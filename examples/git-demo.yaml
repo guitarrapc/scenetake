@@ -10,24 +10,24 @@ settings:
   prompt: "$ "
   typing-speed: 0.06
   typing-jitter: 0.02
-  pre-command-delay: 1.0
-  post-command-delay: 2.0
+  pre-command-delay: 0.5
+  post-command-delay: 1.0
 
 steps:
   - git --version
 
   # Show current status - linger a bit longer so viewers can read it
   - run: git status
-    post-delay: 3.0
+    post-delay: 1.5
 
   - run: git log --oneline -5
-    post-delay: 3.0
+    post-delay: 1.5
 
   # Fast command, shorter pause after
   - run: git branch
-    post-delay: 1.0
+    post-delay: 0.5
 
   # Slower typing to emphasise the command
   - run: git diff --stat HEAD~1
     typing-speed: 0.10
-    post-delay: 3.0
+    post-delay: 1.5

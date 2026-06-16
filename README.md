@@ -81,6 +81,9 @@ steps:
 
 - You can override the command shell with top-level `shell`.
 - `settings.shell` is still accepted for backward compatibility.
+- Cast output newlines are normalized to `\r\n` across all OSes for terminal renderer compatibility.
+- Typing simulation is deterministic for the same scenario file.
+- Cast header `timestamp` is deterministic for the same scenario file.
 - Linux/macOS default: `$SHELL`, fallback to `bash`.
 - Windows default: `pwsh`, fallback to `powershell`.
 - On Windows, `settings.shell: bash` uses Git Bash / MSYS bash if available, and intentionally does not use WSL bash.

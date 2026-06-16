@@ -15,6 +15,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -46,14 +47,16 @@ var outputPath = args.Length >= 2
 Console.Error.WriteLine($"Loading: {scenarioPath}");
 var yaml = File.ReadAllText(scenarioPath, Encoding.UTF8);
 var scenario = ParseScenario(yaml);
+var deterministicSeed = ComputeDeterministicSeed(yaml);
+var deterministicTimestamp = ComputeDeterministicTimestamp(deterministicSeed);
 
 var shell = ResolveShell(scenario);
 Console.Error.WriteLine($"Using shell: {shell.DisplayName}");
 
 Console.Error.WriteLine("Generating cast...");
-var events = Generate(scenario, shell);
+var events = Generate(scenario, shell, deterministicSeed);
 
-WriteCast(scenario, events, outputPath, shell);
+WriteCast(scenario, events, outputPath, shell, deterministicTimestamp);
 
 var duration = events.Count > 0 ? events[^1].Time : 0.0;
 Console.Error.WriteLine($"Done: {outputPath}  ({events.Count} events, {duration:F1}s)");
@@ -67,7 +70,7 @@ static Scenario ParseScenario(string yaml)
     return d.Deserialize<Scenario>(yaml) ?? new Scenario();
 }
 
-static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell)
+static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int deterministicSeed)
 {
     var s = scenario.Settings ?? new();
     var prompt    = AsString(s, "prompt", DefaultPrompt);
@@ -76,7 +79,7 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell)
     var preDelay  = AsDouble(s, "pre-command-delay", DefaultPreDelay);
     var postDelay = AsDouble(s, "post-command-delay", DefaultPostDelay);
     var events = new List<CastEvent>();
-    var rng    = new Random();
+    var rng    = new Random(deterministicSeed);
     double t   = 0.5;
 
     events.Add(new CastEvent(t, prompt));
@@ -155,9 +158,9 @@ static string RunCommand(string cmd, string? cwd, ShellLaunch shell)
 }
 
 static string NormalizeNewlines(string s)
-    => s.Replace("\r\n", "\n").Replace("\n", "\r\n");
+    => s.Replace("\r\n", "\n").Replace("\r", "\n").Replace("\n", "\r\n");
 
-static void WriteCast(Scenario scenario, List<CastEvent> events, string outputPath, ShellLaunch shell)
+static void WriteCast(Scenario scenario, List<CastEvent> events, string outputPath, ShellLaunch shell, long timestamp)
 {
     using var writer = new StreamWriter(outputPath, append: false, encoding: new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     writer.NewLine = "\n";
@@ -167,7 +170,7 @@ static void WriteCast(Scenario scenario, List<CastEvent> events, string outputPa
     var title = scenario.Title ?? "";
     writer.WriteLine(
         $"{{\"version\":2,\"width\":{width},\"height\":{height}" +
-        $",\"timestamp\":{DateTimeOffset.UtcNow.ToUnixTimeSeconds()},\"title\":{JsonString(title)}" +
+        $",\"timestamp\":{timestamp},\"title\":{JsonString(title)}" +
         $",\"env\":{{\"SHELL\":{JsonString(shell.EnvValue)},\"TERM\":\"xterm-256color\"}}}}");
 
     foreach (var ev in events)
@@ -379,6 +382,20 @@ static bool TryResolveExecutableOnWindows(string executableName, out string reso
 
     resolved = string.Empty;
     return false;
+}
+
+static int ComputeDeterministicSeed(string yaml)
+{
+    var normalized = yaml.Replace("\r\n", "\n").Replace("\r", "\n");
+    var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(normalized));
+    return BitConverter.ToInt32(bytes, 0);
+}
+
+static long ComputeDeterministicTimestamp(int seed)
+{
+    const long baseUnixTime = 1700000000;
+    const long spanSeconds = 365L * 24 * 60 * 60;
+    return baseUnixTime + (uint)seed % spanSeconds;
 }
 
 record CastEvent(double Time, string Data);

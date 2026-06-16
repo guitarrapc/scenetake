@@ -81,6 +81,9 @@ steps:
 
 - トップレベルの `shell` で実行シェルを指定できます
 - 後方互換として `settings.shell` も受け付けます
+- cast 出力の改行は OS に関係なく `\r\n` に正規化されます（端末レンダラー互換のため）
+- 同じシナリオファイルに対するタイピングシミュレーションは決定的です
+- cast ヘッダーの `timestamp` も同じシナリオファイルで決定的です
 - Linux/macOS のデフォルトは `$SHELL`、未設定時は `bash` です
 - Windows のデフォルトは `pwsh`、未導入時は `powershell` です
 - Windows で `settings.shell: bash` を指定した場合は Git Bash / MSYS の `bash` を使用し、WSL の `bash` は意図的に使用しません
