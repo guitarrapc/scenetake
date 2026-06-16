@@ -6,6 +6,8 @@ English | [日本語](README-ja.md)
 
 Generate [asciinema v2 cast](https://docs.asciinema.org/manual/asciicast/v2/) files from YAML scenario files. You do not need to install or launch `asciinema` to record. Write a YAML scenario with steps, and this tool executes those steps and emits a cast file with simulated typing plus real command output.
 
+![](examples/basic.gif)
+
 **Motivation**
 
 I want to create asciinema cast files without the hassle of recording them. That is the motivation behind scenario2cast. There are various tools in the asciinema ecosystem, but none quite fit: some lean heavily on shell scripts, some require asciinema itself as a dependency, some leak execution paths into the cast output, and some only fake the output rather than running real commands. What I want is something where I can write a scenario plainly, have the listed commands actually executed, and get a cast file generated directly from the real output.
@@ -33,21 +35,32 @@ scenario2cast init scenario.yaml
 # Run
 scenario2cast scenario.yaml [output.cast]
 
-# Generate a starter scenario file with comments and placeholders.
-scenario2cast init [scenario.yaml]
-
 # If `output.cast` is omitted, output is written next to the scenario file with the `.cast` extension.
 scenario2cast examples/basic.yaml
 
 # Specify output path
-scenario2cast examples/basic.yaml demo.cast
+scenario2cast examples/basic.yaml basic.cast
 
 # Play with asciinema
-asciinema play demo.cast
+asciinema play basic.cast
 
 # Convert to gif with agg
 docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/examples/basic.cast /data/examples/basic.gif
 ```
+
+### Demo The README Workflow As A Scenario
+
+If you want to show the exact README flow as a cast/gif demo, use [examples/readme-demo.yaml](examples/readme-demo.yaml).
+
+```bash
+# This scenario runs:
+# 1) cat examples/basic.yaml
+# 2) scenario2cast examples/basic.yaml examples/basic.cast
+# 3) docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/examples/basic.cast /data/examples/basic.gif
+scenario2cast examples/readme-demo.yaml examples/readme-demo.cast
+```
+
+The scenario intentionally uses per-step `pre-delay` and `post-delay` overrides so each phase has enough pause for explanation.
 
 **Notes**
 

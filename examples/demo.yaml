@@ -1,0 +1,17 @@
+title: "README Workflow Demo"
+width: 120
+height: 24
+shell: bash
+
+settings:
+  prompt: "$ "
+  typing-speed: 0.02 # average seconds per keystroke
+  typing-jitter: 0.01 # random variance (±) per keystroke
+  pre-delay: 0.5 # pause before typing starts
+  post-delay: 1.2 # pause after output before next step
+
+steps:
+  - run: cat examples/basic.yaml
+  - run: scenario2cast examples/basic.yaml examples/basic.cast
+  - run: docker run --rm -v "$PWD:/data" kayvan/agg /data/examples/basic.cast /data/examples/basic.gif
+    execution-duration: 1.0
