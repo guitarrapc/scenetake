@@ -1,4 +1,4 @@
-[![Build](https://github.com/guitarrapc/scenario2cast/actions/workflows/build.yml/badge.svg)](https://github.com/guitarrapc/scenario2cast/actions/workflows/build.yml)
+[![Build](https://github.com/guitarrapc/scenario2cast/actions/workflows/build.yaml/badge.svg)](https://github.com/guitarrapc/scenario2cast/actions/workflows/build.yaml)
 
 # scenario2cast
 
