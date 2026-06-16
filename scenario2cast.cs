@@ -2,6 +2,7 @@
 #:property TargetFramework=net10.0
 #:property Nullable=enable
 #:property ImplicitUsings=enable
+#:package YamlDotNet@16.3.0
 
 // scenario2cast - Generate asciinema v2 cast files from YAML scenario files.
 //
@@ -14,16 +15,14 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
-
-// ────────────────────────────────────────────────────────────────── defaults ──
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 const string DefaultPrompt    = "$ ";
 const double DefaultSpeed     = 0.05;
 const double DefaultJitter    = 0.015;
 const double DefaultPreDelay  = 0.8;
 const double DefaultPostDelay = 1.5;
-
-// ──────────────────────────────────────────────────────────────────────  main ──
 
 if (args.Length < 1)
 {
@@ -43,189 +42,64 @@ var outputPath = args.Length >= 2
     : Path.ChangeExtension(scenarioPath, ".cast");
 
 Console.Error.WriteLine($"Loading: {scenarioPath}");
-var scenario = ParseScenario(File.ReadAllText(scenarioPath, Encoding.UTF8));
+var yaml = File.ReadAllText(scenarioPath, Encoding.UTF8);
+var scenario = ParseScenario(yaml);
 
 Console.Error.WriteLine("Generating cast...");
-var (header, events) = Generate(scenario);
+var events = Generate(scenario);
 
-WriteCast(header, events, outputPath);
+WriteCast(scenario, events, outputPath);
 
 var duration = events.Count > 0 ? events[^1].Time : 0.0;
 Console.Error.WriteLine($"Done: {outputPath}  ({events.Count} events, {duration:F1}s)");
 return 0;
 
-// ─────────────────────────────────────────────────────────────── YAML parser ──
-
-static Scenario ParseScenario(string text)
+static Scenario ParseScenario(string yaml)
 {
-    var scenario = new Scenario();
-    var lines = text.Replace("\r\n", "\n").Split('\n').ToList();
-    int i = 0;
-    while (i < lines.Count)
-    {
-        var line = lines[i];
-        if (IsEmptyOrComment(line)) { i++; continue; }
-        if (GetIndent(line) > 0)   { i++; continue; }
-
-        var (key, rest) = SplitKeyValue(line);
-        switch (key)
-        {
-            case "title":    scenario.Title  = Unquote(rest); i++; break;
-            case "width":    if (int.TryParse(rest, out var w)) scenario.Width  = w; i++; break;
-            case "height":   if (int.TryParse(rest, out var h)) scenario.Height = h; i++; break;
-            case "cwd":      scenario.Cwd = string.IsNullOrEmpty(rest) ? null : rest; i++; break;
-            case "settings": i++; i = ParseSettings(lines, i, scenario.Settings); break;
-            case "commands": i++; i = ParseCommands(lines, i, scenario.Commands); break;
-            default:         i++; break;
-        }
-    }
-    return scenario;
+    var d = new DeserializerBuilder()
+        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+        .IgnoreUnmatchedProperties()
+        .Build();
+    return d.Deserialize<Scenario>(yaml) ?? new Scenario();
 }
 
-static int ParseSettings(List<string> lines, int start, Dictionary<string, string> settings)
+static List<CastEvent> Generate(Scenario scenario)
 {
-    int i = start;
-    while (i < lines.Count)
-    {
-        var line = lines[i];
-        if (IsEmptyOrComment(line)) { i++; continue; }
-        if (GetIndent(line) == 0) break;
-        var (key, val) = SplitKeyValue(line);
-        if (!string.IsNullOrEmpty(key)) settings[key] = val;
-        i++;
-    }
-    return i;
-}
-
-static int ParseCommands(List<string> lines, int start, List<CommandEntry> commands)
-{
-    int i = start;
-    while (i < lines.Count)
-    {
-        var line = lines[i];
-        if (IsEmptyOrComment(line)) { i++; continue; }
-        if (GetIndent(line) == 0) break;
-
-        var trimmed = line.TrimStart();
-        if (!trimmed.StartsWith("- ")) { i++; continue; }
-
-        var itemIndent = GetIndent(line);
-        var afterDash  = trimmed[2..].Trim();
-
-        if (afterDash.StartsWith("cmd:"))
-        {
-            // mapping item starting with cmd:
-            var entry = new CommandEntry { Cmd = Unquote(afterDash[4..].Trim()) };
-            i++;
-            i = ParseCommandMapping(lines, i, itemIndent, entry);
-            if (!string.IsNullOrEmpty(entry.Cmd)) commands.Add(entry);
-        }
-        else
-        {
-            // plain string command
-            var cmd = Unquote(afterDash);
-            if (!string.IsNullOrEmpty(cmd)) commands.Add(new CommandEntry { Cmd = cmd });
-            i++;
-        }
-    }
-    return i;
-}
-
-static int ParseCommandMapping(List<string> lines, int start, int itemIndent, CommandEntry entry)
-{
-    int i = start;
-    while (i < lines.Count)
-    {
-        var line = lines[i];
-        if (IsEmptyOrComment(line)) { i++; continue; }
-        if (GetIndent(line) <= itemIndent) break;
-        var (key, val) = SplitKeyValue(line);
-        if (!string.IsNullOrEmpty(key)) entry.Extra[key] = val;
-        i++;
-    }
-    return i;
-}
-
-// ─────────────────────────────────────────────────────────────── YAML utils ──
-
-static bool IsEmptyOrComment(string line)
-    => string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith('#');
-
-static int GetIndent(string line)
-    => line.Length - line.TrimStart().Length;
-
-static (string key, string value) SplitKeyValue(string line)
-{
-    var idx = line.IndexOf(':');
-    if (idx < 0) return (line.Trim(), "");
-    // strip inline comment from value
-    var val = line[(idx + 1)..];
-    var commentIdx = val.IndexOf(" #");
-    if (commentIdx >= 0) val = val[..commentIdx];
-    return (line[..idx].Trim(), val.Trim());
-}
-
-static string Unquote(string s)
-{
-    s = s.Trim();
-    if (s.Length >= 2 &&
-        ((s[0] == '"'  && s[^1] == '"') ||
-         (s[0] == '\'' && s[^1] == '\'')))
-        return s[1..^1];
-    return s;
-}
-
-// ──────────────────────────────────────────────────────────────────── generate ──
-
-static (CastHeader header, List<CastEvent> events) Generate(Scenario scenario)
-{
-    var s = scenario.Settings;
-    var prompt    = GetStrSetting(s, "prompt",            DefaultPrompt);
-    var speed     = GetDbl(s, "typing_speed",             DefaultSpeed);
-    var jitter    = GetDbl(s, "typing_jitter",            DefaultJitter);
-    var preDelay  = GetDbl(s, "pre_command_delay",        DefaultPreDelay);
-    var postDelay = GetDbl(s, "post_command_delay",       DefaultPostDelay);
-
-    var header = new CastHeader
-    {
-        Version   = 2,
-        Width     = scenario.Width,
-        Height    = scenario.Height,
-        Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-        Title     = scenario.Title,
-        Env       = new CastEnv { Shell = DefaultShell() },
-    };
-
+    var s = scenario.Settings ?? new();
+    var prompt    = AsString(s, "prompt", DefaultPrompt);
+    var speed     = AsDouble(s, "typing_speed", DefaultSpeed);
+    var jitter    = AsDouble(s, "typing_jitter", DefaultJitter);
+    var preDelay  = AsDouble(s, "pre_command_delay", DefaultPreDelay);
+    var postDelay = AsDouble(s, "post_command_delay", DefaultPostDelay);
     var events = new List<CastEvent>();
     var rng    = new Random();
     double t   = 0.5;
 
-    // initial prompt
     events.Add(new CastEvent(t, prompt));
     t += preDelay;
 
-    foreach (var item in scenario.Commands)
+    foreach (var item in scenario.Commands ?? new())
     {
-        var cmdSpeed   = GetDbl(item.Extra, "typing_speed",  speed);
-        var cmdJitter  = GetDbl(item.Extra, "typing_jitter", jitter);
-        var cmdPre     = GetDbl(item.Extra, "pre_delay",     preDelay);
-        var cmdPost    = GetDbl(item.Extra, "post_delay",    postDelay);
+        var command = ParseCommand(item);
+        if (string.IsNullOrWhiteSpace(command.Cmd)) continue;
 
-        // simulate typing
-        foreach (var ch in item.Cmd)
+        var cmdSpeed  = AsDouble(command.Extra, "typing_speed", speed);
+        var cmdJitter = AsDouble(command.Extra, "typing_jitter", jitter);
+        var cmdPre    = AsDouble(command.Extra, "pre_delay", preDelay);
+        var cmdPost   = AsDouble(command.Extra, "post_delay", postDelay);
+
+        foreach (var ch in command.Cmd)
         {
             events.Add(new CastEvent(Math.Round(t, 6), ch.ToString()));
             var delay = cmdSpeed + rng.NextDouble() * 2 * cmdJitter - cmdJitter;
             t += Math.Max(delay, 0.005);
         }
 
-        // Enter key
         events.Add(new CastEvent(Math.Round(t, 6), "\r\n"));
         t += 0.15;
 
-        // run command and capture output
-        Console.Error.WriteLine($"  running: {item.Cmd}");
-        var output = RunCommand(item.Cmd, scenario.Cwd);
+        Console.Error.WriteLine($"  running: {command.Cmd}");
+        var output = RunCommand(command.Cmd, scenario.Cwd);
         if (!string.IsNullOrEmpty(output))
         {
             events.Add(new CastEvent(Math.Round(t, 6), NormalizeNewlines(output)));
@@ -233,16 +107,25 @@ static (CastHeader header, List<CastEvent> events) Generate(Scenario scenario)
         }
 
         t += cmdPost;
-
-        // next prompt
         events.Add(new CastEvent(Math.Round(t, 6), prompt));
         t += cmdPre;
     }
 
-    return (header, events);
+    return events;
 }
 
-// ───────────────────────────────────────────────────────── command execution ──
+static CommandEntry ParseCommand(object item)
+{
+    if (item is string s) return new CommandEntry { Cmd = s };
+    if (item is IDictionary<object, object> map)
+    {
+        var extra = map.ToDictionary(kv => kv.Key.ToString() ?? "", kv => kv.Value);
+        var cmd = extra.TryGetValue("cmd", out var v) ? v?.ToString() ?? "" : "";
+        extra.Remove("cmd");
+        return new CommandEntry { Cmd = cmd, Extra = extra };
+    }
+    return new CommandEntry();
+}
 
 static string RunCommand(string cmd, string? cwd)
 {
@@ -250,30 +133,23 @@ static string RunCommand(string cmd, string? cwd)
         ? (Environment.GetEnvironmentVariable("COMSPEC") ?? "cmd.exe", "/c")
         : (Environment.GetEnvironmentVariable("SHELL")   ?? "/bin/bash", "-c");
 
-    using var proc = new Process
+    var psi = new ProcessStartInfo(shell)
     {
-        StartInfo = new ProcessStartInfo
-        {
-            FileName               = shell,
-            RedirectStandardOutput = true,
-            RedirectStandardError  = true,
-            UseShellExecute        = false,
-            CreateNoWindow         = true,
-            WorkingDirectory       = cwd ?? "",
-        }
+        RedirectStandardOutput = true,
+        RedirectStandardError  = true,
+        UseShellExecute        = false,
+        CreateNoWindow         = true,
     };
-    proc.StartInfo.ArgumentList.Add(flag);
-    proc.StartInfo.ArgumentList.Add(cmd);
+    psi.ArgumentList.Add(flag);
+    psi.ArgumentList.Add(cmd);
+    if (!string.IsNullOrWhiteSpace(cwd)) psi.WorkingDirectory = cwd;
 
-    var sb = new StringBuilder();
-    proc.OutputDataReceived += (_, e) => { if (e.Data is not null) sb.AppendLine(e.Data); };
-    proc.ErrorDataReceived  += (_, e) => { if (e.Data is not null) sb.AppendLine(e.Data); };
+    using var proc = new Process { StartInfo = psi };
     proc.Start();
-    proc.BeginOutputReadLine();
-    proc.BeginErrorReadLine();
+    var stdout = proc.StandardOutput.ReadToEnd();
+    var stderr = proc.StandardError.ReadToEnd();
     proc.WaitForExit();
-
-    return sb.ToString();
+    return stdout + stderr;
 }
 
 static string NormalizeNewlines(string s)
@@ -284,24 +160,24 @@ static string DefaultShell()
         ? Environment.GetEnvironmentVariable("COMSPEC") ?? "cmd.exe"
         : Environment.GetEnvironmentVariable("SHELL")   ?? "/bin/bash";
 
-// ──────────────────────────────────────────────────────────────────── output ──
-
-static void WriteCast(CastHeader header, List<CastEvent> events, string outputPath)
+static void WriteCast(Scenario scenario, List<CastEvent> events, string outputPath)
 {
     using var writer = new StreamWriter(outputPath, append: false, encoding: new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     writer.NewLine = "\n";
 
-    // Header JSON built manually — no System.Text.Json reflection needed.
+    var width = scenario.Width ?? 120;
+    var height = scenario.Height ?? 24;
+    var title = scenario.Title ?? "";
+    var shell = DefaultShell();
     writer.WriteLine(
-        $"{{\"version\":{header.Version},\"width\":{header.Width},\"height\":{header.Height}" +
-        $",\"timestamp\":{header.Timestamp},\"title\":{JsonString(header.Title)}" +
-        $",\"env\":{{\"SHELL\":{JsonString(header.Env.Shell)},\"TERM\":\"xterm-256color\"}}}}");
+        $"{{\"version\":2,\"width\":{width},\"height\":{height}" +
+        $",\"timestamp\":{DateTimeOffset.UtcNow.ToUnixTimeSeconds()},\"title\":{JsonString(title)}" +
+        $",\"env\":{{\"SHELL\":{JsonString(shell)},\"TERM\":\"xterm-256color\"}}}}");
 
     foreach (var ev in events)
         writer.WriteLine($"[{ev.Time.ToString("0.######", CultureInfo.InvariantCulture)},\"o\",{JsonString(ev.Data)}]");
 }
 
-// Minimal JSON string serializer: escapes control characters and special JSON characters.
 static string JsonString(string s)
 {
     var sb = new StringBuilder(s.Length + 2);
@@ -329,47 +205,27 @@ static string JsonString(string s)
     return sb.ToString();
 }
 
-// ──────────────────────────────────────────────────────────── setting helpers ──
+static string AsString(Dictionary<string, object> d, string key, string def)
+    => d.TryGetValue(key, out var v) && v is not null ? v.ToString() ?? def : def;
 
-static string GetStrSetting(Dictionary<string, string> d, string key, string def)
-    => d.TryGetValue(key, out var v) && !string.IsNullOrEmpty(v) ? Unquote(v) : def;
-
-static double GetDbl(Dictionary<string, string> d, string key, double def)
+static double AsDouble(Dictionary<string, object> d, string key, double def)
     => d.TryGetValue(key, out var v) &&
-       double.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out var r) ? r : def;
-
-// ───────────────────────────────────────────────────────────────────── types ──
-
-record CastHeader
-{
-    public int     Version   { get; init; }
-    public int     Width     { get; init; }
-    public int     Height    { get; init; }
-    public long    Timestamp { get; init; }
-    public string  Title     { get; init; } = "";
-    public CastEnv Env       { get; init; } = new();
-}
-
-record CastEnv
-{
-    public string Shell { get; init; } = "";
-    public string Term  { get; init; } = "xterm-256color";
-}
+       double.TryParse(v?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var r) ? r : def;
 
 record CastEvent(double Time, string Data);
 
 class Scenario
 {
-    public string                    Title    { get; set; } = "";
-    public int                       Width    { get; set; } = 120;
-    public int                       Height   { get; set; } = 24;
-    public string?                   Cwd      { get; set; }
-    public Dictionary<string, string> Settings { get; } = new();
-    public List<CommandEntry>         Commands { get; } = new();
+    public string? Title { get; set; }
+    public int? Width { get; set; }
+    public int? Height { get; set; }
+    public string? Cwd { get; set; }
+    public Dictionary<string, object>? Settings { get; set; }
+    public List<object>? Commands { get; set; }
 }
 
 class CommandEntry
 {
-    public string                    Cmd   { get; set; } = "";
-    public Dictionary<string, string> Extra { get; } = new();
+    public string Cmd { get; set; } = "";
+    public Dictionary<string, object> Extra { get; set; } = new();
 }
