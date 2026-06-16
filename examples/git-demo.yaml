@@ -1,0 +1,32 @@
+title: "Git Workflow Demo"
+width: 120
+height: 30
+
+# Working directory for all commands (optional)
+# cwd: /path/to/repo
+
+settings:
+  prompt: "$ "
+  typing_speed: 0.06
+  typing_jitter: 0.02
+  pre_command_delay: 1.0
+  post_command_delay: 2.0
+
+commands:
+  - git --version
+
+  # Show current status - linger a bit longer so viewers can read it
+  - cmd: git status
+    post_delay: 3.0
+
+  - cmd: git log --oneline -5
+    post_delay: 3.0
+
+  # Fast command, shorter pause after
+  - cmd: git branch
+    post_delay: 1.0
+
+  # Slower typing to emphasise the command
+  - cmd: git diff --stat HEAD~1
+    typing_speed: 0.10
+    post_delay: 3.0

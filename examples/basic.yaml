@@ -1,0 +1,16 @@
+title: "Basic Demo"
+width: 120
+height: 24
+
+settings:
+  prompt: "$ "
+  typing_speed: 0.05 # average seconds per keystroke
+  typing_jitter: 0.015 # random variance (±) per keystroke
+  pre_command_delay: 0.8 # pause before typing starts
+  post_command_delay: 1.5 # pause after output before next command
+
+commands:
+  - echo "Hello, World!"
+  - echo "Current directory:"
+  - pwd
+  - echo "Done!"
