@@ -44,7 +44,10 @@ scenario2cast examples/basic.yaml basic.cast
 # Play with asciinema
 asciinema play basic.cast
 
-# Convert to gif with agg
+# Convert to gif with agg (Linux/macOS)
+docker run --rm -v "${PWD}:/data" kayvan/agg /data/examples/basic.cast /data/examples/basic.gif
+
+# Convert to gif with agg (Windows PowerShell)
 docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/examples/basic.cast /data/examples/basic.gif
 ```
 
