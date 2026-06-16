@@ -113,8 +113,8 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
             t += Math.Min(0.004 * output.Length, 2.0);
         }
 
-        t += cmdPost;
         events.Add(new CastEvent(Math.Round(t, 6), prompt));
+        t += cmdPost;
         t += cmdPre;
     }
 

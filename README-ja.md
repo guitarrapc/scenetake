@@ -50,7 +50,7 @@ settings:
   typing-speed: 0.05       # 1文字あたりの平均秒数
   typing-jitter: 0.015     # ジッター幅 ±秒
   pre-command-delay: 0.8   # 次の step のタイピング開始前の停止時間
-  post-command-delay: 1.5  # 出力後・次プロンプトまでの停止時間
+  post-command-delay: 1.5  # プロンプト表示後・次の step 入力までの停止時間
 
 steps:
   # 文字列で書くだけ（シンプルな方法）
@@ -75,7 +75,7 @@ steps:
 | `typing-speed` | 1文字あたりの平均秒数 | `settings.typing-speed` |
 | `typing-jitter` | ジッター幅 | `settings.typing-jitter` |
 | `pre-delay` | タイピング前の停止時間 | `settings.pre-command-delay` |
-| `post-delay` | 出力後の停止時間 | `settings.post-command-delay` |
+| `post-delay` | プロンプト表示後の停止時間 | `settings.post-command-delay` |
 
 ## 注意事項
 

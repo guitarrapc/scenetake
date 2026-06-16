@@ -50,7 +50,7 @@ settings:
   typing-speed: 0.05       # Seconds per character (average)
   typing-jitter: 0.015     # Random jitter (+/- seconds)
   pre-command-delay: 0.8   # Pause before typing next step
-  post-command-delay: 1.5  # Pause after output before next prompt
+  post-command-delay: 1.5  # Pause after prompt appears before next step typing
 
 steps:
   # Simple string command
@@ -75,7 +75,7 @@ steps:
 | `typing-speed` | Seconds per typed character | `settings.typing-speed` |
 | `typing-jitter` | Typing jitter range | `settings.typing-jitter` |
 | `pre-delay` | Pause before command typing | `settings.pre-command-delay` |
-| `post-delay` | Pause after command output | `settings.post-command-delay` |
+| `post-delay` | Pause after prompt appears | `settings.post-command-delay` |
 
 ## Notes
 
