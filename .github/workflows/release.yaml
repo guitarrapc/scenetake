@@ -10,27 +10,8 @@ on:
       - "v*"
 
 jobs:
-  prepare-release:
-    name: Create GitHub Release
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions:
-      contents: write
-    steps:
-      - name: Ensure release exists
-        run: |
-          if gh release view "${{ github.ref_name }}" >/dev/null 2>&1; then
-            echo "Release already exists: ${{ github.ref_name }}"
-          else
-            gh release create "${{ github.ref_name }}" --title "${{ github.ref_name }}" --generate-notes --verify-tag --draft
-          fi
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-
   publish:
     name: Publish ${{ matrix.os }}
-    needs: prepare-release
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     permissions:
@@ -41,13 +22,10 @@ jobs:
         include:
           - os: ubuntu-latest
             rid: linux-x64
-            archive: tar.gz
           - os: windows-latest
             rid: win-x64
-            archive: tar.gz
           - os: macos-latest
             rid: osx-arm64
-            archive: tar.gz
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -105,13 +83,51 @@ jobs:
           test -f "$archive_path"
           test -f "$checksum_path"
 
-      - name: Upload release assets
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: ${{ matrix.rid }}
+          path: |
+            ${{ github.workspace }}/scenario2cast-${{ github.ref_name }}-${{ matrix.rid }}.tar.gz
+            ${{ github.workspace }}/scenario2cast-${{ github.ref_name }}-${{ matrix.rid }}.tar.gz.sha256
+          if-no-files-found: error
+
+  release:
+    name: Create GitHub Release
+    needs: publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: artifacts/
+
+      - name: Collect release assets
         shell: bash
         run: |
-          archive_base_name="scenario2cast-${{ github.ref_name }}-${{ matrix.rid }}"
-          archive_path="$GITHUB_WORKSPACE/${archive_base_name}.tar.gz"
-          checksum_path="$archive_path.sha256"
+          set -euo pipefail
+          mkdir -p release
+          find artifacts/ -type f \( -name '*.tar.gz' -o -name '*.sha256' \) -exec cp {} release/ \;
 
-          gh release upload "${{ github.ref_name }}" "$archive_path" "$checksum_path" --clobber
+          echo "### Release assets" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          find release/ -maxdepth 1 -type f | sort | xargs -n 1 basename >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Attest build provenance (SLSA)
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: release/*.tar.gz
+
+      - name: Create GitHub Release
+        shell: bash
+        run: |
+          gh release create "$TAG" release/* --repo "$GITHUB_REPOSITORY" --title "$TAG" --generate-notes --verify-tag
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
