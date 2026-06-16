@@ -7,8 +7,8 @@ settings:
   prompt: "$ "
   typing-speed: 0.02 # average seconds per keystroke
   typing-jitter: 0.01 # random variance (±) per keystroke
-  pre-command-delay: 0.4 # pause before typing starts
-  post-command-delay: 1.0 # pause after output before next step
+  pre-delay: 0.4 # pause before typing starts
+  post-delay: 1.0 # pause after output before next step
 
 steps:
   - echo "Hello, World!"

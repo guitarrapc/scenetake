@@ -84,19 +84,15 @@ steps:
 
 ## 注意事項
 
-- トップレベルの `shell` で実行シェルを指定できます
-- 後方互換として `settings.shell` も受け付けます
-- cast 出力の改行は OS に関係なく `\r\n` に正規化されます（端末レンダラー互換のため）
-- 同じシナリオファイルに対するタイピングシミュレーションは決定的です
-- cast ヘッダーの `timestamp` も同じシナリオファイルで決定的です
-- 未指定時のコマンド実行待機は cast 上で固定 `0.05s` です
-- `execution-duration` は cast 上の待機時間だけを変更し、実コマンド自体は完了まで実行されます
-- Linux/macOS のデフォルトは `$SHELL`、未設定時は `bash` です
-- Windows のデフォルトは `pwsh`、未導入時は `powershell` です
-- Windows で `settings.shell: bash` を指定した場合は Git Bash / MSYS の `bash` を使用し、WSL の `bash` は意図的に使用しません
-- インタラクティブなコマンド（`vim`、`htop` など）は使用しないでください
-- Windows の PowerShell では通常 `echo "text"` は追加のクォートなしで表示されます
-- 実際に step が実行されるため、副作用のあるコマンドは注意して使用してください
+- `shell` で実行シェルを指定できます
+- `settings` で prompt と timing の既定値を設定できます
+- `vim` や `htop` のような対話的コマンドは避けてください
+- ファイル変更や外部システムに影響するコマンドは慎重に使ってください
+- 長いコマンドは `execution-duration` で見やすく調整できます
+- Linux/macOS の既定シェルは `$SHELL`、なければ `bash` です
+- Windows の既定シェルは `pwsh`、なければ `powershell` です
+- Windows で `shell: bash` を指定した場合は Git Bash / MSYS の `bash` を使います
+- 実際に`step`が実行されるため、副作用のあるコマンドは注意して使用してください
 
 ## サンプル
 

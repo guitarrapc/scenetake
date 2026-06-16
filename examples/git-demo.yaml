@@ -10,8 +10,8 @@ settings:
   prompt: "$ "
   typing-speed: 0.06
   typing-jitter: 0.02
-  pre-command-delay: 0.5
-  post-command-delay: 1.0
+  pre-delay: 0.5
+  post-delay: 1.0
 
 steps:
   - git --version

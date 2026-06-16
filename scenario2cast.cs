@@ -66,20 +66,20 @@ return 0;
 static Scenario ParseScenario(string yaml)
 {
     var d = new StaticDeserializerBuilder(new Scenario2Cast.StaticContext())
-        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+        .WithNamingConvention(HyphenatedNamingConvention.Instance)
         .Build();
     return d.Deserialize<Scenario>(yaml) ?? new Scenario();
 }
 
 static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int deterministicSeed)
 {
-    var s = scenario.Settings ?? new();
-    var prompt    = AsString(s, "prompt", DefaultPrompt);
-    var speed     = AsDouble(s, "typing-speed", DefaultSpeed);
-    var jitter    = AsDouble(s, "typing-jitter", DefaultJitter);
-    var preDelay  = AsDouble(s, "pre-delay", AsDouble(s, "pre-command-delay", DefaultPreDelay));
-    var postDelay = AsDouble(s, "post-delay", AsDouble(s, "post-command-delay", DefaultPostDelay));
-    var defaultExecutionDuration = AsDouble(s, "execution-duration", DefaultCommandExecutionDuration);
+    var settings = scenario.Settings ?? new ScenarioSettings();
+    var prompt    = settings.Prompt ?? DefaultPrompt;
+    var speed     = settings.TypingSpeed ?? DefaultSpeed;
+    var jitter    = settings.TypingJitter ?? DefaultJitter;
+    var preDelay  = settings.PreDelay ?? DefaultPreDelay;
+    var postDelay = settings.PostDelay ?? DefaultPostDelay;
+    var defaultExecutionDuration = settings.ExecutionDuration ?? DefaultCommandExecutionDuration;
     var events = new List<CastEvent>();
     var rng    = new Random(deterministicSeed);
     double t   = 0.5;
@@ -92,11 +92,11 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
         var command = ParseCommand(item);
         if (string.IsNullOrWhiteSpace(command.Cmd)) continue;
 
-        var cmdSpeed  = AsDouble(command.Extra, "typing-speed", speed);
-        var cmdJitter = AsDouble(command.Extra, "typing-jitter", jitter);
-        var cmdPre    = AsDouble(command.Extra, "pre-delay", preDelay);
-        var cmdPost   = AsDouble(command.Extra, "post-delay", postDelay);
-        var cmdExecutionDuration = AsDouble(command.Extra, "execution-duration", defaultExecutionDuration);
+        var cmdSpeed  = GetDouble(command.Extra, speed, "typing-speed");
+        var cmdJitter = GetDouble(command.Extra, jitter, "typing-jitter");
+        var cmdPre    = GetDouble(command.Extra, preDelay, "pre-delay");
+        var cmdPost   = GetDouble(command.Extra, postDelay, "post-delay");
+        var cmdExecutionDuration = GetDouble(command.Extra, defaultExecutionDuration, "execution-duration");
 
         foreach (var ch in command.Cmd)
         {
@@ -208,15 +208,15 @@ static string JsonString(string s)
     return sb.ToString();
 }
 
-static string AsString(Dictionary<string, object> d, string key, string def)
-    => d.TryGetValue(key, out var v) && v is not null ? v.ToString() ?? def : def;
-
-static double AsDouble(Dictionary<string, object> d, string key, double def)
+static double GetDouble(Dictionary<string, object> d, double def, params string[] keys)
 {
-    if (d.TryGetValue(key, out var value) &&
-        double.TryParse(value?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed))
+    foreach (var key in keys)
     {
-        return parsed;
+        if (d.TryGetValue(key, out var value) &&
+            double.TryParse(value?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed))
+        {
+            return parsed;
+        }
     }
 
     return def;
@@ -225,8 +225,6 @@ static double AsDouble(Dictionary<string, object> d, string key, double def)
 static ShellLaunch ResolveShell(Scenario scenario)
 {
     var requested = scenario.Shell;
-    if (string.IsNullOrWhiteSpace(requested) && scenario.Settings is not null)
-        requested = AsString(scenario.Settings, "shell", "");
 
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         return ResolveWindowsShell(requested);
@@ -416,8 +414,24 @@ namespace Scenario2Cast
         public int? Height { get; set; }
         public string? Cwd { get; set; }
         public string? Shell { get; set; }
-        public Dictionary<string, object>? Settings { get; set; }
+        public ScenarioSettings? Settings { get; set; }
         public List<object>? Steps { get; set; }
+    }
+
+    [YamlSerializable]
+    public class ScenarioSettings
+    {
+        public string? Prompt { get; set; }
+
+        public double? TypingSpeed { get; set; }
+
+        public double? TypingJitter { get; set; }
+
+        public double? PreDelay { get; set; }
+
+        public double? PostDelay { get; set; }
+
+        public double? ExecutionDuration { get; set; }
     }
 
     [YamlSerializable]
@@ -429,6 +443,7 @@ namespace Scenario2Cast
 
     [YamlStaticContext]
     [YamlSerializable(typeof(Scenario))]
+    [YamlSerializable(typeof(ScenarioSettings))]
     public partial class StaticContext : YamlDotNet.Serialization.StaticContext
     {
     }

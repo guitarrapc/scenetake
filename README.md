@@ -84,19 +84,15 @@ steps:
 
 ## Notes
 
-- You can override the command shell with top-level `shell`.
-- `settings.shell` is still accepted for backward compatibility.
-- Cast output newlines are normalized to `\r\n` across all OSes for terminal renderer compatibility.
-- Typing simulation is deterministic for the same scenario file.
-- Cast header `timestamp` is deterministic for the same scenario file.
-- If unspecified, command execution waits use a fixed `0.05s` in the cast timeline.
-- `execution-duration` changes only the cast timeline; the real command still runs to completion.
+- Use top-level `shell` to choose the command shell.
+- `settings` provides defaults for prompt and timing.
+- Avoid interactive commands such as `vim` or `htop`.
+- Be careful with commands that change files, the working tree, or external systems.
+- `execution-duration` is optional and useful for keeping long commands readable.
 - Linux/macOS default: `$SHELL`, fallback to `bash`.
 - Windows default: `pwsh`, fallback to `powershell`.
-- On Windows, `settings.shell: bash` uses Git Bash / MSYS bash if available, and intentionally does not use WSL bash.
-- Avoid interactive commands such as `vim` or `htop`.
-- On Windows PowerShell, `echo "text"` usually prints without extra quotes.
-- Steps are executed for real, so be careful with side effects.
+- On Windows, `shell: bash` uses Git Bash / MSYS bash if available.
+- `Steps` are executed for real, so be careful with side effects.
 
 ## Examples
 
