@@ -2,11 +2,11 @@
 
 YAMLシナリオファイルから [asciinema v2 cast](https://docs.asciinema.org/manual/asciicast/v2/) ファイルを生成するツールです。
 
-asciinema をインストール・起動する必要はありません。コマンドを並べた YAML を書くだけで、実際にコマンドを実行してその出力を使った cast ファイルを生成します。
+asciinema をインストール・起動する必要はありません。step を並べた YAML を書くだけで、実際にコマンドを実行してその出力を使った cast ファイルを生成します。
 
 ## 仕組み
 
-1. YAMLシナリオにコマンドを列挙する
+1. YAMLシナリオに step を列挙する
 2. ツールがコマンドを一文字ずつ入力しているようなイベントを cast ファイルに書き出す（タイピング速度はランダムジッターで自然に見える）
 3. コマンドを実際に実行して出力を cast ファイルに書き出す
 
@@ -42,7 +42,7 @@ docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/examples/basic.cast /da
 title: "Demo Title"     # cast のタイトル（任意）
 width: 120              # ターミナル幅（デフォルト: 120）
 height: 24              # ターミナル高さ（デフォルト: 24）
-cwd: /path/to/dir       # コマンドを実行するディレクトリ（任意）
+cwd: /path/to/dir       # step を実行するディレクトリ（任意）
 shell: bash             # 実行シェルを指定 (任意)
 
 settings:
@@ -52,7 +52,7 @@ settings:
   pre_command_delay: 0.8   # タイピング開始前の停止時間
   post_command_delay: 1.5  # 出力後・次プロンプトまでの停止時間
 
-commands:
+steps:
   # 文字列で書くだけ（シンプルな方法）
   - echo "Hello, World!"
   - ls -la
@@ -86,7 +86,7 @@ commands:
 - Windows で `settings.shell: bash` を指定した場合は Git Bash / MSYS の `bash` を使用し、WSL の `bash` は意図的に使用しません
 - インタラクティブなコマンド（`vim`、`htop` など）は使用しないでください
 - Windows の PowerShell では通常 `echo "text"` は追加のクォートなしで表示されます
-- 実際にコマンドが実行されるため、副作用のあるコマンドは注意して使用してください
+- 実際に step が実行されるため、副作用のあるコマンドは注意して使用してください
 
 ## サンプル
 

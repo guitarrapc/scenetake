@@ -2,11 +2,11 @@
 
 Generate [asciinema v2 cast](https://docs.asciinema.org/manual/asciicast/v2/) files from YAML scenario files.
 
-You do not need to install or launch asciinema to record. Write a YAML scenario with commands, and this tool executes those commands and emits a cast file with simulated typing plus real command output.
+You do not need to install or launch asciinema to record. Write a YAML scenario with steps, and this tool executes those steps and emits a cast file with simulated typing plus real command output.
 
 ## How It Works
 
-1. List commands in a YAML scenario.
+1. List steps in a YAML scenario.
 2. The tool writes cast events that look like human typing (with random jitter).
 3. The tool executes each command and writes real output to the cast.
 
@@ -42,7 +42,7 @@ docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/examples/basic.cast /da
 title: "Demo Title"     # Optional cast title
 width: 120              # Terminal width (default: 120)
 height: 24              # Terminal height (default: 24)
-cwd: /path/to/dir       # Optional working directory for all commands
+cwd: /path/to/dir       # Optional working directory for all steps
 shell: bash             # Optional command shell override
 
 settings:
@@ -52,7 +52,7 @@ settings:
   pre_command_delay: 0.8   # Pause before typing next command
   post_command_delay: 1.5  # Pause after output before next prompt
 
-commands:
+steps:
   # Simple string command
   - echo "Hello, World!"
   - ls -la
@@ -86,7 +86,7 @@ commands:
 - On Windows, `settings.shell: bash` uses Git Bash / MSYS bash if available, and intentionally does not use WSL bash.
 - Avoid interactive commands such as `vim` or `htop`.
 - On Windows PowerShell, `echo "text"` usually prints without extra quotes.
-- Commands are executed for real, so be careful with side effects.
+- Steps are executed for real, so be careful with side effects.
 
 ## Examples
 

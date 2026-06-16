@@ -82,7 +82,7 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell)
     events.Add(new CastEvent(t, prompt));
     t += preDelay;
 
-    foreach (var item in scenario.Commands ?? new())
+    foreach (var item in scenario.Steps ?? new())
     {
         var command = ParseCommand(item);
         if (string.IsNullOrWhiteSpace(command.Cmd)) continue;
@@ -389,7 +389,7 @@ namespace Scenario2Cast
         public string? Cwd { get; set; }
         public string? Shell { get; set; }
         public Dictionary<string, object>? Settings { get; set; }
-        public List<object>? Commands { get; set; }
+        public List<object>? Steps { get; set; }
     }
 
     [YamlSerializable]

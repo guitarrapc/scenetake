@@ -3,7 +3,7 @@ width: 120
 height: 30
 shell: bash
 
-# Working directory for all commands (optional)
+# Working directory for all steps (optional)
 # cwd: /path/to/repo
 
 settings:
@@ -13,7 +13,7 @@ settings:
   pre_command_delay: 1.0
   post_command_delay: 2.0
 
-commands:
+steps:
   - git --version
 
   # Show current status - linger a bit longer so viewers can read it

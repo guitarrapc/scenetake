@@ -10,7 +10,7 @@ settings:
   pre_command_delay: 0.4 # pause before typing starts
   post_command_delay: 1.0 # pause after output before next command
 
-commands:
+steps:
   - echo "Hello, World!"
   - echo "Current directory:"
   - pwd
