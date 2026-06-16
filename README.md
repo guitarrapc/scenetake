@@ -1,5 +1,7 @@
 # scenario2cast
 
+English | [日本語](README-ja.md)
+
 Generate [asciinema v2 cast](https://docs.asciinema.org/manual/asciicast/v2/) files from YAML scenario files.
 
 You do not need to install or launch asciinema to record. Write a YAML scenario with steps, and this tool executes those steps and emits a cast file with simulated typing plus real command output.

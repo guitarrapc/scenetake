@@ -1,5 +1,7 @@
 # scenario2cast
 
+[English](README.md) | 日本語
+
 YAMLシナリオファイルから [asciinema v2 cast](https://docs.asciinema.org/manual/asciicast/v2/) ファイルを生成するツールです。
 
 asciinema をインストール・起動する必要はありません。step を並べた YAML を書くだけで、実際にコマンドを実行してその出力を使った cast ファイルを生成します。
