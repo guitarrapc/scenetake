@@ -25,13 +25,16 @@ Download the asset for your OS from the GitHub Releases page, place `scenario2ca
 chmod +x ./scenario2cast
 
 # Create a minimal scenario
-cat <<'EOF' > scenario.yaml
-steps:
-  - echo "Hello, World!"
-EOF
+scenario2cast init scenario.yaml
+
+# Or generate the starter file in the current directory as `scenario.yaml`.
+# scenario2cast init
 
 # Run
 scenario2cast scenario.yaml [output.cast]
+
+# Generate a starter scenario file with comments and placeholders.
+scenario2cast init [scenario.yaml]
 
 # If `output.cast` is omitted, output is written next to the scenario file with the `.cast` extension.
 scenario2cast examples/basic.yaml
@@ -50,6 +53,7 @@ docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/examples/basic.cast /da
 
 - Use top-level `shell` to choose the command shell.
 - `settings` provides defaults for prompt and timing.
+- `init` generates a commented starter scenario so you can start by editing the YAML.
 - Avoid interactive commands such as `vim` or `htop`.
 - Be careful with commands that change files, the working tree, or external systems.
 - `execution-duration` is optional and useful for keeping long commands readable.

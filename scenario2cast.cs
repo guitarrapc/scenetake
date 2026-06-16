@@ -34,6 +34,30 @@ if (args.Length < 1)
     return 1;
 }
 
+if (args[0] is "init")
+{
+    if (args.Length >= 2 && args[1] is "-h" or "--help")
+    {
+        PrintInitUsage();
+        return 0;
+    }
+
+    var initPath = args.Length >= 2 && !args[1].StartsWith('-')
+        ? Path.GetFullPath(args[1])
+        : Path.GetFullPath("scenario.yaml");
+
+    if (File.Exists(initPath))
+    {
+        Console.Error.WriteLine($"Error: {initPath} already exists");
+        return 1;
+    }
+
+    Directory.CreateDirectory(Path.GetDirectoryName(initPath) ?? ".");
+    File.WriteAllText(initPath, CreateInitialScenarioYaml(), Encoding.UTF8);
+    Console.Error.WriteLine($"Created: {initPath}");
+    return 0;
+}
+
 if (args[0] is "--version")
 {
     PrintVersion();
@@ -413,10 +437,44 @@ static long ComputeDeterministicTimestamp(int seed)
     return baseUnixTime + (uint)seed % spanSeconds;
 }
 
+static string CreateInitialScenarioYaml()
+{
+    return """
+    # scenario2cast starter scenario. Edit the values below and add commands under steps.
+    title: "My App"            # Optional cast title
+    # width: 120                 # Default: 120
+    # height: 24                 # Default: 24
+    # cwd: /your/path            # Optional working directory for all steps
+    # shell: bash                # Optional shell override: bash, pwsh, powershell, or a path
+
+    # Default settings for all steps. Can be overridden per step by using a mapping with "run" and timing keys.
+    # settings:
+    #   prompt: "$ "             # Default prompt shown before each command
+    #   typing-speed: 0.05       # Seconds per character on average. Default: 0.05 (50ms)
+    #   typing-jitter: 0.015     # Random typing variance (+/- seconds). Default: 0.015 (15ms)
+    #   pre-delay: 0.8           # Pause before typing each step. Default: 0.8
+    #   post-delay: 1.5          # Pause after output before the next step. Default: 1.5
+    #   execution-duration: 0.05 # Optional cast wait after command execution. Default: 0.05
+
+    # Add one command per step. Use a mapping when you want to override per-command timing.
+    steps:
+      - echo "Hello, World!"
+      - run: pwd
+        post-delay: 1.5
+    """;
+}
+
 static void PrintUsage()
 {
     Console.Error.WriteLine("Usage: scenario2cast <scenario.yaml> [output.cast]");
+    Console.Error.WriteLine("       scenario2cast init [scenario.yaml]");
     Console.Error.WriteLine("       scenario2cast --help");
+}
+
+static void PrintInitUsage()
+{
+    Console.Error.WriteLine("Usage: scenario2cast init [scenario.yaml]");
+    Console.Error.WriteLine("Creates a commented starter YAML scenario file.");
 }
 
 static void PrintVersion()
