@@ -2,8 +2,7 @@
 #:property TargetFramework=net10.0
 #:property Nullable=enable
 #:property ImplicitUsings=enable
-#:package YamlDotNet@18.0.0
-#:package Vecc.YamlDotNet.Analyzers.StaticGenerator@18.0.0
+#:package VYaml@1.3.0
 
 // scenario2cast - Generate asciinema v2 cast files from YAML scenario files.
 //
@@ -17,9 +16,8 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
-using Scenario2Cast;
+using VYaml.Annotations;
+using VYaml.Serialization;
 
 const string DefaultPrompt    = "$ ";
 const double DefaultSpeed     = 0.05;
@@ -47,6 +45,9 @@ var outputPath = args.Length >= 2
 
 Console.Error.WriteLine($"Loading: {scenarioPath}");
 var yaml = File.ReadAllText(scenarioPath, Encoding.UTF8);
+// Register VYaml formatters explicitly for NativeAOT (source generator cannot call __Register via reflection)
+Scenario.__RegisterVYamlFormatter();
+ScenarioSettings.__RegisterVYamlFormatter();
 var scenario = ParseScenario(yaml);
 var deterministicSeed = ComputeDeterministicSeed(yaml);
 var deterministicTimestamp = ComputeDeterministicTimestamp(deterministicSeed);
@@ -65,10 +66,8 @@ return 0;
 
 static Scenario ParseScenario(string yaml)
 {
-    var d = new StaticDeserializerBuilder(new Scenario2Cast.StaticContext())
-        .WithNamingConvention(HyphenatedNamingConvention.Instance)
-        .Build();
-    return d.Deserialize<Scenario>(yaml) ?? new Scenario();
+    var bytes = Encoding.UTF8.GetBytes(yaml);
+    return YamlSerializer.Deserialize<Scenario>(bytes) ?? new Scenario();
 }
 
 static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int deterministicSeed)
@@ -87,7 +86,7 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
     events.Add(new CastEvent(t, prompt));
     t += preDelay;
 
-    foreach (var item in scenario.Steps ?? new())
+    foreach (var item in scenario.Steps ?? [])
     {
         var command = ParseCommand(item);
         if (string.IsNullOrWhiteSpace(command.Cmd)) continue;
@@ -125,10 +124,10 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
     return events;
 }
 
-static CommandEntry ParseCommand(object item)
+static CommandEntry ParseCommand(object? item)
 {
     if (item is string s) return new CommandEntry { Cmd = s };
-    if (item is IDictionary<object, object> map)
+    if (item is Dictionary<object, object?> map)
     {
         var extra = map.ToDictionary(kv => kv.Key.ToString() ?? "", kv => kv.Value);
         var cmd = extra.TryGetValue("run", out var runValue) ? runValue?.ToString() ?? "" : "";
@@ -208,7 +207,7 @@ static string JsonString(string s)
     return sb.ToString();
 }
 
-static double GetDouble(Dictionary<string, object> d, double def, params string[] keys)
+static double GetDouble(Dictionary<string, object?> d, double def, params string[] keys)
 {
     foreach (var key in keys)
     {
@@ -404,47 +403,31 @@ record CastEvent(double Time, string Data);
 
 record ShellLaunch(string FileName, string[] Arguments, string EnvValue, string DisplayName);
 
-namespace Scenario2Cast
+[YamlObject(NamingConvention.KebabCase)]
+public partial class Scenario
 {
-    [YamlSerializable]
-    public class Scenario
-    {
-        public string? Title { get; set; }
-        public int? Width { get; set; }
-        public int? Height { get; set; }
-        public string? Cwd { get; set; }
-        public string? Shell { get; set; }
-        public ScenarioSettings? Settings { get; set; }
-        public List<object>? Steps { get; set; }
-    }
+    public string? Title { get; set; }
+    public int? Width { get; set; }
+    public int? Height { get; set; }
+    public string? Cwd { get; set; }
+    public string? Shell { get; set; }
+    public ScenarioSettings? Settings { get; set; }
+    public List<object?>? Steps { get; set; }
+}
 
-    [YamlSerializable]
-    public class ScenarioSettings
-    {
-        public string? Prompt { get; set; }
+[YamlObject(NamingConvention.KebabCase)]
+public partial class ScenarioSettings
+{
+    public string? Prompt { get; set; }
+    public double? TypingSpeed { get; set; }
+    public double? TypingJitter { get; set; }
+    public double? PreDelay { get; set; }
+    public double? PostDelay { get; set; }
+    public double? ExecutionDuration { get; set; }
+}
 
-        public double? TypingSpeed { get; set; }
-
-        public double? TypingJitter { get; set; }
-
-        public double? PreDelay { get; set; }
-
-        public double? PostDelay { get; set; }
-
-        public double? ExecutionDuration { get; set; }
-    }
-
-    [YamlSerializable]
-    public class CommandEntry
-    {
-        public string Cmd { get; set; } = "";
-        public Dictionary<string, object> Extra { get; set; } = new();
-    }
-
-    [YamlStaticContext]
-    [YamlSerializable(typeof(Scenario))]
-    [YamlSerializable(typeof(ScenarioSettings))]
-    public partial class StaticContext : YamlDotNet.Serialization.StaticContext
-    {
-    }
+public class CommandEntry
+{
+    public string Cmd { get; set; } = "";
+    public Dictionary<string, object?> Extra { get; set; } = new();
 }
