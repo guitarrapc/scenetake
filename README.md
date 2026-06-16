@@ -51,6 +51,7 @@ settings:
   typing-jitter: 0.015     # Random jitter (+/- seconds)
   pre-command-delay: 0.8   # Pause before typing next step
   post-command-delay: 1.5  # Pause after prompt appears before next step typing
+  command-execution-duration: 0.7 # Optional. Default cast wait per command (default: 0.1)
 
 steps:
   # Simple string command
@@ -65,6 +66,9 @@ steps:
     typing-speed: 0.10
     pre-delay: 1.5
     post-delay: 2.0
+
+  - run: sleep 2
+    execution-duration: 0.4
 ```
 
 ### Command Keys
@@ -76,6 +80,7 @@ steps:
 | `typing-jitter` | Typing jitter range | `settings.typing-jitter` |
 | `pre-delay` | Pause before command typing | `settings.pre-command-delay` |
 | `post-delay` | Pause after prompt appears | `settings.post-command-delay` |
+| `execution-duration` | Override cast wait for this command execution | `settings.command-execution-duration` |
 
 ## Notes
 
@@ -84,6 +89,8 @@ steps:
 - Cast output newlines are normalized to `\r\n` across all OSes for terminal renderer compatibility.
 - Typing simulation is deterministic for the same scenario file.
 - Cast header `timestamp` is deterministic for the same scenario file.
+- If unspecified, command execution waits use a fixed `0.1s` in the cast timeline.
+- `execution-duration` changes only the cast timeline; the real command still runs to completion.
 - Linux/macOS default: `$SHELL`, fallback to `bash`.
 - Windows default: `pwsh`, fallback to `powershell`.
 - On Windows, `settings.shell: bash` uses Git Bash / MSYS bash if available, and intentionally does not use WSL bash.

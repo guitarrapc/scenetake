@@ -26,6 +26,7 @@ const double DefaultSpeed     = 0.05;
 const double DefaultJitter    = 0.015;
 const double DefaultPreDelay  = 0.8;
 const double DefaultPostDelay = 1.5;
+const double DefaultCommandExecutionDuration = 0.05;
 
 if (args.Length < 1)
 {
@@ -78,6 +79,7 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
     var jitter    = AsDouble(s, "typing-jitter", DefaultJitter);
     var preDelay  = AsDouble(s, "pre-command-delay", DefaultPreDelay);
     var postDelay = AsDouble(s, "post-command-delay", DefaultPostDelay);
+    var defaultExecutionDuration = AsDouble(s, "command-execution-duration", DefaultCommandExecutionDuration);
     var events = new List<CastEvent>();
     var rng    = new Random(deterministicSeed);
     double t   = 0.5;
@@ -94,6 +96,7 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
         var cmdJitter = AsDouble(command.Extra, "typing-jitter", jitter);
         var cmdPre    = AsDouble(command.Extra, "pre-delay", preDelay);
         var cmdPost   = AsDouble(command.Extra, "post-delay", postDelay);
+        var cmdExecutionDuration = AsDouble(command.Extra, "execution-duration", defaultExecutionDuration);
 
         foreach (var ch in command.Cmd)
         {
@@ -107,11 +110,11 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
 
         Console.Error.WriteLine($"  running: {command.Cmd}");
         var execution = RunCommand(command.Cmd, scenario.Cwd, shell);
-        t += execution.ElapsedSeconds;
+        t += cmdExecutionDuration;
 
-        if (!string.IsNullOrEmpty(execution.Output))
+        if (!string.IsNullOrEmpty(execution))
         {
-            events.Add(new CastEvent(Math.Round(t, 6), NormalizeNewlines(execution.Output)));
+            events.Add(new CastEvent(Math.Round(t, 6), NormalizeNewlines(execution)));
         }
 
         events.Add(new CastEvent(Math.Round(t, 6), prompt));
@@ -136,7 +139,7 @@ static CommandEntry ParseCommand(object item)
     return new CommandEntry();
 }
 
-static CommandExecution RunCommand(string cmd, string? cwd, ShellLaunch shell)
+static string RunCommand(string cmd, string? cwd, ShellLaunch shell)
 {
     var psi = new ProcessStartInfo(shell.FileName)
     {
@@ -151,13 +154,11 @@ static CommandExecution RunCommand(string cmd, string? cwd, ShellLaunch shell)
     if (!string.IsNullOrWhiteSpace(cwd)) psi.WorkingDirectory = cwd;
 
     using var proc = new Process { StartInfo = psi };
-    var sw = Stopwatch.StartNew();
     proc.Start();
     var stdout = proc.StandardOutput.ReadToEnd();
     var stderr = proc.StandardError.ReadToEnd();
     proc.WaitForExit();
-    sw.Stop();
-    return new CommandExecution(stdout + stderr, sw.Elapsed.TotalSeconds);
+    return stdout + stderr;
 }
 
 static string NormalizeNewlines(string s)
@@ -402,8 +403,6 @@ static long ComputeDeterministicTimestamp(int seed)
 }
 
 record CastEvent(double Time, string Data);
-
-record CommandExecution(string Output, double ElapsedSeconds);
 
 record ShellLaunch(string FileName, string[] Arguments, string EnvValue, string DisplayName);
 

@@ -15,5 +15,6 @@ steps:
   - echo "Current directory:"
   - pwd
   - echo "Wait for 2 seconds..."
-  - sleep 2
+  - run: sleep 2
+    execution-duration: 1.0
   - echo "Done!"
