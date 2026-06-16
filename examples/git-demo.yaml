@@ -1,6 +1,7 @@
 title: "Git Workflow Demo"
 width: 120
 height: 30
+shell: bash
 
 # Working directory for all commands (optional)
 # cwd: /path/to/repo

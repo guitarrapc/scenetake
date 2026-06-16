@@ -47,10 +47,13 @@ Console.Error.WriteLine($"Loading: {scenarioPath}");
 var yaml = File.ReadAllText(scenarioPath, Encoding.UTF8);
 var scenario = ParseScenario(yaml);
 
-Console.Error.WriteLine("Generating cast...");
-var events = Generate(scenario);
+var shell = ResolveShell(scenario);
+Console.Error.WriteLine($"Using shell: {shell.DisplayName}");
 
-WriteCast(scenario, events, outputPath);
+Console.Error.WriteLine("Generating cast...");
+var events = Generate(scenario, shell);
+
+WriteCast(scenario, events, outputPath, shell);
 
 var duration = events.Count > 0 ? events[^1].Time : 0.0;
 Console.Error.WriteLine($"Done: {outputPath}  ({events.Count} events, {duration:F1}s)");
@@ -64,7 +67,7 @@ static Scenario ParseScenario(string yaml)
     return d.Deserialize<Scenario>(yaml) ?? new Scenario();
 }
 
-static List<CastEvent> Generate(Scenario scenario)
+static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell)
 {
     var s = scenario.Settings ?? new();
     var prompt    = AsString(s, "prompt", DefaultPrompt);
@@ -100,7 +103,7 @@ static List<CastEvent> Generate(Scenario scenario)
         t += 0.15;
 
         Console.Error.WriteLine($"  running: {command.Cmd}");
-        var output = RunCommand(command.Cmd, scenario.Cwd);
+        var output = RunCommand(command.Cmd, scenario.Cwd, shell);
         if (!string.IsNullOrEmpty(output))
         {
             events.Add(new CastEvent(Math.Round(t, 6), NormalizeNewlines(output)));
@@ -128,20 +131,17 @@ static CommandEntry ParseCommand(object item)
     return new CommandEntry();
 }
 
-static string RunCommand(string cmd, string? cwd)
+static string RunCommand(string cmd, string? cwd, ShellLaunch shell)
 {
-    var (shell, flag) = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-        ? (Environment.GetEnvironmentVariable("COMSPEC") ?? "cmd.exe", "/c")
-        : (Environment.GetEnvironmentVariable("SHELL")   ?? "/bin/bash", "-c");
-
-    var psi = new ProcessStartInfo(shell)
+    var psi = new ProcessStartInfo(shell.FileName)
     {
         RedirectStandardOutput = true,
         RedirectStandardError  = true,
         UseShellExecute        = false,
         CreateNoWindow         = true,
     };
-    psi.ArgumentList.Add(flag);
+    foreach (var arg in shell.Arguments)
+        psi.ArgumentList.Add(arg);
     psi.ArgumentList.Add(cmd);
     if (!string.IsNullOrWhiteSpace(cwd)) psi.WorkingDirectory = cwd;
 
@@ -156,12 +156,7 @@ static string RunCommand(string cmd, string? cwd)
 static string NormalizeNewlines(string s)
     => s.Replace("\r\n", "\n").Replace("\n", "\r\n");
 
-static string DefaultShell()
-    => RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-        ? Environment.GetEnvironmentVariable("COMSPEC") ?? "cmd.exe"
-        : Environment.GetEnvironmentVariable("SHELL")   ?? "/bin/bash";
-
-static void WriteCast(Scenario scenario, List<CastEvent> events, string outputPath)
+static void WriteCast(Scenario scenario, List<CastEvent> events, string outputPath, ShellLaunch shell)
 {
     using var writer = new StreamWriter(outputPath, append: false, encoding: new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     writer.NewLine = "\n";
@@ -169,11 +164,10 @@ static void WriteCast(Scenario scenario, List<CastEvent> events, string outputPa
     var width = scenario.Width ?? 120;
     var height = scenario.Height ?? 24;
     var title = scenario.Title ?? "";
-    var shell = DefaultShell();
     writer.WriteLine(
         $"{{\"version\":2,\"width\":{width},\"height\":{height}" +
         $",\"timestamp\":{DateTimeOffset.UtcNow.ToUnixTimeSeconds()},\"title\":{JsonString(title)}" +
-        $",\"env\":{{\"SHELL\":{JsonString(shell)},\"TERM\":\"xterm-256color\"}}}}");
+        $",\"env\":{{\"SHELL\":{JsonString(shell.EnvValue)},\"TERM\":\"xterm-256color\"}}}}");
 
     foreach (var ev in events)
         writer.WriteLine($"[{ev.Time.ToString("0.######", CultureInfo.InvariantCulture)},\"o\",{JsonString(ev.Data)}]");
@@ -213,7 +207,175 @@ static double AsDouble(Dictionary<string, object> d, string key, double def)
     => d.TryGetValue(key, out var v) &&
        double.TryParse(v?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var r) ? r : def;
 
+static ShellLaunch ResolveShell(Scenario scenario)
+{
+    var requested = scenario.Shell;
+    if (string.IsNullOrWhiteSpace(requested) && scenario.Settings is not null)
+        requested = AsString(scenario.Settings, "shell", "");
+
+    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        return ResolveWindowsShell(requested);
+
+    if (string.IsNullOrWhiteSpace(requested))
+        requested = Environment.GetEnvironmentVariable("SHELL");
+
+    if (string.IsNullOrWhiteSpace(requested))
+        requested = "bash";
+
+    return new ShellLaunch(requested, ["-lc"], requested, requested);
+}
+
+static ShellLaunch ResolveWindowsShell(string? requested)
+{
+    if (string.IsNullOrWhiteSpace(requested))
+    {
+        if (TryResolveWindowsPowerShell("pwsh", out var pwsh))
+            return new ShellLaunch(pwsh, ["-NoLogo", "-NoProfile", "-Command"], pwsh, "pwsh");
+
+        if (TryResolveWindowsPowerShell("powershell", out var powershell))
+            return new ShellLaunch(powershell, ["-NoLogo", "-NoProfile", "-Command"], powershell, "powershell");
+
+        throw new InvalidOperationException("No supported shell was found on Windows. Install pwsh or powershell, or set settings.shell to a Git Bash or MSYS bash.exe path.");
+    }
+
+    if (IsPowerShellName(requested))
+    {
+        var exeName = NormalizeWindowsShellName(requested);
+        if (TryResolveWindowsPowerShell(exeName, out var resolved))
+            return new ShellLaunch(resolved, ["-NoLogo", "-NoProfile", "-Command"], resolved, exeName);
+
+        throw new InvalidOperationException($"Shell '{requested}' was requested, but '{exeName}' could not be found on Windows.");
+    }
+
+    if (IsBashName(requested))
+    {
+        if (TryResolveWindowsBash(out var resolved))
+            return new ShellLaunch(resolved, ["-lc"], resolved, "bash");
+
+        throw new InvalidOperationException("Shell 'bash' was requested, but a Git Bash or MSYS bash.exe could not be found. WSL bash is intentionally not used.");
+    }
+
+    if (Path.IsPathRooted(requested) || requested.Contains(Path.DirectorySeparatorChar) || requested.Contains(Path.AltDirectorySeparatorChar))
+    {
+        if (File.Exists(requested))
+            return new ShellLaunch(requested, ["-c"], requested, requested);
+
+        throw new InvalidOperationException($"Shell '{requested}' was requested, but the path does not exist.");
+    }
+
+    if (TryResolveExecutableOnWindows(requested, out var resolvedExecutable))
+        return new ShellLaunch(resolvedExecutable, ["-c"], resolvedExecutable, requested);
+
+    throw new InvalidOperationException($"Shell '{requested}' could not be resolved on Windows.");
+}
+
+static bool IsPowerShellName(string shell)
+{
+    var name = NormalizeWindowsShellName(shell);
+    return name is "pwsh" or "powershell";
+}
+
+static bool IsBashName(string shell)
+    => string.Equals(NormalizeWindowsShellName(shell), "bash", StringComparison.OrdinalIgnoreCase);
+
+static string NormalizeWindowsShellName(string shell)
+    => Path.GetFileNameWithoutExtension(shell.Trim()).ToLowerInvariant();
+
+static bool TryResolveWindowsPowerShell(string executableName, out string resolved)
+    => TryResolveExecutableOnWindows(executableName, out resolved);
+
+static bool TryResolveWindowsBash(out string resolved)
+{
+    var candidateRoots = new[]
+    {
+        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+        Environment.GetEnvironmentVariable("ProgramW6432") ?? string.Empty,
+        Environment.GetEnvironmentVariable("ProgramFiles") ?? string.Empty,
+        Environment.GetEnvironmentVariable("ProgramFiles(x86)") ?? string.Empty,
+        Environment.GetEnvironmentVariable("LOCALAPPDATA") ?? string.Empty,
+        Environment.GetEnvironmentVariable("ProgramData") ?? string.Empty,
+    };
+
+    var candidatePaths = new[]
+    {
+        @"Git\bin\bash.exe",
+        @"Git\usr\bin\bash.exe",
+        @"msys64\usr\bin\bash.exe",
+        @"GitHub\Desktop\bin\bash.exe",
+    };
+
+    foreach (var root in candidateRoots.Where(static r => !string.IsNullOrWhiteSpace(r)))
+    {
+        foreach (var suffix in candidatePaths)
+        {
+            var candidate = Path.Combine(root, suffix);
+            if (File.Exists(candidate))
+            {
+                resolved = candidate;
+                return true;
+            }
+        }
+    }
+
+    if (TryResolveExecutableOnWindows("bash.exe", out resolved) && !IsWslBashPath(resolved))
+        return true;
+
+    resolved = string.Empty;
+    return false;
+}
+
+static bool IsWslBashPath(string path)
+    => path.Contains(@"\Windows\System32\bash.exe", StringComparison.OrdinalIgnoreCase)
+       || path.Contains(@"\WindowsApps\", StringComparison.OrdinalIgnoreCase);
+
+static bool TryResolveExecutableOnWindows(string executableName, out string resolved)
+{
+    if (File.Exists(executableName))
+    {
+        resolved = Path.GetFullPath(executableName);
+        return true;
+    }
+
+    var pathEnv = Environment.GetEnvironmentVariable("PATH");
+    if (!string.IsNullOrWhiteSpace(pathEnv))
+    {
+        var paths = pathEnv.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var pathext = (Environment.GetEnvironmentVariable("PATHEXT") ?? ".EXE;.CMD;.BAT;.COM")
+            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        foreach (var directory in paths)
+        {
+            if (Path.HasExtension(executableName))
+            {
+                var candidate = Path.Combine(directory, executableName);
+                if (File.Exists(candidate))
+                {
+                    resolved = candidate;
+                    return true;
+                }
+                continue;
+            }
+
+            foreach (var extension in pathext)
+            {
+                var candidate = Path.Combine(directory, executableName + extension);
+                if (File.Exists(candidate))
+                {
+                    resolved = candidate;
+                    return true;
+                }
+            }
+        }
+    }
+
+    resolved = string.Empty;
+    return false;
+}
+
 record CastEvent(double Time, string Data);
+
+record ShellLaunch(string FileName, string[] Arguments, string EnvValue, string DisplayName);
 
 namespace Scenario2Cast
 {
@@ -224,6 +386,7 @@ namespace Scenario2Cast
         public int? Width { get; set; }
         public int? Height { get; set; }
         public string? Cwd { get; set; }
+        public string? Shell { get; set; }
         public Dictionary<string, object>? Settings { get; set; }
         public List<object>? Commands { get; set; }
     }

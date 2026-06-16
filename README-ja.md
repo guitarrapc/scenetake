@@ -39,10 +39,11 @@ docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/examples/basic.cast /da
 ## シナリオファイル形式
 
 ```yaml
-title: "デモタイトル"   # cast のタイトル（任意）
+title: "Demo Title"     # cast のタイトル（任意）
 width: 120              # ターミナル幅（デフォルト: 120）
 height: 24              # ターミナル高さ（デフォルト: 24）
 cwd: /path/to/dir       # コマンドを実行するディレクトリ（任意）
+shell: bash             # 実行シェルを指定 (任意)
 
 settings:
   prompt: "$ "
@@ -78,9 +79,13 @@ commands:
 
 ## 注意事項
 
-- コマンドはシステムのデフォルトシェル（Linux/macOS: `$SHELL`、Windows: `COMSPEC`）で実行されます
+- トップレベルの `shell` で実行シェルを指定できます
+- 後方互換として `settings.shell` も受け付けます
+- Linux/macOS のデフォルトは `$SHELL`、未設定時は `bash` です
+- Windows のデフォルトは `pwsh`、未導入時は `powershell` です
+- Windows で `settings.shell: bash` を指定した場合は Git Bash / MSYS の `bash` を使用し、WSL の `bash` は意図的に使用しません
 - インタラクティブなコマンド（`vim`、`htop` など）は使用しないでください
-- Windows では `echo "text"` が `"text"` とクォート付きで出力される場合があります（`echo text` を使うか Git Bash / WSL 経由で実行してください）
+- Windows の PowerShell では通常 `echo "text"` は追加のクォートなしで表示されます
 - 実際にコマンドが実行されるため、副作用のあるコマンドは注意して使用してください
 
 ## サンプル

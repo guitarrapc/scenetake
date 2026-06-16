@@ -39,10 +39,11 @@ docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/examples/basic.cast /da
 ## Scenario Format
 
 ```yaml
-title: "Demo Title"    # Optional cast title
+title: "Demo Title"     # Optional cast title
 width: 120              # Terminal width (default: 120)
 height: 24              # Terminal height (default: 24)
 cwd: /path/to/dir       # Optional working directory for all commands
+shell: bash             # Optional command shell override
 
 settings:
   prompt: "$ "
@@ -78,9 +79,13 @@ commands:
 
 ## Notes
 
-- Commands run in the system default shell (`$SHELL` on Linux/macOS, `COMSPEC` on Windows).
+- You can override the command shell with top-level `shell`.
+- `settings.shell` is still accepted for backward compatibility.
+- Linux/macOS default: `$SHELL`, fallback to `bash`.
+- Windows default: `pwsh`, fallback to `powershell`.
+- On Windows, `settings.shell: bash` uses Git Bash / MSYS bash if available, and intentionally does not use WSL bash.
 - Avoid interactive commands such as `vim` or `htop`.
-- On Windows, `echo "text"` may output with quotes; use `echo text` or run via Git Bash/WSL if needed.
+- On Windows PowerShell, `echo "text"` usually prints without extra quotes.
 - Commands are executed for real, so be careful with side effects.
 
 ## Examples
