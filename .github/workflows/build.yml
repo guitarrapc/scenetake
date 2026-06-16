@@ -47,7 +47,6 @@ jobs:
         run: |
           artifact_dir="$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}"
           mkdir -p "$artifact_dir"
-
           dotnet publish scenario2cast.cs -c Release -r "${{ matrix.rid }}" --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o "$artifact_dir"
 
       - name: Smoke test published binary

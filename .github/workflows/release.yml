@@ -63,9 +63,7 @@ jobs:
         run: |
           artifact_dir="$GITHUB_WORKSPACE/release/${{ matrix.rid }}"
           mkdir -p "$artifact_dir"
-
-          dotnet publish scenario2cast.cs -c Release -r "${{ matrix.rid }}" \
-            --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o "$artifact_dir"
+          dotnet publish scenario2cast.cs -c Release -r "${{ matrix.rid }}" --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o "$artifact_dir"
 
       - name: Smoke test published binary
         shell: bash
@@ -107,8 +105,6 @@ jobs:
           test -f "$checksum_path"
 
       - name: Upload release assets
-        env:
-          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           archive_base_name="scenario2cast-${{ github.ref_name }}-${{ matrix.rid }}"
@@ -116,3 +112,5 @@ jobs:
           checksum_path="$archive_path.sha256"
 
           gh release upload "${{ github.ref_name }}" "$archive_path" "$checksum_path" --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
