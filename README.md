@@ -10,31 +10,41 @@ You do not need to install or launch asciinema to record. Write a YAML scenario 
 2. The tool writes cast events that look like human typing (with random jitter).
 3. The tool executes each command and writes real output to the cast.
 
-## Requirements
+## Quick Start
 
-- .NET 10 SDK (for C# file-based apps)
-
-## Usage
+Download the asset for your OS from the GitHub Releases page, place `scenario2cast` (or `scenario2cast.exe` on Windows) where you want.
 
 ```bash
-dotnet run scenario2cast.cs <scenario.yaml> [output.cast]
-```
+# On macOS/Linux, add execute permission if needed.
+chmod +x ./scenario2cast
 
-If `output.cast` is omitted, the output is written next to the scenario file with the `.cast` extension.
+# Run
+scenario2cast <scenario.yaml> [output.cast]
 
-```bash
-# Basic
-dotnet run scenario2cast.cs examples/basic.yaml
+# If `output.cast` is omitted, output is written next to the scenario file with the `.cast` extension.
+scenario2cast examples/basic.yaml
 
 # Specify output path
-dotnet run scenario2cast.cs examples/basic.yaml demo.cast
+scenario2cast examples/basic.yaml demo.cast
 
 # Play with asciinema
 asciinema play demo.cast
 
-# convert to gif with agg
+# Convert to gif with agg
 docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/examples/basic.cast /data/examples/basic.gif
 ```
+
+**Notes**
+
+- Use top-level `shell` to choose the command shell.
+- `settings` provides defaults for prompt and timing.
+- Avoid interactive commands such as `vim` or `htop`.
+- Be careful with commands that change files, the working tree, or external systems.
+- `execution-duration` is optional and useful for keeping long commands readable.
+- Linux/macOS default: `$SHELL`, fallback to `bash`.
+- Windows default: `pwsh`, fallback to `powershell`.
+- On Windows, `shell: bash` uses Git Bash / MSYS bash if available.
+- `Steps` are executed for real, so be careful with side effects.
 
 ## Scenario Format
 
@@ -54,11 +64,11 @@ settings:
   execution-duration: 0.1  # Optional. Default cast wait per command
 
 steps:
-  # Simple string command
+  # Writing a command as a string applies default settings from `settings`
   - echo "Hello, World!"
   - ls -la
 
-  # Mapping command with per-command overrides
+  # Writing a command as a mapping allows overriding settings per command
   - run: git log --oneline -10
     post-delay: 3.0
 
@@ -82,21 +92,18 @@ steps:
 | `post-delay` | Pause after prompt appears | `settings.post-delay` |
 | `execution-duration` | Override cast wait for this command execution | `settings.execution-duration` |
 
-## Notes
+## Development
 
-- Use top-level `shell` to choose the command shell.
-- `settings` provides defaults for prompt and timing.
-- Avoid interactive commands such as `vim` or `htop`.
-- Be careful with commands that change files, the working tree, or external systems.
-- `execution-duration` is optional and useful for keeping long commands readable.
-- Linux/macOS default: `$SHELL`, fallback to `bash`.
-- Windows default: `pwsh`, fallback to `powershell`.
-- On Windows, `shell: bash` uses Git Bash / MSYS bash if available.
-- `Steps` are executed for real, so be careful with side effects.
+Use `dotnet` for local development, debugging, or publishing.
 
-## Examples
+### Requirements
+
+- .NET 10 SDK (for C# file-based apps)
 
 ```bash
-dotnet run scenario2cast.cs examples/basic.yaml
-dotnet run scenario2cast.cs examples/git-demo.yaml
+# Local run
+dotnet run scenario2cast.cs <scenario.yaml> [output.cast]
+
+# build
+dotnet publish scenario2cast.cs --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None
 ```
