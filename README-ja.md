@@ -31,6 +31,9 @@ dotnet run scenario2cast.cs examples/basic.yaml demo.cast
 
 # asciinema で再生
 asciinema play demo.cast
+
+# agg で gif に変換
+docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/examples/basic.cast /data/examples/basic.gif
 ```
 
 ## シナリオファイル形式

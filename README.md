@@ -31,6 +31,9 @@ dotnet run scenario2cast.cs examples/basic.yaml demo.cast
 
 # Play with asciinema
 asciinema play demo.cast
+
+# convert to gif with agg
+docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/examples/basic.cast /data/examples/basic.gif
 ```
 
 ## Scenario Format
