@@ -1,6 +1,6 @@
 # Output Highlight Specification
 
-Status: **Planned** (not yet implemented)
+Status: **Implemented**
 
 ## Motivation
 
@@ -224,3 +224,4 @@ Use case: emphasize what was typed while leaving raw command output uncolored.
 | Date       | Change |
 |------------|--------|
 | 2026-06-17 | Initial spec from scenario2cast highlight design discussion. |
+| 2026-06-17 | Implemented in `scenario2cast.cs` (v1). Per-line `byte[]` paint buffers; ANSI inserted once when rendering. |

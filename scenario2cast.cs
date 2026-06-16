@@ -27,6 +27,7 @@ const double DefaultPreDelay  = 0.8;
 const double DefaultPostDelay = 1.5;
 const double DefaultExecutionDuration = 0.05;
 const string AppVersion = "0.1.0";
+const string SgrReset = "\u001b[0m";
 
 if (args.Length < 1)
 {
@@ -151,7 +152,10 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
 
         if (!string.IsNullOrEmpty(execution))
         {
-            events.Add(new CastEvent(Math.Round(t, 6), NormalizeNewlines(execution)));
+            var output = GetHighlights(command.Extra, command.Cmd) is { } highlights
+                ? ApplyHighlights(execution, highlights, command.Cmd)
+                : execution;
+            events.Add(new CastEvent(Math.Round(t, 6), NormalizeNewlines(output)));
         }
 
         events.Add(new CastEvent(Math.Round(t, 6), prompt));
@@ -200,6 +204,248 @@ static string RunCommand(string cmd, string? cwd, ShellLaunch shell)
 
 static string NormalizeNewlines(string s)
     => s.Replace("\r\n", "\n").Replace("\r", "\n").Replace("\n", "\r\n");
+
+// Highlight parsing and application
+
+static string SgrOpen(byte index) => index switch
+{
+    1 => "\u001b[30m",  2 => "\u001b[31m",  3 => "\u001b[32m",  4 => "\u001b[33m",
+    5 => "\u001b[34m",  6 => "\u001b[35m",  7 => "\u001b[36m",  8 => "\u001b[37m",
+    9 => "\u001b[90m", 10 => "\u001b[91m", 11 => "\u001b[92m", 12 => "\u001b[93m",
+   13 => "\u001b[94m", 14 => "\u001b[95m", 15 => "\u001b[96m", 16 => "\u001b[97m",
+    _ => "",
+};
+
+static List<HighlightSpec>? GetHighlights(Dictionary<string, object?> extra, string cmd)
+{
+    if (!extra.TryGetValue("highlight", out var raw) || raw is not List<object?> list || list.Count == 0)
+        return null;
+
+    var specs = new List<HighlightSpec>(list.Count);
+    foreach (var item in list)
+    {
+        if (item is not Dictionary<object, object?> map) continue;
+        var colorName = map.GetValueOrDefault("color")?.ToString();
+        if (!TryColorIndex(colorName, out var colorIndex))
+        {
+            WarnHighlight(cmd, $"unknown color '{colorName}'");
+            continue;
+        }
+
+        if (!map.TryGetValue("at", out var atRaw) || atRaw is null)
+        {
+            WarnHighlight(cmd, "missing 'at'");
+            continue;
+        }
+
+        var ats = new List<string>();
+        if (atRaw is List<object?> atList)
+        {
+            foreach (var a in atList)
+            {
+                var s = a?.ToString();
+                if (!string.IsNullOrWhiteSpace(s)) ats.Add(s);
+            }
+        }
+        else
+        {
+            var s = atRaw.ToString();
+            if (!string.IsNullOrWhiteSpace(s)) ats.Add(s);
+        }
+
+        if (ats.Count == 0)
+        {
+            WarnHighlight(cmd, "missing 'at'");
+            continue;
+        }
+
+        specs.Add(new HighlightSpec(colorIndex, ats));
+    }
+
+    return specs.Count > 0 ? specs : null;
+}
+
+static bool TryColorIndex(string? name, out byte index)
+{
+    index = name?.Trim().ToLowerInvariant() switch
+    {
+        "black" => 1,
+        "red" => 2,
+        "green" => 3,
+        "yellow" => 4,
+        "blue" => 5,
+        "magenta" => 6,
+        "cyan" => 7,
+        "white" => 8,
+        "bright-black" or "gray" or "grey" => 9,
+        "bright-red" => 10,
+        "bright-green" => 11,
+        "bright-yellow" => 12,
+        "bright-blue" => 13,
+        "bright-magenta" => 14,
+        "bright-cyan" => 15,
+        "bright-white" => 16,
+        _ => (byte)0,
+    };
+    return index != 0;
+}
+
+static string ApplyHighlights(string output, List<HighlightSpec> specs, string cmd)
+{
+    var text = output.Replace("\r\n", "\n").Replace("\r", "\n");
+    var lines = text.Split('\n');
+    var paint = new byte[lines.Length][];
+
+    foreach (var spec in specs)
+    {
+        foreach (var at in spec.At)
+            ApplyAt(lines, paint, at, spec.ColorIndex, cmd);
+    }
+
+    var sb = new StringBuilder(text.Length + specs.Count * 16);
+    for (var i = 0; i < lines.Length; i++)
+    {
+        if (i > 0) sb.Append('\n');
+        AppendPaintedLine(sb, lines[i], paint[i]);
+    }
+    return sb.ToString();
+}
+
+static void ApplyAt(string[] lines, byte[][] paint, string at, byte colorIndex, string cmd)
+{
+    if (!TryParseAt(at, out var lineLo, out var lineHi, out var colLo, out var colHi, out var openColEnd, out var hasCol))
+    {
+        WarnHighlight(cmd, $"invalid at '{at}'");
+        return;
+    }
+
+    var lineCount = lines.Length;
+    if (lineLo > lineCount)
+    {
+        WarnHighlight(cmd, $"at '{at}' starts after output");
+        return;
+    }
+
+    if (lineHi > lineCount)
+    {
+        WarnHighlight(cmd, $"at '{at}': lines {lineCount + 1}-{lineHi} are missing");
+        lineHi = lineCount;
+    }
+
+    for (var line = lineLo; line <= lineHi; line++)
+    {
+        var li = line - 1;
+        var content = lines[li];
+        int start, end;
+        if (hasCol)
+        {
+            start = colLo - 1;
+            end = openColEnd ? content.Length : colHi;
+            if (start >= content.Length)
+            {
+                if (lineLo == lineHi)
+                    WarnHighlight(cmd, $"at '{at}' starts after output");
+                continue;
+            }
+            if (end > content.Length) end = content.Length;
+        }
+        else
+        {
+            start = 0;
+            end = content.Length;
+        }
+
+        if (start >= end) continue;
+        var row = paint[li] ??= new byte[content.Length];
+        for (var c = start; c < end; c++)
+            row[c] = colorIndex;
+    }
+}
+
+static void AppendPaintedLine(StringBuilder sb, string line, byte[]? row)
+{
+    if (row is null)
+    {
+        sb.Append(line);
+        return;
+    }
+
+    byte cur = 0;
+    for (var i = 0; i < line.Length; i++)
+    {
+        var next = row[i];
+        if (next != cur)
+        {
+            if (cur != 0) sb.Append(SgrReset);
+            if (next != 0) sb.Append(SgrOpen(next));
+            cur = next;
+        }
+        sb.Append(line[i]);
+    }
+
+    if (cur != 0) sb.Append(SgrReset);
+}
+
+static bool TryParseAt(string at, out int lineLo, out int lineHi, out int colLo, out int colHi, out bool openColEnd, out bool hasCol)
+{
+    lineLo = lineHi = colLo = colHi = 0;
+    openColEnd = hasCol = false;
+    var span = at.AsSpan().Trim();
+    if (span.IsEmpty) return false;
+
+    var colon = span.IndexOf(':');
+    if (!TryParseSpan(span[..(colon >= 0 ? colon : span.Length)], out lineLo, out lineHi))
+        return false;
+
+    if (colon < 0) return true;
+    hasCol = true;
+    return TryParseColSpan(span[(colon + 1)..], out colLo, out colHi, out openColEnd);
+}
+
+static bool TryParseSpan(ReadOnlySpan<char> span, out int lo, out int hi)
+{
+    lo = hi = 0;
+    var dash = span.IndexOf('-');
+    if (dash < 0)
+        return TryPosInt(span, out lo) && (hi = lo) > 0;
+
+    if (!TryPosInt(span[..dash], out lo) || !TryPosInt(span[(dash + 1)..], out hi) || lo < 1 || hi < 1)
+        return false;
+
+    if (lo > hi) (lo, hi) = (hi, lo);
+    return true;
+}
+
+static bool TryParseColSpan(ReadOnlySpan<char> span, out int lo, out int hi, out bool openEnd)
+{
+    lo = hi = 0;
+    openEnd = false;
+    if (span.EndsWith("-"))
+    {
+        openEnd = true;
+        span = span[..^1];
+        return TryPosInt(span, out lo) && lo > 0;
+    }
+
+    return TryParseSpan(span, out lo, out hi);
+}
+
+static bool TryPosInt(ReadOnlySpan<char> span, out int value)
+{
+    value = 0;
+    if (span.IsEmpty) return false;
+    foreach (var ch in span)
+    {
+        if (ch is < '0' or > '9') return false;
+        value = value * 10 + (ch - '0');
+    }
+    return value > 0;
+}
+
+static void WarnHighlight(string cmd, string detail)
+    => Console.Error.WriteLine($"Warning: highlight ({cmd}): {detail}");
+
+// Cast writing
 
 static void WriteCast(Scenario scenario, List<CastEvent> events, string outputPath, ShellLaunch shell, long timestamp)
 {
@@ -483,6 +729,8 @@ static void PrintVersion()
 }
 
 record CastEvent(double Time, string Data);
+
+record HighlightSpec(byte ColorIndex, List<string> At);
 
 record ShellLaunch(string FileName, string[] Arguments, string EnvValue, string DisplayName);
 

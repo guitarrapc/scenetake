@@ -1,0 +1,14 @@
+title: "Highlight Demo"
+width: 80
+height: 12
+shell: bash
+
+steps:
+  - run: printf 'line1 alpha\nline2 beta gamma\nline3\n'
+    highlight:
+      - color: red
+        at: "1:7-"
+      - color: green
+        at: "2:7-10"
+      - color: blue
+        at: "2-3"
