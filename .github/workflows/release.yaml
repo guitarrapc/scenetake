@@ -80,21 +80,15 @@ jobs:
 
           test -f "$output_path"
 
-      - name: Package release assets
+      - name: Package release assets (Linux/macOS)
+        if: ${{ runner.os != 'Windows' }}
         shell: bash
         run: |
           artifact_dir="$GITHUB_WORKSPACE/release/${{ matrix.rid }}"
-          archive_base_name="${{ matrix.artifact }}-${{ github.ref_name }}"
-          archive_path="$GITHUB_WORKSPACE/${archive_base_name}.${{ matrix.ext }}"
+          archive_path="$GITHUB_WORKSPACE/${{ matrix.artifact }}-${{ github.ref_name }}.tar.gz"
           checksum_path="$archive_path.sha256"
 
-          if [[ "${{ matrix.ext }}" == "zip" ]]; then
-            cd "$artifact_dir"
-            zip -r "$archive_path" .
-            cd "$GITHUB_WORKSPACE"
-          else
-            tar -czf "$archive_path" -C "$artifact_dir" .
-          fi
+          tar -czf "$archive_path" -C "$artifact_dir" .
 
           if command -v sha256sum >/dev/null 2>&1; then
             checksum_value=$(sha256sum "$archive_path" | awk '{print $1}')
@@ -103,6 +97,25 @@ jobs:
           fi
 
           printf '%s  %s\n' "$checksum_value" "$(basename "$archive_path")" > "$checksum_path"
+
+          test -f "$archive_path"
+          test -f "$checksum_path"
+
+      - name: Package release assets (Windows)
+        if: ${{ runner.os == 'Windows' }}
+        shell: pwsh
+        run: |
+          $artifactDir = "$env:GITHUB_WORKSPACE\release\${{ matrix.rid }}"
+          $archivePath = "$env:GITHUB_WORKSPACE\${{ matrix.artifact }}-${{ github.ref_name }}.zip"
+          $checksumPath = "$archivePath.sha256"
+
+          Compress-Archive -Path "$artifactDir\*" -DestinationPath $archivePath
+
+          $hash = (Get-FileHash $archivePath -Algorithm SHA256).Hash.ToLower()
+          "$hash  ${{ matrix.artifact }}-${{ github.ref_name }}.zip" | Set-Content $checksumPath -NoNewline
+
+          if (-not (Test-Path $archivePath)) { exit 1 }
+          if (-not (Test-Path $checksumPath)) { exit 1 }
 
           test -f "$archive_path"
           test -f "$checksum_path"
