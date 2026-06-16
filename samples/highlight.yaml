@@ -12,3 +12,8 @@ steps:
         at: "2:7-10"
       - color: blue
         at: "2-3"
+  - name: default cyan comment
+    run: echo hello
+
+  - name: "[yellow] attention comment"
+    run: echo world

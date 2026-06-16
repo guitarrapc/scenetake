@@ -136,6 +136,14 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
         var cmdPost   = GetDouble(command.Extra, postDelay, "post-delay");
         var cmdExecutionDuration = GetDouble(command.Extra, defaultExecutionDuration, "execution-duration");
 
+        if (TryFormatNameComment(command.Name, command.Cmd, out var nameLine))
+        {
+            events.Add(new CastEvent(Math.Round(t, 6), "\r\n" + nameLine));
+            t += 0.05;
+            events.Add(new CastEvent(Math.Round(t, 6), prompt));
+            t += 0.05;
+        }
+
         foreach (var ch in command.Cmd)
         {
             events.Add(new CastEvent(Math.Round(t, 6), ch.ToString()));
@@ -173,9 +181,11 @@ static CommandEntry ParseCommand(object? item)
     {
         var extra = map.ToDictionary(kv => kv.Key.ToString() ?? "", kv => kv.Value);
         var cmd = extra.TryGetValue("run", out var runValue) ? runValue?.ToString() ?? "" : "";
+        var name = extra.TryGetValue("name", out var nameValue) ? nameValue?.ToString() : null;
 
         extra.Remove("run");
-        return new CommandEntry { Cmd = cmd, Extra = extra };
+        extra.Remove("name");
+        return new CommandEntry { Cmd = cmd, Name = name, Extra = extra };
     }
     return new CommandEntry();
 }
@@ -204,6 +214,54 @@ static string RunCommand(string cmd, string? cwd, ShellLaunch shell)
 
 static string NormalizeNewlines(string s)
     => s.Replace("\r\n", "\n").Replace("\r", "\n").Replace("\n", "\r\n");
+
+// Step name comment
+
+static bool TryFormatNameComment(string? raw, string cmd, out string coloredLine)
+{
+    coloredLine = "";
+    if (string.IsNullOrWhiteSpace(raw))
+        return false;
+
+    var value = raw.Trim();
+    var colorIndex = (byte)7; // cyan default
+    string displayText;
+
+    if (value.StartsWith('['))
+    {
+        var close = value.IndexOf(']');
+        if (close > 1)
+        {
+            var colorName = value[1..close];
+            displayText = value[(close + 1)..].TrimStart();
+            if (!TryColorIndex(colorName, out colorIndex))
+            {
+                WarnName(cmd, $"unknown color '{colorName}'");
+                colorIndex = 7;
+            }
+        }
+        else
+        {
+            displayText = value;
+        }
+    }
+    else
+    {
+        displayText = value;
+    }
+
+    if (string.IsNullOrWhiteSpace(displayText))
+    {
+        WarnName(cmd, "empty name text after color prefix");
+        return false;
+    }
+
+    coloredLine = $"{SgrOpen(colorIndex)}# {displayText}{SgrReset}\r\n";
+    return true;
+}
+
+static void WarnName(string cmd, string detail)
+    => Console.Error.WriteLine($"Warning: name ({cmd}): {detail}");
 
 // Highlight parsing and application
 
@@ -760,5 +818,6 @@ public partial class ScenarioSettings
 public class CommandEntry
 {
     public string Cmd { get; set; } = "";
+    public string? Name { get; set; }
     public Dictionary<string, object?> Extra { get; set; } = new();
 }

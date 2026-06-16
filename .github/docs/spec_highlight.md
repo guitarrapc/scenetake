@@ -17,6 +17,7 @@ Post-processing command output with declarative highlights lets authors color sp
 - Positional ranges via `at`: full lines, line spans, and column spans (including multi-line column bands).
 - Multiple highlight entries per step; multiple `at` strings per entry.
 - Warning-and-continue on invalid or out-of-range targets.
+- `name` on **map-form** steps that include `run:` (colored `# …` comment above the command).
 
 ### Out of scope (v1)
 
@@ -25,12 +26,6 @@ Post-processing command output with declarative highlights lets authors color sp
 - Background colors, bold/underline modifiers, or regex-based matching.
 - Terminal theme (`theme` in cast header); that remains separate from per-output ANSI highlights.
 - Relative line indices (e.g. `-1` = last line).
-
-### Planned: `name` on map-form `run` steps
-
-- Optional `name` key on map-form steps that include `run:`.
-- Renders a colored comment line immediately **above** the command for that step (see [Step name (`name`)](#step-name-name)).
-- Independent of `highlight` on command output; both may appear on the same step.
 
 ## YAML shape
 
@@ -57,7 +52,7 @@ steps:
 
 ## Step name (`name`)
 
-Status: **Planned** (not yet implemented)
+Status: **Implemented**
 
 ### Purpose
 
@@ -318,3 +313,4 @@ Use case: emphasize what was typed while leaving raw command output uncolored.
 | 2026-06-17 | Initial spec from scenario2cast highlight design discussion. |
 | 2026-06-17 | Implemented in `scenario2cast.cs` (v1). Per-line `byte[]` paint buffers; ANSI inserted once when rendering. |
 | 2026-06-17 | Specified `name` on map-form `run` steps: colored `# …` comment above command; default `cyan`; optional `[color]` prefix. |
+| 2026-06-17 | Implemented `name` step comments in `scenario2cast.cs`. |
