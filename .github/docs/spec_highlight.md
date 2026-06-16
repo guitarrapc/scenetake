@@ -26,6 +26,12 @@ Post-processing command output with declarative highlights lets authors color sp
 - Terminal theme (`theme` in cast header); that remains separate from per-output ANSI highlights.
 - Relative line indices (e.g. `-1` = last line).
 
+### Planned: `name` on map-form `run` steps
+
+- Optional `name` key on map-form steps that include `run:`.
+- Renders a colored comment line immediately **above** the command for that step (see [Step name (`name`)](#step-name-name)).
+- Independent of `highlight` on command output; both may appear on the same step.
+
 ## YAML shape
 
 Map-form steps may include `highlight` alongside existing keys (`typing-speed`, `post-delay`, etc.):
@@ -47,7 +53,101 @@ steps:
 | `color` | yes      | One of the [color names](#color-names) below.    |
 | `at`    | yes      | A range string, or a list of range strings.      |
 
-`highlight` applies only to **command output** for that step (stdout and stderr combined, in capture order). It does not affect the simulated prompt or keystroke typing events.
+`highlight` applies only to **command output** for that step (stdout and stderr combined, in capture order). It does not affect the simulated prompt, keystroke typing events, or [`name`](#step-name-name) comment lines.
+
+## Step name (`name`)
+
+Status: **Planned** (not yet implemented)
+
+### Purpose
+
+Authors can attach a short label to a map-form `run` step so viewers see **what the next command is for** before it is typed. This is useful in tutorial-style casts where several commands run in sequence and the narration lives in the scenario YAML rather than in the shell.
+
+### YAML shape
+
+`name` is optional. When omitted, the step behaves as today (prompt, typed command, output, next prompt).
+
+```yaml
+steps:
+  - name: this command is ...
+    run: command...
+
+  - name: "[yellow] this command needs attention"
+    run: command...
+```
+
+| Field  | Required | Description |
+|--------|----------|-------------|
+| `name` | no       | Comment text shown above the step’s `run` command (see below). |
+
+Quote the value when it begins with `[` (e.g. `"[yellow] …"`) so YAML parsers do not interpret `[color]` as a flow sequence.
+
+`name` applies only to **map-form** steps with `run:`. String-form steps (e.g. `- echo "foo"`) do not support `name` in this version.
+
+### Visible behavior
+
+When `name` is present, scenario2cast emits one line **immediately before** the step begins typing `run`:
+
+1. The line starts with `# ` (hash and space).
+2. The remainder is the **display text** of `name` after any optional color prefix is removed (see [Color prefix](#color-prefix)).
+3. The full line (including `# `) is wrapped in ANSI foreground SGR using the resolved color (default `cyan`).
+4. The line ends with a newline, then the normal prompt + typed command flow continues unchanged.
+
+Example appearance in the recording:
+
+```text
+# this command is ...
+$ command...
+```
+
+`name` does not alter command output. Per-step `highlight` still targets only stdout/stderr from execution.
+
+### Color prefix
+
+By default, the comment line uses **`cyan`**.
+
+To override, put exactly one color token in square brackets at the **start** of the `name` value, followed by optional whitespace, then the display text:
+
+```yaml
+- name: "[yellow] this command needs attention"
+  run: command...
+```
+
+| Rule | Detail |
+|------|--------|
+| Position | `[color]` must be the first non-whitespace content of `name`. |
+| Count | At most **one** `[color]` prefix per `name`; additional bracket pairs in the display text are literal characters. |
+| Color names | Same set as [`highlight`](#color-names) (`yellow`, `bright-red`, `gray`, etc.). |
+| Display text | Everything after the prefix (trimmed) is shown after `# `; the brackets and color name are not shown. |
+| Default | If there is no valid prefix, use `cyan`. |
+
+Invalid or unknown color names: **warn** to stderr and fall back to `cyan`. An empty display text after removing a valid prefix: **warn** and skip emitting the comment line; the step still runs.
+
+### Examples
+
+```yaml
+- name: show working tree status
+  run: git status
+```
+
+Renders `# show working tree status` in cyan, then types and runs `git status`.
+
+```yaml
+- name: "[yellow] destructive — review diff first"
+  run: git reset --hard HEAD~1
+```
+
+Renders `# destructive — review diff first` in yellow.
+
+```yaml
+- name: git status
+  run: git status
+  highlight:
+    - color: red
+      at: "6-10:3-"
+```
+
+The `name` comment is colored cyan (or as prefixed); `highlight` still applies only to `git status` output.
 
 ## Color names
 
@@ -187,17 +287,13 @@ Line numbers depend on `git status` layout; authors should target stable output 
 
 ## Future considerations (not v1)
 
-### `name` on `run` map steps
-
-A `name` key may be added for cross-step references or markers. A possible convention: **default highlight in `cyan` for the line(s) associated with that name** (exact mapping TBD when `name` lands). Explicit `highlight` on the same step would override or merge per overlap rules—TBD.
-
 ### Highlighting the command line, not output
 
 Use case: emphasize what was typed while leaving raw command output uncolored.
 
 - Today, typing and output are separate cast events; `highlight` only targets **post-execution output**.
 - Reserving **line `0`** (or another sentinel) for “the command line” is tempting but **ambiguous**: `run: |` multiline blocks are valid YAML and may not correspond to a single terminal row. There is no guarantee the executed command fits one line.
-- Likely needs a **separate mechanism** (e.g. `highlight-input: true` or `highlight: command`) rather than overloading output line `0`. Deferred until `name` / input-highlight design is clearer.
+- Likely needs a **separate mechanism** (e.g. `highlight-input: true` or `highlight: command`) rather than overloading output line `0`. Independent of [`name`](#step-name-name), which only adds a comment line above the command.
 
 ### stderr default red
 
@@ -221,3 +317,4 @@ Use case: emphasize what was typed while leaving raw command output uncolored.
 |------------|--------|
 | 2026-06-17 | Initial spec from scenario2cast highlight design discussion. |
 | 2026-06-17 | Implemented in `scenario2cast.cs` (v1). Per-line `byte[]` paint buffers; ANSI inserted once when rendering. |
+| 2026-06-17 | Specified `name` on map-form `run` steps: colored `# …` comment above command; default `cyan`; optional `[color]` prefix. |
