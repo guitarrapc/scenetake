@@ -122,12 +122,10 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
     var rng    = new Random(deterministicSeed);
     double t   = 0.5;
 
-    events.Add(new CastEvent(t, prompt));
-    t += preDelay;
-
-    foreach (var item in scenario.Steps ?? [])
+    var steps = scenario.Steps ?? [];
+    for (var i = 0; i < steps.Count; i++)
     {
-        var command = ParseCommand(item);
+        var command = ParseCommand(steps[i]);
         if (string.IsNullOrWhiteSpace(command.Cmd)) continue;
 
         var cmdSpeed  = GetDouble(command.Extra, speed, "typing-speed");
@@ -136,13 +134,18 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
         var cmdPost   = GetDouble(command.Extra, postDelay, "post-delay");
         var cmdExecutionDuration = GetDouble(command.Extra, defaultExecutionDuration, "execution-duration");
 
+        if (events.Count == 0)
+            t += preDelay;
+
         if (TryFormatNameComment(command.Name, command.Cmd, out var nameLine))
         {
-            events.Add(new CastEvent(Math.Round(t, 6), "\r\n" + nameLine));
-            t += 0.05;
-            events.Add(new CastEvent(Math.Round(t, 6), prompt));
+            var prefix = NameCommentPrefix(events.Count > 0 ? events[^1].Data : null);
+            events.Add(new CastEvent(Math.Round(t, 6), prefix + nameLine));
             t += 0.05;
         }
+
+        events.Add(new CastEvent(Math.Round(t, 6), prompt));
+        t += 0.05;
 
         foreach (var ch in command.Cmd)
         {
@@ -166,12 +169,22 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
             events.Add(new CastEvent(Math.Round(t, 6), NormalizeNewlines(output)));
         }
 
-        events.Add(new CastEvent(Math.Round(t, 6), prompt));
         t += cmdPost;
         t += cmdPre;
     }
 
+    if (events.Count > 0)
+        events.Add(new CastEvent(Math.Round(t, 6), prompt));
+
     return events;
+}
+
+static string NameCommentPrefix(string? precedingOutput)
+{
+    if (string.IsNullOrEmpty(precedingOutput)) return "";
+    return precedingOutput.EndsWith("\r\n", StringComparison.Ordinal) || precedingOutput.EndsWith('\n')
+        ? ""
+        : "\r\n";
 }
 
 static CommandEntry ParseCommand(object? item)

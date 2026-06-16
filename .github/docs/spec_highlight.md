@@ -86,11 +86,15 @@ When `name` is present, scenario2cast emits one line **immediately before** the 
 1. The line starts with `# ` (hash and space).
 2. The remainder is the **display text** of `name` after any optional color prefix is removed (see [Color prefix](#color-prefix)).
 3. The full line (including `# `) is wrapped in ANSI foreground SGR using the resolved color (default `cyan`).
-4. The line ends with a newline, then the normal prompt + typed command flow continues unchanged.
+4. The line ends with a newline, then the prompt appears and the normal typed-command flow continues.
+
+**Prompt timing:** The prompt is emitted once per step, immediately before `run` is typed (after an optional `name` comment). Steps do **not** leave a trailing prompt after their output—the next step supplies the prompt when typing begins. A final prompt is emitted after the last step’s output. This avoids an empty `$` line before a `name` comment and avoids duplicated `$ $` prompts between normal steps.
 
 Example appearance in the recording:
 
 ```text
+$ previous-command
+output
 # this command is ...
 $ command...
 ```
