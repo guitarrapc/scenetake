@@ -187,10 +187,6 @@ Line numbers depend on `git status` layout; authors should target stable output 
 
 ## Future considerations (not v1)
 
-### String-form steps
-
-Allow `highlight` on shorthand steps (e.g. `- pwd`) in a later version, using the same `color` / `at` rules on that step’s output.
-
 ### `name` on `run` map steps
 
 A `name` key may be added for cross-step references or markers. A possible convention: **default highlight in `cyan` for the line(s) associated with that name** (exact mapping TBD when `name` lands). Explicit `highlight` on the same step would override or merge per overlap rules—TBD.
