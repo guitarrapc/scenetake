@@ -1,8 +1,9 @@
-#:sdk Microsoft.NET.Sdk
+﻿#:sdk Microsoft.NET.Sdk
 #:property TargetFramework=net10.0
 #:property Nullable=enable
 #:property ImplicitUsings=enable
-#:package YamlDotNet@16.3.0
+#:package YamlDotNet@18.0.0
+#:package Vecc.YamlDotNet.Analyzers.StaticGenerator@18.0.0
 
 // scenario2cast - Generate asciinema v2 cast files from YAML scenario files.
 //
@@ -17,6 +18,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using Scenario2Cast;
 
 const string DefaultPrompt    = "$ ";
 const double DefaultSpeed     = 0.05;
@@ -56,9 +58,8 @@ return 0;
 
 static Scenario ParseScenario(string yaml)
 {
-    var d = new DeserializerBuilder()
+    var d = new StaticDeserializerBuilder(new Scenario2Cast.StaticContext())
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
-        .IgnoreUnmatchedProperties()
         .Build();
     return d.Deserialize<Scenario>(yaml) ?? new Scenario();
 }
@@ -214,18 +215,29 @@ static double AsDouble(Dictionary<string, object> d, string key, double def)
 
 record CastEvent(double Time, string Data);
 
-class Scenario
+namespace Scenario2Cast
 {
-    public string? Title { get; set; }
-    public int? Width { get; set; }
-    public int? Height { get; set; }
-    public string? Cwd { get; set; }
-    public Dictionary<string, object>? Settings { get; set; }
-    public List<object>? Commands { get; set; }
-}
+    [YamlSerializable]
+    public class Scenario
+    {
+        public string? Title { get; set; }
+        public int? Width { get; set; }
+        public int? Height { get; set; }
+        public string? Cwd { get; set; }
+        public Dictionary<string, object>? Settings { get; set; }
+        public List<object>? Commands { get; set; }
+    }
 
-class CommandEntry
-{
-    public string Cmd { get; set; } = "";
-    public Dictionary<string, object> Extra { get; set; } = new();
+    [YamlSerializable]
+    public class CommandEntry
+    {
+        public string Cmd { get; set; } = "";
+        public Dictionary<string, object> Extra { get; set; } = new();
+    }
+
+    [YamlStaticContext]
+    [YamlSerializable(typeof(Scenario))]
+    public partial class StaticContext : YamlDotNet.Serialization.StaticContext
+    {
+    }
 }
