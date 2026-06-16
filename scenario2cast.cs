@@ -1,5 +1,6 @@
 ﻿#:sdk Microsoft.NET.Sdk
 #:property TargetFramework=net10.0
+#:property Version=0.1.0
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 #:package VYaml@1.3.0
@@ -25,11 +26,24 @@ const double DefaultJitter    = 0.015;
 const double DefaultPreDelay  = 0.8;
 const double DefaultPostDelay = 1.5;
 const double DefaultCommandExecutionDuration = 0.05;
+const string AppVersion = "0.1.0";
 
 if (args.Length < 1)
 {
-    Console.Error.WriteLine("Usage: scenario2cast <scenario.yaml> [output.cast]");
+    PrintUsage();
     return 1;
+}
+
+if (args[0] is "--version")
+{
+    PrintVersion();
+    return 0;
+}
+
+if (args[0] is "-h" or "--help")
+{
+    PrintUsage();
+    return 0;
 }
 
 var scenarioPath = Path.GetFullPath(args[0]);
@@ -397,6 +411,17 @@ static long ComputeDeterministicTimestamp(int seed)
     const long baseUnixTime = 1700000000;
     const long spanSeconds = 365L * 24 * 60 * 60;
     return baseUnixTime + (uint)seed % spanSeconds;
+}
+
+static void PrintUsage()
+{
+    Console.Error.WriteLine("Usage: scenario2cast <scenario.yaml> [output.cast]");
+    Console.Error.WriteLine("       scenario2cast --help");
+}
+
+static void PrintVersion()
+{
+    Console.WriteLine(AppVersion);
 }
 
 record CastEvent(double Time, string Data);
