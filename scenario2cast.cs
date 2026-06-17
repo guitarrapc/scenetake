@@ -540,8 +540,11 @@ static bool TryParseSgrLiteral(string raw, out string codes)
         if (!int.TryParse(part, NumberStyles.None, CultureInfo.InvariantCulture, out var value))
             return false;
 
-        if (value is 38 or 48 && i + 2 < parts.Length && parts[i + 1] == "5")
+        if (value is 38 or 48 && i + 1 < parts.Length && parts[i + 1] == "5")
         {
+            if (i + 2 >= parts.Length)
+                return false;
+
             if (!int.TryParse(parts[i + 2], NumberStyles.None, CultureInfo.InvariantCulture, out var colorIndex))
                 return false;
 
