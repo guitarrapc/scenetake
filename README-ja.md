@@ -1,4 +1,4 @@
-[![Build](https://github.com/guitarrapc/scenario2cast/actions/workflows/build.yml/badge.svg)](https://github.com/guitarrapc/scenario2cast/actions/workflows/build.yml)
+[![Build](https://github.com/guitarrapc/scenario2cast/actions/workflows/build.yaml/badge.svg)](https://github.com/guitarrapc/scenario2cast/actions/workflows/build.yaml)
 
 # scenario2cast
 
@@ -104,7 +104,7 @@ settings:
   typing-jitter: 0.015     # ジッター幅 ±秒
   pre-delay: 0.8           # 次の step のタイピング開始前の停止時間
   post-delay: 1.5          # プロンプト表示後・次の step 入力までの停止時間
-  execution-duration: 0.7  # 任意。各コマンド実行の cast 上待機時間
+  execution-duration: 0.1  # 任意。各コマンド実行の cast 上待機時間
 
 steps:
   # コマンドをリスト形式で書くと、settings の既定値が適用
@@ -124,6 +124,55 @@ steps:
     execution-duration: 0.4
 ```
 
+### ハイライト使用例
+
+```yaml
+settings:
+  stderr-color: red
+
+steps:
+  - run: git status
+    highlight:
+      - color: yellow
+        at: "4"
+      - color: red
+        at: "6-10:3-"
+
+  - run: git log --oneline -3
+    run-highlight: bright-cyan
+
+  - run: echo "plain stderr" 1>&2
+    # stderr に ANSI SGR がない場合は settings.stderr-color を使用
+```
+
+- `highlight` は step のみ対応です（map-form の `run` step）。
+- `run-highlight` は step のみ対応です（map-form の `run` step）。
+- `stderr-color` は両対応です（`settings.stderr-color` の既定値 + step の `stderr-color` 上書き）。
+- stderr 側に既存 ANSI がある場合はそれを保持し、`stderr-color` は ANSI がない stderr にのみ適用されます。
+
+### カラー名とANSIコード
+
+`highlight`、`run-highlight`、`stderr-color` は同じ16色の前景色パレットを使います。
+
+| 名前 | ANSI SGR |
+|------|----------|
+| `black` | `30` |
+| `red` | `31` |
+| `green` | `32` |
+| `yellow` | `33` |
+| `blue` | `34` |
+| `magenta` | `35` |
+| `cyan` | `36` |
+| `white` | `37` |
+| `bright-black` (`gray`, `grey`) | `90` |
+| `bright-red` | `91` |
+| `bright-green` | `92` |
+| `bright-yellow` | `93` |
+| `bright-blue` | `94` |
+| `bright-magenta` | `95` |
+| `bright-cyan` | `96` |
+| `bright-white` | `97` |
+
 ### コマンド設定一覧
 
 | キー | 説明 | デフォルト |
@@ -134,6 +183,14 @@ steps:
 | `pre-delay` | タイピング前の停止時間 | `settings.pre-delay` |
 | `post-delay` | プロンプト表示後の停止時間 | `settings.post-delay` |
 | `execution-duration` | このコマンド実行の cast 上待機時間を上書き | `settings.execution-duration` |
+| `run-highlight` | タイピングされるコマンド文字列に色を付ける | なし（stepのみ） |
+| `stderr-color` | stderr に ANSI SGR がない場合の既定色 | `settings.stderr-color` |
+
+### settings対応 / step対応メモ
+
+- `highlight` はこのバージョンでは `settings` 既定値を持ちません。
+- `run-highlight` はこのバージョンでは `settings` 既定値を持ちません。
+- `stderr-color` は `settings` と step の両方で設定できます。
 
 ## Development
 
@@ -143,7 +200,7 @@ steps:
 
 ```bash
 # ローカル実行
-dotnet run scenario2cast.cs <scenario.yaml> [output.cast]
+dotnet run scenario2cast.cs -- <scenario.yaml> [output.cast]
 
 # ビルド
 dotnet publish scenario2cast.cs --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None
