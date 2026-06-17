@@ -12,9 +12,19 @@ settings:
 
 steps:
   - echo "Hello, World!"
-  - echo "Current directory:"
-  - pwd
+  - name: Name of the step
+    run: echo "Current directory:"
+  - name: Coloring stdout
+    run: curl -I https://google.com
+    highlight:
+      - color: green
+        at:
+          - "1"
+      - color: gray
+        at:
+          - "2-12"
   - echo "Wait for 2 seconds..."
   - run: sleep 2
     execution-duration: 1.0
+  - echo "stderr output is red by default" 1>&2
   - echo "Done!"
