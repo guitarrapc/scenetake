@@ -166,8 +166,8 @@ steps:
 
 - Named color: `red`, `bright-cyan`
 - Style tokens: `bold`, `underline`, `bright`
-- Foreground/background prefixes: `fg:bright-white`, `bg:blue`
-- Raw SGR literal: `1;31`, `\e[1;31m`, `\x1b[1;31m`
+- Foreground/background prefixes: `fg:bright-white`, `bg:blue`, `fg:196`, `bg:235`
+- Raw SGR literal: `1;31`, `38;5;196`, `48;5;235`, `\e[1;31m`, `\x1b[1;31m`
 
 ```yaml
 steps:
@@ -176,7 +176,7 @@ steps:
 
   - run: printf 'line1\nline2\n'
     highlight:
-      - color: "underline fg:bright-white bg:blue"
+      - color: "underline fg:196 bg:235"
         at: "2"
 
   - run: echo "plain stderr" 1>&2
@@ -203,6 +203,8 @@ steps:
 | `bright-magenta` | `95` |
 | `bright-cyan` | `96` |
 | `bright-white` | `97` |
+
+For the ANSI 256-color palette, use `fg:<0-255>` or `bg:<0-255>`, or raw SGR `38;5;n` / `48;5;n`.
 
 ### Command Keys
 

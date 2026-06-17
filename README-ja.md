@@ -166,8 +166,8 @@ steps:
 
 - カラー名: `red`、`bright-cyan`
 - スタイルトークン: `bold`、`underline`、`bright`
-- 前景/背景プレフィックス: `fg:bright-white`、`bg:blue`
-- 生 SGR リテラル: `1;31`、`\e[1;31m`、`\x1b[1;31m`
+- 前景/背景プレフィックス: `fg:bright-white`、`bg:blue`、`fg:196`、`bg:235`
+- 生 SGR リテラル: `1;31`、`38;5;196`、`48;5;235`、`\e[1;31m`、`\x1b[1;31m`
 
 ```yaml
 steps:
@@ -176,7 +176,7 @@ steps:
 
   - run: printf 'line1\nline2\n'
     highlight:
-      - color: "underline fg:bright-white bg:blue"
+      - color: "underline fg:196 bg:235"
         at: "2"
 
   - run: echo "plain stderr" 1>&2
@@ -203,6 +203,8 @@ steps:
 | `bright-magenta` | `95` |
 | `bright-cyan` | `96` |
 | `bright-white` | `97` |
+
+ANSI 256色パレットを使う場合は、`fg:<0-255>` / `bg:<0-255>`、または生SGRの `38;5;n` / `48;5;n` を指定します。
 
 ### コマンド設定一覧
 

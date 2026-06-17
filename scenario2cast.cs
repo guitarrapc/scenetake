@@ -1,4 +1,4 @@
-#:sdk Microsoft.NET.Sdk
+﻿#:sdk Microsoft.NET.Sdk
 #:property TargetFramework=net10.0
 #:property Version=0.2.0
 #:property Nullable=enable
@@ -467,16 +467,6 @@ static bool TryNamedForegroundCode(string? name, out int code)
     return code != 0;
 }
 
-static bool TryNamedBackgroundCode(string? name, out int code)
-{
-    code = 0;
-    if (!TryNamedForegroundCode(name, out var fgCode))
-        return false;
-
-    code = fgCode + 10;
-    return true;
-}
-
 static bool TryParseStyle(string? raw, out string styleOpen)
 {
     styleOpen = "";
@@ -544,10 +534,26 @@ static bool TryParseSgrLiteral(string raw, out string codes)
         return false;
 
     var normalized = new List<string>(parts.Length);
-    foreach (var part in parts)
+    for (var i = 0; i < parts.Length; i++)
     {
+        var part = parts[i];
         if (!int.TryParse(part, NumberStyles.None, CultureInfo.InvariantCulture, out var value))
             return false;
+
+        if (value is 38 or 48 && i + 2 < parts.Length && parts[i + 1] == "5")
+        {
+            if (!int.TryParse(parts[i + 2], NumberStyles.None, CultureInfo.InvariantCulture, out var colorIndex))
+                return false;
+
+            if (colorIndex is < 0 or > 255)
+                return false;
+
+            normalized.Add(value.ToString(CultureInfo.InvariantCulture));
+            normalized.Add("5");
+            normalized.Add(colorIndex.ToString(CultureInfo.InvariantCulture));
+            i += 2;
+            continue;
+        }
 
         if (value is < 0 or > 107)
             return false;
@@ -573,8 +579,9 @@ static bool TryParseStyleWords(string raw, out string codes)
     var bold = false;
     var underline = false;
     var intensityRequested = false;
-    int fgCode = 0;
-    int bgCode = 0;
+    string? fgCodes = null;
+    string? bgCodes = null;
+    int simpleFgCode = 0;
 
     foreach (var token in tokens)
     {
@@ -600,12 +607,12 @@ static bool TryParseStyleWords(string raw, out string codes)
         {
             if (isBackground)
             {
-                if (!TryNamedBackgroundCode(colorName, out bgCode))
+                if (!TryParseStyleColor(colorName, isBackground: true, out bgCodes, out _))
                     return false;
             }
             else
             {
-                if (!TryNamedForegroundCode(colorName, out fgCode))
+                if (!TryParseStyleColor(colorName, isBackground: false, out fgCodes, out simpleFgCode))
                     return false;
             }
 
@@ -614,7 +621,8 @@ static bool TryParseStyleWords(string raw, out string codes)
 
         if (TryNamedForegroundCode(token, out var directFg))
         {
-            fgCode = directFg;
+            simpleFgCode = directFg;
+            fgCodes = directFg.ToString(CultureInfo.InvariantCulture);
             continue;
         }
 
@@ -623,20 +631,44 @@ static bool TryParseStyleWords(string raw, out string codes)
 
     if (intensityRequested)
     {
-        if (fgCode is >= 30 and <= 37)
-            fgCode += 60;
-        else if (fgCode == 0)
+        if (simpleFgCode is >= 30 and <= 37)
+            fgCodes = (simpleFgCode + 60).ToString(CultureInfo.InvariantCulture);
+        else if (fgCodes is null)
             bold = true;
     }
 
     var list = new List<string>(4);
     if (bold) list.Add("1");
     if (underline) list.Add("4");
-    if (fgCode != 0) list.Add(fgCode.ToString(CultureInfo.InvariantCulture));
-    if (bgCode != 0) list.Add(bgCode.ToString(CultureInfo.InvariantCulture));
+    if (fgCodes is not null) list.Add(fgCodes);
+    if (bgCodes is not null) list.Add(bgCodes);
     if (list.Count == 0) return false;
 
     codes = string.Join(';', list);
+    return true;
+}
+
+static bool TryParseStyleColor(string raw, bool isBackground, out string codes, out int simpleForegroundCode)
+{
+    codes = "";
+    simpleForegroundCode = 0;
+
+    if (TryNamedForegroundCode(raw, out var fgCode))
+    {
+        simpleForegroundCode = isBackground ? 0 : fgCode;
+        codes = (isBackground ? fgCode + 10 : fgCode).ToString(CultureInfo.InvariantCulture);
+        return true;
+    }
+
+    if (!int.TryParse(raw, NumberStyles.None, CultureInfo.InvariantCulture, out var colorIndex))
+        return false;
+
+    if (colorIndex is < 0 or > 255)
+        return false;
+
+    codes = isBackground
+        ? $"48;5;{colorIndex.ToString(CultureInfo.InvariantCulture)}"
+        : $"38;5;{colorIndex.ToString(CultureInfo.InvariantCulture)}";
     return true;
 }
 
@@ -1203,10 +1235,17 @@ static string CreateInitialScenarioYaml()
         run: printf 'line1 alpha\nline2 beta gamma\nline3\n'
         run-highlight: "bold fg:bright-cyan"
         highlight:
+          - at: "1"
+            color: "fg:bright-green"
           - at: "2:7-10"
             color: "underline fg:yellow"
-          - at: "1-2"
-            color: "fg:bright-green"
+          - at: "2:12-"
+            color: "bold fg:magenta"
+          - at: "3"
+            color: "fg:white bg:212"
+          - at: "4"
+            color: "fg:black bg:114"
+
       - name: "[bright-yellow]stderr color override"
         run: echo "stderr sample" 1>&2
         stderr-color: "bold fg:red"

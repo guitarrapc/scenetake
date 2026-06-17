@@ -43,7 +43,7 @@ Coloring is split by target type so behavior is explicit and predictable.
 
 ## Shared Named Colors
 
-All coloring keys can use the same named foreground palette.
+All coloring keys can use the same named foreground palette. Named colors map to 16-color ANSI SGR values (normal + bright).
 
 | Name | ANSI SGR |
 |---|---|
@@ -72,13 +72,14 @@ Color-capable keys (`highlight[].color`, `run-highlight`, `stderr-color`, `name`
 
 Accepted forms:
 
-- Named foreground color: `red`, `bright-cyan`
+- Named foreground color: `red`, `bright-cyan` (within the 16-color palette)
 - Token composition (space/comma/`+` separated):
   - Style tokens: `bold`, `underline`, `bright`
-  - Foreground tokens: `<name>`, `fg:<name>`
-  - Background tokens: `bg:<name>`
+  - Foreground tokens: `<name>`, `fg:<name>`, `fg:<0-255>`
+  - Background tokens: `bg:<name>`, `bg:<0-255>`
 - Raw ANSI SGR literal:
   - `1;31`
+  - `38;5;196`, `48;5;235` (ANSI 256-color palette)
   - `\e[1;31m`
   - `\x1b[1;31m`
 
@@ -90,8 +91,12 @@ Examples:
 
 - `bold bright-yellow`
 - `underline fg:bright-cyan bg:black`
+- `fg:196 bg:235` (ANSI 256-color palette)
 - `bright red bg:bright-black`
+- `38;5;208` (ANSI 256-color palette)
 - `\e[1;4;97;44m`
+
+256-color index values use ANSI SGR `38;5;n` for foreground and `48;5;n` for background, where `n` is 0..255.
 
 ## YAML Contract
 
@@ -247,6 +252,7 @@ steps:
 
 | Date | Change |
 |---|---|
+| 2026-06-17 | Added 256-color index support via `fg:<0-255>`, `bg:<0-255>`, `38;5;n`, and `48;5;n`. |
 | 2026-06-17 | Extended color values to style strings (bold/underline/background/bright) and SGR literal input across `highlight`, `run-highlight`, `stderr-color`, and `name` prefix. |
 | 2026-06-17 | Reorganized document as a unified coloring spec (`highlight`, `run-highlight`, `stderr-color`, `name` color prefix). |
 | 2026-06-17 | Implemented `stderr-color` behavior with ANSI-preserving fallback semantics. |
