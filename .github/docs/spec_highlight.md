@@ -14,6 +14,7 @@ Post-processing command output with declarative highlights lets authors color sp
 
 - `highlight` on **map-form** steps that include `run:`.
 - `run-highlight` on **map-form** steps that include `run:` (colored typed command text).
+- `stderr-color` as an **opt-in** default color for uncolored stderr output.
 - Named **16-color** foreground palette (ANSI normal + bright).
 - Positional ranges via `at`: full lines, line spans, and column spans (including multi-line column bands).
 - Multiple highlight entries per step; multiple `at` strings per entry.
@@ -23,7 +24,7 @@ Post-processing command output with declarative highlights lets authors color sp
 ### Out of scope (v1)
 
 - Highlights on **string-form** steps (e.g. `- echo "foo"`). Planned for a later version.
-- Global defaults under `settings`.
+- Global defaults under `settings` for `highlight` ranges.
 - Background colors, bold/underline modifiers, or regex-based matching.
 - Terminal theme (`theme` in cast header); that remains separate from per-output ANSI highlights.
 - Relative line indices (e.g. `-1` = last line).
@@ -52,6 +53,37 @@ steps:
 `highlight` applies only to **command output** for that step (stdout and stderr combined, in capture order). It does not affect the simulated prompt, keystroke typing events, or [`name`](#step-name-name) comment lines.
 
 `run-highlight` applies only to the **typed command text** for that step. It does not affect the prompt, command output, or [`name`](#step-name-name) comment lines.
+
+## stderr color (`stderr-color`)
+
+Status: **Implemented**
+
+`stderr-color` is optional and controls a default foreground color for stderr text that has no ANSI SGR color.
+
+It can be configured globally under `settings` and overridden per map-form `run` step.
+
+```yaml
+settings:
+  stderr-color: red
+
+steps:
+  - run: git status
+    stderr-color: bright-red
+```
+
+| Field | Scope | Required | Description |
+|------|-------|----------|-------------|
+| `stderr-color` | `settings` or step | no | Default color for stderr text when stderr has no ANSI SGR sequences. |
+
+### Behavior
+
+1. If stderr already contains ANSI SGR (`\u001b[...m`), keep it as-is.
+2. Otherwise, if `stderr-color` is set, wrap stderr with that foreground SGR and reset.
+3. If unset, stderr remains unchanged.
+
+Priority is: explicit ANSI in stderr > `stderr-color` defaulting.
+
+Invalid color names: **warn** to stderr and ignore the invalid value (step-level invalid values fall back to `settings.stderr-color` when present).
 
 ## Step name (`name`)
 
@@ -292,14 +324,7 @@ Line numbers depend on `git status` layout; authors should target stable output 
 
 ### stderr default red
 
-**Idea:** Always render stderr spans in red (or `bright-red`) without per-step `highlight`.
-
-| Pros | Cons |
-|------|------|
-| Matches common terminal conventions; errors stand out in GIFs. | Harder to highlight stderr selectively; breaks demos that intentionally print informative messages to stderr. |
-| Zero YAML for the common case. | Today stdout and stderr are merged before cast write; splitting for styling affects ordering semantics. |
-
-**Recommendation:** Do **not** auto-red stderr in v1. If added later, prefer an opt-in step or settings flag (e.g. `stderr-color: red`) rather than global always-on behavior, unless user feedback strongly favors default red.
+`stderr-color` is implemented as an opt-in mechanism. It is not globally always-on by default.
 
 ## Related documents
 
@@ -310,6 +335,7 @@ Line numbers depend on `git status` layout; authors should target stable output 
 
 | Date       | Change |
 |------------|--------|
+| 2026-06-17 | Implemented opt-in `stderr-color` (settings + step override). Existing ANSI in stderr is preserved; uncolored stderr can be colorized. |
 | 2026-06-17 | Added `run-highlight` for typed command text; it colors the recorded command line without affecting output. |
 | 2026-06-17 | Initial spec from scenario2cast highlight design discussion. |
 | 2026-06-17 | Implemented in `scenario2cast.cs` (v1). Per-line `byte[]` paint buffers; ANSI inserted once when rendering. |

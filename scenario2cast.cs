@@ -118,6 +118,7 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
     var preDelay  = settings.PreDelay ?? DefaultPreDelay;
     var postDelay = settings.PostDelay ?? DefaultPostDelay;
     var defaultExecutionDuration = settings.ExecutionDuration ?? DefaultExecutionDuration;
+    var defaultStderrColorIndex = ParseSettingsStderrColor(settings.StderrColor);
     var events = new List<CastEvent>();
     var rng    = new Random(deterministicSeed);
     double t   = 0.5;
@@ -133,6 +134,7 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
         var cmdPre    = GetDouble(command.Extra, preDelay, "pre-delay");
         var cmdPost   = GetDouble(command.Extra, postDelay, "post-delay");
         var cmdExecutionDuration = GetDouble(command.Extra, defaultExecutionDuration, "execution-duration");
+        var cmdStderrColorIndex = ResolveStderrColor(command.Extra, defaultStderrColorIndex, command.Cmd);
         var hasRunHighlight = TryGetRunHighlight(command.Extra, command.Cmd, out var runHighlightColor);
 
         if (events.Count == 0)
@@ -167,12 +169,13 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
         Console.Error.WriteLine($"  running: {command.Cmd}");
         var execution = RunCommand(command.Cmd, scenario.Cwd, shell);
         t += cmdExecutionDuration;
+        var mergedOutput = MergeCommandOutput(execution, cmdStderrColorIndex);
 
-        if (!string.IsNullOrEmpty(execution))
+        if (!string.IsNullOrEmpty(mergedOutput))
         {
             var output = GetHighlights(command.Extra, command.Cmd) is { } highlights
-                ? ApplyHighlights(execution, highlights, command.Cmd)
-                : execution;
+                ? ApplyHighlights(mergedOutput, highlights, command.Cmd)
+                : mergedOutput;
             events.Add(new CastEvent(Math.Round(t, 6), NormalizeNewlines(output)));
         }
 
@@ -210,7 +213,7 @@ static CommandEntry ParseCommand(object? item)
     return new CommandEntry();
 }
 
-static string RunCommand(string cmd, string? cwd, ShellLaunch shell)
+static CommandOutput RunCommand(string cmd, string? cwd, ShellLaunch shell)
 {
     var psi = new ProcessStartInfo(shell.FileName)
     {
@@ -229,7 +232,52 @@ static string RunCommand(string cmd, string? cwd, ShellLaunch shell)
     var stdout = proc.StandardOutput.ReadToEnd();
     var stderr = proc.StandardError.ReadToEnd();
     proc.WaitForExit();
-    return stdout + stderr;
+    return new CommandOutput(stdout, stderr);
+}
+
+static string MergeCommandOutput(CommandOutput output, byte stderrColorIndex)
+{
+    if (string.IsNullOrEmpty(output.Stdout))
+        return MaybeColorizeStderr(output.Stderr, stderrColorIndex);
+
+    if (string.IsNullOrEmpty(output.Stderr))
+        return output.Stdout;
+
+    if (stderrColorIndex == 0 || ContainsAnsiSgr(output.Stderr))
+        return string.Concat(output.Stdout, output.Stderr);
+
+    return string.Concat(output.Stdout, SgrOpen(stderrColorIndex), output.Stderr, SgrReset);
+}
+
+static string MaybeColorizeStderr(string stderr, byte stderrColorIndex)
+{
+    if (string.IsNullOrEmpty(stderr) || stderrColorIndex == 0 || ContainsAnsiSgr(stderr))
+        return stderr;
+
+    return string.Concat(SgrOpen(stderrColorIndex), stderr, SgrReset);
+}
+
+static bool ContainsAnsiSgr(string text)
+{
+    for (var i = 0; i + 2 < text.Length; i++)
+    {
+        if (text[i] != '\u001b' || text[i + 1] != '[')
+            continue;
+
+        for (var j = i + 2; j < text.Length; j++)
+        {
+            var ch = text[j];
+            if ((uint)(ch - '0') <= 9 || ch == ';')
+                continue;
+
+            if (ch == 'm')
+                return true;
+
+            break;
+        }
+    }
+
+    return false;
 }
 
 static string NormalizeNewlines(string s)
@@ -282,6 +330,37 @@ static bool TryFormatNameComment(string? raw, string cmd, out string coloredLine
 
 static void WarnName(string cmd, string detail)
     => Console.Error.WriteLine($"Warning: name ({cmd}): {detail}");
+
+static byte ParseSettingsStderrColor(string? raw)
+{
+    if (string.IsNullOrWhiteSpace(raw))
+        return 0;
+
+    if (TryColorIndex(raw, out var colorIndex))
+        return colorIndex;
+
+    Console.Error.WriteLine($"Warning: settings.stderr-color: unknown color '{raw}'");
+    return 0;
+}
+
+static byte ResolveStderrColor(Dictionary<string, object?> extra, byte fallbackColorIndex, string cmd)
+{
+    if (!extra.TryGetValue("stderr-color", out var raw))
+        return fallbackColorIndex;
+
+    var value = raw?.ToString();
+    if (string.IsNullOrWhiteSpace(value))
+        return 0;
+
+    if (TryColorIndex(value, out var colorIndex))
+        return colorIndex;
+
+    WarnStderrColor(cmd, $"unknown color '{value}'");
+    return fallbackColorIndex;
+}
+
+static void WarnStderrColor(string cmd, string detail)
+    => Console.Error.WriteLine($"Warning: stderr-color ({cmd}): {detail}");
 
 static bool TryGetRunHighlight(Dictionary<string, object?> extra, string cmd, out byte colorIndex)
 {
@@ -798,6 +877,7 @@ static string CreateInitialScenarioYaml()
     #   pre-delay: {DefaultPreDelay}           # Pause before typing each step. Default: {DefaultPreDelay}
     #   post-delay: {DefaultPostDelay}          # Pause after output before the next step. Default: {DefaultPostDelay}
     #   execution-duration: {DefaultExecutionDuration} # Optional cast wait after command execution. Default: {DefaultExecutionDuration}
+    #   stderr-color: red             # Optional default stderr color when stderr has no ANSI SGR. Default: off
 
     # Add one command per step. Use a mapping when you want to override per-command timing.
     steps:
@@ -827,6 +907,8 @@ static void PrintVersion()
 
 record CastEvent(double Time, string Data);
 
+readonly record struct CommandOutput(string Stdout, string Stderr);
+
 record HighlightSpec(byte ColorIndex, List<string> At);
 
 record ShellLaunch(string FileName, string[] Arguments, string EnvValue, string DisplayName);
@@ -852,6 +934,7 @@ public partial class ScenarioSettings
     public double? PreDelay { get; set; }
     public double? PostDelay { get; set; }
     public double? ExecutionDuration { get; set; }
+    public string? StderrColor { get; set; }
 }
 
 public class CommandEntry
