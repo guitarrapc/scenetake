@@ -572,7 +572,7 @@ static bool TryParseStyleWords(string raw, out string codes)
             continue;
         }
 
-        if (TryParsePrefixedColorToken(token, out var isBackground, out var colorName))
+        if (TryParseFgBgToken(token, out var isBackground, out var colorName))
         {
             if (isBackground)
             {
@@ -616,28 +616,28 @@ static bool TryParseStyleWords(string raw, out string codes)
     return true;
 }
 
-static bool TryParsePrefixedColorToken(string token, out bool isBackground, out string colorName)
+static bool TryParseFgBgToken(string token, out bool isBackground, out string colorName)
 {
     isBackground = false;
     colorName = "";
-    var prefixes = new[]
+    if (token.StartsWith("fg:", StringComparison.Ordinal))
     {
-        ("fg:", false), ("fg-", false),
-        ("bg:", true), ("bg-", true),
-        ("on:", true), ("on-", true),
-        ("background:", true), ("background-", true),
-    };
-
-    foreach (var (prefix, bg) in prefixes)
-    {
-        if (!token.StartsWith(prefix, StringComparison.Ordinal))
-            continue;
-
-        var value = token[prefix.Length..].Trim();
+        var value = token[3..].Trim();
         if (value.Length == 0)
             return false;
 
-        isBackground = bg;
+        isBackground = false;
+        colorName = value;
+        return true;
+    }
+
+    if (token.StartsWith("bg:", StringComparison.Ordinal))
+    {
+        var value = token[3..].Trim();
+        if (value.Length == 0)
+            return false;
+
+        isBackground = true;
         colorName = value;
         return true;
     }

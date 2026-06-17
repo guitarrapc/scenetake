@@ -188,7 +188,7 @@ steps:
 
 - カラー名: `red`、`bright-cyan`
 - スタイルトークン: `bold`、`underline`、`bright`（`intensity` も同義）
-- 前景/背景プレフィックス: `fg:bright-white`、`bg:blue`、`on:bright-black`
+- 前景/背景プレフィックス: `fg:bright-white`、`bg:blue`
 - 生 SGR リテラル: `1;31`、`\e[1;31m`、`\x1b[1;31m`
 
 ```yaml

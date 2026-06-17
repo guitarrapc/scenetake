@@ -188,7 +188,7 @@ steps:
 
 - Named color: `red`, `bright-cyan`
 - Style tokens: `bold`, `underline`, `bright` (`intensity` alias)
-- Foreground/background prefixes: `fg:bright-white`, `bg:blue`, `on:bright-black`
+- Foreground/background prefixes: `fg:bright-white`, `bg:blue`
 - Raw SGR literal: `1;31`, `\e[1;31m`, `\x1b[1;31m`
 
 ```yaml

@@ -75,8 +75,8 @@ Accepted forms:
 - Named foreground color: `red`, `bright-cyan`
 - Token composition (space/comma/`+` separated):
   - Style tokens: `bold`, `underline`, `bright` (`intensity` alias)
-  - Foreground tokens: `<name>`, `fg:<name>`, `fg-<name>`
-  - Background tokens: `bg:<name>`, `bg-<name>`, `on:<name>`, `on-<name>`, `background:<name>`
+  - Foreground tokens: `<name>`, `fg:<name>`
+  - Background tokens: `bg:<name>`
 - Raw ANSI SGR literal:
   - `1;31`
   - `\e[1;31m`
@@ -90,7 +90,7 @@ Examples:
 
 - `bold bright-yellow`
 - `underline fg:bright-cyan bg:black`
-- `intensity red on:bright-black`
+- `intensity red bg:bright-black`
 - `\e[1;4;97;44m`
 
 ## YAML Contract
