@@ -1,6 +1,6 @@
 # SVG Output Specification
 
-Status: **Planned**
+Status: **Implemented**
 
 ## Motivation
 

@@ -67,6 +67,9 @@ scenario2cast init
 # Run the scenario to generate a cast file
 scenario2cast scenario.yaml
 
+# Generate cast and animated SVG in one command
+scenario2cast --format svg scenario.yaml
+
 # Show normal pre/post execution logs while generating a cast file
 scenario2cast --verbose scenario.yaml
 
@@ -87,7 +90,7 @@ docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/scenario.cast /data/sce
 scenario2cast init [scenario.yaml]
 
 # Run scenario to generate cast
-scenario2cast [--verbose] scenario.yaml [output.cast]
+scenario2cast [--verbose] [--format cast|svg] scenario.yaml [output]
 ```
 
 **Notes**
@@ -96,6 +99,7 @@ scenario2cast [--verbose] scenario.yaml [output.cast]
   - Linux/macOS default shell is `$SHELL`, with `bash` as fallback.
   - Windows default shell is `pwsh`, with `powershell` as fallback. On Windows, `shell: bash` uses Git Bash / MSYS `bash` when available.
 - `settings` provides defaults for prompt and timing.
+- `render` controls SVG output and is written to the cast header (`font-size`, `theme`). See [.github/docs/spec_svg.md](.github/docs/spec_svg.md).
 - `pre` / `post` run setup and teardown commands outside the recording flow. Their stdout/stderr are printed to the CLI, but are never written to the cast file.
 - `steps`:
   - Steps are executed for real, so use caution with commands that modify files or affect external systems.

@@ -27,7 +27,7 @@ This spec defines declarative coloring controls that keep demos readable without
 - String-form step coloring defaults (for example `- echo "foo"`).
 - `settings` defaults for `highlight` ranges.
 - Regex selectors.
-- Terminal theme control (`theme` in cast header).
+- Terminal theme control (`theme` in cast header). See [spec_svg.md](spec_svg.md) `render.theme`.
 - Relative indices (for example `-1` = last line).
 
 ## Coloring Targets

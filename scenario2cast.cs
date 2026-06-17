@@ -4,6 +4,7 @@
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 #:package VYaml@1.3.0
+#:include SvgRender.cs
 
 using System.Diagnostics;
 using System.Globalization;
@@ -73,7 +74,7 @@ if (args[0] is "-h" or "--help")
     return 0;
 }
 
-if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var verbose, out var runError))
+if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var runError))
 {
     Console.Error.WriteLine($"Error: {runError}");
     PrintUsage();
@@ -87,16 +88,19 @@ if (!File.Exists(scenarioPath))
     return 1;
 }
 
-var outputPath = outputArg is not null
-    ? Path.GetFullPath(outputArg)
-    : Path.ChangeExtension(scenarioPath, ".cast");
+var outputStem = RenderSettingsResolver.ResolveOutputStem(scenarioPath, outputArg);
+var outputPath = outputStem + ".cast";
+var svgPath = outputFormat == OutputFormat.Svg ? outputStem + ".svg" : null;
 
 Console.Error.WriteLine($"Loading: {scenarioPath}");
 var yaml = File.ReadAllText(scenarioPath, Encoding.UTF8);
 // Register VYaml formatters explicitly for NativeAOT (source generator cannot call __Register via reflection)
 Scenario.__RegisterVYamlFormatter();
 ScenarioSettings.__RegisterVYamlFormatter();
+ScenarioRender.__RegisterVYamlFormatter();
+ScenarioTheme.__RegisterVYamlFormatter();
 var scenario = ParseScenario(yaml);
+var renderSettings = RenderSettingsResolver.Resolve(scenario);
 var deterministicSeed = ComputeDeterministicSeed(yaml);
 var deterministicTimestamp = ComputeDeterministicTimestamp(deterministicSeed);
 
@@ -113,16 +117,41 @@ if (verbose)
 Console.Error.WriteLine("Generating cast...");
 var events = Generate(scenario, shell, deterministicSeed);
 
-WriteCast(scenario, events, outputPath, shell, deterministicTimestamp);
+WriteCast(scenario, events, outputPath, shell, deterministicTimestamp, renderSettings);
 
 var duration = events.Count > 0 ? events[^1].Time : 0.0;
 Console.Error.WriteLine($"Written: {outputPath}  ({events.Count} events, {duration:F1}s)");
+
+var exitCode = 0;
+if (outputFormat == OutputFormat.Svg)
+{
+    var width = scenario.Width ?? 120;
+    var height = scenario.Height ?? 24;
+    try
+    {
+        SvgRender.WriteSvg(events, width, height, renderSettings, svgPath!);
+        Console.Error.WriteLine($"Written: {svgPath}");
+    }
+    catch (Exception ex)
+    {
+        if (File.Exists(svgPath!))
+            File.Delete(svgPath!);
+        Console.Error.WriteLine($"Error: SVG render failed: {ex.Message}");
+        exitCode = 1;
+    }
+}
 
 var postExitCode = RunScenarioCommands(scenario.Post, "post", scenario.Cwd, shell, verbose);
 if (postExitCode != 0)
     return postExitCode;
 
-Console.Error.WriteLine($"Done: {outputPath}");
+if (exitCode != 0)
+    return exitCode;
+
+if (outputFormat == OutputFormat.Svg)
+    Console.Error.WriteLine($"Done: {outputPath}, {svgPath}");
+else
+    Console.Error.WriteLine($"Done: {outputPath}");
 return 0;
 
 static bool TryParseInitArgs(string[] args, out string? path, out string error)
@@ -150,18 +179,48 @@ static bool TryParseInitArgs(string[] args, out string? path, out string error)
     return true;
 }
 
-static bool TryParseRunArgs(string[] args, out string scenarioPath, out string? outputPath, out bool verbose, out string error)
+static bool TryParseRunArgs(
+    string[] args,
+    out string scenarioPath,
+    out string? outputPath,
+    out OutputFormat outputFormat,
+    out bool verbose,
+    out string error)
 {
     scenarioPath = "";
     outputPath = null;
+    outputFormat = OutputFormat.Cast;
     verbose = false;
     error = "";
 
-    foreach (var arg in args)
+    for (var i = 0; i < args.Length; i++)
     {
+        var arg = args[i];
         if (arg == "--verbose")
         {
             verbose = true;
+            continue;
+        }
+
+        if (arg == "--format")
+        {
+            if (i + 1 >= args.Length)
+            {
+                error = "--format requires a value";
+                return false;
+            }
+
+            if (!TryParseOutputFormat(args[++i], out outputFormat, out error))
+                return false;
+
+            continue;
+        }
+
+        if (arg.StartsWith("--format=", StringComparison.Ordinal))
+        {
+            if (!TryParseOutputFormat(arg["--format=".Length..], out outputFormat, out error))
+                return false;
+
             continue;
         }
 
@@ -192,6 +251,24 @@ static bool TryParseRunArgs(string[] args, out string scenarioPath, out string? 
 
     error = "scenario path is required";
     return false;
+}
+
+static bool TryParseOutputFormat(string value, out OutputFormat format, out string error)
+{
+    format = OutputFormat.Cast;
+    error = "";
+    switch (value.ToLowerInvariant())
+    {
+        case "cast":
+            format = OutputFormat.Cast;
+            return true;
+        case "svg":
+            format = OutputFormat.Svg;
+            return true;
+        default:
+            error = $"unknown format: {value}";
+            return false;
+    }
 }
 
 static Scenario ParseScenario(string yaml)
@@ -1133,7 +1210,13 @@ static void Warn(string scope, string? cmd, string detail)
         Console.Error.WriteLine($"Warning: {scope} ({cmd}): {detail}");
 }
 
-static void WriteCast(Scenario scenario, List<CastEvent> events, string outputPath, ShellLaunch shell, long timestamp)
+static void WriteCast(
+    Scenario scenario,
+    List<CastEvent> events,
+    string outputPath,
+    ShellLaunch shell,
+    long timestamp,
+    ResolvedRenderSettings renderSettings)
 {
     using var writer = new StreamWriter(outputPath, append: false, encoding: new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     writer.NewLine = "\n";
@@ -1144,7 +1227,9 @@ static void WriteCast(Scenario scenario, List<CastEvent> events, string outputPa
     writer.WriteLine(
         $"{{\"version\":2,\"width\":{width},\"height\":{height}" +
         $",\"timestamp\":{timestamp},\"title\":{JsonString(title)}" +
-        $",\"env\":{{\"SHELL\":{JsonString(shell.EnvValue)},\"TERM\":\"xterm-256color\"}}}}");
+        $",\"env\":{{\"SHELL\":{JsonString(shell.EnvValue)},\"TERM\":\"xterm-256color\"}}" +
+        $",\"theme\":{{\"fg\":{JsonString(renderSettings.Theme.Fg)},\"bg\":{JsonString(renderSettings.Theme.Bg)},\"palette\":{JsonString(renderSettings.Theme.Palette)}}}" +
+        $",\"scenario2cast\":{{\"font-size\":{renderSettings.FontSize.ToString(CultureInfo.InvariantCulture)}}}}}");
 
     foreach (var ev in events)
         writer.WriteLine($"[{ev.Time.ToString("0.######", CultureInfo.InvariantCulture)},\"o\",{JsonString(ev.Data)}]");
@@ -1373,6 +1458,13 @@ static string CreateInitialScenarioYaml()
     # cwd: /your/path            # Optional working directory for all steps
     # shell: bash                # Optional shell override: bash, pwsh, powershell, or a path
 
+    # Optional SVG rendering metadata. Written to the cast header and used by --format svg.
+    # render:
+    #   font-size: 16
+    #   theme:
+    #     fg: "#d0d0d0"
+    #     bg: "#282c34"
+
     # Default settings for all steps. Can be overridden per step by using a mapping with "run" and timing keys.
     settings:
       prompt: "{DefaultPrompt}"             # Default prompt shown before each command.
@@ -1419,7 +1511,7 @@ static string CreateInitialScenarioYaml()
 
 static void PrintUsage()
 {
-    Console.Error.WriteLine("Usage: scenario2cast [--verbose] <scenario.yaml> [output.cast]");
+    Console.Error.WriteLine("Usage: scenario2cast [--verbose] [--format cast|svg] <scenario.yaml> [output]");
     Console.Error.WriteLine("       scenario2cast init [scenario.yaml]");
     Console.Error.WriteLine("       scenario2cast --help");
 }
@@ -1437,6 +1529,12 @@ static void PrintVersion()
 
 record CastEvent(double Time, string Data);
 
+enum OutputFormat
+{
+    Cast,
+    Svg,
+}
+
 readonly record struct CommandOutput(string Stdout, string Stderr, int ExitCode);
 
 record HighlightSpec(string ColorOpen, List<string> At);
@@ -1452,6 +1550,7 @@ public partial class Scenario
     public string? Cwd { get; set; }
     public string? Shell { get; set; }
     public ScenarioSettings? Settings { get; set; }
+    public ScenarioRender? Render { get; set; }
     public List<string>? Pre { get; set; }
     public List<object?>? Steps { get; set; }
     public List<string>? Post { get; set; }
@@ -1467,6 +1566,21 @@ public partial class ScenarioSettings
     public double? PostDelay { get; set; }
     public double? ExecutionDuration { get; set; }
     public string? StderrColor { get; set; }
+}
+
+[YamlObject(NamingConvention.KebabCase)]
+public partial class ScenarioRender
+{
+    public int? FontSize { get; set; }
+    public ScenarioTheme? Theme { get; set; }
+}
+
+[YamlObject(NamingConvention.KebabCase)]
+public partial class ScenarioTheme
+{
+    public string? Fg { get; set; }
+    public string? Bg { get; set; }
+    public string? Palette { get; set; }
 }
 
 public class CommandEntry

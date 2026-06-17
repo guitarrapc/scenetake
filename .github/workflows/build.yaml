@@ -59,10 +59,11 @@ jobs:
           fi
 
           binary_path="$artifact_dir/$binary_name"
-          output_path="$artifact_dir/smoke.cast"
+          output_stem="$artifact_dir/smoke"
 
           test -f "$binary_path"
 
-          "$binary_path" samples/basic.yaml "$output_path"
+          "$binary_path" --format svg samples/basic.yaml "$output_stem"
 
-          test -f "$output_path"
+          test -f "$output_stem.cast"
+          test -f "$output_stem.svg"
