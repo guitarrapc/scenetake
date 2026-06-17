@@ -67,6 +67,9 @@ scenario2cast init
 # シナリオを実行して cast ファイルを生成
 scenario2cast scenario.yaml
 
+# cast 生成時に正常な pre/post 実行ログも表示
+scenario2cast --verbose scenario.yaml
+
 # asciinemaで再生
 asciinema play scenario.cast
 
@@ -84,7 +87,7 @@ docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/scenario.cast /data/sce
 scenario2cast init [scenario.yaml]
 
 # シナリオを実行して cast を生成
-scenario2cast scenario.yaml [output.cast]
+scenario2cast [--verbose] scenario.yaml [output.cast]
 ```
 
 **Notes**
@@ -93,6 +96,7 @@ scenario2cast scenario.yaml [output.cast]
   - Linux/macOS の既定シェルは `$SHELL`、なければ `bash`
   - Windows の既定シェルは `pwsh`、なければ `powershell`、Windows で `shell: bash` を指定した場合は Git Bash / MSYS の `bash` を使います
 - `settings` でpromptとtiming の既定値を設定できます
+- `pre` / `post` は録画フロー外で setup / teardown コマンドを実行します。stdout/stderr は CLI に表示されますが、cast ファイルには一切書き込まれません。
 - `steps`:
   - 実際に実行されるため、ファイル変更や外部システムを操作するような副作用のあるコマンドは慎重に使ってください
   - `vim` や `htop` のような対話的コマンドは避けてください
@@ -115,6 +119,9 @@ settings:
   post-delay: 1.5          # プロンプト表示後・次の step 入力までの停止時間
   execution-duration: 0.1  # 任意。各コマンド実行の cast 上待機時間
   stderr-color: red        # stderr に ANSI SGR がない場合の既定色（デフォルト: red）
+
+pre:
+  - dotnet build
 
 steps:
   # コマンドをリスト形式で書くと、settings の既定値が適用
@@ -153,7 +160,22 @@ steps:
   # この step の stderr 既定色を上書き
   - run: echo "stderr override" 1>&2
     stderr-color: bright-yellow
+
+post:
+  - git clean -fd
 ```
+
+### Pre/Post コマンド
+
+`pre` と `post` は setup / teardown コマンドを書く top-level の文字列配列です。`steps` と同じ `shell` と `cwd` を使い、各配列要素は 1 つのコマンド文字列として shell に渡されます。空の要素は無視されます。
+
+`pre` は `steps` の前に実行されます。fail-fast です。いずれかの `pre` コマンドが非 0 で終了した場合、後続の `pre` はスキップされ、`steps` は実行されず、cast ファイルは書き込まれず、`post` も実行されません。scenario2cast は失敗したコマンドの exit code で終了します。
+
+`post` は `steps` の実行後、cast ファイルを書き込んだ後に実行されます。こちらも fail-fast です。いずれかの `post` コマンドが非 0 で終了した場合、後続の `post` はスキップされ、すでに書き込まれた cast ファイルはそのまま残り、scenario2cast は失敗したコマンドの exit code で終了します。
+
+記録対象の `steps` は成功しても失敗しても、その結果が記録されます。step の exit code は scenario2cast の exit code を決めません。`pre` と `post` は録画フロー外です。stdout/stderr は元のストリームを保って CLI に表示されますが、コマンド文字列も出力も cast ファイルには一切書き込まれません。
+
+`--verbose` を使うと、正常に実行された `pre` / `post` のコマンドラベルとフェーズマーカーを表示します。既存の `steps` の `running:` ログは常に表示されます。失敗した `pre` / `post` は、`--verbose` の有無に関係なく、完全なコマンド文字列と exit code を常に表示します。
 
 - `highlight` は step のみ対応です（map-form の `run` step）。
 - `run-highlight` は step のみ対応です（map-form の `run` step）。

@@ -1,4 +1,4 @@
-#:sdk Microsoft.NET.Sdk
+﻿#:sdk Microsoft.NET.Sdk
 #:property TargetFramework=net10.0
 #:property Version=0.2.0
 #:property Nullable=enable
@@ -32,14 +32,21 @@ if (args.Length < 1)
 
 if (args[0] is "init")
 {
-    if (args.Length >= 2 && args[1] is "-h" or "--help")
+    if (args.Length == 2 && args[1] is "-h" or "--help")
     {
         PrintInitUsage();
         return 0;
     }
 
-    var initPath = args.Length >= 2 && !args[1].StartsWith('-')
-        ? Path.GetFullPath(args[1])
+    if (!TryParseInitArgs(args, out var initPathArg, out var initError))
+    {
+        Console.Error.WriteLine($"Error: {initError}");
+        PrintInitUsage();
+        return 1;
+    }
+
+    var initPath = initPathArg is not null
+        ? Path.GetFullPath(initPathArg)
         : Path.GetFullPath("scenario.yaml");
 
     if (File.Exists(initPath))
@@ -66,15 +73,22 @@ if (args[0] is "-h" or "--help")
     return 0;
 }
 
-var scenarioPath = Path.GetFullPath(args[0]);
+if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var verbose, out var runError))
+{
+    Console.Error.WriteLine($"Error: {runError}");
+    PrintUsage();
+    return 1;
+}
+
+var scenarioPath = Path.GetFullPath(scenarioArg);
 if (!File.Exists(scenarioPath))
 {
     Console.Error.WriteLine($"Error: {scenarioPath} not found");
     return 1;
 }
 
-var outputPath = args.Length >= 2
-    ? Path.GetFullPath(args[1])
+var outputPath = outputArg is not null
+    ? Path.GetFullPath(outputArg)
     : Path.ChangeExtension(scenarioPath, ".cast");
 
 Console.Error.WriteLine($"Loading: {scenarioPath}");
@@ -89,14 +103,96 @@ var deterministicTimestamp = ComputeDeterministicTimestamp(deterministicSeed);
 var shell = ResolveShell(scenario);
 Console.Error.WriteLine($"Using shell: {shell.DisplayName}");
 
+var preExitCode = RunScenarioCommands(scenario.Pre, "pre", scenario.Cwd, shell, verbose);
+if (preExitCode != 0)
+    return preExitCode;
+
+if (verbose)
+    PrintPhase("steps");
+
 Console.Error.WriteLine("Generating cast...");
 var events = Generate(scenario, shell, deterministicSeed);
 
 WriteCast(scenario, events, outputPath, shell, deterministicTimestamp);
 
 var duration = events.Count > 0 ? events[^1].Time : 0.0;
-Console.Error.WriteLine($"Done: {outputPath}  ({events.Count} events, {duration:F1}s)");
+Console.Error.WriteLine($"Written: {outputPath}  ({events.Count} events, {duration:F1}s)");
+
+var postExitCode = RunScenarioCommands(scenario.Post, "post", scenario.Cwd, shell, verbose);
+if (postExitCode != 0)
+    return postExitCode;
+
+Console.Error.WriteLine($"Done: {outputPath}");
 return 0;
+
+static bool TryParseInitArgs(string[] args, out string? path, out string error)
+{
+    path = null;
+    error = "";
+    for (var i = 1; i < args.Length; i++)
+    {
+        var arg = args[i];
+        if (arg.StartsWith('-'))
+        {
+            error = $"unknown option: {arg}";
+            return false;
+        }
+
+        if (path is not null)
+        {
+            error = $"unexpected argument: {arg}";
+            return false;
+        }
+
+        path = arg;
+    }
+
+    return true;
+}
+
+static bool TryParseRunArgs(string[] args, out string scenarioPath, out string? outputPath, out bool verbose, out string error)
+{
+    scenarioPath = "";
+    outputPath = null;
+    verbose = false;
+    error = "";
+
+    foreach (var arg in args)
+    {
+        if (arg == "--verbose")
+        {
+            verbose = true;
+            continue;
+        }
+
+        if (arg.StartsWith('-'))
+        {
+            error = $"unknown option: {arg}";
+            return false;
+        }
+
+        if (scenarioPath.Length == 0)
+        {
+            scenarioPath = arg;
+            continue;
+        }
+
+        if (outputPath is null)
+        {
+            outputPath = arg;
+            continue;
+        }
+
+        error = $"unexpected argument: {arg}";
+        return false;
+    }
+
+    if (scenarioPath.Length != 0)
+        return true;
+
+    error = "scenario path is required";
+    return false;
+}
 
 static Scenario ParseScenario(string yaml)
 {
@@ -241,7 +337,65 @@ static CommandOutput RunCommand(string cmd, string? cwd, ShellLaunch shell)
     var stdout = proc.StandardOutput.ReadToEnd();
     var stderr = proc.StandardError.ReadToEnd();
     proc.WaitForExit();
-    return new CommandOutput(stdout, stderr);
+    return new CommandOutput(stdout, stderr, proc.ExitCode);
+}
+
+static int RunScenarioCommands(List<string>? commands, string phase, string? cwd, ShellLaunch shell, bool verbose)
+{
+    if (commands is null || commands.Count == 0)
+        return 0;
+
+    var phasePrinted = false;
+    foreach (var cmd in commands)
+    {
+        if (string.IsNullOrWhiteSpace(cmd))
+            continue;
+
+        if (verbose)
+        {
+            if (!phasePrinted)
+            {
+                PrintPhase(phase);
+                phasePrinted = true;
+            }
+
+            Console.Error.WriteLine($"Running {phase}:");
+            Console.Error.WriteLine(cmd);
+        }
+
+        CommandOutput execution;
+        try
+        {
+            execution = RunCommand(cmd, cwd, shell);
+        }
+        catch (Exception ex)
+        {
+            PrintScenarioCommandFailure(phase, cmd, 1);
+            Console.Error.WriteLine(ex.Message);
+            return 1;
+        }
+
+        if (!string.IsNullOrEmpty(execution.Stdout))
+            Console.Out.Write(execution.Stdout);
+        if (!string.IsNullOrEmpty(execution.Stderr))
+            Console.Error.Write(execution.Stderr);
+
+        if (execution.ExitCode == 0)
+            continue;
+
+        PrintScenarioCommandFailure(phase, cmd, execution.ExitCode);
+        return execution.ExitCode;
+    }
+
+    return 0;
+}
+
+static void PrintPhase(string name) => Console.Error.WriteLine($"== {name} ==");
+
+static void PrintScenarioCommandFailure(string phase, string cmd, int exitCode)
+{
+    Console.Error.WriteLine($"{phase} failed (exit code {exitCode}):");
+    Console.Error.WriteLine(cmd);
 }
 
 static string MergeCommandOutput(CommandOutput output, string stderrStyle)
@@ -1229,6 +1383,10 @@ static string CreateInitialScenarioYaml()
       execution-duration: {DefaultExecutionDuration} # Optional cast wait after command execution.
       stderr-color: {DefaultStderrColorSpec}       # Applied only when stderr has no ANSI SGR.
 
+    # Optional setup commands. They run before steps, but are not recorded in the cast.
+    # pre:
+    #   - echo "run before steps"
+
     # Add one command per step. Use a mapping when you want to override per-command timing.
     steps:
       - echo "Hello, World!"
@@ -1252,12 +1410,16 @@ static string CreateInitialScenarioYaml()
       - name: "[bright-yellow]stderr color override"
         run: echo "stderr sample" 1>&2
         stderr-color: "bold fg:red"
+
+    # Optional teardown commands. They run after the cast file is written, but are not recorded in the cast.
+    # post:
+    #   - echo "run after steps"
     """;
 }
 
 static void PrintUsage()
 {
-    Console.Error.WriteLine("Usage: scenario2cast <scenario.yaml> [output.cast]");
+    Console.Error.WriteLine("Usage: scenario2cast [--verbose] <scenario.yaml> [output.cast]");
     Console.Error.WriteLine("       scenario2cast init [scenario.yaml]");
     Console.Error.WriteLine("       scenario2cast --help");
 }
@@ -1275,7 +1437,7 @@ static void PrintVersion()
 
 record CastEvent(double Time, string Data);
 
-readonly record struct CommandOutput(string Stdout, string Stderr);
+readonly record struct CommandOutput(string Stdout, string Stderr, int ExitCode);
 
 record HighlightSpec(string ColorOpen, List<string> At);
 
@@ -1290,7 +1452,9 @@ public partial class Scenario
     public string? Cwd { get; set; }
     public string? Shell { get; set; }
     public ScenarioSettings? Settings { get; set; }
+    public List<string>? Pre { get; set; }
     public List<object?>? Steps { get; set; }
+    public List<string>? Post { get; set; }
 }
 
 [YamlObject(NamingConvention.KebabCase)]

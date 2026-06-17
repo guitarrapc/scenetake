@@ -67,6 +67,9 @@ scenario2cast init
 # Run the scenario to generate a cast file
 scenario2cast scenario.yaml
 
+# Show normal pre/post execution logs while generating a cast file
+scenario2cast --verbose scenario.yaml
+
 # Play with asciinema
 asciinema play scenario.cast
 
@@ -84,7 +87,7 @@ docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/scenario.cast /data/sce
 scenario2cast init [scenario.yaml]
 
 # Run scenario to generate cast
-scenario2cast scenario.yaml [output.cast]
+scenario2cast [--verbose] scenario.yaml [output.cast]
 ```
 
 **Notes**
@@ -93,6 +96,7 @@ scenario2cast scenario.yaml [output.cast]
   - Linux/macOS default shell is `$SHELL`, with `bash` as fallback.
   - Windows default shell is `pwsh`, with `powershell` as fallback. On Windows, `shell: bash` uses Git Bash / MSYS `bash` when available.
 - `settings` provides defaults for prompt and timing.
+- `pre` / `post` run setup and teardown commands outside the recording flow. Their stdout/stderr are printed to the CLI, but are never written to the cast file.
 - `steps`:
   - Steps are executed for real, so use caution with commands that modify files or affect external systems.
   - Avoid interactive commands such as `vim` or `htop`.
@@ -115,6 +119,9 @@ settings:
   post-delay: 1.5          # Pause after prompt appears before next step typing
   execution-duration: 0.1  # Optional. Default cast wait per command
   stderr-color: red        # default color for stderr text when stderr has no ANSI SGR sequences. (default: red)
+
+pre:
+  - dotnet build
 
 steps:
   # Writing a command as a string applies default settings from `settings`
@@ -153,7 +160,22 @@ steps:
   # Override default stderr color for this step
   - run: echo "stderr override" 1>&2
     stderr-color: bright-yellow
+
+post:
+  - git clean -fd
 ```
+
+### Pre/Post Commands
+
+`pre` and `post` are top-level string arrays for setup and teardown commands. They use the same `shell` and `cwd` as `steps`, and each array item is passed to the shell as one command string. Empty entries are ignored.
+
+`pre` runs before `steps`. It is fail-fast: if any `pre` command exits non-zero, later `pre` commands are skipped, `steps` are not executed, the cast file is not written, `post` is not executed, and scenario2cast exits with the failed command's exit code.
+
+`post` runs after `steps` are executed and the cast file is written. It is also fail-fast: if any `post` command exits non-zero, later `post` commands are skipped, the already written cast file remains, and scenario2cast exits with the failed command's exit code.
+
+Recorded `steps` may succeed or fail; either result is recorded and does not determine scenario2cast's exit code. `pre` and `post` are outside the recording flow: their stdout/stderr are printed to the CLI, preserving the original streams, but their command text and output are never written to the cast file.
+
+Use `--verbose` to show successful `pre`/`post` command labels and phase markers. Existing `steps` `running:` logs are always shown. Failed `pre`/`post` commands always print the full command text and exit code.
 
 - `highlight` is step-only (map-form `run` step).
 - `run-highlight` is step-only (map-form `run` step).

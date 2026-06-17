@@ -1,6 +1,6 @@
 # Pre/Post Command Specification
 
-Status: **Proposed**
+Status: **Implemented**
 
 ## Motivation
 
