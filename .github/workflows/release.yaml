@@ -85,7 +85,7 @@ jobs:
         shell: bash
         run: |
           artifact_dir="$GITHUB_WORKSPACE/release/${{ matrix.rid }}"
-          archive_path="$GITHUB_WORKSPACE/${{ matrix.artifact }}-${{ github.ref_name }}.tar.gz"
+          archive_path="$GITHUB_WORKSPACE/${{ matrix.artifact }}.tar.gz"
           checksum_path="$archive_path.sha256"
 
           tar -czf "$archive_path" -C "$artifact_dir" .
