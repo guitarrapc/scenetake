@@ -1179,26 +1179,37 @@ static string CreateInitialScenarioYaml()
     return $"""
     # scenario2cast starter scenario. Edit the values below and add commands under steps.
     title: "My App"            # Optional cast title
-    # width: 80                  # Default: 80
+    # width: 120                 # Default: 120
     # height: 24                 # Default: 24
     # cwd: /your/path            # Optional working directory for all steps
-    # shell: bash                # Optional shell override: bash, pwsh, powershell, or a path
+    shell: bash                # Optional shell override: bash, pwsh, powershell, or a path
 
     # Default settings for all steps. Can be overridden per step by using a mapping with "run" and timing keys.
-    # settings:
-    #   prompt: "{DefaultPrompt}"             # Default prompt shown before each command. Default: "{DefaultPrompt}"
-    #   typing-speed: {DefaultSpeed}       # Seconds per character on average. Default: {DefaultSpeed}
-    #   typing-jitter: {DefaultJitter}     # Random typing variance (+/- seconds). Default: {DefaultJitter}
-    #   pre-delay: {DefaultPreDelay}           # Pause before typing each step. Default: {DefaultPreDelay}
-    #   post-delay: {DefaultPostDelay}          # Pause after output before the next step. Default: {DefaultPostDelay}
-    #   execution-duration: {DefaultExecutionDuration} # Optional cast wait after command execution. Default: {DefaultExecutionDuration}
-    #   stderr-color: red             # Optional default stderr color when stderr has no ANSI SGR. Default: off
+    settings:
+      prompt: "{DefaultPrompt}"             # Default prompt shown before each command.
+      typing-speed: {DefaultSpeed}       # Seconds per character on average.
+      typing-jitter: {DefaultJitter}     # Random typing variance (+/- seconds).
+      pre-delay: {DefaultPreDelay}           # Pause before typing each step.
+      post-delay: {DefaultPostDelay}          # Pause after output before the next step.
+      execution-duration: {DefaultExecutionDuration} # Optional cast wait after command execution.
+      stderr-color: {DefaultStderrColorSpec}       # Applied only when stderr has no ANSI SGR.
 
     # Add one command per step. Use a mapping when you want to override per-command timing.
     steps:
       - echo "Hello, World!"
       - run: pwd
         post-delay: 1.5
+      - name: "[cyan]Styled command typing + output highlight"
+        run: printf 'line1 alpha\nline2 beta gamma\nline3\n'
+        run-highlight: "bold fg:bright-cyan"
+        highlight:
+          - at: "2:7-10"
+            color: "underline fg:yellow"
+          - at: "1-2"
+            color: "fg:bright-green"
+      - name: "[bright-yellow]stderr color override"
+        run: echo "stderr sample" 1>&2
+        stderr-color: "bold fg:red"
     """;
 }
 

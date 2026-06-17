@@ -55,49 +55,48 @@ All I need in the end is a cast file, scenario2cast is a cross-platform tool tha
 
 ## Quick Start
 
-Download the asset for your OS from the GitHub Releases page, place `scenario2cast` (or `scenario2cast.exe` on Windows) where you want.
+Download the asset for your OS from GitHub Releases, then place `scenario2cast` (or `scenario2cast.exe` on Windows) where you want.
 
 ```bash
 # On macOS/Linux, add execute permission if needed.
 chmod +x ./scenario2cast
 
-# Create a minimal scenario
-scenario2cast init scenario.yaml
+# Create a starter scenario file in the current directory
+scenario2cast init
 
-# Or generate the starter file in the current directory as `scenario.yaml`.
-# scenario2cast init
-
-# Run
-scenario2cast scenario.yaml [output.cast]
-
-# If `output.cast` is omitted, output is written next to the scenario file with the `.cast` extension.
-scenario2cast samples/basic.yaml
-
-# Specify output path
-scenario2cast samples/basic.yaml basic.cast
+# Run the scenario to generate a cast file
+scenario2cast scenario.yaml
 
 # Play with asciinema
-asciinema play basic.cast
+asciinema play scenario.cast
 
 # Convert to gif with agg (Linux/macOS) - GIF default font size is 16, adjust font size if you feel too small or large
-docker run --rm -v "${PWD}:/data" kayvan/agg /data/samples/basic.cast /data/samples/basic.gif --font-size 16
+docker run --rm -v "${PWD}:/data" kayvan/agg /data/scenario.cast /data/scenario.gif --font-size 20
 
 # Convert to gif with agg (Windows PowerShell)
-docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/samples/basic.cast /data/samples/basic.gif --font-size 16
+docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/scenario.cast /data/scenario.gif --font-size 20
+```
+
+**Usage**
+
+```bash
+# Initialize a new scenario file
+scenario2cast init [scenario.yaml]
+
+# Run scenario to generate cast
+scenario2cast scenario.yaml [output.cast]
 ```
 
 **Notes**
 
-- Use top-level `shell` to choose the command shell.
+- `shell`:
+  - Linux/macOS default shell is `$SHELL`, with `bash` as fallback.
+  - Windows default shell is `pwsh`, with `powershell` as fallback. On Windows, `shell: bash` uses Git Bash / MSYS `bash` when available.
 - `settings` provides defaults for prompt and timing.
-- `init` generates a commented starter scenario so you can start by editing the YAML.
-- Avoid interactive commands such as `vim` or `htop`.
-- Be careful with commands that change files, the working tree, or external systems.
-- `execution-duration` is optional and useful for keeping long commands readable.
-- Linux/macOS default: `$SHELL`, fallback to `bash`.
-- Windows default: `pwsh`, fallback to `powershell`.
-- On Windows, `shell: bash` uses Git Bash / MSYS bash if available.
-- `Steps` are executed for real, so be careful with side effects.
+- `steps`:
+  - Steps are executed for real, so use caution with commands that modify files or affect external systems.
+  - Avoid interactive commands such as `vim` or `htop`.
+  - For long-running commands, use `execution-duration` to keep playback readable.
 
 ## Scenario Format
 
@@ -161,29 +160,6 @@ steps:
 - `stderr-color` supports both scopes: `settings.stderr-color` default + step `stderr-color` override.
 - Existing ANSI on stderr is preserved; `stderr-color` applies only when stderr has no ANSI SGR.
 
-### Color Names (ANSI SGR)
-
-`highlight`, `run-highlight`, and `stderr-color` use the same 16-color foreground palette.
-
-| Name | ANSI SGR |
-|------|----------|
-| `black` | `30` |
-| `red` | `31` |
-| `green` | `32` |
-| `yellow` | `33` |
-| `blue` | `34` |
-| `magenta` | `35` |
-| `cyan` | `36` |
-| `white` | `37` |
-| `bright-black` (`gray`, `grey`) | `90` |
-| `bright-red` | `91` |
-| `bright-green` | `92` |
-| `bright-yellow` | `93` |
-| `bright-blue` | `94` |
-| `bright-magenta` | `95` |
-| `bright-cyan` | `96` |
-| `bright-white` | `97` |
-
 ### Style Values (bold/underline/background/intensity)
 
 `highlight.color`, `run-highlight`, and `stderr-color` accept style strings in addition to simple color names.
@@ -206,6 +182,27 @@ steps:
   - run: echo "plain stderr" 1>&2
     stderr-color: "\\e[1;93m"
 ```
+
+**Color Names (ANSI SGR)**
+
+| Name | ANSI SGR |
+|------|----------|
+| `black` | `30` |
+| `red` | `31` |
+| `green` | `32` |
+| `yellow` | `33` |
+| `blue` | `34` |
+| `magenta` | `35` |
+| `cyan` | `36` |
+| `white` | `37` |
+| `bright-black` (`gray`, `grey`) | `90` |
+| `bright-red` | `91` |
+| `bright-green` | `92` |
+| `bright-yellow` | `93` |
+| `bright-blue` | `94` |
+| `bright-magenta` | `95` |
+| `bright-cyan` | `96` |
+| `bright-white` | `97` |
 
 ### Command Keys
 

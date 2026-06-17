@@ -55,49 +55,48 @@ steps:
 
 ## クイックスタート
 
-GitHub の Releases ページから利用 OS 向けアセットをダウンロード、`scenario2cast`（Windows は `scenario2cast.exe`）を任意の場所に配置します。
+GitHub の Releases ページから利用 OS 向けアセットをダウンロードし、`scenario2cast`（Windows は `scenario2cast.exe`）を任意の場所に配置します。
 
 ```bash
 # macOS/Linux は必要に応じて実行権限を付与
 chmod +x ./scenario2cast
 
-# 最小シナリオを作成
-scenario2cast init scenario.yaml
+# 現在のディレクトリにスターターシナリオを作成
+scenario2cast init
 
-# 省略すると、現在のディレクトリに`scenario.yaml`として初期ファイルを生成します。
-# scenario2cast init
-
-# 実行
-scenario2cast scenario.yaml [output.cast]
-
-# `output.cast`を省略すると、シナリオファイルと同じディレクトリに`.cast`拡張子で出力します。
-scenario2cast samples/basic.yaml
-
-# 出力先を指定
-scenario2cast samples/basic.yaml basic.cast
+# シナリオを実行して cast ファイルを生成
+scenario2cast scenario.yaml
 
 # asciinemaで再生
-asciinema play basic.cast
+asciinema play scenario.cast
 
 # gifに変換 (Linux/macOS) - GIF変換時のデフォルトフォントサイズは16です。小さすぎる・大きすぎると感じたらフォントサイズを調整してください。
-docker run --rm -v "${PWD}:/data" kayvan/agg /data/samples/basic.cast /data/samples/basic.gif --font-size 16
+docker run --rm -v "${PWD}:/data" kayvan/agg /data/scenario.cast /data/scenario.gif --font-size 20
 
 # gifに変換 (Windows PowerShell)
-docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/samples/basic.cast /data/samples/basic.gif --font-size 16
+docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/scenario.cast /data/scenario.gif --font-size 20
 ```
 
-**注意事項**
+**Usage**
 
-- `shell` で実行シェルを指定できます
-- `settings` で prompt と timing の既定値を設定できます
-- `init` でコメント付きの初期シナリオを生成できます
-- `vim` や `htop` のような対話的コマンドは避けてください
-- ファイル変更や外部システムに影響するコマンドは慎重に使ってください
-- 長いコマンドは `execution-duration` で見やすく調整できます
-- Linux/macOS の既定シェルは `$SHELL`、なければ `bash` です
-- Windows の既定シェルは `pwsh`、なければ `powershell` です
-- Windows で `shell: bash` を指定した場合は Git Bash / MSYS の `bash` を使います
-- 実際に`step`が実行されるため、副作用のあるコマンドは注意して使用してください
+```bash
+# 新しいシナリオファイルを初期化
+scenario2cast init [scenario.yaml]
+
+# シナリオを実行して cast を生成
+scenario2cast scenario.yaml [output.cast]
+```
+
+**Notes**
+
+- `shell`:
+  - Linux/macOS の既定シェルは `$SHELL`、なければ `bash`
+  - Windows の既定シェルは `pwsh`、なければ `powershell`、Windows で `shell: bash` を指定した場合は Git Bash / MSYS の `bash` を使います
+- `settings` でpromptとtiming の既定値を設定できます
+- `steps`:
+  - 実際に実行されるため、ファイル変更や外部システムを操作するような副作用のあるコマンドは慎重に使ってください
+  - `vim` や `htop` のような対話的コマンドは避けてください
+  - 実行時間が長いコマンドは `execution-duration` で見やすく調整できます
 
 ## シナリオファイル形式
 
@@ -161,29 +160,6 @@ steps:
 - `stderr-color` は両対応です（`settings.stderr-color` の既定値 + step の `stderr-color` 上書き）。
 - stderr 側に既存 ANSI がある場合はそれを保持し、`stderr-color` は ANSI がない stderr にのみ適用されます。
 
-### カラー名とANSIコード
-
-`highlight`、`run-highlight`、`stderr-color` は同じ16色の前景色パレットを使います。
-
-| 名前 | ANSI SGR |
-|------|----------|
-| `black` | `30` |
-| `red` | `31` |
-| `green` | `32` |
-| `yellow` | `33` |
-| `blue` | `34` |
-| `magenta` | `35` |
-| `cyan` | `36` |
-| `white` | `37` |
-| `bright-black` (`gray`, `grey`) | `90` |
-| `bright-red` | `91` |
-| `bright-green` | `92` |
-| `bright-yellow` | `93` |
-| `bright-blue` | `94` |
-| `bright-magenta` | `95` |
-| `bright-cyan` | `96` |
-| `bright-white` | `97` |
-
 ### スタイル指定（bold/underline/background/intensity）
 
 `highlight.color`、`run-highlight`、`stderr-color` には、単純なカラー名に加えてスタイル文字列も指定できます。
@@ -206,6 +182,27 @@ steps:
   - run: echo "plain stderr" 1>&2
     stderr-color: "\\e[1;93m"
 ```
+
+**カラー名とANSIコード**
+
+| 名前 | ANSI SGR |
+|------|----------|
+| `black` | `30` |
+| `red` | `31` |
+| `green` | `32` |
+| `yellow` | `33` |
+| `blue` | `34` |
+| `magenta` | `35` |
+| `cyan` | `36` |
+| `white` | `37` |
+| `bright-black` (`gray`, `grey`) | `90` |
+| `bright-red` | `91` |
+| `bright-green` | `92` |
+| `bright-yellow` | `93` |
+| `bright-blue` | `94` |
+| `bright-magenta` | `95` |
+| `bright-cyan` | `96` |
+| `bright-white` | `97` |
 
 ### コマンド設定一覧
 

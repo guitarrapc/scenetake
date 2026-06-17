@@ -20,14 +20,14 @@ steps:
         at: "1:7-"
       - color: green
         at: "2:7-10"
-      - color: blue
-        at: "2"
+      - color: magenta
+        at: "2:11-"
       - color: underline fg:bright-white bg:blue
         at: "3"
   - name: stderr color default is red
-    run: echo "plain stderr sample" 1>&2
+    run: echo "this is error" 1>&2
   - name: stderr color override
-    run: echo "plain stderr sample override color" 1>&2
+    run: echo "this is error" 1>&2
     stderr-color: bright-yellow
   - name: stderr style override with SGR literal
     run: echo "stderr style literal" 1>&2
