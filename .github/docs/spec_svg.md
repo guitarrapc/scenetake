@@ -113,7 +113,7 @@ The cast file is never modified by the `svg` subcommand.
 - [spec_cli.md](spec_cli.md) — commands, options, logging, exit codes.
 - [spec_highlight.md](spec_highlight.md) — cast-event coloring (header `theme` is separate).
 
-Cast files remain valid asciinema v3 input for agg, asg, asciinema play, and similar tools. External tools ignore unknown `tags`.
+Cast files remain valid asciinema v3 input for agg (1.6.0+), asg, asciinema play, and similar tools. External tools ignore unknown `tags`. Older agg versions and the `kayvan/agg` Docker image (agg 1.4.0) support only asciicast v2.
 
 ## References
 

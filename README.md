@@ -81,11 +81,11 @@ scenario2cast --verbose scenario.yaml
 # Play with asciinema
 asciinema play scenario.cast
 
-# Convert to gif with agg (Linux/macOS) - GIF default font size is 16, adjust font size if you feel too small or large
-docker run --rm -v "${PWD}:/data" kayvan/agg /data/scenario.cast /data/scenario.gif --font-size 20
+# Convert to gif with agg (Linux/macOS) — requires agg 1.6.0+ for v3 cast files
+docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20
 
 # Convert to gif with agg (Windows PowerShell)
-docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/scenario.cast /data/scenario.gif --font-size 20
+docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20
 ```
 
 **Usage**

@@ -81,11 +81,11 @@ scenario2cast --verbose scenario.yaml
 # asciinemaで再生
 asciinema play scenario.cast
 
-# gifに変換 (Linux/macOS) - GIF変換時のデフォルトフォントサイズは16です。小さすぎる・大きすぎると感じたらフォントサイズを調整してください。
-docker run --rm -v "${PWD}:/data" kayvan/agg /data/scenario.cast /data/scenario.gif --font-size 20
+# agg で gif に変換 (Linux/macOS) — v3 cast には agg 1.6.0 以降が必要。フォントサイズは --font-size で調整
+docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20
 
-# gifに変換 (Windows PowerShell)
-docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/scenario.cast /data/scenario.gif --font-size 20
+# agg で gif に変換 (Windows PowerShell)
+docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20
 ```
 
 **Usage**
