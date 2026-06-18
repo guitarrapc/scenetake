@@ -40,7 +40,8 @@ internal static class TerminalReplay
             lastSignature = signature;
         }
 
-        CaptureIfChanged(0);
+        if (!IsBlankBuffer(buffer))
+            CaptureIfChanged(0);
 
         foreach (var ev in events)
         {
@@ -122,7 +123,7 @@ internal static class TerminalReplay
         return frames.Take(lastNonBlank + 1).ToList();
     }
 
-    private static bool IsBlankFrame(ScreenBuffer buffer)
+    private static bool IsBlankBuffer(ScreenBuffer buffer)
     {
         for (var row = 0; row < buffer.Height; row++)
         {
@@ -143,6 +144,9 @@ internal static class TerminalReplay
 
         return true;
     }
+
+    private static bool IsBlankFrame(ScreenBuffer buffer) =>
+        IsBlankBuffer(buffer);
 
     private static bool HasTrailingBlankIndicators(IReadOnlyList<CastEvent> events, int startIndex)
     {

@@ -10,7 +10,8 @@ internal static class SvgFrameRenderer
     private const double InnerPaddingHorizontalMax = 16.0;
     private const double InnerPaddingVerticalMin = 2.0;
     private const double InnerPaddingVerticalMax = 8.0;
-    private const double MinimumFrameInterval = 0.05;
+    private const double LayerFadeSeconds = 0.001;
+    private const double CursorBlockOpacity = 0.5;
 
     internal static string Render(
         IReadOnlyList<ReplayFrame> frames,
@@ -21,62 +22,252 @@ internal static class SvgFrameRenderer
         if (frames.Count == 0)
             return BuildEmptySvg(render, canvasWidth, canvasHeight);
 
-        frames = CollapseDuplicateFrames(frames);
+        frames = SvgFrameOptimizer.Optimize(frames);
         var theme = TerminalTheme.FromResolved(render.Theme);
-        var fontSize = render.FontSize;
-        var metrics = CreateMetrics(fontSize, canvasWidth, canvasHeight);
-        var lastTime = Math.Max(MinimumFrameInterval, frames[^1].Time);
-        var totalDuration = lastTime + MinimumFrameInterval;
+        var metrics = CreateMetrics(render.FontSize, canvasWidth, canvasHeight);
 
-        var hashToDefsIndex = new Dictionary<ulong, int>();
-        var uniqueIndices = new List<int>();
-        var frameToDefs = new int[frames.Count];
+        var rowLayers = BuildRowLayers(frames, canvasWidth, canvasHeight, theme);
+        var cursorLayers = BuildCursorLayers(frames);
+        var viewportLayers = BuildViewportLayers(frames);
 
-        for (var i = 0; i < frames.Count; i++)
-        {
-            var hash = TerminalReplay.BuildVisualSignature(frames[i].Buffer);
-            if (!hashToDefsIndex.TryGetValue(hash, out var defsIndex))
-            {
-                defsIndex = uniqueIndices.Count;
-                hashToDefsIndex[hash] = defsIndex;
-                uniqueIndices.Add(i);
-            }
+        return BuildLayeredSvg(
+            rowLayers,
+            cursorLayers,
+            viewportLayers,
+            metrics,
+            render,
+            theme,
+            canvasWidth,
+            canvasHeight);
+    }
 
-            frameToDefs[i] = defsIndex;
-        }
+    private static string BuildLayeredSvg(
+        IReadOnlyList<RowLayer> rowLayers,
+        IReadOnlyList<CursorLayer> cursorLayers,
+        IReadOnlyList<ViewportLayer> viewportLayers,
+        SvgMetrics metrics,
+        ResolvedRenderSettings render,
+        TerminalTheme theme,
+        int canvasWidth,
+        int canvasHeight)
+    {
+        var fadeText = LayerFadeSeconds.ToString("0.######", CultureInfo.InvariantCulture);
+        var cursorOpacityText = CursorBlockOpacity.ToString("0.######", CultureInfo.InvariantCulture);
 
-        var sb = new StringBuilder(128 * 1024);
+        if (viewportLayers.Count == 0)
+            viewportLayers = [new ViewportLayer(canvasWidth, canvasHeight, 0)];
+
+        var sb = new StringBuilder(64 * 1024);
         sb.AppendLine(CultureInfo.InvariantCulture, $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLine(CultureInfo.InvariantCulture,
-            $"<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" viewBox=\"0 0 {metrics.SvgWidth:0.##} {metrics.SvgHeight:0.##}\" preserveAspectRatio=\"xMidYMid meet\" role=\"img\" aria-label=\"scenario2cast output\">");
+            $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" viewBox=\"0 0 {metrics.SvgWidth:0.##} {metrics.SvgHeight:0.##}\" preserveAspectRatio=\"xMidYMid meet\" role=\"img\" aria-label=\"scenario2cast output\">");
 
         sb.AppendLine("<style>");
         sb.AppendLine(CultureInfo.InvariantCulture,
-            $".term {{ font-family: {render.FontFamily}; font-size: {fontSize}px; white-space: pre; }}");
+            $"text {{ font-family: {render.FontFamily}; font-size: {render.FontSize}px; white-space: pre; }}");
         sb.AppendLine("text { dominant-baseline: alphabetic; }");
         sb.AppendLine(".bg { shape-rendering: crispEdges; }");
-        sb.AppendLine(".frame { opacity: 0; }");
-        AppendAnimationCss(sb, frames, totalDuration);
+        sb.AppendLine(CultureInfo.InvariantCulture,
+            $".layer {{ opacity: 0; animation-duration: {fadeText}s; animation-timing-function: linear; animation-fill-mode: forwards; }}");
+        sb.AppendLine("@keyframes layer-in { from { opacity: 0; } to { opacity: 1; } }");
+        sb.AppendLine("@keyframes layer-out { from { opacity: 1; } to { opacity: 0; } }");
+        sb.AppendLine(CultureInfo.InvariantCulture,
+            $".cursor-block {{ fill: {theme.Foreground}; fill-opacity: {cursorOpacityText}; }}");
+
+        for (var i = 0; i < rowLayers.Count; i++)
+            AppendLayerStyle(sb, $".layer-{i}", rowLayers[i].ShowTime, rowLayers[i].HideTime);
+
+        for (var i = 0; i < cursorLayers.Count; i++)
+            AppendLayerStyle(sb, $".cursor-layer-{i}", cursorLayers[i].ShowTime, cursorLayers[i].HideTime);
+
+        for (var i = 0; i < viewportLayers.Count; i++)
+        {
+            var viewport = viewportLayers[i];
+            AppendLayerStyle(sb, $".viewport-mask-{i}, .viewport-bg-{i}", viewport.ShowTime, viewport.HideTime);
+        }
+
         sb.AppendLine("</style>");
 
         sb.AppendLine("<defs>");
-        foreach (var frameIndex in uniqueIndices)
-            AppendFrameContent(sb, frames[frameIndex], metrics, theme, $"fd-{frameIndex}");
-        sb.AppendLine("</defs>");
-
-        var bgRect = metrics.BackgroundRect();
         sb.AppendLine(CultureInfo.InvariantCulture,
-            $"<rect x=\"{bgRect.X:0.##}\" y=\"{bgRect.Y:0.##}\" width=\"{bgRect.Width:0.##}\" height=\"{bgRect.Height:0.##}\" fill=\"{render.Theme.Bg}\"/>");
-
-        for (var i = 0; i < frames.Count; i++)
+            $"<mask id=\"viewport-mask\" x=\"0\" y=\"0\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" maskUnits=\"userSpaceOnUse\">");
+        for (var i = 0; i < viewportLayers.Count; i++)
         {
-            var defsFrameIndex = uniqueIndices[frameToDefs[i]];
+            var viewport = viewportLayers[i];
+            var viewportWidth = metrics.ViewportPixelWidth(viewport.Width);
+            var viewportHeight = metrics.ViewportPixelHeight(viewport.Height);
             sb.AppendLine(CultureInfo.InvariantCulture,
-                $"<use href=\"#fd-{defsFrameIndex}\" class=\"frame frame-{i}\"/>");
+                $"<rect class=\"layer viewport-mask-{i}\" x=\"{Padding:0.##}\" y=\"{Padding:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"white\"/>");
         }
 
+        sb.AppendLine("</mask>");
+        sb.AppendLine("</defs>");
+
+        sb.AppendLine("<g mask=\"url(#viewport-mask)\">");
+        for (var i = 0; i < viewportLayers.Count; i++)
+        {
+            var viewport = viewportLayers[i];
+            var viewportWidth = metrics.ViewportPixelWidth(viewport.Width);
+            var viewportHeight = metrics.ViewportPixelHeight(viewport.Height);
+            sb.AppendLine(CultureInfo.InvariantCulture,
+                $"<rect class=\"bg layer viewport-bg-{i}\" x=\"{Padding:0.##}\" y=\"{Padding:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"{render.Theme.Bg}\"/>");
+        }
+
+        var origin = metrics.ContentOrigin;
+        for (var i = 0; i < rowLayers.Count; i++)
+        {
+            var layer = rowLayers[i];
+            sb.AppendLine(CultureInfo.InvariantCulture, $"<g class=\"layer layer-{i}\">");
+            AppendRow(sb, layer.Buffer, layer.Row, origin.X, origin.Y, metrics, theme);
+            sb.AppendLine("</g>");
+        }
+
+        for (var i = 0; i < cursorLayers.Count; i++)
+        {
+            var layer = cursorLayers[i];
+            sb.AppendLine(CultureInfo.InvariantCulture, $"<g class=\"layer cursor-layer-{i}\">");
+            sb.AppendLine(CultureInfo.InvariantCulture,
+                $"<rect class=\"cursor-block\" x=\"{origin.X + layer.Col * metrics.CharWidth:0.##}\" y=\"{origin.Y + layer.Row * metrics.LineHeight:0.##}\" width=\"{metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\"/>");
+            sb.AppendLine("</g>");
+        }
+
+        sb.AppendLine("</g>");
         sb.AppendLine("</svg>");
         return sb.ToString();
+    }
+
+    private static void AppendLayerStyle(
+        StringBuilder sb,
+        string selector,
+        double showTime,
+        double? hideTime)
+    {
+        var showDelay = showTime.ToString("0.######", CultureInfo.InvariantCulture);
+        if (hideTime is double hide)
+        {
+            var hideDelay = hide.ToString("0.######", CultureInfo.InvariantCulture);
+            sb.AppendLine(CultureInfo.InvariantCulture,
+                $"{selector} {{ animation-name: layer-in, layer-out; animation-delay: {showDelay}s, {hideDelay}s; }}");
+            return;
+        }
+
+        sb.AppendLine(CultureInfo.InvariantCulture,
+            $"{selector} {{ animation-name: layer-in; animation-delay: {showDelay}s; }}");
+    }
+
+    private static List<RowLayer> BuildRowLayers(
+        IReadOnlyList<ReplayFrame> frames,
+        int canvasWidth,
+        int canvasHeight,
+        TerminalTheme theme)
+    {
+        var layers = new List<RowLayer>();
+        var activeByRow = new RowLayer?[canvasHeight];
+        var previous = new ScreenBuffer(canvasWidth, canvasHeight, theme);
+
+        foreach (var frame in frames)
+        {
+            var buffer = frame.Buffer;
+            for (var row = 0; row < canvasHeight; row++)
+            {
+                if (RowEquals(previous, buffer, row))
+                    continue;
+
+                if (activeByRow[row] is { } active)
+                    active.HideTime = frame.Time;
+
+                var layer = new RowLayer(row, frame.Time, buffer);
+                layers.Add(layer);
+                activeByRow[row] = layer;
+            }
+
+            previous = buffer;
+        }
+
+        return layers;
+    }
+
+    private static List<CursorLayer> BuildCursorLayers(IReadOnlyList<ReplayFrame> frames)
+    {
+        var layers = new List<CursorLayer>();
+        CursorLayer? active = null;
+
+        foreach (var frame in frames)
+        {
+            var buffer = frame.Buffer;
+            if (!buffer.CursorVisible)
+            {
+                if (active is not null)
+                {
+                    active.HideTime = frame.Time;
+                    active = null;
+                }
+
+                continue;
+            }
+
+            if (active is not null && active.Row == buffer.CursorRow && active.Col == buffer.CursorCol)
+                continue;
+
+            if (active is not null)
+                active.HideTime = frame.Time;
+
+            active = new CursorLayer(buffer.CursorRow, buffer.CursorCol, frame.Time);
+            layers.Add(active);
+        }
+
+        return layers;
+    }
+
+    private static List<ViewportLayer> BuildViewportLayers(IReadOnlyList<ReplayFrame> frames)
+    {
+        var layers = new List<ViewportLayer>();
+        ViewportLayer? active = null;
+
+        foreach (var frame in frames)
+        {
+            if (active is not null
+                && active.Width == frame.ViewportWidth
+                && active.Height == frame.ViewportHeight)
+            {
+                continue;
+            }
+
+            if (active is not null)
+                active.HideTime = frame.Time;
+
+            active = new ViewportLayer(frame.ViewportWidth, frame.ViewportHeight, frame.Time);
+            layers.Add(active);
+        }
+
+        return layers;
+    }
+
+    private static bool RowEquals(ScreenBuffer left, ScreenBuffer right, int row)
+    {
+        if (left.Width != right.Width)
+            return false;
+
+        for (var col = 0; col < left.Width; col++)
+        {
+            var a = left.GetCell(row, col);
+            var b = right.GetCell(row, col);
+            if (a.Text != b.Text
+                || a.Foreground != b.Foreground
+                || a.Background != b.Background
+                || a.Bold != b.Bold
+                || a.Italic != b.Italic
+                || a.Underline != b.Underline
+                || a.Reversed != b.Reversed
+                || a.Faint != b.Faint
+                || a.IsWide != b.IsWide
+                || a.IsWideContinuation != b.IsWideContinuation)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static string BuildEmptySvg(ResolvedRenderSettings render, int width, int height)
@@ -93,109 +284,16 @@ internal static class SvgFrameRenderer
         return sb.ToString();
     }
 
-    private static IReadOnlyList<ReplayFrame> CollapseDuplicateFrames(IReadOnlyList<ReplayFrame> frames)
-    {
-        if (frames.Count <= 1)
-            return frames;
-
-        var collapsed = new List<ReplayFrame> { frames[0] };
-        for (var i = 1; i < frames.Count; i++)
-        {
-            if (TerminalReplay.BuildVisualSignature(frames[i].Buffer)
-                == TerminalReplay.BuildVisualSignature(collapsed[^1].Buffer))
-            {
-                continue;
-            }
-
-            collapsed.Add(frames[i]);
-        }
-
-        if (collapsed.Count == 0 || collapsed[^1].Time != frames[^1].Time
-            || TerminalReplay.BuildVisualSignature(collapsed[^1].Buffer) != TerminalReplay.BuildVisualSignature(frames[^1].Buffer))
-        {
-            if (collapsed.Count == 0 || !ReferenceEquals(collapsed[^1], frames[^1]))
-                collapsed.Add(frames[^1]);
-        }
-
-        return collapsed;
-    }
-
-    private static void AppendAnimationCss(StringBuilder sb, IReadOnlyList<ReplayFrame> frames, double totalDuration)
-    {
-        for (var i = 0; i < frames.Count; i++)
-        {
-            var isLast = i == frames.Count - 1;
-            var start = Percentage(frames[i].Time, totalDuration);
-            var end = isLast
-                ? Percentage(totalDuration - MinimumFrameInterval, totalDuration)
-                : Math.Max(start, Percentage(frames[i + 1].Time, totalDuration));
-            var fadeIn = Math.Max(0d, start - 0.001d);
-            var fadeOut = Math.Min(100d, end + 0.001d);
-
-            sb.AppendLine(CultureInfo.InvariantCulture, $"@keyframes k{i} {{");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  0%, {fadeIn:0.###}% {{ opacity: 0; }}");
-            if (isLast)
-            {
-                sb.AppendLine(CultureInfo.InvariantCulture, $"  {start:0.###}%, 100% {{ opacity: 1; }}");
-            }
-            else
-            {
-                sb.AppendLine(CultureInfo.InvariantCulture, $"  {start:0.###}%, {end:0.###}% {{ opacity: 1; }}");
-                sb.AppendLine(CultureInfo.InvariantCulture, $"  {fadeOut:0.###}%, 100% {{ opacity: 0; }}");
-            }
-
-            sb.AppendLine("}");
-            sb.AppendLine(CultureInfo.InvariantCulture,
-                $".frame-{i} {{ animation: k{i} {totalDuration:0.######}s linear forwards; }}");
-        }
-    }
-
-    private static void AppendFrameContent(
-        StringBuilder sb,
-        ReplayFrame frame,
-        SvgMetrics metrics,
-        TerminalTheme theme,
-        string id)
-    {
-        sb.AppendLine(CultureInfo.InvariantCulture, $"<g id=\"{id}\">");
-        var clipWidth = metrics.ViewportPixelWidth(frame.ViewportWidth);
-        var clipHeight = metrics.ViewportPixelHeight(frame.ViewportHeight);
-        sb.AppendLine(CultureInfo.InvariantCulture,
-            $"<clipPath id=\"{id}-clip\"><rect x=\"{metrics.ContentOriginX:0.##}\" y=\"{metrics.ContentOriginY:0.##}\" width=\"{clipWidth:0.##}\" height=\"{clipHeight:0.##}\"/></clipPath>");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"<g clip-path=\"url(#{id}-clip)\">");
-
-        var origin = metrics.ContentOrigin;
-        sb.AppendLine(CultureInfo.InvariantCulture,
-            $"<rect x=\"{origin.X:0.##}\" y=\"{origin.Y:0.##}\" width=\"{metrics.ContentWidth:0.##}\" height=\"{metrics.ContentHeight:0.##}\" fill=\"{theme.Background}\"/>");
-
-        var buffer = frame.Buffer;
-        for (var row = 0; row < buffer.Height; row++)
-        {
-            var y = origin.Y + row * metrics.LineHeight;
-            AppendRow(sb, buffer, row, origin.X, y, metrics, theme);
-        }
-
-        if (frame.Buffer.CursorVisible)
-        {
-            var cursorX = origin.X + frame.Buffer.CursorCol * metrics.CharWidth;
-            var cursorY = origin.Y + frame.Buffer.CursorRow * metrics.LineHeight;
-            sb.AppendLine(CultureInfo.InvariantCulture,
-                $"<rect x=\"{cursorX:0.##}\" y=\"{cursorY:0.##}\" width=\"{metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\" fill=\"{theme.Foreground}\" fill-opacity=\"0.5\"/>");
-        }
-
-        sb.AppendLine("</g>");
-        sb.AppendLine("</g>");
-    }
-
     private static void AppendRow(
         StringBuilder sb,
         ScreenBuffer buffer,
         int row,
         double originX,
-        double rowY,
+        double originY,
         SvgMetrics metrics,
         TerminalTheme theme)
     {
+        var rowY = originY + row * metrics.LineHeight;
         var textY = rowY + metrics.BaselineOffset;
         var col = 0;
         while (col < buffer.Width)
@@ -226,7 +324,7 @@ internal static class SvgFrameRenderer
             while (col < buffer.Width)
             {
                 var next = buffer.GetCell(row, col);
-                if (next.IsWideContinuation || next.Text == " ")
+                if (next.IsWideContinuation)
                     break;
 
                 var nextFg = ResolveForeground(next, theme);
@@ -242,6 +340,12 @@ internal static class SvgFrameRenderer
                 col++;
             }
 
+            var visible = runText.ToString().TrimEnd(' ');
+            if (visible.Length == 0 && runBg is null)
+                continue;
+
+            var drawText = visible.Length > 0 ? visible : runText.ToString();
+            var drawWidth = (visible.Length > 0 ? visible.Length : runWidth) * metrics.CharWidth;
             var x = originX + runStart * metrics.CharWidth;
             if (runBg is not null)
             {
@@ -255,13 +359,12 @@ internal static class SvgFrameRenderer
                 continue;
             }
 
-            var drawWidth = runWidth * metrics.CharWidth;
             var weight = runBold ? "bold" : "normal";
             var styleAttr = runItalic || runUnderline
                 ? BuildTextStyle(runItalic, runUnderline)
                 : "";
             sb.AppendLine(CultureInfo.InvariantCulture,
-                $"<text class=\"term\" x=\"{x:0.##}\" y=\"{textY:0.##}\" fill=\"{runFg}\" font-weight=\"{weight}\" textLength=\"{drawWidth:0.##}\" lengthAdjust=\"spacingAndGlyphs\"{styleAttr}>{EscapeXml(runText.ToString())}</text>");
+                $"<text x=\"{x:0.##}\" y=\"{textY:0.##}\" fill=\"{runFg}\" font-weight=\"{weight}\" textLength=\"{drawWidth:0.##}\" lengthAdjust=\"spacing\"{styleAttr}>{EscapeXml(drawText)}</text>");
         }
     }
 
@@ -410,9 +513,6 @@ internal static class SvgFrameRenderer
         return (horizontal, vertical);
     }
 
-    private static double Percentage(double value, double total) =>
-        total <= 0 ? 100 : Math.Max(0, Math.Min(100, value / total * 100));
-
     private static string EscapeXml(string text) =>
         text
             .Replace("&", "&amp;", StringComparison.Ordinal)
@@ -466,5 +566,50 @@ internal static class SvgFrameRenderer
 
         internal (double X, double Y, double Width, double Height) BackgroundRect() =>
             (Padding, Padding, SvgWidth - Padding * 2, SvgHeight - Padding * 2);
+    }
+
+    private sealed class RowLayer
+    {
+        internal RowLayer(int row, double showTime, ScreenBuffer buffer)
+        {
+            Row = row;
+            ShowTime = showTime;
+            Buffer = buffer;
+        }
+
+        internal int Row { get; }
+        internal double ShowTime { get; }
+        internal double? HideTime { get; set; }
+        internal ScreenBuffer Buffer { get; }
+    }
+
+    private sealed class CursorLayer
+    {
+        internal CursorLayer(int row, int col, double showTime)
+        {
+            Row = row;
+            Col = col;
+            ShowTime = showTime;
+        }
+
+        internal int Row { get; }
+        internal int Col { get; }
+        internal double ShowTime { get; }
+        internal double? HideTime { get; set; }
+    }
+
+    private sealed class ViewportLayer
+    {
+        internal ViewportLayer(int width, int height, double showTime)
+        {
+            Width = width;
+            Height = height;
+            ShowTime = showTime;
+        }
+
+        internal int Width { get; }
+        internal int Height { get; }
+        internal double ShowTime { get; }
+        internal double? HideTime { get; set; }
     }
 }

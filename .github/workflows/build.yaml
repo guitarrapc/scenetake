@@ -81,3 +81,5 @@ jobs:
             "$binary_path" svg "$fixture" "$artifact_dir/fixture-$stem.svg"
             test -f "$artifact_dir/fixture-$stem.svg"
           done
+
+          dotnet run tests/terminal_tests.cs

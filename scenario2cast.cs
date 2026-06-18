@@ -8,6 +8,7 @@
 #:include Terminal/ScreenBuffer.cs
 #:include Terminal/AnsiParser.cs
 #:include Terminal/TerminalReplay.cs
+#:include Svg/SvgFrameOptimizer.cs
 #:include Svg/SvgFrameRenderer.cs
 #:include SvgRender.cs
 #:include CastReader.cs
