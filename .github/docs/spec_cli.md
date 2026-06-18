@@ -37,8 +37,8 @@ Subcommands accept `-h` / `--help` for subcommand-specific usage.
 |---|---|---|
 | `--verbose` | scenario path only | Show successful `pre`/`post` labels and phase markers. See [spec_pre_post.md](spec_pre_post.md). |
 | `--format cast\|svg` | scenario path only | Default `cast`. `svg` also writes `.svg`. See [spec_svg.md](spec_svg.md). |
-| `--font-size N` | scenario, `svg` | `1`–`128`. Scenario path: overrides `render.font-size` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default `16`). |
-| `--theme dark\|light` | scenario, `svg` | Scenario path: overrides `render.theme.preset`; YAML `fg` / `bg` / `palette` still merge; cast header stores resolved hex. `svg`: render-only override (CLI > cast header > default `dark`). |
+| `--font-size N` | scenario, `svg` | `1`–`128`. Scenario path: overrides `render.font-size` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default `16`). See [spec_cast.md](spec_cast.md). |
+| `--theme dark\|light` | scenario, `svg` | Scenario path: overrides `render.theme.preset`; YAML `fg` / `bg` / `palette` still merge; cast header stores resolved hex. `svg`: render-only override (CLI > cast header > default `dark`). See [spec_cast.md](spec_cast.md). |
 
 `init` accepts only an optional output path positional; no other flags.
 
@@ -77,7 +77,8 @@ Recorded step exit codes do not affect the process exit code. See [spec_pre_post
 ## Cross-Document Notes
 
 - [spec_scenario.md](spec_scenario.md) — scenario YAML structure and defaults.
-- [spec_svg.md](spec_svg.md) — cast header, SVG renderer, `svg` subcommand input/event semantics.
+- [spec_cast.md](spec_cast.md) — cast file format.
+- [spec_svg.md](spec_svg.md) — SVG renderer, `svg` subcommand event handling.
 - [spec_pre_post.md](spec_pre_post.md) — `pre`/`post` execution and failure behavior.
 - [spec_highlight.md](spec_highlight.md) — coloring validation warnings.
 

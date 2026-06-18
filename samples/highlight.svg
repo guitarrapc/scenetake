@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="809.6" height="496" viewBox="0 0 809.6 496">
+<svg xmlns="http://www.w3.org/2000/svg" width="809.6" height="496" viewBox="0 0 809.6 496" preserveAspectRatio="xMidYMid meet">
 <style>
 text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 16px; white-space: pre; }
 .bg { fill: #282c34; }
@@ -661,8 +661,15 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 .cursor-layer-234 { animation-name: layer-in, layer-out; animation-delay: 19.927811s, 19.989331s; }
 .cursor-layer-235 { animation-name: layer-in, layer-out; animation-delay: 19.989331s, 20.889331s; }
 .cursor-layer-236 { animation-name: layer-in; animation-delay: 20.889331s; }
+.viewport-mask-0, .viewport-bg-0 { animation-name: layer-in; animation-delay: 0.7s; }
 </style>
-<rect class="bg" x="0" y="0" width="809.6" height="496"/>
+<defs>
+<mask id="viewport-mask" x="0" y="0" width="809.6" height="496" maskUnits="userSpaceOnUse">
+<rect class="layer viewport-mask-0" x="8" y="8" width="793.6" height="480" fill="white"/>
+</mask>
+</defs>
+<g mask="url(#viewport-mask)">
+<rect class="bg layer viewport-bg-0" x="8" y="8" width="793.6" height="480"/>
 <g class="layer layer-0">
 <text x="8" y="24" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs"># comment color is cyan</text>
 </g>
@@ -754,7 +761,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="8" y="164" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacingAndGlyphs">$ date</text>
 </g>
 <g class="layer layer-30">
-<text x="8" y="184" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="184" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:20 AM</text>
 </g>
 <g class="layer layer-31">
 <text x="8" y="204" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacingAndGlyphs"># run color override</text>
@@ -779,7 +786,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="27.84" y="224" fill="#7e8e50" font-weight="bold" text-decoration="underline" textLength="39.68" lengthAdjust="spacingAndGlyphs">date</text>
 </g>
 <g class="layer layer-37">
-<text x="8" y="244" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="244" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:21 AM</text>
 </g>
 <g class="layer layer-38">
 <text x="8" y="264" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs"># stdout color override</text>
@@ -1095,7 +1102,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="8" y="144" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacingAndGlyphs">$ date</text>
 </g>
 <g class="layer layer-141">
-<text x="8" y="164" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="164" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:20 AM</text>
 </g>
 <g class="layer layer-142">
 <text x="8" y="184" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacingAndGlyphs"># run color override</text>
@@ -1105,7 +1112,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="27.84" y="204" fill="#7e8e50" font-weight="bold" text-decoration="underline" textLength="39.68" lengthAdjust="spacingAndGlyphs">date</text>
 </g>
 <g class="layer layer-144">
-<text x="8" y="224" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="224" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:21 AM</text>
 </g>
 <g class="layer layer-145">
 <text x="8" y="244" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs"># stdout color override</text>
@@ -1253,7 +1260,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="8" y="124" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacingAndGlyphs">$ date</text>
 </g>
 <g class="layer layer-192">
-<text x="8" y="144" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="144" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:20 AM</text>
 </g>
 <g class="layer layer-193">
 <text x="8" y="164" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacingAndGlyphs"># run color override</text>
@@ -1263,7 +1270,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="27.84" y="184" fill="#7e8e50" font-weight="bold" text-decoration="underline" textLength="39.68" lengthAdjust="spacingAndGlyphs">date</text>
 </g>
 <g class="layer layer-195">
-<text x="8" y="204" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="204" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:21 AM</text>
 </g>
 <g class="layer layer-196">
 <text x="8" y="224" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs"># stdout color override</text>
@@ -1326,7 +1333,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="8" y="104" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacingAndGlyphs">$ date</text>
 </g>
 <g class="layer layer-215">
-<text x="8" y="124" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="124" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:20 AM</text>
 </g>
 <g class="layer layer-216">
 <text x="8" y="144" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacingAndGlyphs"># run color override</text>
@@ -1336,7 +1343,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="27.84" y="164" fill="#7e8e50" font-weight="bold" text-decoration="underline" textLength="39.68" lengthAdjust="spacingAndGlyphs">date</text>
 </g>
 <g class="layer layer-218">
-<text x="8" y="184" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="184" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:21 AM</text>
 </g>
 <g class="layer layer-219">
 <text x="8" y="204" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs"># stdout color override</text>
@@ -1397,7 +1404,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="8" y="84" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacingAndGlyphs">$ date</text>
 </g>
 <g class="layer layer-237">
-<text x="8" y="104" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="104" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:20 AM</text>
 </g>
 <g class="layer layer-238">
 <text x="8" y="124" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacingAndGlyphs"># run color override</text>
@@ -1407,7 +1414,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="27.84" y="144" fill="#7e8e50" font-weight="bold" text-decoration="underline" textLength="39.68" lengthAdjust="spacingAndGlyphs">date</text>
 </g>
 <g class="layer layer-240">
-<text x="8" y="164" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="164" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:21 AM</text>
 </g>
 <g class="layer layer-241">
 <text x="8" y="184" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs"># stdout color override</text>
@@ -1537,7 +1544,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="8" y="64" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacingAndGlyphs">$ date</text>
 </g>
 <g class="layer layer-282">
-<text x="8" y="84" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="84" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:20 AM</text>
 </g>
 <g class="layer layer-283">
 <text x="8" y="104" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacingAndGlyphs"># run color override</text>
@@ -1547,7 +1554,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="27.84" y="124" fill="#7e8e50" font-weight="bold" text-decoration="underline" textLength="39.68" lengthAdjust="spacingAndGlyphs">date</text>
 </g>
 <g class="layer layer-285">
-<text x="8" y="144" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="144" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:21 AM</text>
 </g>
 <g class="layer layer-286">
 <text x="8" y="164" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs"># stdout color override</text>
@@ -1610,7 +1617,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="8" y="44" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacingAndGlyphs">$ date</text>
 </g>
 <g class="layer layer-305">
-<text x="8" y="64" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="64" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:20 AM</text>
 </g>
 <g class="layer layer-306">
 <text x="8" y="84" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacingAndGlyphs"># run color override</text>
@@ -1620,7 +1627,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="27.84" y="104" fill="#7e8e50" font-weight="bold" text-decoration="underline" textLength="39.68" lengthAdjust="spacingAndGlyphs">date</text>
 </g>
 <g class="layer layer-308">
-<text x="8" y="124" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="124" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:21 AM</text>
 </g>
 <g class="layer layer-309">
 <text x="8" y="144" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs"># stdout color override</text>
@@ -1682,7 +1689,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="8" y="24" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacingAndGlyphs">$ date</text>
 </g>
 <g class="layer layer-327">
-<text x="8" y="44" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="44" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:20 AM</text>
 </g>
 <g class="layer layer-328">
 <text x="8" y="64" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacingAndGlyphs"># run color override</text>
@@ -1692,7 +1699,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="27.84" y="84" fill="#7e8e50" font-weight="bold" text-decoration="underline" textLength="39.68" lengthAdjust="spacingAndGlyphs">date</text>
 </g>
 <g class="layer layer-330">
-<text x="8" y="104" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="104" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:21 AM</text>
 </g>
 <g class="layer layer-331">
 <text x="8" y="124" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs"># stdout color override</text>
@@ -1814,7 +1821,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="8" y="484" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs">$ printf 'true color\n'</text>
 </g>
 <g class="layer layer-369">
-<text x="8" y="24" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="24" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:20 AM</text>
 </g>
 <g class="layer layer-370">
 <text x="8" y="44" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacingAndGlyphs"># run color override</text>
@@ -1824,7 +1831,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="27.84" y="64" fill="#7e8e50" font-weight="bold" text-decoration="underline" textLength="39.68" lengthAdjust="spacingAndGlyphs">date</text>
 </g>
 <g class="layer layer-372">
-<text x="8" y="84" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="84" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:21 AM</text>
 </g>
 <g class="layer layer-373">
 <text x="8" y="104" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs"># stdout color override</text>
@@ -1898,7 +1905,7 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 <text x="27.84" y="44" fill="#7e8e50" font-weight="bold" text-decoration="underline" textLength="39.68" lengthAdjust="spacingAndGlyphs">date</text>
 </g>
 <g class="layer layer-395">
-<text x="8" y="64" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Thu, Jun 18, 2026 10:22:17 PM</text>
+<text x="8" y="64" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">Fri, Jun 19, 2026  1:56:21 AM</text>
 </g>
 <g class="layer layer-396">
 <text x="8" y="84" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs"># stdout color override</text>
@@ -2679,5 +2686,6 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 </g>
 <g class="layer cursor-layer-236">
 <rect class="cursor-block" x="27.84" y="468" width="9.92" height="20"/>
+</g>
 </g>
 </svg>

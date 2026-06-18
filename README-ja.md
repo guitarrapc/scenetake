@@ -4,7 +4,7 @@
 
 [English](README.md) | 日本語
 
-YAMLシナリオファイルから [asciinema v2 cast](https://docs.asciinema.org/manual/asciicast/v2/) ファイルを生成するツールです。`asciinema`をインストール・起動する必要はありません。step を並べた YAML を書くだけで、実際にコマンドを実行してその出力を使った cast ファイルを生成します。
+YAMLシナリオファイルから [asciinema v3 cast](https://docs.asciinema.org/manual/asciicast/v3/) ファイルを生成するツールです。`asciinema`をインストール・起動する必要はありません。step を並べた YAML を書くだけで、実際にコマンドを実行してその出力を使った cast ファイルを生成します。
 
 サンプルシナリオ`samples/basic.yaml`で生成したcastをgif/svgに変換すると...!タイプを頑張る必要もないし、実際にコマンドも走るので、リアルなデモが簡単に作れます。
 
@@ -81,11 +81,11 @@ scenario2cast --verbose scenario.yaml
 # asciinemaで再生
 asciinema play scenario.cast
 
-# gifに変換 (Linux/macOS) - GIF変換時のデフォルトフォントサイズは16です。小さすぎる・大きすぎると感じたらフォントサイズを調整してください。
-docker run --rm -v "${PWD}:/data" kayvan/agg /data/scenario.cast /data/scenario.gif --font-size 20
+# agg で gif に変換 (Linux/macOS) — v3 cast には agg 1.6.0 以降が必要。フォントサイズは --font-size で調整
+docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20
 
-# gifに変換 (Windows PowerShell)
-docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/scenario.cast /data/scenario.gif --font-size 20
+# agg で gif に変換 (Windows PowerShell)
+docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20
 ```
 
 **Usage**
@@ -107,7 +107,7 @@ scenario2cast svg <input.cast> [output.svg]
   - Linux/macOS の既定シェルは `$SHELL`、なければ `bash`
   - Windows の既定シェルは `pwsh`、なければ `powershell`、Windows で `shell: bash` を指定した場合は Git Bash / MSYS の `bash` を使います
 - `settings` でpromptとtiming の既定値を設定できます
-- `render` は SVG 出力と cast ヘッダーの表示メタデータ（`font-size`、`theme`）を制御します。詳細は [.github/docs/spec_svg.md](.github/docs/spec_svg.md)
+- `render` は cast ヘッダーの表示メタデータ（`s2c:font-size` タグ、`term.theme`）と SVG 出力を制御します。詳細は [.github/docs/spec_cast.md](.github/docs/spec_cast.md) と [.github/docs/spec_svg.md](.github/docs/spec_svg.md)
 - `pre` / `post` は録画フロー外で setup / teardown コマンドを実行します。stdout/stderr は CLI に表示されますが、cast ファイルには一切書き込まれません。
 - `steps`:
   - 実際に実行されるため、ファイル変更や外部システムを操作するような副作用のあるコマンドは慎重に使ってください

@@ -10,7 +10,7 @@ settings:
   pre-delay: 0.3
   post-delay: 0.8
 
-# SVG / cast header display metadata (see .github/docs/spec_svg.md)
+# SVG / cast header display metadata (see .github/docs/spec_cast.md)
 render:
   font-size: 16
   theme:

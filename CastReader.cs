@@ -15,97 +15,154 @@ internal readonly record struct CastRecording(
 
 internal static class CastReader
 {
+    private const string FontSizeTagPrefix = "s2c:font-size=";
+
     internal static CastRecording Read(string castPath)
     {
         var lines = File.ReadAllLines(castPath, Encoding.UTF8);
         if (lines.Length == 0)
             throw new CastReadException("cast file is empty");
 
-        var headerLine = lines[0].Trim();
-        if (headerLine.Length == 0)
+        var headerLineIndex = -1;
+        string headerLine = "";
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var candidate = lines[i].Trim();
+            if (candidate.Length == 0 || candidate[0] == '#')
+                continue;
+
+            headerLineIndex = i;
+            headerLine = candidate;
+            break;
+        }
+
+        if (headerLineIndex < 0)
             throw new CastReadException("cast header is missing");
 
-        using var headerDoc = ParseJsonOrThrow(headerLine, 1);
+        using var headerDoc = ParseJsonOrThrow(headerLine, headerLineIndex + 1);
         var header = headerDoc.RootElement;
 
         if (!header.TryGetProperty("version", out var versionElement) ||
             !versionElement.TryGetInt32(out var version) ||
-            version != 2)
+            version is not (2 or 3))
         {
-            throw new CastReadException("cast version must be 2");
+            throw new CastReadException("cast version must be 2 or 3");
         }
 
-        if (!TryReadPositiveInt(header, "width", out var width))
-            throw new CastReadException("cast header is missing width");
+        var fontSize = RenderSettingsResolver.DefaultFontSize;
+        JsonElement theme = default;
+        int width;
+        int height;
 
-        if (!TryReadPositiveInt(header, "height", out var height))
-            throw new CastReadException("cast header is missing height");
+        if (version == 3)
+        {
+            if (!header.TryGetProperty("term", out var term) || term.ValueKind != JsonValueKind.Object ||
+                !TryReadPositiveInt(term, "cols", out width) ||
+                !TryReadPositiveInt(term, "rows", out height))
+            {
+                throw new CastReadException("cast header is missing terminal size");
+            }
+
+            term.TryGetProperty("theme", out theme);
+            if (header.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var tag in tags.EnumerateArray())
+                {
+                    if (tag.ValueKind != JsonValueKind.String)
+                        continue;
+
+                    var value = tag.GetString();
+                    if (value is null || !value.StartsWith(FontSizeTagPrefix, StringComparison.Ordinal))
+                        continue;
+
+                    if (int.TryParse(value.AsSpan(FontSizeTagPrefix.Length), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) &&
+                        parsed is >= RenderSettingsResolver.MinFontSize and <= RenderSettingsResolver.MaxFontSize)
+                    {
+                        fontSize = parsed;
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (!TryReadPositiveInt(header, "width", out width) ||
+                !TryReadPositiveInt(header, "height", out height))
+            {
+                throw new CastReadException("cast header is missing terminal size");
+            }
+
+            header.TryGetProperty("theme", out theme);
+        }
 
         if (!RenderSettingsResolver.IsValidTerminalSize(width, height))
+        {
             throw new CastReadException(
-                $"cast header width and height must be {RenderSettingsResolver.MinTerminalCols}–{RenderSettingsResolver.MaxTerminalCols}");
+                $"cast terminal size must be {RenderSettingsResolver.MinTerminalCols}–{RenderSettingsResolver.MaxTerminalCols}");
+        }
 
-        var renderSettings = CastReader.ResolveFromCastHeader(header);
+        var (fg, bg, palette) = ParseTheme(theme);
+        var renderSettings = new ResolvedRenderSettings(fontSize, new ResolvedTheme(fg, bg, palette));
         var events = new List<CastEvent>();
         var warnedCodes = new HashSet<string>(StringComparer.Ordinal);
+        var usesRelativeTime = version == 3;
+        var absoluteTime = 0.0;
 
-        for (var i = 1; i < lines.Length; i++)
+        for (var i = headerLineIndex + 1; i < lines.Length; i++)
         {
-            var line = lines[i].Trim();
-            if (line.Length == 0)
+            var line = lines[i].AsSpan().Trim();
+            if (line.IsEmpty || line[0] == '#')
                 continue;
 
             if (!TryParseEventLine(line, i + 1, warnedCodes, out var ev))
                 throw new CastReadException($"invalid cast event at line {i + 1}");
 
-            if (ev.HasValue)
-                events.Add(ev.Value);
+            if (!ev.HasValue)
+                continue;
+
+            var parsed = ev.Value;
+            if (usesRelativeTime)
+            {
+                absoluteTime += parsed.Time;
+                parsed = parsed with { Time = absoluteTime };
+            }
+
+            events.Add(parsed);
         }
 
         return new CastRecording(width, height, renderSettings, events);
     }
 
-    internal static ResolvedRenderSettings ResolveFromCastHeader(JsonElement header)
+    private static (string fg, string bg, string palette) ParseTheme(JsonElement theme)
     {
-        var fontSize = RenderSettingsResolver.DefaultFontSize;
-        if (header.TryGetProperty("scenario2cast", out var extension) &&
-            extension.ValueKind == JsonValueKind.Object &&
-            extension.TryGetProperty("font-size", out var fontSizeElement) &&
-            fontSizeElement.TryGetInt32(out var parsed) &&
-            parsed is >= RenderSettingsResolver.MinFontSize and <= RenderSettingsResolver.MaxFontSize)
+        var fg = RenderSettingsResolver.DefaultFg;
+        var bg = RenderSettingsResolver.DefaultBg;
+        var palette = RenderSettingsResolver.DefaultPalette;
+        if (theme.ValueKind != JsonValueKind.Object)
+            return (fg, bg, palette);
+
+        if (theme.TryGetProperty("fg", out var fgElement) &&
+            fgElement.ValueKind == JsonValueKind.String &&
+            TryParseHexColor(fgElement.GetString(), out var parsedFg))
         {
-            fontSize = parsed;
+            fg = parsedFg;
         }
 
-        string fg = RenderSettingsResolver.DefaultFg;
-        string bg = RenderSettingsResolver.DefaultBg;
-        string palette = RenderSettingsResolver.DefaultPalette;
-
-        if (header.TryGetProperty("theme", out var theme) && theme.ValueKind == JsonValueKind.Object)
+        if (theme.TryGetProperty("bg", out var bgElement) &&
+            bgElement.ValueKind == JsonValueKind.String &&
+            TryParseHexColor(bgElement.GetString(), out var parsedBg))
         {
-            if (theme.TryGetProperty("fg", out var fgElement) &&
-                fgElement.ValueKind == JsonValueKind.String &&
-                TryParseHexColor(fgElement.GetString(), out var parsedFg))
-            {
-                fg = parsedFg;
-            }
-
-            if (theme.TryGetProperty("bg", out var bgElement) &&
-                bgElement.ValueKind == JsonValueKind.String &&
-                TryParseHexColor(bgElement.GetString(), out var parsedBg))
-            {
-                bg = parsedBg;
-            }
-
-            if (theme.TryGetProperty("palette", out var paletteElement) &&
-                paletteElement.ValueKind == JsonValueKind.String &&
-                TryParsePalette(paletteElement.GetString(), out var parsedPalette))
-            {
-                palette = parsedPalette;
-            }
+            bg = parsedBg;
         }
 
-        return new ResolvedRenderSettings(fontSize, new ResolvedTheme(fg, bg, palette));
+        if (theme.TryGetProperty("palette", out var paletteElement) &&
+            paletteElement.ValueKind == JsonValueKind.String &&
+            TryParsePalette(paletteElement.GetString(), out var parsedPalette))
+        {
+            palette = parsedPalette;
+        }
+
+        return (fg, bg, palette);
     }
 
     private static bool TryReadPositiveInt(JsonElement header, string name, out int value)
@@ -117,11 +174,11 @@ internal static class CastReader
         return element.TryGetInt32(out value) && value > 0;
     }
 
-    private static JsonDocument ParseJsonOrThrow(string json, int lineNumber)
+    private static JsonDocument ParseJsonOrThrow(ReadOnlySpan<char> json, int lineNumber)
     {
         try
         {
-            return JsonDocument.Parse(json);
+            return JsonDocument.Parse(json.ToString());
         }
         catch (JsonException ex)
         {
@@ -174,7 +231,7 @@ internal static class CastReader
         c is (>= '0' and <= '9') or (>= 'a' and <= 'f') or (>= 'A' and <= 'F');
 
     private static bool TryParseEventLine(
-        string line,
+        ReadOnlySpan<char> line,
         int lineNumber,
         HashSet<string> warnedCodes,
         out CastEvent? ev)
@@ -183,42 +240,54 @@ internal static class CastReader
 
         using var doc = ParseJsonOrThrow(line, lineNumber);
         var root = doc.RootElement;
-        if (root.ValueKind != JsonValueKind.Array || root.GetArrayLength() < 3)
+        if (root.ValueKind != JsonValueKind.Array || root.GetArrayLength() < 3 ||
+            root[0].ValueKind != JsonValueKind.Number ||
+            root[1].ValueKind != JsonValueKind.String ||
+            root[2].ValueKind != JsonValueKind.String)
+        {
             return false;
+        }
 
-        if (root[0].ValueKind != JsonValueKind.Number)
-            return false;
-
-        if (root[1].ValueKind != JsonValueKind.String)
-            return false;
-
-        if (root[2].ValueKind != JsonValueKind.String)
-            return false;
-
-        var code = root[1].GetString() ?? "";
+        var codeText = root[1].GetRawText();
         var time = root[0].GetDouble();
         var data = root[2].GetString() ?? "";
 
-        if (string.Equals(code, "o", StringComparison.Ordinal))
+        if (codeText.Length == 3 && codeText[0] == '"' && codeText[2] == '"')
         {
-            ev = CastEvent.Output(time, data);
-            return true;
-        }
-
-        if (string.Equals(code, "r", StringComparison.Ordinal))
-        {
-            if (!TryParseResizeData(data, out var resizeWidth, out var resizeHeight))
+            switch (codeText[1])
             {
-                if (warnedCodes.Add("invalid-resize"))
-                    Console.Error.WriteLine("Warning: svg: invalid resize event data; skipping");
+                case 'o':
+                    ev = CastEvent.Output(time, data);
+                    return true;
+                case 'r':
+                    if (!TryParseResizeData(data, out var resizeWidth, out var resizeHeight))
+                    {
+                        if (warnedCodes.Add("invalid-resize"))
+                            Console.Error.WriteLine("Warning: svg: invalid resize event data; skipping");
 
-                return true;
+                        return true;
+                    }
+
+                    ev = CastEvent.Resize(time, resizeWidth, resizeHeight);
+                    return true;
+                case 'm':
+                case 'x':
+                case 'i':
+                    return true;
+                default:
+                {
+                    var unknown = codeText[1].ToString();
+                    if (warnedCodes.Add(unknown))
+                        Console.Error.WriteLine($"Warning: svg: unsupported cast event code '{unknown}'; skipping");
+
+                    return true;
+                }
             }
-
-            ev = CastEvent.Resize(time, resizeWidth, resizeHeight);
-            return true;
         }
 
+        var code = codeText.Length >= 2 && codeText[0] == '"' && codeText[^1] == '"'
+            ? codeText[1..^1].ToString()
+            : root[1].GetString() ?? "";
         if (warnedCodes.Add(code))
             Console.Error.WriteLine($"Warning: svg: unsupported cast event code '{code}'; skipping");
 

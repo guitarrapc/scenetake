@@ -65,7 +65,7 @@ Defaults for all steps. Map-form steps may override individual keys.
 
 ## `render`
 
-Display metadata for cast header and SVG output. Written to the cast header on every run. See [spec_svg.md](spec_svg.md) for cast header mapping and SVG usage.
+Display metadata for the cast header. Written on every run. Header mapping: [spec_cast.md](spec_cast.md). SVG usage: [spec_svg.md](spec_svg.md).
 
 | Key | Default | Description |
 |---|---|---|
@@ -129,7 +129,8 @@ Deterministic seed and timestamp are derived from the whole YAML file (normalize
 
 - [spec_pre_post.md](spec_pre_post.md) — `pre`/`post` recording exclusion and failure behavior.
 - [spec_highlight.md](spec_highlight.md) — coloring semantics and style strings.
-- [spec_svg.md](spec_svg.md) — cast header `theme`, SVG renderer.
+- [spec_cast.md](spec_cast.md) — cast header mapping, event stream, recording boundary.
+- [spec_svg.md](spec_svg.md) — SVG renderer.
 - [spec_cli.md](spec_cli.md) — CLI overrides and `init` command.
 
 ## Lessons Learned

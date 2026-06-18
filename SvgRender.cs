@@ -65,6 +65,9 @@ internal static class SvgRender
 
         foreach (var ev in events)
         {
+            if (ev.Kind == CastEventKind.Marker)
+                continue;
+
             var forceFrame = false;
             if (ev.Kind == CastEventKind.Resize)
             {

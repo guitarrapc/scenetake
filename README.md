@@ -4,7 +4,7 @@
 
 English | [日本語](README-ja.md)
 
-Generate [asciinema v2 cast](https://docs.asciinema.org/manual/asciicast/v2/) files from YAML scenario files. You do not need to install or launch `asciinema` to record. Write a YAML scenario with steps, and this tool executes those steps and emits a cast file with simulated typing plus real command output.
+Generate [asciinema v3 cast](https://docs.asciinema.org/manual/asciicast/v3/) files from YAML scenario files. You do not need to install or launch `asciinema` to record. Write a YAML scenario with steps, and this tool executes those steps and emits a cast file with simulated typing plus real command output.
 
 Sample scenario `samples/basic.yaml` generates a cast that looks like this when converted to gif, svg...! You don't have to struggle with typing, and since the commands are actually executed, you can easily create realistic demos.
 
@@ -81,11 +81,11 @@ scenario2cast --verbose scenario.yaml
 # Play with asciinema
 asciinema play scenario.cast
 
-# Convert to gif with agg (Linux/macOS) - GIF default font size is 16, adjust font size if you feel too small or large
-docker run --rm -v "${PWD}:/data" kayvan/agg /data/scenario.cast /data/scenario.gif --font-size 20
+# Convert to gif with agg (Linux/macOS) — requires agg 1.6.0+ for v3 cast files
+docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20
 
 # Convert to gif with agg (Windows PowerShell)
-docker run --rm -v "$($PWD.Path):/data" kayvan/agg /data/scenario.cast /data/scenario.gif --font-size 20
+docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20
 ```
 
 **Usage**
@@ -107,7 +107,7 @@ scenario2cast svg <input.cast> [output.svg]
   - Linux/macOS default shell is `$SHELL`, with `bash` as fallback.
   - Windows default shell is `pwsh`, with `powershell` as fallback. On Windows, `shell: bash` uses Git Bash / MSYS `bash` when available.
 - `settings` provides defaults for prompt and timing.
-- `render` controls SVG output and is written to the cast header (`font-size`, `theme`). See [.github/docs/spec_svg.md](.github/docs/spec_svg.md).
+- `render` controls cast header display metadata (`s2c:font-size` tag, `term.theme`) and SVG output. See [.github/docs/spec_cast.md](.github/docs/spec_cast.md) and [.github/docs/spec_svg.md](.github/docs/spec_svg.md).
 - `pre` / `post` run setup and teardown commands outside the recording flow. Their stdout/stderr are printed to the CLI, but are never written to the cast file.
 - `steps`:
   - Steps are executed for real, so use caution with commands that modify files or affect external systems.
