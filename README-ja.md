@@ -72,6 +72,9 @@ scenario2cast scenario.yaml
 # cast とアニメーション SVG を一度に生成
 scenario2cast --format svg scenario.yaml
 
+# 既存の cast ファイルを SVG に変換
+scenario2cast svg scenario.cast
+
 # cast 生成時に正常な pre/post 実行ログも表示
 scenario2cast --verbose scenario.yaml
 
@@ -93,6 +96,9 @@ scenario2cast init [scenario.yaml]
 
 # シナリオを実行して cast を生成
 scenario2cast [--verbose] [--format cast|svg] scenario.yaml [output]
+
+# 既存の cast ファイルを SVG に変換
+scenario2cast svg <input.cast> [output.svg]
 ```
 
 **Notes**

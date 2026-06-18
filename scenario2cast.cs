@@ -5,6 +5,7 @@
 #:property ImplicitUsings=enable
 #:package VYaml@1.3.0
 #:include SvgRender.cs
+#:include CastReader.cs
 
 using System.Diagnostics;
 using System.Globalization;
@@ -60,6 +61,56 @@ if (args[0] is "init")
     File.WriteAllText(initPath, CreateInitialScenarioYaml(), Encoding.UTF8);
     Console.Error.WriteLine($"Created: {initPath}");
     return 0;
+}
+
+if (args[0] is "svg")
+{
+    if (args.Length == 2 && args[1] is "-h" or "--help")
+    {
+        PrintSvgUsage();
+        return 0;
+    }
+
+    if (!TryParseSvgArgs(args, out var castArg, out var svgOutputArg, out var svgError))
+    {
+        Console.Error.WriteLine($"Error: {svgError}");
+        PrintSvgUsage();
+        return 1;
+    }
+
+    var castPath = Path.GetFullPath(castArg);
+    if (!File.Exists(castPath))
+    {
+        Console.Error.WriteLine($"Error: {castPath} not found");
+        return 1;
+    }
+
+    var svgOutputPath = RenderSettingsResolver.ResolveCastSvgOutputPath(castPath, svgOutputArg);
+    Console.Error.WriteLine($"Loading: {castPath}");
+
+    try
+    {
+        var recording = CastReader.Read(castPath);
+        SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, recording.RenderSettings, svgOutputPath);
+        var svgDuration = recording.Events.Count > 0 ? recording.Events[^1].Time : 0.0;
+        Console.Error.WriteLine($"Written: {svgOutputPath}  ({recording.Events.Count} events, {svgDuration:F1}s)");
+        Console.Error.WriteLine($"Done: {svgOutputPath}");
+        return 0;
+    }
+    catch (CastReadException ex)
+    {
+        if (File.Exists(svgOutputPath))
+            File.Delete(svgOutputPath);
+        Console.Error.WriteLine($"Error: {ex.Message}");
+        return 1;
+    }
+    catch (Exception ex)
+    {
+        if (File.Exists(svgOutputPath))
+            File.Delete(svgOutputPath);
+        Console.Error.WriteLine($"Error: SVG render failed: {ex.Message}");
+        return 1;
+    }
 }
 
 if (args[0] is "--version")
@@ -177,6 +228,44 @@ static bool TryParseInitArgs(string[] args, out string? path, out string error)
     }
 
     return true;
+}
+
+static bool TryParseSvgArgs(string[] args, out string castPath, out string? outputPath, out string error)
+{
+    castPath = "";
+    outputPath = null;
+    error = "";
+
+    for (var i = 1; i < args.Length; i++)
+    {
+        var arg = args[i];
+        if (arg.StartsWith('-'))
+        {
+            error = $"unknown option: {arg}";
+            return false;
+        }
+
+        if (castPath.Length == 0)
+        {
+            castPath = arg;
+            continue;
+        }
+
+        if (outputPath is null)
+        {
+            outputPath = arg;
+            continue;
+        }
+
+        error = $"unexpected argument: {arg}";
+        return false;
+    }
+
+    if (castPath.Length != 0)
+        return true;
+
+    error = "cast path is required";
+    return false;
 }
 
 static bool TryParseRunArgs(
@@ -1512,6 +1601,7 @@ static string CreateInitialScenarioYaml()
 static void PrintUsage()
 {
     Console.Error.WriteLine("Usage: scenario2cast [--verbose] [--format cast|svg] <scenario.yaml> [output]");
+    Console.Error.WriteLine("       scenario2cast svg <input.cast> [output.svg]");
     Console.Error.WriteLine("       scenario2cast init [scenario.yaml]");
     Console.Error.WriteLine("       scenario2cast --help");
 }
@@ -1520,6 +1610,12 @@ static void PrintInitUsage()
 {
     Console.Error.WriteLine("Usage: scenario2cast init [scenario.yaml]");
     Console.Error.WriteLine("Creates a commented starter YAML scenario file.");
+}
+
+static void PrintSvgUsage()
+{
+    Console.Error.WriteLine("Usage: scenario2cast svg <input.cast> [output.svg]");
+    Console.Error.WriteLine("Converts an existing asciinema v2 cast file to animated SVG.");
 }
 
 static void PrintVersion()
