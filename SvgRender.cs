@@ -48,7 +48,7 @@ internal static class SvgRender
         {
             terminal.Write(ev.Data);
             var screen = terminal.CaptureScreen();
-            var cursorX = terminal.CursorX;
+            var cursorX = Math.Min(terminal.CursorX, width - 1);
             var cursorY = terminal.CursorY;
             var cursorVisible = terminal.CursorVisible;
             if (lastScreen is null ||
