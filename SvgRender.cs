@@ -429,13 +429,7 @@ internal sealed class TerminalEmulator
         var end = index;
         var command = data[end];
         var body = data[start..end];
-        var parts = body.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var numbers = new List<int>();
-        foreach (var part in parts)
-        {
-            if (int.TryParse(part, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n))
-                numbers.Add(n);
-        }
+        var numbers = ParseCsiNumericParameters(body, command == 'm');
 
         switch (command)
         {
@@ -468,6 +462,22 @@ internal sealed class TerminalEmulator
         }
 
         return end;
+    }
+
+    private static List<int> ParseCsiNumericParameters(string body, bool normalizeColons)
+    {
+        if (normalizeColons)
+            body = body.Replace(':', ';');
+
+        var parts = body.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var numbers = new List<int>(parts.Length);
+        foreach (var part in parts)
+        {
+            if (int.TryParse(part, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n))
+                numbers.Add(n);
+        }
+
+        return numbers;
     }
 
     private void ApplySgr(List<int> codes)

@@ -20,7 +20,8 @@ External tools such as [agg](https://docs.asciinema.org/manual/agg/) (GIF) and [
 - C# SVG renderer inside scenario2cast (no bundled external binary).
 - 16-color foreground/background ANSI SGR, plus `bold`, `underline`, and `bright`.
 - 256-color ANSI SGR (`38;5;n`, `48;5;n`) using the xterm palette: indices 0–15 from `theme.palette`, 16–231 cube, 232–255 grayscale (same formula as [agg `theme.rs`](https://github.com/asciinema/agg/blob/main/src/theme.rs)).
-- True-color ANSI SGR (`38;2;r;g;b`, `48;2;r;g;b`) with RGB components 0–255 (semicolon form only).
+- True-color ANSI SGR (`38;2;r;g;b`, `48;2;r;g;b`) with RGB components 0–255 (semicolon and colon forms).
+- Colon-form extended color SGR (`38:5:n`, `48:5:n`, `38:2:r:g:b`, `48:2:r:g:b`); mixed `;` / `:` delimiters in one SGR are normalized for `m` commands.
 - Animated SVG via CSS `animation-delay` row-layer opacity switching.
 - Fixed dark terminal theme when `render.theme` is omitted.
 - Default `font-size` of 16.
@@ -33,7 +34,6 @@ External tools such as [agg](https://docs.asciinema.org/manual/agg/) (GIF) and [
 ### Out of scope (v1)
 
 - Cursor display and blink animation.
-- Colon-form true-color SGR (`38:2:r:g:b`).
 - Light theme presets beyond user-defined `render.theme`.
 - Resize cast events (`"r"`) during `svg` conversion.
 - Cursor rendering.
@@ -191,8 +191,8 @@ Terminal coloring in cast events (`highlight`, `run-highlight`, etc.) is defined
 | 16-color foreground (`30`–`37`, `90`–`97`) | Yes |
 | 16-color background (`40`–`47`, `100`–`107`) | Yes |
 | `bold`, `underline`, `bright` | Yes |
-| 256-color (`38;5;n`, `48;5;n`) | Yes — palette 0–15 from `theme.palette`; 16–231 xterm cube; 232–255 grayscale |
-| True color (`38;2;r;g;b`, `48;2;r;g;b`) | Yes — semicolon form; RGB 0–255; `bold` does not alter RGB |
+| 256-color (`38;5;n`, `48;5;n`) | Yes — semicolon or colon form (`38:5:n`); palette 0–15 from `theme.palette`; 16–231 xterm cube; 232–255 grayscale |
+| True color (`38;2;r;g;b`, `48;2;r;g;b`) | Yes — semicolon or colon form; mixed delimiters normalized; RGB 0–255; `bold` does not alter RGB |
 | Invalid true-color RGB, 256 index, or malformed extended color | Warn once per type; render as default `theme.fg` / no background |
 
 This matches the warn-and-continue philosophy used elsewhere in scenario2cast (see [spec_highlight.md](spec_highlight.md)).
