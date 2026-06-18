@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text;
 using System.Text.Json;
 
@@ -25,12 +24,12 @@ internal static class CastReader
         if (headerLine.Length == 0)
             throw new CastReadException("cast header is missing");
 
-        using var headerDoc = JsonDocument.Parse(headerLine);
+        using var headerDoc = ParseJsonOrThrow(headerLine, 1);
         var header = headerDoc.RootElement;
 
         if (!header.TryGetProperty("version", out var versionElement) ||
-            versionElement.ValueKind != JsonValueKind.Number ||
-            versionElement.GetInt32() != 2)
+            !versionElement.TryGetInt32(out var version) ||
+            version != 2)
         {
             throw new CastReadException("cast version must be 2");
         }
@@ -67,11 +66,10 @@ internal static class CastReader
         if (header.TryGetProperty("scenario2cast", out var extension) &&
             extension.ValueKind == JsonValueKind.Object &&
             extension.TryGetProperty("font-size", out var fontSizeElement) &&
-            fontSizeElement.ValueKind == JsonValueKind.Number)
+            fontSizeElement.TryGetInt32(out var parsed) &&
+            parsed > 0)
         {
-            var parsed = fontSizeElement.GetInt32();
-            if (parsed > 0)
-                fontSize = parsed;
+            fontSize = parsed;
         }
 
         string fg = RenderSettingsResolver.DefaultFg;
@@ -82,23 +80,23 @@ internal static class CastReader
         {
             if (theme.TryGetProperty("fg", out var fgElement) &&
                 fgElement.ValueKind == JsonValueKind.String &&
-                !string.IsNullOrWhiteSpace(fgElement.GetString()))
+                TryParseHexColor(fgElement.GetString(), out var parsedFg))
             {
-                fg = fgElement.GetString()!;
+                fg = parsedFg;
             }
 
             if (theme.TryGetProperty("bg", out var bgElement) &&
                 bgElement.ValueKind == JsonValueKind.String &&
-                !string.IsNullOrWhiteSpace(bgElement.GetString()))
+                TryParseHexColor(bgElement.GetString(), out var parsedBg))
             {
-                bg = bgElement.GetString()!;
+                bg = parsedBg;
             }
 
             if (theme.TryGetProperty("palette", out var paletteElement) &&
                 paletteElement.ValueKind == JsonValueKind.String &&
-                !string.IsNullOrWhiteSpace(paletteElement.GetString()))
+                TryParsePalette(paletteElement.GetString(), out var parsedPalette))
             {
-                palette = paletteElement.GetString()!;
+                palette = parsedPalette;
             }
         }
 
@@ -111,9 +109,64 @@ internal static class CastReader
         if (!header.TryGetProperty(name, out var element) || element.ValueKind != JsonValueKind.Number)
             return false;
 
-        value = element.GetInt32();
-        return value > 0;
+        return element.TryGetInt32(out value) && value > 0;
     }
+
+    private static JsonDocument ParseJsonOrThrow(string json, int lineNumber)
+    {
+        try
+        {
+            return JsonDocument.Parse(json);
+        }
+        catch (JsonException ex)
+        {
+            throw new CastReadException($"invalid JSON at line {lineNumber}: {ex.Message}");
+        }
+    }
+
+    private static bool TryParseHexColor(string? value, out string color)
+    {
+        color = "";
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        value = value.Trim();
+        if (value.Length is not (4 or 7) || value[0] != '#')
+            return false;
+
+        for (var i = 1; i < value.Length; i++)
+        {
+            if (!IsHexDigit(value[i]))
+                return false;
+        }
+
+        color = value;
+        return true;
+    }
+
+    private static bool TryParsePalette(string? value, out string palette)
+    {
+        palette = "";
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        var parts = value.Split(':', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 16)
+            return false;
+
+        var colors = new string[16];
+        for (var i = 0; i < 16; i++)
+        {
+            if (!TryParseHexColor(parts[i], out colors[i]))
+                return false;
+        }
+
+        palette = string.Join(':', colors);
+        return true;
+    }
+
+    private static bool IsHexDigit(char c) =>
+        c is (>= '0' and <= '9') or (>= 'a' and <= 'f') or (>= 'A' and <= 'F');
 
     private static bool TryParseEventLine(
         string line,
@@ -123,44 +176,32 @@ internal static class CastReader
     {
         ev = null;
 
-        JsonDocument doc;
-        try
+        using var doc = ParseJsonOrThrow(line, lineNumber);
+        var root = doc.RootElement;
+        if (root.ValueKind != JsonValueKind.Array || root.GetArrayLength() < 3)
+            return false;
+
+        if (root[0].ValueKind != JsonValueKind.Number)
+            return false;
+
+        if (root[1].ValueKind != JsonValueKind.String)
+            return false;
+
+        if (root[2].ValueKind != JsonValueKind.String)
+            return false;
+
+        var code = root[1].GetString() ?? "";
+        if (!string.Equals(code, "o", StringComparison.Ordinal))
         {
-            doc = JsonDocument.Parse(line);
-        }
-        catch (JsonException ex)
-        {
-            throw new CastReadException($"invalid JSON at line {lineNumber}: {ex.Message}");
-        }
+            if (warnedCodes.Add(code))
+                Console.Error.WriteLine($"Warning: svg: unsupported cast event code '{code}'; skipping");
 
-        using (doc)
-        {
-            var root = doc.RootElement;
-            if (root.ValueKind != JsonValueKind.Array || root.GetArrayLength() < 3)
-                return false;
-
-            if (root[0].ValueKind != JsonValueKind.Number)
-                return false;
-
-            if (root[1].ValueKind != JsonValueKind.String)
-                return false;
-
-            if (root[2].ValueKind != JsonValueKind.String)
-                return false;
-
-            var code = root[1].GetString() ?? "";
-            if (!string.Equals(code, "o", StringComparison.Ordinal))
-            {
-                if (warnedCodes.Add(code))
-                    Console.Error.WriteLine($"Warning: svg: unsupported cast event code '{code}'; skipping");
-
-                return true;
-            }
-
-            var time = root[0].GetDouble();
-            var data = root[2].GetString() ?? "";
-            ev = new CastEvent(time, data);
             return true;
         }
+
+        var time = root[0].GetDouble();
+        var data = root[2].GetString() ?? "";
+        ev = new CastEvent(time, data);
+        return true;
     }
 }
