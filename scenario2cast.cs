@@ -10,6 +10,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Buffers;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -558,7 +559,7 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
 
         foreach (var ch in command.Cmd)
         {
-            events.Add(CastEvent.Output(Math.Round(t, 6), ch.ToString()));
+            events.Add(CastEvent.Output(Math.Round(t, 6), TypingChars.Get(ch)));
             var delay = cmdSpeed + rng.NextDouble() * 2 * cmdJitter - cmdJitter;
             t += Math.Max(delay, 0.005);
         }
@@ -1596,49 +1597,76 @@ static void WriteCast(
         previousAbs = ev.Time;
         var code = ev.Kind switch
         {
-            CastEventKind.Resize => "r",
-            CastEventKind.Marker => "m",
-            _ => "o",
+            CastEventKind.Resize => 'r',
+            CastEventKind.Marker => 'm',
+            _ => 'o',
         };
-        writer.WriteLine($"[{FormatCastInterval(exact, ref intervalError)},\"{code}\",{JsonString(ev.Data)}]");
+        writer.Write('[');
+        WriteCastInterval(writer, exact, ref intervalError);
+        writer.Write(',');
+        writer.Write('"');
+        writer.Write(code);
+        writer.Write("\",");
+        WriteJsonString(writer, ev.Data);
+        writer.WriteLine(']');
     }
 
-    writer.WriteLine($"[{FormatCastInterval(events.Count > 0 ? 0.05 : 0, ref intervalError)},\"x\",\"0\"]");
+    writer.Write('[');
+    WriteCastInterval(writer, events.Count > 0 ? 0.05 : 0, ref intervalError);
+    writer.WriteLine(",\"x\",\"0\"]");
 }
 
-static string FormatCastInterval(double exact, ref double error)
+static void WriteCastInterval(TextWriter writer, double exact, ref double error)
 {
     const double scale = 1000.0;
     var scaled = exact * scale + error;
     var quantized = Math.Round(scaled, MidpointRounding.AwayFromZero);
     error = scaled - quantized;
-    return (quantized / scale).ToString("0.000", CultureInfo.InvariantCulture);
+    Span<char> buf = stackalloc char[16];
+    (quantized / scale).TryFormat(buf, out var n, "0.000", CultureInfo.InvariantCulture);
+    writer.Write(buf[..n]);
 }
 
-static string JsonString(string s)
+static void WriteJsonString(TextWriter writer, ReadOnlySpan<char> s)
 {
-    var sb = new StringBuilder(s.Length + 2);
-    sb.Append('"');
+    writer.Write('"');
+    Span<char> esc = stackalloc char[6];
     foreach (var c in s)
     {
         switch (c)
         {
-            case '"':  sb.Append("\\\""); break;
-            case '\\': sb.Append("\\\\"); break;
-            case '\b': sb.Append("\\b");  break;
-            case '\f': sb.Append("\\f");  break;
-            case '\n': sb.Append("\\n");  break;
-            case '\r': sb.Append("\\r");  break;
-            case '\t': sb.Append("\\t");  break;
+            case '"': writer.Write("\\\""); break;
+            case '\\': writer.Write("\\\\"); break;
+            case '\b': writer.Write("\\b"); break;
+            case '\f': writer.Write("\\f"); break;
+            case '\n': writer.Write("\\n"); break;
+            case '\r': writer.Write("\\r"); break;
+            case '\t': writer.Write("\\t"); break;
             default:
                 if (c < 0x20)
-                    sb.Append($"\\u{(int)c:x4}");
+                {
+                    esc[0] = '\\';
+                    esc[1] = 'u';
+                    ((uint)c).TryFormat(esc[2..], out _, "x4");
+                    writer.Write(esc);
+                }
                 else
-                    sb.Append(c);
+                {
+                    writer.Write(c);
+                }
+
                 break;
         }
     }
-    sb.Append('"');
+
+    writer.Write('"');
+}
+
+static string JsonString(ReadOnlySpan<char> s)
+{
+    var sb = new StringBuilder(s.Length + 2);
+    using (var sw = new StringWriter(sb, CultureInfo.InvariantCulture))
+        WriteJsonString(sw, s);
     return sb.ToString();
 }
 
@@ -1944,6 +1972,22 @@ enum OutputFormat
 }
 
 readonly record struct CommandOutput(string Stdout, string Stderr, int ExitCode);
+
+static class TypingChars
+{
+    private static readonly string[] Cache = CreateCache();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static string Get(char c) => (uint)c < 128 ? Cache[c] : c.ToString();
+
+    private static string[] CreateCache()
+    {
+        var cache = new string[128];
+        for (var i = 0; i < cache.Length; i++)
+            cache[i] = ((char)i).ToString();
+        return cache;
+    }
+}
 
 record HighlightSpec(string ColorOpen, List<string> At);
 

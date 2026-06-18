@@ -98,8 +98,8 @@ internal static class CastReader
 
         for (var i = 1; i < lines.Length; i++)
         {
-            var line = lines[i].Trim();
-            if (line.Length == 0 || line[0] == '#')
+            var line = lines[i].AsSpan().Trim();
+            if (line.IsEmpty || line[0] == '#')
                 continue;
 
             if (!TryParseEventLine(line, i + 1, warnedCodes, out var ev))
@@ -162,11 +162,11 @@ internal static class CastReader
         return element.TryGetInt32(out value) && value > 0;
     }
 
-    private static JsonDocument ParseJsonOrThrow(string json, int lineNumber)
+    private static JsonDocument ParseJsonOrThrow(ReadOnlySpan<char> json, int lineNumber)
     {
         try
         {
-            return JsonDocument.Parse(json);
+            return JsonDocument.Parse(json.ToString());
         }
         catch (JsonException ex)
         {
@@ -219,7 +219,7 @@ internal static class CastReader
         c is (>= '0' and <= '9') or (>= 'a' and <= 'f') or (>= 'A' and <= 'F');
 
     private static bool TryParseEventLine(
-        string line,
+        ReadOnlySpan<char> line,
         int lineNumber,
         HashSet<string> warnedCodes,
         out CastEvent? ev)
@@ -236,44 +236,50 @@ internal static class CastReader
             return false;
         }
 
-        var code = root[1].GetString() ?? "";
+        var codeText = root[1].GetRawText();
         var time = root[0].GetDouble();
         var data = root[2].GetString() ?? "";
 
-        if (code.Length != 1)
+        if (codeText.Length == 3 && codeText[0] == '"' && codeText[2] == '"')
         {
-            if (warnedCodes.Add(code))
-                Console.Error.WriteLine($"Warning: svg: unsupported cast event code '{code}'; skipping");
+            switch (codeText[1])
+            {
+                case 'o':
+                    ev = CastEvent.Output(time, data);
+                    return true;
+                case 'r':
+                    if (!TryParseResizeData(data, out var resizeWidth, out var resizeHeight))
+                    {
+                        if (warnedCodes.Add("invalid-resize"))
+                            Console.Error.WriteLine("Warning: svg: invalid resize event data; skipping");
 
-            return true;
-        }
+                        return true;
+                    }
 
-        switch (code[0])
-        {
-            case 'o':
-                ev = CastEvent.Output(time, data);
-                return true;
-            case 'r':
-                if (!TryParseResizeData(data, out var resizeWidth, out var resizeHeight))
+                    ev = CastEvent.Resize(time, resizeWidth, resizeHeight);
+                    return true;
+                case 'm':
+                case 'x':
+                case 'i':
+                    return true;
+                default:
                 {
-                    if (warnedCodes.Add("invalid-resize"))
-                        Console.Error.WriteLine("Warning: svg: invalid resize event data; skipping");
+                    var unknown = codeText[1].ToString();
+                    if (warnedCodes.Add(unknown))
+                        Console.Error.WriteLine($"Warning: svg: unsupported cast event code '{unknown}'; skipping");
 
                     return true;
                 }
-
-                ev = CastEvent.Resize(time, resizeWidth, resizeHeight);
-                return true;
-            case 'm':
-            case 'x':
-            case 'i':
-                return true;
-            default:
-                if (warnedCodes.Add(code))
-                    Console.Error.WriteLine($"Warning: svg: unsupported cast event code '{code}'; skipping");
-
-                return true;
+            }
         }
+
+        var code = codeText.Length >= 2 && codeText[0] == '"' && codeText[^1] == '"'
+            ? codeText[1..^1].ToString()
+            : root[1].GetString() ?? "";
+        if (warnedCodes.Add(code))
+            Console.Error.WriteLine($"Warning: svg: unsupported cast event code '{code}'; skipping");
+
+        return true;
     }
 
     private static bool TryParseResizeData(string data, out int width, out int height)
