@@ -26,17 +26,16 @@ External tools such as [agg](https://docs.asciinema.org/manual/agg/) (GIF) and [
 - Fixed dark terminal theme when `render.theme` is omitted.
 - Default `font-size` of 16.
 - CLI `--font-size` override for scenario runs and the `svg` subcommand (`1`–`128`).
-- No cursor rendering in v1.
+- Block cursor rendering driven by cursor position changes (`theme.fg` at 50% opacity; no blink).
+- DECTCEM cursor visibility (`\e[?25h`, `\e[?25l`).
 - Warning-and-continue for malformed extended color SGR (invalid true-color RGB, invalid 256 index, unknown modes) during SVG rendering.
 - Failure behavior aligned with `pre`/`post`: cast is retained, incomplete SVG is removed, `post` still runs.
 - `svg` subcommand that converts an existing asciinema v2 cast file to SVG.
 
 ### Out of scope (v1)
 
-- Cursor display and blink animation.
 - Light theme presets beyond user-defined `render.theme`.
 - Resize cast events (`"r"`) during `svg` conversion.
-- Cursor rendering.
 
 ## CLI Contract
 
@@ -209,7 +208,9 @@ This matches the warn-and-continue philosophy used elsewhere in scenario2cast (s
 ### Visual defaults
 
 - Terminal background from `theme.bg`.
-- No block cursor in v1.
+- Block cursor at the emulator cursor position when visible (`\e[?25l` hides it).
+- Cursor visibility follows cast timestamps via row-layer-style show/hide; each position stays lit until the cursor moves or is hidden.
+- Cursor uses `theme.fg` at 50% opacity (solid, no blink — matches agg/GIF export behavior).
 - Monospace font stack; size from `scenario2cast.font-size`.
 
 ## Failure Behavior
