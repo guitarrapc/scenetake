@@ -47,7 +47,7 @@ Cast file format (header, versions, written event codes): [spec_cast.md](spec_ca
 | OSC / DCS / charset designations | Skipped (not rendered) |
 | Block elements U+2580–U+259F | Yes — SVG rects |
 
-Implementation: `Terminal/AnsiParser.cs`, `Terminal/ScreenBuffer.cs`. Tests: `tests/terminal_tests.cs`.
+Implementation: `Terminal.cs` (AnsiParser, ScreenBuffer, TerminalReplay). Tests: `tests/terminal_tests.cs`.
 
 ### Animation and visuals
 

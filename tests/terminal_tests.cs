@@ -2,9 +2,7 @@
 #:property TargetFramework=net10.0
 #:property Nullable=enable
 #:property ImplicitUsings=enable
-#:include ../Terminal/TerminalTheme.cs
-#:include ../Terminal/ScreenBuffer.cs
-#:include ../Terminal/AnsiParser.cs
+#:include ../Terminal.cs
 
 var failures = 0;
 failures += Run("SgrColorAndReset", SgrColorAndReset);

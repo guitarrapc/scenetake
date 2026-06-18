@@ -1,6 +1,305 @@
 using System.Globalization;
 using System.Text;
 
+internal static class SvgRender
+{
+    internal static void WriteSvg(
+        IReadOnlyList<CastEvent> events,
+        int width,
+        int height,
+        ResolvedRenderSettings render,
+        string outputPath)
+    {
+        var (canvasWidth, canvasHeight) = TerminalReplay.ResolveCanvasSize(width, height, events);
+        var theme = TerminalTheme.FromResolved(render.Theme);
+        var frames = TerminalReplay.BuildFrames(events, width, height, canvasWidth, canvasHeight, theme);
+        var svg = SvgFrameRenderer.Render(frames, render, canvasWidth, canvasHeight);
+        File.WriteAllText(outputPath, svg, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+    }
+}
+
+internal readonly record struct ResolvedRenderSettings(int FontSize, string FontFamily, ResolvedTheme Theme)
+{
+    public string DefaultFg => Theme.Fg;
+}
+
+internal readonly record struct ResolvedTheme(string Fg, string Bg, string Palette);
+
+internal static class ThemePresets
+{
+    internal const string DarkName = "dark";
+    internal const string LightName = "light";
+    internal static string ExpectedPresetNames => $"{DarkName}|{LightName}";
+
+    private static readonly ResolvedTheme DarkTheme = new(
+        "#d0d0d0",
+        "#282c34",
+        "#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5");
+
+    private static readonly ResolvedTheme LightTheme = new(
+        "#383838",
+        "#fafafa",
+        "#383838:#c82828:#548b2e:#a88800:#2871aa:#9a4a96:#008787:#585858:#686868:#e74c3c:#69a845:#d4a017:#3498db:#c678dd:#20b2aa:#fafafa");
+
+    internal static ResolvedTheme Dark => DarkTheme;
+    internal static ResolvedTheme Light => LightTheme;
+
+    internal static bool TryGet(string name, out ResolvedTheme theme)
+    {
+        switch (name.Trim().ToLowerInvariant())
+        {
+            case DarkName:
+                theme = DarkTheme;
+                return true;
+            case LightName:
+                theme = LightTheme;
+                return true;
+            default:
+                theme = default;
+                return false;
+        }
+    }
+
+    internal static bool TryParse(string text, out string presetName, out string error)
+    {
+        presetName = text.Trim();
+        if (presetName.Length == 0)
+        {
+            error = "--theme requires a value";
+            return false;
+        }
+
+        if (!TryGet(presetName, out _))
+        {
+            error = $"unknown theme preset: {presetName} (expected: {ExpectedPresetNames})";
+            return false;
+        }
+
+        error = "";
+        return true;
+    }
+}
+
+internal static class RenderSettingsResolver
+{
+    internal const int MinFontSize = 1;
+    internal const int MaxFontSize = 128;
+    internal const int MinTerminalCols = 1;
+    internal const int MaxTerminalCols = 512;
+    internal const int MinTerminalRows = 1;
+    internal const int MaxTerminalRows = 512;
+
+    internal static bool IsValidTerminalSize(int cols, int rows) =>
+        cols is >= MinTerminalCols and <= MaxTerminalCols &&
+        rows is >= MinTerminalRows and <= MaxTerminalRows;
+
+    internal const int DefaultFontSize = 16;
+    internal const int MaxFontFamilyLength = 256;
+    internal const int MaxFontFamilyCount = 10;
+    internal const string FontSizeTagPrefix = "s2c:font-size=";
+    internal const string FontFamilyTagPrefix = "s2c:font-family=";
+    internal const string DefaultFontFamily =
+        "ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace";
+    internal static string DefaultFg => ThemePresets.Dark.Fg;
+    internal static string DefaultBg => ThemePresets.Dark.Bg;
+    internal static string DefaultPalette => ThemePresets.Dark.Palette;
+
+    internal static bool TryParseFontFamily(string text, out string fontFamily, out string error)
+    {
+        fontFamily = "";
+        error = "";
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            error = "font-family must not be empty";
+            return false;
+        }
+
+        text = text.Trim();
+        if (text.Length > MaxFontFamilyLength)
+        {
+            error = $"font-family must be at most {MaxFontFamilyLength} characters";
+            return false;
+        }
+
+        foreach (var c in text)
+        {
+            if (char.IsControl(c) || c is ';' or '{' or '}' or '<' or '>')
+            {
+                error = $"font-family: invalid character '{c}'";
+                return false;
+            }
+        }
+
+        var familyCount = 1;
+        foreach (var c in text)
+        {
+            if (c == ',')
+                familyCount++;
+        }
+
+        var hasMono = text.Contains("monospace", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("ui-monospace", StringComparison.OrdinalIgnoreCase);
+        var maxAllowed = hasMono ? MaxFontFamilyCount : MaxFontFamilyCount - 1;
+        if (familyCount > maxAllowed)
+        {
+            error = $"font-family must have at most {maxAllowed} families";
+            return false;
+        }
+
+        fontFamily = hasMono ? text : $"{text}, monospace";
+        if (fontFamily.Length > MaxFontFamilyLength)
+        {
+            error = $"font-family must be at most {MaxFontFamilyLength} characters";
+            return false;
+        }
+
+        return true;
+    }
+
+    internal static bool TryParseFontSize(string text, out int fontSize, out string error)
+    {
+        fontSize = 0;
+        error = "";
+        if (!int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out fontSize))
+        {
+            error = $"invalid --font-size value: {text}";
+            return false;
+        }
+
+        if (fontSize is < MinFontSize or > MaxFontSize)
+        {
+            error = $"--font-size must be between {MinFontSize} and {MaxFontSize}: {fontSize}";
+            return false;
+        }
+
+        return true;
+    }
+
+    internal static bool TryResolve(
+        Scenario scenario,
+        string? cliThemePreset,
+        out ResolvedRenderSettings settings,
+        out string error)
+    {
+        settings = default;
+        error = "";
+        var render = scenario.Render;
+        var fontSize = render?.FontSize ?? DefaultFontSize;
+        if (fontSize is < MinFontSize or > MaxFontSize)
+            fontSize = DefaultFontSize;
+
+        if (!TryResolveTheme(render?.Theme, cliThemePreset, out var theme, out error))
+            return false;
+
+        var fontFamily = DefaultFontFamily;
+        if (!string.IsNullOrWhiteSpace(render?.FontFamily))
+        {
+            if (!TryParseFontFamily(render!.FontFamily!, out fontFamily, out error))
+            {
+                error = $"invalid render.font-family: {error}";
+                return false;
+            }
+        }
+
+        settings = new ResolvedRenderSettings(fontSize, fontFamily, theme);
+        return true;
+    }
+
+    internal static bool TryResolveTheme(
+        ScenarioTheme? theme,
+        string? cliThemePreset,
+        out ResolvedTheme resolved,
+        out string error)
+    {
+        resolved = default;
+        error = "";
+
+        var presetName = cliThemePreset ?? theme?.Preset;
+        if (string.IsNullOrWhiteSpace(presetName))
+            presetName = ThemePresets.DarkName;
+
+        if (!ThemePresets.TryGet(presetName, out var baseTheme))
+        {
+            error = $"unknown theme preset: {presetName} (expected: {ThemePresets.ExpectedPresetNames})";
+            return false;
+        }
+
+        resolved = MergeTheme(baseTheme, theme);
+        return true;
+    }
+
+    internal static ResolvedRenderSettings ApplySvgOverrides(
+        ResolvedRenderSettings settings,
+        int? fontSizeOverride,
+        string? fontFamilyOverride,
+        string? themePresetOverride,
+        out string error)
+    {
+        error = "";
+        if (themePresetOverride is not null)
+        {
+            if (!ThemePresets.TryGet(themePresetOverride, out var theme))
+            {
+                error = $"unknown theme preset: {themePresetOverride} (expected: {ThemePresets.ExpectedPresetNames})";
+                return settings;
+            }
+
+            settings = settings with { Theme = theme };
+        }
+
+        if (fontSizeOverride is int fontSize)
+            settings = settings with { FontSize = fontSize };
+
+        if (fontFamilyOverride is string fontFamily)
+            settings = settings with { FontFamily = fontFamily };
+
+        return settings;
+    }
+
+    private static ResolvedTheme MergeTheme(ResolvedTheme baseTheme, ScenarioTheme? overrides)
+    {
+        if (overrides is null)
+            return baseTheme;
+
+        return new ResolvedTheme(
+            string.IsNullOrWhiteSpace(overrides.Fg) ? baseTheme.Fg : overrides.Fg!,
+            string.IsNullOrWhiteSpace(overrides.Bg) ? baseTheme.Bg : overrides.Bg!,
+            string.IsNullOrWhiteSpace(overrides.Palette) ? baseTheme.Palette : overrides.Palette!);
+    }
+
+    internal static ResolvedRenderSettings Resolve(Scenario scenario)
+    {
+        if (!TryResolve(scenario, cliThemePreset: null, out var settings, out var error))
+            throw new InvalidOperationException(error);
+
+        return settings;
+    }
+
+    internal static string ResolveCastSvgOutputPath(string castPath, string? outputArg)
+    {
+        if (outputArg is not null)
+        {
+            var full = Path.GetFullPath(outputArg);
+            return Path.Combine(
+                Path.GetDirectoryName(full) ?? ".",
+                Path.GetFileNameWithoutExtension(full) + ".svg");
+        }
+
+        return Path.ChangeExtension(Path.GetFullPath(castPath), ".svg")!;
+    }
+
+    internal static string ResolveOutputStem(string scenarioPath, string? outputArg)
+    {
+        if (outputArg is not null)
+        {
+            var full = Path.GetFullPath(outputArg);
+            return Path.Combine(Path.GetDirectoryName(full) ?? ".", Path.GetFileNameWithoutExtension(full));
+        }
+
+        return Path.ChangeExtension(Path.GetFullPath(scenarioPath), null)!;
+    }
+}
+
 internal static class SvgFrameRenderer
 {
     private const double LineHeightFactor = 1.25;
@@ -12,6 +311,10 @@ internal static class SvgFrameRenderer
     private const double InnerPaddingVerticalMax = 8.0;
     private const double LayerFadeSeconds = 0.001;
     private const double CursorBlockOpacity = 0.5;
+    private const double DefaultMaxFps = 12d;
+    private const string Space = " ";
+
+    [ThreadStatic] private static StringBuilder? t_runText;
 
     internal static string Render(
         IReadOnlyList<ReplayFrame> frames,
@@ -22,7 +325,7 @@ internal static class SvgFrameRenderer
         if (frames.Count == 0)
             return BuildEmptySvg(render, canvasWidth, canvasHeight);
 
-        frames = SvgFrameOptimizer.Optimize(frames);
+        frames = OptimizeFrames(frames);
         var theme = TerminalTheme.FromResolved(render.Theme);
         var metrics = CreateMetrics(render.FontSize, canvasWidth, canvasHeight);
 
@@ -243,32 +546,8 @@ internal static class SvgFrameRenderer
         return layers;
     }
 
-    private static bool RowEquals(ScreenBuffer left, ScreenBuffer right, int row)
-    {
-        if (left.Width != right.Width)
-            return false;
-
-        for (var col = 0; col < left.Width; col++)
-        {
-            var a = left.GetCell(row, col);
-            var b = right.GetCell(row, col);
-            if (a.Text != b.Text
-                || a.Foreground != b.Foreground
-                || a.Background != b.Background
-                || a.Bold != b.Bold
-                || a.Italic != b.Italic
-                || a.Underline != b.Underline
-                || a.Reversed != b.Reversed
-                || a.Faint != b.Faint
-                || a.IsWide != b.IsWide
-                || a.IsWideContinuation != b.IsWideContinuation)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
+    private static bool RowEquals(ScreenBuffer left, ScreenBuffer right, int row) =>
+        left.RowEquals(right, row);
 
     private static string BuildEmptySvg(ResolvedRenderSettings render, int width, int height)
     {
@@ -305,7 +584,7 @@ internal static class SvgFrameRenderer
                 continue;
             }
 
-            if (cell.Text == " ")
+            if (cell.Text == Space)
             {
                 col++;
                 continue;
@@ -317,7 +596,9 @@ internal static class SvgFrameRenderer
             var runBold = cell.Bold;
             var runItalic = cell.Italic;
             var runUnderline = cell.Underline;
-            var runText = new StringBuilder(cell.Text);
+            var runText = (t_runText ??= new StringBuilder(64));
+            runText.Clear();
+            runText.Append(cell.Text);
             var runWidth = cell.IsWide ? 2 : 1;
             col++;
 
@@ -340,7 +621,7 @@ internal static class SvgFrameRenderer
                 col++;
             }
 
-            var visible = runText.ToString().TrimEnd(' ');
+            var visible = runText.ToString().TrimEnd();
             if (visible.Length == 0 && runBg is null)
                 continue;
 
@@ -360,8 +641,9 @@ internal static class SvgFrameRenderer
             }
 
             var weight = runBold ? "bold" : "normal";
-            var styleAttr = runItalic || runUnderline
-                ? BuildTextStyle(runItalic, runUnderline)
+            var styleAttr = runItalic && runUnderline ? " style=\"font-style:italic;text-decoration:underline;\""
+                : runItalic ? " style=\"font-style:italic;\""
+                : runUnderline ? " style=\"text-decoration:underline;\""
                 : "";
             sb.AppendLine(CultureInfo.InvariantCulture,
                 $"<text x=\"{x:0.##}\" y=\"{textY:0.##}\" fill=\"{runFg}\" font-weight=\"{weight}\" textLength=\"{drawWidth:0.##}\" lengthAdjust=\"spacing\"{styleAttr}>{EscapeXml(drawText)}</text>");
@@ -431,13 +713,190 @@ internal static class SvgFrameRenderer
         return value >= 0;
     }
 
-    private static string BuildTextStyle(bool italic, bool underline)
+    private static string EscapeXml(string text)
     {
-        var parts = new List<string>(2);
-        if (italic) parts.Add("font-style:italic");
-        if (underline) parts.Add("text-decoration:underline");
-        return $" style=\"{string.Join(';', parts)};\"";
+        for (var i = 0; i < text.Length; i++)
+        {
+            if (text[i] is '&' or '<' or '>' or '"')
+            {
+                var sb = new StringBuilder(text.Length + 8);
+                sb.Append(text, 0, i);
+                for (; i < text.Length; i++)
+                {
+                    switch (text[i])
+                    {
+                        case '&': sb.Append("&amp;"); break;
+                        case '<': sb.Append("&lt;"); break;
+                        case '>': sb.Append("&gt;"); break;
+                        case '"': sb.Append("&quot;"); break;
+                        default: sb.Append(text[i]); break;
+                    }
+                }
+
+                return sb.ToString();
+            }
+        }
+
+        return text;
     }
+
+    private static List<ReplayFrame> OptimizeFrames(IReadOnlyList<ReplayFrame> frames, double maxFps = DefaultMaxFps)
+    {
+        if (frames.Count <= 1)
+            return frames.ToList();
+
+        var normalized = NormalizeTiming(frames, maxFps);
+        var reduced = ReduceFrames(normalized, maxFps);
+        return SpreadCollapsedFrameTimes(reduced, maxFps);
+    }
+
+    private static List<ReplayFrame> NormalizeTiming(IReadOnlyList<ReplayFrame> frames, double maxFps)
+    {
+        if (frames.Count == 0 || maxFps <= 0)
+            return frames.ToList();
+
+        var interval = 1d / maxFps;
+        var normalized = new List<ReplayFrame>(frames.Count);
+        var lastTime = 0d;
+        for (var i = 0; i < frames.Count; i++)
+        {
+            var rawTime = Math.Max(0d, frames[i].Time);
+            var quantizedTime = Math.Round(rawTime / interval, MidpointRounding.AwayFromZero) * interval;
+            if (i > 0 && quantizedTime < lastTime)
+                quantizedTime = lastTime;
+            normalized.Add(CloneAtTime(frames[i], quantizedTime));
+            lastTime = quantizedTime;
+        }
+
+        return normalized;
+    }
+
+    private static List<ReplayFrame> ReduceFrames(IReadOnlyList<ReplayFrame> frames, double maxFps)
+    {
+        if (frames.Count <= 2 || maxFps <= 0)
+            return frames.ToList();
+
+        var minimumInterval = 1d / maxFps;
+        var reduced = new List<ReplayFrame>(frames.Count) { frames[0] };
+        var lastKeptTime = frames[0].Time;
+        var lastKeptSignature = frames[0].Signature;
+        ReplayFrame? pending = null;
+        ulong pendingSignature = 0;
+
+        for (var i = 1; i < frames.Count - 1; i++)
+        {
+            var frame = frames[i];
+            var signature = frame.Signature;
+            var visualChanged = signature != lastKeptSignature;
+            var elapsed = frame.Time - lastKeptTime;
+            if (elapsed < minimumInterval)
+            {
+                if (visualChanged)
+                {
+                    pending = frame;
+                    pendingSignature = signature;
+                }
+
+                continue;
+            }
+
+            if (pending is not null)
+            {
+                reduced.Add(pending);
+                lastKeptTime = pending.Time;
+                lastKeptSignature = pendingSignature;
+                pending = null;
+                signature = frame.Signature;
+                visualChanged = signature != lastKeptSignature;
+                elapsed = frame.Time - lastKeptTime;
+                if (elapsed < minimumInterval)
+                {
+                    if (visualChanged)
+                    {
+                        pending = frame;
+                        pendingSignature = signature;
+                    }
+
+                    continue;
+                }
+
+                if (!visualChanged)
+                    continue;
+            }
+
+            reduced.Add(frame);
+            lastKeptTime = frame.Time;
+            lastKeptSignature = signature;
+        }
+
+        if (pending is not null && !ReferenceEquals(reduced[^1], pending))
+            reduced.Add(pending);
+
+        var last = frames[^1];
+        if (reduced[^1].Signature != last.Signature || Math.Abs(reduced[^1].Time - last.Time) > 1e-9)
+            reduced.Add(last);
+
+        return reduced;
+    }
+
+    private static List<ReplayFrame> SpreadCollapsedFrameTimes(IReadOnlyList<ReplayFrame> frames, double maxFps)
+    {
+        if (frames.Count <= 1)
+            return frames.ToList();
+
+        List<ReplayFrame>? adjusted = null;
+        for (var runStart = 0; runStart < frames.Count;)
+        {
+            var runEnd = runStart;
+            while (runEnd + 1 < frames.Count && HaveSameTime(frames[runEnd + 1].Time, frames[runStart].Time))
+                runEnd++;
+
+            if (runEnd == runStart)
+            {
+                adjusted?.Add(frames[runStart]);
+                runStart++;
+                continue;
+            }
+
+            adjusted ??= new List<ReplayFrame>(frames.Count);
+            if (adjusted.Count == 0)
+            {
+                for (var copyIndex = 0; copyIndex < runStart; copyIndex++)
+                    adjusted.Add(frames[copyIndex]);
+            }
+
+            var runCount = runEnd - runStart + 1;
+            if (runStart == 0 && frames[runStart].Time <= 0d)
+            {
+                var upperBound = runEnd + 1 < frames.Count ? frames[runEnd + 1].Time : 1d / maxFps;
+                if (upperBound <= 0d)
+                    upperBound = 1d / maxFps;
+                var step = upperBound / runCount;
+                for (var offset = 0; offset < runCount; offset++)
+                    adjusted.Add(CloneAtTime(frames[runStart + offset], step * offset));
+            }
+            else
+            {
+                var lowerBound = adjusted.Count > 0 ? adjusted[^1].Time : 0d;
+                var upperBound = frames[runStart].Time;
+                var step = (upperBound - lowerBound) / runCount;
+                if (step <= 0d)
+                    step = (1d / maxFps) / runCount;
+                for (var offset = 0; offset < runCount; offset++)
+                    adjusted.Add(CloneAtTime(frames[runStart + offset], lowerBound + (step * (offset + 1))));
+            }
+
+            runStart = runEnd + 1;
+        }
+
+        return adjusted ?? frames.ToList();
+    }
+
+    private static ReplayFrame CloneAtTime(ReplayFrame frame, double time) =>
+        new(time, frame.Buffer, frame.ViewportWidth, frame.ViewportHeight);
+
+    private static bool HaveSameTime(double left, double right) =>
+        Math.Abs(left - right) <= 1e-9;
 
     private static bool IsBlockElement(string text)
     {
@@ -512,13 +971,6 @@ internal static class SvgFrameRenderer
         var vertical = Math.Clamp(fontSize * 4.0 / 16.0, InnerPaddingVerticalMin, InnerPaddingVerticalMax);
         return (horizontal, vertical);
     }
-
-    private static string EscapeXml(string text) =>
-        text
-            .Replace("&", "&amp;", StringComparison.Ordinal)
-            .Replace("<", "&lt;", StringComparison.Ordinal)
-            .Replace(">", "&gt;", StringComparison.Ordinal)
-            .Replace("\"", "&quot;", StringComparison.Ordinal);
 
     private readonly struct SvgMetrics
     {
@@ -613,3 +1065,4 @@ internal static class SvgFrameRenderer
         internal double? HideTime { get; set; }
     }
 }
+

@@ -4,13 +4,8 @@
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 #:package VYaml@1.3.0
-#:include Terminal/TerminalTheme.cs
-#:include Terminal/ScreenBuffer.cs
-#:include Terminal/AnsiParser.cs
-#:include Terminal/TerminalReplay.cs
-#:include Svg/SvgFrameOptimizer.cs
-#:include Svg/SvgFrameRenderer.cs
-#:include SvgRender.cs
+#:include Terminal.cs
+#:include Svg.cs
 #:include CastReader.cs
 
 using System.Diagnostics;
@@ -2023,28 +2018,6 @@ static void PrintSvgUsage()
 static void PrintVersion()
 {
     Console.WriteLine(AppVersion);
-}
-
-enum CastEventKind
-{
-    Output,
-    Resize,
-    Marker,
-}
-
-readonly record struct CastEvent(
-    double Time,
-    CastEventKind Kind,
-    string Data,
-    int ResizeWidth = 0,
-    int ResizeHeight = 0)
-{
-    public static CastEvent Output(double time, string data) => new(time, CastEventKind.Output, data);
-
-    public static CastEvent Resize(double time, int width, int height) =>
-        new(time, CastEventKind.Resize, $"{width}x{height}", width, height);
-
-    public static CastEvent Marker(double time, string label) => new(time, CastEventKind.Marker, label);
 }
 
 enum OutputFormat
