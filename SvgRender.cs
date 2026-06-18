@@ -1209,13 +1209,23 @@ internal static class RenderSettingsResolver
         if (!TrySplitFontFamilies(text, out var families, out error))
             return false;
 
-        if (families.Count > MaxFontFamilyCount)
+        var hasMono = families.Any(f =>
+            f.Equals("monospace", StringComparison.OrdinalIgnoreCase) ||
+            f.Equals("ui-monospace", StringComparison.OrdinalIgnoreCase));
+        var maxAllowed = hasMono ? MaxFontFamilyCount : MaxFontFamilyCount - 1;
+        if (families.Count > maxAllowed)
         {
-            error = $"font-family must have at most {MaxFontFamilyCount} families";
+            error = $"font-family must have at most {maxAllowed} families";
             return false;
         }
 
         fontFamily = EnsureMonospaceFallback(FormatFontFamilies(families));
+        if (fontFamily.Length > MaxFontFamilyLength)
+        {
+            error = $"font-family must be at most {MaxFontFamilyLength} characters";
+            return false;
+        }
+
         return true;
     }
 
@@ -1350,6 +1360,11 @@ internal static class RenderSettingsResolver
             }
 
             index++;
+            if (index >= text.Length)
+            {
+                error = "font-family: trailing comma";
+                return false;
+            }
         }
 
         if (families.Count == 0)
@@ -1428,7 +1443,7 @@ internal static class RenderSettingsResolver
 
         foreach (var c in family)
         {
-            if (c is ';' or '{' or '}' or '<' or '>')
+            if (char.IsControl(c) || c is ';' or '{' or '}' or '<' or '>')
             {
                 error = $"font-family: invalid character '{c}' in family name";
                 return false;
@@ -1449,10 +1464,17 @@ internal static class RenderSettingsResolver
 
     private static string FormatFontFamilyForCss(string family)
     {
-        if (family.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_'))
+        var isSafeIdent = family.Length > 0 &&
+            (char.IsAsciiLetter(family[0]) || family[0] is '_' or '-') &&
+            (family[0] != '-' || family.Length == 1 || !char.IsAsciiDigit(family[1])) &&
+            family.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_');
+        if (isSafeIdent)
             return family;
 
-        return $"\"{family.Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
+        var escaped = family
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal);
+        return $"\"{escaped}\"";
     }
 
     private static string EnsureMonospaceFallback(string fontFamily)
