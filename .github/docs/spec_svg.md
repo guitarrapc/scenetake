@@ -31,16 +31,11 @@ External tools such as [agg](https://docs.asciinema.org/manual/agg/) (GIF) and [
 
 ### Out of scope (v1)
 
-- `--format gif` or agg integration.
 - CLI `--font-size` override (use `render.font-size` in YAML or cast header).
 - Cursor display and blink animation.
 - Colon-form true-color SGR (`38:2:r:g:b`).
 - Light theme presets beyond user-defined `render.theme`.
-- SVG output without also writing the cast file (`--format svg` scenario path only; the `svg` subcommand writes SVG only).
 - Resize cast events (`"r"`) during `svg` conversion.
-
-### Planned for v2+
-
 - CLI `--font-size` override for `scenario2cast svg` (useful for casts without `scenario2cast` header extensions).
 - Cursor rendering.
 
