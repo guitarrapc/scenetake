@@ -5,7 +5,6 @@
 #:property ImplicitUsings=enable
 #:package VYaml@1.3.0
 #:include SvgRender.cs
-#:include CastFormat.cs
 #:include CastReader.cs
 
 using System.Diagnostics;
@@ -779,14 +778,15 @@ static bool ContainsAnsiSgr(string text)
 static string NormalizeNewlines(string s)
     => s.Replace("\r\n", "\n").Replace("\r", "\n").Replace("\n", "\r\n");
 
-static bool TryParseStepName(string? raw, string cmd, out string displayText, out string colorOpen)
+static bool TryFormatNameComment(string? raw, string cmd, out string coloredLine, out string displayText)
 {
+    coloredLine = "";
     displayText = "";
-    colorOpen = SgrNamed("cyan");
     if (string.IsNullOrWhiteSpace(raw))
         return false;
 
     var value = raw.Trim();
+    var colorOpen = SgrNamed("cyan");
     if (value.StartsWith('['))
     {
         var close = value.IndexOf(']');
@@ -819,16 +819,6 @@ static bool TryParseStepName(string? raw, string cmd, out string displayText, ou
         Warn("name", cmd, "empty name text after color prefix");
         return false;
     }
-
-    return true;
-}
-
-static bool TryFormatNameComment(string? raw, string cmd, out string coloredLine, out string displayText)
-{
-    coloredLine = "";
-    displayText = "";
-    if (!TryParseStepName(raw, cmd, out displayText, out var colorOpen))
-        return false;
 
     coloredLine = string.IsNullOrEmpty(colorOpen)
         ? $"# {displayText}\r\n"
@@ -1597,35 +1587,32 @@ static void WriteCast(
         $",\"env\":{{\"SHELL\":{JsonString(shell.EnvValue)}}}" +
         $",\"tags\":[\"s2c:font-size={fontSize}\"]}}");
 
-    var absoluteTimes = new List<double>(events.Count + 1);
-    foreach (var ev in events)
-        absoluteTimes.Add(ev.Time);
-
-    var lastTime = absoluteTimes.Count > 0 ? absoluteTimes[^1] : 0.0;
-    absoluteTimes.Add(lastTime + CastFormat.ExitEventGapSeconds);
-
-    var intervals = CastFormat.ToRelativeIntervals(absoluteTimes);
+    var intervalError = 0.0;
+    var previousAbs = 0.0;
     for (var i = 0; i < events.Count; i++)
-        WriteCastEventLine(writer, events[i], intervals[i]);
+    {
+        var ev = events[i];
+        var exact = i == 0 ? ev.Time : ev.Time - previousAbs;
+        previousAbs = ev.Time;
+        var code = ev.Kind switch
+        {
+            CastEventKind.Resize => "r",
+            CastEventKind.Marker => "m",
+            _ => "o",
+        };
+        writer.WriteLine($"[{FormatCastInterval(exact, ref intervalError)},\"{code}\",{JsonString(ev.Data)}]");
+    }
 
-    writer.WriteLine($"[{CastFormat.FormatInterval(intervals[^1])},\"x\",\"0\"]");
+    writer.WriteLine($"[{FormatCastInterval(events.Count > 0 ? 0.05 : 0, ref intervalError)},\"x\",\"0\"]");
 }
 
-static void WriteCastEventLine(StreamWriter writer, CastEvent ev, double interval)
+static string FormatCastInterval(double exact, ref double error)
 {
-    var formattedInterval = CastFormat.FormatInterval(interval);
-    switch (ev.Kind)
-    {
-        case CastEventKind.Output:
-            writer.WriteLine($"[{formattedInterval},\"o\",{JsonString(ev.Data)}]");
-            break;
-        case CastEventKind.Resize:
-            writer.WriteLine($"[{formattedInterval},\"r\",{JsonString(ev.Data)}]");
-            break;
-        case CastEventKind.Marker:
-            writer.WriteLine($"[{formattedInterval},\"m\",{JsonString(ev.Data)}]");
-            break;
-    }
+    const double scale = 1000.0;
+    var scaled = exact * scale + error;
+    var quantized = Math.Round(scaled, MidpointRounding.AwayFromZero);
+    error = scaled - quantized;
+    return (quantized / scale).ToString("0.000", CultureInfo.InvariantCulture);
 }
 
 static string JsonString(string s)

@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 internal sealed class CastReadException : Exception
 {
@@ -16,9 +15,7 @@ internal readonly record struct CastRecording(
 
 internal static class CastReader
 {
-    private static readonly Regex FontSizeTagRegex = new(
-        "^s2c:font-size=(\\d+)$",
-        RegexOptions.CultureInvariant | RegexOptions.Compiled);
+    private const string FontSizeTagPrefix = "s2c:font-size=";
 
     internal static CastRecording Read(string castPath)
     {
@@ -27,10 +24,7 @@ internal static class CastReader
             throw new CastReadException("cast file is empty");
 
         var headerLine = lines[0].Trim();
-        if (headerLine.Length == 0)
-            throw new CastReadException("cast header is missing");
-
-        if (headerLine.StartsWith('#'))
+        if (headerLine.Length == 0 || headerLine[0] == '#')
             throw new CastReadException("cast header is missing");
 
         using var headerDoc = ParseJsonOrThrow(headerLine, 1);
@@ -43,14 +37,60 @@ internal static class CastReader
             throw new CastReadException("cast version must be 2 or 3");
         }
 
-        if (!TryReadTerminalSize(header, version, out var width, out var height))
-            throw new CastReadException("cast header is missing terminal size");
+        var fontSize = RenderSettingsResolver.DefaultFontSize;
+        JsonElement theme = default;
+        int width;
+        int height;
+
+        if (version == 3)
+        {
+            if (!header.TryGetProperty("term", out var term) || term.ValueKind != JsonValueKind.Object ||
+                !TryReadPositiveInt(term, "cols", out width) ||
+                !TryReadPositiveInt(term, "rows", out height))
+            {
+                throw new CastReadException("cast header is missing terminal size");
+            }
+
+            term.TryGetProperty("theme", out theme);
+            if (header.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var tag in tags.EnumerateArray())
+                {
+                    if (tag.ValueKind != JsonValueKind.String)
+                        continue;
+
+                    var value = tag.GetString();
+                    if (value is null || !value.StartsWith(FontSizeTagPrefix, StringComparison.Ordinal))
+                        continue;
+
+                    if (int.TryParse(value.AsSpan(FontSizeTagPrefix.Length), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) &&
+                        parsed is >= RenderSettingsResolver.MinFontSize and <= RenderSettingsResolver.MaxFontSize)
+                    {
+                        fontSize = parsed;
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (!TryReadPositiveInt(header, "width", out width) ||
+                !TryReadPositiveInt(header, "height", out height))
+            {
+                throw new CastReadException("cast header is missing terminal size");
+            }
+
+            header.TryGetProperty("theme", out theme);
+        }
 
         if (!RenderSettingsResolver.IsValidTerminalSize(width, height))
+        {
             throw new CastReadException(
                 $"cast terminal size must be {RenderSettingsResolver.MinTerminalCols}–{RenderSettingsResolver.MaxTerminalCols}");
+        }
 
-        var renderSettings = ResolveFromCastHeader(header, version);
+        var (fg, bg, palette) = ParseTheme(theme);
+        var renderSettings = new ResolvedRenderSettings(fontSize, new ResolvedTheme(fg, bg, palette));
         var events = new List<CastEvent>();
         var warnedCodes = new HashSet<string>(StringComparer.Ordinal);
         var usesRelativeTime = version == 3;
@@ -59,10 +99,7 @@ internal static class CastReader
         for (var i = 1; i < lines.Length; i++)
         {
             var line = lines[i].Trim();
-            if (line.Length == 0)
-                continue;
-
-            if (line.StartsWith('#'))
+            if (line.Length == 0 || line[0] == '#')
                 continue;
 
             if (!TryParseEventLine(line, i + 1, warnedCodes, out var ev))
@@ -84,78 +121,11 @@ internal static class CastReader
         return new CastRecording(width, height, renderSettings, events);
     }
 
-    internal static ResolvedRenderSettings ResolveFromCastHeader(JsonElement header, int version)
+    private static (string fg, string bg, string palette) ParseTheme(JsonElement theme)
     {
-        var fontSize = RenderSettingsResolver.DefaultFontSize;
-        if (version == 3)
-            fontSize = TryParseFontSizeFromTags(header) ?? fontSize;
-
-        var themeElement = version == 3
-            ? header.TryGetProperty("term", out var term) &&
-              term.ValueKind == JsonValueKind.Object &&
-              term.TryGetProperty("theme", out var termTheme)
-                ? termTheme
-                : default
-            : header.TryGetProperty("theme", out var topTheme)
-                ? topTheme
-                : default;
-
-        var (fg, bg, palette) = TryParseTheme(themeElement);
-        return new ResolvedRenderSettings(fontSize, new ResolvedTheme(fg, bg, palette));
-    }
-
-    private static bool TryReadTerminalSize(JsonElement header, int version, out int width, out int height)
-    {
-        width = 0;
-        height = 0;
-
-        if (version == 3)
-        {
-            if (!header.TryGetProperty("term", out var term) || term.ValueKind != JsonValueKind.Object)
-                return false;
-
-            return TryReadPositiveInt(term, "cols", out width) &&
-                   TryReadPositiveInt(term, "rows", out height);
-        }
-
-        return TryReadPositiveInt(header, "width", out width) &&
-               TryReadPositiveInt(header, "height", out height);
-    }
-
-    private static int? TryParseFontSizeFromTags(JsonElement header)
-    {
-        if (!header.TryGetProperty("tags", out var tags) || tags.ValueKind != JsonValueKind.Array)
-            return null;
-
-        foreach (var tag in tags.EnumerateArray())
-        {
-            if (tag.ValueKind != JsonValueKind.String)
-                continue;
-
-            var value = tag.GetString();
-            if (value is null)
-                continue;
-
-            var match = FontSizeTagRegex.Match(value);
-            if (!match.Success)
-                continue;
-
-            if (!int.TryParse(match.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
-                continue;
-
-            if (parsed is >= RenderSettingsResolver.MinFontSize and <= RenderSettingsResolver.MaxFontSize)
-                return parsed;
-        }
-
-        return null;
-    }
-
-    private static (string fg, string bg, string palette) TryParseTheme(JsonElement theme)
-    {
-        string fg = RenderSettingsResolver.DefaultFg;
-        string bg = RenderSettingsResolver.DefaultBg;
-        string palette = RenderSettingsResolver.DefaultPalette;
-
+        var fg = RenderSettingsResolver.DefaultFg;
+        var bg = RenderSettingsResolver.DefaultBg;
+        var palette = RenderSettingsResolver.DefaultPalette;
         if (theme.ValueKind != JsonValueKind.Object)
             return (fg, bg, palette);
 
@@ -258,53 +228,52 @@ internal static class CastReader
 
         using var doc = ParseJsonOrThrow(line, lineNumber);
         var root = doc.RootElement;
-        if (root.ValueKind != JsonValueKind.Array || root.GetArrayLength() < 3)
+        if (root.ValueKind != JsonValueKind.Array || root.GetArrayLength() < 3 ||
+            root[0].ValueKind != JsonValueKind.Number ||
+            root[1].ValueKind != JsonValueKind.String ||
+            root[2].ValueKind != JsonValueKind.String)
+        {
             return false;
-
-        if (root[0].ValueKind != JsonValueKind.Number)
-            return false;
-
-        if (root[1].ValueKind != JsonValueKind.String)
-            return false;
-
-        if (root[2].ValueKind != JsonValueKind.String)
-            return false;
+        }
 
         var code = root[1].GetString() ?? "";
         var time = root[0].GetDouble();
         var data = root[2].GetString() ?? "";
 
-        if (string.Equals(code, "o", StringComparison.Ordinal))
+        if (code.Length != 1)
         {
-            ev = CastEvent.Output(time, data);
+            if (warnedCodes.Add(code))
+                Console.Error.WriteLine($"Warning: svg: unsupported cast event code '{code}'; skipping");
+
             return true;
         }
 
-        if (string.Equals(code, "r", StringComparison.Ordinal))
+        switch (code[0])
         {
-            if (!TryParseResizeData(data, out var resizeWidth, out var resizeHeight))
-            {
-                if (warnedCodes.Add("invalid-resize"))
-                    Console.Error.WriteLine("Warning: svg: invalid resize event data; skipping");
+            case 'o':
+                ev = CastEvent.Output(time, data);
+                return true;
+            case 'r':
+                if (!TryParseResizeData(data, out var resizeWidth, out var resizeHeight))
+                {
+                    if (warnedCodes.Add("invalid-resize"))
+                        Console.Error.WriteLine("Warning: svg: invalid resize event data; skipping");
+
+                    return true;
+                }
+
+                ev = CastEvent.Resize(time, resizeWidth, resizeHeight);
+                return true;
+            case 'm':
+            case 'x':
+            case 'i':
+                return true;
+            default:
+                if (warnedCodes.Add(code))
+                    Console.Error.WriteLine($"Warning: svg: unsupported cast event code '{code}'; skipping");
 
                 return true;
-            }
-
-            ev = CastEvent.Resize(time, resizeWidth, resizeHeight);
-            return true;
         }
-
-        if (string.Equals(code, "m", StringComparison.Ordinal) ||
-            string.Equals(code, "x", StringComparison.Ordinal) ||
-            string.Equals(code, "i", StringComparison.Ordinal))
-        {
-            return true;
-        }
-
-        if (warnedCodes.Add(code))
-            Console.Error.WriteLine($"Warning: svg: unsupported cast event code '{code}'; skipping");
-
-        return true;
     }
 
     private static bool TryParseResizeData(string data, out int width, out int height)
