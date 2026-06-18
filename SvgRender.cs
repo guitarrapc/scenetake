@@ -691,6 +691,19 @@ internal static class RenderSettingsResolver
                 string.IsNullOrWhiteSpace(theme?.Palette) ? DefaultPalette : theme!.Palette!));
     }
 
+    internal static string ResolveCastSvgOutputPath(string castPath, string? outputArg)
+    {
+        if (outputArg is not null)
+        {
+            var full = Path.GetFullPath(outputArg);
+            return Path.Combine(
+                Path.GetDirectoryName(full) ?? ".",
+                Path.GetFileNameWithoutExtension(full) + ".svg");
+        }
+
+        return Path.ChangeExtension(Path.GetFullPath(castPath), ".svg")!;
+    }
+
     internal static string ResolveOutputStem(string scenarioPath, string? outputArg)
     {
         if (outputArg is not null)

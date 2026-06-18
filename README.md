@@ -72,6 +72,9 @@ scenario2cast scenario.yaml
 # Generate cast and animated SVG in one command
 scenario2cast --format svg scenario.yaml
 
+# Convert an existing cast file to SVG
+scenario2cast svg scenario.cast
+
 # Show normal pre/post execution logs while generating a cast file
 scenario2cast --verbose scenario.yaml
 
@@ -93,6 +96,9 @@ scenario2cast init [scenario.yaml]
 
 # Run scenario to generate cast
 scenario2cast [--verbose] [--format cast|svg] scenario.yaml [output]
+
+# Convert an existing cast file to SVG
+scenario2cast svg <input.cast> [output.svg]
 ```
 
 **Notes**
@@ -264,6 +270,7 @@ Use `dotnet` for local development, debugging, or publishing.
 ```bash
 # Local run
 dotnet run scenario2cast.cs -- <scenario.yaml> [output.cast]
+dotnet run scenario2cast.cs -- svg <scenario.cast> [output.svg]
 
 # build
 dotnet publish scenario2cast.cs --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None

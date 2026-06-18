@@ -19,27 +19,28 @@ External tools such as [agg](https://docs.asciinema.org/manual/agg/) (GIF) and [
 - Render metadata is written to the cast header on every run, regardless of `--format`.
 - C# SVG renderer inside scenario2cast (no bundled external binary).
 - 16-color foreground/background ANSI SGR, plus `bold`, `underline`, and `bright`.
-- Animated SVG via CSS `@keyframes` and opacity frame switching.
+- Animated SVG via CSS `animation-delay` row-layer opacity switching.
 - Fixed dark terminal theme when `render.theme` is omitted.
 - Default `font-size` of 16.
 - No cursor rendering in v1.
 - Warning-and-continue for unsupported 256-color SGR (`38;5;n`, `48;5;n`) during SVG rendering.
 - Failure behavior aligned with `pre`/`post`: cast is retained, incomplete SVG is removed, `post` still runs.
+- `svg` subcommand that converts an existing asciinema v2 cast file to SVG.
 
 ### Out of scope (v1)
 
 - `--format gif` or agg integration.
-- CLI `--font-size` override (use `render.font-size` in YAML).
+- CLI `--font-size` override (use `render.font-size` in YAML or cast header).
 - Cursor display and blink animation.
 - Full 256-color ANSI palette support in the SVG renderer.
 - Light theme presets beyond user-defined `render.theme`.
-- SVG output without also writing the cast file.
-- Generate SVG from an existing cast file.
+- SVG output without also writing the cast file (`--format svg` scenario path only; the `svg` subcommand writes SVG only).
+- Resize cast events (`"r"`) during `svg` conversion.
 
 ### Planned for v2+
 
 - 256-color ANSI support in the SVG renderer.
-- Optional CLI overrides for render metadata.
+- CLI `--font-size` override for `scenario2cast svg` (useful for casts without `scenario2cast` header extensions).
 - Cursor rendering.
 
 ## CLI Contract
@@ -58,6 +59,55 @@ scenario2cast [--verbose] [--format cast|svg] <scenario.yaml> [output]
 When `[output]` is given, the stem is shared; only the extension differs (`.cast` / `.svg`).
 
 `--format cast` is the default and matches existing behavior.
+
+### `svg` subcommand
+
+Convert an existing cast file without running a scenario:
+
+```bash
+scenario2cast svg <input.cast> [output.svg]
+```
+
+| Invocation | Output |
+|---|---|
+| `scenario2cast svg demo.cast` | `demo.svg` |
+| `scenario2cast svg demo.cast out.svg` | `out.svg` |
+| `scenario2cast svg demo.cast out` | `out.svg` |
+
+The input cast file is read-only. Only `.svg` is written.
+
+#### Input casts
+
+- Any [asciicast v2](https://docs.asciinema.org/manual/asciicast/v2/) file with `version: 2`.
+- `width` and `height` are required in the cast header.
+- Render metadata comes from the cast header only:
+  - `theme` (official header field) when present.
+  - `scenario2cast.font-size` when present.
+  - Defaults when absent (`font-size: 16`, fixed dark theme).
+
+#### Event handling
+
+- Process `"o"` (output) events for SVG rendering.
+- Skip `"i"`, `"m"`, `"r"`, and other event codes with a stderr warning per unsupported code (warn-and-continue).
+
+#### Failure behavior
+
+| Situation | Behavior |
+|---|---|
+| Cast file not found | Exit non-zero |
+| Invalid header JSON / `version` ≠ 2 | Exit non-zero; no SVG written |
+| Missing `width` or `height` | Exit non-zero; no SVG written |
+| Invalid event line JSON | Exit non-zero; no SVG written |
+| SVG render failure | Exit non-zero; partial `.svg` deleted |
+| Unsupported event codes | Warning only; continue |
+
+Stderr on success:
+
+```text
+Loading: demo.cast
+Written: demo.svg  (184 events, 16.7s)
+Done: demo.svg
+```
 
 ## Execution Order
 
@@ -160,6 +210,8 @@ This matches the warn-and-continue philosophy used elsewhere in scenario2cast (s
 
 ## Failure Behavior
 
+### Scenario path (`--format svg`)
+
 | Phase | On failure |
 |---|---|
 | `pre` | Fail-fast; cast and SVG are not written (unchanged). |
@@ -175,6 +227,10 @@ Written: demo.cast  (142 events, 12.3s)
 Written: demo.svg
 Done: demo.cast, demo.svg
 ```
+
+### `svg` subcommand
+
+See [Failure behavior](#failure-behavior) under `svg` subcommand above. The cast file is never modified.
 
 ## Relationship to External Tools
 
