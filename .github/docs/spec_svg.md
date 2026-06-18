@@ -108,9 +108,9 @@ The input cast file is read-only. Only `.svg` is written.
 Stderr on success:
 
 ```text
-Loading: demo.cast
-Written: demo.svg  (184 events, 16.7s)
-Done: demo.svg
+ Loading: /abs/path/demo.cast
+ Written: /abs/path/demo.svg  (184 events, 16.7s)
+ Done: /abs/path/demo.svg
 ```
 
 ## Execution Order
