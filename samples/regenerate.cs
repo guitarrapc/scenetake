@@ -3,7 +3,7 @@
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 
-// Regenerate sample .cast files from every *.yaml in this directory.
+// Regenerate sample .cast and .svg files from every *.yaml in this directory.
 //
 // Usage (from repository root):
 //   dotnet run samples/regenerate.cs
