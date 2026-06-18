@@ -1,4 +1,4 @@
-{"version":3,"term":{"cols":80,"rows":24,"type":"xterm-256color","theme":{"fg":"#383838","bg":"#fafafa","palette":"#383838:#c82828:#548b2e:#a88800:#2871aa:#9a4a96:#008787:#585858:#686868:#e74c3c:#69a845:#d4a017:#3498db:#c678dd:#20b2aa:#fafafa"}},"timestamp":1703032945,"title":"Theme Demo","env":{"SHELL":"C:\\Program Files\\Git\\bin\\bash.exe"},"tags":["s2c:font-size=16"]}
+{"version":3,"term":{"cols":80,"rows":24,"type":"xterm-256color","theme":{"fg":"#383838","bg":"#fafafa","palette":"#383838:#c82828:#548b2e:#a88800:#2871aa:#9a4a96:#008787:#585858:#686868:#e74c3c:#69a845:#d4a017:#3498db:#c678dd:#20b2aa:#fafafa"}},"timestamp":1703032945,"title":"Theme Demo","env":{"SHELL":"C:\\Program Files\\Git\\bin\\bash.exe"},"tags":["s2c:font-size=16","s2c:font-family=ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace"]}
 [0.800,"o","$ "]
 [0.050,"o","p"]
 [0.029,"o","r"]

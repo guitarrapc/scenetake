@@ -72,7 +72,7 @@ if (args[0] is "svg")
         return 0;
     }
 
-    if (!TryParseSvgArgs(args, out var castArg, out var svgOutputArg, out var svgFontSize, out var svgThemePreset, out var svgError))
+    if (!TryParseSvgArgs(args, out var castArg, out var svgOutputArg, out var svgFontSize, out var svgFontFamily, out var svgThemePreset, out var svgError))
     {
         Console.Error.WriteLine($"Error: {svgError}");
         PrintSvgUsage();
@@ -95,6 +95,7 @@ if (args[0] is "svg")
         var svgRenderSettings = RenderSettingsResolver.ApplySvgOverrides(
             recording.RenderSettings,
             svgFontSize,
+            svgFontFamily,
             svgThemePreset,
             out var svgOverrideError);
         if (svgOverrideError.Length != 0)
@@ -137,7 +138,7 @@ if (args[0] is "-h" or "--help")
     return 0;
 }
 
-if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var runFontSize, out var runThemePreset, out var runError))
+if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runError))
 {
     Console.Error.WriteLine($"Error: {runError}");
     PrintUsage();
@@ -172,6 +173,8 @@ if (!RenderSettingsResolver.TryResolve(scenario, runThemePreset, out var renderS
 
 if (runFontSize is int runFontSizeValue)
     renderSettings = renderSettings with { FontSize = runFontSizeValue };
+if (runFontFamily is string runFontFamilyValue)
+    renderSettings = renderSettings with { FontFamily = runFontFamilyValue };
 var deterministicSeed = ComputeDeterministicSeed(yaml);
 var deterministicTimestamp = ComputeDeterministicTimestamp(deterministicSeed);
 
@@ -255,12 +258,14 @@ static bool TryParseSvgArgs(
     out string castPath,
     out string? outputPath,
     out int? fontSizeOverride,
+    out string? fontFamilyOverride,
     out string? themePresetOverride,
     out string error)
 {
     castPath = "";
     outputPath = null;
     fontSizeOverride = null;
+    fontFamilyOverride = null;
     themePresetOverride = null;
     error = "";
 
@@ -268,6 +273,13 @@ static bool TryParseSvgArgs(
     {
         var arg = args[i];
         if (TryConsumeFontSizeArg(args, ref i, ref fontSizeOverride, out error))
+        {
+            if (error.Length != 0)
+                return false;
+            continue;
+        }
+
+        if (TryConsumeFontFamilyArg(args, ref i, ref fontFamilyOverride, out error))
         {
             if (error.Length != 0)
                 return false;
@@ -317,6 +329,7 @@ static bool TryParseRunArgs(
     out OutputFormat outputFormat,
     out bool verbose,
     out int? fontSizeOverride,
+    out string? fontFamilyOverride,
     out string? themePresetOverride,
     out string error)
 {
@@ -325,6 +338,7 @@ static bool TryParseRunArgs(
     outputFormat = OutputFormat.Cast;
     verbose = false;
     fontSizeOverride = null;
+    fontFamilyOverride = null;
     themePresetOverride = null;
     error = "";
 
@@ -338,6 +352,13 @@ static bool TryParseRunArgs(
         }
 
         if (TryConsumeFontSizeArg(args, ref i, ref fontSizeOverride, out error))
+        {
+            if (error.Length != 0)
+                return false;
+            continue;
+        }
+
+        if (TryConsumeFontFamilyArg(args, ref i, ref fontFamilyOverride, out error))
         {
             if (error.Length != 0)
                 return false;
@@ -442,6 +463,52 @@ static bool TryConsumeFontSizeArg(string[] args, ref int i, ref int? fontSizeOve
         return true;
 
     fontSizeOverride = parsed;
+    return true;
+}
+
+static bool TryConsumeFontFamilyArg(string[] args, ref int i, ref string? fontFamilyOverride, out string error)
+{
+    error = "";
+    var arg = args[i];
+    string? value;
+
+    if (arg == "--font-family")
+    {
+        if (i + 1 >= args.Length)
+        {
+            error = "--font-family requires a value";
+            return true;
+        }
+
+        value = args[++i];
+    }
+    else if (arg.StartsWith("--font-family=", StringComparison.Ordinal))
+    {
+        value = arg["--font-family=".Length..];
+        if (value.Length == 0)
+        {
+            error = "--font-family requires a value";
+            return true;
+        }
+    }
+    else
+    {
+        return false;
+    }
+
+    if (fontFamilyOverride is not null)
+    {
+        error = "duplicate option: --font-family";
+        return true;
+    }
+
+    if (!RenderSettingsResolver.TryParseFontFamily(value, out var parsed, out var parseError))
+    {
+        error = $"invalid --font-family value: {parseError}";
+        return true;
+    }
+
+    fontFamilyOverride = parsed;
     return true;
 }
 
@@ -1580,13 +1647,14 @@ static void WriteCast(
     var height = scenario.Height ?? 24;
     var title = scenario.Title ?? "";
     var fontSize = renderSettings.FontSize.ToString(CultureInfo.InvariantCulture);
+    var fontFamilyTag = RenderSettingsResolver.FontFamilyTagPrefix + renderSettings.FontFamily;
     writer.WriteLine(
         $"{{\"version\":3,\"term\":{{\"cols\":{width},\"rows\":{height}" +
         $",\"type\":\"xterm-256color\"" +
         $",\"theme\":{{\"fg\":{JsonString(renderSettings.Theme.Fg)},\"bg\":{JsonString(renderSettings.Theme.Bg)},\"palette\":{JsonString(renderSettings.Theme.Palette)}}}}}" +
         $",\"timestamp\":{timestamp},\"title\":{JsonString(title)}" +
         $",\"env\":{{\"SHELL\":{JsonString(shell.EnvValue)}}}" +
-        $",\"tags\":[\"s2c:font-size={fontSize}\"]}}");
+        $",\"tags\":[{JsonString(RenderSettingsResolver.FontSizeTagPrefix + fontSize)},{JsonString(fontFamilyTag)}]}}");
 
     var intervalError = 0.0;
     var previousAbs = 0.0;
@@ -1876,6 +1944,7 @@ static string CreateInitialScenarioYaml()
     # Optional SVG rendering metadata. Written to the cast header (v3 tags / term.theme) and used by --format svg.
     # render:
     #   font-size: 16
+    #   font-family: '"JetBrains Mono", Consolas, monospace'
     #   theme:
     #     preset: dark
     #     fg: "#d0d0d0"
@@ -1927,8 +1996,8 @@ static string CreateInitialScenarioYaml()
 
 static void PrintUsage()
 {
-    Console.Error.WriteLine("Usage: scenario2cast [--verbose] [--format cast|svg] [--font-size N] [--theme dark|light] <scenario.yaml> [output]");
-    Console.Error.WriteLine("       scenario2cast svg [--font-size N] [--theme dark|light] <input.cast> [output.svg]");
+    Console.Error.WriteLine("Usage: scenario2cast [--verbose] [--format cast|svg] [--font-size N] [--font-family FAMILIES] [--theme dark|light] <scenario.yaml> [output]");
+    Console.Error.WriteLine("       scenario2cast svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] <input.cast> [output.svg]");
     Console.Error.WriteLine("       scenario2cast init [scenario.yaml]");
     Console.Error.WriteLine("       scenario2cast --help");
 }
@@ -1941,7 +2010,7 @@ static void PrintInitUsage()
 
 static void PrintSvgUsage()
 {
-    Console.Error.WriteLine("Usage: scenario2cast svg [--font-size N] [--theme dark|light] <input.cast> [output.svg]");
+    Console.Error.WriteLine("Usage: scenario2cast svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] <input.cast> [output.svg]");
     Console.Error.WriteLine("Converts an existing asciinema v2/v3 cast file to animated SVG.");
 }
 
@@ -2031,6 +2100,7 @@ public partial class ScenarioSettings
 public partial class ScenarioRender
 {
     public int? FontSize { get; set; }
+    public string? FontFamily { get; set; }
     public ScenarioTheme? Theme { get; set; }
 }
 

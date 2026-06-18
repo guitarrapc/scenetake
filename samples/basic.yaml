@@ -10,9 +10,6 @@ settings:
   pre-delay: 0.4 # pause before typing starts
   post-delay: 1.0 # pause after output before next step
 
-render:
-  font-size: 20
-
 steps:
   - echo "Hello, World!"
   - name: Name of the step

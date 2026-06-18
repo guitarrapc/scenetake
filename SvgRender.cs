@@ -249,7 +249,7 @@ internal static class SvgRender
             $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{svgWidth:0.##}\" height=\"{svgHeight:0.##}\" viewBox=\"0 0 {svgWidth:0.##} {svgHeight:0.##}\" preserveAspectRatio=\"xMidYMid meet\">");
         sb.AppendLine("<style>");
         sb.AppendLine(CultureInfo.InvariantCulture,
-            $"text {{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace; font-size: {fontSize}px; white-space: pre; }}");
+            $"text {{ font-family: {render.FontFamily}; font-size: {fontSize}px; white-space: pre; }}");
         sb.AppendLine(CultureInfo.InvariantCulture, $".bg {{ fill: {render.Theme.Bg}; }}");
         sb.AppendLine(CultureInfo.InvariantCulture, $".layer {{ opacity: 0; animation-duration: {fadeText}s; animation-timing-function: linear; animation-fill-mode: forwards; }}");
         sb.AppendLine("@keyframes layer-in { from { opacity: 0; } to { opacity: 1; } }");
@@ -478,7 +478,7 @@ internal static class SvgRender
     }
 }
 
-internal readonly record struct ResolvedRenderSettings(int FontSize, ResolvedTheme Theme)
+internal readonly record struct ResolvedRenderSettings(int FontSize, string FontFamily, ResolvedTheme Theme)
 {
     public string DefaultFg => Theme.Fg;
 }
@@ -1179,9 +1179,55 @@ internal static class RenderSettingsResolver
         rows is >= MinTerminalRows and <= MaxTerminalRows;
 
     internal const int DefaultFontSize = 16;
+    internal const int MaxFontFamilyLength = 256;
+    internal const int MaxFontFamilyCount = 10;
+    internal const string FontSizeTagPrefix = "s2c:font-size=";
+    internal const string FontFamilyTagPrefix = "s2c:font-family=";
+    internal const string DefaultFontFamily =
+        "ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace";
     internal static string DefaultFg => ThemePresets.Dark.Fg;
     internal static string DefaultBg => ThemePresets.Dark.Bg;
     internal static string DefaultPalette => ThemePresets.Dark.Palette;
+
+    internal static bool TryParseFontFamily(string text, out string fontFamily, out string error)
+    {
+        fontFamily = "";
+        error = "";
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            error = "font-family must not be empty";
+            return false;
+        }
+
+        text = text.Trim();
+        if (text.Length > MaxFontFamilyLength)
+        {
+            error = $"font-family must be at most {MaxFontFamilyLength} characters";
+            return false;
+        }
+
+        if (!TrySplitFontFamilies(text, out var families, out error))
+            return false;
+
+        var hasMono = families.Any(f =>
+            f.Equals("monospace", StringComparison.OrdinalIgnoreCase) ||
+            f.Equals("ui-monospace", StringComparison.OrdinalIgnoreCase));
+        var maxAllowed = hasMono ? MaxFontFamilyCount : MaxFontFamilyCount - 1;
+        if (families.Count > maxAllowed)
+        {
+            error = $"font-family must have at most {maxAllowed} families";
+            return false;
+        }
+
+        fontFamily = EnsureMonospaceFallback(FormatFontFamilies(families));
+        if (fontFamily.Length > MaxFontFamilyLength)
+        {
+            error = $"font-family must be at most {MaxFontFamilyLength} characters";
+            return false;
+        }
+
+        return true;
+    }
 
     internal static bool TryParseFontSize(string text, out int fontSize, out string error)
     {
@@ -1218,7 +1264,17 @@ internal static class RenderSettingsResolver
         if (!TryResolveTheme(render?.Theme, cliThemePreset, out var theme, out error))
             return false;
 
-        settings = new ResolvedRenderSettings(fontSize, theme);
+        var fontFamily = DefaultFontFamily;
+        if (!string.IsNullOrWhiteSpace(render?.FontFamily))
+        {
+            if (!TryParseFontFamily(render!.FontFamily!, out fontFamily, out error))
+            {
+                error = $"invalid render.font-family: {error}";
+                return false;
+            }
+        }
+
+        settings = new ResolvedRenderSettings(fontSize, fontFamily, theme);
         return true;
     }
 
@@ -1248,6 +1304,7 @@ internal static class RenderSettingsResolver
     internal static ResolvedRenderSettings ApplySvgOverrides(
         ResolvedRenderSettings settings,
         int? fontSizeOverride,
+        string? fontFamilyOverride,
         string? themePresetOverride,
         out string error)
     {
@@ -1266,7 +1323,183 @@ internal static class RenderSettingsResolver
         if (fontSizeOverride is int fontSize)
             settings = settings with { FontSize = fontSize };
 
+        if (fontFamilyOverride is string fontFamily)
+            settings = settings with { FontFamily = fontFamily };
+
         return settings;
+    }
+
+    private static bool TrySplitFontFamilies(string text, out List<string> families, out string error)
+    {
+        families = [];
+        error = "";
+        var index = 0;
+        while (index < text.Length)
+        {
+            while (index < text.Length && char.IsWhiteSpace(text[index]))
+                index++;
+
+            if (index >= text.Length)
+                break;
+
+            if (!TryReadFontFamilyName(text, ref index, out var family, out error))
+                return false;
+
+            families.Add(family);
+
+            while (index < text.Length && char.IsWhiteSpace(text[index]))
+                index++;
+
+            if (index >= text.Length)
+                break;
+
+            if (text[index] != ',')
+            {
+                error = "font-family: expected comma between family names";
+                return false;
+            }
+
+            index++;
+            if (index >= text.Length)
+            {
+                error = "font-family: trailing comma";
+                return false;
+            }
+        }
+
+        if (families.Count == 0)
+        {
+            error = "font-family must not be empty";
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool TryReadFontFamilyName(string text, ref int index, out string family, out string error)
+    {
+        family = "";
+        error = "";
+        if (index >= text.Length)
+        {
+            error = "font-family: unexpected end of value";
+            return false;
+        }
+
+        if (text[index] is '"' or '\'')
+        {
+            var quote = text[index++];
+            var start = index;
+            while (index < text.Length)
+            {
+                if (text[index] == '\\' && index + 1 < text.Length)
+                {
+                    index += 2;
+                    continue;
+                }
+
+                if (text[index] == quote)
+                {
+                    family = text[start..index];
+                    index++;
+                    return ValidateFontFamilyName(family, out error);
+                }
+
+                index++;
+            }
+
+            error = "font-family: unterminated quoted family name";
+            return false;
+        }
+
+        var unquotedStart = index;
+        while (index < text.Length && text[index] != ',')
+            index++;
+
+        family = text[unquotedStart..index].Trim();
+        if (family.Length == 0)
+        {
+            error = "font-family: empty family name";
+            return false;
+        }
+
+        if (family.Any(char.IsWhiteSpace))
+        {
+            error = $"font-family: unquoted family name contains spaces: {family}";
+            return false;
+        }
+
+        return ValidateFontFamilyName(family, out error);
+    }
+
+    private static bool ValidateFontFamilyName(string family, out string error)
+    {
+        error = "";
+        if (family.Length == 0)
+        {
+            error = "font-family: empty family name";
+            return false;
+        }
+
+        foreach (var c in family)
+        {
+            if (char.IsControl(c) || c is ';' or '{' or '}' or '<' or '>')
+            {
+                error = $"font-family: invalid character '{c}' in family name";
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static string FormatFontFamilies(IReadOnlyList<string> families)
+    {
+        var parts = new string[families.Count];
+        for (var i = 0; i < families.Count; i++)
+            parts[i] = FormatFontFamilyForCss(families[i]);
+
+        return string.Join(", ", parts);
+    }
+
+    private static string FormatFontFamilyForCss(string family)
+    {
+        var isSafeIdent = family.Length > 0 &&
+            (char.IsAsciiLetter(family[0]) || family[0] is '_' or '-') &&
+            (family[0] != '-' || family.Length == 1 || !char.IsAsciiDigit(family[1])) &&
+            family.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_');
+        if (isSafeIdent)
+            return family;
+
+        var escaped = family
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal);
+        return $"\"{escaped}\"";
+    }
+
+    private static string EnsureMonospaceFallback(string fontFamily)
+    {
+        if (HasMonospaceGeneric(fontFamily))
+            return fontFamily;
+
+        return $"{fontFamily}, monospace";
+    }
+
+    private static bool HasMonospaceGeneric(string fontFamily)
+    {
+        if (!TrySplitFontFamilies(fontFamily, out var families, out _))
+            return false;
+
+        foreach (var family in families)
+        {
+            if (family.Equals("monospace", StringComparison.OrdinalIgnoreCase) ||
+                family.Equals("ui-monospace", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static ResolvedTheme MergeTheme(ResolvedTheme baseTheme, ScenarioTheme? overrides)

@@ -72,6 +72,9 @@ scenario2cast scenario.yaml
 # cast とアニメーション SVG を一度に生成
 scenario2cast --format svg scenario.yaml
 
+# SVG 出力のスタイルを細かく指定
+scenario2cast --format svg scenario.yaml --font-size 20 --font-family "'Noto Sans Mono', ui-monospace"
+
 # 既存の cast ファイルを SVG に変換
 scenario2cast svg scenario.cast
 

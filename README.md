@@ -72,6 +72,9 @@ scenario2cast scenario.yaml
 # Generate cast and animated SVG in one command
 scenario2cast --format svg scenario.yaml
 
+# For more granular SVG styling control
+scenario2cast --format svg scenario.yaml --font-size 20 --font-family "'Noto Sans Mono', ui-monospace"
+
 # Convert an existing cast file to SVG
 scenario2cast svg scenario.cast
 

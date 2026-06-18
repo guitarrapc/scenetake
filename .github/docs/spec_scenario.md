@@ -70,12 +70,13 @@ Display metadata for the cast header. Written on every run. Header mapping: [spe
 | Key | Default | Description |
 |---|---|---|
 | `font-size` | `16` | Monospace font size (`1`–`128`) |
+| `font-family` | built-in stack | CSS `font-family` value (`1`–`10` families, `256` characters max). If `monospace` / `ui-monospace` is absent, `monospace` is appended. |
 | `theme.preset` | `dark` | Built-in preset: `dark` or `light` |
 | `theme.fg` | from preset | Optional foreground override (hex) |
 | `theme.bg` | from preset | Optional background override (hex) |
 | `theme.palette` | from preset | Optional 16-color palette override (colon-separated hex) |
 
-`settings` controls recording; `render` controls presentation. CLI may override `font-size` and theme preset. See [spec_cli.md](spec_cli.md).
+`settings` controls recording; `render` controls presentation. CLI may override `font-size`, `font-family`, and theme preset. See [spec_cli.md](spec_cli.md).
 
 ## `pre` and `post`
 

@@ -48,7 +48,7 @@ Every cast file written by the scenario path includes render metadata in the hea
   "timestamp": 1701960613,
   "title": "My Demo",
   "env": { "SHELL": "/bin/bash" },
-  "tags": ["s2c:font-size=16"]
+  "tags": ["s2c:font-size=16", "s2c:font-family=ui-monospace, \"Cascadia Mono\", monospace"]
 }
 ```
 
@@ -61,9 +61,9 @@ Every cast file written by the scenario path includes render metadata in the hea
 | `timestamp` | deterministic from YAML | See [spec_scenario.md](spec_scenario.md) → Determinism. |
 | `title` | scenario `title` | May be empty. |
 | `env.SHELL` | resolved shell | `TERM` is represented by `term.type`. |
-| `tags` | `s2c:font-size=N` | SVG font size (`1`–`128`). Unknown tags are ignored by external tools. |
+| `tags` | `s2c:font-size=N`, `s2c:font-family=…` | SVG font size (`1`–`128`) and CSS `font-family` string. Unknown tags are ignored by external tools. |
 
-On read, v2 headers use top-level `width`, `height`, and `theme` instead. Font size defaults to `16` unless overridden by CLI; v3 font size is read from `s2c:font-size` in `tags`.
+On read, v2 headers use top-level `width`, `height`, and `theme` instead. Render metadata defaults apply unless overridden by CLI or header fields: v3 `s2c:font-size` / `s2c:font-family` in `tags`; v2 `scenario2cast.font-size` / `scenario2cast.font-family`. Invalid header values warn once and fall back to defaults when read by the `svg` subcommand.
 
 ## Event Stream
 

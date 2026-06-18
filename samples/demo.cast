@@ -1,4 +1,4 @@
-{"version":3,"term":{"cols":120,"rows":24,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":1719865244,"title":"README Workflow Demo","env":{"SHELL":"C:\\Program Files\\Git\\bin\\bash.exe"},"tags":["s2c:font-size=16"]}
+{"version":3,"term":{"cols":120,"rows":24,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":1719865244,"title":"README Workflow Demo","env":{"SHELL":"C:\\Program Files\\Git\\bin\\bash.exe"},"tags":["s2c:font-size=16","s2c:font-family=ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace"]}
 [1.000,"o","$ "]
 [0.050,"o","c"]
 [0.011,"o","a"]
@@ -23,7 +23,7 @@
 [0.028,"o","m"]
 [0.020,"o","l"]
 [0.019,"o","\r\n"]
-[0.200,"o","title: \"Basic Demo\"\r\nwidth: 80\r\nheight: 24\r\nshell: bash\r\n\r\nsettings:\r\n  prompt: \"$ \"\r\n  typing-speed: 0.02 # average seconds per keystroke\r\n  typing-jitter: 0.01 # random variance (±) per keystroke\r\n  pre-delay: 0.4 # pause before typing starts\r\n  post-delay: 1.0 # pause after output before next step\r\n\r\nrender:\r\n  font-size: 20\r\n\r\nsteps:\r\n  - echo \"Hello, World!\"\r\n  - name: Name of the step\r\n    run: echo \"Current directory:\"\r\n  - name: Coloring stdout\r\n    run: curl -I https://google.com\r\n    highlight:\r\n      - color: green\r\n        at:\r\n          - \"1\"\r\n      - color: gray\r\n        at:\r\n          - \"2-12\"\r\n  - echo \"Wait for 2 seconds...\"\r\n  - run: sleep 2\r\n    execution-duration: 1.0\r\n  - echo \"stderr output is red by default\" 1>&2\r\n  - echo \"Done!\"\r\n"]
+[0.200,"o","title: \"Basic Demo\"\r\nwidth: 80\r\nheight: 24\r\nshell: bash\r\n\r\nsettings:\r\n  prompt: \"$ \"\r\n  typing-speed: 0.02 # average seconds per keystroke\r\n  typing-jitter: 0.01 # random variance (±) per keystroke\r\n  pre-delay: 0.4 # pause before typing starts\r\n  post-delay: 1.0 # pause after output before next step\r\n\r\nsteps:\r\n  - echo \"Hello, World!\"\r\n  - name: Name of the step\r\n    run: echo \"Current directory:\"\r\n  - name: Coloring stdout\r\n    run: curl -I https://google.com\r\n    highlight:\r\n      - color: green\r\n        at:\r\n          - \"1\"\r\n      - color: gray\r\n        at:\r\n          - \"2-12\"\r\n  - echo \"Wait for 2 seconds...\"\r\n  - run: sleep 2\r\n    execution-duration: 1.0\r\n  - echo \"stderr output is red by default\" 1>&2\r\n  - echo \"Done!\"\r\n"]
 [1.700,"o","$ "]
 [0.050,"o","s"]
 [0.029,"o","c"]

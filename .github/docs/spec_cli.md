@@ -17,8 +17,8 @@ scenario2cast exposes a small command-line surface: record scenarios to cast (an
 | `scenario2cast --version` | Print version |
 
 ```bash
-scenario2cast [--verbose] [--format cast|svg] [--font-size N] [--theme dark|light] <scenario.yaml> [output]
-scenario2cast svg [--font-size N] [--theme dark|light] <input.cast> [output]
+scenario2cast [--verbose] [--format cast|svg] [--font-size N] [--font-family FAMILIES] [--theme dark|light] <scenario.yaml> [output]
+scenario2cast svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] <input.cast> [output]
 scenario2cast init [scenario.yaml]
 ```
 
@@ -28,8 +28,8 @@ Subcommands accept `-h` / `--help` for subcommand-specific usage.
 
 - Options may appear in any order before positional arguments on the scenario and `svg` paths.
 - Unknown `-` / `--` options are explicit errors (avoids typos becoming path-not-found errors).
-- `--format`, `--font-size`, and `--theme` accept `--name=value` or `--name value`.
-- Duplicate `--font-size` or `--theme` is an error.
+- `--format`, `--font-size`, `--font-family`, and `--theme` accept `--name=value` or `--name value`.
+- Duplicate `--font-size`, `--font-family`, or `--theme` is an error.
 
 ## Options
 
@@ -38,6 +38,7 @@ Subcommands accept `-h` / `--help` for subcommand-specific usage.
 | `--verbose` | scenario path only | Show successful `pre`/`post` labels and phase markers. See [spec_pre_post.md](spec_pre_post.md). |
 | `--format cast\|svg` | scenario path only | Default `cast`. `svg` also writes `.svg`. See [spec_svg.md](spec_svg.md). |
 | `--font-size N` | scenario, `svg` | `1`–`128`. Scenario path: overrides `render.font-size` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default `16`). See [spec_cast.md](spec_cast.md). |
+| `--font-family FAMILIES` | scenario, `svg` | CSS `font-family` string (`1`–`10` families, `256` characters max). Scenario path: overrides `render.font-family` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default stack). See [spec_cast.md](spec_cast.md) and [spec_svg.md](spec_svg.md). |
 | `--theme dark\|light` | scenario, `svg` | Scenario path: overrides `render.theme.preset`; YAML `fg` / `bg` / `palette` still merge; cast header stores resolved hex. `svg`: render-only override (CLI > cast header > default `dark`). See [spec_cast.md](spec_cast.md). |
 
 `init` accepts only an optional output path positional; no other flags.

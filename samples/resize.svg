@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="809.6" height="256" viewBox="0 0 809.6 256" preserveAspectRatio="xMidYMid meet">
+<svg xmlns="http://www.w3.org/2000/svg" width="829.6" height="264" viewBox="0 0 829.6 264" preserveAspectRatio="xMidYMid meet">
 <style>
-text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 16px; white-space: pre; }
+text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 .bg { fill: #282c34; }
 .layer { opacity: 0; animation-duration: 0.001s; animation-timing-function: linear; animation-fill-mode: forwards; }
 @keyframes layer-in { from { opacity: 0; } to { opacity: 1; } }
@@ -18,33 +18,33 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 .viewport-mask-2, .viewport-bg-2 { animation-name: layer-in; animation-delay: 1s; }
 </style>
 <defs>
-<mask id="viewport-mask" x="0" y="0" width="809.6" height="256" maskUnits="userSpaceOnUse">
-<rect class="layer viewport-mask-0" x="8" y="8" width="396.8" height="160" fill="white"/>
-<rect class="layer viewport-mask-1" x="8" y="8" width="793.6" height="240" fill="white"/>
-<rect class="layer viewport-mask-2" x="8" y="8" width="496" height="120" fill="white"/>
+<mask id="viewport-mask" x="0" y="0" width="829.6" height="264" maskUnits="userSpaceOnUse">
+<rect class="layer viewport-mask-0" x="8" y="8" width="416.8" height="168" fill="white"/>
+<rect class="layer viewport-mask-1" x="8" y="8" width="813.6" height="248" fill="white"/>
+<rect class="layer viewport-mask-2" x="8" y="8" width="516" height="128" fill="white"/>
 </mask>
 </defs>
 <g mask="url(#viewport-mask)">
-<rect class="bg layer viewport-bg-0" x="8" y="8" width="396.8" height="160"/>
-<rect class="bg layer viewport-bg-1" x="8" y="8" width="793.6" height="240"/>
-<rect class="bg layer viewport-bg-2" x="8" y="8" width="496" height="120"/>
+<rect class="bg layer viewport-bg-0" x="8" y="8" width="416.8" height="168"/>
+<rect class="bg layer viewport-bg-1" x="8" y="8" width="813.6" height="248"/>
+<rect class="bg layer viewport-bg-2" x="8" y="8" width="516" height="128"/>
 <g class="layer layer-0">
-<text x="8" y="24" fill="#d0d0d0" font-weight="normal" textLength="208.32" lengthAdjust="spacingAndGlyphs">Small terminal (40x8)</text>
+<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="208.32" lengthAdjust="spacingAndGlyphs">Small terminal (40x8)</text>
 </g>
 <g class="layer layer-1">
-<text x="8" y="44" fill="#d0d0d0" font-weight="normal" textLength="168.64" lengthAdjust="spacingAndGlyphs">Expanded to 80x12</text>
+<text x="18" y="48" fill="#d0d0d0" font-weight="normal" textLength="168.64" lengthAdjust="spacingAndGlyphs">Expanded to 80x12</text>
 </g>
 <g class="layer layer-2">
-<text x="8" y="64" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">Shrunk to 50x6</text>
+<text x="18" y="68" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">Shrunk to 50x6</text>
 </g>
 <g class="layer cursor-layer-0">
-<rect class="cursor-block" x="8" y="28" width="9.92" height="20"/>
+<rect class="cursor-block" x="18" y="32" width="9.92" height="20"/>
 </g>
 <g class="layer cursor-layer-1">
-<rect class="cursor-block" x="8" y="48" width="9.92" height="20"/>
+<rect class="cursor-block" x="18" y="52" width="9.92" height="20"/>
 </g>
 <g class="layer cursor-layer-2">
-<rect class="cursor-block" x="8" y="68" width="9.92" height="20"/>
+<rect class="cursor-block" x="18" y="72" width="9.92" height="20"/>
 </g>
 </g>
 </svg>
