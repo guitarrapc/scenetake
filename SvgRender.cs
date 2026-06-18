@@ -16,27 +16,46 @@ internal static class SvgRender
         ResolvedRenderSettings render,
         string outputPath)
     {
-        var frames = BuildFrames(events, width, height, render);
+        var (canvasWidth, canvasHeight) = ResolveCanvasSize(width, height, events);
+        var frames = BuildFrames(events, width, height, canvasWidth, canvasHeight, render);
         if (frames.Count == 0)
-            frames.Add(new TerminalFrame(0, CreateEmptyScreen(width, height, render), 0, 0, true));
+            frames.Add(new TerminalFrame(0, CreateEmptyScreen(canvasWidth, canvasHeight, render), 0, 0, true, width, height));
 
-        var totalDuration = events.Count > 0 ? events[^1].Time : 0.0;
-        if (totalDuration <= 0)
-            totalDuration = 0.001;
-
-        var rowLayers = BuildRowLayers(frames, width, height, render);
+        var rowLayers = BuildRowLayers(frames, canvasWidth, canvasHeight, render);
         var cursorLayers = BuildCursorLayers(frames);
-        var svg = BuildSvgDocument(rowLayers, cursorLayers, width, height, render);
+        var viewportLayers = BuildViewportLayers(frames);
+        var svg = BuildSvgDocument(rowLayers, cursorLayers, viewportLayers, canvasWidth, canvasHeight, render);
         File.WriteAllText(outputPath, svg, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+    }
+
+    private static (int width, int height) ResolveCanvasSize(
+        int initialWidth,
+        int initialHeight,
+        IReadOnlyList<CastEvent> events)
+    {
+        var maxWidth = initialWidth;
+        var maxHeight = initialHeight;
+        foreach (var ev in events)
+        {
+            if (ev.Kind != CastEventKind.Resize)
+                continue;
+
+            maxWidth = Math.Max(maxWidth, ev.ResizeWidth);
+            maxHeight = Math.Max(maxHeight, ev.ResizeHeight);
+        }
+
+        return (maxWidth, maxHeight);
     }
 
     private static List<TerminalFrame> BuildFrames(
         IReadOnlyList<CastEvent> events,
-        int width,
-        int height,
+        int terminalWidth,
+        int terminalHeight,
+        int canvasWidth,
+        int canvasHeight,
         ResolvedRenderSettings render)
     {
-        var terminal = new TerminalEmulator(width, height, render);
+        var terminal = new TerminalEmulator(terminalWidth, terminalHeight, render);
         var frames = new List<TerminalFrame>();
         TerminalScreen? lastScreen = null;
         var lastCursorX = -1;
@@ -46,19 +65,37 @@ internal static class SvgRender
 
         foreach (var ev in events)
         {
-            terminal.Write(ev.Data);
-            var screen = terminal.CaptureScreen();
-            var cursorX = Math.Min(terminal.CursorX, width - 1);
-            var cursorY = terminal.CursorY;
+            var forceFrame = false;
+            if (ev.Kind == CastEventKind.Resize)
+            {
+                terminal.Resize(ev.ResizeWidth, ev.ResizeHeight);
+                forceFrame = true;
+            }
+            else
+            {
+                terminal.Write(ev.Data);
+            }
+
+            var screen = terminal.CaptureScreen(canvasWidth, canvasHeight);
+            var cursorX = Math.Clamp(terminal.CursorX, 0, canvasWidth - 1);
+            var cursorY = Math.Clamp(terminal.CursorY, 0, canvasHeight - 1);
             var cursorVisible = terminal.CursorVisible;
-            if (lastScreen is null ||
+            if (forceFrame ||
+                lastScreen is null ||
                 !screen.ContentEquals(lastScreen) ||
                 !hasCursorState ||
                 cursorX != lastCursorX ||
                 cursorY != lastCursorY ||
                 cursorVisible != lastCursorVisible)
             {
-                frames.Add(new TerminalFrame(ev.Time, screen, cursorX, cursorY, cursorVisible));
+                frames.Add(new TerminalFrame(
+                    ev.Time,
+                    screen,
+                    cursorX,
+                    cursorY,
+                    cursorVisible,
+                    terminal.Width,
+                    terminal.Height));
                 lastScreen = screen;
                 lastCursorX = cursorX;
                 lastCursorY = cursorY;
@@ -99,6 +136,30 @@ internal static class SvgRender
                 active.HideTime = frame.Time;
 
             active = new CursorLayer(frame.CursorY, frame.CursorX, frame.Time);
+            layers.Add(active);
+        }
+
+        return layers;
+    }
+
+    private static List<ViewportLayer> BuildViewportLayers(IReadOnlyList<TerminalFrame> frames)
+    {
+        var layers = new List<ViewportLayer>();
+        ViewportLayer? active = null;
+
+        foreach (var frame in frames)
+        {
+            if (active is not null &&
+                active.Width == frame.ViewportWidth &&
+                active.Height == frame.ViewportHeight)
+            {
+                continue;
+            }
+
+            if (active is not null)
+                active.HideTime = frame.Time;
+
+            active = new ViewportLayer(frame.ViewportWidth, frame.ViewportHeight, frame.Time);
             layers.Add(active);
         }
 
@@ -150,12 +211,13 @@ internal static class SvgRender
     private static TerminalScreen CreateEmptyScreen(int width, int height, ResolvedRenderSettings render)
     {
         var terminal = new TerminalEmulator(width, height, render);
-        return terminal.CaptureScreen();
+        return terminal.CaptureScreen(width, height);
     }
 
     private static string BuildSvgDocument(
         IReadOnlyList<RowLayer> layers,
         IReadOnlyList<CursorLayer> cursorLayers,
+        IReadOnlyList<ViewportLayer> viewportLayers,
         int width,
         int height,
         ResolvedRenderSettings render)
@@ -168,10 +230,13 @@ internal static class SvgRender
         var fadeText = LayerFadeSeconds.ToString("0.######", CultureInfo.InvariantCulture);
         var cursorOpacityText = CursorBlockOpacity.ToString("0.######", CultureInfo.InvariantCulture);
 
+        if (viewportLayers.Count == 0)
+            viewportLayers = [new ViewportLayer(width, height, 0)];
+
         var sb = new StringBuilder(64 * 1024);
         sb.AppendLine(CultureInfo.InvariantCulture, $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLine(CultureInfo.InvariantCulture,
-            $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{svgWidth:0.##}\" height=\"{svgHeight:0.##}\" viewBox=\"0 0 {svgWidth:0.##} {svgHeight:0.##}\">");
+            $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{svgWidth:0.##}\" height=\"{svgHeight:0.##}\" viewBox=\"0 0 {svgWidth:0.##} {svgHeight:0.##}\" preserveAspectRatio=\"xMidYMid meet\">");
         sb.AppendLine("<style>");
         sb.AppendLine(CultureInfo.InvariantCulture,
             $"text {{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace; font-size: {fontSize}px; white-space: pre; }}");
@@ -188,10 +253,35 @@ internal static class SvgRender
         for (var i = 0; i < cursorLayers.Count; i++)
             AppendCursorLayerStyle(sb, i, cursorLayers[i], fadeText);
 
+        for (var i = 0; i < viewportLayers.Count; i++)
+            AppendViewportLayerStyle(sb, i, viewportLayers[i], fadeText);
+
         sb.AppendLine("</style>");
 
+        sb.AppendLine("<defs>");
         sb.AppendLine(CultureInfo.InvariantCulture,
-            $"<rect class=\"bg\" x=\"0\" y=\"0\" width=\"{svgWidth:0.##}\" height=\"{svgHeight:0.##}\"/>");
+            $"<mask id=\"viewport-mask\" x=\"0\" y=\"0\" width=\"{svgWidth:0.##}\" height=\"{svgHeight:0.##}\" maskUnits=\"userSpaceOnUse\">");
+        for (var i = 0; i < viewportLayers.Count; i++)
+        {
+            var viewport = viewportLayers[i];
+            var viewportWidth = ViewportPixelWidth(viewport.Width, charWidth);
+            var viewportHeight = ViewportPixelHeight(viewport.Height, lineHeight);
+            sb.AppendLine(CultureInfo.InvariantCulture,
+                $"<rect class=\"layer viewport-mask-{i}\" x=\"{Padding:0.##}\" y=\"{Padding:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"white\"/>");
+        }
+
+        sb.AppendLine("</mask>");
+        sb.AppendLine("</defs>");
+
+        sb.AppendLine("<g mask=\"url(#viewport-mask)\">");
+        for (var i = 0; i < viewportLayers.Count; i++)
+        {
+            var viewport = viewportLayers[i];
+            var viewportWidth = ViewportPixelWidth(viewport.Width, charWidth);
+            var viewportHeight = ViewportPixelHeight(viewport.Height, lineHeight);
+            sb.AppendLine(CultureInfo.InvariantCulture,
+                $"<rect class=\"bg layer viewport-bg-{i}\" x=\"{Padding:0.##}\" y=\"{Padding:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\"/>");
+        }
 
         for (var i = 0; i < layers.Count; i++)
         {
@@ -210,8 +300,34 @@ internal static class SvgRender
             sb.AppendLine("</g>");
         }
 
+        sb.AppendLine("</g>");
         sb.AppendLine("</svg>");
         return sb.ToString();
+    }
+
+    private static double ViewportPixelWidth(int cols, double charWidth) => cols * charWidth;
+
+    private static double ViewportPixelHeight(int rows, double lineHeight) => rows * lineHeight;
+
+    private static void AppendViewportLayerStyle(
+        StringBuilder sb,
+        int index,
+        ViewportLayer layer,
+        string fadeText)
+    {
+        var showDelay = layer.ShowTime.ToString("0.######", CultureInfo.InvariantCulture);
+        var selector = $".viewport-mask-{index}, .viewport-bg-{index}";
+
+        if (layer.HideTime is double hideTime)
+        {
+            var hideDelay = hideTime.ToString("0.######", CultureInfo.InvariantCulture);
+            sb.AppendLine(CultureInfo.InvariantCulture,
+                $"{selector} {{ animation-name: layer-in, layer-out; animation-delay: {showDelay}s, {hideDelay}s; }}");
+            return;
+        }
+
+        sb.AppendLine(CultureInfo.InvariantCulture,
+            $"{selector} {{ animation-name: layer-in; animation-delay: {showDelay}s; }}");
     }
 
     private static void AppendCursorLayerStyle(
@@ -353,7 +469,24 @@ internal readonly record struct TerminalFrame(
     TerminalScreen Screen,
     int CursorX,
     int CursorY,
-    bool CursorVisible);
+    bool CursorVisible,
+    int ViewportWidth,
+    int ViewportHeight);
+
+internal sealed class ViewportLayer
+{
+    public ViewportLayer(int width, int height, double showTime)
+    {
+        Width = width;
+        Height = height;
+        ShowTime = showTime;
+    }
+
+    public int Width { get; }
+    public int Height { get; }
+    public double ShowTime { get; }
+    public double? HideTime { get; set; }
+}
 
 internal sealed class CursorLayer
 {
@@ -449,11 +582,11 @@ internal readonly struct TerminalCell : IEquatable<TerminalCell>
 
 internal sealed class TerminalEmulator
 {
-    private readonly int _width;
-    private readonly int _height;
+    private int _width;
+    private int _height;
     private readonly ResolvedRenderSettings _render;
     private readonly string[] _palette;
-    private readonly TerminalCell[,] _cells;
+    private TerminalCell[,] _cells;
     private int _cursorX;
     private int _cursorY;
     private bool _cursorVisible = true;
@@ -473,9 +606,31 @@ internal sealed class TerminalEmulator
         ClearAll();
     }
 
+    public int Width => _width;
+    public int Height => _height;
     public int CursorX => _cursorX;
     public int CursorY => _cursorY;
     public bool CursorVisible => _cursorVisible;
+
+    public void Resize(int newWidth, int newHeight)
+    {
+        var resized = new TerminalCell[newHeight, newWidth];
+        for (var row = 0; row < newHeight; row++)
+        {
+            for (var col = 0; col < newWidth; col++)
+            {
+                resized[row, col] = row < _height && col < _width
+                    ? _cells[row, col]
+                    : EmptyCell();
+            }
+        }
+
+        _cells = resized;
+        _width = newWidth;
+        _height = newHeight;
+        _cursorX = Math.Clamp(_cursorX, 0, Math.Max(0, _width - 1));
+        _cursorY = Math.Clamp(_cursorY, 0, Math.Max(0, _height - 1));
+    }
 
     public void Write(string data)
     {
@@ -519,13 +674,17 @@ internal sealed class TerminalEmulator
         }
     }
 
-    public TerminalScreen CaptureScreen()
+    public TerminalScreen CaptureScreen(int canvasWidth, int canvasHeight)
     {
-        var screen = new TerminalScreen(_width, _height);
-        for (var row = 0; row < _height; row++)
+        var screen = new TerminalScreen(canvasWidth, canvasHeight);
+        for (var row = 0; row < canvasHeight; row++)
         {
-            for (var col = 0; col < _width; col++)
-                screen[row, col] = _cells[row, col];
+            for (var col = 0; col < canvasWidth; col++)
+            {
+                screen[row, col] = row < _height && col < _width
+                    ? _cells[row, col]
+                    : EmptyCell();
+            }
         }
 
         return screen;
@@ -989,6 +1148,15 @@ internal static class RenderSettingsResolver
 {
     internal const int MinFontSize = 1;
     internal const int MaxFontSize = 128;
+    internal const int MinTerminalCols = 1;
+    internal const int MaxTerminalCols = 512;
+    internal const int MinTerminalRows = 1;
+    internal const int MaxTerminalRows = 512;
+
+    internal static bool IsValidTerminalSize(int cols, int rows) =>
+        cols is >= MinTerminalCols and <= MaxTerminalCols &&
+        rows is >= MinTerminalRows and <= MaxTerminalRows;
+
     internal const int DefaultFontSize = 16;
     internal static string DefaultFg => ThemePresets.Dark.Fg;
     internal static string DefaultBg => ThemePresets.Dark.Bg;

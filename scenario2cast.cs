@@ -545,27 +545,27 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
         if (TryFormatNameComment(command.Name, command.Cmd, out var nameLine))
         {
             var prefix = NameCommentPrefix(events.Count > 0 ? events[^1].Data : null);
-            events.Add(new CastEvent(Math.Round(t, 6), prefix + nameLine));
+            events.Add(CastEvent.Output(Math.Round(t, 6), prefix + nameLine));
             t += 0.05;
         }
 
-        events.Add(new CastEvent(Math.Round(t, 6), prompt));
+        events.Add(CastEvent.Output(Math.Round(t, 6), prompt));
         t += 0.05;
 
         if (hasRunHighlight && !string.IsNullOrEmpty(runHighlightStyle))
-            events.Add(new CastEvent(Math.Round(t, 6), runHighlightStyle));
+            events.Add(CastEvent.Output(Math.Round(t, 6), runHighlightStyle));
 
         foreach (var ch in command.Cmd)
         {
-            events.Add(new CastEvent(Math.Round(t, 6), ch.ToString()));
+            events.Add(CastEvent.Output(Math.Round(t, 6), ch.ToString()));
             var delay = cmdSpeed + rng.NextDouble() * 2 * cmdJitter - cmdJitter;
             t += Math.Max(delay, 0.005);
         }
 
         if (hasRunHighlight && !string.IsNullOrEmpty(runHighlightStyle))
-            events.Add(new CastEvent(Math.Round(t, 6), SgrReset));
+            events.Add(CastEvent.Output(Math.Round(t, 6), SgrReset));
 
-        events.Add(new CastEvent(Math.Round(t, 6), "\r\n"));
+        events.Add(CastEvent.Output(Math.Round(t, 6), "\r\n"));
         t += 0.15;
 
         Console.Error.WriteLine($"  running: {command.Cmd}");
@@ -578,7 +578,7 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
             var output = GetHighlights(command.Extra, command.Cmd) is { } highlights
                 ? ApplyHighlights(mergedOutput, highlights, command.Cmd)
                 : mergedOutput;
-            events.Add(new CastEvent(Math.Round(t, 6), NormalizeNewlines(output)));
+            events.Add(CastEvent.Output(Math.Round(t, 6), NormalizeNewlines(output)));
         }
 
         t += cmdPost;
@@ -586,7 +586,7 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
     }
 
     if (events.Count > 0)
-        events.Add(new CastEvent(Math.Round(t, 6), prompt));
+        events.Add(CastEvent.Output(Math.Round(t, 6), prompt));
 
     return events;
 }
@@ -1586,7 +1586,17 @@ static void WriteCast(
         $",\"scenario2cast\":{{\"font-size\":{renderSettings.FontSize.ToString(CultureInfo.InvariantCulture)}}}}}");
 
     foreach (var ev in events)
-        writer.WriteLine($"[{ev.Time.ToString("0.######", CultureInfo.InvariantCulture)},\"o\",{JsonString(ev.Data)}]");
+    {
+        switch (ev.Kind)
+        {
+            case CastEventKind.Output:
+                writer.WriteLine($"[{ev.Time.ToString("0.######", CultureInfo.InvariantCulture)},\"o\",{JsonString(ev.Data)}]");
+                break;
+            case CastEventKind.Resize:
+                writer.WriteLine($"[{ev.Time.ToString("0.######", CultureInfo.InvariantCulture)},\"r\",{JsonString(ev.Data)}]");
+                break;
+        }
+    }
 }
 
 static string JsonString(string s)
@@ -1889,7 +1899,24 @@ static void PrintVersion()
     Console.WriteLine(AppVersion);
 }
 
-record CastEvent(double Time, string Data);
+enum CastEventKind
+{
+    Output,
+    Resize,
+}
+
+readonly record struct CastEvent(
+    double Time,
+    CastEventKind Kind,
+    string Data,
+    int ResizeWidth = 0,
+    int ResizeHeight = 0)
+{
+    public static CastEvent Output(double time, string data) => new(time, CastEventKind.Output, data);
+
+    public static CastEvent Resize(double time, int width, int height) =>
+        new(time, CastEventKind.Resize, $"{width}x{height}", width, height);
+}
 
 enum OutputFormat
 {

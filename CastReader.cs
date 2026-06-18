@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 
@@ -40,6 +41,10 @@ internal static class CastReader
         if (!TryReadPositiveInt(header, "height", out var height))
             throw new CastReadException("cast header is missing height");
 
+        if (!RenderSettingsResolver.IsValidTerminalSize(width, height))
+            throw new CastReadException(
+                $"cast header width and height must be {RenderSettingsResolver.MinTerminalCols}–{RenderSettingsResolver.MaxTerminalCols}");
+
         var renderSettings = CastReader.ResolveFromCastHeader(header);
         var events = new List<CastEvent>();
         var warnedCodes = new HashSet<string>(StringComparer.Ordinal);
@@ -53,8 +58,8 @@ internal static class CastReader
             if (!TryParseEventLine(line, i + 1, warnedCodes, out var ev))
                 throw new CastReadException($"invalid cast event at line {i + 1}");
 
-            if (ev is not null)
-                events.Add(ev);
+            if (ev.HasValue)
+                events.Add(ev.Value);
         }
 
         return new CastRecording(width, height, renderSettings, events);
@@ -191,17 +196,49 @@ internal static class CastReader
             return false;
 
         var code = root[1].GetString() ?? "";
-        if (!string.Equals(code, "o", StringComparison.Ordinal))
-        {
-            if (warnedCodes.Add(code))
-                Console.Error.WriteLine($"Warning: svg: unsupported cast event code '{code}'; skipping");
+        var time = root[0].GetDouble();
+        var data = root[2].GetString() ?? "";
 
+        if (string.Equals(code, "o", StringComparison.Ordinal))
+        {
+            ev = CastEvent.Output(time, data);
             return true;
         }
 
-        var time = root[0].GetDouble();
-        var data = root[2].GetString() ?? "";
-        ev = new CastEvent(time, data);
+        if (string.Equals(code, "r", StringComparison.Ordinal))
+        {
+            if (!TryParseResizeData(data, out var resizeWidth, out var resizeHeight))
+            {
+                if (warnedCodes.Add("invalid-resize"))
+                    Console.Error.WriteLine("Warning: svg: invalid resize event data; skipping");
+
+                return true;
+            }
+
+            ev = CastEvent.Resize(time, resizeWidth, resizeHeight);
+            return true;
+        }
+
+        if (warnedCodes.Add(code))
+            Console.Error.WriteLine($"Warning: svg: unsupported cast event code '{code}'; skipping");
+
         return true;
+    }
+
+    private static bool TryParseResizeData(string data, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+        var separator = data.IndexOf('x');
+        if (separator <= 0 || separator >= data.Length - 1)
+            return false;
+
+        if (!int.TryParse(data.AsSpan(0, separator), NumberStyles.Integer, CultureInfo.InvariantCulture, out width))
+            return false;
+
+        if (!int.TryParse(data.AsSpan(separator + 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out height))
+            return false;
+
+        return RenderSettingsResolver.IsValidTerminalSize(width, height);
     }
 }

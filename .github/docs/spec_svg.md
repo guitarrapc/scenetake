@@ -32,12 +32,7 @@ External tools such as [agg](https://docs.asciinema.org/manual/agg/) (GIF) and [
 - Warning-and-continue for malformed extended color SGR (invalid true-color RGB, invalid 256 index, unknown modes) during SVG rendering.
 - Failure behavior aligned with `pre`/`post`: cast is retained, incomplete SVG is removed, `post` still runs.
 - `svg` subcommand that converts an existing asciinema v2 cast file to SVG.
-
-### Out of scope (v1)
-
 - Resize cast events (`"r"`) during `svg` conversion.
-
-## CLI Contract
 
 ```bash
 scenario2cast [--verbose] [--format cast|svg] [--font-size N] [--theme dark|light] <scenario.yaml> [output]
@@ -84,7 +79,7 @@ The input cast file is read-only. Only `.svg` is written.
 #### Input casts
 
 - Any [asciicast v2](https://docs.asciinema.org/manual/asciicast/v2/) file with `version: 2`.
-- `width` and `height` are required in the cast header.
+- `width` and `height` are required in the cast header (`1`–`512` each).
 - Render metadata comes from the cast header only:
   - `theme` (official header field) when present.
   - `scenario2cast.font-size` when present.
@@ -93,7 +88,12 @@ The input cast file is read-only. Only `.svg` is written.
 #### Event handling
 
 - Process `"o"` (output) events for SVG rendering.
-- Skip `"i"`, `"m"`, `"r"`, and other event codes with a stderr warning per unsupported code (warn-and-continue).
+- Process `"r"` (resize) events: update the terminal model to `{COLS}x{ROWS}`; invalid or out-of-range sizes (`1`–`512`) warn once and are skipped.
+- Skip `"i"`, `"m"`, and other event codes with a stderr warning per unsupported code (warn-and-continue).
+
+SVG canvas size is the maximum terminal width and height seen across the cast header and all valid `"r"` events. On shrink, cell content outside the new bounds is discarded.
+
+The SVG `viewBox` uses this maximum size. During playback, an animated viewport mask and matching background rectangle switch to the current terminal size at each resize timestamp, so the visible terminal window grows or shrinks within the fixed coordinate system. Embed with a fixed HTML `width`/`height` and `preserveAspectRatio` (already set on the root `<svg>`) to keep page layout stable.
 
 #### Failure behavior
 
@@ -102,6 +102,7 @@ The input cast file is read-only. Only `.svg` is written.
 | Cast file not found | Exit non-zero |
 | Invalid header JSON / `version` ≠ 2 | Exit non-zero; no SVG written |
 | Missing `width` or `height` | Exit non-zero; no SVG written |
+| `width` or `height` out of range (`1`–`512`) | Exit non-zero; no SVG written |
 | Invalid event line JSON | Exit non-zero; no SVG written |
 | SVG render failure | Exit non-zero; partial `.svg` deleted |
 | Unsupported event codes | Warning only; continue |
