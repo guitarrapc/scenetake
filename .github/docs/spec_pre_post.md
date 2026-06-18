@@ -23,7 +23,7 @@ Failed recorded steps can still be legitimate demo content; setup and teardown f
 - Coloring, timing, or display metadata on `pre`/`post` commands.
 - Recording, retrying, or continuing past a failed `pre`/`post` command.
 
-YAML structure for `pre`/`post`: [spec_scenario.md](spec_scenario.md). CLI logging: [spec_cli.md](spec_cli.md).
+YAML structure for `pre`/`post`: [spec_scenario.md](spec_scenario.md). CLI logging: [spec_cli.md](spec_cli.md). What is recorded into the cast: [spec_cast.md](spec_cast.md) → Recording boundary.
 
 ## Failure Behavior
 

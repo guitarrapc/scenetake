@@ -107,7 +107,7 @@ scenario2cast svg <input.cast> [output.svg]
   - Linux/macOS default shell is `$SHELL`, with `bash` as fallback.
   - Windows default shell is `pwsh`, with `powershell` as fallback. On Windows, `shell: bash` uses Git Bash / MSYS `bash` when available.
 - `settings` provides defaults for prompt and timing.
-- `render` controls SVG output and is written to the cast header (`s2c:font-size` tag, `term.theme`). See [.github/docs/spec_svg.md](.github/docs/spec_svg.md).
+- `render` controls cast header display metadata (`s2c:font-size` tag, `term.theme`) and SVG output. See [.github/docs/spec_cast.md](.github/docs/spec_cast.md) and [.github/docs/spec_svg.md](.github/docs/spec_svg.md).
 - `pre` / `post` run setup and teardown commands outside the recording flow. Their stdout/stderr are printed to the CLI, but are never written to the cast file.
 - `steps`:
   - Steps are executed for real, so use caution with commands that modify files or affect external systems.

@@ -107,7 +107,7 @@ scenario2cast svg <input.cast> [output.svg]
   - Linux/macOS の既定シェルは `$SHELL`、なければ `bash`
   - Windows の既定シェルは `pwsh`、なければ `powershell`、Windows で `shell: bash` を指定した場合は Git Bash / MSYS の `bash` を使います
 - `settings` でpromptとtiming の既定値を設定できます
-- `render` は SVG 出力と cast ヘッダーの表示メタデータ（`s2c:font-size` タグ、`term.theme`）を制御します。詳細は [.github/docs/spec_svg.md](.github/docs/spec_svg.md)
+- `render` は cast ヘッダーの表示メタデータ（`s2c:font-size` タグ、`term.theme`）と SVG 出力を制御します。詳細は [.github/docs/spec_cast.md](.github/docs/spec_cast.md) と [.github/docs/spec_svg.md](.github/docs/spec_svg.md)
 - `pre` / `post` は録画フロー外で setup / teardown コマンドを実行します。stdout/stderr は CLI に表示されますが、cast ファイルには一切書き込まれません。
 - `steps`:
   - 実際に実行されるため、ファイル変更や外部システムを操作するような副作用のあるコマンドは慎重に使ってください
