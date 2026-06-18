@@ -4,7 +4,7 @@ Status: **Implemented**
 
 ## Motivation
 
-scenario2cast exposes a small command-line surface: record scenarios to cast (and optionally SVG), convert existing casts to SVG, and scaffold starter YAML. Centralizing CLI behavior here keeps feature specs focused on YAML contracts and runtime semantics.
+scenario2cast exposes a small command-line surface: record scenarios to cast (and optionally SVG), convert existing casts to SVG, and scaffold starter YAML. Centralizing CLI behavior here keeps feature specs focused on runtime semantics.
 
 ## Commands
 
@@ -72,11 +72,12 @@ Recorded step exit codes do not affect the process exit code. See [spec_pre_post
 
 - Default output path: `scenario.yaml` in the current directory.
 - Fails if the target file already exists.
-- Generated template includes commented examples for optional features. See [spec_pre_post.md](spec_pre_post.md) for `pre`/`post` placement.
+- Generated template follows [spec_scenario.md](spec_scenario.md).
 
 ## Cross-Document Notes
 
-- [spec_svg.md](spec_svg.md) — `render:` YAML, cast header, SVG renderer, `svg` subcommand input/event semantics.
+- [spec_scenario.md](spec_scenario.md) — scenario YAML structure and defaults.
+- [spec_svg.md](spec_svg.md) — cast header, SVG renderer, `svg` subcommand input/event semantics.
 - [spec_pre_post.md](spec_pre_post.md) — `pre`/`post` execution and failure behavior.
 - [spec_highlight.md](spec_highlight.md) — coloring validation warnings.
 

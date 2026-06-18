@@ -10,8 +10,7 @@ External tools such as [agg](https://docs.asciinema.org/manual/agg/) (GIF) and [
 
 ## Scope
 
-- SVG output via `--format svg` or the `svg` subcommand. CLI details: [spec_cli.md](spec_cli.md).
-- Top-level `render:` section in scenario YAML for display metadata.
+- SVG output via `--format svg` or the `svg` subcommand. CLI: [spec_cli.md](spec_cli.md). Scenario `render:` keys: [spec_scenario.md](spec_scenario.md).
 - Cast header: official `theme` plus `scenario2cast.font-size` extension.
 - Render metadata is written to the cast header on every run, regardless of output format.
 - Built-in C# SVG renderer (no bundled external binary).
@@ -22,30 +21,9 @@ External tools such as [agg](https://docs.asciinema.org/manual/agg/) (GIF) and [
 - Warn-and-continue for malformed extended color SGR and unsupported cast event codes.
 - Resize cast events (`"r"`) during `svg` conversion.
 
-## YAML Contract — `render:`
-
-Display metadata lives in a top-level `render:` section, separate from `settings` (recording behavior).
-
-```yaml
-render:
-  font-size: 16
-  theme:
-    preset: dark
-    fg: "#d0d0d0"
-    bg: "#282c34"
-    palette: "#151515:#ac4142:..."
-```
-
-| Key | Default |
-|---|---|
-| `font-size` | `16` |
-| `theme` | `dark` preset |
-
-`settings` controls how the session is recorded; `render` controls how the terminal is presented in SVG. `font-size` is stored under a `scenario2cast` extension object because it is not part of the official asciicast v2 header schema.
-
 ## Cast Header Contract
 
-Every cast file includes render metadata in the header, whether or not SVG is generated.
+Every cast file includes render metadata in the header, whether or not SVG is generated. Values come from scenario `render:` (with CLI overrides on the scenario path).
 
 ```json
 {
@@ -58,19 +36,8 @@ Every cast file includes render metadata in the header, whether or not SVG is ge
 ```
 
 - `theme` follows the [asciicast v2](https://docs.asciinema.org/manual/asciicast/v2/) optional header format.
-- Terminal coloring in cast events is defined in [spec_highlight.md](spec_highlight.md); header `theme` sets canvas defaults for rendering.
-
-## Execution Order
-
-1. Resolve scenario settings, shell, cwd, deterministic seed, and timestamp.
-2. Execute `pre` commands.
-3. Execute and record `steps`.
-4. Write the cast file (including render metadata).
-5. If `--format svg`, render SVG from in-memory events.
-6. Execute `post` commands.
-7. Report success or failure.
-
-`post` runs even when SVG rendering fails; the cast recording remains useful. See [spec_pre_post.md](spec_pre_post.md).
+- `scenario2cast.font-size` is a scenario2cast extension (not in the official schema).
+- Terminal coloring in cast events: [spec_highlight.md](spec_highlight.md). Header `theme` sets canvas defaults for rendering.
 
 ## `svg` Subcommand — Input and Events
 
@@ -107,10 +74,12 @@ Warn-and-continue matches [spec_highlight.md](spec_highlight.md).
 
 | Phase | On failure |
 |---|---|
-| `pre` | Fail-fast; no cast or SVG (unchanged). |
+| `pre` | Fail-fast; no cast or SVG. See [spec_pre_post.md](spec_pre_post.md). |
 | Cast write | Fail; SVG not attempted. |
 | SVG render | Cast retained; partial `.svg` deleted; exit non-zero; `post` still runs. |
-| `post` | Fail-fast; cast (and SVG if written) remain (unchanged). |
+| `post` | Fail-fast; cast (and SVG if written) remain. See [spec_pre_post.md](spec_pre_post.md). |
+
+Execution order: [spec_scenario.md](spec_scenario.md).
 
 ### `svg` subcommand
 
@@ -124,9 +93,9 @@ The cast file is never modified by the `svg` subcommand.
 
 ## Cross-Document Notes
 
-- [spec_cli.md](spec_cli.md) — commands, options, output paths, logging, exit codes.
-- [spec_highlight.md](spec_highlight.md) defers cast-header `theme` to this spec (`render.theme` → header `theme`).
-- [spec_pre_post.md](spec_pre_post.md) failure semantics for `post` after cast write apply to SVG failure handling.
+- [spec_scenario.md](spec_scenario.md) — `render:` YAML keys and execution order.
+- [spec_cli.md](spec_cli.md) — commands, options, logging, exit codes.
+- [spec_highlight.md](spec_highlight.md) — cast-event coloring (header `theme` is separate).
 
 Cast files remain valid asciinema v2 input for agg, asg, asciinema play, and similar tools. External tools may ignore `scenario2cast` header extensions.
 

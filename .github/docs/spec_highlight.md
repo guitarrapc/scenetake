@@ -29,7 +29,7 @@ This spec defines declarative coloring controls that keep demos readable without
 - String-form step coloring defaults (for example `- echo "foo"`).
 - `settings` defaults for `highlight` ranges.
 - Regex selectors.
-- Terminal theme control (`theme` in cast header). See [spec_svg.md](spec_svg.md) `render.theme`.
+- Terminal theme control (`theme` in cast header). See [spec_scenario.md](spec_scenario.md) `render.theme` and [spec_svg.md](spec_svg.md).
 - Relative indices (for example `-1` = last line).
 
 ## Coloring Targets
@@ -104,24 +104,11 @@ Examples:
 
 256-color index values use ANSI SGR `38;5;n` for foreground and `48;5;n` for background, where `n` is 0..255.
 
-True-color values use ANSI SGR `38;2;r;g;b` for foreground and `48;2;r;g;b` for background, where `r`, `g`, and `b` are 0..255. Hex forms accept `#rrggbb` or `#rgb` (shorthand expands each digit to a pair, for example `#f80` → `#ff8800`). Decimal forms accept comma-separated `r,g,b`. SVG rendering behavior is defined in [spec_svg.md](spec_svg.md).
+True-color values use ANSI SGR `38;2;r;g;b` for foreground and `48;2;r;g;b` for background, where `r`, `g`, and `b` are 0..255. Hex forms accept `#rrggbb` or `#rgb` (shorthand expands each digit to a pair, for example `#f80` → `#ff8800`). Decimal forms accept comma-separated `r,g,b`. SVG rendering: [spec_svg.md](spec_svg.md).
 
-## YAML Contract
+## Keys and Behavior
 
-```yaml
-settings:
-  stderr-color: "bold red"
-
-steps:
-  - name: "[underline bright-yellow] review status"
-    run: git status
-    run-highlight: "bold bright-cyan"
-    highlight:
-      - color: "underline yellow"
-        at: "4"
-      - color: "fg:bright-white bg:blue"
-        at: "6-10:3-"
-```
+Coloring keys live on `settings` and map-form `steps`. Key placement and defaults: [spec_scenario.md](spec_scenario.md). Value format: [Style Value Formats](#style-value-formats) below.
 
 ### `highlight` (output)
 
@@ -262,6 +249,7 @@ steps:
 
 ## Related documents
 
+- [spec_scenario.md](spec_scenario.md) — YAML key placement and defaults.
 - [spec_cli.md](spec_cli.md) — CLI logging and warning delivery.
 - [spec_svg.md](spec_svg.md) — terminal theme and SVG rendering.
 - [asciicast v2](https://docs.asciinema.org/manual/asciicast/v2/) — cast event format.
