@@ -7,6 +7,7 @@ internal static class SvgRender
     private const double CharWidthFactor = 0.62;
     private const double Padding = 8.0;
     private const double LayerFadeSeconds = 0.001;
+    private const double CursorBlockOpacity = 0.5;
 
     internal static void WriteSvg(
         IReadOnlyList<CastEvent> events,
@@ -17,14 +18,15 @@ internal static class SvgRender
     {
         var frames = BuildFrames(events, width, height, render);
         if (frames.Count == 0)
-            frames.Add(new TerminalFrame(0, CreateEmptyScreen(width, height, render)));
+            frames.Add(new TerminalFrame(0, CreateEmptyScreen(width, height, render), 0, 0, true));
 
         var totalDuration = events.Count > 0 ? events[^1].Time : 0.0;
         if (totalDuration <= 0)
             totalDuration = 0.001;
 
         var rowLayers = BuildRowLayers(frames, width, height, render);
-        var svg = BuildSvgDocument(rowLayers, width, height, render);
+        var cursorLayers = BuildCursorLayers(frames);
+        var svg = BuildSvgDocument(rowLayers, cursorLayers, width, height, render);
         File.WriteAllText(outputPath, svg, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     }
 
@@ -37,19 +39,70 @@ internal static class SvgRender
         var terminal = new TerminalEmulator(width, height, render);
         var frames = new List<TerminalFrame>();
         TerminalScreen? lastScreen = null;
+        var lastCursorX = -1;
+        var lastCursorY = -1;
+        var lastCursorVisible = false;
+        var hasCursorState = false;
 
         foreach (var ev in events)
         {
             terminal.Write(ev.Data);
             var screen = terminal.CaptureScreen();
-            if (lastScreen is null || !screen.ContentEquals(lastScreen))
+            var cursorX = terminal.CursorX;
+            var cursorY = terminal.CursorY;
+            var cursorVisible = terminal.CursorVisible;
+            if (lastScreen is null ||
+                !screen.ContentEquals(lastScreen) ||
+                !hasCursorState ||
+                cursorX != lastCursorX ||
+                cursorY != lastCursorY ||
+                cursorVisible != lastCursorVisible)
             {
-                frames.Add(new TerminalFrame(ev.Time, screen));
+                frames.Add(new TerminalFrame(ev.Time, screen, cursorX, cursorY, cursorVisible));
                 lastScreen = screen;
+                lastCursorX = cursorX;
+                lastCursorY = cursorY;
+                lastCursorVisible = cursorVisible;
+                hasCursorState = true;
             }
         }
 
         return frames;
+    }
+
+    private static List<CursorLayer> BuildCursorLayers(IReadOnlyList<TerminalFrame> frames)
+    {
+        var layers = new List<CursorLayer>();
+        CursorLayer? active = null;
+
+        foreach (var frame in frames)
+        {
+            if (!frame.CursorVisible)
+            {
+                if (active is not null)
+                {
+                    active.HideTime = frame.Time;
+                    active = null;
+                }
+
+                continue;
+            }
+
+            if (active is not null &&
+                active.Row == frame.CursorY &&
+                active.Col == frame.CursorX)
+            {
+                continue;
+            }
+
+            if (active is not null)
+                active.HideTime = frame.Time;
+
+            active = new CursorLayer(frame.CursorY, frame.CursorX, frame.Time);
+            layers.Add(active);
+        }
+
+        return layers;
     }
 
     private static List<RowLayer> BuildRowLayers(
@@ -102,6 +155,7 @@ internal static class SvgRender
 
     private static string BuildSvgDocument(
         IReadOnlyList<RowLayer> layers,
+        IReadOnlyList<CursorLayer> cursorLayers,
         int width,
         int height,
         ResolvedRenderSettings render)
@@ -112,6 +166,7 @@ internal static class SvgRender
         var svgWidth = width * charWidth + Padding * 2;
         var svgHeight = height * lineHeight + Padding * 2;
         var fadeText = LayerFadeSeconds.ToString("0.######", CultureInfo.InvariantCulture);
+        var cursorOpacityText = CursorBlockOpacity.ToString("0.######", CultureInfo.InvariantCulture);
 
         var sb = new StringBuilder(64 * 1024);
         sb.AppendLine(CultureInfo.InvariantCulture, $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
@@ -124,9 +179,14 @@ internal static class SvgRender
         sb.AppendLine(CultureInfo.InvariantCulture, $".layer {{ opacity: 0; animation-duration: {fadeText}s; animation-timing-function: linear; animation-fill-mode: forwards; }}");
         sb.AppendLine("@keyframes layer-in { from { opacity: 0; } to { opacity: 1; } }");
         sb.AppendLine("@keyframes layer-out { from { opacity: 1; } to { opacity: 0; } }");
+        sb.AppendLine(CultureInfo.InvariantCulture,
+            $".cursor-block {{ fill: {render.Theme.Fg}; fill-opacity: {cursorOpacityText}; }}");
 
         for (var i = 0; i < layers.Count; i++)
             AppendLayerStyle(sb, i, layers[i], fadeText);
+
+        for (var i = 0; i < cursorLayers.Count; i++)
+            AppendCursorLayerStyle(sb, i, cursorLayers[i], fadeText);
 
         sb.AppendLine("</style>");
 
@@ -141,8 +201,37 @@ internal static class SvgRender
             sb.AppendLine("</g>");
         }
 
+        for (var i = 0; i < cursorLayers.Count; i++)
+        {
+            var layer = cursorLayers[i];
+            sb.AppendLine(CultureInfo.InvariantCulture, $"<g class=\"layer cursor-layer-{i}\">");
+            sb.AppendLine(CultureInfo.InvariantCulture,
+                $"<rect class=\"cursor-block\" x=\"{Padding + layer.Col * charWidth:0.##}\" y=\"{Padding + layer.Row * lineHeight:0.##}\" width=\"{charWidth:0.##}\" height=\"{lineHeight:0.##}\"/>");
+            sb.AppendLine("</g>");
+        }
+
         sb.AppendLine("</svg>");
         return sb.ToString();
+    }
+
+    private static void AppendCursorLayerStyle(
+        StringBuilder sb,
+        int index,
+        CursorLayer layer,
+        string fadeText)
+    {
+        var showDelay = layer.ShowTime.ToString("0.######", CultureInfo.InvariantCulture);
+
+        if (layer.HideTime is double hideTime)
+        {
+            var hideDelay = hideTime.ToString("0.######", CultureInfo.InvariantCulture);
+            sb.AppendLine(CultureInfo.InvariantCulture,
+                $".cursor-layer-{index} {{ animation-name: layer-in, layer-out; animation-delay: {showDelay}s, {hideDelay}s; }}");
+            return;
+        }
+
+        sb.AppendLine(CultureInfo.InvariantCulture,
+            $".cursor-layer-{index} {{ animation-name: layer-in; animation-delay: {showDelay}s; }}");
     }
 
     private static void AppendLayerStyle(
@@ -259,7 +348,27 @@ internal readonly record struct ResolvedRenderSettings(int FontSize, ResolvedThe
 
 internal readonly record struct ResolvedTheme(string Fg, string Bg, string Palette);
 
-internal readonly record struct TerminalFrame(double Time, TerminalScreen Screen);
+internal readonly record struct TerminalFrame(
+    double Time,
+    TerminalScreen Screen,
+    int CursorX,
+    int CursorY,
+    bool CursorVisible);
+
+internal sealed class CursorLayer
+{
+    public CursorLayer(int row, int col, double showTime)
+    {
+        Row = row;
+        Col = col;
+        ShowTime = showTime;
+    }
+
+    public int Row { get; }
+    public int Col { get; }
+    public double ShowTime { get; }
+    public double? HideTime { get; set; }
+}
 
 internal sealed class RowLayer
 {
@@ -347,6 +456,7 @@ internal sealed class TerminalEmulator
     private readonly TerminalCell[,] _cells;
     private int _cursorX;
     private int _cursorY;
+    private bool _cursorVisible = true;
     private AnsiStyle _style;
     private AnsiStyle _defaultStyle;
     private readonly HashSet<string> _warnedKeys = new(StringComparer.Ordinal);
@@ -362,6 +472,10 @@ internal sealed class TerminalEmulator
         _style = _defaultStyle;
         ClearAll();
     }
+
+    public int CursorX => _cursorX;
+    public int CursorY => _cursorY;
+    public bool CursorVisible => _cursorVisible;
 
     public void Write(string data)
     {
@@ -420,7 +534,7 @@ internal sealed class TerminalEmulator
     private int ParseCsi(string data, int index)
     {
         var start = index;
-        while (index < data.Length && data[index] != 'm' && data[index] != 'J' && data[index] != 'H' && data[index] != 'K')
+        while (index < data.Length && !IsCsiFinalByte(data[index]))
             index++;
 
         if (index >= data.Length)
@@ -429,6 +543,13 @@ internal sealed class TerminalEmulator
         var end = index;
         var command = data[end];
         var body = data[start..end];
+
+        if (body.StartsWith('?'))
+        {
+            ApplyPrivateMode(body[1..], command);
+            return end;
+        }
+
         var numbers = ParseCsiNumericParameters(body, command == 'm');
 
         switch (command)
@@ -462,6 +583,20 @@ internal sealed class TerminalEmulator
         }
 
         return end;
+    }
+
+    private static bool IsCsiFinalByte(char c) => c is >= (char)0x40 and <= (char)0x7e;
+
+    private void ApplyPrivateMode(string parameters, char command)
+    {
+        if (command is not ('h' or 'l'))
+            return;
+
+        foreach (var part in parameters.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (part == "25")
+                _cursorVisible = command == 'h';
+        }
     }
 
     private static List<int> ParseCsiNumericParameters(string body, bool normalizeColons)
