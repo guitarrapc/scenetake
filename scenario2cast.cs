@@ -1622,8 +1622,15 @@ static void WriteCastInterval(TextWriter writer, double exact, ref double error)
     var scaled = exact * scale + error;
     var quantized = Math.Round(scaled, MidpointRounding.AwayFromZero);
     error = scaled - quantized;
+    var seconds = quantized / scale;
+    if (seconds == 0)
+    {
+        writer.Write("0.000");
+        return;
+    }
+
     Span<char> buf = stackalloc char[16];
-    (quantized / scale).TryFormat(buf, out var n, "0.000", CultureInfo.InvariantCulture);
+    seconds.TryFormat(buf, out var n, "0.000", CultureInfo.InvariantCulture);
     writer.Write(buf[..n]);
 }
 

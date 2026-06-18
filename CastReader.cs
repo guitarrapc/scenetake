@@ -23,11 +23,23 @@ internal static class CastReader
         if (lines.Length == 0)
             throw new CastReadException("cast file is empty");
 
-        var headerLine = lines[0].Trim();
-        if (headerLine.Length == 0 || headerLine[0] == '#')
+        var headerLineIndex = -1;
+        string headerLine = "";
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var candidate = lines[i].Trim();
+            if (candidate.Length == 0 || candidate[0] == '#')
+                continue;
+
+            headerLineIndex = i;
+            headerLine = candidate;
+            break;
+        }
+
+        if (headerLineIndex < 0)
             throw new CastReadException("cast header is missing");
 
-        using var headerDoc = ParseJsonOrThrow(headerLine, 1);
+        using var headerDoc = ParseJsonOrThrow(headerLine, headerLineIndex + 1);
         var header = headerDoc.RootElement;
 
         if (!header.TryGetProperty("version", out var versionElement) ||
@@ -96,7 +108,7 @@ internal static class CastReader
         var usesRelativeTime = version == 3;
         var absoluteTime = 0.0;
 
-        for (var i = 1; i < lines.Length; i++)
+        for (var i = headerLineIndex + 1; i < lines.Length; i++)
         {
             var line = lines[i].AsSpan().Trim();
             if (line.IsEmpty || line[0] == '#')

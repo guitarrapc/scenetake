@@ -76,6 +76,8 @@ jobs:
 
           test -f "$artifact_dir/highlight.svg"
 
-          "$binary_path" svg tests/fixtures/minimal-v2.cast "$artifact_dir/minimal-v2.svg"
-
-          test -f "$artifact_dir/minimal-v2.svg"
+          for fixture in tests/fixtures/*.cast; do
+            stem="$(basename "$fixture" .cast)"
+            "$binary_path" svg "$fixture" "$artifact_dir/fixture-$stem.svg"
+            test -f "$artifact_dir/fixture-$stem.svg"
+          done
