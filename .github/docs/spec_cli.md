@@ -4,22 +4,22 @@ Status: **Implemented**
 
 ## Motivation
 
-scenario2cast exposes a small command-line surface: record scenarios to cast (and optionally SVG), convert existing casts to SVG, and scaffold starter YAML. Centralizing CLI behavior here keeps feature specs focused on runtime semantics.
+scenetake exposes a small command-line surface: record scenarios to cast (and optionally SVG), convert existing casts to SVG, and scaffold starter YAML. Centralizing CLI behavior here keeps feature specs focused on runtime semantics.
 
 ## Commands
 
 | Command | Purpose |
 |---|---|
-| `scenario2cast <scenario.yaml> [output]` | Run a scenario; write `.cast` (default) or `.cast` + `.svg` |
-| `scenario2cast svg <input.cast> [output]` | Convert an existing cast to SVG |
-| `scenario2cast init [scenario.yaml]` | Create a commented starter scenario file |
-| `scenario2cast --help` | Print usage |
-| `scenario2cast --version` | Print version |
+| `scenetake <scenario.yaml> [output]` | Run a scenario; write `.cast` (default) or `.cast` + `.svg` |
+| `scenetake svg <input.cast> [output]` | Convert an existing cast to SVG |
+| `scenetake init [scenario.yaml]` | Create a commented starter scenario file |
+| `scenetake --help` | Print usage |
+| `scenetake --version` | Print version |
 
 ```bash
-scenario2cast [--verbose] [--format cast|svg] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <scenario.yaml> [output]
-scenario2cast svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output]
-scenario2cast init [scenario.yaml]
+scenetake [--verbose] [--format cast|svg] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <scenario.yaml> [output]
+scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output]
+scenetake init [scenario.yaml]
 ```
 
 Subcommands accept `-h` / `--help` for subcommand-specific usage.

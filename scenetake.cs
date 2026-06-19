@@ -1,6 +1,6 @@
 ﻿#:sdk Microsoft.NET.Sdk
 #:property TargetFramework=net10.0
-#:property Version=0.3.0
+#:property Version=0.4.0
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 #:package VYaml@1.3.0
@@ -25,7 +25,7 @@ const double DefaultPreDelay  = 0.2;
 const double DefaultPostDelay = 0.5;
 const double DefaultExecutionDuration = 0.05;
 const string DefaultStderrColorSpec = "red";
-const string AppVersion = "0.3.0";
+const string AppVersion = "0.4.0";
 const string SgrReset = "\u001b[0m";
 
 if (args.Length < 1)
@@ -2071,7 +2071,7 @@ static long ComputeDeterministicTimestamp(int seed)
 static string CreateInitialScenarioYaml()
 {
     return $"""
-    # scenario2cast starter scenario. Edit the values below and add commands under steps.
+    # scenetake starter scenario. Edit the values below and add commands under steps.
     title: "My App"            # Optional cast title
     # width: 120                 # Default: 120
     # height: 24                 # Default: 24
@@ -2133,21 +2133,21 @@ static string CreateInitialScenarioYaml()
 
 static void PrintUsage()
 {
-    Console.Error.WriteLine("Usage: scenario2cast [--verbose] [--format cast|svg] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <scenario.yaml> [output]");
-    Console.Error.WriteLine("       scenario2cast svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
-    Console.Error.WriteLine("       scenario2cast init [scenario.yaml]");
-    Console.Error.WriteLine("       scenario2cast --help");
+    Console.Error.WriteLine("Usage: scenetake [--verbose] [--format cast|svg] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <scenario.yaml> [output]");
+    Console.Error.WriteLine("       scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
+    Console.Error.WriteLine("       scenetake init [scenario.yaml]");
+    Console.Error.WriteLine("       scenetake --help");
 }
 
 static void PrintInitUsage()
 {
-    Console.Error.WriteLine("Usage: scenario2cast init [scenario.yaml]");
+    Console.Error.WriteLine("Usage: scenetake init [scenario.yaml]");
     Console.Error.WriteLine("Creates a commented starter YAML scenario file.");
 }
 
 static void PrintSvgUsage()
 {
-    Console.Error.WriteLine("Usage: scenario2cast svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
+    Console.Error.WriteLine("Usage: scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
     Console.Error.WriteLine("Converts an existing asciinema v2/v3 cast file to animated SVG.");
 }
 

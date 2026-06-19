@@ -4,7 +4,7 @@ Status: **Implemented**
 
 ## Motivation
 
-The `.cast` file is scenario2cast's canonical artifact. README embeds, [agg](https://docs.asciinema.org/manual/agg/) GIFs, built-in SVG, and `asciinema play` all consume the same recording. Aligning with [asciicast v3](https://docs.asciinema.org/manual/asciicast/v3/) keeps scenario2cast compatible with the current asciinema ecosystem while older v2 files remain readable for conversion.
+The `.cast` file is scenetake's canonical artifact. README embeds, [agg](https://docs.asciinema.org/manual/agg/) GIFs, built-in SVG, and `asciinema play` all consume the same recording. Aligning with [asciicast v3](https://docs.asciinema.org/manual/asciicast/v3/) keeps scenetake compatible with the current asciinema ecosystem while older v2 files remain readable for conversion.
 
 ## Scope
 
@@ -13,7 +13,7 @@ The `.cast` file is scenario2cast's canonical artifact. README embeds, [agg](htt
 - Cast files produced by the scenario path (always asciicast v3).
 - Cast files accepted as read-only input (asciicast v2 or v3) by the `svg` subcommand. CLI: [spec_cli.md](spec_cli.md).
 - Header metadata mapped from scenario YAML and CLI overrides.
-- Event codes and timing semantics scenario2cast writes and understands.
+- Event codes and timing semantics scenetake writes and understands.
 - What is and is not recorded into the cast.
 
 ### Out of scope
@@ -48,7 +48,7 @@ Every cast file written by the scenario path includes render metadata in the hea
   "timestamp": 1701960613,
   "title": "My Demo",
   "env": { "SHELL": "/bin/bash" },
-  "tags": ["s2c:font-size=16", "s2c:font-family=ui-monospace, \"Cascadia Mono\", monospace"]
+  "tags": ["st:font-size=16", "st:font-family=ui-monospace, \"Cascadia Mono\", monospace"]
 }
 ```
 
@@ -61,13 +61,13 @@ Every cast file written by the scenario path includes render metadata in the hea
 | `timestamp` | deterministic from YAML | See [spec_scenario.md](spec_scenario.md) → Determinism. |
 | `title` | scenario `title` | May be empty. |
 | `env.SHELL` | resolved shell | `TERM` is represented by `term.type`. |
-| `tags` | `s2c:font-size=N`, `s2c:font-family=…`, `s2c:window=macos\|windows` | SVG render metadata. `s2c:window` is omitted when window chrome is off. Unknown tags are ignored by external tools. |
+| `tags` | `st:font-size=N`, `st:font-family=…`, `st:window=macos\|windows` | SVG render metadata. `st:window` is omitted when window chrome is off. Unknown tags are ignored by external tools. |
 
-On read, v2 headers use top-level `width`, `height`, and `theme` only. Render metadata defaults apply unless overridden by CLI: v3 `s2c:font-size` / `s2c:font-family` / `s2c:window` in `tags`. Invalid header values warn once and fall back to defaults when read by the `svg` subcommand.
+On read, v2 headers use top-level `width`, `height`, and `theme` only. Render metadata defaults apply unless overridden by CLI: v3 `st:font-size` / `st:font-family` / `st:window` in `tags`. Invalid header values warn once and fall back to defaults when read by the `svg` subcommand.
 
 ## Event Stream
 
-### Codes scenario2cast writes
+### Codes scenetake writes
 
 | Code | When | Notes |
 |---|---|---|
@@ -96,7 +96,7 @@ Only `steps` content is recorded.
 | `steps` | Yes — simulated typing, command output, markers, comments. |
 | `post` | No — runs after the cast file is written. |
 
-Step command exit codes are captured during execution but do not stop later steps and do not determine scenario2cast's exit code. See [spec_pre_post.md](spec_pre_post.md).
+Step command exit codes are captured during execution but do not stop later steps and do not determine scenetake's exit code. See [spec_pre_post.md](spec_pre_post.md).
 
 ## External Tool Compatibility
 

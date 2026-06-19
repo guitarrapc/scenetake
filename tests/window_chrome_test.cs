@@ -91,12 +91,12 @@ static bool ApplySvgOverridesWindowWins()
 
 static bool CastTagReadsWindow()
 {
-    var castPath = Path.Combine(Path.GetTempPath(), $"s2c-window-{Guid.NewGuid():N}.cast");
+    var castPath = Path.Combine(Path.GetTempPath(), $"st-window-{Guid.NewGuid():N}.cast");
     try
     {
         File.WriteAllText(castPath,
             """
-            {"version":3,"term":{"cols":40,"rows":6,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"tags":["s2c:font-size=16","s2c:window=macos"]}
+            {"version":3,"term":{"cols":40,"rows":6,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"tags":["st:font-size=16","st:window=macos"]}
             [0.0,"o","hello\r\n"]
             [0.05,"x","0"]
             """);
@@ -113,12 +113,12 @@ static bool CastTagReadsWindow()
 
 static string RenderMinimal(string windowTagValue)
 {
-    var castPath = Path.Combine(Path.GetTempPath(), $"s2c-chrome-{Guid.NewGuid():N}.cast");
+    var castPath = Path.Combine(Path.GetTempPath(), $"st-chrome-{Guid.NewGuid():N}.cast");
     try
     {
         var tags = windowTagValue.Length == 0
-            ? "[\"s2c:font-size=16\"]"
-            : $"[\"s2c:font-size=16\",\"s2c:window={windowTagValue}\"]";
+            ? "[\"st:font-size=16\"]"
+            : $"[\"st:font-size=16\",\"st:window={windowTagValue}\"]";
         File.WriteAllText(castPath,
             "{\"version\":3,\"term\":{\"cols\":40,\"rows\":6,\"type\":\"xterm-256color\",\"theme\":{\"fg\":\"#d0d0d0\",\"bg\":\"#282c34\",\"palette\":\"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5\"}},\"tags\":" + tags + "}\n" +
             "[0.0,\"o\",\"hello\\r\\n\"]\n" +

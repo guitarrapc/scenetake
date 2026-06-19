@@ -1,10 +1,10 @@
-[![Build](https://github.com/guitarrapc/scenario2cast/actions/workflows/build.yaml/badge.svg)](https://github.com/guitarrapc/scenario2cast/actions/workflows/build.yaml)
+[![Build](https://github.com/guitarrapc/scenetake/actions/workflows/build.yaml/badge.svg)](https://github.com/guitarrapc/scenetake/actions/workflows/build.yaml)
 
-# scenario2cast
+# scenetake
 
 [English](README.md) | 日本語
 
-YAMLシナリオファイルから [asciinema v3 cast](https://docs.asciinema.org/manual/asciicast/v3/) ファイルを生成するツールです。`asciinema`をインストール・起動する必要はありません。step を並べた YAML を書くだけで、実際にコマンドを実行してその出力を使った cast ファイルを生成します。
+YAML **scenario** を実行し、ターミナルの scene take（[asciinema v3 `.cast`](https://docs.asciinema.org/manual/asciicast/v3/)、アニメーション `.svg` など）を記録するツールです。`asciinema`をインストール・起動する必要はありません。step を並べた YAML を書くだけで、実際にコマンドを実行してその出力を使った cast ファイルを生成します。
 
 サンプルシナリオ`samples/basic.yaml`で生成したcastをgif/svgに変換すると...!タイプを頑張る必要もないし、実際にコマンドも走るので、リアルなデモが簡単に作れます。
 
@@ -47,7 +47,7 @@ steps:
 
 **動機**
 
-作りたいのはasciinemaのcastファイルであって、コマンドのレコードを頑張りたくない、scenario2castはこんな動機で作ったツールです。asciinemaの周辺に様々なツールがありますが、シェルスクリプトに寄っていたり、asciinema 本体を前提にしていたり、実行パスがcastに出力されたり、実行せずにそれっぽい出力だけを作るものだったりして、どれも欲しい形とはずれています。欲しいのは、シナリオを素直に書けて、列挙したコマンドを実際に実行し、その結果から cast ファイルを直接生成できるものです。
+作りたいのはasciinemaのcastファイルであって、コマンドのレコードを頑張りたくない、scenetakeはこんな動機で作ったツールです。asciinemaの周辺に様々なツールがありますが、シェルスクリプトに寄っていたり、asciinema 本体を前提にしていたり、実行パスがcastに出力されたり、実行せずにそれっぽい出力だけを作るものだったりして、どれも欲しい形とはずれています。欲しいのは、シナリオを素直に書けて、列挙したコマンドを実際に実行し、その結果から cast ファイルを直接生成できるものです。
 
 最終的にcastファイルがあればいいのでasciinema介さず、シナリオから直接castを生成するクロスプラットフォームツールです。
 
@@ -57,29 +57,29 @@ steps:
 
 ## クイックスタート
 
-GitHub の Releases ページから利用 OS 向けアセットをダウンロードし、`scenario2cast`（Windows は `scenario2cast.exe`）を任意の場所に配置します。
+GitHub の Releases ページから利用 OS 向けアセットをダウンロードし、`scenetake`（Windows は `scenetake.exe`）を任意の場所に配置します。
 
 ```bash
 # macOS/Linux は必要に応じて実行権限を付与
-chmod +x ./scenario2cast
+chmod +x ./scenetake
 
 # 現在のディレクトリにスターターシナリオを作成
-scenario2cast init
+scenetake init
 
 # シナリオを実行して cast ファイルを生成
-scenario2cast scenario.yaml
+scenetake scenario.yaml
 
 # cast とアニメーション SVG を一度に生成
-scenario2cast --format svg scenario.yaml
+scenetake --format svg scenario.yaml
 
 # SVG 出力のスタイルを細かく指定
-scenario2cast --format svg scenario.yaml --font-size 20 --font-family "'Noto Sans Mono', ui-monospace"
+scenetake --format svg scenario.yaml --font-size 20 --font-family "'Noto Sans Mono', ui-monospace"
 
 # 既存の cast ファイルを SVG に変換
-scenario2cast svg scenario.cast
+scenetake svg scenario.cast
 
 # cast 生成時に正常な pre/post 実行ログも表示
-scenario2cast --verbose scenario.yaml
+scenetake --verbose scenario.yaml
 
 # asciinemaで再生
 asciinema play scenario.cast
@@ -95,13 +95,13 @@ docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/scenario.cas
 
 ```bash
 # 新しいシナリオファイルを初期化
-scenario2cast init [scenario.yaml]
+scenetake init [scenario.yaml]
 
 # シナリオを実行して cast を生成
-scenario2cast [--verbose] [--format cast|svg] scenario.yaml [output]
+scenetake [--verbose] [--format cast|svg] scenario.yaml [output]
 
 # 既存の cast ファイルを SVG に変換
-scenario2cast svg <input.cast> [output.svg]
+scenetake svg <input.cast> [output.svg]
 ```
 
 **Notes**
@@ -110,7 +110,7 @@ scenario2cast svg <input.cast> [output.svg]
   - Linux/macOS の既定シェルは `$SHELL`、なければ `bash`
   - Windows の既定シェルは `pwsh`、なければ `powershell`、Windows で `shell: bash` を指定した場合は Git Bash / MSYS の `bash` を使います
 - `settings` でpromptとtiming の既定値を設定できます
-- `render` は cast ヘッダーの表示メタデータ（`s2c:font-size` タグ、`term.theme`）と SVG 出力を制御します。詳細は [.github/docs/spec_cast.md](.github/docs/spec_cast.md) と [.github/docs/spec_svg.md](.github/docs/spec_svg.md)
+- `render` は cast ヘッダーの表示メタデータ（`st:font-size` タグ、`term.theme`）と SVG 出力を制御します。詳細は [.github/docs/spec_cast.md](.github/docs/spec_cast.md) と [.github/docs/spec_svg.md](.github/docs/spec_svg.md)
 - `pre` / `post` は録画フロー外で setup / teardown コマンドを実行します。stdout/stderr は CLI に表示されますが、cast ファイルには一切書き込まれません。
 - `steps`:
   - 実際に実行されるため、ファイル変更や外部システムを操作するような副作用のあるコマンドは慎重に使ってください
@@ -184,11 +184,11 @@ post:
 
 `pre` と `post` は setup / teardown コマンドを書く top-level の文字列配列です。`steps` と同じ `shell` と `cwd` を使い、各配列要素は 1 つのコマンド文字列として shell に渡されます。空の要素は無視されます。
 
-`pre` は `steps` の前に実行されます。fail-fast です。いずれかの `pre` コマンドが非 0 で終了した場合、後続の `pre` はスキップされ、`steps` は実行されず、cast ファイルは書き込まれず、`post` も実行されません。scenario2cast は失敗したコマンドの exit code で終了します。
+`pre` は `steps` の前に実行されます。fail-fast です。いずれかの `pre` コマンドが非 0 で終了した場合、後続の `pre` はスキップされ、`steps` は実行されず、cast ファイルは書き込まれず、`post` も実行されません。scenetake は失敗したコマンドの exit code で終了します。
 
-`post` は `steps` の実行後、cast ファイルを書き込んだ後に実行されます。こちらも fail-fast です。いずれかの `post` コマンドが非 0 で終了した場合、後続の `post` はスキップされ、すでに書き込まれた cast ファイルはそのまま残り、scenario2cast は失敗したコマンドの exit code で終了します。
+`post` は `steps` の実行後、cast ファイルを書き込んだ後に実行されます。こちらも fail-fast です。いずれかの `post` コマンドが非 0 で終了した場合、後続の `post` はスキップされ、すでに書き込まれた cast ファイルはそのまま残り、scenetake は失敗したコマンドの exit code で終了します。
 
-記録対象の `steps` は成功しても失敗しても、その結果が記録されます。step の exit code は scenario2cast の exit code を決めません。`pre` と `post` は録画フロー外です。stdout/stderr は元のストリームを保って CLI に表示されますが、コマンド文字列も出力も cast ファイルには一切書き込まれません。
+記録対象の `steps` は成功しても失敗しても、その結果が記録されます。step の exit code は scenetake の exit code を決めません。`pre` と `post` は録画フロー外です。stdout/stderr は元のストリームを保って CLI に表示されますが、コマンド文字列も出力も cast ファイルには一切書き込まれません。
 
 `--verbose` を使うと、正常に実行された `pre` / `post` のコマンドラベルとフェーズマーカーを表示します。既存の `steps` の `running:` ログは常に表示されます。失敗した `pre` / `post` は、`--verbose` の有無に関係なく、完全なコマンド文字列と exit code を常に表示します。
 
@@ -270,9 +270,9 @@ ANSI 256色パレットを使う場合は、`fg:<0-255>` / `bg:<0-255>`、また
 
 ```bash
 # ローカル実行
-dotnet run scenario2cast.cs -- <scenario.yaml> [output.cast]
-dotnet run scenario2cast.cs -- svg <scenario.cast> [output.svg]
+dotnet run scenetake.cs -- <scenario.yaml> [output.cast]
+dotnet run scenetake.cs -- svg <scenario.cast> [output.svg]
 
 # ビルド
-dotnet publish scenario2cast.cs --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None
+dotnet publish scenetake.cs --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None
 ```

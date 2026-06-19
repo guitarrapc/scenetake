@@ -46,9 +46,9 @@ internal static class RenderSettingsResolver
     internal const int DefaultMaxFps = 0;
     internal const int MinMaxFps = 0, MaxMaxFps = 120;
     internal const int MaxFontFamilyLength = 256, MaxFontFamilyCount = 10;
-    internal const string FontSizeTagPrefix = "s2c:font-size=";
-    internal const string FontFamilyTagPrefix = "s2c:font-family=";
-    internal const string WindowTagPrefix = "s2c:window=";
+    internal const string FontSizeTagPrefix = "st:font-size=";
+    internal const string FontFamilyTagPrefix = "st:font-family=";
+    internal const string WindowTagPrefix = "st:window=";
     internal const string DarkName = "dark", LightName = "light";
     internal const string MacosWindowName = "macos", WindowsWindowName = "windows", NoneWindowName = "none";
     internal static string ExpectedPresetNames => $"{DarkName}|{LightName}";
@@ -521,7 +521,7 @@ internal static class SvgFrameRenderer
         var sb = new StringBuilder(64 * 1024);
         sb.AppendLine(CultureInfo.InvariantCulture, $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLine(CultureInfo.InvariantCulture,
-            $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" viewBox=\"0 0 {metrics.SvgWidth:0.##} {metrics.SvgHeight:0.##}\" preserveAspectRatio=\"xMidYMid meet\" role=\"img\" aria-label=\"scenario2cast output\">");
+            $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" viewBox=\"0 0 {metrics.SvgWidth:0.##} {metrics.SvgHeight:0.##}\" preserveAspectRatio=\"xMidYMid meet\" role=\"img\" aria-label=\"scenetake output\">");
 
         sb.AppendLine("<style>");
         sb.AppendLine(CultureInfo.InvariantCulture,

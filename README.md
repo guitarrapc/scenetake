@@ -1,10 +1,10 @@
-[![Build](https://github.com/guitarrapc/scenario2cast/actions/workflows/build.yaml/badge.svg)](https://github.com/guitarrapc/scenario2cast/actions/workflows/build.yaml)
+[![Build](https://github.com/guitarrapc/scenetake/actions/workflows/build.yaml/badge.svg)](https://github.com/guitarrapc/scenetake/actions/workflows/build.yaml)
 
-# scenario2cast
+# scenetake
 
 English | [日本語](README-ja.md)
 
-Generate [asciinema v3 cast](https://docs.asciinema.org/manual/asciicast/v3/) files from YAML scenario files. You do not need to install or launch `asciinema` to record. Write a YAML scenario with steps, and this tool executes those steps and emits a cast file with simulated typing plus real command output.
+Run a YAML **scenario** and record a terminal scene take — [asciinema v3 `.cast`](https://docs.asciinema.org/manual/asciicast/v3/), animated `.svg`, and more. You do not need to install or launch `asciinema` to record. Write a YAML scenario with steps, and this tool executes those steps and emits a cast file with simulated typing plus real command output.
 
 Sample scenario `samples/basic.yaml` generates a cast that looks like this when converted to gif, svg...! You don't have to struggle with typing, and since the commands are actually executed, you can easily create realistic demos.
 
@@ -47,9 +47,9 @@ steps:
 
 **Motivation**
 
-I want to create asciinema cast files without the hassle of recording them. That is the motivation behind scenario2cast. There are various tools in the asciinema ecosystem, but none quite fit: some lean heavily on shell scripts, some require asciinema itself as a dependency, some leak execution paths into the cast output, and some only fake the output rather than running real commands. What I want is something where I can write a scenario plainly, have the listed commands actually executed, and get a cast file generated directly from the real output.
+I want terminal demos without the hassle of typing commands into asciinema. That is the motivation behind scenetake. There are various tools in the asciinema ecosystem, but none quite fit: some lean heavily on shell scripts, some require asciinema itself as a dependency, some leak execution paths into the cast output, and some only fake the output rather than running real commands. What I want is something where I can write a scenario plainly, have the listed commands actually executed, and get a cast file generated directly from the real output.
 
-All I need in the end is a cast file, scenario2cast is a cross-platform tool that generates cast files directly from a scenario, without going through asciinema at all.
+scenetake is a cross-platform tool that records those scenarios as asciinema-compatible casts (and optional SVG), without going through asciinema at all.
 
 1. Write the commands to run in the scenario.
 2. Generate cast events as if the commands were typed at a steady pace.
@@ -57,29 +57,29 @@ All I need in the end is a cast file, scenario2cast is a cross-platform tool tha
 
 ## Quick Start
 
-Download the asset for your OS from GitHub Releases, then place `scenario2cast` (or `scenario2cast.exe` on Windows) where you want.
+Download the asset for your OS from GitHub Releases, then place `scenetake` (or `scenetake.exe` on Windows) where you want.
 
 ```bash
 # On macOS/Linux, add execute permission if needed.
-chmod +x ./scenario2cast
+chmod +x ./scenetake
 
 # Create a starter scenario file in the current directory
-scenario2cast init
+scenetake init
 
 # Run the scenario to generate a cast file
-scenario2cast scenario.yaml
+scenetake scenario.yaml
 
 # Generate cast and animated SVG in one command
-scenario2cast --format svg scenario.yaml
+scenetake --format svg scenario.yaml
 
 # For more granular SVG styling control
-scenario2cast --format svg scenario.yaml --font-size 20 --font-family "'Noto Sans Mono', ui-monospace"
+scenetake --format svg scenario.yaml --font-size 20 --font-family "'Noto Sans Mono', ui-monospace"
 
 # Convert an existing cast file to SVG
-scenario2cast svg scenario.cast
+scenetake svg scenario.cast
 
 # Show normal pre/post execution logs while generating a cast file
-scenario2cast --verbose scenario.yaml
+scenetake --verbose scenario.yaml
 
 # Play with asciinema
 asciinema play scenario.cast
@@ -95,13 +95,13 @@ docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/scenario.cas
 
 ```bash
 # Initialize a new scenario file
-scenario2cast init [scenario.yaml]
+scenetake init [scenario.yaml]
 
 # Run scenario to generate cast
-scenario2cast [--verbose] [--format cast|svg] scenario.yaml [output]
+scenetake [--verbose] [--format cast|svg] scenario.yaml [output]
 
 # Convert an existing cast file to SVG
-scenario2cast svg <input.cast> [output.svg]
+scenetake svg <input.cast> [output.svg]
 ```
 
 **Notes**
@@ -110,7 +110,7 @@ scenario2cast svg <input.cast> [output.svg]
   - Linux/macOS default shell is `$SHELL`, with `bash` as fallback.
   - Windows default shell is `pwsh`, with `powershell` as fallback. On Windows, `shell: bash` uses Git Bash / MSYS `bash` when available.
 - `settings` provides defaults for prompt and timing.
-- `render` controls cast header display metadata (`s2c:font-size` tag, `term.theme`) and SVG output. See [.github/docs/spec_cast.md](.github/docs/spec_cast.md) and [.github/docs/spec_svg.md](.github/docs/spec_svg.md).
+- `render` controls cast header display metadata (`st:font-size` tag, `term.theme`) and SVG output. See [.github/docs/spec_cast.md](.github/docs/spec_cast.md) and [.github/docs/spec_svg.md](.github/docs/spec_svg.md).
 - `pre` / `post` run setup and teardown commands outside the recording flow. Their stdout/stderr are printed to the CLI, but are never written to the cast file.
 - `steps`:
   - Steps are executed for real, so use caution with commands that modify files or affect external systems.
@@ -184,11 +184,11 @@ post:
 
 `pre` and `post` are top-level string arrays for setup and teardown commands. They use the same `shell` and `cwd` as `steps`, and each array item is passed to the shell as one command string. Empty entries are ignored.
 
-`pre` runs before `steps`. It is fail-fast: if any `pre` command exits non-zero, later `pre` commands are skipped, `steps` are not executed, the cast file is not written, `post` is not executed, and scenario2cast exits with the failed command's exit code.
+`pre` runs before `steps`. It is fail-fast: if any `pre` command exits non-zero, later `pre` commands are skipped, `steps` are not executed, the cast file is not written, `post` is not executed, and scenetake exits with the failed command's exit code.
 
-`post` runs after `steps` are executed and the cast file is written. It is also fail-fast: if any `post` command exits non-zero, later `post` commands are skipped, the already written cast file remains, and scenario2cast exits with the failed command's exit code.
+`post` runs after `steps` are executed and the cast file is written. It is also fail-fast: if any `post` command exits non-zero, later `post` commands are skipped, the already written cast file remains, and scenetake exits with the failed command's exit code.
 
-Recorded `steps` may succeed or fail; either result is recorded and does not determine scenario2cast's exit code. `pre` and `post` are outside the recording flow: their stdout/stderr are printed to the CLI, preserving the original streams, but their command text and output are never written to the cast file.
+Recorded `steps` may succeed or fail; either result is recorded and does not determine scenetake's exit code. `pre` and `post` are outside the recording flow: their stdout/stderr are printed to the CLI, preserving the original streams, but their command text and output are never written to the cast file.
 
 Use `--verbose` to show successful `pre`/`post` command labels and phase markers. Existing `steps` `running:` logs are always shown. Failed `pre`/`post` commands always print the full command text and exit code.
 
@@ -270,11 +270,11 @@ Use `dotnet` for local development, debugging, or publishing.
 
 ```bash
 # Local run
-dotnet run scenario2cast.cs -- <scenario.yaml> [output.cast]
-dotnet run scenario2cast.cs -- svg <scenario.cast> [output.svg]
+dotnet run scenetake.cs -- <scenario.yaml> [output.cast]
+dotnet run scenetake.cs -- svg <scenario.cast> [output.svg]
 
 # build
-dotnet publish scenario2cast.cs --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None
+dotnet publish scenetake.cs --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None
 ```
 
 Regenerate samples cast/svg files:

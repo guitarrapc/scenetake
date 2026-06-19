@@ -1,4 +1,4 @@
-{"version":3,"term":{"cols":80,"rows":24,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":1701960613,"title":"Highlight Demo","env":{"SHELL":"C:\\Program Files\\Git\\bin\\bash.exe"},"tags":["s2c:font-size=16","s2c:font-family=ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace"]}
+{"version":3,"term":{"cols":80,"rows":24,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":1701960613,"title":"Highlight Demo","env":{"SHELL":"C:\\Program Files\\Git\\bin\\bash.exe"},"tags":["st:font-size=16","st:font-family=ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace"]}
 [0.700,"m","comment color is cyan"]
 [0.000,"o","\u001b[36m# comment color is cyan\u001b[0m\r\n"]
 [0.050,"o","$ "]
@@ -37,7 +37,7 @@
 [0.036,"o","t"]
 [0.055,"o","e"]
 [0.059,"o","\r\n"]
-[0.200,"o","Fri, Jun 19, 2026  2:39:04 PM\r\n"]
+[0.200,"o","Fri, Jun 19, 2026  4:43:08 PM\r\n"]
 [0.700,"m","run color override"]
 [0.000,"o","\u001b[36m# run color override\u001b[0m\r\n"]
 [0.050,"o","$ "]
@@ -48,7 +48,7 @@
 [0.038,"o","e"]
 [0.047,"o","\u001b[0m"]
 [0.000,"o","\r\n"]
-[0.200,"o","Fri, Jun 19, 2026  2:39:05 PM\r\n"]
+[0.200,"o","Fri, Jun 19, 2026  4:43:09 PM\r\n"]
 [0.700,"m","stdout color override"]
 [0.000,"o","\u001b[36m# stdout color override\u001b[0m\r\n"]
 [0.050,"o","$ "]

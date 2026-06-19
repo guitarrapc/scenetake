@@ -47,15 +47,15 @@ jobs:
         run: |
           artifact_dir="$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}"
           mkdir -p "$artifact_dir"
-          dotnet publish scenario2cast.cs -c Release -r "${{ matrix.rid }}" --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o "$artifact_dir"
+          dotnet publish scenetake.cs -c Release -r "${{ matrix.rid }}" --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o "$artifact_dir"
 
       - name: Smoke test published binary
         shell: bash
         run: |
           artifact_dir="$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}"
-          binary_name="scenario2cast"
+          binary_name="scenetake"
           if [[ "${{ matrix.rid }}" == win-* ]]; then
-            binary_name="scenario2cast.exe"
+            binary_name="scenetake.exe"
           fi
 
           binary_path="$artifact_dir/$binary_name"

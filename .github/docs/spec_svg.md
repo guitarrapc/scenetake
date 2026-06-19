@@ -20,7 +20,7 @@ Rich TUI recordings (`copilot --banner`, `sl`, etc.) are expected from **externa
 - Block cursor (`theme.fg` at 50% opacity, no blink); DECTCEM visibility (`\e[?25h`, `\e[?25l`).
 - Warn-and-continue for unsupported cast event codes.
 - Resize cast events (`"r"`) during `svg` conversion.
-- Window chrome: optional `macos` or `windows` frame (`render.window` / `--window` / `s2c:window` tag). Default is plain terminal (no chrome).
+- Window chrome: optional `macos` or `windows` frame (`render.window` / `--window` / `st:window` tag). Default is plain terminal (no chrome).
 
 Cast file format (header, versions, written event codes): [spec_cast.md](spec_cast.md).
 

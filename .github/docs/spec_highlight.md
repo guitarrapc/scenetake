@@ -4,7 +4,7 @@ Status: **Implemented**
 
 ## Motivation
 
-scenario2cast executes commands and records terminal output into cast events. In non-TTY execution, many CLI tools stop emitting ANSI colors, so demos can look flat even when rendered by [agg](https://docs.asciinema.org/manual/agg/).
+scenetake executes commands and records terminal output into cast events. In non-TTY execution, many CLI tools stop emitting ANSI colors, so demos can look flat even when rendered by [agg](https://docs.asciinema.org/manual/agg/).
 
 This spec defines declarative coloring controls that keep demos readable without depending on each tool's TTY/color options.
 

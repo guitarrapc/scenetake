@@ -4,7 +4,7 @@ Status: **Implemented**
 
 ## Motivation
 
-scenario2cast records the visible command flow described by `steps`. Scenarios often need setup and teardown around that flow—preparing state, starting helpers, cleaning up—without polluting the cast. Top-level `pre` and `post` run those commands outside the recording.
+scenetake records the visible command flow described by `steps`. Scenarios often need setup and teardown around that flow—preparing state, starting helpers, cleaning up—without polluting the cast. Top-level `pre` and `post` run those commands outside the recording.
 
 Failed recorded steps can still be legitimate demo content; setup and teardown failures should instead fail the scenario run.
 
@@ -30,10 +30,10 @@ YAML structure for `pre`/`post`: [spec_scenario.md](spec_scenario.md). CLI loggi
 | Phase | On failure |
 |---|---|
 | `pre` | Fail-fast; `steps`, cast write, and `post` are skipped; exit with the command's code. |
-| `steps` | Recording continues; step exit codes do not stop later steps or affect scenario2cast's exit code. |
+| `steps` | Recording continues; step exit codes do not stop later steps or affect scenetake's exit code. |
 | `post` | Fail-fast; remaining `post` commands skipped; cast file retained; exit with the command's code. |
 
-If no `pre` or `post` command fails, scenario2cast exits `0` regardless of individual step exit codes.
+If no `pre` or `post` command fails, scenetake exits `0` regardless of individual step exit codes.
 
 ## Lessons Learned
 

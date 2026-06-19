@@ -4,7 +4,7 @@ Status: **v1 implemented** · **v2 window chrome implemented**
 
 ## Goal
 
-Raise the built-in SVG renderer to **console2svg-level** terminal emulation and **full-frame** animation, shared by the `svg` subcommand and `--format svg`. scenario2cast continues to record commands via **pipes** (no PTY). Rich TUI demos (`copilot --banner`, `sl`) are expected via **external asciinema casts**, not the scenario path.
+Raise the built-in SVG renderer to **console2svg-level** terminal emulation and **full-frame** animation, shared by the `svg` subcommand and `--format svg`. scenetake continues to record commands via **pipes** (no PTY). Rich TUI demos (`copilot --banner`, `sl`) are expected via **external asciinema casts**, not the scenario path.
 
 Reference behavior is documented from `.references/console2svg` (read-only; **no code copy**).
 
@@ -32,8 +32,8 @@ Reference behavior is documented from `.references/console2svg` (read-only; **no
 | Title bar text | **None** — traffic lights / Windows buttons only |
 | Config surface | scenario `render.window` + v3 cast tag + CLI `--window` |
 | Priority | **CLI > cast header > default `none`** |
-| Cast header | v3 `tags`: `s2c:window=macos` (omit when `none`) |
-| v2 cast header | **No scenario2cast-specific fields** — ignore legacy `scenario2cast` block on read; v2 uses `width` / `height` / `theme` only |
+| Cast header | v3 `tags`: `st:window=macos` (omit when `none`) |
+| v2 cast header | **No scenetake-specific fields** — ignore legacy `scenetake` block on read; v2 uses `width` / `height` / `theme` only |
 | Resize | Chrome resizes with viewport; title bar height fixed px (does not scale with `font-size`) |
 | Resize animation | Chrome rects tied to existing `viewport-*` layer show/hide timing |
 | Decoration | Rounded corners + light drop shadow (`macos` larger radius; `windows` smaller) |
@@ -101,7 +101,7 @@ render:
 
 CLI: `--window macos|windows|none` on the scenario path (cast header always; SVG when `--format svg`) and on the `svg` subcommand.
 
-Cast write (v3 only): append `s2c:window=macos` to `tags` when not `none`.
+Cast write (v3 only): append `st:window=macos` to `tags` when not `none`.
 
 ### Rendering
 
@@ -123,7 +123,7 @@ Cast write (v3 only): append `s2c:window=macos` to `tags` when not `none`.
 
 ### Cast header cleanup (v2)
 
-Remove v2 `scenario2cast` read support from `CastReader` and drop it from `spec_cast.md`. v2 casts remain readable for events and terminal size; render metadata on v2 is CLI-only.
+Remove v2 `scenetake` read support from `CastReader` and drop it from `spec_cast.md`. v2 casts remain readable for events and terminal size; render metadata on v2 is CLI-only.
 
 ### Samples
 
@@ -139,7 +139,7 @@ Regenerate via `dotnet run samples/regenerate.cs` after implementation.
 
 - `.github/docs/spec_scenario.md` — `render.window`
 - `.github/docs/spec_cli.md` — `--window`
-- `.github/docs/spec_cast.md` — `s2c:window` tag; remove v2 `scenario2cast` object
+- `.github/docs/spec_cast.md` — `st:window` tag; remove v2 `scenetake` object
 - `.github/docs/spec_svg.md` — window chrome section (move from “out of scope v1”)
 
 ## Testing
@@ -161,5 +161,5 @@ Run: `dotnet run tests/terminal_tests.cs`
 
 ```bash
 asciinema rec demo.cast
-scenario2cast svg demo.cast
+scenetake svg demo.cast
 ```

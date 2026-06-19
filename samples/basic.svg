@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="829.6" height="504" viewBox="0 0 829.6 504" preserveAspectRatio="xMidYMid meet" role="img" aria-label="scenario2cast output">
+<svg xmlns="http://www.w3.org/2000/svg" width="829.6" height="504" viewBox="0 0 829.6 504" preserveAspectRatio="xMidYMid meet" role="img" aria-label="scenetake output">
 <style>
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
@@ -755,7 +755,7 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="124.8" fill="#505050" font-weight="normal" textLength="793.6" lengthAdjust="spacing">Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-sr</text>
 </g>
 <g class="layer layer-78">
-<text x="18" y="144.8" fill="#505050" font-weight="normal" textLength="783.68" lengthAdjust="spacing">c 'nonce-YvwIsSalB7kR7uGHnQurwA' 'strict-dynamic' 'report-sample' 'unsafe-eval'</text>
+<text x="18" y="144.8" fill="#505050" font-weight="normal" textLength="783.68" lengthAdjust="spacing">c 'nonce-1RVKGxhJwiE_qDiZJ7X1Kw' 'strict-dynamic' 'report-sample' 'unsafe-eval'</text>
 </g>
 <g class="layer layer-79">
 <text x="18" y="164.8" fill="#505050" font-weight="normal" textLength="793.6" lengthAdjust="spacing">'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other</text>
@@ -764,10 +764,10 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="184.8" fill="#505050" font-weight="normal" textLength="29.76" lengthAdjust="spacing">-hp</text>
 </g>
 <g class="layer layer-81">
-<text x="18" y="204.8" fill="#505050" font-weight="normal" textLength="347.2" lengthAdjust="spacing">Date: Fri, 19 Jun 2026 05:38:56 GMT</text>
+<text x="18" y="204.8" fill="#505050" font-weight="normal" textLength="347.2" lengthAdjust="spacing">Date: Fri, 19 Jun 2026 07:43:00 GMT</text>
 </g>
 <g class="layer layer-82">
-<text x="18" y="224.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Expires: Sun, 19 Jul 2026 05:38:56 GMT</text>
+<text x="18" y="224.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Expires: Sun, 19 Jul 2026 07:43:00 GMT</text>
 </g>
 <g class="layer layer-83">
 <text x="18" y="244.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Cache-Control: public, max-age=2592000</text>
@@ -890,7 +890,7 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="104.8" fill="#505050" font-weight="normal" textLength="793.6" lengthAdjust="spacing">Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-sr</text>
 </g>
 <g class="layer layer-123">
-<text x="18" y="124.8" fill="#505050" font-weight="normal" textLength="783.68" lengthAdjust="spacing">c 'nonce-YvwIsSalB7kR7uGHnQurwA' 'strict-dynamic' 'report-sample' 'unsafe-eval'</text>
+<text x="18" y="124.8" fill="#505050" font-weight="normal" textLength="783.68" lengthAdjust="spacing">c 'nonce-1RVKGxhJwiE_qDiZJ7X1Kw' 'strict-dynamic' 'report-sample' 'unsafe-eval'</text>
 </g>
 <g class="layer layer-124">
 <text x="18" y="144.8" fill="#505050" font-weight="normal" textLength="793.6" lengthAdjust="spacing">'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other</text>
@@ -899,10 +899,10 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="164.8" fill="#505050" font-weight="normal" textLength="29.76" lengthAdjust="spacing">-hp</text>
 </g>
 <g class="layer layer-126">
-<text x="18" y="184.8" fill="#505050" font-weight="normal" textLength="347.2" lengthAdjust="spacing">Date: Fri, 19 Jun 2026 05:38:56 GMT</text>
+<text x="18" y="184.8" fill="#505050" font-weight="normal" textLength="347.2" lengthAdjust="spacing">Date: Fri, 19 Jun 2026 07:43:00 GMT</text>
 </g>
 <g class="layer layer-127">
-<text x="18" y="204.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Expires: Sun, 19 Jul 2026 05:38:56 GMT</text>
+<text x="18" y="204.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Expires: Sun, 19 Jul 2026 07:43:00 GMT</text>
 </g>
 <g class="layer layer-128">
 <text x="18" y="224.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Cache-Control: public, max-age=2592000</text>
@@ -950,7 +950,7 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="84.8" fill="#505050" font-weight="normal" textLength="793.6" lengthAdjust="spacing">Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-sr</text>
 </g>
 <g class="layer layer-143">
-<text x="18" y="104.8" fill="#505050" font-weight="normal" textLength="783.68" lengthAdjust="spacing">c 'nonce-YvwIsSalB7kR7uGHnQurwA' 'strict-dynamic' 'report-sample' 'unsafe-eval'</text>
+<text x="18" y="104.8" fill="#505050" font-weight="normal" textLength="783.68" lengthAdjust="spacing">c 'nonce-1RVKGxhJwiE_qDiZJ7X1Kw' 'strict-dynamic' 'report-sample' 'unsafe-eval'</text>
 </g>
 <g class="layer layer-144">
 <text x="18" y="124.8" fill="#505050" font-weight="normal" textLength="793.6" lengthAdjust="spacing">'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other</text>
@@ -959,10 +959,10 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="144.8" fill="#505050" font-weight="normal" textLength="29.76" lengthAdjust="spacing">-hp</text>
 </g>
 <g class="layer layer-146">
-<text x="18" y="164.8" fill="#505050" font-weight="normal" textLength="347.2" lengthAdjust="spacing">Date: Fri, 19 Jun 2026 05:38:56 GMT</text>
+<text x="18" y="164.8" fill="#505050" font-weight="normal" textLength="347.2" lengthAdjust="spacing">Date: Fri, 19 Jun 2026 07:43:00 GMT</text>
 </g>
 <g class="layer layer-147">
-<text x="18" y="184.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Expires: Sun, 19 Jul 2026 05:38:56 GMT</text>
+<text x="18" y="184.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Expires: Sun, 19 Jul 2026 07:43:00 GMT</text>
 </g>
 <g class="layer layer-148">
 <text x="18" y="204.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Cache-Control: public, max-age=2592000</text>
@@ -1031,7 +1031,7 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="64.8" fill="#505050" font-weight="normal" textLength="793.6" lengthAdjust="spacing">Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-sr</text>
 </g>
 <g class="layer layer-170">
-<text x="18" y="84.8" fill="#505050" font-weight="normal" textLength="783.68" lengthAdjust="spacing">c 'nonce-YvwIsSalB7kR7uGHnQurwA' 'strict-dynamic' 'report-sample' 'unsafe-eval'</text>
+<text x="18" y="84.8" fill="#505050" font-weight="normal" textLength="783.68" lengthAdjust="spacing">c 'nonce-1RVKGxhJwiE_qDiZJ7X1Kw' 'strict-dynamic' 'report-sample' 'unsafe-eval'</text>
 </g>
 <g class="layer layer-171">
 <text x="18" y="104.8" fill="#505050" font-weight="normal" textLength="793.6" lengthAdjust="spacing">'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other</text>
@@ -1040,10 +1040,10 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="124.8" fill="#505050" font-weight="normal" textLength="29.76" lengthAdjust="spacing">-hp</text>
 </g>
 <g class="layer layer-173">
-<text x="18" y="144.8" fill="#505050" font-weight="normal" textLength="347.2" lengthAdjust="spacing">Date: Fri, 19 Jun 2026 05:38:56 GMT</text>
+<text x="18" y="144.8" fill="#505050" font-weight="normal" textLength="347.2" lengthAdjust="spacing">Date: Fri, 19 Jun 2026 07:43:00 GMT</text>
 </g>
 <g class="layer layer-174">
-<text x="18" y="164.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Expires: Sun, 19 Jul 2026 05:38:56 GMT</text>
+<text x="18" y="164.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Expires: Sun, 19 Jul 2026 07:43:00 GMT</text>
 </g>
 <g class="layer layer-175">
 <text x="18" y="184.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Cache-Control: public, max-age=2592000</text>
@@ -1202,7 +1202,7 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="44.8" fill="#505050" font-weight="normal" textLength="793.6" lengthAdjust="spacing">Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-sr</text>
 </g>
 <g class="layer layer-227">
-<text x="18" y="64.8" fill="#505050" font-weight="normal" textLength="783.68" lengthAdjust="spacing">c 'nonce-YvwIsSalB7kR7uGHnQurwA' 'strict-dynamic' 'report-sample' 'unsafe-eval'</text>
+<text x="18" y="64.8" fill="#505050" font-weight="normal" textLength="783.68" lengthAdjust="spacing">c 'nonce-1RVKGxhJwiE_qDiZJ7X1Kw' 'strict-dynamic' 'report-sample' 'unsafe-eval'</text>
 </g>
 <g class="layer layer-228">
 <text x="18" y="84.8" fill="#505050" font-weight="normal" textLength="793.6" lengthAdjust="spacing">'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other</text>
@@ -1211,10 +1211,10 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="104.8" fill="#505050" font-weight="normal" textLength="29.76" lengthAdjust="spacing">-hp</text>
 </g>
 <g class="layer layer-230">
-<text x="18" y="124.8" fill="#505050" font-weight="normal" textLength="347.2" lengthAdjust="spacing">Date: Fri, 19 Jun 2026 05:38:56 GMT</text>
+<text x="18" y="124.8" fill="#505050" font-weight="normal" textLength="347.2" lengthAdjust="spacing">Date: Fri, 19 Jun 2026 07:43:00 GMT</text>
 </g>
 <g class="layer layer-231">
-<text x="18" y="144.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Expires: Sun, 19 Jul 2026 05:38:56 GMT</text>
+<text x="18" y="144.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Expires: Sun, 19 Jul 2026 07:43:00 GMT</text>
 </g>
 <g class="layer layer-232">
 <text x="18" y="164.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Cache-Control: public, max-age=2592000</text>
@@ -1262,7 +1262,7 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="24.8" fill="#505050" font-weight="normal" textLength="793.6" lengthAdjust="spacing">Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-sr</text>
 </g>
 <g class="layer layer-247">
-<text x="18" y="44.8" fill="#505050" font-weight="normal" textLength="783.68" lengthAdjust="spacing">c 'nonce-YvwIsSalB7kR7uGHnQurwA' 'strict-dynamic' 'report-sample' 'unsafe-eval'</text>
+<text x="18" y="44.8" fill="#505050" font-weight="normal" textLength="783.68" lengthAdjust="spacing">c 'nonce-1RVKGxhJwiE_qDiZJ7X1Kw' 'strict-dynamic' 'report-sample' 'unsafe-eval'</text>
 </g>
 <g class="layer layer-248">
 <text x="18" y="64.8" fill="#505050" font-weight="normal" textLength="793.6" lengthAdjust="spacing">'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other</text>
@@ -1271,10 +1271,10 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="84.8" fill="#505050" font-weight="normal" textLength="29.76" lengthAdjust="spacing">-hp</text>
 </g>
 <g class="layer layer-250">
-<text x="18" y="104.8" fill="#505050" font-weight="normal" textLength="347.2" lengthAdjust="spacing">Date: Fri, 19 Jun 2026 05:38:56 GMT</text>
+<text x="18" y="104.8" fill="#505050" font-weight="normal" textLength="347.2" lengthAdjust="spacing">Date: Fri, 19 Jun 2026 07:43:00 GMT</text>
 </g>
 <g class="layer layer-251">
-<text x="18" y="124.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Expires: Sun, 19 Jul 2026 05:38:56 GMT</text>
+<text x="18" y="124.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Expires: Sun, 19 Jul 2026 07:43:00 GMT</text>
 </g>
 <g class="layer layer-252">
 <text x="18" y="144.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Cache-Control: public, max-age=2592000</text>
@@ -1358,7 +1358,7 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">$ echo &quot;Done!&quot;</text>
 </g>
 <g class="layer layer-279">
-<text x="18" y="24.8" fill="#505050" font-weight="normal" textLength="783.68" lengthAdjust="spacing">c 'nonce-YvwIsSalB7kR7uGHnQurwA' 'strict-dynamic' 'report-sample' 'unsafe-eval'</text>
+<text x="18" y="24.8" fill="#505050" font-weight="normal" textLength="783.68" lengthAdjust="spacing">c 'nonce-1RVKGxhJwiE_qDiZJ7X1Kw' 'strict-dynamic' 'report-sample' 'unsafe-eval'</text>
 </g>
 <g class="layer layer-280">
 <text x="18" y="44.8" fill="#505050" font-weight="normal" textLength="793.6" lengthAdjust="spacing">'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other</text>
@@ -1367,10 +1367,10 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="64.8" fill="#505050" font-weight="normal" textLength="29.76" lengthAdjust="spacing">-hp</text>
 </g>
 <g class="layer layer-282">
-<text x="18" y="84.8" fill="#505050" font-weight="normal" textLength="347.2" lengthAdjust="spacing">Date: Fri, 19 Jun 2026 05:38:56 GMT</text>
+<text x="18" y="84.8" fill="#505050" font-weight="normal" textLength="347.2" lengthAdjust="spacing">Date: Fri, 19 Jun 2026 07:43:00 GMT</text>
 </g>
 <g class="layer layer-283">
-<text x="18" y="104.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Expires: Sun, 19 Jul 2026 05:38:56 GMT</text>
+<text x="18" y="104.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Expires: Sun, 19 Jul 2026 07:43:00 GMT</text>
 </g>
 <g class="layer layer-284">
 <text x="18" y="124.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Cache-Control: public, max-age=2592000</text>
@@ -1427,10 +1427,10 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="44.8" fill="#505050" font-weight="normal" textLength="29.76" lengthAdjust="spacing">-hp</text>
 </g>
 <g class="layer layer-302">
-<text x="18" y="64.8" fill="#505050" font-weight="normal" textLength="347.2" lengthAdjust="spacing">Date: Fri, 19 Jun 2026 05:38:56 GMT</text>
+<text x="18" y="64.8" fill="#505050" font-weight="normal" textLength="347.2" lengthAdjust="spacing">Date: Fri, 19 Jun 2026 07:43:00 GMT</text>
 </g>
 <g class="layer layer-303">
-<text x="18" y="84.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Expires: Sun, 19 Jul 2026 05:38:56 GMT</text>
+<text x="18" y="84.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Expires: Sun, 19 Jul 2026 07:43:00 GMT</text>
 </g>
 <g class="layer layer-304">
 <text x="18" y="104.8" fill="#505050" font-weight="normal" textLength="376.96" lengthAdjust="spacing">Cache-Control: public, max-age=2592000</text>

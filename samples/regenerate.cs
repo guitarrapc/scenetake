@@ -11,7 +11,7 @@
 using System.Diagnostics;
 
 var repoRoot = FindRepoRoot(Directory.GetCurrentDirectory());
-var toolPath = Path.Combine(repoRoot, "scenario2cast.cs");
+var toolPath = Path.Combine(repoRoot, "scenetake.cs");
 var samplesDir = Path.Combine(repoRoot, "samples");
 
 if (!File.Exists(toolPath))
@@ -86,7 +86,7 @@ static string FindRepoRoot(string startDir)
     var dir = Path.GetFullPath(startDir);
     while (true)
     {
-        if (File.Exists(Path.Combine(dir, "scenario2cast.cs")))
+        if (File.Exists(Path.Combine(dir, "scenetake.cs")))
             return dir;
 
         var parent = Directory.GetParent(dir);
@@ -96,7 +96,7 @@ static string FindRepoRoot(string startDir)
         dir = parent.FullName;
     }
 
-    Console.Error.WriteLine("Error: could not find scenario2cast.cs; run from the repository root");
+    Console.Error.WriteLine("Error: could not find scenetake.cs; run from the repository root");
     Environment.Exit(1);
     return "";
 }

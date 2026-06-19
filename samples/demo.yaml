@@ -12,6 +12,6 @@ settings:
 
 steps:
   - run: cat samples/basic.yaml
-  - run: scenario2cast samples/basic.yaml samples/basic.cast
+  - run: scenetake samples/basic.yaml samples/basic.cast
   - run: docker run --rm -v "$PWD:/data" ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basic.gif
     execution-duration: 1.0

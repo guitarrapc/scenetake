@@ -4,7 +4,7 @@ Status: **Implemented**
 
 ## Motivation
 
-A scenario file is the single declarative input for scenario2cast: terminal dimensions, execution environment, recording timing, optional display metadata, setup/teardown, and the command sequence to record. Keeping the YAML structure in one spec lets feature specs focus on behavior.
+A scenario file is the single declarative input for scenetake: terminal dimensions, execution environment, recording timing, optional display metadata, setup/teardown, and the command sequence to record. Keeping the YAML structure in one spec lets feature specs focus on behavior.
 
 ## File Structure
 
@@ -125,7 +125,7 @@ Deterministic seed and timestamp are derived from the whole YAML file (normalize
 
 ## Init Template
 
-`scenario2cast init` creates a commented starter file following this structure. Optional sections (`render`, `pre`, `post`, coloring examples) should be present but commented so users discover features without enabling them by default.
+`scenetake init` creates a commented starter file following this structure. Optional sections (`render`, `pre`, `post`, coloring examples) should be present but commented so users discover features without enabling them by default.
 
 ## Cross-Document Notes
 

@@ -1,6 +1,6 @@
 # Specification Index
 
-scenario2cast behavior is split into focused specs under `.github/docs/`. Each spec covers **what** and **why**; implementation details live in code.
+scenetake behavior is split into focused specs under `.github/docs/`. Each spec covers **what** and **why**; implementation details live in code.
 
 ## Specs at a Glance
 
@@ -23,12 +23,12 @@ Use this when you know the goal but not the document.
 |---|---|
 | Write or review a scenario YAML file | [spec_scenario.md](spec_scenario.md) |
 | Know defaults for `typing-speed`, `prompt`, etc. | [spec_scenario.md](spec_scenario.md) → `settings` |
-| Understand the `.cast` file scenario2cast produces | [spec_cast.md](spec_cast.md) |
+| Understand the `.cast` file scenetake produces | [spec_cast.md](spec_cast.md) |
 | Know v3 vs v2, header fields, markers, or agg compatibility | [spec_cast.md](spec_cast.md) |
 | Add setup/teardown commands | [spec_scenario.md](spec_scenario.md) → `pre`/`post`, then [spec_pre_post.md](spec_pre_post.md) for behavior |
 | Color command output, typed text, or stderr | [spec_highlight.md](spec_highlight.md); key placement in [spec_scenario.md](spec_scenario.md) → `steps` |
 | Set terminal theme or font size for cast / SVG | [spec_scenario.md](spec_scenario.md) → `render`; header mapping in [spec_cast.md](spec_cast.md) |
-| Run scenario2cast from the command line | [spec_cli.md](spec_cli.md) |
+| Run scenetake from the command line | [spec_cli.md](spec_cli.md) |
 | Produce `.svg` alongside or from a `.cast` | [spec_cli.md](spec_cli.md) → `--format svg` / `svg` subcommand; rendering in [spec_svg.md](spec_svg.md) |
 | Understand exit codes or stderr output | [spec_cli.md](spec_cli.md) |
 | Know what happens when `pre`, SVG, or `post` fails | [spec_pre_post.md](spec_pre_post.md) + [spec_svg.md](spec_svg.md) failure tables |
@@ -58,7 +58,7 @@ spec_cli.md ──────────────────────�
 
 ## Suggested Reading Order
 
-1. **New to scenario2cast** — [spec_scenario.md](spec_scenario.md), then [spec_cli.md](spec_cli.md)
+1. **New to scenetake** — [spec_scenario.md](spec_scenario.md), then [spec_cli.md](spec_cli.md)
 2. **Cast file format or downstream tools** — [spec_cast.md](spec_cast.md)
 3. **Polishing demo appearance** — [spec_highlight.md](spec_highlight.md), then [spec_svg.md](spec_svg.md)
 4. **CI / automation around runs** — [spec_cli.md](spec_cli.md), then [spec_pre_post.md](spec_pre_post.md)
