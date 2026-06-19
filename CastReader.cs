@@ -101,20 +101,16 @@ internal static class CastReader
             if (line.IsEmpty || line[0] == '#')
                 continue;
 
-            if (!TryParseEventLine(line, i + 1, warnedCodes, out var ev))
+            if (!TryParseEventLine(line, i + 1, warnedCodes, out var ev, out var relativeDelay))
                 throw new CastReadException($"invalid cast event at line {i + 1}");
+
+            if (usesRelativeTime)
+                absoluteTime += relativeDelay;
 
             if (!ev.HasValue)
                 continue;
 
-            var parsed = ev.Value;
-            if (usesRelativeTime)
-            {
-                absoluteTime += parsed.Time;
-                parsed = parsed with { Time = absoluteTime };
-            }
-
-            events.Add(parsed);
+            events.Add(ev.Value with { Time = absoluteTime });
         }
 
         return new CastRecording(width, height, renderSettings, events);
@@ -293,9 +289,11 @@ internal static class CastReader
         ReadOnlySpan<char> line,
         int lineNumber,
         HashSet<string> warnedCodes,
-        out CastEvent? ev)
+        out CastEvent? ev,
+        out double relativeDelay)
     {
         ev = null;
+        relativeDelay = 0;
 
         using var doc = ParseJsonOrThrow(line, lineNumber);
         var root = doc.RootElement;
@@ -307,9 +305,11 @@ internal static class CastReader
             return false;
         }
 
-        var codeText = root[1].GetRawText();
         var time = root[0].GetDouble();
+        relativeDelay = time;
         var data = root[2].GetString() ?? "";
+
+        var codeText = root[1].GetRawText();
 
         if (codeText.Length == 3 && codeText[0] == '"' && codeText[2] == '"')
         {
@@ -330,6 +330,8 @@ internal static class CastReader
                     ev = CastEvent.Resize(time, resizeWidth, resizeHeight);
                     return true;
                 case 'm':
+                    ev = CastEvent.Marker(time, data);
+                    return true;
                 case 'x':
                 case 'i':
                     return true;

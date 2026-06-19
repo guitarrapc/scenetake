@@ -378,8 +378,14 @@ internal static class SvgFrameRenderer
                 var rowBlank = buffer.IsRowBlank(row);
                 if (rowBlank)
                 {
-                    if (activeByRow[row] is not { Buffer: ScreenBuffer prior } || prior.IsRowBlank(row))
+                    if (activeByRow[row] is not { Buffer: ScreenBuffer prior } priorActive)
                         continue;
+
+                    if (prior.IsRowBlank(row))
+                        continue;
+
+                    priorActive.Hide = time;
+                    activeByRow[row] = null;
 
                     if (!IsLikelyFullClear(previous, buffer))
                         continue;
