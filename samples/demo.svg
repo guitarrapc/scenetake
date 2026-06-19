@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1226.4" height="504" viewBox="0 0 1226.4 504" preserveAspectRatio="xMidYMid meet">
+<svg xmlns="http://www.w3.org/2000/svg" width="1226.4" height="504" viewBox="0 0 1226.4 504" preserveAspectRatio="xMidYMid meet" role="img" aria-label="scenario2cast output">
 <style>
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
-.bg { fill: #282c34; }
+text { dominant-baseline: alphabetic; }
+.bg { shape-rendering: crispEdges; }
 .layer { opacity: 0; animation-duration: 0.001s; animation-timing-function: linear; animation-fill-mode: forwards; }
 @keyframes layer-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes layer-out { from { opacity: 1; } to { opacity: 0; } }
@@ -123,8 +124,8 @@ text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains M
 .layer-113 { animation-name: layer-in, layer-out; animation-delay: 4.398224s, 4.598224s; }
 .layer-114 { animation-name: layer-in, layer-out; animation-delay: 4.398224s, 4.598224s; }
 .layer-115 { animation-name: layer-in, layer-out; animation-delay: 4.398224s, 4.598224s; }
-.layer-116 { animation-name: layer-in, layer-out; animation-delay: 4.398224s, 4.598224s; }
-.layer-117 { animation-name: layer-in, layer-out; animation-delay: 4.398224s, 6.298224s; }
+.layer-116 { animation-name: layer-in, layer-out; animation-delay: 4.598224s, 8.481458s; }
+.layer-117 { animation-name: layer-in, layer-out; animation-delay: 4.598224s, 8.481458s; }
 .layer-118 { animation-name: layer-in, layer-out; animation-delay: 4.598224s, 8.481458s; }
 .layer-119 { animation-name: layer-in, layer-out; animation-delay: 4.598224s, 8.481458s; }
 .layer-120 { animation-name: layer-in, layer-out; animation-delay: 4.598224s, 8.481458s; }
@@ -145,105 +146,105 @@ text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains M
 .layer-135 { animation-name: layer-in, layer-out; animation-delay: 4.598224s, 8.481458s; }
 .layer-136 { animation-name: layer-in, layer-out; animation-delay: 4.598224s, 8.481458s; }
 .layer-137 { animation-name: layer-in, layer-out; animation-delay: 4.598224s, 8.481458s; }
-.layer-138 { animation-name: layer-in, layer-out; animation-delay: 4.598224s, 8.481458s; }
-.layer-139 { animation-name: layer-in, layer-out; animation-delay: 4.598224s, 8.481458s; }
-.layer-140 { animation-name: layer-in, layer-out; animation-delay: 4.598224s, 8.481458s; }
-.layer-141 { animation-name: layer-in, layer-out; animation-delay: 6.298224s, 6.348224s; }
-.layer-142 { animation-name: layer-in, layer-out; animation-delay: 6.348224s, 6.367508s; }
-.layer-143 { animation-name: layer-in, layer-out; animation-delay: 6.367508s, 6.396709s; }
-.layer-144 { animation-name: layer-in, layer-out; animation-delay: 6.396709s, 6.415853s; }
-.layer-145 { animation-name: layer-in, layer-out; animation-delay: 6.415853s, 6.438991s; }
-.layer-146 { animation-name: layer-in, layer-out; animation-delay: 6.438991s, 6.467152s; }
-.layer-147 { animation-name: layer-in, layer-out; animation-delay: 6.467152s, 6.513115s; }
-.layer-148 { animation-name: layer-in, layer-out; animation-delay: 6.513115s, 6.538992s; }
-.layer-149 { animation-name: layer-in, layer-out; animation-delay: 6.538992s, 6.55213s; }
-.layer-150 { animation-name: layer-in, layer-out; animation-delay: 6.55213s, 6.591272s; }
-.layer-151 { animation-name: layer-in, layer-out; animation-delay: 6.591272s, 6.602937s; }
-.layer-152 { animation-name: layer-in, layer-out; animation-delay: 6.602937s, 6.624985s; }
-.layer-153 { animation-name: layer-in, layer-out; animation-delay: 6.624985s, 6.652573s; }
-.layer-154 { animation-name: layer-in, layer-out; animation-delay: 6.652573s, 6.699634s; }
-.layer-155 { animation-name: layer-in, layer-out; animation-delay: 6.699634s, 6.716619s; }
-.layer-156 { animation-name: layer-in, layer-out; animation-delay: 6.716619s, 6.770942s; }
-.layer-157 { animation-name: layer-in, layer-out; animation-delay: 6.770942s, 6.796966s; }
-.layer-158 { animation-name: layer-in, layer-out; animation-delay: 6.796966s, 6.818702s; }
-.layer-159 { animation-name: layer-in, layer-out; animation-delay: 6.818702s, 6.847391s; }
-.layer-160 { animation-name: layer-in, layer-out; animation-delay: 6.847391s, 6.874255s; }
-.layer-161 { animation-name: layer-in, layer-out; animation-delay: 6.874255s, 6.900433s; }
-.layer-162 { animation-name: layer-in, layer-out; animation-delay: 6.900433s, 6.925733s; }
-.layer-163 { animation-name: layer-in, layer-out; animation-delay: 6.925733s, 6.951531s; }
-.layer-164 { animation-name: layer-in, layer-out; animation-delay: 6.951531s, 6.964795s; }
-.layer-165 { animation-name: layer-in, layer-out; animation-delay: 6.964795s, 6.979022s; }
-.layer-166 { animation-name: layer-in, layer-out; animation-delay: 6.979022s, 7.004472s; }
-.layer-167 { animation-name: layer-in, layer-out; animation-delay: 7.004472s, 7.026869s; }
-.layer-168 { animation-name: layer-in, layer-out; animation-delay: 7.026869s, 7.07189s; }
-.layer-169 { animation-name: layer-in, layer-out; animation-delay: 7.07189s, 7.090865s; }
-.layer-170 { animation-name: layer-in, layer-out; animation-delay: 7.090865s, 7.106637s; }
-.layer-171 { animation-name: layer-in, layer-out; animation-delay: 7.106637s, 7.134947s; }
-.layer-172 { animation-name: layer-in, layer-out; animation-delay: 7.134947s, 7.162499s; }
-.layer-173 { animation-name: layer-in, layer-out; animation-delay: 7.162499s, 7.183078s; }
-.layer-174 { animation-name: layer-in, layer-out; animation-delay: 7.183078s, 7.211948s; }
-.layer-175 { animation-name: layer-in, layer-out; animation-delay: 7.211948s, 7.222104s; }
-.layer-176 { animation-name: layer-in, layer-out; animation-delay: 7.222104s, 7.248505s; }
-.layer-177 { animation-name: layer-in, layer-out; animation-delay: 7.248505s, 7.26883s; }
-.layer-178 { animation-name: layer-in, layer-out; animation-delay: 7.26883s, 7.293615s; }
-.layer-179 { animation-name: layer-in, layer-out; animation-delay: 7.293615s, 7.320503s; }
-.layer-180 { animation-name: layer-in, layer-out; animation-delay: 7.320503s, 7.337703s; }
-.layer-181 { animation-name: layer-in, layer-out; animation-delay: 7.337703s, 7.348314s; }
-.layer-182 { animation-name: layer-in, layer-out; animation-delay: 7.348314s, 7.377458s; }
-.layer-183 { animation-name: layer-in, layer-out; animation-delay: 7.377458s, 7.399805s; }
-.layer-184 { animation-name: layer-in, layer-out; animation-delay: 7.399805s, 7.412868s; }
-.layer-185 { animation-name: layer-in, layer-out; animation-delay: 7.412868s, 7.434829s; }
-.layer-186 { animation-name: layer-in, layer-out; animation-delay: 7.434829s, 7.464555s; }
-.layer-187 { animation-name: layer-in, layer-out; animation-delay: 7.464555s, 7.477542s; }
-.layer-188 { animation-name: layer-in, layer-out; animation-delay: 7.477542s, 7.501021s; }
-.layer-189 { animation-name: layer-in, layer-out; animation-delay: 7.501021s, 7.543043s; }
-.layer-190 { animation-name: layer-in, layer-out; animation-delay: 7.543043s, 7.570483s; }
-.layer-191 { animation-name: layer-in, layer-out; animation-delay: 7.570483s, 7.591077s; }
-.layer-192 { animation-name: layer-in, layer-out; animation-delay: 7.591077s, 7.603414s; }
-.layer-193 { animation-name: layer-in, layer-out; animation-delay: 7.603414s, 7.62638s; }
-.layer-194 { animation-name: layer-in, layer-out; animation-delay: 7.62638s, 7.654218s; }
-.layer-195 { animation-name: layer-in, layer-out; animation-delay: 7.654218s, 7.666582s; }
-.layer-196 { animation-name: layer-in, layer-out; animation-delay: 7.666582s, 7.684927s; }
-.layer-197 { animation-name: layer-in, layer-out; animation-delay: 7.684927s, 7.705054s; }
-.layer-198 { animation-name: layer-in, layer-out; animation-delay: 7.705054s, 7.715479s; }
-.layer-199 { animation-name: layer-in, layer-out; animation-delay: 7.715479s, 7.736221s; }
-.layer-200 { animation-name: layer-in, layer-out; animation-delay: 7.736221s, 7.747828s; }
-.layer-201 { animation-name: layer-in, layer-out; animation-delay: 7.747828s, 7.770343s; }
-.layer-202 { animation-name: layer-in, layer-out; animation-delay: 7.770343s, 7.793032s; }
-.layer-203 { animation-name: layer-in, layer-out; animation-delay: 7.793032s, 7.809308s; }
-.layer-204 { animation-name: layer-in, layer-out; animation-delay: 7.809308s, 7.838586s; }
-.layer-205 { animation-name: layer-in, layer-out; animation-delay: 7.838586s, 7.849193s; }
-.layer-206 { animation-name: layer-in, layer-out; animation-delay: 7.849193s, 7.877517s; }
-.layer-207 { animation-name: layer-in, layer-out; animation-delay: 7.877517s, 7.895631s; }
-.layer-208 { animation-name: layer-in, layer-out; animation-delay: 7.895631s, 7.920241s; }
-.layer-209 { animation-name: layer-in, layer-out; animation-delay: 7.920241s, 7.933397s; }
-.layer-210 { animation-name: layer-in, layer-out; animation-delay: 7.933397s, 7.949096s; }
-.layer-211 { animation-name: layer-in, layer-out; animation-delay: 7.949096s, 7.976047s; }
-.layer-212 { animation-name: layer-in, layer-out; animation-delay: 7.976047s, 7.987848s; }
-.layer-213 { animation-name: layer-in, layer-out; animation-delay: 7.987848s, 8.033079s; }
-.layer-214 { animation-name: layer-in, layer-out; animation-delay: 8.033079s, 8.059235s; }
-.layer-215 { animation-name: layer-in, layer-out; animation-delay: 8.059235s, 8.072686s; }
-.layer-216 { animation-name: layer-in, layer-out; animation-delay: 8.072686s, 8.082888s; }
-.layer-217 { animation-name: layer-in, layer-out; animation-delay: 8.082888s, 8.105154s; }
-.layer-218 { animation-name: layer-in, layer-out; animation-delay: 8.105154s, 8.130878s; }
-.layer-219 { animation-name: layer-in, layer-out; animation-delay: 8.130878s, 8.150287s; }
-.layer-220 { animation-name: layer-in, layer-out; animation-delay: 8.150287s, 8.179877s; }
-.layer-221 { animation-name: layer-in, layer-out; animation-delay: 8.179877s, 8.195541s; }
-.layer-222 { animation-name: layer-in, layer-out; animation-delay: 8.195541s, 8.218782s; }
-.layer-223 { animation-name: layer-in, layer-out; animation-delay: 8.218782s, 8.237115s; }
-.layer-224 { animation-name: layer-in, layer-out; animation-delay: 8.237115s, 8.25483s; }
-.layer-225 { animation-name: layer-in, layer-out; animation-delay: 8.25483s, 8.280045s; }
-.layer-226 { animation-name: layer-in, layer-out; animation-delay: 8.280045s, 8.307657s; }
-.layer-227 { animation-name: layer-in, layer-out; animation-delay: 8.307657s, 8.31869s; }
-.layer-228 { animation-name: layer-in, layer-out; animation-delay: 8.31869s, 8.346483s; }
-.layer-229 { animation-name: layer-in, layer-out; animation-delay: 8.346483s, 8.364538s; }
-.layer-230 { animation-name: layer-in, layer-out; animation-delay: 8.364538s, 8.374736s; }
-.layer-231 { animation-name: layer-in, layer-out; animation-delay: 8.374736s, 8.399096s; }
-.layer-232 { animation-name: layer-in, layer-out; animation-delay: 8.399096s, 8.415243s; }
-.layer-233 { animation-name: layer-in, layer-out; animation-delay: 8.415243s, 8.430835s; }
-.layer-234 { animation-name: layer-in, layer-out; animation-delay: 8.430835s, 8.448931s; }
-.layer-235 { animation-name: layer-in, layer-out; animation-delay: 8.448931s, 8.465386s; }
-.layer-236 { animation-name: layer-in, layer-out; animation-delay: 8.465386s, 8.481458s; }
+.layer-138 { animation-name: layer-in, layer-out; animation-delay: 6.298224s, 6.348224s; }
+.layer-139 { animation-name: layer-in, layer-out; animation-delay: 6.348224s, 6.367508s; }
+.layer-140 { animation-name: layer-in, layer-out; animation-delay: 6.367508s, 6.396709s; }
+.layer-141 { animation-name: layer-in, layer-out; animation-delay: 6.396709s, 6.415853s; }
+.layer-142 { animation-name: layer-in, layer-out; animation-delay: 6.415853s, 6.438991s; }
+.layer-143 { animation-name: layer-in, layer-out; animation-delay: 6.438991s, 6.467152s; }
+.layer-144 { animation-name: layer-in, layer-out; animation-delay: 6.467152s, 6.513115s; }
+.layer-145 { animation-name: layer-in, layer-out; animation-delay: 6.513115s, 6.538992s; }
+.layer-146 { animation-name: layer-in, layer-out; animation-delay: 6.538992s, 6.55213s; }
+.layer-147 { animation-name: layer-in, layer-out; animation-delay: 6.55213s, 6.591272s; }
+.layer-148 { animation-name: layer-in, layer-out; animation-delay: 6.591272s, 6.602937s; }
+.layer-149 { animation-name: layer-in, layer-out; animation-delay: 6.602937s, 6.624985s; }
+.layer-150 { animation-name: layer-in, layer-out; animation-delay: 6.624985s, 6.652573s; }
+.layer-151 { animation-name: layer-in, layer-out; animation-delay: 6.652573s, 6.699634s; }
+.layer-152 { animation-name: layer-in, layer-out; animation-delay: 6.699634s, 6.716619s; }
+.layer-153 { animation-name: layer-in, layer-out; animation-delay: 6.716619s, 6.770942s; }
+.layer-154 { animation-name: layer-in, layer-out; animation-delay: 6.770942s, 6.796966s; }
+.layer-155 { animation-name: layer-in, layer-out; animation-delay: 6.796966s, 6.818702s; }
+.layer-156 { animation-name: layer-in, layer-out; animation-delay: 6.818702s, 6.847391s; }
+.layer-157 { animation-name: layer-in, layer-out; animation-delay: 6.847391s, 6.874255s; }
+.layer-158 { animation-name: layer-in, layer-out; animation-delay: 6.874255s, 6.900433s; }
+.layer-159 { animation-name: layer-in, layer-out; animation-delay: 6.900433s, 6.925733s; }
+.layer-160 { animation-name: layer-in, layer-out; animation-delay: 6.925733s, 6.951531s; }
+.layer-161 { animation-name: layer-in, layer-out; animation-delay: 6.951531s, 6.964795s; }
+.layer-162 { animation-name: layer-in, layer-out; animation-delay: 6.964795s, 6.979022s; }
+.layer-163 { animation-name: layer-in, layer-out; animation-delay: 6.979022s, 7.004472s; }
+.layer-164 { animation-name: layer-in, layer-out; animation-delay: 7.004472s, 7.026869s; }
+.layer-165 { animation-name: layer-in, layer-out; animation-delay: 7.026869s, 7.07189s; }
+.layer-166 { animation-name: layer-in, layer-out; animation-delay: 7.07189s, 7.090865s; }
+.layer-167 { animation-name: layer-in, layer-out; animation-delay: 7.090865s, 7.106637s; }
+.layer-168 { animation-name: layer-in, layer-out; animation-delay: 7.106637s, 7.134947s; }
+.layer-169 { animation-name: layer-in, layer-out; animation-delay: 7.134947s, 7.162499s; }
+.layer-170 { animation-name: layer-in, layer-out; animation-delay: 7.162499s, 7.183078s; }
+.layer-171 { animation-name: layer-in, layer-out; animation-delay: 7.183078s, 7.211948s; }
+.layer-172 { animation-name: layer-in, layer-out; animation-delay: 7.211948s, 7.222104s; }
+.layer-173 { animation-name: layer-in, layer-out; animation-delay: 7.222104s, 7.248505s; }
+.layer-174 { animation-name: layer-in, layer-out; animation-delay: 7.248505s, 7.26883s; }
+.layer-175 { animation-name: layer-in, layer-out; animation-delay: 7.26883s, 7.293615s; }
+.layer-176 { animation-name: layer-in, layer-out; animation-delay: 7.293615s, 7.320503s; }
+.layer-177 { animation-name: layer-in, layer-out; animation-delay: 7.320503s, 7.337703s; }
+.layer-178 { animation-name: layer-in, layer-out; animation-delay: 7.337703s, 7.348314s; }
+.layer-179 { animation-name: layer-in, layer-out; animation-delay: 7.348314s, 7.377458s; }
+.layer-180 { animation-name: layer-in, layer-out; animation-delay: 7.377458s, 7.399805s; }
+.layer-181 { animation-name: layer-in, layer-out; animation-delay: 7.399805s, 7.412868s; }
+.layer-182 { animation-name: layer-in, layer-out; animation-delay: 7.412868s, 7.434829s; }
+.layer-183 { animation-name: layer-in, layer-out; animation-delay: 7.434829s, 7.464555s; }
+.layer-184 { animation-name: layer-in, layer-out; animation-delay: 7.464555s, 7.477542s; }
+.layer-185 { animation-name: layer-in, layer-out; animation-delay: 7.477542s, 7.501021s; }
+.layer-186 { animation-name: layer-in, layer-out; animation-delay: 7.501021s, 7.543043s; }
+.layer-187 { animation-name: layer-in, layer-out; animation-delay: 7.543043s, 7.570483s; }
+.layer-188 { animation-name: layer-in, layer-out; animation-delay: 7.570483s, 7.591077s; }
+.layer-189 { animation-name: layer-in, layer-out; animation-delay: 7.591077s, 7.603414s; }
+.layer-190 { animation-name: layer-in, layer-out; animation-delay: 7.603414s, 7.62638s; }
+.layer-191 { animation-name: layer-in, layer-out; animation-delay: 7.62638s, 7.654218s; }
+.layer-192 { animation-name: layer-in, layer-out; animation-delay: 7.654218s, 7.666582s; }
+.layer-193 { animation-name: layer-in, layer-out; animation-delay: 7.666582s, 7.684927s; }
+.layer-194 { animation-name: layer-in, layer-out; animation-delay: 7.684927s, 7.705054s; }
+.layer-195 { animation-name: layer-in, layer-out; animation-delay: 7.705054s, 7.715479s; }
+.layer-196 { animation-name: layer-in, layer-out; animation-delay: 7.715479s, 7.736221s; }
+.layer-197 { animation-name: layer-in, layer-out; animation-delay: 7.736221s, 7.747828s; }
+.layer-198 { animation-name: layer-in, layer-out; animation-delay: 7.747828s, 7.770343s; }
+.layer-199 { animation-name: layer-in, layer-out; animation-delay: 7.770343s, 7.793032s; }
+.layer-200 { animation-name: layer-in, layer-out; animation-delay: 7.793032s, 7.809308s; }
+.layer-201 { animation-name: layer-in, layer-out; animation-delay: 7.809308s, 7.838586s; }
+.layer-202 { animation-name: layer-in, layer-out; animation-delay: 7.838586s, 7.849193s; }
+.layer-203 { animation-name: layer-in, layer-out; animation-delay: 7.849193s, 7.877517s; }
+.layer-204 { animation-name: layer-in, layer-out; animation-delay: 7.877517s, 7.895631s; }
+.layer-205 { animation-name: layer-in, layer-out; animation-delay: 7.895631s, 7.920241s; }
+.layer-206 { animation-name: layer-in, layer-out; animation-delay: 7.920241s, 7.933397s; }
+.layer-207 { animation-name: layer-in, layer-out; animation-delay: 7.933397s, 7.949096s; }
+.layer-208 { animation-name: layer-in, layer-out; animation-delay: 7.949096s, 7.976047s; }
+.layer-209 { animation-name: layer-in, layer-out; animation-delay: 7.976047s, 7.987848s; }
+.layer-210 { animation-name: layer-in, layer-out; animation-delay: 7.987848s, 8.033079s; }
+.layer-211 { animation-name: layer-in, layer-out; animation-delay: 8.033079s, 8.059235s; }
+.layer-212 { animation-name: layer-in, layer-out; animation-delay: 8.059235s, 8.072686s; }
+.layer-213 { animation-name: layer-in, layer-out; animation-delay: 8.072686s, 8.082888s; }
+.layer-214 { animation-name: layer-in, layer-out; animation-delay: 8.082888s, 8.105154s; }
+.layer-215 { animation-name: layer-in, layer-out; animation-delay: 8.105154s, 8.130878s; }
+.layer-216 { animation-name: layer-in, layer-out; animation-delay: 8.130878s, 8.150287s; }
+.layer-217 { animation-name: layer-in, layer-out; animation-delay: 8.150287s, 8.179877s; }
+.layer-218 { animation-name: layer-in, layer-out; animation-delay: 8.179877s, 8.195541s; }
+.layer-219 { animation-name: layer-in, layer-out; animation-delay: 8.195541s, 8.218782s; }
+.layer-220 { animation-name: layer-in, layer-out; animation-delay: 8.218782s, 8.237115s; }
+.layer-221 { animation-name: layer-in, layer-out; animation-delay: 8.237115s, 8.25483s; }
+.layer-222 { animation-name: layer-in, layer-out; animation-delay: 8.25483s, 8.280045s; }
+.layer-223 { animation-name: layer-in, layer-out; animation-delay: 8.280045s, 8.307657s; }
+.layer-224 { animation-name: layer-in, layer-out; animation-delay: 8.307657s, 8.31869s; }
+.layer-225 { animation-name: layer-in, layer-out; animation-delay: 8.31869s, 8.346483s; }
+.layer-226 { animation-name: layer-in, layer-out; animation-delay: 8.346483s, 8.364538s; }
+.layer-227 { animation-name: layer-in, layer-out; animation-delay: 8.364538s, 8.374736s; }
+.layer-228 { animation-name: layer-in, layer-out; animation-delay: 8.374736s, 8.399096s; }
+.layer-229 { animation-name: layer-in, layer-out; animation-delay: 8.399096s, 8.415243s; }
+.layer-230 { animation-name: layer-in, layer-out; animation-delay: 8.415243s, 8.430835s; }
+.layer-231 { animation-name: layer-in, layer-out; animation-delay: 8.430835s, 8.448931s; }
+.layer-232 { animation-name: layer-in, layer-out; animation-delay: 8.448931s, 8.465386s; }
+.layer-233 { animation-name: layer-in, layer-out; animation-delay: 8.465386s, 8.481458s; }
+.layer-234 { animation-name: layer-in, layer-out; animation-delay: 8.481458s, 9.631458s; }
+.layer-235 { animation-name: layer-in, layer-out; animation-delay: 8.481458s, 9.631458s; }
+.layer-236 { animation-name: layer-in, layer-out; animation-delay: 8.481458s, 9.631458s; }
 .layer-237 { animation-name: layer-in, layer-out; animation-delay: 8.481458s, 9.631458s; }
 .layer-238 { animation-name: layer-in, layer-out; animation-delay: 8.481458s, 9.631458s; }
 .layer-239 { animation-name: layer-in, layer-out; animation-delay: 8.481458s, 9.631458s; }
@@ -263,11 +264,11 @@ text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains M
 .layer-253 { animation-name: layer-in, layer-out; animation-delay: 8.481458s, 9.631458s; }
 .layer-254 { animation-name: layer-in, layer-out; animation-delay: 8.481458s, 9.631458s; }
 .layer-255 { animation-name: layer-in, layer-out; animation-delay: 8.481458s, 9.631458s; }
-.layer-256 { animation-name: layer-in, layer-out; animation-delay: 8.481458s, 9.631458s; }
-.layer-257 { animation-name: layer-in, layer-out; animation-delay: 8.481458s, 9.631458s; }
-.layer-258 { animation-name: layer-in, layer-out; animation-delay: 8.481458s, 9.631458s; }
-.layer-259 { animation-name: layer-in, layer-out; animation-delay: 8.481458s, 9.631458s; }
-.layer-260 { animation-name: layer-in, layer-out; animation-delay: 8.481458s, 11.331458s; }
+.layer-256 { animation-name: layer-in; animation-delay: 9.631458s; }
+.layer-257 { animation-name: layer-in; animation-delay: 9.631458s; }
+.layer-258 { animation-name: layer-in; animation-delay: 9.631458s; }
+.layer-259 { animation-name: layer-in; animation-delay: 9.631458s; }
+.layer-260 { animation-name: layer-in; animation-delay: 9.631458s; }
 .layer-261 { animation-name: layer-in; animation-delay: 9.631458s; }
 .layer-262 { animation-name: layer-in; animation-delay: 9.631458s; }
 .layer-263 { animation-name: layer-in; animation-delay: 9.631458s; }
@@ -285,13 +286,7 @@ text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains M
 .layer-275 { animation-name: layer-in; animation-delay: 9.631458s; }
 .layer-276 { animation-name: layer-in; animation-delay: 9.631458s; }
 .layer-277 { animation-name: layer-in; animation-delay: 9.631458s; }
-.layer-278 { animation-name: layer-in; animation-delay: 9.631458s; }
-.layer-279 { animation-name: layer-in; animation-delay: 9.631458s; }
-.layer-280 { animation-name: layer-in; animation-delay: 9.631458s; }
-.layer-281 { animation-name: layer-in; animation-delay: 9.631458s; }
-.layer-282 { animation-name: layer-in; animation-delay: 9.631458s; }
-.layer-283 { animation-name: layer-in; animation-delay: 9.631458s; }
-.layer-284 { animation-name: layer-in; animation-delay: 11.331458s; }
+.layer-278 { animation-name: layer-in; animation-delay: 11.331458s; }
 .cursor-layer-0 { animation-name: layer-in, layer-out; animation-delay: 1s, 1.05s; }
 .cursor-layer-1 { animation-name: layer-in, layer-out; animation-delay: 1.05s, 1.061257s; }
 .cursor-layer-2 { animation-name: layer-in, layer-out; animation-delay: 1.061257s, 1.087928s; }
@@ -475,7 +470,7 @@ text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains M
 .cursor-layer-180 { animation-name: layer-in, layer-out; animation-delay: 8.465386s, 8.481458s; }
 .cursor-layer-181 { animation-name: layer-in, layer-out; animation-delay: 8.481458s, 11.331458s; }
 .cursor-layer-182 { animation-name: layer-in; animation-delay: 11.331458s; }
-.viewport-mask-0, .viewport-bg-0 { animation-name: layer-in; animation-delay: 1s; }
+.viewport-mask-0, .viewport-bg-0 { animation-name: layer-in; animation-delay: 0s; }
 </style>
 <defs>
 <mask id="viewport-mask" x="0" y="0" width="1226.4" height="504" maskUnits="userSpaceOnUse">
@@ -483,855 +478,843 @@ text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains M
 </mask>
 </defs>
 <g mask="url(#viewport-mask)">
-<rect class="bg layer viewport-bg-0" x="8" y="8" width="1210.4" height="488"/>
+<rect class="bg layer viewport-bg-0" x="8" y="8" width="1210.4" height="488" fill="#282c34"/>
 <g class="layer layer-0">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacingAndGlyphs">$</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
 </g>
 <g class="layer layer-1">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacingAndGlyphs">$ c</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">$ c</text>
 </g>
 <g class="layer layer-2">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="39.68" lengthAdjust="spacingAndGlyphs">$ ca</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="39.68" lengthAdjust="spacing">$ ca</text>
 </g>
 <g class="layer layer-3">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacingAndGlyphs">$ cat</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">$ cat</text>
 </g>
 <g class="layer layer-4">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacingAndGlyphs">$ cat s</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacing">$ cat s</text>
 </g>
 <g class="layer layer-5">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacingAndGlyphs">$ cat sa</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">$ cat sa</text>
 </g>
 <g class="layer layer-6">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacingAndGlyphs">$ cat sam</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">$ cat sam</text>
 </g>
 <g class="layer layer-7">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacingAndGlyphs">$ cat samp</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">$ cat samp</text>
 </g>
 <g class="layer layer-8">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="109.12" lengthAdjust="spacingAndGlyphs">$ cat sampl</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="109.12" lengthAdjust="spacing">$ cat sampl</text>
 </g>
 <g class="layer layer-9">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacingAndGlyphs">$ cat sample</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacing">$ cat sample</text>
 </g>
 <g class="layer layer-10">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacingAndGlyphs">$ cat samples</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">$ cat samples</text>
 </g>
 <g class="layer layer-11">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">$ cat samples/</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">$ cat samples/</text>
 </g>
 <g class="layer layer-12">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="148.8" lengthAdjust="spacingAndGlyphs">$ cat samples/b</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="148.8" lengthAdjust="spacing">$ cat samples/b</text>
 </g>
 <g class="layer layer-13">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacingAndGlyphs">$ cat samples/ba</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacing">$ cat samples/ba</text>
 </g>
 <g class="layer layer-14">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="168.64" lengthAdjust="spacingAndGlyphs">$ cat samples/bas</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="168.64" lengthAdjust="spacing">$ cat samples/bas</text>
 </g>
 <g class="layer layer-15">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacingAndGlyphs">$ cat samples/basi</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">$ cat samples/basi</text>
 </g>
 <g class="layer layer-16">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="188.48" lengthAdjust="spacingAndGlyphs">$ cat samples/basic</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="188.48" lengthAdjust="spacing">$ cat samples/basic</text>
 </g>
 <g class="layer layer-17">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacingAndGlyphs">$ cat samples/basic.</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">$ cat samples/basic.</text>
 </g>
 <g class="layer layer-18">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="208.32" lengthAdjust="spacingAndGlyphs">$ cat samples/basic.y</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="208.32" lengthAdjust="spacing">$ cat samples/basic.y</text>
 </g>
 <g class="layer layer-19">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacingAndGlyphs">$ cat samples/basic.ya</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">$ cat samples/basic.ya</text>
 </g>
 <g class="layer layer-20">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs">$ cat samples/basic.yam</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">$ cat samples/basic.yam</text>
 </g>
 <g class="layer layer-21">
-<text x="18" y="28" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacingAndGlyphs">$ cat samples/basic.yaml</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">$ cat samples/basic.yaml</text>
 </g>
 <g class="layer layer-22">
-<text x="37.84" y="28" fill="#d0d0d0" font-weight="normal" textLength="496" lengthAdjust="spacingAndGlyphs">typing-speed: 0.02 # average seconds per keystroke</text>
+<text x="37.84" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="496" lengthAdjust="spacing">typing-speed: 0.02 # average seconds per keystroke</text>
 </g>
 <g class="layer layer-23">
-<text x="37.84" y="48" fill="#d0d0d0" font-weight="normal" textLength="545.6" lengthAdjust="spacingAndGlyphs">typing-jitter: 0.01 # random variance (±) per keystroke</text>
+<text x="37.84" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="545.6" lengthAdjust="spacing">typing-jitter: 0.01 # random variance (±) per keystroke</text>
 </g>
 <g class="layer layer-24">
-<text x="37.84" y="68" fill="#d0d0d0" font-weight="normal" textLength="426.56" lengthAdjust="spacingAndGlyphs">pre-delay: 0.4 # pause before typing starts</text>
+<text x="37.84" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="426.56" lengthAdjust="spacing">pre-delay: 0.4 # pause before typing starts</text>
 </g>
 <g class="layer layer-25">
-<text x="37.84" y="88" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacingAndGlyphs">post-delay: 1.0 # pause after output before next step</text>
+<text x="37.84" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacing">post-delay: 1.0 # pause after output before next step</text>
 </g>
 <g class="layer layer-26">
-<text x="18" y="128" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacingAndGlyphs">steps:</text>
+<text x="18" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">steps:</text>
 </g>
 <g class="layer layer-27">
-<text x="37.84" y="148" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacingAndGlyphs">- echo &quot;Hello, World!&quot;</text>
+<text x="37.84" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">- echo &quot;Hello, World!&quot;</text>
 </g>
 <g class="layer layer-28">
-<text x="37.84" y="168" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacingAndGlyphs">- name: Name of the step</text>
+<text x="37.84" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">- name: Name of the step</text>
 </g>
 <g class="layer layer-29">
-<text x="57.68" y="188" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacingAndGlyphs">run: echo &quot;Current directory:&quot;</text>
+<text x="57.68" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">run: echo &quot;Current directory:&quot;</text>
 </g>
 <g class="layer layer-30">
-<text x="37.84" y="208" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs">- name: Coloring stdout</text>
+<text x="37.84" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">- name: Coloring stdout</text>
 </g>
 <g class="layer layer-31">
-<text x="57.68" y="228" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacingAndGlyphs">run: curl -I https://google.com</text>
+<text x="57.68" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacing">run: curl -I https://google.com</text>
 </g>
 <g class="layer layer-32">
-<text x="57.68" y="248" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacingAndGlyphs">highlight:</text>
+<text x="57.68" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">highlight:</text>
 </g>
 <g class="layer layer-33">
-<text x="77.52" y="268" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">- color: green</text>
+<text x="77.52" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- color: green</text>
 </g>
 <g class="layer layer-34">
-<text x="97.36" y="288" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacingAndGlyphs">at:</text>
+<text x="97.36" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">at:</text>
 </g>
 <g class="layer layer-35">
-<text x="117.2" y="308" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacingAndGlyphs">- &quot;1&quot;</text>
+<text x="117.2" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">- &quot;1&quot;</text>
 </g>
 <g class="layer layer-36">
-<text x="77.52" y="328" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacingAndGlyphs">- color: gray</text>
+<text x="77.52" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">- color: gray</text>
 </g>
 <g class="layer layer-37">
-<text x="97.36" y="348" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacingAndGlyphs">at:</text>
+<text x="97.36" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">at:</text>
 </g>
 <g class="layer layer-38">
-<text x="117.2" y="368" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacingAndGlyphs">- &quot;2-12&quot;</text>
+<text x="117.2" y="364.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">- &quot;2-12&quot;</text>
 </g>
 <g class="layer layer-39">
-<text x="37.84" y="388" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacingAndGlyphs">- echo &quot;Wait for 2 seconds...&quot;</text>
+<text x="37.84" y="384.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">- echo &quot;Wait for 2 seconds...&quot;</text>
 </g>
 <g class="layer layer-40">
-<text x="37.84" y="408" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">- run: sleep 2</text>
+<text x="37.84" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- run: sleep 2</text>
 </g>
 <g class="layer layer-41">
-<text x="57.68" y="428" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs">execution-duration: 1.0</text>
+<text x="57.68" y="424.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">execution-duration: 1.0</text>
 </g>
 <g class="layer layer-42">
-<text x="37.84" y="448" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacingAndGlyphs">- echo &quot;stderr output is red by default&quot; 1&gt;&amp;2</text>
+<text x="37.84" y="444.8" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacing">- echo &quot;stderr output is red by default&quot; 1&gt;&amp;2</text>
 </g>
 <g class="layer layer-43">
-<text x="37.84" y="468" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">- echo &quot;Done!&quot;</text>
+<text x="37.84" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- echo &quot;Done!&quot;</text>
 </g>
 <g class="layer layer-44">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacingAndGlyphs">$</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
 </g>
 <g class="layer layer-45">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacingAndGlyphs">$ s</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">$ s</text>
 </g>
 <g class="layer layer-46">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="39.68" lengthAdjust="spacingAndGlyphs">$ sc</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="39.68" lengthAdjust="spacing">$ sc</text>
 </g>
 <g class="layer layer-47">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacingAndGlyphs">$ sce</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">$ sce</text>
 </g>
 <g class="layer layer-48">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacingAndGlyphs">$ scen</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ scen</text>
 </g>
 <g class="layer layer-49">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacingAndGlyphs">$ scena</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacing">$ scena</text>
 </g>
 <g class="layer layer-50">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacingAndGlyphs">$ scenar</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">$ scenar</text>
 </g>
 <g class="layer layer-51">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacingAndGlyphs">$ scenari</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">$ scenari</text>
 </g>
 <g class="layer layer-52">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacingAndGlyphs">$ scenario</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">$ scenario</text>
 </g>
 <g class="layer layer-53">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="109.12" lengthAdjust="spacingAndGlyphs">$ scenario2</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="109.12" lengthAdjust="spacing">$ scenario2</text>
 </g>
 <g class="layer layer-54">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacingAndGlyphs">$ scenario2c</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacing">$ scenario2c</text>
 </g>
 <g class="layer layer-55">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacingAndGlyphs">$ scenario2ca</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">$ scenario2ca</text>
 </g>
 <g class="layer layer-56">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">$ scenario2cas</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">$ scenario2cas</text>
 </g>
 <g class="layer layer-57">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="148.8" lengthAdjust="spacingAndGlyphs">$ scenario2cast</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="148.8" lengthAdjust="spacing">$ scenario2cast</text>
 </g>
 <g class="layer layer-58">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="168.64" lengthAdjust="spacingAndGlyphs">$ scenario2cast s</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="168.64" lengthAdjust="spacing">$ scenario2cast s</text>
 </g>
 <g class="layer layer-59">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacingAndGlyphs">$ scenario2cast sa</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">$ scenario2cast sa</text>
 </g>
 <g class="layer layer-60">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="188.48" lengthAdjust="spacingAndGlyphs">$ scenario2cast sam</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="188.48" lengthAdjust="spacing">$ scenario2cast sam</text>
 </g>
 <g class="layer layer-61">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacingAndGlyphs">$ scenario2cast samp</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">$ scenario2cast samp</text>
 </g>
 <g class="layer layer-62">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="208.32" lengthAdjust="spacingAndGlyphs">$ scenario2cast sampl</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="208.32" lengthAdjust="spacing">$ scenario2cast sampl</text>
 </g>
 <g class="layer layer-63">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacingAndGlyphs">$ scenario2cast sample</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">$ scenario2cast sample</text>
 </g>
 <g class="layer layer-64">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">$ scenario2cast samples</text>
 </g>
 <g class="layer layer-65">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">$ scenario2cast samples/</text>
 </g>
 <g class="layer layer-66">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/b</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacing">$ scenario2cast samples/b</text>
 </g>
 <g class="layer layer-67">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="257.92" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/ba</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="257.92" lengthAdjust="spacing">$ scenario2cast samples/ba</text>
 </g>
 <g class="layer layer-68">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/bas</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">$ scenario2cast samples/bas</text>
 </g>
 <g class="layer layer-69">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basi</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">$ scenario2cast samples/basi</text>
 </g>
 <g class="layer layer-70">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">$ scenario2cast samples/basic</text>
 </g>
 <g class="layer layer-71">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">$ scenario2cast samples/basic.</text>
 </g>
 <g class="layer layer-72">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.y</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacing">$ scenario2cast samples/basic.y</text>
 </g>
 <g class="layer layer-73">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="317.44" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.ya</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="317.44" lengthAdjust="spacing">$ scenario2cast samples/basic.ya</text>
 </g>
 <g class="layer layer-74">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yam</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">$ scenario2cast samples/basic.yam</text>
 </g>
 <g class="layer layer-75">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="337.28" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="337.28" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml</text>
 </g>
 <g class="layer layer-76">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml s</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml s</text>
 </g>
 <g class="layer layer-77">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml sa</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml sa</text>
 </g>
 <g class="layer layer-78">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="376.96" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml sam</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="376.96" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml sam</text>
 </g>
 <g class="layer layer-79">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="386.88" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samp</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="386.88" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samp</text>
 </g>
 <g class="layer layer-80">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="396.8" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml sampl</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="396.8" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml sampl</text>
 </g>
 <g class="layer layer-81">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="406.72" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml sample</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="406.72" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml sample</text>
 </g>
 <g class="layer layer-82">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="416.64" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samples</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="416.64" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samples</text>
 </g>
 <g class="layer layer-83">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="426.56" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samples/</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="426.56" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samples/</text>
 </g>
 <g class="layer layer-84">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="436.48" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samples/b</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="436.48" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samples/b</text>
 </g>
 <g class="layer layer-85">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samples/ba</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samples/ba</text>
 </g>
 <g class="layer layer-86">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samples/bas</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samples/bas</text>
 </g>
 <g class="layer layer-87">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samples/basi</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samples/basi</text>
 </g>
 <g class="layer layer-88">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="476.16" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samples/basic</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="476.16" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samples/basic</text>
 </g>
 <g class="layer layer-89">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="486.08" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samples/basic.</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="486.08" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samples/basic.</text>
 </g>
 <g class="layer layer-90">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="496" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samples/basic.c</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="496" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samples/basic.c</text>
 </g>
 <g class="layer layer-91">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="505.92" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samples/basic.ca</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="505.92" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samples/basic.ca</text>
 </g>
 <g class="layer layer-92">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="515.84" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samples/basic.cas</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="515.84" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samples/basic.cas</text>
 </g>
 <g class="layer layer-93">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samples/basic.cast</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samples/basic.cast</text>
 </g>
 <g class="layer layer-94">
-<text x="37.84" y="28" fill="#d0d0d0" font-weight="normal" textLength="545.6" lengthAdjust="spacingAndGlyphs">typing-jitter: 0.01 # random variance (±) per keystroke</text>
+<text x="37.84" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="545.6" lengthAdjust="spacing">typing-jitter: 0.01 # random variance (±) per keystroke</text>
 </g>
 <g class="layer layer-95">
-<text x="37.84" y="48" fill="#d0d0d0" font-weight="normal" textLength="426.56" lengthAdjust="spacingAndGlyphs">pre-delay: 0.4 # pause before typing starts</text>
+<text x="37.84" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="426.56" lengthAdjust="spacing">pre-delay: 0.4 # pause before typing starts</text>
 </g>
 <g class="layer layer-96">
-<text x="37.84" y="68" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacingAndGlyphs">post-delay: 1.0 # pause after output before next step</text>
+<text x="37.84" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacing">post-delay: 1.0 # pause after output before next step</text>
 </g>
 <g class="layer layer-97">
+<text x="18" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">steps:</text>
 </g>
 <g class="layer layer-98">
-<text x="18" y="108" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacingAndGlyphs">steps:</text>
+<text x="37.84" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">- echo &quot;Hello, World!&quot;</text>
 </g>
 <g class="layer layer-99">
-<text x="37.84" y="128" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacingAndGlyphs">- echo &quot;Hello, World!&quot;</text>
+<text x="37.84" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">- name: Name of the step</text>
 </g>
 <g class="layer layer-100">
-<text x="37.84" y="148" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacingAndGlyphs">- name: Name of the step</text>
+<text x="57.68" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">run: echo &quot;Current directory:&quot;</text>
 </g>
 <g class="layer layer-101">
-<text x="57.68" y="168" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacingAndGlyphs">run: echo &quot;Current directory:&quot;</text>
+<text x="37.84" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">- name: Coloring stdout</text>
 </g>
 <g class="layer layer-102">
-<text x="37.84" y="188" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs">- name: Coloring stdout</text>
+<text x="57.68" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacing">run: curl -I https://google.com</text>
 </g>
 <g class="layer layer-103">
-<text x="57.68" y="208" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacingAndGlyphs">run: curl -I https://google.com</text>
+<text x="57.68" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">highlight:</text>
 </g>
 <g class="layer layer-104">
-<text x="57.68" y="228" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacingAndGlyphs">highlight:</text>
+<text x="77.52" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- color: green</text>
 </g>
 <g class="layer layer-105">
-<text x="77.52" y="248" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">- color: green</text>
+<text x="97.36" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">at:</text>
 </g>
 <g class="layer layer-106">
-<text x="97.36" y="268" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacingAndGlyphs">at:</text>
+<text x="117.2" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">- &quot;1&quot;</text>
 </g>
 <g class="layer layer-107">
-<text x="117.2" y="288" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacingAndGlyphs">- &quot;1&quot;</text>
+<text x="77.52" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">- color: gray</text>
 </g>
 <g class="layer layer-108">
-<text x="77.52" y="308" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacingAndGlyphs">- color: gray</text>
+<text x="97.36" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">at:</text>
 </g>
 <g class="layer layer-109">
-<text x="97.36" y="328" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacingAndGlyphs">at:</text>
+<text x="117.2" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">- &quot;2-12&quot;</text>
 </g>
 <g class="layer layer-110">
-<text x="117.2" y="348" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacingAndGlyphs">- &quot;2-12&quot;</text>
+<text x="37.84" y="364.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">- echo &quot;Wait for 2 seconds...&quot;</text>
 </g>
 <g class="layer layer-111">
-<text x="37.84" y="368" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacingAndGlyphs">- echo &quot;Wait for 2 seconds...&quot;</text>
+<text x="37.84" y="384.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- run: sleep 2</text>
 </g>
 <g class="layer layer-112">
-<text x="37.84" y="388" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">- run: sleep 2</text>
+<text x="57.68" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">execution-duration: 1.0</text>
 </g>
 <g class="layer layer-113">
-<text x="57.68" y="408" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs">execution-duration: 1.0</text>
+<text x="37.84" y="424.8" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacing">- echo &quot;stderr output is red by default&quot; 1&gt;&amp;2</text>
 </g>
 <g class="layer layer-114">
-<text x="37.84" y="428" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacingAndGlyphs">- echo &quot;stderr output is red by default&quot; 1&gt;&amp;2</text>
+<text x="37.84" y="444.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- echo &quot;Done!&quot;</text>
 </g>
 <g class="layer layer-115">
-<text x="37.84" y="448" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">- echo &quot;Done!&quot;</text>
+<text x="18" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samples/basic.cast</text>
 </g>
 <g class="layer layer-116">
-<text x="18" y="468" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samples/basic.cast</text>
+<text x="37.84" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="426.56" lengthAdjust="spacing">pre-delay: 0.4 # pause before typing starts</text>
 </g>
 <g class="layer layer-117">
+<text x="37.84" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacing">post-delay: 1.0 # pause after output before next step</text>
 </g>
 <g class="layer layer-118">
-<text x="37.84" y="28" fill="#d0d0d0" font-weight="normal" textLength="426.56" lengthAdjust="spacingAndGlyphs">pre-delay: 0.4 # pause before typing starts</text>
+<text x="18" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">steps:</text>
 </g>
 <g class="layer layer-119">
-<text x="37.84" y="48" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacingAndGlyphs">post-delay: 1.0 # pause after output before next step</text>
+<text x="37.84" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">- echo &quot;Hello, World!&quot;</text>
 </g>
 <g class="layer layer-120">
+<text x="37.84" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">- name: Name of the step</text>
 </g>
 <g class="layer layer-121">
-<text x="18" y="88" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacingAndGlyphs">steps:</text>
+<text x="57.68" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">run: echo &quot;Current directory:&quot;</text>
 </g>
 <g class="layer layer-122">
-<text x="37.84" y="108" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacingAndGlyphs">- echo &quot;Hello, World!&quot;</text>
+<text x="37.84" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">- name: Coloring stdout</text>
 </g>
 <g class="layer layer-123">
-<text x="37.84" y="128" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacingAndGlyphs">- name: Name of the step</text>
+<text x="57.68" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacing">run: curl -I https://google.com</text>
 </g>
 <g class="layer layer-124">
-<text x="57.68" y="148" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacingAndGlyphs">run: echo &quot;Current directory:&quot;</text>
+<text x="57.68" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">highlight:</text>
 </g>
 <g class="layer layer-125">
-<text x="37.84" y="168" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs">- name: Coloring stdout</text>
+<text x="77.52" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- color: green</text>
 </g>
 <g class="layer layer-126">
-<text x="57.68" y="188" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacingAndGlyphs">run: curl -I https://google.com</text>
+<text x="97.36" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">at:</text>
 </g>
 <g class="layer layer-127">
-<text x="57.68" y="208" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacingAndGlyphs">highlight:</text>
+<text x="117.2" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">- &quot;1&quot;</text>
 </g>
 <g class="layer layer-128">
-<text x="77.52" y="228" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">- color: green</text>
+<text x="77.52" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">- color: gray</text>
 </g>
 <g class="layer layer-129">
-<text x="97.36" y="248" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacingAndGlyphs">at:</text>
+<text x="97.36" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">at:</text>
 </g>
 <g class="layer layer-130">
-<text x="117.2" y="268" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacingAndGlyphs">- &quot;1&quot;</text>
+<text x="117.2" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">- &quot;2-12&quot;</text>
 </g>
 <g class="layer layer-131">
-<text x="77.52" y="288" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacingAndGlyphs">- color: gray</text>
+<text x="37.84" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">- echo &quot;Wait for 2 seconds...&quot;</text>
 </g>
 <g class="layer layer-132">
-<text x="97.36" y="308" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacingAndGlyphs">at:</text>
+<text x="37.84" y="364.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- run: sleep 2</text>
 </g>
 <g class="layer layer-133">
-<text x="117.2" y="328" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacingAndGlyphs">- &quot;2-12&quot;</text>
+<text x="57.68" y="384.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">execution-duration: 1.0</text>
 </g>
 <g class="layer layer-134">
-<text x="37.84" y="348" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacingAndGlyphs">- echo &quot;Wait for 2 seconds...&quot;</text>
+<text x="37.84" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacing">- echo &quot;stderr output is red by default&quot; 1&gt;&amp;2</text>
 </g>
 <g class="layer layer-135">
-<text x="37.84" y="368" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">- run: sleep 2</text>
+<text x="37.84" y="424.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- echo &quot;Done!&quot;</text>
 </g>
 <g class="layer layer-136">
-<text x="57.68" y="388" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs">execution-duration: 1.0</text>
+<text x="18" y="444.8" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samples/basic.cast</text>
 </g>
 <g class="layer layer-137">
-<text x="37.84" y="408" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacingAndGlyphs">- echo &quot;stderr output is red by default&quot; 1&gt;&amp;2</text>
+<text x="18" y="464.8" fill="#ac4142" font-weight="normal" textLength="545.6" lengthAdjust="spacing">/usr/bin/bash: line 1: scenario2cast: command not found</text>
 </g>
 <g class="layer layer-138">
-<text x="37.84" y="428" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">- echo &quot;Done!&quot;</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
 </g>
 <g class="layer layer-139">
-<text x="18" y="448" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samples/basic.cast</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">$ d</text>
 </g>
 <g class="layer layer-140">
-<text x="18" y="468" fill="#ac4142" font-weight="normal" textLength="545.6" lengthAdjust="spacingAndGlyphs">/usr/bin/bash: line 1: scenario2cast: command not found</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="39.68" lengthAdjust="spacing">$ do</text>
 </g>
 <g class="layer layer-141">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacingAndGlyphs">$</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">$ doc</text>
 </g>
 <g class="layer layer-142">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacingAndGlyphs">$ d</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ dock</text>
 </g>
 <g class="layer layer-143">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="39.68" lengthAdjust="spacingAndGlyphs">$ do</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacing">$ docke</text>
 </g>
 <g class="layer layer-144">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacingAndGlyphs">$ doc</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">$ docker</text>
 </g>
 <g class="layer layer-145">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacingAndGlyphs">$ dock</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">$ docker r</text>
 </g>
 <g class="layer layer-146">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacingAndGlyphs">$ docke</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="109.12" lengthAdjust="spacing">$ docker ru</text>
 </g>
 <g class="layer layer-147">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacingAndGlyphs">$ docker</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacing">$ docker run</text>
 </g>
 <g class="layer layer-148">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacingAndGlyphs">$ docker r</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">$ docker run -</text>
 </g>
 <g class="layer layer-149">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="109.12" lengthAdjust="spacingAndGlyphs">$ docker ru</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="148.8" lengthAdjust="spacing">$ docker run --</text>
 </g>
 <g class="layer layer-150">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacingAndGlyphs">$ docker run</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacing">$ docker run --r</text>
 </g>
 <g class="layer layer-151">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">$ docker run -</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="168.64" lengthAdjust="spacing">$ docker run --rm</text>
 </g>
 <g class="layer layer-152">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="148.8" lengthAdjust="spacingAndGlyphs">$ docker run --</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="188.48" lengthAdjust="spacing">$ docker run --rm -</text>
 </g>
 <g class="layer layer-153">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacingAndGlyphs">$ docker run --r</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">$ docker run --rm -v</text>
 </g>
 <g class="layer layer-154">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="168.64" lengthAdjust="spacingAndGlyphs">$ docker run --rm</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">$ docker run --rm -v &quot;</text>
 </g>
 <g class="layer layer-155">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="188.48" lengthAdjust="spacingAndGlyphs">$ docker run --rm -</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">$ docker run --rm -v &quot;$</text>
 </g>
 <g class="layer layer-156">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">$ docker run --rm -v &quot;$P</text>
 </g>
 <g class="layer layer-157">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacing">$ docker run --rm -v &quot;$PW</text>
 </g>
 <g class="layer layer-158">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="257.92" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD</text>
 </g>
 <g class="layer layer-159">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$P</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:</text>
 </g>
 <g class="layer layer-160">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PW</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/</text>
 </g>
 <g class="layer layer-161">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="257.92" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/d</text>
 </g>
 <g class="layer layer-162">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/da</text>
 </g>
 <g class="layer layer-163">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/dat</text>
 </g>
 <g class="layer layer-164">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/d</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="317.44" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data</text>
 </g>
 <g class="layer layer-165">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/da</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot;</text>
 </g>
 <g class="layer layer-166">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/dat</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; g</text>
 </g>
 <g class="layer layer-167">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="317.44" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; gh</text>
 </g>
 <g class="layer layer-168">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot;</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghc</text>
 </g>
 <g class="layer layer-169">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; g</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="376.96" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr</text>
 </g>
 <g class="layer layer-170">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; gh</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="386.88" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.</text>
 </g>
 <g class="layer layer-171">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghc</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="396.8" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.i</text>
 </g>
 <g class="layer layer-172">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="376.96" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="406.72" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io</text>
 </g>
 <g class="layer layer-173">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="386.88" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="416.64" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/</text>
 </g>
 <g class="layer layer-174">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="396.8" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.i</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="426.56" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/a</text>
 </g>
 <g class="layer layer-175">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="406.72" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="436.48" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/as</text>
 </g>
 <g class="layer layer-176">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="416.64" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asc</text>
 </g>
 <g class="layer layer-177">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="426.56" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/a</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asci</text>
 </g>
 <g class="layer layer-178">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="436.48" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/as</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/ascii</text>
 </g>
 <g class="layer layer-179">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asc</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="476.16" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciin</text>
 </g>
 <g class="layer layer-180">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asci</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="486.08" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciine</text>
 </g>
 <g class="layer layer-181">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/ascii</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="496" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinem</text>
 </g>
 <g class="layer layer-182">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="476.16" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciin</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="505.92" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema</text>
 </g>
 <g class="layer layer-183">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="486.08" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciine</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="515.84" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/</text>
 </g>
 <g class="layer layer-184">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="496" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinem</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/a</text>
 </g>
 <g class="layer layer-185">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="505.92" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="535.68" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/ag</text>
 </g>
 <g class="layer layer-186">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="515.84" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="545.6" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg</text>
 </g>
 <g class="layer layer-187">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/a</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="565.44" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /</text>
 </g>
 <g class="layer layer-188">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="535.68" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/ag</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="575.36" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /d</text>
 </g>
 <g class="layer layer-189">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="545.6" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="585.28" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /da</text>
 </g>
 <g class="layer layer-190">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="565.44" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="595.2" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /dat</text>
 </g>
 <g class="layer layer-191">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="575.36" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /d</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="605.12" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data</text>
 </g>
 <g class="layer layer-192">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="585.28" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /da</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="615.04" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/</text>
 </g>
 <g class="layer layer-193">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="595.2" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /dat</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="624.96" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/s</text>
 </g>
 <g class="layer layer-194">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="605.12" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="634.88" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/sa</text>
 </g>
 <g class="layer layer-195">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="615.04" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="644.8" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/sam</text>
 </g>
 <g class="layer layer-196">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="624.96" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/s</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="654.72" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samp</text>
 </g>
 <g class="layer layer-197">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="634.88" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/sa</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="664.64" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/sampl</text>
 </g>
 <g class="layer layer-198">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="644.8" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/sam</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="674.56" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/sample</text>
 </g>
 <g class="layer layer-199">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="654.72" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samp</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="684.48" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples</text>
 </g>
 <g class="layer layer-200">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="664.64" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/sampl</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="694.4" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/</text>
 </g>
 <g class="layer layer-201">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="674.56" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/sample</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="704.32" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/b</text>
 </g>
 <g class="layer layer-202">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="684.48" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="714.24" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/ba</text>
 </g>
 <g class="layer layer-203">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="694.4" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="724.16" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/bas</text>
 </g>
 <g class="layer layer-204">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="704.32" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/b</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="734.08" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basi</text>
 </g>
 <g class="layer layer-205">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="714.24" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/ba</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="744" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic</text>
 </g>
 <g class="layer layer-206">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="724.16" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/bas</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="753.92" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.</text>
 </g>
 <g class="layer layer-207">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="734.08" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basi</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="763.84" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.c</text>
 </g>
 <g class="layer layer-208">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="744" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="773.76" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.ca</text>
 </g>
 <g class="layer layer-209">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="753.92" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cas</text>
 </g>
 <g class="layer layer-210">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="763.84" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.c</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="793.6" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast</text>
 </g>
 <g class="layer layer-211">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="773.76" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.ca</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="813.44" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /</text>
 </g>
 <g class="layer layer-212">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cas</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="823.36" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /d</text>
 </g>
 <g class="layer layer-213">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="793.6" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="833.28" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /da</text>
 </g>
 <g class="layer layer-214">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="813.44" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="843.2" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /dat</text>
 </g>
 <g class="layer layer-215">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="823.36" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /d</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="853.12" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data</text>
 </g>
 <g class="layer layer-216">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="833.28" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /da</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="863.04" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/</text>
 </g>
 <g class="layer layer-217">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="843.2" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /dat</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="872.96" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/s</text>
 </g>
 <g class="layer layer-218">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="853.12" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="882.88" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/sa</text>
 </g>
 <g class="layer layer-219">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="863.04" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="892.8" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/sam</text>
 </g>
 <g class="layer layer-220">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="872.96" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/s</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="902.72" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samp</text>
 </g>
 <g class="layer layer-221">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="882.88" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/sa</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="912.64" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/sampl</text>
 </g>
 <g class="layer layer-222">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="892.8" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/sam</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="922.56" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/sample</text>
 </g>
 <g class="layer layer-223">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="902.72" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samp</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="932.48" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples</text>
 </g>
 <g class="layer layer-224">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="912.64" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/sampl</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="942.4" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/</text>
 </g>
 <g class="layer layer-225">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="922.56" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/sample</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="952.32" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/b</text>
 </g>
 <g class="layer layer-226">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="932.48" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="962.24" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/ba</text>
 </g>
 <g class="layer layer-227">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="942.4" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="972.16" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/bas</text>
 </g>
 <g class="layer layer-228">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="952.32" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/b</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="982.08" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basi</text>
 </g>
 <g class="layer layer-229">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="962.24" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/ba</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="992" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basic</text>
 </g>
 <g class="layer layer-230">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="972.16" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/bas</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="1001.92" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basic.</text>
 </g>
 <g class="layer layer-231">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="982.08" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basi</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="1011.84" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basic.g</text>
 </g>
 <g class="layer layer-232">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="992" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basic</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="1021.76" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basic.gi</text>
 </g>
 <g class="layer layer-233">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="1001.92" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basic.</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="1031.68" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basic.gif</text>
 </g>
 <g class="layer layer-234">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="1011.84" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basic.g</text>
+<text x="37.84" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacing">post-delay: 1.0 # pause after output before next step</text>
 </g>
 <g class="layer layer-235">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="1021.76" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basic.gi</text>
+<text x="18" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">steps:</text>
 </g>
 <g class="layer layer-236">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="1031.68" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basic.gif</text>
+<text x="37.84" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">- echo &quot;Hello, World!&quot;</text>
 </g>
 <g class="layer layer-237">
-<text x="37.84" y="28" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacingAndGlyphs">post-delay: 1.0 # pause after output before next step</text>
+<text x="37.84" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">- name: Name of the step</text>
 </g>
 <g class="layer layer-238">
+<text x="57.68" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">run: echo &quot;Current directory:&quot;</text>
 </g>
 <g class="layer layer-239">
-<text x="18" y="68" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacingAndGlyphs">steps:</text>
+<text x="37.84" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">- name: Coloring stdout</text>
 </g>
 <g class="layer layer-240">
-<text x="37.84" y="88" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacingAndGlyphs">- echo &quot;Hello, World!&quot;</text>
+<text x="57.68" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacing">run: curl -I https://google.com</text>
 </g>
 <g class="layer layer-241">
-<text x="37.84" y="108" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacingAndGlyphs">- name: Name of the step</text>
+<text x="57.68" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">highlight:</text>
 </g>
 <g class="layer layer-242">
-<text x="57.68" y="128" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacingAndGlyphs">run: echo &quot;Current directory:&quot;</text>
+<text x="77.52" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- color: green</text>
 </g>
 <g class="layer layer-243">
-<text x="37.84" y="148" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs">- name: Coloring stdout</text>
+<text x="97.36" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">at:</text>
 </g>
 <g class="layer layer-244">
-<text x="57.68" y="168" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacingAndGlyphs">run: curl -I https://google.com</text>
+<text x="117.2" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">- &quot;1&quot;</text>
 </g>
 <g class="layer layer-245">
-<text x="57.68" y="188" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacingAndGlyphs">highlight:</text>
+<text x="77.52" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">- color: gray</text>
 </g>
 <g class="layer layer-246">
-<text x="77.52" y="208" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">- color: green</text>
+<text x="97.36" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">at:</text>
 </g>
 <g class="layer layer-247">
-<text x="97.36" y="228" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacingAndGlyphs">at:</text>
+<text x="117.2" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">- &quot;2-12&quot;</text>
 </g>
 <g class="layer layer-248">
-<text x="117.2" y="248" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacingAndGlyphs">- &quot;1&quot;</text>
+<text x="37.84" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">- echo &quot;Wait for 2 seconds...&quot;</text>
 </g>
 <g class="layer layer-249">
-<text x="77.52" y="268" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacingAndGlyphs">- color: gray</text>
+<text x="37.84" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- run: sleep 2</text>
 </g>
 <g class="layer layer-250">
-<text x="97.36" y="288" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacingAndGlyphs">at:</text>
+<text x="57.68" y="364.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">execution-duration: 1.0</text>
 </g>
 <g class="layer layer-251">
-<text x="117.2" y="308" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacingAndGlyphs">- &quot;2-12&quot;</text>
+<text x="37.84" y="384.8" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacing">- echo &quot;stderr output is red by default&quot; 1&gt;&amp;2</text>
 </g>
 <g class="layer layer-252">
-<text x="37.84" y="328" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacingAndGlyphs">- echo &quot;Wait for 2 seconds...&quot;</text>
+<text x="37.84" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- echo &quot;Done!&quot;</text>
 </g>
 <g class="layer layer-253">
-<text x="37.84" y="348" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">- run: sleep 2</text>
+<text x="18" y="424.8" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samples/basic.cast</text>
 </g>
 <g class="layer layer-254">
-<text x="57.68" y="368" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs">execution-duration: 1.0</text>
+<text x="18" y="444.8" fill="#ac4142" font-weight="normal" textLength="545.6" lengthAdjust="spacing">/usr/bin/bash: line 1: scenario2cast: command not found</text>
 </g>
 <g class="layer layer-255">
-<text x="37.84" y="388" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacingAndGlyphs">- echo &quot;stderr output is red by default&quot; 1&gt;&amp;2</text>
+<text x="18" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="1031.68" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basic.gif</text>
 </g>
 <g class="layer layer-256">
-<text x="37.84" y="408" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">- echo &quot;Done!&quot;</text>
+<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">steps:</text>
 </g>
 <g class="layer layer-257">
-<text x="18" y="428" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samples/basic.cast</text>
+<text x="37.84" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">- echo &quot;Hello, World!&quot;</text>
 </g>
 <g class="layer layer-258">
-<text x="18" y="448" fill="#ac4142" font-weight="normal" textLength="545.6" lengthAdjust="spacingAndGlyphs">/usr/bin/bash: line 1: scenario2cast: command not found</text>
+<text x="37.84" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">- name: Name of the step</text>
 </g>
 <g class="layer layer-259">
-<text x="18" y="468" fill="#d0d0d0" font-weight="normal" textLength="1031.68" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basic.gif</text>
+<text x="57.68" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">run: echo &quot;Current directory:&quot;</text>
 </g>
 <g class="layer layer-260">
+<text x="37.84" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">- name: Coloring stdout</text>
 </g>
 <g class="layer layer-261">
+<text x="57.68" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacing">run: curl -I https://google.com</text>
 </g>
 <g class="layer layer-262">
-<text x="18" y="48" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacingAndGlyphs">steps:</text>
+<text x="57.68" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">highlight:</text>
 </g>
 <g class="layer layer-263">
-<text x="37.84" y="68" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacingAndGlyphs">- echo &quot;Hello, World!&quot;</text>
+<text x="77.52" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- color: green</text>
 </g>
 <g class="layer layer-264">
-<text x="37.84" y="88" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacingAndGlyphs">- name: Name of the step</text>
+<text x="97.36" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">at:</text>
 </g>
 <g class="layer layer-265">
-<text x="57.68" y="108" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacingAndGlyphs">run: echo &quot;Current directory:&quot;</text>
+<text x="117.2" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">- &quot;1&quot;</text>
 </g>
 <g class="layer layer-266">
-<text x="37.84" y="128" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs">- name: Coloring stdout</text>
+<text x="77.52" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">- color: gray</text>
 </g>
 <g class="layer layer-267">
-<text x="57.68" y="148" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacingAndGlyphs">run: curl -I https://google.com</text>
+<text x="97.36" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">at:</text>
 </g>
 <g class="layer layer-268">
-<text x="57.68" y="168" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacingAndGlyphs">highlight:</text>
+<text x="117.2" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">- &quot;2-12&quot;</text>
 </g>
 <g class="layer layer-269">
-<text x="77.52" y="188" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">- color: green</text>
+<text x="37.84" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">- echo &quot;Wait for 2 seconds...&quot;</text>
 </g>
 <g class="layer layer-270">
-<text x="97.36" y="208" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacingAndGlyphs">at:</text>
+<text x="37.84" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- run: sleep 2</text>
 </g>
 <g class="layer layer-271">
-<text x="117.2" y="228" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacingAndGlyphs">- &quot;1&quot;</text>
+<text x="57.68" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">execution-duration: 1.0</text>
 </g>
 <g class="layer layer-272">
-<text x="77.52" y="248" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacingAndGlyphs">- color: gray</text>
+<text x="37.84" y="364.8" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacing">- echo &quot;stderr output is red by default&quot; 1&gt;&amp;2</text>
 </g>
 <g class="layer layer-273">
-<text x="97.36" y="268" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacingAndGlyphs">at:</text>
+<text x="37.84" y="384.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- echo &quot;Done!&quot;</text>
 </g>
 <g class="layer layer-274">
-<text x="117.2" y="288" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacingAndGlyphs">- &quot;2-12&quot;</text>
+<text x="18" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacing">$ scenario2cast samples/basic.yaml samples/basic.cast</text>
 </g>
 <g class="layer layer-275">
-<text x="37.84" y="308" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacingAndGlyphs">- echo &quot;Wait for 2 seconds...&quot;</text>
+<text x="18" y="424.8" fill="#ac4142" font-weight="normal" textLength="545.6" lengthAdjust="spacing">/usr/bin/bash: line 1: scenario2cast: command not found</text>
 </g>
 <g class="layer layer-276">
-<text x="37.84" y="328" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">- run: sleep 2</text>
+<text x="18" y="444.8" fill="#d0d0d0" font-weight="normal" textLength="1031.68" lengthAdjust="spacing">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basic.gif</text>
 </g>
 <g class="layer layer-277">
-<text x="57.68" y="348" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacingAndGlyphs">execution-duration: 1.0</text>
+<text x="18" y="464.8" fill="#ac4142" font-weight="normal" textLength="446.4" lengthAdjust="spacing">Error: No such file or directory (os error 2)</text>
 </g>
 <g class="layer layer-278">
-<text x="37.84" y="368" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacingAndGlyphs">- echo &quot;stderr output is red by default&quot; 1&gt;&amp;2</text>
-</g>
-<g class="layer layer-279">
-<text x="37.84" y="388" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacingAndGlyphs">- echo &quot;Done!&quot;</text>
-</g>
-<g class="layer layer-280">
-<text x="18" y="408" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacingAndGlyphs">$ scenario2cast samples/basic.yaml samples/basic.cast</text>
-</g>
-<g class="layer layer-281">
-<text x="18" y="428" fill="#ac4142" font-weight="normal" textLength="545.6" lengthAdjust="spacingAndGlyphs">/usr/bin/bash: line 1: scenario2cast: command not found</text>
-</g>
-<g class="layer layer-282">
-<text x="18" y="448" fill="#d0d0d0" font-weight="normal" textLength="1031.68" lengthAdjust="spacingAndGlyphs">$ docker run --rm -v &quot;$PWD:/data&quot; ghcr.io/asciinema/agg /data/samples/basic.cast /data/samples/basic.gif</text>
-</g>
-<g class="layer layer-283">
-<text x="18" y="468" fill="#ac4142" font-weight="normal" textLength="446.4" lengthAdjust="spacingAndGlyphs">Error: No such file or directory (os error 2)</text>
-</g>
-<g class="layer layer-284">
-<text x="18" y="488" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacingAndGlyphs">$</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
 </g>
 <g class="layer cursor-layer-0">
 <rect class="cursor-block" x="37.84" y="12" width="9.92" height="20"/>

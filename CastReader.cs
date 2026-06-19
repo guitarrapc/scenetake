@@ -101,20 +101,16 @@ internal static class CastReader
             if (line.IsEmpty || line[0] == '#')
                 continue;
 
-            if (!TryParseEventLine(line, i + 1, warnedCodes, out var ev))
+            if (!TryParseEventLine(line, i + 1, warnedCodes, out var ev, out var relativeDelay))
                 throw new CastReadException($"invalid cast event at line {i + 1}");
+
+            if (usesRelativeTime)
+                absoluteTime += relativeDelay;
 
             if (!ev.HasValue)
                 continue;
 
-            var parsed = ev.Value;
-            if (usesRelativeTime)
-            {
-                absoluteTime += parsed.Time;
-                parsed = parsed with { Time = absoluteTime };
-            }
-
-            events.Add(parsed);
+            events.Add(usesRelativeTime ? ev.Value with { Time = absoluteTime } : ev.Value);
         }
 
         return new CastRecording(width, height, renderSettings, events);
@@ -122,99 +118,73 @@ internal static class CastReader
 
     private static void ReadRenderTags(JsonElement tags, ref int fontSize, ref string fontFamily)
     {
-        var warnedFontSize = false;
-        var warnedFontFamily = false;
-
+        var warnedSize = false;
+        var warnedFamily = false;
         foreach (var tag in tags.EnumerateArray())
         {
             if (tag.ValueKind != JsonValueKind.String)
                 continue;
-
             var value = tag.GetString();
             if (value is null)
                 continue;
-
             if (value.StartsWith(RenderSettingsResolver.FontSizeTagPrefix, StringComparison.Ordinal))
-            {
-                var sizeText = value[RenderSettingsResolver.FontSizeTagPrefix.Length..];
-                if (RenderSettingsResolver.TryParseFontSize(sizeText, out var parsed, out _))
-                {
-                    fontSize = parsed;
-                    continue;
-                }
-
-                if (!warnedFontSize)
-                {
-                    warnedFontSize = true;
-                    Console.Error.WriteLine($"Warning: svg: invalid {value}; using default font size");
-                }
-
-                continue;
-            }
-
-            if (!value.StartsWith(RenderSettingsResolver.FontFamilyTagPrefix, StringComparison.Ordinal))
-                continue;
-
-            var familyText = value[RenderSettingsResolver.FontFamilyTagPrefix.Length..];
-            if (RenderSettingsResolver.TryParseFontFamily(familyText, out var parsedFamily, out _))
-            {
-                fontFamily = parsedFamily;
-                continue;
-            }
-
-            if (!warnedFontFamily)
-            {
-                warnedFontFamily = true;
-                Console.Error.WriteLine($"Warning: svg: invalid {value}; using default font-family");
-            }
+                ApplyFontSize(ref fontSize, value[RenderSettingsResolver.FontSizeTagPrefix.Length..], ref warnedSize);
+            else if (value.StartsWith(RenderSettingsResolver.FontFamilyTagPrefix, StringComparison.Ordinal))
+                ApplyFontFamily(ref fontFamily, value[RenderSettingsResolver.FontFamilyTagPrefix.Length..], ref warnedFamily);
         }
     }
 
     private static void ReadScenario2CastRender(JsonElement scenario2cast, ref int fontSize, ref string fontFamily)
     {
-        var warnedFontSize = false;
-        var warnedFontFamily = false;
-
+        var warnedSize = false;
+        var warnedFamily = false;
         if (scenario2cast.TryGetProperty("font-size", out var fontSizeElement))
         {
-            string? sizeText = fontSizeElement.ValueKind switch
+            var sizeText = fontSizeElement.ValueKind switch
             {
-                JsonValueKind.Number when fontSizeElement.TryGetInt32(out var number) =>
-                    number.ToString(CultureInfo.InvariantCulture),
+                JsonValueKind.Number when fontSizeElement.TryGetInt32(out var number) => number.ToString(CultureInfo.InvariantCulture),
                 JsonValueKind.String => fontSizeElement.GetString(),
                 _ => null,
             };
-
-            if (sizeText is not null &&
-                RenderSettingsResolver.TryParseFontSize(sizeText, out var parsed, out _))
-            {
-                fontSize = parsed;
-            }
-            else if (!warnedFontSize)
-            {
-                warnedFontSize = true;
-                Console.Error.WriteLine("Warning: svg: invalid scenario2cast.font-size; using default font size");
-            }
+            if (sizeText is not null)
+                ApplyFontSize(ref fontSize, sizeText, ref warnedSize);
         }
 
-        if (!scenario2cast.TryGetProperty("font-family", out var fontFamilyElement) ||
-            fontFamilyElement.ValueKind != JsonValueKind.String)
+        if (scenario2cast.TryGetProperty("font-family", out var fontFamilyElement)
+            && fontFamilyElement.ValueKind == JsonValueKind.String
+            && fontFamilyElement.GetString() is string familyText)
         {
+            ApplyFontFamily(ref fontFamily, familyText, ref warnedFamily);
+        }
+    }
+
+    private static void ApplyFontSize(ref int fontSize, string sizeText, ref bool warned)
+    {
+        if (RenderSettingsResolver.TryParseFontSize(sizeText, out var parsed, out _))
+        {
+            fontSize = parsed;
             return;
         }
 
-        var familyText = fontFamilyElement.GetString();
-        if (familyText is not null &&
-            RenderSettingsResolver.TryParseFontFamily(familyText, out var parsedFamily, out _))
+        if (!warned)
         {
-            fontFamily = parsedFamily;
+            warned = true;
+            Console.Error.WriteLine($"Warning: svg: invalid font-size '{sizeText}'; using default font size");
+        }
+    }
+
+    private static void ApplyFontFamily(ref string fontFamily, string familyText, ref bool warned)
+    {
+        if (RenderSettingsResolver.TryParseFontFamily(familyText, out var parsed, out _))
+        {
+            fontFamily = parsed;
             return;
         }
 
-        if (!warnedFontFamily)
+        if (!warned)
         {
-            warnedFontFamily = true;
-            Console.Error.WriteLine("Warning: svg: invalid scenario2cast.font-family; using default font-family");
+            warned = true;
+            Console.Error.WriteLine($"Warning: svg: invalid font-family '{familyText}'; using default font-family");
         }
     }
 
@@ -319,9 +289,11 @@ internal static class CastReader
         ReadOnlySpan<char> line,
         int lineNumber,
         HashSet<string> warnedCodes,
-        out CastEvent? ev)
+        out CastEvent? ev,
+        out double relativeDelay)
     {
         ev = null;
+        relativeDelay = 0;
 
         using var doc = ParseJsonOrThrow(line, lineNumber);
         var root = doc.RootElement;
@@ -333,9 +305,11 @@ internal static class CastReader
             return false;
         }
 
-        var codeText = root[1].GetRawText();
         var time = root[0].GetDouble();
+        relativeDelay = time;
         var data = root[2].GetString() ?? "";
+
+        var codeText = root[1].GetRawText();
 
         if (codeText.Length == 3 && codeText[0] == '"' && codeText[2] == '"')
         {

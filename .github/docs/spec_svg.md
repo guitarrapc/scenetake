@@ -8,16 +8,19 @@ For README and documentation embeds, animated SVG is often preferable to GIF: sm
 
 External tools such as [agg](https://docs.asciinema.org/manual/agg/) (GIF) and [asg](https://github.com/kingsword09/asg) (SVG) can convert cast files, but requiring a second install and a second command adds friction. Built-in SVG output lets users produce `.cast` and `.svg` in one invocation while keeping cast as the canonical artifact defined in [spec_cast.md](spec_cast.md).
 
+Rich TUI recordings (`copilot --banner`, `sl`, etc.) are expected from **external asciinema casts** converted via the `svg` subcommand. The scenario path records commands via pipes (no PTY). See [plan_svg_update.md](../../plan_svg_update.md).
+
 ## Scope
 
 - SVG output via `--format svg` or the `svg` subcommand. CLI: [spec_cli.md](spec_cli.md). Scenario `render:` keys: [spec_scenario.md](spec_scenario.md).
 - Built-in C# SVG renderer (no bundled external binary).
-- ANSI SGR: 16-color, 256-color (xterm palette; indices 0–15 from `theme.palette`), true color (`38;2` / `48;2` and colon forms); `bold`, `underline`, `bright`.
-- Animated SVG driven by cast event timestamps; no JavaScript required.
-- Theme presets `dark` (default) and `light`; default `font-size` of `16`; default `font-family` stack tuned for programming (`ui-monospace`, `Cascadia Mono`, `Cascadia Code`, `JetBrains Mono`, `Noto Sans Mono`, system monospaces, `monospace`).
+- **Row-diff** animated SVG (changed rows only, CSS layer fade) with optional **`--max-fps`** frame sampling (default **off**; console2svg-style `ReduceFrames` + `SpreadCollapsedFrameTimes` when enabled).
+- VT emulator at console2svg reference level (see [VT emulator](#vt-emulator)).
+- Theme presets `dark` (default) and `light`; default `font-size` of `16`; default `font-family` stack tuned for programming.
 - Block cursor (`theme.fg` at 50% opacity, no blink); DECTCEM visibility (`\e[?25h`, `\e[?25l`).
-- Warn-and-continue for malformed extended color SGR and unsupported cast event codes.
+- Warn-and-continue for unsupported cast event codes.
 - Resize cast events (`"r"`) during `svg` conversion.
+- Window chrome (macOS / Windows frame): **out of scope v1** (planned v2).
 
 Cast file format (header, versions, written event codes): [spec_cast.md](spec_cast.md).
 
@@ -27,31 +30,36 @@ Cast file format (header, versions, written event codes): [spec_cast.md](spec_ca
 - Render metadata resolution: CLI overrides > cast header > defaults. See [spec_cli.md](spec_cli.md).
 - Processes `"o"` (output) and `"r"` (resize) events. Silently skips `"i"`, `"m"`, and `"x"`. Other codes warn once (warn-and-continue).
 - Invalid or out-of-range resize sizes warn once and are skipped.
-- Canvas size is the maximum terminal dimensions across the header and all valid `"r"` events. On shrink, content outside the new bounds is discarded. Playback shows the current terminal size within that fixed canvas so embed layout stays stable (`preserveAspectRatio` on the root `<svg>`).
+- Canvas size is the maximum terminal dimensions across the header and all valid `"r"` events. On shrink, a per-frame viewport clip shows the current terminal size within the fixed canvas (`preserveAspectRatio` on the root `<svg>`).
 
 ## Renderer Requirements
 
-### ANSI
+### VT emulator
 
 | Category | v1 support |
 |---|---|
-| 16-color fg/bg (`30`–`37`, `40`–`47`, bright variants) | Yes |
-| `bold`, `underline`, `bright` | Yes |
-| 256-color (`38;5;n`, `48;5;n`, colon form) | Yes — palette 0–15 from `theme.palette`; 16–231 cube; 232–255 grayscale (same formula as [agg `theme.rs`](https://github.com/asciinema/agg/blob/main/src/theme.rs)) |
-| True color (`38;2`, `48;2`, colon form; mixed `;` / `:` delimiters) | Yes — RGB 0–255 |
-| Invalid extended color | Warn once per type; render as default fg / no background |
+| CSI cursor (`A`–`F`, `G`, `H`, `d`) | Yes |
+| Erase (`J`, `K`, `X`), insert/delete (`@`, `P`, `L`, `M`, `S`, `T`) | Yes |
+| Scroll region (`r`), save/restore (`s`, `u`, `ESC 7/8`) | Yes |
+| Alternate screen (`?1049h/l`), cursor visibility (`?25h/l`) | Yes |
+| SGR: bold, faint, italic, underline, reverse, 16/256/true color | Yes — `;` and `:` forms |
+| Unicode wide chars, surrogate pairs, combining marks, VS | Yes |
+| OSC / DCS / charset designations | Skipped (not rendered) |
+| Block elements U+2580–U+259F | Yes — SVG rects |
 
-Warn-and-continue matches [spec_highlight.md](spec_highlight.md).
+Implementation: `Terminal.cs` (AnsiParser, ScreenBuffer, TerminalReplay). Tests: `tests/terminal_tests.cs`.
 
 ### Animation and visuals
 
-- Replay follows cast event timestamps; short keystroke intervals must remain visible in browsers.
+- Replay follows cast event timestamps. **`--max-fps`** (default **off**) caps sampling when set; preserves the latest visual change within each interval. When off, every visual change is kept (~125KB for `basic.cast`).
 - Output is self-contained animated SVG (CSS only, no JavaScript).
+- **Row-diff** animation: only changed rows are emitted as timed layers (`layer-in` / `layer-out` keyframes). Cursor and viewport resize use separate layers.
+- Trailing blank frames after alternate-screen restore are trimmed when the event stream indicates a screen clear.
 - Background from `theme.bg`; monospace font at resolved `font-size` and `font-family`.
-- Layout uses fixed cell metrics (`CharWidthFactor`, `LineHeightFactor`); changing `font-family` affects appearance only, not grid math.
+- Layout uses fixed cell metrics (`CharWidthFactor` 0.62, `LineHeightFactor` 1.25).
 - Layout padding:
-  - **Outer:** 8px transparent margin between the SVG canvas edge and the terminal background (unchanged when `font-size` changes).
-  - **Inner:** inset between the terminal background and text/cursor: horizontal `font-size × 10/16`, vertical `font-size × 4/16`, each clamped (horizontal 4–16px, vertical 2–8px). The terminal background grows with this inset so content is not clipped.
+  - **Outer:** 8px transparent margin.
+  - **Inner:** horizontal `font-size × 10/16`, vertical `font-size × 4/16`, clamped (horizontal 4–16px, vertical 2–8px).
 - Block cursor at the emulator position when visible; hidden by `\e[?25l`.
 
 ## Failure Behavior
@@ -65,24 +73,23 @@ Warn-and-continue matches [spec_highlight.md](spec_highlight.md).
 | SVG render | Cast retained; partial `.svg` deleted; exit non-zero; `post` still runs. |
 | `post` | Fail-fast; cast (and SVG if written) remain. See [spec_pre_post.md](spec_pre_post.md). |
 
-Execution order: [spec_scenario.md](spec_scenario.md).
-
 ### `svg` subcommand
 
 | Situation | Behavior |
 |---|---|
 | Cast not found, invalid header, missing/out-of-range terminal size, invalid event JSON | Exit non-zero; no SVG |
 | SVG render failure | Exit non-zero; partial `.svg` deleted |
-| Unsupported event codes, invalid resize, malformed color SGR | Warning only; continue |
+| Unsupported event codes, invalid resize | Warning only; continue |
 
 The cast file is never modified by the `svg` subcommand.
 
 ## Cross-Document Notes
 
-- [spec_cast.md](spec_cast.md) — cast header, versions, event stream, external tool compatibility.
-- [spec_scenario.md](spec_scenario.md) — `render:` YAML keys and execution order.
-- [spec_cli.md](spec_cli.md) — commands, options, logging, exit codes.
+- [spec_cast.md](spec_cast.md) — cast header, versions, event stream.
+- [spec_scenario.md](spec_scenario.md) — `render:` YAML keys.
+- [spec_cli.md](spec_cli.md) — commands, options.
 - [spec_highlight.md](spec_highlight.md) — cast-event coloring (header `theme` is separate).
+- [plan_svg_update.md](../../plan_svg_update.md) — design decisions and migration notes.
 
 ## References
 
@@ -91,5 +98,6 @@ The cast file is never modified by the `svg` subcommand.
 
 ## Lessons Learned
 
-- Percentage-based CSS keyframes skip narrow opacity windows (~20ms typing intervals). Timing must follow cast timestamps directly.
-- First-frame diffing must treat the initial screen as empty; otherwise every row spawns a spurious layer.
+- Row-diff layers keep typing-heavy casts small (~80KB for `basic.cast`); full-screen redraws still work but emit one layer per changed row.
+- Frame sampling is optional (`--max-fps`); default off keeps full timing for typing and bulk output (e.g. curl). Use sampling on long TUI casts to limit layer count.
+- Trailing blank alternate-screen restore frames should be trimmed when the event stream contains screen-clear sequences.
