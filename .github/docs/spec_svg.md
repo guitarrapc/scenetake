@@ -141,7 +141,6 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 - [spec_scenario.md](spec_scenario.md) — `render.window`.
 - [spec_cli.md](spec_cli.md) — `--window`.
 - [spec_highlight.md](spec_highlight.md) — cast-event coloring (header `theme` is separate).
-- [plan_svg_update.md](../../plan_svg_update.md) — planning archive and deferred items.
 
 ## References
 
