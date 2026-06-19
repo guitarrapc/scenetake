@@ -744,8 +744,9 @@ internal static class SvgFrameRenderer
         var diameter = metrics.TitleBarHeight * 0.5;
         var radius = diameter / 2d;
         var gap = diameter * 0.6;
+        var leftPadding = metrics.TitleBarHeight * 0.5;
         var centerY = frameY + metrics.TitleBarHeight / 2d;
-        var centerX = frameX + metrics.TitleBarHeight * 0.45;
+        var centerX = frameX + leftPadding + radius;
         var colors = new[] { chrome.MacClose, chrome.MacMinimize, chrome.MacMaximize };
         for (var i = 0; i < colors.Length; i++)
         {
@@ -766,9 +767,9 @@ internal static class SvgFrameRenderer
     {
         var size = metrics.TitleBarHeight * 0.52;
         var gap = size * 0.33;
-        var inset = metrics.TitleBarHeight * 0.4;
+        var rightPadding = metrics.TitleBarHeight * 0.5;
         var top = frameY + (metrics.TitleBarHeight - size) / 2d;
-        var left = frameX + frameWidth - inset - (size * 3) - (gap * 2);
+        var left = frameX + frameWidth - rightPadding - (size * 3) - (gap * 2);
         for (var i = 0; i < 3; i++)
         {
             sb.AppendLine(CultureInfo.InvariantCulture,

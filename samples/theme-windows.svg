@@ -178,9 +178,9 @@ text { dominant-baseline: alphabetic; }
 <rect class="layer viewport-chrome-0" x="6" y="6" width="813.6" height="516" rx="4" ry="4" fill="none" stroke="#404040" stroke-width="1" filter="url(#window-shadow)"/>
 <path class="layer viewport-chrome-0" d="M 10,6 H 815.6 Q 819.6,6 819.6,10 V 34 H 6 V 10 Q 6,6 10,6 Z" fill="#2d2d2d"/>
 <line class="layer viewport-chrome-0" x1="6" y1="34" x2="819.6" y2="34" stroke="#404040" stroke-width="1"/>
-<rect class="layer viewport-chrome-0" x="755.11" y="12.72" width="14.56" height="14.56" rx="2.18" ry="2.18" fill="#8a8a8a"/>
-<rect class="layer viewport-chrome-0" x="774.48" y="12.72" width="14.56" height="14.56" rx="2.18" ry="2.18" fill="#8a8a8a"/>
-<rect class="layer viewport-chrome-0" x="793.84" y="12.72" width="14.56" height="14.56" rx="2.18" ry="2.18" fill="#8a8a8a"/>
+<rect class="layer viewport-chrome-0" x="752.31" y="12.72" width="14.56" height="14.56" rx="2.18" ry="2.18" fill="#8a8a8a"/>
+<rect class="layer viewport-chrome-0" x="771.68" y="12.72" width="14.56" height="14.56" rx="2.18" ry="2.18" fill="#8a8a8a"/>
+<rect class="layer viewport-chrome-0" x="791.04" y="12.72" width="14.56" height="14.56" rx="2.18" ry="2.18" fill="#8a8a8a"/>
 <g mask="url(#viewport-mask)">
 <rect class="bg layer viewport-bg-0" x="6" y="34" width="813.6" height="488" fill="#282c34"/>
 <g class="layer layer-0">

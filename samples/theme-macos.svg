@@ -174,9 +174,9 @@ text { dominant-baseline: alphabetic; }
 <rect class="layer viewport-chrome-0" x="6" y="6" width="813.6" height="516" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
 <path class="layer viewport-chrome-0" d="M 14,6 H 811.6 Q 819.6,6 819.6,14 V 34 H 6 V 14 Q 6,6 14,6 Z" fill="#323232"/>
 <line class="layer viewport-chrome-0" x1="6" y1="34" x2="819.6" y2="34" stroke="#1a1a1a" stroke-width="1"/>
-<circle class="layer viewport-chrome-0" cx="18.6" cy="20" r="7" fill="#ff5f57"/>
-<circle class="layer viewport-chrome-0" cx="41" cy="20" r="7" fill="#febc2e"/>
-<circle class="layer viewport-chrome-0" cx="63.4" cy="20" r="7" fill="#28c840"/>
+<circle class="layer viewport-chrome-0" cx="27" cy="20" r="7" fill="#ff5f57"/>
+<circle class="layer viewport-chrome-0" cx="49.4" cy="20" r="7" fill="#febc2e"/>
+<circle class="layer viewport-chrome-0" cx="71.8" cy="20" r="7" fill="#28c840"/>
 <g mask="url(#viewport-mask)">
 <rect class="bg layer viewport-bg-0" x="6" y="34" width="813.6" height="488" fill="#282c34"/>
 <g class="layer layer-0">
