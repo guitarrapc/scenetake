@@ -79,6 +79,8 @@ scenetake は、asciinema を介さずシナリオから `.cast`（任意で `.s
 
 GitHub の Releases ページから利用 OS 向けアセットをダウンロードし、`scenetake`（Windows は `scenetake.exe`）を任意の場所に配置します。
 
+![](samples/quickstart.svg)
+
 ```bash
 # macOS/Linux は必要に応じて実行権限を付与
 chmod +x ./scenetake

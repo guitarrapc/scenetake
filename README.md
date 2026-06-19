@@ -79,6 +79,8 @@ scenetake is a cross-platform tool that records those scenarios as `.cast` files
 
 Download the asset for your OS from GitHub Releases, then place `scenetake` (or `scenetake.exe` on Windows) where you want.
 
+![](samples/quickstart.svg)
+
 ```bash
 # On macOS/Linux, add execute permission if needed.
 chmod +x ./scenetake

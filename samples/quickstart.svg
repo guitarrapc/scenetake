@@ -1,0 +1,2222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="837.6" height="546" viewBox="0 0 837.6 546" preserveAspectRatio="xMidYMid meet" role="img" aria-label="scenetake output">
+<style>
+text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
+text { dominant-baseline: alphabetic; }
+.bg { shape-rendering: crispEdges; }
+.layer { opacity: 0; }
+.cursor-block { fill: #d0d0d0; fill-opacity: 0.5; }
+@keyframes k0 { 0%,6.603982%{opacity:0;} 6.607286%,6.93765%{opacity:1;} 6.944257%,100%{opacity:0;} }
+@keyframes k1 { 0%,6.934346%{opacity:0;} 6.93765%,7.074579%{opacity:1;} 7.081187%,100%{opacity:0;} }
+@keyframes k2 { 0%,7.071276%{opacity:0;} 7.074579%,7.264631%{opacity:1;} 7.271239%,100%{opacity:0;} }
+@keyframes k3 { 0%,7.261328%{opacity:0;} 7.264631%,7.449457%{opacity:1;} 7.456064%,100%{opacity:0;} }
+@keyframes k4 { 0%,7.446153%{opacity:0;} 7.449457%,7.585336%{opacity:1;} 7.591943%,100%{opacity:0;} }
+@keyframes k5 { 0%,7.582032%{opacity:0;} 7.585336%,7.782391%{opacity:1;} 7.788999%,100%{opacity:0;} }
+@keyframes k6 { 0%,7.779088%{opacity:0;} 7.782391%,7.924131%{opacity:1;} 7.930738%,100%{opacity:0;} }
+@keyframes k7 { 0%,7.920827%{opacity:0;} 7.924131%,7.999613%{opacity:1;} 8.00622%,100%{opacity:0;} }
+@keyframes k8 { 0%,7.996309%{opacity:0;} 7.999613%,8.121074%{opacity:1;} 8.127682%,100%{opacity:0;} }
+@keyframes k9 { 0%,8.117771%{opacity:0;} 8.121074%,8.32999%{opacity:1;} 8.336597%,100%{opacity:0;} }
+@keyframes k10 { 0%,8.326686%{opacity:0;} 8.32999%,8.425644%{opacity:1;} 8.432251%,100%{opacity:0;} }
+@keyframes k11 { 0%,8.42234%{opacity:0;} 8.425644%,8.571843%{opacity:1;} 8.57845%,100%{opacity:0;} }
+@keyframes k12 { 0%,8.568539%{opacity:0;} 8.571843%,8.673318%{opacity:1;} 8.679925%,100%{opacity:0;} }
+@keyframes k13 { 0%,8.670014%{opacity:0;} 8.673318%,25.422635%{opacity:1;} 25.429242%,100%{opacity:0;} }
+@keyframes k14 { 0%,10.150548%{opacity:0;} 10.153852%,25.422635%{opacity:1;} 25.429242%,100%{opacity:0;} }
+@keyframes k15 { 0%,21.382934%{opacity:0;} 21.386238%,21.716602%{opacity:1;} 21.723209%,100%{opacity:0;} }
+@keyframes k16 { 0%,21.713298%{opacity:0;} 21.716602%,21.882762%{opacity:1;} 21.889369%,100%{opacity:0;} }
+@keyframes k17 { 0%,21.879458%{opacity:0;} 21.882762%,21.965604%{opacity:1;} 21.972211%,100%{opacity:0;} }
+@keyframes k18 { 0%,21.9623%{opacity:0;} 21.965604%,22.281921%{opacity:1;} 22.288529%,100%{opacity:0;} }
+@keyframes k19 { 0%,22.278618%{opacity:0;} 22.281921%,22.412699%{opacity:1;} 22.419307%,100%{opacity:0;} }
+@keyframes k20 { 0%,22.409396%{opacity:0;} 22.412699%,22.603874%{opacity:1;} 22.610482%,100%{opacity:0;} }
+@keyframes k21 { 0%,22.600571%{opacity:0;} 22.603874%,22.696357%{opacity:1;} 22.702964%,100%{opacity:0;} }
+@keyframes k22 { 0%,22.693053%{opacity:0;} 22.696357%,22.84808%{opacity:1;} 22.854687%,100%{opacity:0;} }
+@keyframes k23 { 0%,22.844776%{opacity:0;} 22.84808%,23.003437%{opacity:1;} 23.010044%,100%{opacity:0;} }
+@keyframes k24 { 0%,23.000133%{opacity:0;} 23.003437%,23.145434%{opacity:1;} 23.152041%,100%{opacity:0;} }
+@keyframes k25 { 0%,23.14213%{opacity:0;} 23.145434%,23.289057%{opacity:1;} 23.295664%,100%{opacity:0;} }
+@keyframes k26 { 0%,23.285753%{opacity:0;} 23.289057%,23.426865%{opacity:1;} 23.433472%,100%{opacity:0;} }
+@keyframes k27 { 0%,23.423561%{opacity:0;} 23.426865%,23.5498%{opacity:1;} 23.556407%,100%{opacity:0;} }
+@keyframes k28 { 0%,23.546496%{opacity:0;} 23.5498%,23.686914%{opacity:1;} 23.693522%,100%{opacity:0;} }
+@keyframes k29 { 0%,23.683611%{opacity:0;} 23.686914%,23.836662%{opacity:1;} 23.843269%,100%{opacity:0;} }
+@keyframes k30 { 0%,23.833358%{opacity:0;} 23.836662%,23.947625%{opacity:1;} 23.954232%,100%{opacity:0;} }
+@keyframes k31 { 0%,23.944321%{opacity:0;} 23.947625%,25.422635%{opacity:1;} 25.429242%,100%{opacity:0;} }
+@keyframes k32 { 0%,25.419331%{opacity:0;} 25.422635%,41.705042%{opacity:1;} 41.711649%,100%{opacity:0;} }
+@keyframes k33 { 0%,36.651717%{opacity:0;} 36.655021%,36.985385%{opacity:1;} 36.991992%,100%{opacity:0;} }
+@keyframes k34 { 0%,36.982081%{opacity:0;} 36.985385%,37.089311%{opacity:1;} 37.095918%,100%{opacity:0;} }
+@keyframes k35 { 0%,37.086007%{opacity:0;} 37.089311%,37.220935%{opacity:1;} 37.227542%,100%{opacity:0;} }
+@keyframes k36 { 0%,37.217631%{opacity:0;} 37.220935%,37.330642%{opacity:1;} 37.337249%,100%{opacity:0;} }
+@keyframes k37 { 0%,37.327338%{opacity:0;} 37.330642%,37.433954%{opacity:1;} 37.440561%,100%{opacity:0;} }
+@keyframes k38 { 0%,37.43065%{opacity:0;} 37.433954%,37.520654%{opacity:1;} 37.527262%,100%{opacity:0;} }
+@keyframes k39 { 0%,37.517351%{opacity:0;} 37.520654%,37.681634%{opacity:1;} 37.688242%,100%{opacity:0;} }
+@keyframes k40 { 0%,37.678331%{opacity:0;} 37.681634%,37.855479%{opacity:1;} 37.862086%,100%{opacity:0;} }
+@keyframes k41 { 0%,37.852175%{opacity:0;} 37.855479%,37.981123%{opacity:1;} 37.98773%,100%{opacity:0;} }
+@keyframes k42 { 0%,37.977819%{opacity:0;} 37.981123%,38.146959%{opacity:1;} 38.153566%,100%{opacity:0;} }
+@keyframes k43 { 0%,38.143655%{opacity:0;} 38.146959%,38.321041%{opacity:1;} 38.327648%,100%{opacity:0;} }
+@keyframes k44 { 0%,38.317737%{opacity:0;} 38.321041%,38.486739%{opacity:1;} 38.493346%,100%{opacity:0;} }
+@keyframes k45 { 0%,38.483435%{opacity:0;} 38.486739%,38.560099%{opacity:1;} 38.566707%,100%{opacity:0;} }
+@keyframes k46 { 0%,38.556796%{opacity:0;} 38.560099%,38.679077%{opacity:1;} 38.685684%,100%{opacity:0;} }
+@keyframes k47 { 0%,38.675773%{opacity:0;} 38.679077%,38.762659%{opacity:1;} 38.769266%,100%{opacity:0;} }
+@keyframes k48 { 0%,38.759355%{opacity:0;} 38.762659%,38.942053%{opacity:1;} 38.948661%,100%{opacity:0;} }
+@keyframes k49 { 0%,38.93875%{opacity:0;} 38.942053%,39.058057%{opacity:1;} 39.064665%,100%{opacity:0;} }
+@keyframes k50 { 0%,39.054754%{opacity:0;} 39.058057%,39.253415%{opacity:1;} 39.260022%,100%{opacity:0;} }
+@keyframes k51 { 0%,39.250111%{opacity:0;} 39.253415%,39.361358%{opacity:1;} 39.367966%,100%{opacity:0;} }
+@keyframes k52 { 0%,39.358055%{opacity:0;} 39.361358%,39.522754%{opacity:1;} 39.529362%,100%{opacity:0;} }
+@keyframes k53 { 0%,39.519451%{opacity:0;} 39.522754%,39.634345%{opacity:1;} 39.640952%,100%{opacity:0;} }
+@keyframes k54 { 0%,39.631041%{opacity:0;} 39.634345%,39.7528%{opacity:1;} 39.759408%,100%{opacity:0;} }
+@keyframes k55 { 0%,39.749497%{opacity:0;} 39.7528%,39.993325%{opacity:1;} 39.999933%,100%{opacity:0;} }
+@keyframes k56 { 0%,39.990022%{opacity:0;} 39.993325%,40.17675%{opacity:1;} 40.183357%,100%{opacity:0;} }
+@keyframes k57 { 0%,40.173447%{opacity:0;} 40.17675%,40.277518%{opacity:1;} 40.284125%,100%{opacity:0;} }
+@keyframes k58 { 0%,40.274214%{opacity:0;} 40.277518%,40.386426%{opacity:1;} 40.393033%,100%{opacity:0;} }
+@keyframes k59 { 0%,40.383122%{opacity:0;} 40.386426%,40.576901%{opacity:1;} 40.583508%,100%{opacity:0;} }
+@keyframes k60 { 0%,40.573597%{opacity:0;} 40.576901%,40.702214%{opacity:1;} 40.708822%,100%{opacity:0;} }
+@keyframes k61 { 0%,40.698911%{opacity:0;} 40.702214%,40.787092%{opacity:1;} 40.793699%,100%{opacity:0;} }
+@keyframes k62 { 0%,40.783788%{opacity:0;} 40.787092%,40.923684%{opacity:1;} 40.930291%,100%{opacity:0;} }
+@keyframes k63 { 0%,40.92038%{opacity:0;} 40.923684%,41.268327%{opacity:1;} 41.274934%,100%{opacity:0;} }
+@keyframes k64 { 0%,41.265023%{opacity:0;} 41.268327%,41.434447%{opacity:1;} 41.441054%,100%{opacity:0;} }
+@keyframes k65 { 0%,41.431143%{opacity:0;} 41.434447%,41.6244%{opacity:1;} 41.631007%,100%{opacity:0;} }
+@keyframes k66 { 0%,41.621096%{opacity:0;} 41.6244%,41.705042%{opacity:1;} 41.711649%,100%{opacity:0;} }
+@keyframes k67 { 0%,41.701738%{opacity:0;} 41.705042%,43.026499%{opacity:1;} 43.033106%,100%{opacity:0;} }
+@keyframes k68 { 0%,43.023195%{opacity:0;} 43.026499%,64.905052%{opacity:1;} 64.911659%,100%{opacity:0;} }
+@keyframes k69 { 0%,54.255581%{opacity:0;} 54.258885%,54.589249%{opacity:1;} 54.595856%,100%{opacity:0;} }
+@keyframes k70 { 0%,54.585945%{opacity:0;} 54.589249%,54.779241%{opacity:1;} 54.785849%,100%{opacity:0;} }
+@keyframes k71 { 0%,54.775938%{opacity:0;} 54.779241%,54.901073%{opacity:1;} 54.90768%,100%{opacity:0;} }
+@keyframes k72 { 0%,54.897769%{opacity:0;} 54.901073%,55.046605%{opacity:1;} 55.053212%,100%{opacity:0;} }
+@keyframes k73 { 0%,55.043302%{opacity:0;} 55.046605%,55.166686%{opacity:1;} 55.173293%,100%{opacity:0;} }
+@keyframes k74 { 0%,55.163382%{opacity:0;} 55.166686%,55.341772%{opacity:1;} 55.34838%,100%{opacity:0;} }
+@keyframes k75 { 0%,55.338469%{opacity:0;} 55.341772%,55.447813%{opacity:1;} 55.45442%,100%{opacity:0;} }
+@keyframes k76 { 0%,55.444509%{opacity:0;} 55.447813%,55.562%{opacity:1;} 55.568607%,100%{opacity:0;} }
+@keyframes k77 { 0%,55.558696%{opacity:0;} 55.562%,55.736075%{opacity:1;} 55.742683%,100%{opacity:0;} }
+@keyframes k78 { 0%,55.732772%{opacity:0;} 55.736075%,55.852694%{opacity:1;} 55.859301%,100%{opacity:0;} }
+@keyframes k79 { 0%,55.84939%{opacity:0;} 55.852694%,56.036932%{opacity:1;} 56.043539%,100%{opacity:0;} }
+@keyframes k80 { 0%,56.033628%{opacity:0;} 56.036932%,56.185001%{opacity:1;} 56.191608%,100%{opacity:0;} }
+@keyframes k81 { 0%,56.181697%{opacity:0;} 56.185001%,56.274093%{opacity:1;} 56.280701%,100%{opacity:0;} }
+@keyframes k82 { 0%,56.27079%{opacity:0;} 56.274093%,56.400207%{opacity:1;} 56.406814%,100%{opacity:0;} }
+@keyframes k83 { 0%,56.396903%{opacity:0;} 56.400207%,56.556846%{opacity:1;} 56.563453%,100%{opacity:0;} }
+@keyframes k84 { 0%,56.553542%{opacity:0;} 56.556846%,56.629843%{opacity:1;} 56.63645%,100%{opacity:0;} }
+@keyframes k85 { 0%,56.626539%{opacity:0;} 56.629843%,56.769818%{opacity:1;} 56.776426%,100%{opacity:0;} }
+@keyframes k86 { 0%,56.766515%{opacity:0;} 56.769818%,56.877695%{opacity:1;} 56.884303%,100%{opacity:0;} }
+@keyframes k87 { 0%,56.874392%{opacity:0;} 56.877695%,57.133516%{opacity:1;} 57.140124%,100%{opacity:0;} }
+@keyframes k88 { 0%,57.130213%{opacity:0;} 57.133516%,57.317205%{opacity:1;} 57.323813%,100%{opacity:0;} }
+@keyframes k89 { 0%,57.313902%{opacity:0;} 57.317205%,57.407514%{opacity:1;} 57.414121%,100%{opacity:0;} }
+@keyframes k90 { 0%,57.40421%{opacity:0;} 57.407514%,57.582303%{opacity:1;} 57.58891%,100%{opacity:0;} }
+@keyframes k91 { 0%,57.578999%{opacity:0;} 57.582303%,57.700415%{opacity:1;} 57.707022%,100%{opacity:0;} }
+@keyframes k92 { 0%,57.697111%{opacity:0;} 57.700415%,57.88456%{opacity:1;} 57.891167%,100%{opacity:0;} }
+@keyframes k93 { 0%,57.881256%{opacity:0;} 57.88456%,58.184293%{opacity:1;} 58.1909%,100%{opacity:0;} }
+@keyframes k94 { 0%,58.180989%{opacity:0;} 58.184293%,58.250696%{opacity:1;} 58.257303%,100%{opacity:0;} }
+@keyframes k95 { 0%,58.247392%{opacity:0;} 58.250696%,58.446695%{opacity:1;} 58.453302%,100%{opacity:0;} }
+@keyframes k96 { 0%,58.443391%{opacity:0;} 58.446695%,58.661722%{opacity:1;} 58.668329%,100%{opacity:0;} }
+@keyframes k97 { 0%,58.658418%{opacity:0;} 58.661722%,58.850935%{opacity:1;} 58.857542%,100%{opacity:0;} }
+@keyframes k98 { 0%,58.847631%{opacity:0;} 58.850935%,58.956387%{opacity:1;} 58.962994%,100%{opacity:0;} }
+@keyframes k99 { 0%,58.953084%{opacity:0;} 58.956387%,59.083637%{opacity:1;} 59.090244%,100%{opacity:0;} }
+@keyframes k100 { 0%,59.080333%{opacity:0;} 59.083637%,59.340264%{opacity:1;} 59.346871%,100%{opacity:0;} }
+@keyframes k101 { 0%,59.33696%{opacity:0;} 59.340264%,59.532655%{opacity:1;} 59.539262%,100%{opacity:0;} }
+@keyframes k102 { 0%,59.529351%{opacity:0;} 59.532655%,59.834634%{opacity:1;} 59.841241%,100%{opacity:0;} }
+@keyframes k103 { 0%,59.831331%{opacity:0;} 59.834634%,60.019162%{opacity:1;} 60.02577%,100%{opacity:0;} }
+@keyframes k104 { 0%,60.015859%{opacity:0;} 60.019162%,60.090792%{opacity:1;} 60.097399%,100%{opacity:0;} }
+@keyframes k105 { 0%,60.087488%{opacity:0;} 60.090792%,60.161127%{opacity:1;} 60.167734%,100%{opacity:0;} }
+@keyframes k106 { 0%,60.157823%{opacity:0;} 60.161127%,60.292658%{opacity:1;} 60.299265%,100%{opacity:0;} }
+@keyframes k107 { 0%,60.289354%{opacity:0;} 60.292658%,60.375256%{opacity:1;} 60.381863%,100%{opacity:0;} }
+@keyframes k108 { 0%,60.371952%{opacity:0;} 60.375256%,60.572655%{opacity:1;} 60.579262%,100%{opacity:0;} }
+@keyframes k109 { 0%,60.569351%{opacity:0;} 60.572655%,60.723572%{opacity:1;} 60.730179%,100%{opacity:0;} }
+@keyframes k110 { 0%,60.720268%{opacity:0;} 60.723572%,60.80946%{opacity:1;} 60.816067%,100%{opacity:0;} }
+@keyframes k111 { 0%,60.806156%{opacity:0;} 60.80946%,60.939894%{opacity:1;} 60.946502%,100%{opacity:0;} }
+@keyframes k112 { 0%,60.936591%{opacity:0;} 60.939894%,61.106794%{opacity:1;} 61.113402%,100%{opacity:0;} }
+@keyframes k113 { 0%,61.103491%{opacity:0;} 61.106794%,61.184741%{opacity:1;} 61.191348%,100%{opacity:0;} }
+@keyframes k114 { 0%,61.181437%{opacity:0;} 61.184741%,61.379583%{opacity:1;} 61.38619%,100%{opacity:0;} }
+@keyframes k115 { 0%,61.376279%{opacity:0;} 61.379583%,61.507705%{opacity:1;} 61.514312%,100%{opacity:0;} }
+@keyframes k116 { 0%,61.504401%{opacity:0;} 61.507705%,61.600702%{opacity:1;} 61.607309%,100%{opacity:0;} }
+@keyframes k117 { 0%,61.597399%{opacity:0;} 61.600702%,61.724866%{opacity:1;} 61.731474%,100%{opacity:0;} }
+@keyframes k118 { 0%,61.721563%{opacity:0;} 61.724866%,61.985748%{opacity:1;} 61.992356%,100%{opacity:0;} }
+@keyframes k119 { 0%,61.982445%{opacity:0;} 61.985748%,62.067025%{opacity:1;} 62.073632%,100%{opacity:0;} }
+@keyframes k120 { 0%,62.063721%{opacity:0;} 62.067025%,62.136824%{opacity:1;} 62.143431%,100%{opacity:0;} }
+@keyframes k121 { 0%,62.13352%{opacity:0;} 62.136824%,62.296423%{opacity:1;} 62.30303%,100%{opacity:0;} }
+@keyframes k122 { 0%,62.293119%{opacity:0;} 62.296423%,62.364432%{opacity:1;} 62.371039%,100%{opacity:0;} }
+@keyframes k123 { 0%,62.361128%{opacity:0;} 62.364432%,62.556149%{opacity:1;} 62.562756%,100%{opacity:0;} }
+@keyframes k124 { 0%,62.552845%{opacity:0;} 62.556149%,62.661859%{opacity:1;} 62.668466%,100%{opacity:0;} }
+@keyframes k125 { 0%,62.658555%{opacity:0;} 62.661859%,62.778272%{opacity:1;} 62.78488%,100%{opacity:0;} }
+@keyframes k126 { 0%,62.774969%{opacity:0;} 62.778272%,62.873609%{opacity:1;} 62.880216%,100%{opacity:0;} }
+@keyframes k127 { 0%,62.870305%{opacity:0;} 62.873609%,62.986072%{opacity:1;} 62.992679%,100%{opacity:0;} }
+@keyframes k128 { 0%,62.982768%{opacity:0;} 62.986072%,63.179328%{opacity:1;} 63.185935%,100%{opacity:0;} }
+@keyframes k129 { 0%,63.176024%{opacity:0;} 63.179328%,63.288018%{opacity:1;} 63.294625%,100%{opacity:0;} }
+@keyframes k130 { 0%,63.284714%{opacity:0;} 63.288018%,63.448073%{opacity:1;} 63.45468%,100%{opacity:0;} }
+@keyframes k131 { 0%,63.444769%{opacity:0;} 63.448073%,63.571252%{opacity:1;} 63.57786%,100%{opacity:0;} }
+@keyframes k132 { 0%,63.567949%{opacity:0;} 63.571252%,63.738489%{opacity:1;} 63.745097%,100%{opacity:0;} }
+@keyframes k133 { 0%,63.735186%{opacity:0;} 63.738489%,63.817314%{opacity:1;} 63.823922%,100%{opacity:0;} }
+@keyframes k134 { 0%,63.814011%{opacity:0;} 63.817314%,63.907464%{opacity:1;} 63.914071%,100%{opacity:0;} }
+@keyframes k135 { 0%,63.904161%{opacity:0;} 63.907464%,64.027479%{opacity:1;} 64.034086%,100%{opacity:0;} }
+@keyframes k136 { 0%,64.024175%{opacity:0;} 64.027479%,64.188961%{opacity:1;} 64.195568%,100%{opacity:0;} }
+@keyframes k137 { 0%,64.185657%{opacity:0;} 64.188961%,64.291433%{opacity:1;} 64.298041%,100%{opacity:0;} }
+@keyframes k138 { 0%,64.28813%{opacity:0;} 64.291433%,64.470867%{opacity:1;} 64.477475%,100%{opacity:0;} }
+@keyframes k139 { 0%,64.467564%{opacity:0;} 64.470867%,64.786127%{opacity:1;} 64.792735%,100%{opacity:0;} }
+@keyframes k140 { 0%,64.782824%{opacity:0;} 64.786127%,64.905052%{opacity:1;} 64.911659%,100%{opacity:0;} }
+@keyframes k141 { 0%,64.901748%{opacity:0;} 64.905052%,69.93685%{opacity:1;} 69.943457%,100%{opacity:0;} }
+@keyframes k142 { 0%,64.901748%{opacity:0;} 64.905052%,65.004353%{opacity:1;} 65.01096%,100%{opacity:0;} }
+@keyframes k143 { 0%,65.001049%{opacity:0;} 65.004353%,65.102689%{opacity:1;} 65.109296%,100%{opacity:0;} }
+@keyframes k144 { 0%,65.099385%{opacity:0;} 65.102689%,65.219916%{opacity:1;} 65.226523%,100%{opacity:0;} }
+@keyframes k145 { 0%,65.216612%{opacity:0;} 65.219916%,65.317631%{opacity:1;} 65.324238%,100%{opacity:0;} }
+@keyframes k146 { 0%,65.314327%{opacity:0;} 65.317631%,65.501756%{opacity:1;} 65.508363%,100%{opacity:0;} }
+@keyframes k147 { 0%,65.498452%{opacity:0;} 65.501756%,65.649944%{opacity:1;} 65.656551%,100%{opacity:0;} }
+@keyframes k148 { 0%,65.646641%{opacity:0;} 65.649944%,65.790263%{opacity:1;} 65.79687%,100%{opacity:0;} }
+@keyframes k149 { 0%,65.786959%{opacity:0;} 65.790263%,65.952545%{opacity:1;} 65.959152%,100%{opacity:0;} }
+@keyframes k150 { 0%,65.949241%{opacity:0;} 65.952545%,66.132051%{opacity:1;} 66.138659%,100%{opacity:0;} }
+@keyframes k151 { 0%,66.128748%{opacity:0;} 66.132051%,66.253051%{opacity:1;} 66.259658%,100%{opacity:0;} }
+@keyframes k152 { 0%,66.249747%{opacity:0;} 66.253051%,66.331717%{opacity:1;} 66.338324%,100%{opacity:0;} }
+@keyframes k153 { 0%,66.328413%{opacity:0;} 66.331717%,66.504141%{opacity:1;} 66.510748%,100%{opacity:0;} }
+@keyframes k154 { 0%,66.500837%{opacity:0;} 66.504141%,66.692805%{opacity:1;} 66.699412%,100%{opacity:0;} }
+@keyframes k155 { 0%,66.689501%{opacity:0;} 66.692805%,66.847316%{opacity:1;} 66.853924%,100%{opacity:0;} }
+@keyframes k156 { 0%,66.844013%{opacity:0;} 66.847316%,67.031468%{opacity:1;} 67.038075%,100%{opacity:0;} }
+@keyframes k157 { 0%,67.028164%{opacity:0;} 67.031468%,67.222491%{opacity:1;} 67.229099%,100%{opacity:0;} }
+@keyframes k158 { 0%,67.219188%{opacity:0;} 67.222491%,67.38663%{opacity:1;} 67.393237%,100%{opacity:0;} }
+@keyframes k159 { 0%,67.383326%{opacity:0;} 67.38663%,67.641036%{opacity:1;} 67.647644%,100%{opacity:0;} }
+@keyframes k160 { 0%,67.637733%{opacity:0;} 67.641036%,67.80939%{opacity:1;} 67.815997%,100%{opacity:0;} }
+@keyframes k161 { 0%,67.806086%{opacity:0;} 67.80939%,67.879606%{opacity:1;} 67.886213%,100%{opacity:0;} }
+@keyframes k162 { 0%,67.876302%{opacity:0;} 67.879606%,67.987912%{opacity:1;} 67.99452%,100%{opacity:0;} }
+@keyframes k163 { 0%,67.984609%{opacity:0;} 67.987912%,68.111958%{opacity:1;} 68.118565%,100%{opacity:0;} }
+@keyframes k164 { 0%,68.108654%{opacity:0;} 68.111958%,68.185285%{opacity:1;} 68.191892%,100%{opacity:0;} }
+@keyframes k165 { 0%,68.181982%{opacity:0;} 68.185285%,68.383167%{opacity:1;} 68.389774%,100%{opacity:0;} }
+@keyframes k166 { 0%,68.379863%{opacity:0;} 68.383167%,68.580513%{opacity:1;} 68.58712%,100%{opacity:0;} }
+@keyframes k167 { 0%,68.57721%{opacity:0;} 68.580513%,68.751272%{opacity:1;} 68.757879%,100%{opacity:0;} }
+@keyframes k168 { 0%,68.747968%{opacity:0;} 68.751272%,68.825452%{opacity:1;} 68.832059%,100%{opacity:0;} }
+@keyframes k169 { 0%,68.822148%{opacity:0;} 68.825452%,68.955179%{opacity:1;} 68.961787%,100%{opacity:0;} }
+@keyframes k170 { 0%,68.951876%{opacity:0;} 68.955179%,69.042951%{opacity:1;} 69.049558%,100%{opacity:0;} }
+@keyframes k171 { 0%,69.039647%{opacity:0;} 69.042951%,69.134065%{opacity:1;} 69.140672%,100%{opacity:0;} }
+@keyframes k172 { 0%,69.130761%{opacity:0;} 69.134065%,69.231701%{opacity:1;} 69.238308%,100%{opacity:0;} }
+@keyframes k173 { 0%,69.228397%{opacity:0;} 69.231701%,69.352925%{opacity:1;} 69.359532%,100%{opacity:0;} }
+@keyframes k174 { 0%,69.349621%{opacity:0;} 69.352925%,69.502018%{opacity:1;} 69.508625%,100%{opacity:0;} }
+@keyframes k175 { 0%,69.498714%{opacity:0;} 69.502018%,69.628396%{opacity:1;} 69.635003%,100%{opacity:0;} }
+@keyframes k176 { 0%,69.625092%{opacity:0;} 69.628396%,69.79628%{opacity:1;} 69.802887%,100%{opacity:0;} }
+@keyframes k177 { 0%,69.792977%{opacity:0;} 69.79628%,69.93685%{opacity:1;} 69.943457%,100%{opacity:0;} }
+@keyframes k178 { 0%,69.933547%{opacity:0;} 69.93685%,77.535229%{opacity:1;} 77.541836%,100%{opacity:0;} }
+@keyframes k179 { 0%,77.531925%{opacity:0;} 77.535229%,100%{opacity:1;} }
+@keyframes k180 { 0%,88.764311%{opacity:0;} 88.767614%,100%{opacity:1;} }
+@keyframes k181 { 0%,8.117771%{opacity:0;} 8.121074%,8.208535%{opacity:1;} 8.215142%,100%{opacity:0;} }
+@keyframes k182 { 0%,8.205231%{opacity:0;} 8.208535%,8.32999%{opacity:1;} 8.336597%,100%{opacity:0;} }
+@keyframes k183 { 0%,8.670014%{opacity:0;} 8.673318%,8.832395%{opacity:1;} 8.839002%,100%{opacity:0;} }
+@keyframes k184 { 0%,8.829091%{opacity:0;} 8.832395%,10.153852%{opacity:1;} 10.160459%,100%{opacity:0;} }
+@keyframes k185 { 0%,10.150548%{opacity:0;} 10.153852%,21.386238%{opacity:1;} 21.392845%,100%{opacity:0;} }
+@keyframes k186 { 0%,21.9623%{opacity:0;} 21.965604%,22.116316%{opacity:1;} 22.122924%,100%{opacity:0;} }
+@keyframes k187 { 0%,22.113013%{opacity:0;} 22.116316%,22.281921%{opacity:1;} 22.288529%,100%{opacity:0;} }
+@keyframes k188 { 0%,23.944321%{opacity:0;} 23.947625%,24.101178%{opacity:1;} 24.107785%,100%{opacity:0;} }
+@keyframes k189 { 0%,24.097874%{opacity:0;} 24.101178%,25.422635%{opacity:1;} 25.429242%,100%{opacity:0;} }
+@keyframes k190 { 0%,25.419331%{opacity:0;} 25.422635%,36.655021%{opacity:1;} 36.661628%,100%{opacity:0;} }
+@keyframes k191 { 0%,37.977819%{opacity:0;} 37.981123%,38.06378%{opacity:1;} 38.070387%,100%{opacity:0;} }
+@keyframes k192 { 0%,38.060476%{opacity:0;} 38.06378%,38.146959%{opacity:1;} 38.153566%,100%{opacity:0;} }
+@keyframes k193 { 0%,39.749497%{opacity:0;} 39.7528%,39.860189%{opacity:1;} 39.866796%,100%{opacity:0;} }
+@keyframes k194 { 0%,39.856885%{opacity:0;} 39.860189%,39.993325%{opacity:1;} 39.999933%,100%{opacity:0;} }
+@keyframes k195 { 0%,40.92038%{opacity:0;} 40.923684%,41.093617%{opacity:1;} 41.100224%,100%{opacity:0;} }
+@keyframes k196 { 0%,41.090313%{opacity:0;} 41.093617%,41.268327%{opacity:1;} 41.274934%,100%{opacity:0;} }
+@keyframes k197 { 0%,41.701738%{opacity:0;} 41.705042%,54.258885%{opacity:1;} 54.265492%,100%{opacity:0;} }
+@keyframes k198 { 0%,56.874392%{opacity:0;} 56.877695%,57.025487%{opacity:1;} 57.032094%,100%{opacity:0;} }
+@keyframes k199 { 0%,57.022184%{opacity:0;} 57.025487%,57.133516%{opacity:1;} 57.140124%,100%{opacity:0;} }
+@keyframes k200 { 0%,57.881256%{opacity:0;} 57.88456%,58.002711%{opacity:1;} 58.009319%,100%{opacity:0;} }
+@keyframes k201 { 0%,57.999408%{opacity:0;} 58.002711%,58.184293%{opacity:1;} 58.1909%,100%{opacity:0;} }
+@keyframes k202 { 0%,58.443391%{opacity:0;} 58.446695%,58.5915%{opacity:1;} 58.598107%,100%{opacity:0;} }
+@keyframes k203 { 0%,58.588196%{opacity:0;} 58.5915%,58.661722%{opacity:1;} 58.668329%,100%{opacity:0;} }
+@keyframes k204 { 0%,59.080333%{opacity:0;} 59.083637%,59.152643%{opacity:1;} 59.159251%,100%{opacity:0;} }
+@keyframes k205 { 0%,59.14934%{opacity:0;} 59.152643%,59.340264%{opacity:1;} 59.346871%,100%{opacity:0;} }
+@keyframes k206 { 0%,59.529351%{opacity:0;} 59.532655%,59.648553%{opacity:1;} 59.65516%,100%{opacity:0;} }
+@keyframes k207 { 0%,59.64525%{opacity:0;} 59.648553%,59.834634%{opacity:1;} 59.841241%,100%{opacity:0;} }
+@keyframes k208 { 0%,61.721563%{opacity:0;} 61.724866%,61.79719%{opacity:1;} 61.803797%,100%{opacity:0;} }
+@keyframes k209 { 0%,61.793886%{opacity:0;} 61.79719%,61.985748%{opacity:1;} 61.992356%,100%{opacity:0;} }
+@keyframes k210 { 0%,64.467564%{opacity:0;} 64.470867%,64.627857%{opacity:1;} 64.634464%,100%{opacity:0;} }
+@keyframes k211 { 0%,64.624553%{opacity:0;} 64.627857%,64.905052%{opacity:1;} 64.911659%,100%{opacity:0;} }
+@keyframes k212 { 0%,67.383326%{opacity:0;} 67.38663%,67.538769%{opacity:1;} 67.545376%,100%{opacity:0;} }
+@keyframes k213 { 0%,67.535465%{opacity:0;} 67.538769%,67.641036%{opacity:1;} 67.647644%,100%{opacity:0;} }
+@keyframes k214 { 0%,69.933547%{opacity:0;} 69.93685%,88.767614%{opacity:1;} 88.774222%,100%{opacity:0;} }
+@keyframes k215 { 0%,100%{opacity:1;} }
+.layer-0 { animation:k0 15.134808s linear infinite; }
+.layer-1 { animation:k1 15.134808s linear infinite; }
+.layer-2 { animation:k2 15.134808s linear infinite; }
+.layer-3 { animation:k3 15.134808s linear infinite; }
+.layer-4 { animation:k4 15.134808s linear infinite; }
+.layer-5 { animation:k5 15.134808s linear infinite; }
+.layer-6 { animation:k6 15.134808s linear infinite; }
+.layer-7 { animation:k7 15.134808s linear infinite; }
+.layer-8 { animation:k8 15.134808s linear infinite; }
+.layer-9 { animation:k9 15.134808s linear infinite; }
+.layer-10 { animation:k10 15.134808s linear infinite; }
+.layer-11 { animation:k11 15.134808s linear infinite; }
+.layer-12 { animation:k12 15.134808s linear infinite; }
+.layer-13 { animation:k13 15.134808s linear infinite; }
+.layer-14 { animation:k14 15.134808s linear infinite; }
+.layer-15 { animation:k15 15.134808s linear infinite; }
+.layer-16 { animation:k16 15.134808s linear infinite; }
+.layer-17 { animation:k17 15.134808s linear infinite; }
+.layer-18 { animation:k18 15.134808s linear infinite; }
+.layer-19 { animation:k19 15.134808s linear infinite; }
+.layer-20 { animation:k20 15.134808s linear infinite; }
+.layer-21 { animation:k21 15.134808s linear infinite; }
+.layer-22 { animation:k22 15.134808s linear infinite; }
+.layer-23 { animation:k23 15.134808s linear infinite; }
+.layer-24 { animation:k24 15.134808s linear infinite; }
+.layer-25 { animation:k25 15.134808s linear infinite; }
+.layer-26 { animation:k26 15.134808s linear infinite; }
+.layer-27 { animation:k27 15.134808s linear infinite; }
+.layer-28 { animation:k28 15.134808s linear infinite; }
+.layer-29 { animation:k29 15.134808s linear infinite; }
+.layer-30 { animation:k30 15.134808s linear infinite; }
+.layer-31 { animation:k31 15.134808s linear infinite; }
+.layer-32 { animation:k32 15.134808s linear infinite; }
+.layer-33 { animation:k32 15.134808s linear infinite; }
+.layer-34 { animation:k32 15.134808s linear infinite; }
+.layer-35 { animation:k32 15.134808s linear infinite; }
+.layer-36 { animation:k32 15.134808s linear infinite; }
+.layer-37 { animation:k32 15.134808s linear infinite; }
+.layer-38 { animation:k32 15.134808s linear infinite; }
+.layer-39 { animation:k32 15.134808s linear infinite; }
+.layer-40 { animation:k32 15.134808s linear infinite; }
+.layer-41 { animation:k32 15.134808s linear infinite; }
+.layer-42 { animation:k32 15.134808s linear infinite; }
+.layer-43 { animation:k32 15.134808s linear infinite; }
+.layer-44 { animation:k32 15.134808s linear infinite; }
+.layer-45 { animation:k32 15.134808s linear infinite; }
+.layer-46 { animation:k32 15.134808s linear infinite; }
+.layer-47 { animation:k32 15.134808s linear infinite; }
+.layer-48 { animation:k32 15.134808s linear infinite; }
+.layer-49 { animation:k32 15.134808s linear infinite; }
+.layer-50 { animation:k32 15.134808s linear infinite; }
+.layer-51 { animation:k32 15.134808s linear infinite; }
+.layer-52 { animation:k32 15.134808s linear infinite; }
+.layer-53 { animation:k33 15.134808s linear infinite; }
+.layer-54 { animation:k34 15.134808s linear infinite; }
+.layer-55 { animation:k35 15.134808s linear infinite; }
+.layer-56 { animation:k36 15.134808s linear infinite; }
+.layer-57 { animation:k37 15.134808s linear infinite; }
+.layer-58 { animation:k38 15.134808s linear infinite; }
+.layer-59 { animation:k39 15.134808s linear infinite; }
+.layer-60 { animation:k40 15.134808s linear infinite; }
+.layer-61 { animation:k41 15.134808s linear infinite; }
+.layer-62 { animation:k42 15.134808s linear infinite; }
+.layer-63 { animation:k43 15.134808s linear infinite; }
+.layer-64 { animation:k44 15.134808s linear infinite; }
+.layer-65 { animation:k45 15.134808s linear infinite; }
+.layer-66 { animation:k46 15.134808s linear infinite; }
+.layer-67 { animation:k47 15.134808s linear infinite; }
+.layer-68 { animation:k48 15.134808s linear infinite; }
+.layer-69 { animation:k49 15.134808s linear infinite; }
+.layer-70 { animation:k50 15.134808s linear infinite; }
+.layer-71 { animation:k51 15.134808s linear infinite; }
+.layer-72 { animation:k52 15.134808s linear infinite; }
+.layer-73 { animation:k53 15.134808s linear infinite; }
+.layer-74 { animation:k54 15.134808s linear infinite; }
+.layer-75 { animation:k55 15.134808s linear infinite; }
+.layer-76 { animation:k56 15.134808s linear infinite; }
+.layer-77 { animation:k57 15.134808s linear infinite; }
+.layer-78 { animation:k58 15.134808s linear infinite; }
+.layer-79 { animation:k59 15.134808s linear infinite; }
+.layer-80 { animation:k60 15.134808s linear infinite; }
+.layer-81 { animation:k61 15.134808s linear infinite; }
+.layer-82 { animation:k62 15.134808s linear infinite; }
+.layer-83 { animation:k63 15.134808s linear infinite; }
+.layer-84 { animation:k64 15.134808s linear infinite; }
+.layer-85 { animation:k65 15.134808s linear infinite; }
+.layer-86 { animation:k66 15.134808s linear infinite; }
+.layer-87 { animation:k67 15.134808s linear infinite; }
+.layer-88 { animation:k67 15.134808s linear infinite; }
+.layer-89 { animation:k67 15.134808s linear infinite; }
+.layer-90 { animation:k67 15.134808s linear infinite; }
+.layer-91 { animation:k67 15.134808s linear infinite; }
+.layer-92 { animation:k67 15.134808s linear infinite; }
+.layer-93 { animation:k67 15.134808s linear infinite; }
+.layer-94 { animation:k67 15.134808s linear infinite; }
+.layer-95 { animation:k67 15.134808s linear infinite; }
+.layer-96 { animation:k67 15.134808s linear infinite; }
+.layer-97 { animation:k67 15.134808s linear infinite; }
+.layer-98 { animation:k67 15.134808s linear infinite; }
+.layer-99 { animation:k67 15.134808s linear infinite; }
+.layer-100 { animation:k67 15.134808s linear infinite; }
+.layer-101 { animation:k67 15.134808s linear infinite; }
+.layer-102 { animation:k67 15.134808s linear infinite; }
+.layer-103 { animation:k67 15.134808s linear infinite; }
+.layer-104 { animation:k67 15.134808s linear infinite; }
+.layer-105 { animation:k67 15.134808s linear infinite; }
+.layer-106 { animation:k67 15.134808s linear infinite; }
+.layer-107 { animation:k67 15.134808s linear infinite; }
+.layer-108 { animation:k68 15.134808s linear infinite; }
+.layer-109 { animation:k68 15.134808s linear infinite; }
+.layer-110 { animation:k68 15.134808s linear infinite; }
+.layer-111 { animation:k68 15.134808s linear infinite; }
+.layer-112 { animation:k68 15.134808s linear infinite; }
+.layer-113 { animation:k68 15.134808s linear infinite; }
+.layer-114 { animation:k68 15.134808s linear infinite; }
+.layer-115 { animation:k68 15.134808s linear infinite; }
+.layer-116 { animation:k68 15.134808s linear infinite; }
+.layer-117 { animation:k68 15.134808s linear infinite; }
+.layer-118 { animation:k68 15.134808s linear infinite; }
+.layer-119 { animation:k68 15.134808s linear infinite; }
+.layer-120 { animation:k68 15.134808s linear infinite; }
+.layer-121 { animation:k68 15.134808s linear infinite; }
+.layer-122 { animation:k68 15.134808s linear infinite; }
+.layer-123 { animation:k68 15.134808s linear infinite; }
+.layer-124 { animation:k68 15.134808s linear infinite; }
+.layer-125 { animation:k68 15.134808s linear infinite; }
+.layer-126 { animation:k68 15.134808s linear infinite; }
+.layer-127 { animation:k68 15.134808s linear infinite; }
+.layer-128 { animation:k68 15.134808s linear infinite; }
+.layer-129 { animation:k69 15.134808s linear infinite; }
+.layer-130 { animation:k70 15.134808s linear infinite; }
+.layer-131 { animation:k71 15.134808s linear infinite; }
+.layer-132 { animation:k72 15.134808s linear infinite; }
+.layer-133 { animation:k73 15.134808s linear infinite; }
+.layer-134 { animation:k74 15.134808s linear infinite; }
+.layer-135 { animation:k75 15.134808s linear infinite; }
+.layer-136 { animation:k76 15.134808s linear infinite; }
+.layer-137 { animation:k77 15.134808s linear infinite; }
+.layer-138 { animation:k78 15.134808s linear infinite; }
+.layer-139 { animation:k79 15.134808s linear infinite; }
+.layer-140 { animation:k80 15.134808s linear infinite; }
+.layer-141 { animation:k81 15.134808s linear infinite; }
+.layer-142 { animation:k82 15.134808s linear infinite; }
+.layer-143 { animation:k83 15.134808s linear infinite; }
+.layer-144 { animation:k84 15.134808s linear infinite; }
+.layer-145 { animation:k85 15.134808s linear infinite; }
+.layer-146 { animation:k86 15.134808s linear infinite; }
+.layer-147 { animation:k87 15.134808s linear infinite; }
+.layer-148 { animation:k88 15.134808s linear infinite; }
+.layer-149 { animation:k89 15.134808s linear infinite; }
+.layer-150 { animation:k90 15.134808s linear infinite; }
+.layer-151 { animation:k91 15.134808s linear infinite; }
+.layer-152 { animation:k92 15.134808s linear infinite; }
+.layer-153 { animation:k93 15.134808s linear infinite; }
+.layer-154 { animation:k94 15.134808s linear infinite; }
+.layer-155 { animation:k95 15.134808s linear infinite; }
+.layer-156 { animation:k96 15.134808s linear infinite; }
+.layer-157 { animation:k97 15.134808s linear infinite; }
+.layer-158 { animation:k98 15.134808s linear infinite; }
+.layer-159 { animation:k99 15.134808s linear infinite; }
+.layer-160 { animation:k100 15.134808s linear infinite; }
+.layer-161 { animation:k101 15.134808s linear infinite; }
+.layer-162 { animation:k102 15.134808s linear infinite; }
+.layer-163 { animation:k103 15.134808s linear infinite; }
+.layer-164 { animation:k104 15.134808s linear infinite; }
+.layer-165 { animation:k105 15.134808s linear infinite; }
+.layer-166 { animation:k106 15.134808s linear infinite; }
+.layer-167 { animation:k107 15.134808s linear infinite; }
+.layer-168 { animation:k108 15.134808s linear infinite; }
+.layer-169 { animation:k109 15.134808s linear infinite; }
+.layer-170 { animation:k110 15.134808s linear infinite; }
+.layer-171 { animation:k111 15.134808s linear infinite; }
+.layer-172 { animation:k112 15.134808s linear infinite; }
+.layer-173 { animation:k113 15.134808s linear infinite; }
+.layer-174 { animation:k114 15.134808s linear infinite; }
+.layer-175 { animation:k115 15.134808s linear infinite; }
+.layer-176 { animation:k116 15.134808s linear infinite; }
+.layer-177 { animation:k117 15.134808s linear infinite; }
+.layer-178 { animation:k118 15.134808s linear infinite; }
+.layer-179 { animation:k119 15.134808s linear infinite; }
+.layer-180 { animation:k120 15.134808s linear infinite; }
+.layer-181 { animation:k121 15.134808s linear infinite; }
+.layer-182 { animation:k122 15.134808s linear infinite; }
+.layer-183 { animation:k123 15.134808s linear infinite; }
+.layer-184 { animation:k124 15.134808s linear infinite; }
+.layer-185 { animation:k125 15.134808s linear infinite; }
+.layer-186 { animation:k126 15.134808s linear infinite; }
+.layer-187 { animation:k127 15.134808s linear infinite; }
+.layer-188 { animation:k128 15.134808s linear infinite; }
+.layer-189 { animation:k129 15.134808s linear infinite; }
+.layer-190 { animation:k130 15.134808s linear infinite; }
+.layer-191 { animation:k131 15.134808s linear infinite; }
+.layer-192 { animation:k132 15.134808s linear infinite; }
+.layer-193 { animation:k133 15.134808s linear infinite; }
+.layer-194 { animation:k134 15.134808s linear infinite; }
+.layer-195 { animation:k135 15.134808s linear infinite; }
+.layer-196 { animation:k136 15.134808s linear infinite; }
+.layer-197 { animation:k137 15.134808s linear infinite; }
+.layer-198 { animation:k138 15.134808s linear infinite; }
+.layer-199 { animation:k139 15.134808s linear infinite; }
+.layer-200 { animation:k140 15.134808s linear infinite; }
+.layer-201 { animation:k141 15.134808s linear infinite; }
+.layer-202 { animation:k141 15.134808s linear infinite; }
+.layer-203 { animation:k141 15.134808s linear infinite; }
+.layer-204 { animation:k141 15.134808s linear infinite; }
+.layer-205 { animation:k141 15.134808s linear infinite; }
+.layer-206 { animation:k141 15.134808s linear infinite; }
+.layer-207 { animation:k141 15.134808s linear infinite; }
+.layer-208 { animation:k141 15.134808s linear infinite; }
+.layer-209 { animation:k141 15.134808s linear infinite; }
+.layer-210 { animation:k141 15.134808s linear infinite; }
+.layer-211 { animation:k141 15.134808s linear infinite; }
+.layer-212 { animation:k141 15.134808s linear infinite; }
+.layer-213 { animation:k141 15.134808s linear infinite; }
+.layer-214 { animation:k141 15.134808s linear infinite; }
+.layer-215 { animation:k141 15.134808s linear infinite; }
+.layer-216 { animation:k141 15.134808s linear infinite; }
+.layer-217 { animation:k141 15.134808s linear infinite; }
+.layer-218 { animation:k141 15.134808s linear infinite; }
+.layer-219 { animation:k141 15.134808s linear infinite; }
+.layer-220 { animation:k141 15.134808s linear infinite; }
+.layer-221 { animation:k141 15.134808s linear infinite; }
+.layer-222 { animation:k142 15.134808s linear infinite; }
+.layer-223 { animation:k143 15.134808s linear infinite; }
+.layer-224 { animation:k144 15.134808s linear infinite; }
+.layer-225 { animation:k145 15.134808s linear infinite; }
+.layer-226 { animation:k146 15.134808s linear infinite; }
+.layer-227 { animation:k147 15.134808s linear infinite; }
+.layer-228 { animation:k148 15.134808s linear infinite; }
+.layer-229 { animation:k149 15.134808s linear infinite; }
+.layer-230 { animation:k150 15.134808s linear infinite; }
+.layer-231 { animation:k151 15.134808s linear infinite; }
+.layer-232 { animation:k152 15.134808s linear infinite; }
+.layer-233 { animation:k153 15.134808s linear infinite; }
+.layer-234 { animation:k154 15.134808s linear infinite; }
+.layer-235 { animation:k155 15.134808s linear infinite; }
+.layer-236 { animation:k156 15.134808s linear infinite; }
+.layer-237 { animation:k157 15.134808s linear infinite; }
+.layer-238 { animation:k158 15.134808s linear infinite; }
+.layer-239 { animation:k159 15.134808s linear infinite; }
+.layer-240 { animation:k160 15.134808s linear infinite; }
+.layer-241 { animation:k161 15.134808s linear infinite; }
+.layer-242 { animation:k162 15.134808s linear infinite; }
+.layer-243 { animation:k163 15.134808s linear infinite; }
+.layer-244 { animation:k164 15.134808s linear infinite; }
+.layer-245 { animation:k165 15.134808s linear infinite; }
+.layer-246 { animation:k166 15.134808s linear infinite; }
+.layer-247 { animation:k167 15.134808s linear infinite; }
+.layer-248 { animation:k168 15.134808s linear infinite; }
+.layer-249 { animation:k169 15.134808s linear infinite; }
+.layer-250 { animation:k170 15.134808s linear infinite; }
+.layer-251 { animation:k171 15.134808s linear infinite; }
+.layer-252 { animation:k172 15.134808s linear infinite; }
+.layer-253 { animation:k173 15.134808s linear infinite; }
+.layer-254 { animation:k174 15.134808s linear infinite; }
+.layer-255 { animation:k175 15.134808s linear infinite; }
+.layer-256 { animation:k176 15.134808s linear infinite; }
+.layer-257 { animation:k177 15.134808s linear infinite; }
+.layer-258 { animation:k178 15.134808s linear infinite; }
+.layer-259 { animation:k178 15.134808s linear infinite; }
+.layer-260 { animation:k178 15.134808s linear infinite; }
+.layer-261 { animation:k178 15.134808s linear infinite; }
+.layer-262 { animation:k178 15.134808s linear infinite; }
+.layer-263 { animation:k178 15.134808s linear infinite; }
+.layer-264 { animation:k178 15.134808s linear infinite; }
+.layer-265 { animation:k178 15.134808s linear infinite; }
+.layer-266 { animation:k178 15.134808s linear infinite; }
+.layer-267 { animation:k178 15.134808s linear infinite; }
+.layer-268 { animation:k178 15.134808s linear infinite; }
+.layer-269 { animation:k178 15.134808s linear infinite; }
+.layer-270 { animation:k178 15.134808s linear infinite; }
+.layer-271 { animation:k178 15.134808s linear infinite; }
+.layer-272 { animation:k178 15.134808s linear infinite; }
+.layer-273 { animation:k178 15.134808s linear infinite; }
+.layer-274 { animation:k178 15.134808s linear infinite; }
+.layer-275 { animation:k178 15.134808s linear infinite; }
+.layer-276 { animation:k178 15.134808s linear infinite; }
+.layer-277 { animation:k178 15.134808s linear infinite; }
+.layer-278 { animation:k178 15.134808s linear infinite; }
+.layer-279 { animation:k179 15.134808s linear infinite; }
+.layer-280 { animation:k179 15.134808s linear infinite; }
+.layer-281 { animation:k179 15.134808s linear infinite; }
+.layer-282 { animation:k179 15.134808s linear infinite; }
+.layer-283 { animation:k179 15.134808s linear infinite; }
+.layer-284 { animation:k179 15.134808s linear infinite; }
+.layer-285 { animation:k179 15.134808s linear infinite; }
+.layer-286 { animation:k179 15.134808s linear infinite; }
+.layer-287 { animation:k179 15.134808s linear infinite; }
+.layer-288 { animation:k179 15.134808s linear infinite; }
+.layer-289 { animation:k179 15.134808s linear infinite; }
+.layer-290 { animation:k179 15.134808s linear infinite; }
+.layer-291 { animation:k179 15.134808s linear infinite; }
+.layer-292 { animation:k179 15.134808s linear infinite; }
+.layer-293 { animation:k179 15.134808s linear infinite; }
+.layer-294 { animation:k179 15.134808s linear infinite; }
+.layer-295 { animation:k179 15.134808s linear infinite; }
+.layer-296 { animation:k179 15.134808s linear infinite; }
+.layer-297 { animation:k179 15.134808s linear infinite; }
+.layer-298 { animation:k179 15.134808s linear infinite; }
+.layer-299 { animation:k179 15.134808s linear infinite; }
+.layer-300 { animation:k179 15.134808s linear infinite; }
+.layer-301 { animation:k179 15.134808s linear infinite; }
+.layer-302 { animation:k180 15.134808s linear infinite; }
+.cursor-layer-0 { animation:k0 15.134808s linear infinite; }
+.cursor-layer-1 { animation:k1 15.134808s linear infinite; }
+.cursor-layer-2 { animation:k2 15.134808s linear infinite; }
+.cursor-layer-3 { animation:k3 15.134808s linear infinite; }
+.cursor-layer-4 { animation:k4 15.134808s linear infinite; }
+.cursor-layer-5 { animation:k5 15.134808s linear infinite; }
+.cursor-layer-6 { animation:k6 15.134808s linear infinite; }
+.cursor-layer-7 { animation:k7 15.134808s linear infinite; }
+.cursor-layer-8 { animation:k8 15.134808s linear infinite; }
+.cursor-layer-9 { animation:k181 15.134808s linear infinite; }
+.cursor-layer-10 { animation:k182 15.134808s linear infinite; }
+.cursor-layer-11 { animation:k10 15.134808s linear infinite; }
+.cursor-layer-12 { animation:k11 15.134808s linear infinite; }
+.cursor-layer-13 { animation:k12 15.134808s linear infinite; }
+.cursor-layer-14 { animation:k183 15.134808s linear infinite; }
+.cursor-layer-15 { animation:k184 15.134808s linear infinite; }
+.cursor-layer-16 { animation:k185 15.134808s linear infinite; }
+.cursor-layer-17 { animation:k15 15.134808s linear infinite; }
+.cursor-layer-18 { animation:k16 15.134808s linear infinite; }
+.cursor-layer-19 { animation:k17 15.134808s linear infinite; }
+.cursor-layer-20 { animation:k186 15.134808s linear infinite; }
+.cursor-layer-21 { animation:k187 15.134808s linear infinite; }
+.cursor-layer-22 { animation:k19 15.134808s linear infinite; }
+.cursor-layer-23 { animation:k20 15.134808s linear infinite; }
+.cursor-layer-24 { animation:k21 15.134808s linear infinite; }
+.cursor-layer-25 { animation:k22 15.134808s linear infinite; }
+.cursor-layer-26 { animation:k23 15.134808s linear infinite; }
+.cursor-layer-27 { animation:k24 15.134808s linear infinite; }
+.cursor-layer-28 { animation:k25 15.134808s linear infinite; }
+.cursor-layer-29 { animation:k26 15.134808s linear infinite; }
+.cursor-layer-30 { animation:k27 15.134808s linear infinite; }
+.cursor-layer-31 { animation:k28 15.134808s linear infinite; }
+.cursor-layer-32 { animation:k29 15.134808s linear infinite; }
+.cursor-layer-33 { animation:k30 15.134808s linear infinite; }
+.cursor-layer-34 { animation:k188 15.134808s linear infinite; }
+.cursor-layer-35 { animation:k189 15.134808s linear infinite; }
+.cursor-layer-36 { animation:k190 15.134808s linear infinite; }
+.cursor-layer-37 { animation:k33 15.134808s linear infinite; }
+.cursor-layer-38 { animation:k34 15.134808s linear infinite; }
+.cursor-layer-39 { animation:k35 15.134808s linear infinite; }
+.cursor-layer-40 { animation:k36 15.134808s linear infinite; }
+.cursor-layer-41 { animation:k37 15.134808s linear infinite; }
+.cursor-layer-42 { animation:k38 15.134808s linear infinite; }
+.cursor-layer-43 { animation:k39 15.134808s linear infinite; }
+.cursor-layer-44 { animation:k40 15.134808s linear infinite; }
+.cursor-layer-45 { animation:k41 15.134808s linear infinite; }
+.cursor-layer-46 { animation:k191 15.134808s linear infinite; }
+.cursor-layer-47 { animation:k192 15.134808s linear infinite; }
+.cursor-layer-48 { animation:k43 15.134808s linear infinite; }
+.cursor-layer-49 { animation:k44 15.134808s linear infinite; }
+.cursor-layer-50 { animation:k45 15.134808s linear infinite; }
+.cursor-layer-51 { animation:k46 15.134808s linear infinite; }
+.cursor-layer-52 { animation:k47 15.134808s linear infinite; }
+.cursor-layer-53 { animation:k48 15.134808s linear infinite; }
+.cursor-layer-54 { animation:k49 15.134808s linear infinite; }
+.cursor-layer-55 { animation:k50 15.134808s linear infinite; }
+.cursor-layer-56 { animation:k51 15.134808s linear infinite; }
+.cursor-layer-57 { animation:k52 15.134808s linear infinite; }
+.cursor-layer-58 { animation:k53 15.134808s linear infinite; }
+.cursor-layer-59 { animation:k54 15.134808s linear infinite; }
+.cursor-layer-60 { animation:k193 15.134808s linear infinite; }
+.cursor-layer-61 { animation:k194 15.134808s linear infinite; }
+.cursor-layer-62 { animation:k56 15.134808s linear infinite; }
+.cursor-layer-63 { animation:k57 15.134808s linear infinite; }
+.cursor-layer-64 { animation:k58 15.134808s linear infinite; }
+.cursor-layer-65 { animation:k59 15.134808s linear infinite; }
+.cursor-layer-66 { animation:k60 15.134808s linear infinite; }
+.cursor-layer-67 { animation:k61 15.134808s linear infinite; }
+.cursor-layer-68 { animation:k62 15.134808s linear infinite; }
+.cursor-layer-69 { animation:k195 15.134808s linear infinite; }
+.cursor-layer-70 { animation:k196 15.134808s linear infinite; }
+.cursor-layer-71 { animation:k64 15.134808s linear infinite; }
+.cursor-layer-72 { animation:k65 15.134808s linear infinite; }
+.cursor-layer-73 { animation:k66 15.134808s linear infinite; }
+.cursor-layer-74 { animation:k197 15.134808s linear infinite; }
+.cursor-layer-75 { animation:k69 15.134808s linear infinite; }
+.cursor-layer-76 { animation:k70 15.134808s linear infinite; }
+.cursor-layer-77 { animation:k71 15.134808s linear infinite; }
+.cursor-layer-78 { animation:k72 15.134808s linear infinite; }
+.cursor-layer-79 { animation:k73 15.134808s linear infinite; }
+.cursor-layer-80 { animation:k74 15.134808s linear infinite; }
+.cursor-layer-81 { animation:k75 15.134808s linear infinite; }
+.cursor-layer-82 { animation:k76 15.134808s linear infinite; }
+.cursor-layer-83 { animation:k77 15.134808s linear infinite; }
+.cursor-layer-84 { animation:k78 15.134808s linear infinite; }
+.cursor-layer-85 { animation:k79 15.134808s linear infinite; }
+.cursor-layer-86 { animation:k80 15.134808s linear infinite; }
+.cursor-layer-87 { animation:k81 15.134808s linear infinite; }
+.cursor-layer-88 { animation:k82 15.134808s linear infinite; }
+.cursor-layer-89 { animation:k83 15.134808s linear infinite; }
+.cursor-layer-90 { animation:k84 15.134808s linear infinite; }
+.cursor-layer-91 { animation:k85 15.134808s linear infinite; }
+.cursor-layer-92 { animation:k86 15.134808s linear infinite; }
+.cursor-layer-93 { animation:k198 15.134808s linear infinite; }
+.cursor-layer-94 { animation:k199 15.134808s linear infinite; }
+.cursor-layer-95 { animation:k88 15.134808s linear infinite; }
+.cursor-layer-96 { animation:k89 15.134808s linear infinite; }
+.cursor-layer-97 { animation:k90 15.134808s linear infinite; }
+.cursor-layer-98 { animation:k91 15.134808s linear infinite; }
+.cursor-layer-99 { animation:k92 15.134808s linear infinite; }
+.cursor-layer-100 { animation:k200 15.134808s linear infinite; }
+.cursor-layer-101 { animation:k201 15.134808s linear infinite; }
+.cursor-layer-102 { animation:k94 15.134808s linear infinite; }
+.cursor-layer-103 { animation:k95 15.134808s linear infinite; }
+.cursor-layer-104 { animation:k202 15.134808s linear infinite; }
+.cursor-layer-105 { animation:k203 15.134808s linear infinite; }
+.cursor-layer-106 { animation:k97 15.134808s linear infinite; }
+.cursor-layer-107 { animation:k98 15.134808s linear infinite; }
+.cursor-layer-108 { animation:k99 15.134808s linear infinite; }
+.cursor-layer-109 { animation:k204 15.134808s linear infinite; }
+.cursor-layer-110 { animation:k205 15.134808s linear infinite; }
+.cursor-layer-111 { animation:k101 15.134808s linear infinite; }
+.cursor-layer-112 { animation:k206 15.134808s linear infinite; }
+.cursor-layer-113 { animation:k207 15.134808s linear infinite; }
+.cursor-layer-114 { animation:k103 15.134808s linear infinite; }
+.cursor-layer-115 { animation:k104 15.134808s linear infinite; }
+.cursor-layer-116 { animation:k105 15.134808s linear infinite; }
+.cursor-layer-117 { animation:k106 15.134808s linear infinite; }
+.cursor-layer-118 { animation:k107 15.134808s linear infinite; }
+.cursor-layer-119 { animation:k108 15.134808s linear infinite; }
+.cursor-layer-120 { animation:k109 15.134808s linear infinite; }
+.cursor-layer-121 { animation:k110 15.134808s linear infinite; }
+.cursor-layer-122 { animation:k111 15.134808s linear infinite; }
+.cursor-layer-123 { animation:k112 15.134808s linear infinite; }
+.cursor-layer-124 { animation:k113 15.134808s linear infinite; }
+.cursor-layer-125 { animation:k114 15.134808s linear infinite; }
+.cursor-layer-126 { animation:k115 15.134808s linear infinite; }
+.cursor-layer-127 { animation:k116 15.134808s linear infinite; }
+.cursor-layer-128 { animation:k117 15.134808s linear infinite; }
+.cursor-layer-129 { animation:k208 15.134808s linear infinite; }
+.cursor-layer-130 { animation:k209 15.134808s linear infinite; }
+.cursor-layer-131 { animation:k119 15.134808s linear infinite; }
+.cursor-layer-132 { animation:k120 15.134808s linear infinite; }
+.cursor-layer-133 { animation:k121 15.134808s linear infinite; }
+.cursor-layer-134 { animation:k122 15.134808s linear infinite; }
+.cursor-layer-135 { animation:k123 15.134808s linear infinite; }
+.cursor-layer-136 { animation:k124 15.134808s linear infinite; }
+.cursor-layer-137 { animation:k125 15.134808s linear infinite; }
+.cursor-layer-138 { animation:k126 15.134808s linear infinite; }
+.cursor-layer-139 { animation:k127 15.134808s linear infinite; }
+.cursor-layer-140 { animation:k128 15.134808s linear infinite; }
+.cursor-layer-141 { animation:k129 15.134808s linear infinite; }
+.cursor-layer-142 { animation:k130 15.134808s linear infinite; }
+.cursor-layer-143 { animation:k131 15.134808s linear infinite; }
+.cursor-layer-144 { animation:k132 15.134808s linear infinite; }
+.cursor-layer-145 { animation:k133 15.134808s linear infinite; }
+.cursor-layer-146 { animation:k134 15.134808s linear infinite; }
+.cursor-layer-147 { animation:k135 15.134808s linear infinite; }
+.cursor-layer-148 { animation:k136 15.134808s linear infinite; }
+.cursor-layer-149 { animation:k137 15.134808s linear infinite; }
+.cursor-layer-150 { animation:k138 15.134808s linear infinite; }
+.cursor-layer-151 { animation:k210 15.134808s linear infinite; }
+.cursor-layer-152 { animation:k211 15.134808s linear infinite; }
+.cursor-layer-153 { animation:k142 15.134808s linear infinite; }
+.cursor-layer-154 { animation:k143 15.134808s linear infinite; }
+.cursor-layer-155 { animation:k144 15.134808s linear infinite; }
+.cursor-layer-156 { animation:k145 15.134808s linear infinite; }
+.cursor-layer-157 { animation:k146 15.134808s linear infinite; }
+.cursor-layer-158 { animation:k147 15.134808s linear infinite; }
+.cursor-layer-159 { animation:k148 15.134808s linear infinite; }
+.cursor-layer-160 { animation:k149 15.134808s linear infinite; }
+.cursor-layer-161 { animation:k150 15.134808s linear infinite; }
+.cursor-layer-162 { animation:k151 15.134808s linear infinite; }
+.cursor-layer-163 { animation:k152 15.134808s linear infinite; }
+.cursor-layer-164 { animation:k153 15.134808s linear infinite; }
+.cursor-layer-165 { animation:k154 15.134808s linear infinite; }
+.cursor-layer-166 { animation:k155 15.134808s linear infinite; }
+.cursor-layer-167 { animation:k156 15.134808s linear infinite; }
+.cursor-layer-168 { animation:k157 15.134808s linear infinite; }
+.cursor-layer-169 { animation:k158 15.134808s linear infinite; }
+.cursor-layer-170 { animation:k212 15.134808s linear infinite; }
+.cursor-layer-171 { animation:k213 15.134808s linear infinite; }
+.cursor-layer-172 { animation:k160 15.134808s linear infinite; }
+.cursor-layer-173 { animation:k161 15.134808s linear infinite; }
+.cursor-layer-174 { animation:k162 15.134808s linear infinite; }
+.cursor-layer-175 { animation:k163 15.134808s linear infinite; }
+.cursor-layer-176 { animation:k164 15.134808s linear infinite; }
+.cursor-layer-177 { animation:k165 15.134808s linear infinite; }
+.cursor-layer-178 { animation:k166 15.134808s linear infinite; }
+.cursor-layer-179 { animation:k167 15.134808s linear infinite; }
+.cursor-layer-180 { animation:k168 15.134808s linear infinite; }
+.cursor-layer-181 { animation:k169 15.134808s linear infinite; }
+.cursor-layer-182 { animation:k170 15.134808s linear infinite; }
+.cursor-layer-183 { animation:k171 15.134808s linear infinite; }
+.cursor-layer-184 { animation:k172 15.134808s linear infinite; }
+.cursor-layer-185 { animation:k173 15.134808s linear infinite; }
+.cursor-layer-186 { animation:k174 15.134808s linear infinite; }
+.cursor-layer-187 { animation:k175 15.134808s linear infinite; }
+.cursor-layer-188 { animation:k176 15.134808s linear infinite; }
+.cursor-layer-189 { animation:k177 15.134808s linear infinite; }
+.cursor-layer-190 { animation:k214 15.134808s linear infinite; }
+.cursor-layer-191 { animation:k180 15.134808s linear infinite; }
+.viewport-mask-0,.viewport-bg-0,.viewport-chrome-0 { animation:k215 15.134808s linear infinite; }
+</style>
+<defs>
+<filter id="window-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.22"/></filter>
+<mask id="viewport-mask" x="0" y="0" width="837.6" height="546" maskUnits="userSpaceOnUse">
+<rect class="layer viewport-mask-0" x="12" y="46" width="813.6" height="488" fill="white"/>
+</mask>
+</defs>
+<rect class="layer viewport-chrome-0" x="12" y="12" width="813.6" height="522" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
+<path class="layer viewport-chrome-0" d="M 20,12 H 817.6 Q 825.6,12 825.6,20 V 46 H 12 V 20 Q 12,12 20,12 Z" fill="#323232"/>
+<line class="layer viewport-chrome-0" x1="12" y1="46" x2="825.6" y2="46" stroke="#1a1a1a" stroke-width="1"/>
+<circle class="layer viewport-chrome-0" cx="34" cy="29" r="8" fill="#ff5f57"/>
+<circle class="layer viewport-chrome-0" cx="60" cy="29" r="8" fill="#febc2e"/>
+<circle class="layer viewport-chrome-0" cx="86" cy="29" r="8" fill="#28c840"/>
+<g mask="url(#viewport-mask)">
+<rect class="bg layer viewport-bg-0" x="12" y="46" width="813.6" height="488" fill="#282c34"/>
+<g class="layer layer-0">
+<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
+</g>
+<g class="layer layer-1">
+<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">$ s</text>
+</g>
+<g class="layer layer-2">
+<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="39.68" lengthAdjust="spacing">$ sc</text>
+</g>
+<g class="layer layer-3">
+<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">$ sce</text>
+</g>
+<g class="layer layer-4">
+<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ scen</text>
+</g>
+<g class="layer layer-5">
+<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacing">$ scene</text>
+</g>
+<g class="layer layer-6">
+<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">$ scenet</text>
+</g>
+<g class="layer layer-7">
+<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">$ sceneta</text>
+</g>
+<g class="layer layer-8">
+<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">$ scenetak</text>
+</g>
+<g class="layer layer-9">
+<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="109.12" lengthAdjust="spacing">$ scenetake</text>
+</g>
+<g class="layer layer-10">
+<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">$ scenetake i</text>
+</g>
+<g class="layer layer-11">
+<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">$ scenetake in</text>
+</g>
+<g class="layer layer-12">
+<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="148.8" lengthAdjust="spacing">$ scenetake ini</text>
+</g>
+<g class="layer layer-13">
+<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacing">$ scenetake init</text>
+</g>
+<g class="layer layer-14">
+<text x="22" y="82.8" fill="#ac4142" font-weight="normal" textLength="218.24" lengthAdjust="spacing">Created: scenario.yaml</text>
+</g>
+<g class="layer layer-15">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
+</g>
+<g class="layer layer-16">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">$ c</text>
+</g>
+<g class="layer layer-17">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="39.68" lengthAdjust="spacing">$ ca</text>
+</g>
+<g class="layer layer-18">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">$ cat</text>
+</g>
+<g class="layer layer-19">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacing">$ cat s</text>
+</g>
+<g class="layer layer-20">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">$ cat sc</text>
+</g>
+<g class="layer layer-21">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">$ cat sce</text>
+</g>
+<g class="layer layer-22">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">$ cat scen</text>
+</g>
+<g class="layer layer-23">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="109.12" lengthAdjust="spacing">$ cat scena</text>
+</g>
+<g class="layer layer-24">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacing">$ cat scenar</text>
+</g>
+<g class="layer layer-25">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">$ cat scenari</text>
+</g>
+<g class="layer layer-26">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">$ cat scenario</text>
+</g>
+<g class="layer layer-27">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="148.8" lengthAdjust="spacing">$ cat scenario.</text>
+</g>
+<g class="layer layer-28">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacing">$ cat scenario.y</text>
+</g>
+<g class="layer layer-29">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="168.64" lengthAdjust="spacing">$ cat scenario.ya</text>
+</g>
+<g class="layer layer-30">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">$ cat scenario.yam</text>
+</g>
+<g class="layer layer-31">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="188.48" lengthAdjust="spacing">$ cat scenario.yaml</text>
+</g>
+<g class="layer layer-32">
+<text x="41.84" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="555.52" lengthAdjust="spacing">- name: &quot;[cyan]Styled command typing + output highlight&quot;</text>
+</g>
+<g class="layer layer-33">
+<text x="61.68" y="82.8" fill="#d0d0d0" font-weight="normal" textLength="644.8" lengthAdjust="spacing">run: printf 'line1 alpha\nline2 beta gamma\nline3\nline4 delta\n'</text>
+</g>
+<g class="layer layer-34">
+<text x="61.68" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">run-highlight: &quot;bold fg:bright-cyan&quot;</text>
+</g>
+<g class="layer layer-35">
+<text x="61.68" y="122.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">highlight:</text>
+</g>
+<g class="layer layer-36">
+<text x="81.52" y="142.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">- at: &quot;1&quot;</text>
+</g>
+<g class="layer layer-37">
+<text x="101.36" y="162.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">color: &quot;fg:bright-green&quot;</text>
+</g>
+<g class="layer layer-38">
+<text x="81.52" y="182.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- at: &quot;2:7-10&quot;</text>
+</g>
+<g class="layer layer-39">
+<text x="101.36" y="202.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">color: &quot;underline fg:yellow&quot;</text>
+</g>
+<g class="layer layer-40">
+<text x="81.52" y="222.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">- at: &quot;2:12-&quot;</text>
+</g>
+<g class="layer layer-41">
+<text x="101.36" y="242.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">color: &quot;bold fg:magenta&quot;</text>
+</g>
+<g class="layer layer-42">
+<text x="81.52" y="262.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">- at: &quot;3&quot;</text>
+</g>
+<g class="layer layer-43">
+<text x="101.36" y="282.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">color: &quot;fg:white bg:212&quot;</text>
+</g>
+<g class="layer layer-44">
+<text x="81.52" y="302.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">- at: &quot;4&quot;</text>
+</g>
+<g class="layer layer-45">
+<text x="101.36" y="322.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">color: &quot;fg:black bg:114&quot;</text>
+</g>
+<g class="layer layer-46">
+<text x="41.84" y="362.8" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacing">- name: &quot;[bright-yellow]stderr color override&quot;</text>
+</g>
+<g class="layer layer-47">
+<text x="61.68" y="382.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">run: echo &quot;stderr sample&quot; 1&gt;&amp;2</text>
+</g>
+<g class="layer layer-48">
+<text x="61.68" y="402.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">stderr-color: &quot;bold fg:red&quot;</text>
+</g>
+<g class="layer layer-49">
+<text x="22" y="442.8" fill="#d0d0d0" font-weight="normal" textLength="793.6" lengthAdjust="spacing"># Optional teardown commands. They run after the cast file is written, but are n</text>
+</g>
+<g class="layer layer-50">
+<text x="22" y="462.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">ot recorded in the cast.</text>
+</g>
+<g class="layer layer-51">
+<text x="22" y="482.8" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacing"># post:</text>
+</g>
+<g class="layer layer-52">
+<text x="22" y="502.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">#   - echo &quot;run after steps&quot;</text>
+</g>
+<g class="layer layer-53">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
+</g>
+<g class="layer layer-54">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">$ s</text>
+</g>
+<g class="layer layer-55">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="39.68" lengthAdjust="spacing">$ sc</text>
+</g>
+<g class="layer layer-56">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">$ sce</text>
+</g>
+<g class="layer layer-57">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ scen</text>
+</g>
+<g class="layer layer-58">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacing">$ scene</text>
+</g>
+<g class="layer layer-59">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">$ scenet</text>
+</g>
+<g class="layer layer-60">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">$ sceneta</text>
+</g>
+<g class="layer layer-61">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">$ scenetak</text>
+</g>
+<g class="layer layer-62">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="109.12" lengthAdjust="spacing">$ scenetake</text>
+</g>
+<g class="layer layer-63">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">$ scenetake s</text>
+</g>
+<g class="layer layer-64">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">$ scenetake sc</text>
+</g>
+<g class="layer layer-65">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="148.8" lengthAdjust="spacing">$ scenetake sce</text>
+</g>
+<g class="layer layer-66">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacing">$ scenetake scen</text>
+</g>
+<g class="layer layer-67">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="168.64" lengthAdjust="spacing">$ scenetake scena</text>
+</g>
+<g class="layer layer-68">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">$ scenetake scenar</text>
+</g>
+<g class="layer layer-69">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="188.48" lengthAdjust="spacing">$ scenetake scenari</text>
+</g>
+<g class="layer layer-70">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">$ scenetake scenario</text>
+</g>
+<g class="layer layer-71">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="208.32" lengthAdjust="spacing">$ scenetake scenario.</text>
+</g>
+<g class="layer layer-72">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">$ scenetake scenario.y</text>
+</g>
+<g class="layer layer-73">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">$ scenetake scenario.ya</text>
+</g>
+<g class="layer layer-74">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">$ scenetake scenario.yam</text>
+</g>
+<g class="layer layer-75">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacing">$ scenetake scenario.yaml</text>
+</g>
+<g class="layer layer-76">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">$ scenetake scenario.yaml -</text>
+</g>
+<g class="layer layer-77">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">$ scenetake scenario.yaml --</text>
+</g>
+<g class="layer layer-78">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">$ scenetake scenario.yaml --f</text>
+</g>
+<g class="layer layer-79">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">$ scenetake scenario.yaml --fo</text>
+</g>
+<g class="layer layer-80">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacing">$ scenetake scenario.yaml --for</text>
+</g>
+<g class="layer layer-81">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="317.44" lengthAdjust="spacing">$ scenetake scenario.yaml --form</text>
+</g>
+<g class="layer layer-82">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">$ scenetake scenario.yaml --forma</text>
+</g>
+<g class="layer layer-83">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="337.28" lengthAdjust="spacing">$ scenetake scenario.yaml --format</text>
+</g>
+<g class="layer layer-84">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">$ scenetake scenario.yaml --format s</text>
+</g>
+<g class="layer layer-85">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">$ scenetake scenario.yaml --format sv</text>
+</g>
+<g class="layer layer-86">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="376.96" lengthAdjust="spacing">$ scenetake scenario.yaml --format svg</text>
+</g>
+<g class="layer layer-87">
+<text x="61.68" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="644.8" lengthAdjust="spacing">run: printf 'line1 alpha\nline2 beta gamma\nline3\nline4 delta\n'</text>
+</g>
+<g class="layer layer-88">
+<text x="61.68" y="82.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">run-highlight: &quot;bold fg:bright-cyan&quot;</text>
+</g>
+<g class="layer layer-89">
+<text x="61.68" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">highlight:</text>
+</g>
+<g class="layer layer-90">
+<text x="81.52" y="122.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">- at: &quot;1&quot;</text>
+</g>
+<g class="layer layer-91">
+<text x="101.36" y="142.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">color: &quot;fg:bright-green&quot;</text>
+</g>
+<g class="layer layer-92">
+<text x="81.52" y="162.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">- at: &quot;2:7-10&quot;</text>
+</g>
+<g class="layer layer-93">
+<text x="101.36" y="182.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">color: &quot;underline fg:yellow&quot;</text>
+</g>
+<g class="layer layer-94">
+<text x="81.52" y="202.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">- at: &quot;2:12-&quot;</text>
+</g>
+<g class="layer layer-95">
+<text x="101.36" y="222.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">color: &quot;bold fg:magenta&quot;</text>
+</g>
+<g class="layer layer-96">
+<text x="81.52" y="242.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">- at: &quot;3&quot;</text>
+</g>
+<g class="layer layer-97">
+<text x="101.36" y="262.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">color: &quot;fg:white bg:212&quot;</text>
+</g>
+<g class="layer layer-98">
+<text x="81.52" y="282.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">- at: &quot;4&quot;</text>
+</g>
+<g class="layer layer-99">
+<text x="101.36" y="302.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">color: &quot;fg:black bg:114&quot;</text>
+</g>
+<g class="layer layer-100">
+<text x="41.84" y="342.8" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacing">- name: &quot;[bright-yellow]stderr color override&quot;</text>
+</g>
+<g class="layer layer-101">
+<text x="61.68" y="362.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">run: echo &quot;stderr sample&quot; 1&gt;&amp;2</text>
+</g>
+<g class="layer layer-102">
+<text x="61.68" y="382.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">stderr-color: &quot;bold fg:red&quot;</text>
+</g>
+<g class="layer layer-103">
+<text x="22" y="422.8" fill="#d0d0d0" font-weight="normal" textLength="793.6" lengthAdjust="spacing"># Optional teardown commands. They run after the cast file is written, but are n</text>
+</g>
+<g class="layer layer-104">
+<text x="22" y="442.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">ot recorded in the cast.</text>
+</g>
+<g class="layer layer-105">
+<text x="22" y="462.8" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacing"># post:</text>
+</g>
+<g class="layer layer-106">
+<text x="22" y="482.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">#   - echo &quot;run after steps&quot;</text>
+</g>
+<g class="layer layer-107">
+<text x="22" y="502.8" fill="#d0d0d0" font-weight="normal" textLength="376.96" lengthAdjust="spacing">$ scenetake scenario.yaml --format svg</text>
+</g>
+<g class="layer layer-108">
+<text x="101.36" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">color: &quot;fg:white bg:212&quot;</text>
+</g>
+<g class="layer layer-109">
+<text x="81.52" y="82.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">- at: &quot;4&quot;</text>
+</g>
+<g class="layer layer-110">
+<text x="101.36" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">color: &quot;fg:black bg:114&quot;</text>
+</g>
+<g class="layer layer-111">
+<text x="41.84" y="142.8" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacing">- name: &quot;[bright-yellow]stderr color override&quot;</text>
+</g>
+<g class="layer layer-112">
+<text x="61.68" y="162.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">run: echo &quot;stderr sample&quot; 1&gt;&amp;2</text>
+</g>
+<g class="layer layer-113">
+<text x="61.68" y="182.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">stderr-color: &quot;bold fg:red&quot;</text>
+</g>
+<g class="layer layer-114">
+<text x="22" y="222.8" fill="#d0d0d0" font-weight="normal" textLength="793.6" lengthAdjust="spacing"># Optional teardown commands. They run after the cast file is written, but are n</text>
+</g>
+<g class="layer layer-115">
+<text x="22" y="242.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">ot recorded in the cast.</text>
+</g>
+<g class="layer layer-116">
+<text x="22" y="262.8" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacing"># post:</text>
+</g>
+<g class="layer layer-117">
+<text x="22" y="282.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">#   - echo &quot;run after steps&quot;</text>
+</g>
+<g class="layer layer-118">
+<text x="22" y="302.8" fill="#d0d0d0" font-weight="normal" textLength="376.96" lengthAdjust="spacing">$ scenetake scenario.yaml --format svg</text>
+</g>
+<g class="layer layer-119">
+<text x="22" y="322.8" fill="#ac4142" font-weight="normal" textLength="218.24" lengthAdjust="spacing">Loading: scenario.yaml</text>
+</g>
+<g class="layer layer-120">
+<text x="22" y="342.8" fill="#ac4142" font-weight="normal" textLength="168.64" lengthAdjust="spacing">Using shell: pwsh</text>
+</g>
+<g class="layer layer-121">
+<text x="22" y="362.8" fill="#ac4142" font-weight="normal" textLength="178.56" lengthAdjust="spacing">Generating cast...</text>
+</g>
+<g class="layer layer-122">
+<text x="41.84" y="382.8" fill="#ac4142" font-weight="normal" textLength="287.68" lengthAdjust="spacing">running: echo &quot;Hello, World!&quot;</text>
+</g>
+<g class="layer layer-123">
+<text x="41.84" y="402.8" fill="#ac4142" font-weight="normal" textLength="119.04" lengthAdjust="spacing">running: pwd</text>
+</g>
+<g class="layer layer-124">
+<text x="41.84" y="422.8" fill="#ac4142" font-weight="normal" textLength="684.48" lengthAdjust="spacing">running: printf 'line1 alpha\nline2 beta gamma\nline3\nline4 delta\n'</text>
+</g>
+<g class="layer layer-125">
+<text x="41.84" y="442.8" fill="#ac4142" font-weight="normal" textLength="337.28" lengthAdjust="spacing">running: echo &quot;stderr sample&quot; 1&gt;&amp;2</text>
+</g>
+<g class="layer layer-126">
+<text x="22" y="462.8" fill="#ac4142" font-weight="normal" textLength="426.56" lengthAdjust="spacing">Written: scenario.cast  (127 events, 11.1s)</text>
+</g>
+<g class="layer layer-127">
+<text x="22" y="482.8" fill="#ac4142" font-weight="normal" textLength="208.32" lengthAdjust="spacing">Written: scenario.svg</text>
+</g>
+<g class="layer layer-128">
+<text x="22" y="502.8" fill="#ac4142" font-weight="normal" textLength="327.36" lengthAdjust="spacing">Done: scenario.cast, scenario.svg</text>
+</g>
+<g class="layer layer-129">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
+</g>
+<g class="layer layer-130">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">$ M</text>
+</g>
+<g class="layer layer-131">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="39.68" lengthAdjust="spacing">$ MS</text>
+</g>
+<g class="layer layer-132">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">$ MSY</text>
+</g>
+<g class="layer layer-133">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ MSYS</text>
+</g>
+<g class="layer layer-134">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacing">$ MSYS_</text>
+</g>
+<g class="layer layer-135">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">$ MSYS_N</text>
+</g>
+<g class="layer layer-136">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">$ MSYS_NO</text>
+</g>
+<g class="layer layer-137">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">$ MSYS_NO_</text>
+</g>
+<g class="layer layer-138">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="109.12" lengthAdjust="spacing">$ MSYS_NO_P</text>
+</g>
+<g class="layer layer-139">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacing">$ MSYS_NO_PA</text>
+</g>
+<g class="layer layer-140">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">$ MSYS_NO_PAT</text>
+</g>
+<g class="layer layer-141">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">$ MSYS_NO_PATH</text>
+</g>
+<g class="layer layer-142">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="148.8" lengthAdjust="spacing">$ MSYS_NO_PATHC</text>
+</g>
+<g class="layer layer-143">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacing">$ MSYS_NO_PATHCO</text>
+</g>
+<g class="layer layer-144">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="168.64" lengthAdjust="spacing">$ MSYS_NO_PATHCON</text>
+</g>
+<g class="layer layer-145">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">$ MSYS_NO_PATHCONV</text>
+</g>
+<g class="layer layer-146">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="188.48" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=</text>
+</g>
+<g class="layer layer-147">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1</text>
+</g>
+<g class="layer layer-148">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 d</text>
+</g>
+<g class="layer layer-149">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 do</text>
+</g>
+<g class="layer layer-150">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 doc</text>
+</g>
+<g class="layer layer-151">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 dock</text>
+</g>
+<g class="layer layer-152">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="257.92" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docke</text>
+</g>
+<g class="layer layer-153">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker</text>
+</g>
+<g class="layer layer-154">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker r</text>
+</g>
+<g class="layer layer-155">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker ru</text>
+</g>
+<g class="layer layer-156">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run</text>
+</g>
+<g class="layer layer-157">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run -</text>
+</g>
+<g class="layer layer-158">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="337.28" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --</text>
+</g>
+<g class="layer layer-159">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --r</text>
+</g>
+<g class="layer layer-160">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm</text>
+</g>
+<g class="layer layer-161">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="376.96" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -</text>
+</g>
+<g class="layer layer-162">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="386.88" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v</text>
+</g>
+<g class="layer layer-163">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="406.72" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;</text>
+</g>
+<g class="layer layer-164">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="416.64" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;/</text>
+</g>
+<g class="layer layer-165">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="426.56" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//</text>
+</g>
+<g class="layer layer-166">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="436.48" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//$</text>
+</g>
+<g class="layer layer-167">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${</text>
+</g>
+<g class="layer layer-168">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${P</text>
+</g>
+<g class="layer layer-169">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PW</text>
+</g>
+<g class="layer layer-170">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="476.16" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD</text>
+</g>
+<g class="layer layer-171">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="486.08" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}</text>
+</g>
+<g class="layer layer-172">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="496" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:</text>
+</g>
+<g class="layer layer-173">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="505.92" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/</text>
+</g>
+<g class="layer layer-174">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="515.84" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/d</text>
+</g>
+<g class="layer layer-175">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/da</text>
+</g>
+<g class="layer layer-176">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="535.68" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/dat</text>
+</g>
+<g class="layer layer-177">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="545.6" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data</text>
+</g>
+<g class="layer layer-178">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="555.52" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot;</text>
+</g>
+<g class="layer layer-179">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="575.36" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; g</text>
+</g>
+<g class="layer layer-180">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="585.28" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; gh</text>
+</g>
+<g class="layer layer-181">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="595.2" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghc</text>
+</g>
+<g class="layer layer-182">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="605.12" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr</text>
+</g>
+<g class="layer layer-183">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="615.04" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.</text>
+</g>
+<g class="layer layer-184">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="624.96" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.i</text>
+</g>
+<g class="layer layer-185">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="634.88" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io</text>
+</g>
+<g class="layer layer-186">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="644.8" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/</text>
+</g>
+<g class="layer layer-187">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="654.72" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/a</text>
+</g>
+<g class="layer layer-188">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="664.64" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/as</text>
+</g>
+<g class="layer layer-189">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="674.56" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asc</text>
+</g>
+<g class="layer layer-190">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="684.48" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asci</text>
+</g>
+<g class="layer layer-191">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="694.4" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/ascii</text>
+</g>
+<g class="layer layer-192">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="704.32" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciin</text>
+</g>
+<g class="layer layer-193">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="714.24" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciine</text>
+</g>
+<g class="layer layer-194">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="724.16" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinem</text>
+</g>
+<g class="layer layer-195">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="734.08" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema</text>
+</g>
+<g class="layer layer-196">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="744" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/</text>
+</g>
+<g class="layer layer-197">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="753.92" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/a</text>
+</g>
+<g class="layer layer-198">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="763.84" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/ag</text>
+</g>
+<g class="layer layer-199">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="773.76" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/agg</text>
+</g>
+<g class="layer layer-200">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="793.6" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/agg /</text>
+</g>
+<g class="layer layer-201">
+<text x="81.52" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">- at: &quot;4&quot;</text>
+</g>
+<g class="layer layer-202">
+<text x="101.36" y="82.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">color: &quot;fg:black bg:114&quot;</text>
+</g>
+<g class="layer layer-203">
+<text x="41.84" y="122.8" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacing">- name: &quot;[bright-yellow]stderr color override&quot;</text>
+</g>
+<g class="layer layer-204">
+<text x="61.68" y="142.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">run: echo &quot;stderr sample&quot; 1&gt;&amp;2</text>
+</g>
+<g class="layer layer-205">
+<text x="61.68" y="162.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">stderr-color: &quot;bold fg:red&quot;</text>
+</g>
+<g class="layer layer-206">
+<text x="22" y="202.8" fill="#d0d0d0" font-weight="normal" textLength="793.6" lengthAdjust="spacing"># Optional teardown commands. They run after the cast file is written, but are n</text>
+</g>
+<g class="layer layer-207">
+<text x="22" y="222.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">ot recorded in the cast.</text>
+</g>
+<g class="layer layer-208">
+<text x="22" y="242.8" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacing"># post:</text>
+</g>
+<g class="layer layer-209">
+<text x="22" y="262.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">#   - echo &quot;run after steps&quot;</text>
+</g>
+<g class="layer layer-210">
+<text x="22" y="282.8" fill="#d0d0d0" font-weight="normal" textLength="376.96" lengthAdjust="spacing">$ scenetake scenario.yaml --format svg</text>
+</g>
+<g class="layer layer-211">
+<text x="22" y="302.8" fill="#ac4142" font-weight="normal" textLength="218.24" lengthAdjust="spacing">Loading: scenario.yaml</text>
+</g>
+<g class="layer layer-212">
+<text x="22" y="322.8" fill="#ac4142" font-weight="normal" textLength="168.64" lengthAdjust="spacing">Using shell: pwsh</text>
+</g>
+<g class="layer layer-213">
+<text x="22" y="342.8" fill="#ac4142" font-weight="normal" textLength="178.56" lengthAdjust="spacing">Generating cast...</text>
+</g>
+<g class="layer layer-214">
+<text x="41.84" y="362.8" fill="#ac4142" font-weight="normal" textLength="287.68" lengthAdjust="spacing">running: echo &quot;Hello, World!&quot;</text>
+</g>
+<g class="layer layer-215">
+<text x="41.84" y="382.8" fill="#ac4142" font-weight="normal" textLength="119.04" lengthAdjust="spacing">running: pwd</text>
+</g>
+<g class="layer layer-216">
+<text x="41.84" y="402.8" fill="#ac4142" font-weight="normal" textLength="684.48" lengthAdjust="spacing">running: printf 'line1 alpha\nline2 beta gamma\nline3\nline4 delta\n'</text>
+</g>
+<g class="layer layer-217">
+<text x="41.84" y="422.8" fill="#ac4142" font-weight="normal" textLength="337.28" lengthAdjust="spacing">running: echo &quot;stderr sample&quot; 1&gt;&amp;2</text>
+</g>
+<g class="layer layer-218">
+<text x="22" y="442.8" fill="#ac4142" font-weight="normal" textLength="426.56" lengthAdjust="spacing">Written: scenario.cast  (127 events, 11.1s)</text>
+</g>
+<g class="layer layer-219">
+<text x="22" y="462.8" fill="#ac4142" font-weight="normal" textLength="208.32" lengthAdjust="spacing">Written: scenario.svg</text>
+</g>
+<g class="layer layer-220">
+<text x="22" y="482.8" fill="#ac4142" font-weight="normal" textLength="327.36" lengthAdjust="spacing">Done: scenario.cast, scenario.svg</text>
+</g>
+<g class="layer layer-221">
+<text x="22" y="502.8" fill="#d0d0d0" font-weight="normal" textLength="793.6" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/agg /</text>
+</g>
+<g class="layer layer-222">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">d</text>
+</g>
+<g class="layer layer-223">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="19.84" lengthAdjust="spacing">da</text>
+</g>
+<g class="layer layer-224">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">dat</text>
+</g>
+<g class="layer layer-225">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="39.68" lengthAdjust="spacing">data</text>
+</g>
+<g class="layer layer-226">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">data/</text>
+</g>
+<g class="layer layer-227">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">data/s</text>
+</g>
+<g class="layer layer-228">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacing">data/sc</text>
+</g>
+<g class="layer layer-229">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">data/sce</text>
+</g>
+<g class="layer layer-230">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">data/scen</text>
+</g>
+<g class="layer layer-231">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">data/scena</text>
+</g>
+<g class="layer layer-232">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="109.12" lengthAdjust="spacing">data/scenar</text>
+</g>
+<g class="layer layer-233">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacing">data/scenari</text>
+</g>
+<g class="layer layer-234">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">data/scenario</text>
+</g>
+<g class="layer layer-235">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">data/scenario.</text>
+</g>
+<g class="layer layer-236">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="148.8" lengthAdjust="spacing">data/scenario.c</text>
+</g>
+<g class="layer layer-237">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacing">data/scenario.ca</text>
+</g>
+<g class="layer layer-238">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="168.64" lengthAdjust="spacing">data/scenario.cas</text>
+</g>
+<g class="layer layer-239">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">data/scenario.cast</text>
+</g>
+<g class="layer layer-240">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">data/scenario.cast /</text>
+</g>
+<g class="layer layer-241">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="208.32" lengthAdjust="spacing">data/scenario.cast /d</text>
+</g>
+<g class="layer layer-242">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">data/scenario.cast /da</text>
+</g>
+<g class="layer layer-243">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">data/scenario.cast /dat</text>
+</g>
+<g class="layer layer-244">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">data/scenario.cast /data</text>
+</g>
+<g class="layer layer-245">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacing">data/scenario.cast /data/</text>
+</g>
+<g class="layer layer-246">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="257.92" lengthAdjust="spacing">data/scenario.cast /data/s</text>
+</g>
+<g class="layer layer-247">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">data/scenario.cast /data/sc</text>
+</g>
+<g class="layer layer-248">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">data/scenario.cast /data/sce</text>
+</g>
+<g class="layer layer-249">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">data/scenario.cast /data/scen</text>
+</g>
+<g class="layer layer-250">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">data/scenario.cast /data/scena</text>
+</g>
+<g class="layer layer-251">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacing">data/scenario.cast /data/scenar</text>
+</g>
+<g class="layer layer-252">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="317.44" lengthAdjust="spacing">data/scenario.cast /data/scenari</text>
+</g>
+<g class="layer layer-253">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">data/scenario.cast /data/scenario</text>
+</g>
+<g class="layer layer-254">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="337.28" lengthAdjust="spacing">data/scenario.cast /data/scenario.</text>
+</g>
+<g class="layer layer-255">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">data/scenario.cast /data/scenario.g</text>
+</g>
+<g class="layer layer-256">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">data/scenario.cast /data/scenario.gi</text>
+</g>
+<g class="layer layer-257">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">data/scenario.cast /data/scenario.gif</text>
+</g>
+<g class="layer layer-258">
+<text x="101.36" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">color: &quot;fg:black bg:114&quot;</text>
+</g>
+<g class="layer layer-259">
+<text x="41.84" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacing">- name: &quot;[bright-yellow]stderr color override&quot;</text>
+</g>
+<g class="layer layer-260">
+<text x="61.68" y="122.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">run: echo &quot;stderr sample&quot; 1&gt;&amp;2</text>
+</g>
+<g class="layer layer-261">
+<text x="61.68" y="142.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">stderr-color: &quot;bold fg:red&quot;</text>
+</g>
+<g class="layer layer-262">
+<text x="22" y="182.8" fill="#d0d0d0" font-weight="normal" textLength="793.6" lengthAdjust="spacing"># Optional teardown commands. They run after the cast file is written, but are n</text>
+</g>
+<g class="layer layer-263">
+<text x="22" y="202.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">ot recorded in the cast.</text>
+</g>
+<g class="layer layer-264">
+<text x="22" y="222.8" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacing"># post:</text>
+</g>
+<g class="layer layer-265">
+<text x="22" y="242.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">#   - echo &quot;run after steps&quot;</text>
+</g>
+<g class="layer layer-266">
+<text x="22" y="262.8" fill="#d0d0d0" font-weight="normal" textLength="376.96" lengthAdjust="spacing">$ scenetake scenario.yaml --format svg</text>
+</g>
+<g class="layer layer-267">
+<text x="22" y="282.8" fill="#ac4142" font-weight="normal" textLength="218.24" lengthAdjust="spacing">Loading: scenario.yaml</text>
+</g>
+<g class="layer layer-268">
+<text x="22" y="302.8" fill="#ac4142" font-weight="normal" textLength="168.64" lengthAdjust="spacing">Using shell: pwsh</text>
+</g>
+<g class="layer layer-269">
+<text x="22" y="322.8" fill="#ac4142" font-weight="normal" textLength="178.56" lengthAdjust="spacing">Generating cast...</text>
+</g>
+<g class="layer layer-270">
+<text x="41.84" y="342.8" fill="#ac4142" font-weight="normal" textLength="287.68" lengthAdjust="spacing">running: echo &quot;Hello, World!&quot;</text>
+</g>
+<g class="layer layer-271">
+<text x="41.84" y="362.8" fill="#ac4142" font-weight="normal" textLength="119.04" lengthAdjust="spacing">running: pwd</text>
+</g>
+<g class="layer layer-272">
+<text x="41.84" y="382.8" fill="#ac4142" font-weight="normal" textLength="684.48" lengthAdjust="spacing">running: printf 'line1 alpha\nline2 beta gamma\nline3\nline4 delta\n'</text>
+</g>
+<g class="layer layer-273">
+<text x="41.84" y="402.8" fill="#ac4142" font-weight="normal" textLength="337.28" lengthAdjust="spacing">running: echo &quot;stderr sample&quot; 1&gt;&amp;2</text>
+</g>
+<g class="layer layer-274">
+<text x="22" y="422.8" fill="#ac4142" font-weight="normal" textLength="426.56" lengthAdjust="spacing">Written: scenario.cast  (127 events, 11.1s)</text>
+</g>
+<g class="layer layer-275">
+<text x="22" y="442.8" fill="#ac4142" font-weight="normal" textLength="208.32" lengthAdjust="spacing">Written: scenario.svg</text>
+</g>
+<g class="layer layer-276">
+<text x="22" y="462.8" fill="#ac4142" font-weight="normal" textLength="327.36" lengthAdjust="spacing">Done: scenario.cast, scenario.svg</text>
+</g>
+<g class="layer layer-277">
+<text x="22" y="482.8" fill="#d0d0d0" font-weight="normal" textLength="793.6" lengthAdjust="spacing">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/agg /</text>
+</g>
+<g class="layer layer-278">
+<text x="22" y="502.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">data/scenario.cast /data/scenario.gif</text>
+</g>
+<g class="layer layer-279">
+<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">103 / 124 [=======================================&gt;--------] 83.06 % 61.89/s 0s</text>
+</g>
+<g class="layer layer-280">
+<text x="22" y="82.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">104 / 124 [========================================&gt;-------] 83.87 % 61.92/s 0s</text>
+</g>
+<g class="layer layer-281">
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">105 / 124 [========================================&gt;-------] 84.68 % 61.97/s 0s</text>
+</g>
+<g class="layer layer-282">
+<text x="22" y="122.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">106 / 124 [=========================================&gt;------] 85.48 % 62.01/s 0s</text>
+</g>
+<g class="layer layer-283">
+<text x="22" y="142.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">107 / 124 [=========================================&gt;------] 86.29 % 62.05/s 0s</text>
+</g>
+<g class="layer layer-284">
+<text x="22" y="162.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">108 / 124 [=========================================&gt;------] 87.10 % 62.06/s 0s</text>
+</g>
+<g class="layer layer-285">
+<text x="22" y="182.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">109 / 124 [==========================================&gt;-----] 87.90 % 62.10/s 0s</text>
+</g>
+<g class="layer layer-286">
+<text x="22" y="202.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">110 / 124 [==========================================&gt;-----] 88.71 % 62.13/s 0s</text>
+</g>
+<g class="layer layer-287">
+<text x="22" y="222.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">111 / 124 [==========================================&gt;-----] 89.52 % 62.13/s 0s</text>
+</g>
+<g class="layer layer-288">
+<text x="22" y="242.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">112 / 124 [===========================================&gt;----] 90.32 % 62.14/s 0s</text>
+</g>
+<g class="layer layer-289">
+<text x="22" y="262.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">113 / 124 [===========================================&gt;----] 91.13 % 62.20/s 0s</text>
+</g>
+<g class="layer layer-290">
+<text x="22" y="282.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">114 / 124 [============================================&gt;---] 91.94 % 62.24/s 0s</text>
+</g>
+<g class="layer layer-291">
+<text x="22" y="302.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">115 / 124 [============================================&gt;---] 92.74 % 62.20/s 0s</text>
+</g>
+<g class="layer layer-292">
+<text x="22" y="322.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">116 / 124 [============================================&gt;---] 93.55 % 62.37/s 0s</text>
+</g>
+<g class="layer layer-293">
+<text x="22" y="342.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">117 / 124 [=============================================&gt;--] 94.35 % 62.77/s 0s</text>
+</g>
+<g class="layer layer-294">
+<text x="22" y="362.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">118 / 124 [=============================================&gt;--] 95.16 % 63.14/s 0s</text>
+</g>
+<g class="layer layer-295">
+<text x="22" y="382.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">119 / 124 [==============================================&gt;-] 95.97 % 63.52/s 0s</text>
+</g>
+<g class="layer layer-296">
+<text x="22" y="402.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">120 / 124 [==============================================&gt;-] 96.77 % 63.90/s 0s</text>
+</g>
+<g class="layer layer-297">
+<text x="22" y="422.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">121 / 124 [==============================================&gt;-] 97.58 % 64.27/s 0s</text>
+</g>
+<g class="layer layer-298">
+<text x="22" y="442.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">122 / 124 [================================================] 98.39 % 64.63/s 0s</text>
+</g>
+<g class="layer layer-299">
+<text x="22" y="462.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">123 / 124 [================================================] 99.19 % 64.87/s 0s</text>
+</g>
+<g class="layer layer-300">
+<text x="22" y="482.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">124 / 124 [==================================================] 100.00 % 65.12/s</text>
+</g>
+<g class="layer layer-301">
+<text x="22" y="502.8" fill="#ac4142" font-weight="normal" textLength="605.12" lengthAdjust="spacing">[WARN  fontdb] Fallback to loading from known font dir paths.</text>
+</g>
+<g class="layer layer-302">
+<text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
+</g>
+<g class="layer cursor-layer-0">
+<rect class="cursor-block" x="41.84" y="50" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-1">
+<rect class="cursor-block" x="51.76" y="50" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-2">
+<rect class="cursor-block" x="61.68" y="50" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-3">
+<rect class="cursor-block" x="71.6" y="50" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-4">
+<rect class="cursor-block" x="81.52" y="50" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-5">
+<rect class="cursor-block" x="91.44" y="50" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-6">
+<rect class="cursor-block" x="101.36" y="50" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-7">
+<rect class="cursor-block" x="111.28" y="50" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-8">
+<rect class="cursor-block" x="121.2" y="50" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-9">
+<rect class="cursor-block" x="131.12" y="50" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-10">
+<rect class="cursor-block" x="141.04" y="50" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-11">
+<rect class="cursor-block" x="150.96" y="50" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-12">
+<rect class="cursor-block" x="160.88" y="50" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-13">
+<rect class="cursor-block" x="170.8" y="50" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-14">
+<rect class="cursor-block" x="180.72" y="50" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-15">
+<rect class="cursor-block" x="22" y="70" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-16">
+<rect class="cursor-block" x="22" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-17">
+<rect class="cursor-block" x="41.84" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-18">
+<rect class="cursor-block" x="51.76" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-19">
+<rect class="cursor-block" x="61.68" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-20">
+<rect class="cursor-block" x="71.6" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-21">
+<rect class="cursor-block" x="81.52" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-22">
+<rect class="cursor-block" x="91.44" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-23">
+<rect class="cursor-block" x="101.36" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-24">
+<rect class="cursor-block" x="111.28" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-25">
+<rect class="cursor-block" x="121.2" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-26">
+<rect class="cursor-block" x="131.12" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-27">
+<rect class="cursor-block" x="141.04" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-28">
+<rect class="cursor-block" x="150.96" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-29">
+<rect class="cursor-block" x="160.88" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-30">
+<rect class="cursor-block" x="170.8" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-31">
+<rect class="cursor-block" x="180.72" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-32">
+<rect class="cursor-block" x="190.64" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-33">
+<rect class="cursor-block" x="200.56" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-34">
+<rect class="cursor-block" x="210.48" y="90" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-35">
+<rect class="cursor-block" x="22" y="110" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-36">
+<rect class="cursor-block" x="22" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-37">
+<rect class="cursor-block" x="41.84" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-38">
+<rect class="cursor-block" x="51.76" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-39">
+<rect class="cursor-block" x="61.68" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-40">
+<rect class="cursor-block" x="71.6" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-41">
+<rect class="cursor-block" x="81.52" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-42">
+<rect class="cursor-block" x="91.44" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-43">
+<rect class="cursor-block" x="101.36" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-44">
+<rect class="cursor-block" x="111.28" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-45">
+<rect class="cursor-block" x="121.2" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-46">
+<rect class="cursor-block" x="131.12" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-47">
+<rect class="cursor-block" x="141.04" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-48">
+<rect class="cursor-block" x="150.96" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-49">
+<rect class="cursor-block" x="160.88" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-50">
+<rect class="cursor-block" x="170.8" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-51">
+<rect class="cursor-block" x="180.72" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-52">
+<rect class="cursor-block" x="190.64" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-53">
+<rect class="cursor-block" x="200.56" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-54">
+<rect class="cursor-block" x="210.48" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-55">
+<rect class="cursor-block" x="220.4" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-56">
+<rect class="cursor-block" x="230.32" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-57">
+<rect class="cursor-block" x="240.24" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-58">
+<rect class="cursor-block" x="250.16" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-59">
+<rect class="cursor-block" x="260.08" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-60">
+<rect class="cursor-block" x="270" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-61">
+<rect class="cursor-block" x="279.92" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-62">
+<rect class="cursor-block" x="289.84" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-63">
+<rect class="cursor-block" x="299.76" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-64">
+<rect class="cursor-block" x="309.68" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-65">
+<rect class="cursor-block" x="319.6" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-66">
+<rect class="cursor-block" x="329.52" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-67">
+<rect class="cursor-block" x="339.44" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-68">
+<rect class="cursor-block" x="349.36" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-69">
+<rect class="cursor-block" x="359.28" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-70">
+<rect class="cursor-block" x="369.2" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-71">
+<rect class="cursor-block" x="379.12" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-72">
+<rect class="cursor-block" x="389.04" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-73">
+<rect class="cursor-block" x="398.96" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-74">
+<rect class="cursor-block" x="22" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-75">
+<rect class="cursor-block" x="41.84" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-76">
+<rect class="cursor-block" x="51.76" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-77">
+<rect class="cursor-block" x="61.68" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-78">
+<rect class="cursor-block" x="71.6" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-79">
+<rect class="cursor-block" x="81.52" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-80">
+<rect class="cursor-block" x="91.44" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-81">
+<rect class="cursor-block" x="101.36" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-82">
+<rect class="cursor-block" x="111.28" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-83">
+<rect class="cursor-block" x="121.2" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-84">
+<rect class="cursor-block" x="131.12" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-85">
+<rect class="cursor-block" x="141.04" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-86">
+<rect class="cursor-block" x="150.96" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-87">
+<rect class="cursor-block" x="160.88" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-88">
+<rect class="cursor-block" x="170.8" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-89">
+<rect class="cursor-block" x="180.72" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-90">
+<rect class="cursor-block" x="190.64" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-91">
+<rect class="cursor-block" x="200.56" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-92">
+<rect class="cursor-block" x="210.48" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-93">
+<rect class="cursor-block" x="220.4" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-94">
+<rect class="cursor-block" x="230.32" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-95">
+<rect class="cursor-block" x="240.24" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-96">
+<rect class="cursor-block" x="250.16" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-97">
+<rect class="cursor-block" x="260.08" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-98">
+<rect class="cursor-block" x="270" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-99">
+<rect class="cursor-block" x="279.92" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-100">
+<rect class="cursor-block" x="289.84" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-101">
+<rect class="cursor-block" x="299.76" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-102">
+<rect class="cursor-block" x="309.68" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-103">
+<rect class="cursor-block" x="319.6" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-104">
+<rect class="cursor-block" x="329.52" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-105">
+<rect class="cursor-block" x="339.44" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-106">
+<rect class="cursor-block" x="349.36" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-107">
+<rect class="cursor-block" x="359.28" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-108">
+<rect class="cursor-block" x="369.2" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-109">
+<rect class="cursor-block" x="379.12" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-110">
+<rect class="cursor-block" x="389.04" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-111">
+<rect class="cursor-block" x="398.96" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-112">
+<rect class="cursor-block" x="408.88" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-113">
+<rect class="cursor-block" x="418.8" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-114">
+<rect class="cursor-block" x="428.72" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-115">
+<rect class="cursor-block" x="438.64" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-116">
+<rect class="cursor-block" x="448.56" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-117">
+<rect class="cursor-block" x="458.48" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-118">
+<rect class="cursor-block" x="468.4" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-119">
+<rect class="cursor-block" x="478.32" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-120">
+<rect class="cursor-block" x="488.24" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-121">
+<rect class="cursor-block" x="498.16" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-122">
+<rect class="cursor-block" x="508.08" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-123">
+<rect class="cursor-block" x="518" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-124">
+<rect class="cursor-block" x="527.92" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-125">
+<rect class="cursor-block" x="537.84" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-126">
+<rect class="cursor-block" x="547.76" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-127">
+<rect class="cursor-block" x="557.68" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-128">
+<rect class="cursor-block" x="567.6" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-129">
+<rect class="cursor-block" x="577.52" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-130">
+<rect class="cursor-block" x="587.44" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-131">
+<rect class="cursor-block" x="597.36" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-132">
+<rect class="cursor-block" x="607.28" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-133">
+<rect class="cursor-block" x="617.2" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-134">
+<rect class="cursor-block" x="627.12" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-135">
+<rect class="cursor-block" x="637.04" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-136">
+<rect class="cursor-block" x="646.96" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-137">
+<rect class="cursor-block" x="656.88" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-138">
+<rect class="cursor-block" x="666.8" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-139">
+<rect class="cursor-block" x="676.72" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-140">
+<rect class="cursor-block" x="686.64" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-141">
+<rect class="cursor-block" x="696.56" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-142">
+<rect class="cursor-block" x="706.48" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-143">
+<rect class="cursor-block" x="716.4" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-144">
+<rect class="cursor-block" x="726.32" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-145">
+<rect class="cursor-block" x="736.24" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-146">
+<rect class="cursor-block" x="746.16" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-147">
+<rect class="cursor-block" x="756.08" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-148">
+<rect class="cursor-block" x="766" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-149">
+<rect class="cursor-block" x="775.92" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-150">
+<rect class="cursor-block" x="785.84" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-151">
+<rect class="cursor-block" x="795.76" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-152">
+<rect class="cursor-block" x="805.68" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-153">
+<rect class="cursor-block" x="31.92" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-154">
+<rect class="cursor-block" x="41.84" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-155">
+<rect class="cursor-block" x="51.76" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-156">
+<rect class="cursor-block" x="61.68" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-157">
+<rect class="cursor-block" x="71.6" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-158">
+<rect class="cursor-block" x="81.52" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-159">
+<rect class="cursor-block" x="91.44" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-160">
+<rect class="cursor-block" x="101.36" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-161">
+<rect class="cursor-block" x="111.28" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-162">
+<rect class="cursor-block" x="121.2" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-163">
+<rect class="cursor-block" x="131.12" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-164">
+<rect class="cursor-block" x="141.04" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-165">
+<rect class="cursor-block" x="150.96" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-166">
+<rect class="cursor-block" x="160.88" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-167">
+<rect class="cursor-block" x="170.8" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-168">
+<rect class="cursor-block" x="180.72" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-169">
+<rect class="cursor-block" x="190.64" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-170">
+<rect class="cursor-block" x="200.56" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-171">
+<rect class="cursor-block" x="210.48" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-172">
+<rect class="cursor-block" x="220.4" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-173">
+<rect class="cursor-block" x="230.32" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-174">
+<rect class="cursor-block" x="240.24" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-175">
+<rect class="cursor-block" x="250.16" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-176">
+<rect class="cursor-block" x="260.08" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-177">
+<rect class="cursor-block" x="270" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-178">
+<rect class="cursor-block" x="279.92" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-179">
+<rect class="cursor-block" x="289.84" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-180">
+<rect class="cursor-block" x="299.76" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-181">
+<rect class="cursor-block" x="309.68" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-182">
+<rect class="cursor-block" x="319.6" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-183">
+<rect class="cursor-block" x="329.52" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-184">
+<rect class="cursor-block" x="339.44" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-185">
+<rect class="cursor-block" x="349.36" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-186">
+<rect class="cursor-block" x="359.28" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-187">
+<rect class="cursor-block" x="369.2" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-188">
+<rect class="cursor-block" x="379.12" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-189">
+<rect class="cursor-block" x="389.04" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-190">
+<rect class="cursor-block" x="22" y="510" width="9.92" height="20"/>
+</g>
+<g class="layer cursor-layer-191">
+<rect class="cursor-block" x="41.84" y="510" width="9.92" height="20"/>
+</g>
+</g>
+</svg>
