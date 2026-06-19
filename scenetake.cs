@@ -2127,6 +2127,7 @@ static string CreateInitialScenarioYaml()
     # Optional teardown commands. They run after the cast file is written, but are not recorded in the cast.
     # post:
     #   - echo "run after steps"
+
     """;
 }
 
