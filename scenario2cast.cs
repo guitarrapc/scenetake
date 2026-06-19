@@ -549,7 +549,7 @@ static bool TryConsumeThemeArg(string[] args, ref int i, ref string? themePreset
         return true;
     }
 
-    if (!ThemePresets.TryParse(value, out var parsed, out error))
+    if (!RenderSettingsResolver.TryParsePreset(value, out var parsed, out error))
         return true;
 
     themePresetOverride = parsed;

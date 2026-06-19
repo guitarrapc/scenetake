@@ -2,80 +2,48 @@ using System.Globalization;
 
 internal readonly record struct TerminalTheme(string Foreground, string Background, string[] AnsiPalette)
 {
-    internal static TerminalTheme FromResolved(ResolvedTheme theme)
-    {
-        var palette = ParsePalette(theme.Palette);
-        return new TerminalTheme(theme.Fg, theme.Bg, palette);
-    }
-
-    private static string[] ParsePalette(string palette)
-    {
-        var parts = palette.Split(':', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length >= 16)
-            return parts[..16];
-
-        var defaults = TerminalEmulatorPalette.DefaultColors();
-        for (var i = 0; i < parts.Length && i < defaults.Length; i++)
-            defaults[i] = parts[i];
-        return defaults;
-    }
-}
-
-internal static class TerminalEmulatorPalette
-{
-    internal static string[] DefaultColors() =>
+    private static readonly string[] DefaultPalette =
     [
         "#151515", "#ac4142", "#7e8e50", "#e5b567", "#6c99bb", "#9f4e85", "#7dd6cf", "#d0d0d0",
         "#505050", "#ac4142", "#7e8e50", "#e5b567", "#6c99bb", "#9f4e85", "#7dd6cf", "#f5f5f5"
     ];
+
+    internal static TerminalTheme FromResolved(ResolvedTheme theme)
+    {
+        var parts = theme.Palette.Split(':', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 16)
+        {
+            var palette = (string[])DefaultPalette.Clone();
+            Array.Copy(parts, palette, parts.Length);
+            return new TerminalTheme(theme.Fg, theme.Bg, palette);
+        }
+
+        return new TerminalTheme(theme.Fg, theme.Bg, parts[..16]);
+    }
 }
 
 internal readonly record struct CellStyle(
-    string Foreground,
-    string Background,
-    bool Bold,
-    bool Italic,
-    bool Underline,
-    bool Reversed = false,
-    bool Faint = false)
+    string Foreground, string Background, bool Bold, bool Italic, bool Underline,
+    bool Reversed = false, bool Faint = false)
 {
     internal static CellStyle Default(TerminalTheme theme) =>
         new(theme.Foreground, theme.Background, false, false, false);
 }
 
-internal readonly struct ScreenCell
+internal readonly struct ScreenCell(string text, CellStyle style, bool isWide = false, bool isWideContinuation = false)
 {
-    internal ScreenCell(
-        string text,
-        CellStyle style,
-        bool isWide = false,
-        bool isWideContinuation = false)
-    {
-        Text = text;
-        Foreground = style.Foreground;
-        Background = style.Background;
-        Bold = style.Bold;
-        Italic = style.Italic;
-        Underline = style.Underline;
-        Reversed = style.Reversed;
-        Faint = style.Faint;
-        IsWide = isWide;
-        IsWideContinuation = isWideContinuation;
-    }
-
-    internal string Text { get; }
-    internal string Foreground { get; }
-    internal string Background { get; }
-    internal bool Bold { get; }
-    internal bool Italic { get; }
-    internal bool Underline { get; }
-    internal bool Reversed { get; }
-    internal bool Faint { get; }
-    internal bool IsWide { get; }
-    internal bool IsWideContinuation { get; }
-
-    internal CellStyle ToStyle() =>
-        new(Foreground, Background, Bold, Italic, Underline, Reversed, Faint);
+    internal string Text => text;
+    internal CellStyle Style => style;
+    internal string Foreground => style.Foreground;
+    internal string Background => style.Background;
+    internal bool Bold => style.Bold;
+    internal bool Italic => style.Italic;
+    internal bool Underline => style.Underline;
+    internal bool Reversed => style.Reversed;
+    internal bool Faint => style.Faint;
+    internal bool IsWide => isWide;
+    internal bool IsWideContinuation => isWideContinuation;
+    internal CellStyle ToStyle() => style;
 }
 
 internal sealed class ScreenBuffer
@@ -138,10 +106,7 @@ internal sealed class ScreenBuffer
         {
             var a = _cells[row, col];
             var b = other._cells[row, col];
-            if (a.Text != b.Text || a.Foreground != b.Foreground || a.Background != b.Background
-                || a.Bold != b.Bold || a.Italic != b.Italic || a.Underline != b.Underline
-                || a.Reversed != b.Reversed || a.Faint != b.Faint
-                || a.IsWide != b.IsWide || a.IsWideContinuation != b.IsWideContinuation)
+            if (a.Text != b.Text || a.Style != b.Style || a.IsWide != b.IsWide || a.IsWideContinuation != b.IsWideContinuation)
             {
                 return false;
             }
@@ -234,11 +199,7 @@ internal sealed class ScreenBuffer
     }
 
     internal void PutSurrogatePair(char high, char low, CellStyle style) =>
-        PutPrintable(string.Create(2, (high, low), static (span, state) =>
-        {
-            span[0] = state.high;
-            span[1] = state.low;
-        }), style);
+        PutCodePoint(char.ConvertToUtf32(high, low), string.Create(2, (high, low), static (s, t) => { s[0] = t.high; s[1] = t.low; }), style);
 
     internal void AppendToPreviousCell(string combining)
     {
@@ -534,7 +495,7 @@ internal sealed class ScreenBuffer
 
         var cell = _cells[row, col];
         _cells[row, col] = new ScreenCell(cell.Text, cell.ToStyle(), isWide: true);
-        _cells[row, col + 1] = new ScreenCell(" ", cell.ToStyle(), isWideContinuation: true);
+        _cells[row, col + 1] = new ScreenCell(Space, cell.ToStyle(), isWideContinuation: true);
 
         if (CursorRow == row && CursorCol == col + 1)
         {
@@ -556,8 +517,16 @@ internal sealed class ScreenBuffer
             Index();
         }
 
-        var isWide = IsWideCharacter(text);
+        var cp = Utf16CodePoint(text);
+        if (cp < 0)
+            return;
 
+        PutCodePoint(cp, text, style);
+    }
+
+    private void PutCodePoint(int cp, string text, CellStyle style)
+    {
+        var isWide = IsWideCodePoint(cp);
         if (isWide && CursorCol + 1 >= Width)
         {
             _cells[CursorRow, CursorCol] = BlankCell();
@@ -570,7 +539,7 @@ internal sealed class ScreenBuffer
 
         if (isWide && CursorCol < Width)
         {
-            _cells[CursorRow, CursorCol] = new ScreenCell(" ", style, false, true);
+            _cells[CursorRow, CursorCol] = new ScreenCell(Space, style, isWideContinuation: true);
             CursorCol++;
         }
 
@@ -581,49 +550,36 @@ internal sealed class ScreenBuffer
         }
     }
 
-    private static bool IsWideCharacter(string text)
+    private static int Utf16CodePoint(string text) =>
+        text.Length switch
+        {
+            0 => -1,
+            1 => text[0],
+            2 when char.IsHighSurrogate(text[0]) && char.IsLowSurrogate(text[1]) => char.ConvertToUtf32(text[0], text[1]),
+            _ => -1
+        };
+
+    private static bool IsWideCodePoint(int cp) => cp switch
     {
-        if (string.IsNullOrEmpty(text))
-            return false;
-
-        int codePoint;
-        if (text.Length >= 2 && char.IsHighSurrogate(text[0]) && char.IsLowSurrogate(text[1]))
-            codePoint = char.ConvertToUtf32(text[0], text[1]);
-        else if (text.Length == 1)
-            codePoint = text[0];
-        else
-            return false;
-
-        return IsEastAsianWide(codePoint) || IsBmpEmojiWide(codePoint);
-    }
-
-    private static bool IsBmpEmojiWide(int cp) =>
-        cp is 0x2611 or 0x2705 or 0x274C or 0x2753 or 0x2754 or 0x2755 or 0x2757;
-
-    private static bool IsEastAsianWide(int cp) =>
-        cp is (>= 0x1100 and <= 0x115F)
-            or (>= 0x2E80 and <= 0x2FFD)
-            or (>= 0x3000 and <= 0x303F)
-            or (>= 0x3040 and <= 0x33FF)
-            or (>= 0x3400 and <= 0x4DBF)
-            or (>= 0x4E00 and <= 0x9FFF)
-            or (>= 0xA000 and <= 0xA48C)
-            or (>= 0xA960 and <= 0xA97F)
-            or (>= 0xAC00 and <= 0xD7A3)
-            or (>= 0xF900 and <= 0xFAFF)
-            or (>= 0xFE10 and <= 0xFE1F)
-            or (>= 0xFE30 and <= 0xFE6F)
-            or (>= 0xFF01 and <= 0xFF60)
-            or (>= 0xFFE0 and <= 0xFFE6)
-            or (>= 0x1B000 and <= 0x1B0FF)
-            or (>= 0x1F004 and <= 0x1F004)
-            or (>= 0x1F0CF and <= 0x1F0CF)
-            or (>= 0x1F200 and <= 0x1F2FF)
-            or (>= 0x1F300 and <= 0x1F64F)
-            or (>= 0x1F680 and <= 0x1F6FF)
-            or (>= 0x1F900 and <= 0x1F9FF)
-            or (>= 0x20000 and <= 0x2FFFD)
-            or (>= 0x30000 and <= 0x3FFFD);
+        0x2611 or 0x2705 or 0x274C or 0x2753 or 0x2754 or 0x2755 or 0x2757 => true,
+        >= 0x1100 and <= 0x115F => true,
+        >= 0x2E80 and <= 0x9FFF => true,
+        >= 0xA000 and <= 0xA48C => true,
+        >= 0xA960 and <= 0xA97F => true,
+        >= 0xAC00 and <= 0xD7A3 => true,
+        >= 0xF900 and <= 0xFAFF => true,
+        >= 0xFE10 and <= 0xFE6F => true,
+        >= 0xFF01 and <= 0xFF60 => true,
+        >= 0xFFE0 and <= 0xFFE6 => true,
+        >= 0x1B000 and <= 0x1B0FF => true,
+        0x1F004 or 0x1F0CF => true,
+        >= 0x1F200 and <= 0x1F64F => true,
+        >= 0x1F680 and <= 0x1F6FF => true,
+        >= 0x1F900 and <= 0x1F9FF => true,
+        >= 0x20000 and <= 0x2FFFD => true,
+        >= 0x30000 and <= 0x3FFFD => true,
+        _ => false
+    };
 
     private void ScrollRegionUp(int top, int bottom, int count, bool includeScrollback)
     {
@@ -740,8 +696,9 @@ internal sealed class AnsiParser
     private readonly TerminalTheme _theme;
     private readonly List<int> _csiParams = new(8);
     private CellStyle _style;
-    private string _pendingEscapeSequence = "";
-    private string _pendingCaretSequence = "";
+    private string _pendingEscape = "";
+    private string _pendingCaret = "";
+    [ThreadStatic] private static char[]? t_pendingBuf;
 
     internal AnsiParser(ScreenBuffer buffer, TerminalTheme theme)
     {
@@ -752,21 +709,37 @@ internal sealed class AnsiParser
 
     internal void Process(string text)
     {
-        if (string.IsNullOrEmpty(text))
+        if (text.Length == 0)
             return;
 
-        if (_pendingEscapeSequence.Length > 0)
+        if (_pendingEscape.Length > 0)
         {
-            text = _pendingEscapeSequence + text;
-            _pendingEscapeSequence = "";
+            text = MergePending(_pendingEscape, text);
+            _pendingEscape = "";
         }
 
-        if (_pendingCaretSequence.Length > 0)
+        if (_pendingCaret.Length > 0)
         {
-            text = _pendingCaretSequence + text;
-            _pendingCaretSequence = "";
+            text = MergePending(_pendingCaret, text);
+            _pendingCaret = "";
         }
 
+        ProcessCore(text);
+    }
+
+    private static string MergePending(string pending, string text)
+    {
+        var len = pending.Length + text.Length;
+        var buf = t_pendingBuf ??= new char[256];
+        if (len > buf.Length)
+            buf = t_pendingBuf = new char[len];
+        pending.AsSpan().CopyTo(buf);
+        text.AsSpan().CopyTo(buf.AsSpan(pending.Length));
+        return new string(buf, 0, len);
+    }
+
+    private void ProcessCore(string text)
+    {
         for (var i = 0; i < text.Length; i++)
         {
             var ch = text[i];
@@ -774,7 +747,7 @@ internal sealed class AnsiParser
             {
                 if (!TryHandleEscape(text, i, out var escapeEndIndex))
                 {
-                    _pendingEscapeSequence = text[i..];
+                    _pendingEscape = text[i..];
                     break;
                 }
 
@@ -784,9 +757,9 @@ internal sealed class AnsiParser
 
             if (ch == '^' && i + 2 < text.Length && text[i + 1] == '[' && text[i + 2] == ']')
             {
-                if (!TrySkipCaretOsc(text, i + 3, out var oscEnd))
+                if (!TrySkipOsc(text, i + 3, out var oscEnd, caretTerminator: true))
                 {
-                    _pendingCaretSequence = text[i..];
+                    _pendingCaret = text[i..];
                     break;
                 }
 
@@ -844,9 +817,12 @@ internal sealed class AnsiParser
             case ']':
                 return TrySkipOsc(text, index + 2, out endIndex);
             case 'P':
-                return TrySkipDcs(text, index + 2, out endIndex);
+                return TrySkipOsc(text, index + 2, out endIndex);
             case '(' or ')' or '*' or '+' or '-' or '.' or '/' or '#' or '%':
-                return TrySkipEscSingleFinal(text, index + 2, out endIndex);
+                if (index + 2 >= text.Length)
+                    return false;
+                endIndex = index + 2;
+                return true;
             case '7':
                 _buffer.SaveCursor();
                 endIndex = index + 1;
@@ -879,38 +855,7 @@ internal sealed class AnsiParser
         }
     }
 
-    private static bool TrySkipEscSingleFinal(string text, int start, out int endIndex)
-    {
-        endIndex = start;
-        if (start >= text.Length)
-            return false;
-
-        endIndex = start;
-        return true;
-    }
-
-    private static bool TrySkipOsc(string text, int start, out int endIndex)
-    {
-        endIndex = text.Length - 1;
-        for (var i = start; i < text.Length; i++)
-        {
-            if (text[i] == '\a')
-            {
-                endIndex = i;
-                return true;
-            }
-
-            if (text[i] == '\u001b' && i + 1 < text.Length && text[i + 1] == '\\')
-            {
-                endIndex = i + 1;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static bool TrySkipCaretOsc(string text, int start, out int endIndex)
+    private static bool TrySkipOsc(string text, int start, out int endIndex, bool caretTerminator = false)
     {
         endIndex = start;
         for (var i = start; i < text.Length; i++)
@@ -921,7 +866,7 @@ internal sealed class AnsiParser
                 return true;
             }
 
-            if (text[i] == '^' && i + 2 < text.Length && text[i + 1] == '[' && text[i + 2] == '\\')
+            if (caretTerminator && text[i] == '^' && i + 2 < text.Length && text[i + 1] == '[' && text[i + 2] == '\\')
             {
                 endIndex = i + 2;
                 return true;
@@ -936,9 +881,6 @@ internal sealed class AnsiParser
 
         return false;
     }
-
-    private static bool TrySkipDcs(string text, int start, out int endIndex) =>
-        TrySkipOsc(text, start, out endIndex);
 
     private bool TryHandleCsi(string text, int start, out int endIndex)
     {
@@ -1265,13 +1207,13 @@ internal readonly record struct CastEvent(
 
 internal sealed class ReplayFrame
 {
-    internal ReplayFrame(double time, ScreenBuffer buffer, int viewportWidth, int viewportHeight)
+    internal ReplayFrame(double time, ScreenBuffer buffer, int viewportWidth, int viewportHeight, ulong? signature = null)
     {
         Time = time;
         Buffer = buffer;
         ViewportWidth = viewportWidth;
         ViewportHeight = viewportHeight;
-        Signature = TerminalReplay.BuildVisualSignature(buffer);
+        Signature = signature ?? TerminalReplay.BuildVisualSignature(buffer);
     }
 
     internal double Time { get; }
@@ -1305,7 +1247,7 @@ internal static class TerminalReplay
             if (lastSignature is ulong previous && previous == signature)
                 return;
 
-            frames.Add(new ReplayFrame(time, padded, buffer.Width, buffer.Height));
+            frames.Add(new ReplayFrame(time, padded, buffer.Width, buffer.Height, signature));
             lastSignature = signature;
         }
 
@@ -1402,20 +1344,15 @@ internal static class TerminalReplay
                 if (cell.Text != Space || cell.IsWide || cell.IsWideContinuation)
                     return false;
 
-                if (!string.Equals(cell.Foreground, buffer.DefaultStyle.Foreground, StringComparison.Ordinal)
-                    || !string.Equals(cell.Background, buffer.DefaultStyle.Background, StringComparison.Ordinal)
-                    || cell.Bold || cell.Italic || cell.Underline || cell.Reversed || cell.Faint)
-                {
+                if (cell.Style != buffer.DefaultStyle)
                     return false;
-                }
             }
         }
 
         return true;
     }
 
-    private static bool IsBlankFrame(ScreenBuffer buffer) =>
-        IsBlankBuffer(buffer);
+    private static bool IsBlankFrame(ScreenBuffer buffer) => IsBlankBuffer(buffer);
 
     private static bool HasTrailingBlankIndicators(IReadOnlyList<CastEvent> events, int startIndex)
     {
@@ -1454,16 +1391,11 @@ internal static class TerminalReplay
             for (var col = 0; col < buffer.Width; col++)
             {
                 var cell = buffer.GetCell(row, col);
+                var style = cell.Style;
                 signature = HashString(signature, cell.Text.AsSpan(), fnvPrime);
-                signature = HashString(signature, cell.Foreground.AsSpan(), fnvPrime);
-                signature = HashString(signature, cell.Background.AsSpan(), fnvPrime);
-                signature = HashBool(signature, cell.Bold, fnvPrime);
-                signature = HashBool(signature, cell.Italic, fnvPrime);
-                signature = HashBool(signature, cell.Underline, fnvPrime);
-                signature = HashBool(signature, cell.Reversed, fnvPrime);
-                signature = HashBool(signature, cell.Faint, fnvPrime);
-                signature = HashBool(signature, cell.IsWide, fnvPrime);
-                signature = HashBool(signature, cell.IsWideContinuation, fnvPrime);
+                signature = HashString(signature, style.Foreground.AsSpan(), fnvPrime);
+                signature = HashString(signature, style.Background.AsSpan(), fnvPrime);
+                signature = HashByte(signature, PackStyleFlags(style, cell.IsWide, cell.IsWideContinuation), fnvPrime);
             }
         }
 
@@ -1483,9 +1415,22 @@ internal static class TerminalReplay
         return signature;
     }
 
-    private static ulong HashBool(ulong signature, bool value, ulong fnvPrime)
+    private static byte PackStyleFlags(CellStyle style, bool isWide, bool isWideContinuation)
     {
-        signature ^= value ? (byte)1 : (byte)0;
+        byte flags = 0;
+        if (style.Bold) flags |= 1;
+        if (style.Italic) flags |= 2;
+        if (style.Underline) flags |= 4;
+        if (style.Reversed) flags |= 8;
+        if (style.Faint) flags |= 16;
+        if (isWide) flags |= 32;
+        if (isWideContinuation) flags |= 64;
+        return flags;
+    }
+
+    private static ulong HashByte(ulong signature, byte value, ulong fnvPrime)
+    {
+        signature ^= value;
         signature *= fnvPrime;
         return signature;
     }

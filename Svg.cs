@@ -25,84 +25,53 @@ internal readonly record struct ResolvedRenderSettings(int FontSize, string Font
 
 internal readonly record struct ResolvedTheme(string Fg, string Bg, string Palette);
 
-internal static class ThemePresets
-{
-    internal const string DarkName = "dark";
-    internal const string LightName = "light";
-    internal static string ExpectedPresetNames => $"{DarkName}|{LightName}";
-
-    private static readonly ResolvedTheme DarkTheme = new(
-        "#d0d0d0",
-        "#282c34",
-        "#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5");
-
-    private static readonly ResolvedTheme LightTheme = new(
-        "#383838",
-        "#fafafa",
-        "#383838:#c82828:#548b2e:#a88800:#2871aa:#9a4a96:#008787:#585858:#686868:#e74c3c:#69a845:#d4a017:#3498db:#c678dd:#20b2aa:#fafafa");
-
-    internal static ResolvedTheme Dark => DarkTheme;
-    internal static ResolvedTheme Light => LightTheme;
-
-    internal static bool TryGet(string name, out ResolvedTheme theme)
-    {
-        switch (name.Trim().ToLowerInvariant())
-        {
-            case DarkName:
-                theme = DarkTheme;
-                return true;
-            case LightName:
-                theme = LightTheme;
-                return true;
-            default:
-                theme = default;
-                return false;
-        }
-    }
-
-    internal static bool TryParse(string text, out string presetName, out string error)
-    {
-        presetName = text.Trim();
-        if (presetName.Length == 0)
-        {
-            error = "--theme requires a value";
-            return false;
-        }
-
-        if (!TryGet(presetName, out _))
-        {
-            error = $"unknown theme preset: {presetName} (expected: {ExpectedPresetNames})";
-            return false;
-        }
-
-        error = "";
-        return true;
-    }
-}
-
 internal static class RenderSettingsResolver
 {
-    internal const int MinFontSize = 1;
-    internal const int MaxFontSize = 128;
-    internal const int MinTerminalCols = 1;
-    internal const int MaxTerminalCols = 512;
-    internal const int MinTerminalRows = 1;
-    internal const int MaxTerminalRows = 512;
+    internal const int MinFontSize = 1, MaxFontSize = 128;
+    internal const int MinTerminalCols = 1, MaxTerminalCols = 512;
+    internal const int MinTerminalRows = 1, MaxTerminalRows = 512;
+    internal const int DefaultFontSize = 16;
+    internal const int MaxFontFamilyLength = 256, MaxFontFamilyCount = 10;
+    internal const string FontSizeTagPrefix = "s2c:font-size=";
+    internal const string FontFamilyTagPrefix = "s2c:font-family=";
+    internal const string DarkName = "dark", LightName = "light";
+    internal static string ExpectedPresetNames => $"{DarkName}|{LightName}";
+    internal const string DefaultFontFamily =
+        "ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace";
+
+    private static readonly ResolvedTheme DarkTheme = new(
+        "#d0d0d0", "#282c34",
+        "#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5");
+    private static readonly ResolvedTheme LightTheme = new(
+        "#383838", "#fafafa",
+        "#383838:#c82828:#548b2e:#a88800:#2871aa:#9a4a96:#008787:#585858:#686868:#e74c3c:#69a845:#d4a017:#3498db:#c678dd:#20b2aa:#fafafa");
+
+    internal static string DefaultFg => DarkTheme.Fg;
+    internal static string DefaultBg => DarkTheme.Bg;
+    internal static string DefaultPalette => DarkTheme.Palette;
 
     internal static bool IsValidTerminalSize(int cols, int rows) =>
         cols is >= MinTerminalCols and <= MaxTerminalCols &&
         rows is >= MinTerminalRows and <= MaxTerminalRows;
 
-    internal const int DefaultFontSize = 16;
-    internal const int MaxFontFamilyLength = 256;
-    internal const int MaxFontFamilyCount = 10;
-    internal const string FontSizeTagPrefix = "s2c:font-size=";
-    internal const string FontFamilyTagPrefix = "s2c:font-family=";
-    internal const string DefaultFontFamily =
-        "ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace";
-    internal static string DefaultFg => ThemePresets.Dark.Fg;
-    internal static string DefaultBg => ThemePresets.Dark.Bg;
-    internal static string DefaultPalette => ThemePresets.Dark.Palette;
+    internal static bool TryGetPreset(string name, out ResolvedTheme theme)
+    {
+        switch (name.Trim().ToLowerInvariant())
+        {
+            case DarkName: theme = DarkTheme; return true;
+            case LightName: theme = LightTheme; return true;
+            default: theme = default; return false;
+        }
+    }
+
+    internal static bool TryParsePreset(string text, out string presetName, out string error)
+    {
+        presetName = text.Trim();
+        if (presetName.Length == 0) { error = "--theme requires a value"; return false; }
+        if (!TryGetPreset(presetName, out _)) { error = $"unknown theme preset: {presetName} (expected: {ExpectedPresetNames})"; return false; }
+        error = "";
+        return true;
+    }
 
     internal static bool TryParseFontFamily(string text, out string fontFamily, out string error)
     {
@@ -216,11 +185,11 @@ internal static class RenderSettingsResolver
 
         var presetName = cliThemePreset ?? theme?.Preset;
         if (string.IsNullOrWhiteSpace(presetName))
-            presetName = ThemePresets.DarkName;
+            presetName = RenderSettingsResolver.DarkName;
 
-        if (!ThemePresets.TryGet(presetName, out var baseTheme))
+        if (!RenderSettingsResolver.TryGetPreset(presetName, out var baseTheme))
         {
-            error = $"unknown theme preset: {presetName} (expected: {ThemePresets.ExpectedPresetNames})";
+            error = $"unknown theme preset: {presetName} (expected: {RenderSettingsResolver.ExpectedPresetNames})";
             return false;
         }
 
@@ -238,9 +207,9 @@ internal static class RenderSettingsResolver
         error = "";
         if (themePresetOverride is not null)
         {
-            if (!ThemePresets.TryGet(themePresetOverride, out var theme))
+            if (!RenderSettingsResolver.TryGetPreset(themePresetOverride, out var theme))
             {
-                error = $"unknown theme preset: {themePresetOverride} (expected: {ThemePresets.ExpectedPresetNames})";
+                error = $"unknown theme preset: {themePresetOverride} (expected: {RenderSettingsResolver.ExpectedPresetNames})";
                 return settings;
             }
 
@@ -275,28 +244,24 @@ internal static class RenderSettingsResolver
         return settings;
     }
 
-    internal static string ResolveCastSvgOutputPath(string castPath, string? outputArg)
+    internal static string ResolveCastSvgOutputPath(string castPath, string? outputArg) =>
+        ResolveOutputPath(castPath, outputArg, ".svg");
+
+    internal static string ResolveOutputStem(string scenarioPath, string? outputArg) =>
+        ResolveOutputPath(scenarioPath, outputArg, null);
+
+    private static string ResolveOutputPath(string inputPath, string? outputArg, string? extension)
     {
         if (outputArg is not null)
         {
             var full = Path.GetFullPath(outputArg);
-            return Path.Combine(
-                Path.GetDirectoryName(full) ?? ".",
-                Path.GetFileNameWithoutExtension(full) + ".svg");
+            var dir = Path.GetDirectoryName(full) ?? ".";
+            var stem = Path.GetFileNameWithoutExtension(full);
+            return extension is null ? Path.Combine(dir, stem) : Path.Combine(dir, stem + extension);
         }
 
-        return Path.ChangeExtension(Path.GetFullPath(castPath), ".svg")!;
-    }
-
-    internal static string ResolveOutputStem(string scenarioPath, string? outputArg)
-    {
-        if (outputArg is not null)
-        {
-            var full = Path.GetFullPath(outputArg);
-            return Path.Combine(Path.GetDirectoryName(full) ?? ".", Path.GetFileNameWithoutExtension(full));
-        }
-
-        return Path.ChangeExtension(Path.GetFullPath(scenarioPath), null)!;
+        var resolved = Path.GetFullPath(inputPath);
+        return extension is null ? Path.ChangeExtension(resolved, null)! : Path.ChangeExtension(resolved, extension)!;
     }
 }
 
@@ -315,6 +280,7 @@ internal static class SvgFrameRenderer
     private const string Space = " ";
 
     [ThreadStatic] private static StringBuilder? t_runText;
+    [ThreadStatic] private static StringBuilder? t_escape;
 
     internal static string Render(
         IReadOnlyList<ReplayFrame> frames,
@@ -329,36 +295,89 @@ internal static class SvgFrameRenderer
         var theme = TerminalTheme.FromResolved(render.Theme);
         var metrics = CreateMetrics(render.FontSize, canvasWidth, canvasHeight);
 
-        var rowLayers = BuildRowLayers(frames, canvasWidth, canvasHeight, theme);
-        var cursorLayers = BuildCursorLayers(frames);
-        var viewportLayers = BuildViewportLayers(frames);
+        var layers = BuildLayers(frames, canvasWidth, canvasHeight, theme);
 
-        return BuildLayeredSvg(
-            rowLayers,
-            cursorLayers,
-            viewportLayers,
-            metrics,
-            render,
-            theme,
-            canvasWidth,
-            canvasHeight);
+        return BuildLayeredSvg(layers, metrics, render, theme, canvasWidth, canvasHeight);
+    }
+
+    private static LayerSet BuildLayers(
+        IReadOnlyList<ReplayFrame> frames,
+        int canvasWidth,
+        int canvasHeight,
+        TerminalTheme theme)
+    {
+        var rows = new List<AnimLayer>();
+        var cursors = new List<AnimLayer>();
+        var viewports = new List<AnimLayer>();
+        var activeByRow = new AnimLayer?[canvasHeight];
+        var previous = new ScreenBuffer(canvasWidth, canvasHeight, theme);
+        AnimLayer? cursorActive = null;
+        AnimLayer? viewportActive = null;
+
+        foreach (var frame in frames)
+        {
+            var time = frame.Time;
+            var buffer = frame.Buffer;
+
+            if (viewportActive is null || viewportActive.P0 != frame.ViewportWidth || viewportActive.P1 != frame.ViewportHeight)
+            {
+                if (viewportActive is not null)
+                    viewportActive.Hide = time;
+                viewportActive = new AnimLayer(time, frame.ViewportWidth, frame.ViewportHeight);
+                viewports.Add(viewportActive);
+            }
+
+            if (!buffer.CursorVisible)
+            {
+                if (cursorActive is not null)
+                {
+                    cursorActive.Hide = time;
+                    cursorActive = null;
+                }
+            }
+            else if (cursorActive is null || cursorActive.P0 != buffer.CursorRow || cursorActive.P1 != buffer.CursorCol)
+            {
+                if (cursorActive is not null)
+                    cursorActive.Hide = time;
+                cursorActive = new AnimLayer(time, buffer.CursorRow, buffer.CursorCol);
+                cursors.Add(cursorActive);
+            }
+
+            for (var row = 0; row < canvasHeight; row++)
+            {
+                if (previous.RowEquals(buffer, row))
+                    continue;
+
+                if (activeByRow[row] is { } active)
+                    active.Hide = time;
+
+                var layer = new AnimLayer(time, row, buffer);
+                rows.Add(layer);
+                activeByRow[row] = layer;
+            }
+
+            previous = buffer;
+        }
+
+        return new LayerSet(rows, cursors, viewports);
     }
 
     private static string BuildLayeredSvg(
-        IReadOnlyList<RowLayer> rowLayers,
-        IReadOnlyList<CursorLayer> cursorLayers,
-        IReadOnlyList<ViewportLayer> viewportLayers,
+        LayerSet layers,
         SvgMetrics metrics,
         ResolvedRenderSettings render,
         TerminalTheme theme,
         int canvasWidth,
         int canvasHeight)
     {
+        var rowLayers = layers.Rows;
+        var cursorLayers = layers.Cursors;
+        var viewportLayers = layers.Viewports;
         var fadeText = LayerFadeSeconds.ToString("0.######", CultureInfo.InvariantCulture);
         var cursorOpacityText = CursorBlockOpacity.ToString("0.######", CultureInfo.InvariantCulture);
 
         if (viewportLayers.Count == 0)
-            viewportLayers = [new ViewportLayer(canvasWidth, canvasHeight, 0)];
+            viewportLayers = [new AnimLayer(0, canvasWidth, canvasHeight)];
 
         var sb = new StringBuilder(64 * 1024);
         sb.AppendLine(CultureInfo.InvariantCulture, $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
@@ -378,16 +397,13 @@ internal static class SvgFrameRenderer
             $".cursor-block {{ fill: {theme.Foreground}; fill-opacity: {cursorOpacityText}; }}");
 
         for (var i = 0; i < rowLayers.Count; i++)
-            AppendLayerStyle(sb, $".layer-{i}", rowLayers[i].ShowTime, rowLayers[i].HideTime);
+            AppendLayerStyle(sb, $".layer-{i}", rowLayers[i].Show, rowLayers[i].Hide);
 
         for (var i = 0; i < cursorLayers.Count; i++)
-            AppendLayerStyle(sb, $".cursor-layer-{i}", cursorLayers[i].ShowTime, cursorLayers[i].HideTime);
+            AppendLayerStyle(sb, $".cursor-layer-{i}", cursorLayers[i].Show, cursorLayers[i].Hide);
 
         for (var i = 0; i < viewportLayers.Count; i++)
-        {
-            var viewport = viewportLayers[i];
-            AppendLayerStyle(sb, $".viewport-mask-{i}, .viewport-bg-{i}", viewport.ShowTime, viewport.HideTime);
-        }
+            AppendLayerStyle(sb, $".viewport-mask-{i}, .viewport-bg-{i}", viewportLayers[i].Show, viewportLayers[i].Hide);
 
         sb.AppendLine("</style>");
 
@@ -397,8 +413,8 @@ internal static class SvgFrameRenderer
         for (var i = 0; i < viewportLayers.Count; i++)
         {
             var viewport = viewportLayers[i];
-            var viewportWidth = metrics.ViewportPixelWidth(viewport.Width);
-            var viewportHeight = metrics.ViewportPixelHeight(viewport.Height);
+            var viewportWidth = metrics.ViewportPixelWidth(viewport.P0);
+            var viewportHeight = metrics.ViewportPixelHeight(viewport.P1);
             sb.AppendLine(CultureInfo.InvariantCulture,
                 $"<rect class=\"layer viewport-mask-{i}\" x=\"{Padding:0.##}\" y=\"{Padding:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"white\"/>");
         }
@@ -410,8 +426,8 @@ internal static class SvgFrameRenderer
         for (var i = 0; i < viewportLayers.Count; i++)
         {
             var viewport = viewportLayers[i];
-            var viewportWidth = metrics.ViewportPixelWidth(viewport.Width);
-            var viewportHeight = metrics.ViewportPixelHeight(viewport.Height);
+            var viewportWidth = metrics.ViewportPixelWidth(viewport.P0);
+            var viewportHeight = metrics.ViewportPixelHeight(viewport.P1);
             sb.AppendLine(CultureInfo.InvariantCulture,
                 $"<rect class=\"bg layer viewport-bg-{i}\" x=\"{Padding:0.##}\" y=\"{Padding:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"{render.Theme.Bg}\"/>");
         }
@@ -421,7 +437,7 @@ internal static class SvgFrameRenderer
         {
             var layer = rowLayers[i];
             sb.AppendLine(CultureInfo.InvariantCulture, $"<g class=\"layer layer-{i}\">");
-            AppendRow(sb, layer.Buffer, layer.Row, origin.X, origin.Y, metrics, theme);
+            AppendRow(sb, layer.Buffer!, layer.P0, origin.X, origin.Y, metrics, theme);
             sb.AppendLine("</g>");
         }
 
@@ -430,7 +446,7 @@ internal static class SvgFrameRenderer
             var layer = cursorLayers[i];
             sb.AppendLine(CultureInfo.InvariantCulture, $"<g class=\"layer cursor-layer-{i}\">");
             sb.AppendLine(CultureInfo.InvariantCulture,
-                $"<rect class=\"cursor-block\" x=\"{origin.X + layer.Col * metrics.CharWidth:0.##}\" y=\"{origin.Y + layer.Row * metrics.LineHeight:0.##}\" width=\"{metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\"/>");
+                $"<rect class=\"cursor-block\" x=\"{origin.X + layer.P1 * metrics.CharWidth:0.##}\" y=\"{origin.Y + layer.P0 * metrics.LineHeight:0.##}\" width=\"{metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\"/>");
             sb.AppendLine("</g>");
         }
 
@@ -439,115 +455,23 @@ internal static class SvgFrameRenderer
         return sb.ToString();
     }
 
-    private static void AppendLayerStyle(
-        StringBuilder sb,
-        string selector,
-        double showTime,
-        double? hideTime)
+    private static void AppendLayerStyle(StringBuilder sb, string selector, double showTime, double? hideTime)
     {
-        var showDelay = showTime.ToString("0.######", CultureInfo.InvariantCulture);
+        sb.Append(selector);
         if (hideTime is double hide)
         {
-            var hideDelay = hide.ToString("0.######", CultureInfo.InvariantCulture);
-            sb.AppendLine(CultureInfo.InvariantCulture,
-                $"{selector} {{ animation-name: layer-in, layer-out; animation-delay: {showDelay}s, {hideDelay}s; }}");
+            sb.Append(" { animation-name: layer-in, layer-out; animation-delay: ");
+            sb.Append(showTime.ToString("0.######", CultureInfo.InvariantCulture));
+            sb.Append("s, ");
+            sb.Append(hide.ToString("0.######", CultureInfo.InvariantCulture));
+            sb.AppendLine("s; }");
             return;
         }
 
-        sb.AppendLine(CultureInfo.InvariantCulture,
-            $"{selector} {{ animation-name: layer-in; animation-delay: {showDelay}s; }}");
+        sb.Append(" { animation-name: layer-in; animation-delay: ");
+        sb.Append(showTime.ToString("0.######", CultureInfo.InvariantCulture));
+        sb.AppendLine("s; }");
     }
-
-    private static List<RowLayer> BuildRowLayers(
-        IReadOnlyList<ReplayFrame> frames,
-        int canvasWidth,
-        int canvasHeight,
-        TerminalTheme theme)
-    {
-        var layers = new List<RowLayer>();
-        var activeByRow = new RowLayer?[canvasHeight];
-        var previous = new ScreenBuffer(canvasWidth, canvasHeight, theme);
-
-        foreach (var frame in frames)
-        {
-            var buffer = frame.Buffer;
-            for (var row = 0; row < canvasHeight; row++)
-            {
-                if (RowEquals(previous, buffer, row))
-                    continue;
-
-                if (activeByRow[row] is { } active)
-                    active.HideTime = frame.Time;
-
-                var layer = new RowLayer(row, frame.Time, buffer);
-                layers.Add(layer);
-                activeByRow[row] = layer;
-            }
-
-            previous = buffer;
-        }
-
-        return layers;
-    }
-
-    private static List<CursorLayer> BuildCursorLayers(IReadOnlyList<ReplayFrame> frames)
-    {
-        var layers = new List<CursorLayer>();
-        CursorLayer? active = null;
-
-        foreach (var frame in frames)
-        {
-            var buffer = frame.Buffer;
-            if (!buffer.CursorVisible)
-            {
-                if (active is not null)
-                {
-                    active.HideTime = frame.Time;
-                    active = null;
-                }
-
-                continue;
-            }
-
-            if (active is not null && active.Row == buffer.CursorRow && active.Col == buffer.CursorCol)
-                continue;
-
-            if (active is not null)
-                active.HideTime = frame.Time;
-
-            active = new CursorLayer(buffer.CursorRow, buffer.CursorCol, frame.Time);
-            layers.Add(active);
-        }
-
-        return layers;
-    }
-
-    private static List<ViewportLayer> BuildViewportLayers(IReadOnlyList<ReplayFrame> frames)
-    {
-        var layers = new List<ViewportLayer>();
-        ViewportLayer? active = null;
-
-        foreach (var frame in frames)
-        {
-            if (active is not null
-                && active.Width == frame.ViewportWidth
-                && active.Height == frame.ViewportHeight)
-            {
-                continue;
-            }
-
-            if (active is not null)
-                active.HideTime = frame.Time;
-
-            active = new ViewportLayer(frame.ViewportWidth, frame.ViewportHeight, frame.Time);
-            layers.Add(active);
-        }
-
-        return layers;
-    }
-
-    private static bool RowEquals(ScreenBuffer left, ScreenBuffer right, int row) =>
-        left.RowEquals(right, row);
 
     private static string BuildEmptySvg(ResolvedRenderSettings render, int width, int height)
     {
@@ -678,30 +602,21 @@ internal static class SvgFrameRenderer
     private static bool TryParseHexColor(string color, out int r, out int g, out int b)
     {
         r = g = b = 0;
-        if (color.Length != 7 || color[0] != '#')
-            return false;
-
-        if (!TryParseHexByte(color[1], color[2], out r)
-            || !TryParseHexByte(color[3], color[4], out g)
-            || !TryParseHexByte(color[5], color[6], out b))
+        if (color.Length != 7 || color[0] != '#'
+            || !TryHexNibble(color[1], out var r0) || !TryHexNibble(color[2], out var r1)
+            || !TryHexNibble(color[3], out var g0) || !TryHexNibble(color[4], out var g1)
+            || !TryHexNibble(color[5], out var b0) || !TryHexNibble(color[6], out var b1))
         {
             return false;
         }
 
+        r = (r0 << 4) | r1;
+        g = (g0 << 4) | g1;
+        b = (b0 << 4) | b1;
         return true;
     }
 
-    private static bool TryParseHexByte(char high, char low, out int value)
-    {
-        value = 0;
-        if (!TryParseHexNibble(high, out var hi) || !TryParseHexNibble(low, out var lo))
-            return false;
-
-        value = (hi << 4) | lo;
-        return true;
-    }
-
-    private static bool TryParseHexNibble(char c, out int value)
+    private static bool TryHexNibble(char c, out int value)
     {
         value = c switch
         {
@@ -719,7 +634,8 @@ internal static class SvgFrameRenderer
         {
             if (text[i] is '&' or '<' or '>' or '"')
             {
-                var sb = new StringBuilder(text.Length + 8);
+                var sb = t_escape ??= new StringBuilder(64);
+                sb.Clear();
                 sb.Append(text, 0, i);
                 for (; i < text.Length; i++)
                 {
@@ -764,7 +680,10 @@ internal static class SvgFrameRenderer
             var quantizedTime = Math.Round(rawTime / interval, MidpointRounding.AwayFromZero) * interval;
             if (i > 0 && quantizedTime < lastTime)
                 quantizedTime = lastTime;
-            normalized.Add(CloneAtTime(frames[i], quantizedTime));
+            if (Math.Abs(quantizedTime - frames[i].Time) < 1e-9)
+                normalized.Add(frames[i]);
+            else
+                normalized.Add(new ReplayFrame(quantizedTime, frames[i].Buffer, frames[i].ViewportWidth, frames[i].ViewportHeight, frames[i].Signature));
             lastTime = quantizedTime;
         }
 
@@ -893,7 +812,9 @@ internal static class SvgFrameRenderer
     }
 
     private static ReplayFrame CloneAtTime(ReplayFrame frame, double time) =>
-        new(time, frame.Buffer, frame.ViewportWidth, frame.ViewportHeight);
+        Math.Abs(time - frame.Time) < 1e-9
+            ? frame
+            : new ReplayFrame(time, frame.Buffer, frame.ViewportWidth, frame.ViewportHeight, frame.Signature);
 
     private static bool HaveSameTime(double left, double right) =>
         Math.Abs(left - right) <= 1e-9;
@@ -972,97 +893,43 @@ internal static class SvgFrameRenderer
         return (horizontal, vertical);
     }
 
-    private readonly struct SvgMetrics
+    private readonly record struct SvgMetrics(
+        double CharWidth,
+        double LineHeight,
+        double BaselineOffset,
+        double InnerPaddingH,
+        double InnerPaddingV,
+        double ContentOriginX,
+        double ContentOriginY,
+        double ContentWidth,
+        double ContentHeight,
+        double SvgWidth,
+        double SvgHeight)
     {
-        internal SvgMetrics(
-            double charWidth,
-            double lineHeight,
-            double baselineOffset,
-            double innerPaddingH,
-            double innerPaddingV,
-            double contentOriginX,
-            double contentOriginY,
-            double contentWidth,
-            double contentHeight,
-            double svgWidth,
-            double svgHeight)
-        {
-            CharWidth = charWidth;
-            LineHeight = lineHeight;
-            BaselineOffset = baselineOffset;
-            InnerPaddingH = innerPaddingH;
-            InnerPaddingV = innerPaddingV;
-            ContentOriginX = contentOriginX;
-            ContentOriginY = contentOriginY;
-            ContentWidth = contentWidth;
-            ContentHeight = contentHeight;
-            SvgWidth = svgWidth;
-            SvgHeight = svgHeight;
-        }
-
-        internal double CharWidth { get; }
-        internal double LineHeight { get; }
-        internal double BaselineOffset { get; }
-        private double InnerPaddingH { get; }
-        private double InnerPaddingV { get; }
-        internal double ContentOriginX { get; }
-        internal double ContentOriginY { get; }
-        internal double ContentWidth { get; }
-        internal double ContentHeight { get; }
-        internal double SvgWidth { get; }
-        internal double SvgHeight { get; }
         internal (double X, double Y) ContentOrigin => (ContentOriginX, ContentOriginY);
-
         internal double ViewportPixelWidth(int cols) => cols * CharWidth + InnerPaddingH * 2;
         internal double ViewportPixelHeight(int rows) => rows * LineHeight + InnerPaddingV * 2;
-
         internal (double X, double Y, double Width, double Height) BackgroundRect() =>
             (Padding, Padding, SvgWidth - Padding * 2, SvgHeight - Padding * 2);
     }
 
-    private sealed class RowLayer
+    private readonly struct LayerSet(List<AnimLayer> rows, List<AnimLayer> cursors, List<AnimLayer> viewports)
     {
-        internal RowLayer(int row, double showTime, ScreenBuffer buffer)
-        {
-            Row = row;
-            ShowTime = showTime;
-            Buffer = buffer;
-        }
-
-        internal int Row { get; }
-        internal double ShowTime { get; }
-        internal double? HideTime { get; set; }
-        internal ScreenBuffer Buffer { get; }
+        internal List<AnimLayer> Rows { get; } = rows;
+        internal List<AnimLayer> Cursors { get; } = cursors;
+        internal List<AnimLayer> Viewports { get; } = viewports;
     }
 
-    private sealed class CursorLayer
+    private sealed class AnimLayer
     {
-        internal CursorLayer(int row, int col, double showTime)
-        {
-            Row = row;
-            Col = col;
-            ShowTime = showTime;
-        }
+        internal AnimLayer(double show, int p0, ScreenBuffer buffer) { Show = show; P0 = p0; Buffer = buffer; }
+        internal AnimLayer(double show, int p0, int p1) { Show = show; P0 = p0; P1 = p1; }
 
-        internal int Row { get; }
-        internal int Col { get; }
-        internal double ShowTime { get; }
-        internal double? HideTime { get; set; }
-    }
-
-    private sealed class ViewportLayer
-    {
-        internal ViewportLayer(int width, int height, double showTime)
-        {
-            Width = width;
-            Height = height;
-            ShowTime = showTime;
-        }
-
-        internal int Width { get; }
-        internal int Height { get; }
-        internal double ShowTime { get; }
-        internal double? HideTime { get; set; }
+        internal double Show { get; }
+        internal double? Hide { get; set; }
+        internal int P0 { get; }
+        internal int P1 { get; }
+        internal ScreenBuffer? Buffer { get; }
     }
 }
 
