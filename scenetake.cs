@@ -55,13 +55,13 @@ if (args[0] is "init")
 
     if (File.Exists(initPath))
     {
-        Console.Error.WriteLine($"Error: {initPath} already exists");
+        Console.Error.WriteLine($"Error: {FormatDisplayPath(initPath)} already exists");
         return 1;
     }
 
     Directory.CreateDirectory(Path.GetDirectoryName(initPath) ?? ".");
     File.WriteAllText(initPath, CreateInitialScenarioYaml(), Encoding.UTF8);
-    Console.Error.WriteLine($"Created: {initPath}");
+    Console.Error.WriteLine($"Created: {FormatDisplayPath(initPath)}");
     return 0;
 }
 
@@ -83,12 +83,12 @@ if (args[0] is "svg")
     var castPath = Path.GetFullPath(castArg);
     if (!File.Exists(castPath))
     {
-        Console.Error.WriteLine($"Error: {castPath} not found");
+        Console.Error.WriteLine($"Error: {FormatDisplayPath(castPath)} not found");
         return 1;
     }
 
     var svgOutputPath = RenderSettingsResolver.ResolveCastSvgOutputPath(castPath, svgOutputArg);
-    Console.Error.WriteLine($"Loading: {castPath}");
+    Console.Error.WriteLine($"Loading: {FormatDisplayPath(castPath)}");
 
     try
     {
@@ -108,8 +108,8 @@ if (args[0] is "svg")
         }
 
         SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath, recording.LoopDuration);
-        Console.Error.WriteLine($"Written: {svgOutputPath}  ({recording.Events.Count} events, {recording.LoopDuration:F1}s)");
-        Console.Error.WriteLine($"Done: {svgOutputPath}");
+        Console.Error.WriteLine($"Written: {FormatDisplayPath(svgOutputPath)}  ({recording.Events.Count} events, {recording.LoopDuration:F1}s)");
+        Console.Error.WriteLine($"Done: {FormatDisplayPath(svgOutputPath)}");
         return 0;
     }
     catch (CastReadException ex)
@@ -150,7 +150,7 @@ if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outpu
 var scenarioPath = Path.GetFullPath(scenarioArg);
 if (!File.Exists(scenarioPath))
 {
-    Console.Error.WriteLine($"Error: {scenarioPath} not found");
+    Console.Error.WriteLine($"Error: {FormatDisplayPath(scenarioPath)} not found");
     return 1;
 }
 
@@ -158,7 +158,7 @@ var outputStem = RenderSettingsResolver.ResolveOutputStem(scenarioPath, outputAr
 var outputPath = outputStem + ".cast";
 var svgPath = outputFormat == OutputFormat.Svg ? outputStem + ".svg" : null;
 
-Console.Error.WriteLine($"Loading: {scenarioPath}");
+Console.Error.WriteLine($"Loading: {FormatDisplayPath(scenarioPath)}");
 var yaml = File.ReadAllText(scenarioPath, Encoding.UTF8);
 // Register VYaml formatters explicitly for NativeAOT (source generator cannot call __Register via reflection)
 Scenario.__RegisterVYamlFormatter();
@@ -200,7 +200,7 @@ var events = Generate(scenario, shell, deterministicSeed);
 WriteCast(scenario, events, outputPath, shell, deterministicTimestamp, renderSettings);
 
 var duration = events.Count > 0 ? events[^1].Time : 0.0;
-Console.Error.WriteLine($"Written: {outputPath}  ({events.Count} events, {duration:F1}s)");
+Console.Error.WriteLine($"Written: {FormatDisplayPath(outputPath)}  ({events.Count} events, {duration:F1}s)");
 
 var exitCode = 0;
 if (outputFormat == OutputFormat.Svg)
@@ -210,7 +210,7 @@ if (outputFormat == OutputFormat.Svg)
     try
     {
         SvgRender.WriteSvg(events, width, height, renderSettings, svgPath!);
-        Console.Error.WriteLine($"Written: {svgPath}");
+        Console.Error.WriteLine($"Written: {FormatDisplayPath(svgPath!)}");
     }
     catch (Exception ex)
     {
@@ -229,10 +229,13 @@ if (exitCode != 0)
     return exitCode;
 
 if (outputFormat == OutputFormat.Svg)
-    Console.Error.WriteLine($"Done: {outputPath}, {svgPath}");
+    Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(svgPath!)}");
 else
-    Console.Error.WriteLine($"Done: {outputPath}");
+    Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}");
 return 0;
+
+static string FormatDisplayPath(string fullPath) =>
+    Path.GetRelativePath(Directory.GetCurrentDirectory(), fullPath).Replace('\\', '/');
 
 static bool TryParseInitArgs(string[] args, out string? path, out string error)
 {
