@@ -8,19 +8,19 @@ For README and documentation embeds, animated SVG is often preferable to GIF: sm
 
 External tools such as [agg](https://docs.asciinema.org/manual/agg/) (GIF) and [asg](https://github.com/kingsword09/asg) (SVG) can convert cast files, but requiring a second install and a second command adds friction. Built-in SVG output lets users produce `.cast` and `.svg` in one invocation while keeping cast as the canonical artifact defined in [spec_cast.md](spec_cast.md).
 
-Rich TUI recordings (`copilot --banner`, `sl`, etc.) are expected from **external asciinema casts** converted via the `svg` subcommand. The scenario path records commands via pipes (no PTY). See [plan_svg_update.md](../../plan_svg_update.md).
+Rich TUI recordings (`copilot --banner`, `sl`, etc.) are expected from **external asciinema casts** converted via the `svg` subcommand. The scenario path records commands via pipes (no PTY).
 
 ## Scope
 
 - SVG output via `--format svg` or the `svg` subcommand. CLI: [spec_cli.md](spec_cli.md). Scenario `render:` keys: [spec_scenario.md](spec_scenario.md).
 - Built-in C# SVG renderer (no bundled external binary).
-- **Row-diff** animated SVG (changed rows only, CSS layer fade) with optional **`--max-fps`** frame sampling (default **off**; console2svg-style `ReduceFrames` + `SpreadCollapsedFrameTimes` when enabled).
-- VT emulator at console2svg reference level (see [VT emulator](#vt-emulator)).
+- **Row-diff** animated SVG (changed rows only, CSS layer fade) with optional **`--max-fps`** frame sampling (default **off**).
+- VT emulator. (see [VT emulator](#vt-emulator)).
 - Theme presets `dark` (default) and `light`; default `font-size` of `16`; default `font-family` stack tuned for programming.
 - Block cursor (`theme.fg` at 50% opacity, no blink); DECTCEM visibility (`\e[?25h`, `\e[?25l`).
 - Warn-and-continue for unsupported cast event codes.
 - Resize cast events (`"r"`) during `svg` conversion.
-- Window chrome: optional `macos` or `windows` frame (`render.window` / `--window` / `st:window` tag). Default is plain terminal (no chrome).
+- **Window chrome** (v2): optional `macos` or `windows` frame. Default is plain terminal (no chrome).
 
 Cast file format (header, versions, written event codes): [spec_cast.md](spec_cast.md).
 
@@ -36,7 +36,7 @@ Cast file format (header, versions, written event codes): [spec_cast.md](spec_ca
 
 ### VT emulator
 
-| Category | v1 support |
+| Category | Support |
 |---|---|
 | CSI cursor (`A`–`F`, `G`, `H`, `d`) | Yes |
 | Erase (`J`, `K`, `X`), insert/delete (`@`, `P`, `L`, `M`, `S`, `T`) | Yes |
@@ -47,33 +47,60 @@ Cast file format (header, versions, written event codes): [spec_cast.md](spec_ca
 | OSC / DCS / charset designations | Skipped (not rendered) |
 | Block elements U+2580–U+259F | Yes — SVG rects |
 
-Implementation: `Terminal.cs` (AnsiParser, ScreenBuffer, TerminalReplay). Tests: `tests/terminal_tests.cs`.
+Tests: `tests/terminal_tests.cs`.
 
-### Animation and visuals
+### Animation and layout (plain terminal)
 
-- Replay follows cast event timestamps. **`--max-fps`** (default **off**) caps sampling when set; preserves the latest visual change within each interval. When off, every visual change is kept (~125KB for `basic.cast`).
+- Replay follows cast event timestamps. **`--max-fps`** (default **off**) caps sampling when set.
 - Output is self-contained animated SVG (CSS only, no JavaScript).
 - **Row-diff** animation: only changed rows are emitted as timed layers (`layer-in` / `layer-out` keyframes). Cursor and viewport resize use separate layers.
 - Trailing blank frames after alternate-screen restore are trimmed when the event stream indicates a screen clear.
 - Background from `theme.bg`; monospace font at resolved `font-size` and `font-family`.
-- Layout uses fixed cell metrics (`CharWidthFactor` 0.62, `LineHeightFactor` 1.25).
-- Layout padding:
+- Cell metrics: `CharWidthFactor` 0.62, `LineHeightFactor` 1.25.
+- Padding when `window` is `none`:
   - **Outer:** 8px transparent margin.
   - **Inner:** horizontal `font-size × 10/16`, vertical `font-size × 4/16`, clamped (horizontal 4–16px, vertical 2–8px).
 - Block cursor at the emulator position when visible; hidden by `\e[?25l`.
 
 ### Window chrome
 
-When `render.window` is `macos` or `windows` (or overridden via CLI / cast tag):
+Optional OS-style frame for README embeds. Configured via `render.window` in scenario YAML, `st:window` in v3 cast `tags`, or `--window` on CLI. Default: **`none`** (plain terminal above).
 
-- Outer 8px padding is replaced by a title bar, border, rounded corners, and light drop shadow (12px outer margin for shadow extent).
-- Title bar shows window controls only (no title text). macOS: traffic lights on the left; Windows: three buttons on the right.
-- Chrome colors follow `theme.preset` (`dark` / `light`); `theme.fg` / `theme.bg` overrides affect terminal content only.
-- Title bar height, buttons, padding, corner radius, and shadow are **fixed px** (designed at `font-size` 16); they do not scale with terminal `font-size`.
-- Chrome resizes with terminal viewport changes; chrome layers use the same viewport animation timing as the terminal background.
-- Inner terminal padding is unchanged.
+| Source | Key / flag | Values |
+|--------|------------|--------|
+| Scenario | `render.window` | `macos`, `windows` (omit = `none`) |
+| Cast header (v3) | `st:window=…` in `tags` | Written when not `none`; omitted otherwise |
+| CLI | `--window` | `none`, `macos`, `windows` |
 
-Samples: `samples/theme-macos.yaml`, `samples/theme-windows.yaml`.
+Priority: **CLI > cast header > default `none`**. Unknown values error on scenario path and CLI; invalid cast tag warns once and falls back to `none`.
+
+#### Visual behavior
+
+- Replaces the plain 8px outer margin with a title bar, border, rounded outer frame, and drop shadow.
+- **Title bar:** controls only (no title text). macOS: three traffic-light circles (left). Windows: three square buttons (right).
+- **Title bar shape:** top corners rounded; bottom edge straight (flush with terminal viewport — avoids a gap between bar and terminal).
+- **Chrome colors:** derived from terminal `theme.bg` luminance (light vs dark chrome palette). `theme.preset` and resolved header colors drive this; per-key `theme.fg` / `theme.bg` overrides affect **terminal content only**, not chrome palette selection beyond bg luminance.
+- **Resize:** chrome width/height follow viewport `"r"` events; chrome elements share `viewport-*` layer animation timing with the terminal background mask.
+- **Inner terminal padding** (around cell content) is unchanged from plain mode.
+
+#### Fixed chrome geometry (px)
+
+Does **not** scale with `font-size` (matches real OS window chrome). Tuned at default `font-size` 16.
+
+| Constant | macOS | Windows |
+|----------|-------|---------|
+| Title bar height | 34 | 34 |
+| Outer margin (shadow) | 12 | 12 |
+| Side padding (controls inset) | 14 | 14 |
+| Top padding (controls) | 9 | 9 |
+| Outer corner radius | 8 | 4 |
+| Control size | circles Ø16, gap 10 | squares 17×17, gap 5.5 |
+
+#### Samples
+
+- `samples/theme.yaml` — color demo, no chrome.
+- `samples/theme-macos.yaml` — `window: macos`, `preset: dark`.
+- `samples/theme-windows.yaml` — `window: windows`, `preset: dark`.
 
 ## Failure Behavior
 
@@ -96,13 +123,23 @@ Samples: `samples/theme-macos.yaml`, `samples/theme-windows.yaml`.
 
 The cast file is never modified by the `svg` subcommand.
 
+## Testing
+
+| Suite | Coverage |
+|-------|----------|
+| `tests/terminal_tests.cs` | VT emulator (CSI, Unicode, alt screen) |
+| `tests/svg_render_test.cs` | Row-diff smoke, marker timing, `--max-fps` |
+| `tests/window_chrome_test.cs` | `render.window` / cast tag / CLI resolution; chrome SVG structure |
+
+Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs all three.
+
 ## Cross-Document Notes
 
-- [spec_cast.md](spec_cast.md) — cast header, versions, event stream.
-- [spec_scenario.md](spec_scenario.md) — `render:` YAML keys.
-- [spec_cli.md](spec_cli.md) — commands, options.
+- [spec_cast.md](spec_cast.md) — cast header, `st:window` tag, v2 header rules.
+- [spec_scenario.md](spec_scenario.md) — `render.window`.
+- [spec_cli.md](spec_cli.md) — `--window`.
 - [spec_highlight.md](spec_highlight.md) — cast-event coloring (header `theme` is separate).
-- [plan_svg_update.md](../../plan_svg_update.md) — design decisions and migration notes.
+- [plan_svg_update.md](../../plan_svg_update.md) — planning archive and deferred items.
 
 ## References
 
@@ -111,6 +148,9 @@ The cast file is never modified by the `svg` subcommand.
 
 ## Lessons Learned
 
-- Row-diff layers keep typing-heavy casts small (~80KB for `basic.cast`); full-screen redraws still work but emit one layer per changed row.
-- Frame sampling is optional (`--max-fps`); default off keeps full timing for typing and bulk output (e.g. curl). Use sampling on long TUI casts to limit layer count.
+- Row-diff layers keep typing-heavy casts small (~80KB for `basic.cast`); full-screen redraws emit one layer per changed row.
+- Frame sampling is optional (`--max-fps`); default off keeps full timing for typing and bulk output (e.g. curl).
 - Trailing blank alternate-screen restore frames should be trimmed when the event stream contains screen-clear sequences.
+- Window chrome should stay **fixed px** like a real desktop window; scaling chrome with `font-size` looked wrong in README embeds.
+- Title bar corners must be rounded on the **top only**; a fully rounded title-bar rect leaves visible gaps where it meets the terminal viewport.
+- Chrome control layout (button size, padding, title bar height) needed visual iteration; fixed constants are preferable to formula-based scaling.
