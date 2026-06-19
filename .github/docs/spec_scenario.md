@@ -75,8 +75,9 @@ Display metadata for the cast header. Written on every run. Header mapping: [spe
 | `theme.fg` | from preset | Optional foreground override (hex) |
 | `theme.bg` | from preset | Optional background override (hex) |
 | `theme.palette` | from preset | Optional 16-color palette override (colon-separated hex) |
+| `window` | omitted (`none`) | Optional window chrome: `macos` or `windows` |
 
-`settings` controls recording; `render` controls presentation. CLI may override `font-size`, `font-family`, and theme preset. See [spec_cli.md](spec_cli.md).
+`settings` controls recording; `render` controls presentation. CLI may override `font-size`, `font-family`, `window`, and theme preset. See [spec_cli.md](spec_cli.md).
 
 ## `pre` and `post`
 

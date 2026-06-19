@@ -1,6 +1,6 @@
 # SVG Renderer Update Plan
 
-Status: **v1 implemented** · **v2 window chrome planned**
+Status: **v1 implemented** · **v2 window chrome implemented**
 
 ## Goal
 

@@ -7,6 +7,7 @@ public partial class ScenarioRender
 {
     public int? FontSize { get; set; }
     public string? FontFamily { get; set; }
+    public string? Window { get; set; }
     public ScenarioTheme? Theme { get; set; }
 }
 

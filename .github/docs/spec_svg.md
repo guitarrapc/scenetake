@@ -20,7 +20,7 @@ Rich TUI recordings (`copilot --banner`, `sl`, etc.) are expected from **externa
 - Block cursor (`theme.fg` at 50% opacity, no blink); DECTCEM visibility (`\e[?25h`, `\e[?25l`).
 - Warn-and-continue for unsupported cast event codes.
 - Resize cast events (`"r"`) during `svg` conversion.
-- Window chrome (macOS / Windows frame): **out of scope v1** (planned v2).
+- Window chrome: optional `macos` or `windows` frame (`render.window` / `--window` / `s2c:window` tag). Default is plain terminal (no chrome).
 
 Cast file format (header, versions, written event codes): [spec_cast.md](spec_cast.md).
 
@@ -61,6 +61,18 @@ Implementation: `Terminal.cs` (AnsiParser, ScreenBuffer, TerminalReplay). Tests:
   - **Outer:** 8px transparent margin.
   - **Inner:** horizontal `font-size × 10/16`, vertical `font-size × 4/16`, clamped (horizontal 4–16px, vertical 2–8px).
 - Block cursor at the emulator position when visible; hidden by `\e[?25l`.
+
+### Window chrome
+
+When `render.window` is `macos` or `windows` (or overridden via CLI / cast tag):
+
+- Outer 8px padding is replaced by a title bar, border, rounded corners, and light drop shadow.
+- Title bar shows window controls only (no title text). macOS: traffic lights on the left; Windows: three buttons on the right.
+- Chrome colors follow `theme.preset` (`dark` / `light`); `theme.fg` / `theme.bg` overrides affect terminal content only.
+- Chrome resizes with terminal viewport changes; chrome layers use the same viewport animation timing as the terminal background.
+- Inner terminal padding is unchanged.
+
+Samples: `samples/theme-macos.yaml`, `samples/theme-windows.yaml`.
 
 ## Failure Behavior
 

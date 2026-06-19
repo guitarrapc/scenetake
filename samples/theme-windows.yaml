@@ -1,0 +1,23 @@
+title: "Theme Windows"
+width: 80
+height: 24
+shell: bash
+
+settings:
+  prompt: "$ "
+  typing-speed: 0.03
+  typing-jitter: 0.01
+  pre-delay: 0.3
+  post-delay: 0.8
+
+render:
+  font-size: 16
+  window: windows
+  theme:
+    preset: dark
+
+steps:
+  - printf '\033[1;34mDark theme with Windows window chrome\033[0m\n'
+  - printf '16-color: \033[31mred\033[0m \033[32mgreen\033[0m \033[33myellow\033[0m \033[34mblue\033[0m\n'
+  - printf '256-color: \033[38;5;196m196\033[0m \033[38;5;46m46\033[0m \033[38;5;27m27\033[0m\n'
+  - echo "Done!"

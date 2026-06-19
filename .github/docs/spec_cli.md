@@ -17,8 +17,8 @@ scenario2cast exposes a small command-line surface: record scenarios to cast (an
 | `scenario2cast --version` | Print version |
 
 ```bash
-scenario2cast [--verbose] [--format cast|svg] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--max-fps N] <scenario.yaml> [output]
-scenario2cast svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--max-fps N] <input.cast> [output]
+scenario2cast [--verbose] [--format cast|svg] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <scenario.yaml> [output]
+scenario2cast svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output]
 scenario2cast init [scenario.yaml]
 ```
 
@@ -28,8 +28,8 @@ Subcommands accept `-h` / `--help` for subcommand-specific usage.
 
 - Options may appear in any order before positional arguments on the scenario and `svg` paths.
 - Unknown `-` / `--` options are explicit errors (avoids typos becoming path-not-found errors).
-- `--format`, `--font-size`, `--font-family`, `--theme`, and `--max-fps` accept `--name=value` or `--name value`.
-- Duplicate `--font-size`, `--font-family`, `--theme`, or `--max-fps` is an error.
+- `--format`, `--font-size`, `--font-family`, `--theme`, `--window`, and `--max-fps` accept `--name=value` or `--name value`.
+- Duplicate `--font-size`, `--font-family`, `--theme`, `--window`, or `--max-fps` is an error.
 
 ## Options
 
@@ -40,6 +40,7 @@ Subcommands accept `-h` / `--help` for subcommand-specific usage.
 | `--font-size N` | scenario, `svg` | `1`–`128`. Scenario path: overrides `render.font-size` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default `16`). See [spec_cast.md](spec_cast.md). |
 | `--font-family FAMILIES` | scenario, `svg` | CSS `font-family` string (`1`–`10` families, `256` characters max). Scenario path: overrides `render.font-family` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default stack). See [spec_cast.md](spec_cast.md) and [spec_svg.md](spec_svg.md). |
 | `--theme dark\|light` | scenario, `svg` | Scenario path: overrides `render.theme.preset`; YAML `fg` / `bg` / `palette` still merge; cast header stores resolved hex. `svg`: render-only override (CLI > cast header > default `dark`). See [spec_cast.md](spec_cast.md). |
+| `--window none\|macos\|windows` | scenario (`--format svg`), `svg` | Scenario path: overrides `render.window` in cast header and SVG. `svg`: render-only override (CLI > cast header > default `none`). See [spec_cast.md](spec_cast.md) and [spec_svg.md](spec_svg.md). |
 | `--max-fps N` | scenario (`--format svg` only), `svg` | Optional frame sampling cap for SVG animation. `0` (default) = off (full cast timing). `1`–`120` enables sampling. See [spec_svg.md](spec_svg.md). |
 
 `init` accepts only an optional output path positional; no other flags.

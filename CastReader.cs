@@ -49,6 +49,7 @@ internal static class CastReader
 
         var fontSize = RenderSettingsResolver.DefaultFontSize;
         var fontFamily = RenderSettingsResolver.DefaultFontFamily;
+        var window = WindowStyle.None;
         JsonElement theme = default;
         int width;
         int height;
@@ -64,7 +65,7 @@ internal static class CastReader
 
             term.TryGetProperty("theme", out theme);
             if (header.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Array)
-                ReadRenderTags(tags, ref fontSize, ref fontFamily);
+                ReadRenderTags(tags, ref fontSize, ref fontFamily, ref window);
         }
         else
         {
@@ -75,11 +76,6 @@ internal static class CastReader
             }
 
             header.TryGetProperty("theme", out theme);
-            if (header.TryGetProperty("scenario2cast", out var scenario2cast) &&
-                scenario2cast.ValueKind == JsonValueKind.Object)
-            {
-                ReadScenario2CastRender(scenario2cast, ref fontSize, ref fontFamily);
-            }
         }
 
         if (!RenderSettingsResolver.IsValidTerminalSize(width, height))
@@ -89,7 +85,7 @@ internal static class CastReader
         }
 
         var (fg, bg, palette) = ParseTheme(theme);
-        var renderSettings = new ResolvedRenderSettings(fontSize, fontFamily, new ResolvedTheme(fg, bg, palette));
+        var renderSettings = new ResolvedRenderSettings(fontSize, fontFamily, new ResolvedTheme(fg, bg, palette), window);
         var events = new List<CastEvent>();
         var warnedCodes = new HashSet<string>(StringComparer.Ordinal);
         var usesRelativeTime = version == 3;
@@ -116,10 +112,11 @@ internal static class CastReader
         return new CastRecording(width, height, renderSettings, events);
     }
 
-    private static void ReadRenderTags(JsonElement tags, ref int fontSize, ref string fontFamily)
+    private static void ReadRenderTags(JsonElement tags, ref int fontSize, ref string fontFamily, ref WindowStyle window)
     {
         var warnedSize = false;
         var warnedFamily = false;
+        var warnedWindow = false;
         foreach (var tag in tags.EnumerateArray())
         {
             if (tag.ValueKind != JsonValueKind.String)
@@ -131,30 +128,8 @@ internal static class CastReader
                 ApplyFontSize(ref fontSize, value[RenderSettingsResolver.FontSizeTagPrefix.Length..], ref warnedSize);
             else if (value.StartsWith(RenderSettingsResolver.FontFamilyTagPrefix, StringComparison.Ordinal))
                 ApplyFontFamily(ref fontFamily, value[RenderSettingsResolver.FontFamilyTagPrefix.Length..], ref warnedFamily);
-        }
-    }
-
-    private static void ReadScenario2CastRender(JsonElement scenario2cast, ref int fontSize, ref string fontFamily)
-    {
-        var warnedSize = false;
-        var warnedFamily = false;
-        if (scenario2cast.TryGetProperty("font-size", out var fontSizeElement))
-        {
-            var sizeText = fontSizeElement.ValueKind switch
-            {
-                JsonValueKind.Number when fontSizeElement.TryGetInt32(out var number) => number.ToString(CultureInfo.InvariantCulture),
-                JsonValueKind.String => fontSizeElement.GetString(),
-                _ => null,
-            };
-            if (sizeText is not null)
-                ApplyFontSize(ref fontSize, sizeText, ref warnedSize);
-        }
-
-        if (scenario2cast.TryGetProperty("font-family", out var fontFamilyElement)
-            && fontFamilyElement.ValueKind == JsonValueKind.String
-            && fontFamilyElement.GetString() is string familyText)
-        {
-            ApplyFontFamily(ref fontFamily, familyText, ref warnedFamily);
+            else if (value.StartsWith(RenderSettingsResolver.WindowTagPrefix, StringComparison.Ordinal))
+                ApplyWindow(ref window, value[RenderSettingsResolver.WindowTagPrefix.Length..], ref warnedWindow);
         }
     }
 
@@ -185,6 +160,21 @@ internal static class CastReader
         {
             warned = true;
             Console.Error.WriteLine($"Warning: svg: invalid font-family '{familyText}'; using default font-family");
+        }
+    }
+
+    private static void ApplyWindow(ref WindowStyle window, string windowText, ref bool warned)
+    {
+        if (RenderSettingsResolver.TryParseWindow(windowText, out var parsed, out _))
+        {
+            window = parsed;
+            return;
+        }
+
+        if (!warned)
+        {
+            warned = true;
+            Console.Error.WriteLine($"Warning: svg: invalid window '{windowText}'; using no window chrome");
         }
     }
 

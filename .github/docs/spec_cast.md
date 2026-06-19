@@ -61,9 +61,9 @@ Every cast file written by the scenario path includes render metadata in the hea
 | `timestamp` | deterministic from YAML | See [spec_scenario.md](spec_scenario.md) → Determinism. |
 | `title` | scenario `title` | May be empty. |
 | `env.SHELL` | resolved shell | `TERM` is represented by `term.type`. |
-| `tags` | `s2c:font-size=N`, `s2c:font-family=…` | SVG font size (`1`–`128`) and CSS `font-family` string. Unknown tags are ignored by external tools. |
+| `tags` | `s2c:font-size=N`, `s2c:font-family=…`, `s2c:window=macos\|windows` | SVG render metadata. `s2c:window` is omitted when window chrome is off. Unknown tags are ignored by external tools. |
 
-On read, v2 headers use top-level `width`, `height`, and `theme` instead. Render metadata defaults apply unless overridden by CLI or header fields: v3 `s2c:font-size` / `s2c:font-family` in `tags`; v2 `scenario2cast.font-size` / `scenario2cast.font-family`. Invalid header values warn once and fall back to defaults when read by the `svg` subcommand.
+On read, v2 headers use top-level `width`, `height`, and `theme` only. Render metadata defaults apply unless overridden by CLI: v3 `s2c:font-size` / `s2c:font-family` / `s2c:window` in `tags`. Invalid header values warn once and fall back to defaults when read by the `svg` subcommand.
 
 ## Event Stream
 

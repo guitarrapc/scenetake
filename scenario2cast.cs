@@ -73,7 +73,7 @@ if (args[0] is "svg")
         return 0;
     }
 
-    if (!TryParseSvgArgs(args, out var castArg, out var svgOutputArg, out var svgFontSize, out var svgFontFamily, out var svgThemePreset, out var svgMaxFps, out var svgError))
+    if (!TryParseSvgArgs(args, out var castArg, out var svgOutputArg, out var svgFontSize, out var svgFontFamily, out var svgThemePreset, out var svgWindow, out var svgMaxFps, out var svgError))
     {
         Console.Error.WriteLine($"Error: {svgError}");
         PrintSvgUsage();
@@ -98,6 +98,7 @@ if (args[0] is "svg")
             svgFontSize,
             svgFontFamily,
             svgThemePreset,
+            svgWindow,
             svgMaxFps,
             out var svgOverrideError);
         if (svgOverrideError.Length != 0)
@@ -140,7 +141,7 @@ if (args[0] is "-h" or "--help")
     return 0;
 }
 
-if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runMaxFps, out var runError))
+if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runError))
 {
     Console.Error.WriteLine($"Error: {runError}");
     PrintUsage();
@@ -177,6 +178,8 @@ if (runFontSize is int runFontSizeValue)
     renderSettings = renderSettings with { FontSize = runFontSizeValue };
 if (runFontFamily is string runFontFamilyValue)
     renderSettings = renderSettings with { FontFamily = runFontFamilyValue };
+if (runWindow is WindowStyle runWindowValue)
+    renderSettings = renderSettings with { Window = runWindowValue };
 if (runMaxFps is int runMaxFpsValue)
     renderSettings = renderSettings with { MaxFps = runMaxFpsValue };
 var deterministicSeed = ComputeDeterministicSeed(yaml);
@@ -264,6 +267,7 @@ static bool TryParseSvgArgs(
     out int? fontSizeOverride,
     out string? fontFamilyOverride,
     out string? themePresetOverride,
+    out WindowStyle? windowOverride,
     out int? maxFpsOverride,
     out string error)
 {
@@ -272,6 +276,7 @@ static bool TryParseSvgArgs(
     fontSizeOverride = null;
     fontFamilyOverride = null;
     themePresetOverride = null;
+    windowOverride = null;
     maxFpsOverride = null;
     error = "";
 
@@ -293,6 +298,13 @@ static bool TryParseSvgArgs(
         }
 
         if (TryConsumeThemeArg(args, ref i, ref themePresetOverride, out error))
+        {
+            if (error.Length != 0)
+                return false;
+            continue;
+        }
+
+        if (TryConsumeWindowArg(args, ref i, ref windowOverride, out error))
         {
             if (error.Length != 0)
                 return false;
@@ -344,6 +356,7 @@ static bool TryParseRunArgs(
     out int? fontSizeOverride,
     out string? fontFamilyOverride,
     out string? themePresetOverride,
+    out WindowStyle? windowOverride,
     out int? maxFpsOverride,
     out string error)
 {
@@ -354,6 +367,7 @@ static bool TryParseRunArgs(
     fontSizeOverride = null;
     fontFamilyOverride = null;
     themePresetOverride = null;
+    windowOverride = null;
     maxFpsOverride = null;
     error = "";
 
@@ -381,6 +395,13 @@ static bool TryParseRunArgs(
         }
 
         if (TryConsumeThemeArg(args, ref i, ref themePresetOverride, out error))
+        {
+            if (error.Length != 0)
+                return false;
+            continue;
+        }
+
+        if (TryConsumeWindowArg(args, ref i, ref windowOverride, out error))
         {
             if (error.Length != 0)
                 return false;
@@ -617,6 +638,49 @@ static bool TryConsumeThemeArg(string[] args, ref int i, ref string? themePreset
         return true;
 
     themePresetOverride = parsed;
+    return true;
+}
+
+static bool TryConsumeWindowArg(string[] args, ref int i, ref WindowStyle? windowOverride, out string error)
+{
+    error = "";
+    var arg = args[i];
+    string? value;
+
+    if (arg == "--window")
+    {
+        if (i + 1 >= args.Length)
+        {
+            error = "--window requires a value";
+            return true;
+        }
+
+        value = args[++i];
+    }
+    else if (arg.StartsWith("--window=", StringComparison.Ordinal))
+    {
+        value = arg["--window=".Length..];
+        if (value.Length == 0)
+        {
+            error = "--window requires a value";
+            return true;
+        }
+    }
+    else
+    {
+        return false;
+    }
+
+    if (windowOverride is not null)
+    {
+        error = "duplicate option: --window";
+        return true;
+    }
+
+    if (!RenderSettingsResolver.TryParseWindow(value, out var parsed, out error))
+        return true;
+
+    windowOverride = parsed;
     return true;
 }
 
@@ -1713,13 +1777,21 @@ static void WriteCast(
     var title = scenario.Title ?? "";
     var fontSize = renderSettings.FontSize.ToString(CultureInfo.InvariantCulture);
     var fontFamilyTag = RenderSettingsResolver.FontFamilyTagPrefix + renderSettings.FontFamily;
+    var tags = new List<string>
+    {
+        RenderSettingsResolver.FontSizeTagPrefix + fontSize,
+        fontFamilyTag,
+    };
+    if (renderSettings.Window != WindowStyle.None)
+        tags.Add(RenderSettingsResolver.WindowTagPrefix + RenderSettingsResolver.WindowToTagValue(renderSettings.Window));
+    var tagsJson = string.Join(",", tags.ConvertAll(static tag => JsonString(tag)));
     writer.WriteLine(
         $"{{\"version\":3,\"term\":{{\"cols\":{width},\"rows\":{height}" +
         $",\"type\":\"xterm-256color\"" +
         $",\"theme\":{{\"fg\":{JsonString(renderSettings.Theme.Fg)},\"bg\":{JsonString(renderSettings.Theme.Bg)},\"palette\":{JsonString(renderSettings.Theme.Palette)}}}}}" +
         $",\"timestamp\":{timestamp},\"title\":{JsonString(title)}" +
         $",\"env\":{{\"SHELL\":{JsonString(shell.EnvValue)}}}" +
-        $",\"tags\":[{JsonString(RenderSettingsResolver.FontSizeTagPrefix + fontSize)},{JsonString(fontFamilyTag)}]}}");
+        $",\"tags\":[{tagsJson}]}}");
 
     var intervalError = 0.0;
     var previousAbs = 0.0;
@@ -2061,8 +2133,8 @@ static string CreateInitialScenarioYaml()
 
 static void PrintUsage()
 {
-    Console.Error.WriteLine("Usage: scenario2cast [--verbose] [--format cast|svg] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--max-fps N] <scenario.yaml> [output]");
-    Console.Error.WriteLine("       scenario2cast svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--max-fps N] <input.cast> [output.svg]");
+    Console.Error.WriteLine("Usage: scenario2cast [--verbose] [--format cast|svg] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <scenario.yaml> [output]");
+    Console.Error.WriteLine("       scenario2cast svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
     Console.Error.WriteLine("       scenario2cast init [scenario.yaml]");
     Console.Error.WriteLine("       scenario2cast --help");
 }
@@ -2075,7 +2147,7 @@ static void PrintInitUsage()
 
 static void PrintSvgUsage()
 {
-    Console.Error.WriteLine("Usage: scenario2cast svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--max-fps N] <input.cast> [output.svg]");
+    Console.Error.WriteLine("Usage: scenario2cast svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
     Console.Error.WriteLine("Converts an existing asciinema v2/v3 cast file to animated SVG.");
 }
 
@@ -2144,6 +2216,7 @@ public partial class ScenarioRender
 {
     public int? FontSize { get; set; }
     public string? FontFamily { get; set; }
+    public string? Window { get; set; }
     public ScenarioTheme? Theme { get; set; }
 }
 
