@@ -110,11 +110,7 @@ internal static class CastReader
             events.Add(usesRelativeTime ? ev.Value with { Time = absoluteTime } : ev.Value);
         }
 
-        var loopDuration = usesRelativeTime
-            ? absoluteTime
-            : events.Count > 0
-                ? events[^1].Time
-                : 0.0;
+        var loopDuration = TerminalReplay.ComputeLoopDuration(events);
 
         return new CastRecording(width, height, renderSettings, events, loopDuration);
     }

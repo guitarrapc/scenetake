@@ -85,10 +85,10 @@ scenetake --verbose scenario.yaml
 asciinema play scenario.cast
 
 # Convert to gif with agg (Linux/macOS) — requires agg 1.6.0+ for v3 cast files
-docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20
+docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20 --last-frame-duration 0
 
 # Convert to gif with agg (Windows PowerShell)
-docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20
+docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20 --last-frame-duration 0
 ```
 
 **Usage**
@@ -282,6 +282,6 @@ Regenerate samples cast/svg files:
 ```bash
 dotnet run samples/regenerate.cs
 foreach ($file in Get-ChildItem samples/*.cast) {
-  docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/samples/$($file.BaseName).cast /data/samples/$($file.BaseName).gif --font-size 20
+  docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/samples/$($file.BaseName).cast /data/samples/$($file.BaseName).gif --font-size 20 --last-frame-duration 0
 }
 ```

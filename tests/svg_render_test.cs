@@ -12,6 +12,7 @@ failures += Run("CurlOutputSurvivesFrameSampling", CurlOutputSurvivesFrameSampli
 failures += Run("EchoOutputNoDuplicateCommandLine", EchoOutputNoDuplicateCommandLine);
 failures += Run("MarkerDelayAdvancesTiming", MarkerDelayAdvancesTiming);
 failures += Run("SvgLoopsWithCastDuration", SvgLoopsWithCastDuration);
+failures += Run("LoopDurationMatchesAggGifCycle", LoopDurationMatchesAggGifCycle);
 failures += Run("MaxFpsDoesNotChangeLoopDuration", MaxFpsDoesNotChangeLoopDuration);
 
 return failures == 0 ? 0 : 1;
@@ -74,8 +75,18 @@ static bool MarkerDelayAdvancesTiming()
 
     var svg = RenderCast("tests/marker-delay.cast");
     return svg.Contains("animation:k", StringComparison.Ordinal)
-        && svg.Contains("1.5s linear infinite", StringComparison.Ordinal)
+        && svg.Contains("2.5s linear infinite", StringComparison.Ordinal)
         && svg.Contains("@keyframes k0", StringComparison.Ordinal);
+}
+
+static bool LoopDurationMatchesAggGifCycle()
+{
+    var recording = CastReader.Read("samples/basic.cast");
+    if (recording.Events.Count < 2)
+        return false;
+
+    // Verified against: agg samples/basic.cast --last-frame-duration 0 → 18.11s GIF loop.
+    return Math.Abs(recording.LoopDuration - 18.11) < 0.05;
 }
 
 static bool SvgLoopsWithCastDuration()

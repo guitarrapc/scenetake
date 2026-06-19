@@ -6,467 +6,467 @@ text { dominant-baseline: alphabetic; }
 .bg { shape-rendering: crispEdges; }
 .layer { opacity: 0; }
 .cursor-block { fill: #d0d0d0; fill-opacity: 0.5; }
-@keyframes k0 { 0%,5.223%{opacity:0;} 5.227%,5.6%{opacity:1;} 5.608%,100%{opacity:0;} }
-@keyframes k1 { 0%,5.596%{opacity:0;} 5.6%,5.866%{opacity:1;} 5.874%,100%{opacity:0;} }
-@keyframes k2 { 0%,5.862%{opacity:0;} 5.866%,6.265%{opacity:1;} 6.272%,100%{opacity:0;} }
-@keyframes k3 { 0%,6.261%{opacity:0;} 6.265%,6.874%{opacity:1;} 6.881%,100%{opacity:0;} }
-@keyframes k4 { 0%,6.87%{opacity:0;} 6.874%,7.142%{opacity:1;} 7.149%,100%{opacity:0;} }
-@keyframes k5 { 0%,7.138%{opacity:0;} 7.142%,7.507%{opacity:1;} 7.514%,100%{opacity:0;} }
-@keyframes k6 { 0%,7.503%{opacity:0;} 7.507%,7.885%{opacity:1;} 7.892%,100%{opacity:0;} }
-@keyframes k7 { 0%,7.881%{opacity:0;} 7.885%,8.282%{opacity:1;} 8.289%,100%{opacity:0;} }
-@keyframes k8 { 0%,8.278%{opacity:0;} 8.282%,8.744%{opacity:1;} 8.752%,100%{opacity:0;} }
-@keyframes k9 { 0%,8.741%{opacity:0;} 8.744%,9.12%{opacity:1;} 9.128%,100%{opacity:0;} }
-@keyframes k10 { 0%,9.117%{opacity:0;} 9.12%,9.585%{opacity:1;} 9.593%,100%{opacity:0;} }
-@keyframes k11 { 0%,9.581%{opacity:0;} 9.585%,10.06%{opacity:1;} 10.067%,100%{opacity:0;} }
-@keyframes k12 { 0%,10.056%{opacity:0;} 10.06%,22.703%{opacity:1;} 22.71%,100%{opacity:0;} }
-@keyframes k13 { 0%,12.022%{opacity:0;} 12.025%,22.703%{opacity:1;} 22.71%,100%{opacity:0;} }
-@keyframes k14 { 0%,17.248%{opacity:0;} 17.252%,17.625%{opacity:1;} 17.633%,100%{opacity:0;} }
-@keyframes k15 { 0%,17.622%{opacity:0;} 17.625%,17.982%{opacity:1;} 17.989%,100%{opacity:0;} }
-@keyframes k16 { 0%,17.978%{opacity:0;} 17.982%,18.414%{opacity:1;} 18.421%,100%{opacity:0;} }
-@keyframes k17 { 0%,18.41%{opacity:0;} 18.414%,19.129%{opacity:1;} 19.136%,100%{opacity:0;} }
-@keyframes k18 { 0%,19.125%{opacity:0;} 19.129%,19.445%{opacity:1;} 19.453%,100%{opacity:0;} }
-@keyframes k19 { 0%,19.442%{opacity:0;} 19.445%,19.788%{opacity:1;} 19.796%,100%{opacity:0;} }
-@keyframes k20 { 0%,19.784%{opacity:0;} 19.788%,20.177%{opacity:1;} 20.184%,100%{opacity:0;} }
-@keyframes k21 { 0%,20.173%{opacity:0;} 20.177%,20.487%{opacity:1;} 20.494%,100%{opacity:0;} }
-@keyframes k22 { 0%,20.483%{opacity:0;} 20.487%,20.861%{opacity:1;} 20.868%,100%{opacity:0;} }
-@keyframes k23 { 0%,20.857%{opacity:0;} 20.861%,22.703%{opacity:1;} 22.71%,100%{opacity:0;} }
-@keyframes k24 { 0%,22.699%{opacity:0;} 22.703%,43.756%{opacity:1;} 43.763%,100%{opacity:0;} }
-@keyframes k25 { 0%,35.393%{opacity:0;} 35.396%,35.77%{opacity:1;} 35.777%,100%{opacity:0;} }
-@keyframes k26 { 0%,35.766%{opacity:0;} 35.77%,36.036%{opacity:1;} 36.044%,100%{opacity:0;} }
-@keyframes k27 { 0%,36.032%{opacity:0;} 36.036%,36.509%{opacity:1;} 36.516%,100%{opacity:0;} }
-@keyframes k28 { 0%,36.505%{opacity:0;} 36.509%,37.228%{opacity:1;} 37.235%,100%{opacity:0;} }
-@keyframes k29 { 0%,37.224%{opacity:0;} 37.228%,37.712%{opacity:1;} 37.719%,100%{opacity:0;} }
-@keyframes k30 { 0%,37.708%{opacity:0;} 37.712%,38.146%{opacity:1;} 38.154%,100%{opacity:0;} }
-@keyframes k31 { 0%,38.143%{opacity:0;} 38.146%,39.053%{opacity:1;} 39.06%,100%{opacity:0;} }
-@keyframes k32 { 0%,39.049%{opacity:0;} 39.053%,39.501%{opacity:1;} 39.509%,100%{opacity:0;} }
-@keyframes k33 { 0%,39.497%{opacity:0;} 39.501%,39.875%{opacity:1;} 39.883%,100%{opacity:0;} }
-@keyframes k34 { 0%,39.872%{opacity:0;} 39.875%,40.299%{opacity:1;} 40.307%,100%{opacity:0;} }
-@keyframes k35 { 0%,40.295%{opacity:0;} 40.299%,40.685%{opacity:1;} 40.692%,100%{opacity:0;} }
-@keyframes k36 { 0%,40.681%{opacity:0;} 40.685%,41.032%{opacity:1;} 41.04%,100%{opacity:0;} }
-@keyframes k37 { 0%,41.028%{opacity:0;} 41.032%,41.461%{opacity:1;} 41.469%,100%{opacity:0;} }
-@keyframes k38 { 0%,41.458%{opacity:0;} 41.461%,41.814%{opacity:1;} 41.822%,100%{opacity:0;} }
-@keyframes k39 { 0%,41.811%{opacity:0;} 41.814%,42.156%{opacity:1;} 42.164%,100%{opacity:0;} }
-@keyframes k40 { 0%,42.152%{opacity:0;} 42.156%,43.033%{opacity:1;} 43.04%,100%{opacity:0;} }
-@keyframes k41 { 0%,43.029%{opacity:0;} 43.033%,43.407%{opacity:1;} 43.415%,100%{opacity:0;} }
-@keyframes k42 { 0%,43.403%{opacity:0;} 43.407%,43.756%{opacity:1;} 43.763%,100%{opacity:0;} }
-@keyframes k43 { 0%,43.752%{opacity:0;} 43.756%,45.249%{opacity:1;} 45.257%,100%{opacity:0;} }
-@keyframes k44 { 0%,45.245%{opacity:0;} 45.249%,61.907%{opacity:1;} 61.914%,100%{opacity:0;} }
-@keyframes k45 { 0%,57.939%{opacity:0;} 57.943%,58.316%{opacity:1;} 58.324%,100%{opacity:0;} }
-@keyframes k46 { 0%,58.313%{opacity:0;} 58.316%,58.698%{opacity:1;} 58.706%,100%{opacity:0;} }
-@keyframes k47 { 0%,58.695%{opacity:0;} 58.698%,59.138%{opacity:1;} 59.146%,100%{opacity:0;} }
-@keyframes k48 { 0%,59.134%{opacity:0;} 59.138%,59.766%{opacity:1;} 59.773%,100%{opacity:0;} }
-@keyframes k49 { 0%,59.762%{opacity:0;} 59.766%,60.137%{opacity:1;} 60.145%,100%{opacity:0;} }
-@keyframes k50 { 0%,60.134%{opacity:0;} 60.137%,60.533%{opacity:1;} 60.541%,100%{opacity:0;} }
-@keyframes k51 { 0%,60.529%{opacity:0;} 60.533%,60.825%{opacity:1;} 60.832%,100%{opacity:0;} }
-@keyframes k52 { 0%,60.821%{opacity:0;} 60.825%,61.141%{opacity:1;} 61.149%,100%{opacity:0;} }
-@keyframes k53 { 0%,61.137%{opacity:0;} 61.141%,61.468%{opacity:1;} 61.475%,100%{opacity:0;} }
-@keyframes k54 { 0%,61.464%{opacity:0;} 61.468%,61.907%{opacity:1;} 61.914%,100%{opacity:0;} }
-@keyframes k55 { 0%,61.903%{opacity:0;} 61.907%,63.4%{opacity:1;} 63.408%,100%{opacity:0;} }
-@keyframes k56 { 0%,63.397%{opacity:0;} 63.4%,85.439%{opacity:1;} 85.447%,100%{opacity:0;} }
-@keyframes k57 { 0%,68.624%{opacity:0;} 68.627%,69.001%{opacity:1;} 69.008%,100%{opacity:0;} }
-@keyframes k58 { 0%,68.997%{opacity:0;} 69.001%,69.798%{opacity:1;} 69.805%,100%{opacity:0;} }
-@keyframes k59 { 0%,69.794%{opacity:0;} 69.798%,70.56%{opacity:1;} 70.567%,100%{opacity:0;} }
-@keyframes k60 { 0%,70.556%{opacity:0;} 70.56%,71.996%{opacity:1;} 72.003%,100%{opacity:0;} }
-@keyframes k61 { 0%,71.992%{opacity:0;} 71.996%,72.654%{opacity:1;} 72.661%,100%{opacity:0;} }
-@keyframes k62 { 0%,72.65%{opacity:0;} 72.654%,73.359%{opacity:1;} 73.367%,100%{opacity:0;} }
-@keyframes k63 { 0%,73.356%{opacity:0;} 73.359%,74.125%{opacity:1;} 74.132%,100%{opacity:0;} }
-@keyframes k64 { 0%,74.121%{opacity:0;} 74.125%,75.519%{opacity:1;} 75.527%,100%{opacity:0;} }
-@keyframes k65 { 0%,75.515%{opacity:0;} 75.519%,76.34%{opacity:1;} 76.348%,100%{opacity:0;} }
-@keyframes k66 { 0%,76.336%{opacity:0;} 76.34%,77.193%{opacity:1;} 77.2%,100%{opacity:0;} }
-@keyframes k67 { 0%,77.189%{opacity:0;} 77.193%,77.99%{opacity:1;} 77.997%,100%{opacity:0;} }
-@keyframes k68 { 0%,77.986%{opacity:0;} 77.99%,78.641%{opacity:1;} 78.648%,100%{opacity:0;} }
-@keyframes k69 { 0%,78.637%{opacity:0;} 78.641%,79.376%{opacity:1;} 79.384%,100%{opacity:0;} }
-@keyframes k70 { 0%,79.372%{opacity:0;} 79.376%,80.888%{opacity:1;} 80.896%,100%{opacity:0;} }
-@keyframes k71 { 0%,80.884%{opacity:0;} 80.888%,81.608%{opacity:1;} 81.615%,100%{opacity:0;} }
-@keyframes k72 { 0%,81.604%{opacity:0;} 81.608%,82.365%{opacity:1;} 82.373%,100%{opacity:0;} }
-@keyframes k73 { 0%,82.362%{opacity:0;} 82.365%,83.034%{opacity:1;} 83.042%,100%{opacity:0;} }
-@keyframes k74 { 0%,83.03%{opacity:0;} 83.034%,83.867%{opacity:1;} 83.875%,100%{opacity:0;} }
-@keyframes k75 { 0%,83.864%{opacity:0;} 83.867%,84.607%{opacity:1;} 84.615%,100%{opacity:0;} }
-@keyframes k76 { 0%,84.604%{opacity:0;} 84.607%,85.439%{opacity:1;} 85.447%,100%{opacity:0;} }
-@keyframes k77 { 0%,85.436%{opacity:0;} 85.439%,86.933%{opacity:1;} 86.94%,100%{opacity:0;} }
-@keyframes k78 { 0%,86.929%{opacity:0;} 86.933%,100%{opacity:1;} }
-@keyframes k79 { 0%,99.623%{opacity:0;} 99.627%,100%{opacity:1;} }
-@keyframes k80 { 0%,6.261%{opacity:0;} 6.265%,6.555%{opacity:1;} 6.562%,100%{opacity:0;} }
-@keyframes k81 { 0%,6.551%{opacity:0;} 6.555%,6.874%{opacity:1;} 6.881%,100%{opacity:0;} }
-@keyframes k82 { 0%,10.056%{opacity:0;} 10.06%,10.532%{opacity:1;} 10.539%,100%{opacity:0;} }
-@keyframes k83 { 0%,10.528%{opacity:0;} 10.532%,12.025%{opacity:1;} 12.033%,100%{opacity:0;} }
-@keyframes k84 { 0%,12.022%{opacity:0;} 12.025%,17.252%{opacity:1;} 17.26%,100%{opacity:0;} }
-@keyframes k85 { 0%,18.41%{opacity:0;} 18.414%,18.742%{opacity:1;} 18.749%,100%{opacity:0;} }
-@keyframes k86 { 0%,18.738%{opacity:0;} 18.742%,19.129%{opacity:1;} 19.136%,100%{opacity:0;} }
-@keyframes k87 { 0%,20.857%{opacity:0;} 20.861%,21.209%{opacity:1;} 21.217%,100%{opacity:0;} }
-@keyframes k88 { 0%,21.205%{opacity:0;} 21.209%,22.703%{opacity:1;} 22.71%,100%{opacity:0;} }
-@keyframes k89 { 0%,22.699%{opacity:0;} 22.703%,35.396%{opacity:1;} 35.404%,100%{opacity:0;} }
-@keyframes k90 { 0%,36.505%{opacity:0;} 36.509%,36.87%{opacity:1;} 36.877%,100%{opacity:0;} }
-@keyframes k91 { 0%,36.866%{opacity:0;} 36.87%,37.228%{opacity:1;} 37.235%,100%{opacity:0;} }
-@keyframes k92 { 0%,38.143%{opacity:0;} 38.146%,38.615%{opacity:1;} 38.622%,100%{opacity:0;} }
-@keyframes k93 { 0%,38.611%{opacity:0;} 38.615%,39.053%{opacity:1;} 39.06%,100%{opacity:0;} }
-@keyframes k94 { 0%,42.152%{opacity:0;} 42.156%,42.618%{opacity:1;} 42.625%,100%{opacity:0;} }
-@keyframes k95 { 0%,42.614%{opacity:0;} 42.618%,43.033%{opacity:1;} 43.04%,100%{opacity:0;} }
-@keyframes k96 { 0%,43.752%{opacity:0;} 43.756%,57.943%{opacity:1;} 57.95%,100%{opacity:0;} }
-@keyframes k97 { 0%,59.134%{opacity:0;} 59.138%,59.408%{opacity:1;} 59.416%,100%{opacity:0;} }
-@keyframes k98 { 0%,59.405%{opacity:0;} 59.408%,59.766%{opacity:1;} 59.773%,100%{opacity:0;} }
-@keyframes k99 { 0%,61.903%{opacity:0;} 61.907%,68.627%{opacity:1;} 68.635%,100%{opacity:0;} }
-@keyframes k100 { 0%,70.556%{opacity:0;} 70.56%,71.311%{opacity:1;} 71.318%,100%{opacity:0;} }
-@keyframes k101 { 0%,71.307%{opacity:0;} 71.311%,71.996%{opacity:1;} 72.003%,100%{opacity:0;} }
-@keyframes k102 { 0%,74.121%{opacity:0;} 74.125%,74.766%{opacity:1;} 74.774%,100%{opacity:0;} }
-@keyframes k103 { 0%,74.763%{opacity:0;} 74.766%,75.519%{opacity:1;} 75.527%,100%{opacity:0;} }
-@keyframes k104 { 0%,79.372%{opacity:0;} 79.376%,80.059%{opacity:1;} 80.067%,100%{opacity:0;} }
-@keyframes k105 { 0%,80.055%{opacity:0;} 80.059%,80.888%{opacity:1;} 80.896%,100%{opacity:0;} }
-@keyframes k106 { 0%,85.436%{opacity:0;} 85.439%,99.627%{opacity:1;} 99.634%,100%{opacity:0;} }
+@keyframes k0 { 0%,4.65%{opacity:0;} 4.654%,4.986%{opacity:1;} 4.993%,100%{opacity:0;} }
+@keyframes k1 { 0%,4.983%{opacity:0;} 4.986%,5.223%{opacity:1;} 5.229%,100%{opacity:0;} }
+@keyframes k2 { 0%,5.219%{opacity:0;} 5.223%,5.578%{opacity:1;} 5.584%,100%{opacity:0;} }
+@keyframes k3 { 0%,5.574%{opacity:0;} 5.578%,6.12%{opacity:1;} 6.127%,100%{opacity:0;} }
+@keyframes k4 { 0%,6.117%{opacity:0;} 6.12%,6.359%{opacity:1;} 6.365%,100%{opacity:0;} }
+@keyframes k5 { 0%,6.355%{opacity:0;} 6.359%,6.684%{opacity:1;} 6.69%,100%{opacity:0;} }
+@keyframes k6 { 0%,6.68%{opacity:0;} 6.684%,7.02%{opacity:1;} 7.026%,100%{opacity:0;} }
+@keyframes k7 { 0%,7.016%{opacity:0;} 7.02%,7.373%{opacity:1;} 7.38%,100%{opacity:0;} }
+@keyframes k8 { 0%,7.37%{opacity:0;} 7.373%,7.785%{opacity:1;} 7.792%,100%{opacity:0;} }
+@keyframes k9 { 0%,7.782%{opacity:0;} 7.785%,8.12%{opacity:1;} 8.127%,100%{opacity:0;} }
+@keyframes k10 { 0%,8.117%{opacity:0;} 8.12%,8.534%{opacity:1;} 8.54%,100%{opacity:0;} }
+@keyframes k11 { 0%,8.53%{opacity:0;} 8.534%,8.957%{opacity:1;} 8.963%,100%{opacity:0;} }
+@keyframes k12 { 0%,8.953%{opacity:0;} 8.957%,20.212%{opacity:1;} 20.219%,100%{opacity:0;} }
+@keyframes k13 { 0%,10.703%{opacity:0;} 10.706%,20.212%{opacity:1;} 20.219%,100%{opacity:0;} }
+@keyframes k14 { 0%,15.356%{opacity:0;} 15.36%,15.692%{opacity:1;} 15.699%,100%{opacity:0;} }
+@keyframes k15 { 0%,15.689%{opacity:0;} 15.692%,16.009%{opacity:1;} 16.016%,100%{opacity:0;} }
+@keyframes k16 { 0%,16.006%{opacity:0;} 16.009%,16.394%{opacity:1;} 16.401%,100%{opacity:0;} }
+@keyframes k17 { 0%,16.391%{opacity:0;} 16.394%,17.031%{opacity:1;} 17.037%,100%{opacity:0;} }
+@keyframes k18 { 0%,17.027%{opacity:0;} 17.031%,17.312%{opacity:1;} 17.319%,100%{opacity:0;} }
+@keyframes k19 { 0%,17.309%{opacity:0;} 17.312%,17.618%{opacity:1;} 17.624%,100%{opacity:0;} }
+@keyframes k20 { 0%,17.614%{opacity:0;} 17.618%,17.964%{opacity:1;} 17.97%,100%{opacity:0;} }
+@keyframes k21 { 0%,17.96%{opacity:0;} 17.964%,18.24%{opacity:1;} 18.246%,100%{opacity:0;} }
+@keyframes k22 { 0%,18.236%{opacity:0;} 18.24%,18.572%{opacity:1;} 18.579%,100%{opacity:0;} }
+@keyframes k23 { 0%,18.569%{opacity:0;} 18.572%,20.212%{opacity:1;} 20.219%,100%{opacity:0;} }
+@keyframes k24 { 0%,20.209%{opacity:0;} 20.212%,38.956%{opacity:1;} 38.963%,100%{opacity:0;} }
+@keyframes k25 { 0%,31.51%{opacity:0;} 31.514%,31.846%{opacity:1;} 31.853%,100%{opacity:0;} }
+@keyframes k26 { 0%,31.843%{opacity:0;} 31.846%,32.083%{opacity:1;} 32.09%,100%{opacity:0;} }
+@keyframes k27 { 0%,32.08%{opacity:0;} 32.083%,32.504%{opacity:1;} 32.511%,100%{opacity:0;} }
+@keyframes k28 { 0%,32.501%{opacity:0;} 32.504%,33.144%{opacity:1;} 33.151%,100%{opacity:0;} }
+@keyframes k29 { 0%,33.141%{opacity:0;} 33.144%,33.575%{opacity:1;} 33.582%,100%{opacity:0;} }
+@keyframes k30 { 0%,33.572%{opacity:0;} 33.575%,33.962%{opacity:1;} 33.969%,100%{opacity:0;} }
+@keyframes k31 { 0%,33.959%{opacity:0;} 33.962%,34.769%{opacity:1;} 34.776%,100%{opacity:0;} }
+@keyframes k32 { 0%,34.766%{opacity:0;} 34.769%,35.168%{opacity:1;} 35.175%,100%{opacity:0;} }
+@keyframes k33 { 0%,35.165%{opacity:0;} 35.168%,35.501%{opacity:1;} 35.508%,100%{opacity:0;} }
+@keyframes k34 { 0%,35.498%{opacity:0;} 35.501%,35.879%{opacity:1;} 35.885%,100%{opacity:0;} }
+@keyframes k35 { 0%,35.875%{opacity:0;} 35.879%,36.222%{opacity:1;} 36.229%,100%{opacity:0;} }
+@keyframes k36 { 0%,36.219%{opacity:0;} 36.222%,36.531%{opacity:1;} 36.538%,100%{opacity:0;} }
+@keyframes k37 { 0%,36.528%{opacity:0;} 36.531%,36.913%{opacity:1;} 36.92%,100%{opacity:0;} }
+@keyframes k38 { 0%,36.91%{opacity:0;} 36.913%,37.228%{opacity:1;} 37.234%,100%{opacity:0;} }
+@keyframes k39 { 0%,37.224%{opacity:0;} 37.228%,37.532%{opacity:1;} 37.539%,100%{opacity:0;} }
+@keyframes k40 { 0%,37.529%{opacity:0;} 37.532%,38.313%{opacity:1;} 38.319%,100%{opacity:0;} }
+@keyframes k41 { 0%,38.309%{opacity:0;} 38.313%,38.646%{opacity:1;} 38.652%,100%{opacity:0;} }
+@keyframes k42 { 0%,38.642%{opacity:0;} 38.646%,38.956%{opacity:1;} 38.963%,100%{opacity:0;} }
+@keyframes k43 { 0%,38.953%{opacity:0;} 38.956%,40.286%{opacity:1;} 40.292%,100%{opacity:0;} }
+@keyframes k44 { 0%,40.282%{opacity:0;} 40.286%,55.116%{opacity:1;} 55.123%,100%{opacity:0;} }
+@keyframes k45 { 0%,51.584%{opacity:0;} 51.587%,51.92%{opacity:1;} 51.926%,100%{opacity:0;} }
+@keyframes k46 { 0%,51.916%{opacity:0;} 51.92%,52.26%{opacity:1;} 52.266%,100%{opacity:0;} }
+@keyframes k47 { 0%,52.256%{opacity:0;} 52.26%,52.651%{opacity:1;} 52.658%,100%{opacity:0;} }
+@keyframes k48 { 0%,52.648%{opacity:0;} 52.651%,53.21%{opacity:1;} 53.217%,100%{opacity:0;} }
+@keyframes k49 { 0%,53.207%{opacity:0;} 53.21%,53.541%{opacity:1;} 53.547%,100%{opacity:0;} }
+@keyframes k50 { 0%,53.537%{opacity:0;} 53.541%,53.893%{opacity:1;} 53.9%,100%{opacity:0;} }
+@keyframes k51 { 0%,53.89%{opacity:0;} 53.893%,54.153%{opacity:1;} 54.159%,100%{opacity:0;} }
+@keyframes k52 { 0%,54.149%{opacity:0;} 54.153%,54.435%{opacity:1;} 54.441%,100%{opacity:0;} }
+@keyframes k53 { 0%,54.431%{opacity:0;} 54.435%,54.725%{opacity:1;} 54.732%,100%{opacity:0;} }
+@keyframes k54 { 0%,54.722%{opacity:0;} 54.725%,55.116%{opacity:1;} 55.123%,100%{opacity:0;} }
+@keyframes k55 { 0%,55.113%{opacity:0;} 55.116%,56.446%{opacity:1;} 56.453%,100%{opacity:0;} }
+@keyframes k56 { 0%,56.443%{opacity:0;} 56.446%,76.068%{opacity:1;} 76.074%,100%{opacity:0;} }
+@keyframes k57 { 0%,61.096%{opacity:0;} 61.099%,61.432%{opacity:1;} 61.439%,100%{opacity:0;} }
+@keyframes k58 { 0%,61.429%{opacity:0;} 61.432%,62.142%{opacity:1;} 62.148%,100%{opacity:0;} }
+@keyframes k59 { 0%,62.138%{opacity:0;} 62.142%,62.82%{opacity:1;} 62.827%,100%{opacity:0;} }
+@keyframes k60 { 0%,62.817%{opacity:0;} 62.82%,64.099%{opacity:1;} 64.105%,100%{opacity:0;} }
+@keyframes k61 { 0%,64.095%{opacity:0;} 64.099%,64.684%{opacity:1;} 64.691%,100%{opacity:0;} }
+@keyframes k62 { 0%,64.681%{opacity:0;} 64.684%,65.313%{opacity:1;} 65.319%,100%{opacity:0;} }
+@keyframes k63 { 0%,65.309%{opacity:0;} 65.313%,65.994%{opacity:1;} 66.001%,100%{opacity:0;} }
+@keyframes k64 { 0%,65.991%{opacity:0;} 65.994%,67.235%{opacity:1;} 67.242%,100%{opacity:0;} }
+@keyframes k65 { 0%,67.232%{opacity:0;} 67.235%,67.966%{opacity:1;} 67.973%,100%{opacity:0;} }
+@keyframes k66 { 0%,67.963%{opacity:0;} 67.966%,68.726%{opacity:1;} 68.732%,100%{opacity:0;} }
+@keyframes k67 { 0%,68.722%{opacity:0;} 68.726%,69.435%{opacity:1;} 69.442%,100%{opacity:0;} }
+@keyframes k68 { 0%,69.432%{opacity:0;} 69.435%,70.015%{opacity:1;} 70.021%,100%{opacity:0;} }
+@keyframes k69 { 0%,70.011%{opacity:0;} 70.015%,70.669%{opacity:1;} 70.676%,100%{opacity:0;} }
+@keyframes k70 { 0%,70.666%{opacity:0;} 70.669%,72.015%{opacity:1;} 72.022%,100%{opacity:0;} }
+@keyframes k71 { 0%,72.012%{opacity:0;} 72.015%,72.656%{opacity:1;} 72.663%,100%{opacity:0;} }
+@keyframes k72 { 0%,72.653%{opacity:0;} 72.656%,73.331%{opacity:1;} 73.337%,100%{opacity:0;} }
+@keyframes k73 { 0%,73.327%{opacity:0;} 73.331%,73.926%{opacity:1;} 73.933%,100%{opacity:0;} }
+@keyframes k74 { 0%,73.923%{opacity:0;} 73.926%,74.668%{opacity:1;} 74.675%,100%{opacity:0;} }
+@keyframes k75 { 0%,74.665%{opacity:0;} 74.668%,75.327%{opacity:1;} 75.333%,100%{opacity:0;} }
+@keyframes k76 { 0%,75.323%{opacity:0;} 75.327%,76.068%{opacity:1;} 76.074%,100%{opacity:0;} }
+@keyframes k77 { 0%,76.064%{opacity:0;} 76.068%,77.397%{opacity:1;} 77.404%,100%{opacity:0;} }
+@keyframes k78 { 0%,77.394%{opacity:0;} 77.397%,100%{opacity:1;} }
+@keyframes k79 { 0%,88.695%{opacity:0;} 88.699%,100%{opacity:1;} }
+@keyframes k80 { 0%,5.574%{opacity:0;} 5.578%,5.836%{opacity:1;} 5.842%,100%{opacity:0;} }
+@keyframes k81 { 0%,5.832%{opacity:0;} 5.836%,6.12%{opacity:1;} 6.127%,100%{opacity:0;} }
+@keyframes k82 { 0%,8.953%{opacity:0;} 8.957%,9.377%{opacity:1;} 9.383%,100%{opacity:0;} }
+@keyframes k83 { 0%,9.373%{opacity:0;} 9.377%,10.706%{opacity:1;} 10.713%,100%{opacity:0;} }
+@keyframes k84 { 0%,10.703%{opacity:0;} 10.706%,15.36%{opacity:1;} 15.366%,100%{opacity:0;} }
+@keyframes k85 { 0%,16.391%{opacity:0;} 16.394%,16.686%{opacity:1;} 16.693%,100%{opacity:0;} }
+@keyframes k86 { 0%,16.683%{opacity:0;} 16.686%,17.031%{opacity:1;} 17.037%,100%{opacity:0;} }
+@keyframes k87 { 0%,18.569%{opacity:0;} 18.572%,18.883%{opacity:1;} 18.889%,100%{opacity:0;} }
+@keyframes k88 { 0%,18.879%{opacity:0;} 18.883%,20.212%{opacity:1;} 20.219%,100%{opacity:0;} }
+@keyframes k89 { 0%,20.209%{opacity:0;} 20.212%,31.514%{opacity:1;} 31.52%,100%{opacity:0;} }
+@keyframes k90 { 0%,32.501%{opacity:0;} 32.504%,32.825%{opacity:1;} 32.832%,100%{opacity:0;} }
+@keyframes k91 { 0%,32.822%{opacity:0;} 32.825%,33.144%{opacity:1;} 33.151%,100%{opacity:0;} }
+@keyframes k92 { 0%,33.959%{opacity:0;} 33.962%,34.379%{opacity:1;} 34.386%,100%{opacity:0;} }
+@keyframes k93 { 0%,34.376%{opacity:0;} 34.379%,34.769%{opacity:1;} 34.776%,100%{opacity:0;} }
+@keyframes k94 { 0%,37.529%{opacity:0;} 37.532%,37.943%{opacity:1;} 37.95%,100%{opacity:0;} }
+@keyframes k95 { 0%,37.94%{opacity:0;} 37.943%,38.313%{opacity:1;} 38.319%,100%{opacity:0;} }
+@keyframes k96 { 0%,38.953%{opacity:0;} 38.956%,51.587%{opacity:1;} 51.594%,100%{opacity:0;} }
+@keyframes k97 { 0%,52.648%{opacity:0;} 52.651%,52.892%{opacity:1;} 52.898%,100%{opacity:0;} }
+@keyframes k98 { 0%,52.888%{opacity:0;} 52.892%,53.21%{opacity:1;} 53.217%,100%{opacity:0;} }
+@keyframes k99 { 0%,55.113%{opacity:0;} 55.116%,61.099%{opacity:1;} 61.106%,100%{opacity:0;} }
+@keyframes k100 { 0%,62.817%{opacity:0;} 62.82%,63.489%{opacity:1;} 63.495%,100%{opacity:0;} }
+@keyframes k101 { 0%,63.485%{opacity:0;} 63.489%,64.099%{opacity:1;} 64.105%,100%{opacity:0;} }
+@keyframes k102 { 0%,65.991%{opacity:0;} 65.994%,66.565%{opacity:1;} 66.572%,100%{opacity:0;} }
+@keyframes k103 { 0%,66.562%{opacity:0;} 66.565%,67.235%{opacity:1;} 67.242%,100%{opacity:0;} }
+@keyframes k104 { 0%,70.666%{opacity:0;} 70.669%,71.277%{opacity:1;} 71.284%,100%{opacity:0;} }
+@keyframes k105 { 0%,71.274%{opacity:0;} 71.277%,72.015%{opacity:1;} 72.022%,100%{opacity:0;} }
+@keyframes k106 { 0%,76.064%{opacity:0;} 76.068%,88.699%{opacity:1;} 88.705%,100%{opacity:0;} }
 @keyframes k107 { 0%,100%{opacity:1;} }
-.layer-0 { animation:k0 13.392312s linear infinite; }
-.layer-1 { animation:k1 13.392312s linear infinite; }
-.layer-2 { animation:k2 13.392312s linear infinite; }
-.layer-3 { animation:k3 13.392312s linear infinite; }
-.layer-4 { animation:k4 13.392312s linear infinite; }
-.layer-5 { animation:k5 13.392312s linear infinite; }
-.layer-6 { animation:k6 13.392312s linear infinite; }
-.layer-7 { animation:k7 13.392312s linear infinite; }
-.layer-8 { animation:k8 13.392312s linear infinite; }
-.layer-9 { animation:k9 13.392312s linear infinite; }
-.layer-10 { animation:k10 13.392312s linear infinite; }
-.layer-11 { animation:k11 13.392312s linear infinite; }
-.layer-12 { animation:k12 13.392312s linear infinite; }
-.layer-13 { animation:k13 13.392312s linear infinite; }
-.layer-14 { animation:k14 13.392312s linear infinite; }
-.layer-15 { animation:k15 13.392312s linear infinite; }
-.layer-16 { animation:k16 13.392312s linear infinite; }
-.layer-17 { animation:k17 13.392312s linear infinite; }
-.layer-18 { animation:k18 13.392312s linear infinite; }
-.layer-19 { animation:k19 13.392312s linear infinite; }
-.layer-20 { animation:k20 13.392312s linear infinite; }
-.layer-21 { animation:k21 13.392312s linear infinite; }
-.layer-22 { animation:k22 13.392312s linear infinite; }
-.layer-23 { animation:k23 13.392312s linear infinite; }
-.layer-24 { animation:k24 13.392312s linear infinite; }
-.layer-25 { animation:k24 13.392312s linear infinite; }
-.layer-26 { animation:k24 13.392312s linear infinite; }
-.layer-27 { animation:k24 13.392312s linear infinite; }
-.layer-28 { animation:k24 13.392312s linear infinite; }
-.layer-29 { animation:k24 13.392312s linear infinite; }
-.layer-30 { animation:k24 13.392312s linear infinite; }
-.layer-31 { animation:k24 13.392312s linear infinite; }
-.layer-32 { animation:k24 13.392312s linear infinite; }
-.layer-33 { animation:k24 13.392312s linear infinite; }
-.layer-34 { animation:k24 13.392312s linear infinite; }
-.layer-35 { animation:k24 13.392312s linear infinite; }
-.layer-36 { animation:k24 13.392312s linear infinite; }
-.layer-37 { animation:k24 13.392312s linear infinite; }
-.layer-38 { animation:k24 13.392312s linear infinite; }
-.layer-39 { animation:k24 13.392312s linear infinite; }
-.layer-40 { animation:k24 13.392312s linear infinite; }
-.layer-41 { animation:k24 13.392312s linear infinite; }
-.layer-42 { animation:k24 13.392312s linear infinite; }
-.layer-43 { animation:k24 13.392312s linear infinite; }
-.layer-44 { animation:k24 13.392312s linear infinite; }
-.layer-45 { animation:k24 13.392312s linear infinite; }
-.layer-46 { animation:k24 13.392312s linear infinite; }
-.layer-47 { animation:k24 13.392312s linear infinite; }
-.layer-48 { animation:k24 13.392312s linear infinite; }
-.layer-49 { animation:k24 13.392312s linear infinite; }
-.layer-50 { animation:k24 13.392312s linear infinite; }
-.layer-51 { animation:k25 13.392312s linear infinite; }
-.layer-52 { animation:k26 13.392312s linear infinite; }
-.layer-53 { animation:k27 13.392312s linear infinite; }
-.layer-54 { animation:k28 13.392312s linear infinite; }
-.layer-55 { animation:k29 13.392312s linear infinite; }
-.layer-56 { animation:k30 13.392312s linear infinite; }
-.layer-57 { animation:k31 13.392312s linear infinite; }
-.layer-58 { animation:k32 13.392312s linear infinite; }
-.layer-59 { animation:k33 13.392312s linear infinite; }
-.layer-60 { animation:k34 13.392312s linear infinite; }
-.layer-61 { animation:k35 13.392312s linear infinite; }
-.layer-62 { animation:k36 13.392312s linear infinite; }
-.layer-63 { animation:k37 13.392312s linear infinite; }
-.layer-64 { animation:k38 13.392312s linear infinite; }
-.layer-65 { animation:k39 13.392312s linear infinite; }
-.layer-66 { animation:k40 13.392312s linear infinite; }
-.layer-67 { animation:k41 13.392312s linear infinite; }
-.layer-68 { animation:k42 13.392312s linear infinite; }
-.layer-69 { animation:k43 13.392312s linear infinite; }
-.layer-70 { animation:k43 13.392312s linear infinite; }
-.layer-71 { animation:k43 13.392312s linear infinite; }
-.layer-72 { animation:k43 13.392312s linear infinite; }
-.layer-73 { animation:k43 13.392312s linear infinite; }
-.layer-74 { animation:k43 13.392312s linear infinite; }
-.layer-75 { animation:k43 13.392312s linear infinite; }
-.layer-76 { animation:k43 13.392312s linear infinite; }
-.layer-77 { animation:k43 13.392312s linear infinite; }
-.layer-78 { animation:k43 13.392312s linear infinite; }
-.layer-79 { animation:k43 13.392312s linear infinite; }
-.layer-80 { animation:k43 13.392312s linear infinite; }
-.layer-81 { animation:k43 13.392312s linear infinite; }
-.layer-82 { animation:k43 13.392312s linear infinite; }
-.layer-83 { animation:k43 13.392312s linear infinite; }
-.layer-84 { animation:k43 13.392312s linear infinite; }
-.layer-85 { animation:k43 13.392312s linear infinite; }
-.layer-86 { animation:k43 13.392312s linear infinite; }
-.layer-87 { animation:k43 13.392312s linear infinite; }
-.layer-88 { animation:k43 13.392312s linear infinite; }
-.layer-89 { animation:k43 13.392312s linear infinite; }
-.layer-90 { animation:k43 13.392312s linear infinite; }
-.layer-91 { animation:k43 13.392312s linear infinite; }
-.layer-92 { animation:k43 13.392312s linear infinite; }
-.layer-93 { animation:k43 13.392312s linear infinite; }
-.layer-94 { animation:k43 13.392312s linear infinite; }
-.layer-95 { animation:k43 13.392312s linear infinite; }
-.layer-96 { animation:k44 13.392312s linear infinite; }
-.layer-97 { animation:k44 13.392312s linear infinite; }
-.layer-98 { animation:k44 13.392312s linear infinite; }
-.layer-99 { animation:k44 13.392312s linear infinite; }
-.layer-100 { animation:k44 13.392312s linear infinite; }
-.layer-101 { animation:k44 13.392312s linear infinite; }
-.layer-102 { animation:k44 13.392312s linear infinite; }
-.layer-103 { animation:k44 13.392312s linear infinite; }
-.layer-104 { animation:k44 13.392312s linear infinite; }
-.layer-105 { animation:k44 13.392312s linear infinite; }
-.layer-106 { animation:k44 13.392312s linear infinite; }
-.layer-107 { animation:k44 13.392312s linear infinite; }
-.layer-108 { animation:k44 13.392312s linear infinite; }
-.layer-109 { animation:k44 13.392312s linear infinite; }
-.layer-110 { animation:k44 13.392312s linear infinite; }
-.layer-111 { animation:k44 13.392312s linear infinite; }
-.layer-112 { animation:k44 13.392312s linear infinite; }
-.layer-113 { animation:k44 13.392312s linear infinite; }
-.layer-114 { animation:k44 13.392312s linear infinite; }
-.layer-115 { animation:k44 13.392312s linear infinite; }
-.layer-116 { animation:k44 13.392312s linear infinite; }
-.layer-117 { animation:k44 13.392312s linear infinite; }
-.layer-118 { animation:k44 13.392312s linear infinite; }
-.layer-119 { animation:k44 13.392312s linear infinite; }
-.layer-120 { animation:k44 13.392312s linear infinite; }
-.layer-121 { animation:k44 13.392312s linear infinite; }
-.layer-122 { animation:k44 13.392312s linear infinite; }
-.layer-123 { animation:k45 13.392312s linear infinite; }
-.layer-124 { animation:k46 13.392312s linear infinite; }
-.layer-125 { animation:k47 13.392312s linear infinite; }
-.layer-126 { animation:k48 13.392312s linear infinite; }
-.layer-127 { animation:k49 13.392312s linear infinite; }
-.layer-128 { animation:k50 13.392312s linear infinite; }
-.layer-129 { animation:k51 13.392312s linear infinite; }
-.layer-130 { animation:k52 13.392312s linear infinite; }
-.layer-131 { animation:k53 13.392312s linear infinite; }
-.layer-132 { animation:k54 13.392312s linear infinite; }
-.layer-133 { animation:k55 13.392312s linear infinite; }
-.layer-134 { animation:k55 13.392312s linear infinite; }
-.layer-135 { animation:k55 13.392312s linear infinite; }
-.layer-136 { animation:k55 13.392312s linear infinite; }
-.layer-137 { animation:k55 13.392312s linear infinite; }
-.layer-138 { animation:k55 13.392312s linear infinite; }
-.layer-139 { animation:k55 13.392312s linear infinite; }
-.layer-140 { animation:k55 13.392312s linear infinite; }
-.layer-141 { animation:k55 13.392312s linear infinite; }
-.layer-142 { animation:k55 13.392312s linear infinite; }
-.layer-143 { animation:k55 13.392312s linear infinite; }
-.layer-144 { animation:k55 13.392312s linear infinite; }
-.layer-145 { animation:k55 13.392312s linear infinite; }
-.layer-146 { animation:k55 13.392312s linear infinite; }
-.layer-147 { animation:k55 13.392312s linear infinite; }
-.layer-148 { animation:k55 13.392312s linear infinite; }
-.layer-149 { animation:k55 13.392312s linear infinite; }
-.layer-150 { animation:k55 13.392312s linear infinite; }
-.layer-151 { animation:k55 13.392312s linear infinite; }
-.layer-152 { animation:k55 13.392312s linear infinite; }
-.layer-153 { animation:k55 13.392312s linear infinite; }
-.layer-154 { animation:k55 13.392312s linear infinite; }
-.layer-155 { animation:k55 13.392312s linear infinite; }
-.layer-156 { animation:k55 13.392312s linear infinite; }
-.layer-157 { animation:k55 13.392312s linear infinite; }
-.layer-158 { animation:k55 13.392312s linear infinite; }
-.layer-159 { animation:k55 13.392312s linear infinite; }
-.layer-160 { animation:k56 13.392312s linear infinite; }
-.layer-161 { animation:k56 13.392312s linear infinite; }
-.layer-162 { animation:k56 13.392312s linear infinite; }
-.layer-163 { animation:k56 13.392312s linear infinite; }
-.layer-164 { animation:k56 13.392312s linear infinite; }
-.layer-165 { animation:k56 13.392312s linear infinite; }
-.layer-166 { animation:k56 13.392312s linear infinite; }
-.layer-167 { animation:k56 13.392312s linear infinite; }
-.layer-168 { animation:k56 13.392312s linear infinite; }
-.layer-169 { animation:k56 13.392312s linear infinite; }
-.layer-170 { animation:k56 13.392312s linear infinite; }
-.layer-171 { animation:k56 13.392312s linear infinite; }
-.layer-172 { animation:k56 13.392312s linear infinite; }
-.layer-173 { animation:k56 13.392312s linear infinite; }
-.layer-174 { animation:k56 13.392312s linear infinite; }
-.layer-175 { animation:k56 13.392312s linear infinite; }
-.layer-176 { animation:k56 13.392312s linear infinite; }
-.layer-177 { animation:k56 13.392312s linear infinite; }
-.layer-178 { animation:k56 13.392312s linear infinite; }
-.layer-179 { animation:k56 13.392312s linear infinite; }
-.layer-180 { animation:k56 13.392312s linear infinite; }
-.layer-181 { animation:k56 13.392312s linear infinite; }
-.layer-182 { animation:k56 13.392312s linear infinite; }
-.layer-183 { animation:k56 13.392312s linear infinite; }
-.layer-184 { animation:k56 13.392312s linear infinite; }
-.layer-185 { animation:k56 13.392312s linear infinite; }
-.layer-186 { animation:k56 13.392312s linear infinite; }
-.layer-187 { animation:k57 13.392312s linear infinite; }
-.layer-188 { animation:k58 13.392312s linear infinite; }
-.layer-189 { animation:k59 13.392312s linear infinite; }
-.layer-190 { animation:k60 13.392312s linear infinite; }
-.layer-191 { animation:k61 13.392312s linear infinite; }
-.layer-192 { animation:k62 13.392312s linear infinite; }
-.layer-193 { animation:k63 13.392312s linear infinite; }
-.layer-194 { animation:k64 13.392312s linear infinite; }
-.layer-195 { animation:k65 13.392312s linear infinite; }
-.layer-196 { animation:k66 13.392312s linear infinite; }
-.layer-197 { animation:k67 13.392312s linear infinite; }
-.layer-198 { animation:k68 13.392312s linear infinite; }
-.layer-199 { animation:k69 13.392312s linear infinite; }
-.layer-200 { animation:k70 13.392312s linear infinite; }
-.layer-201 { animation:k71 13.392312s linear infinite; }
-.layer-202 { animation:k72 13.392312s linear infinite; }
-.layer-203 { animation:k73 13.392312s linear infinite; }
-.layer-204 { animation:k74 13.392312s linear infinite; }
-.layer-205 { animation:k75 13.392312s linear infinite; }
-.layer-206 { animation:k76 13.392312s linear infinite; }
-.layer-207 { animation:k77 13.392312s linear infinite; }
-.layer-208 { animation:k77 13.392312s linear infinite; }
-.layer-209 { animation:k77 13.392312s linear infinite; }
-.layer-210 { animation:k77 13.392312s linear infinite; }
-.layer-211 { animation:k77 13.392312s linear infinite; }
-.layer-212 { animation:k77 13.392312s linear infinite; }
-.layer-213 { animation:k77 13.392312s linear infinite; }
-.layer-214 { animation:k77 13.392312s linear infinite; }
-.layer-215 { animation:k77 13.392312s linear infinite; }
-.layer-216 { animation:k77 13.392312s linear infinite; }
-.layer-217 { animation:k77 13.392312s linear infinite; }
-.layer-218 { animation:k77 13.392312s linear infinite; }
-.layer-219 { animation:k77 13.392312s linear infinite; }
-.layer-220 { animation:k77 13.392312s linear infinite; }
-.layer-221 { animation:k77 13.392312s linear infinite; }
-.layer-222 { animation:k77 13.392312s linear infinite; }
-.layer-223 { animation:k77 13.392312s linear infinite; }
-.layer-224 { animation:k77 13.392312s linear infinite; }
-.layer-225 { animation:k77 13.392312s linear infinite; }
-.layer-226 { animation:k77 13.392312s linear infinite; }
-.layer-227 { animation:k77 13.392312s linear infinite; }
-.layer-228 { animation:k77 13.392312s linear infinite; }
-.layer-229 { animation:k77 13.392312s linear infinite; }
-.layer-230 { animation:k77 13.392312s linear infinite; }
-.layer-231 { animation:k77 13.392312s linear infinite; }
-.layer-232 { animation:k77 13.392312s linear infinite; }
-.layer-233 { animation:k77 13.392312s linear infinite; }
-.layer-234 { animation:k78 13.392312s linear infinite; }
-.layer-235 { animation:k78 13.392312s linear infinite; }
-.layer-236 { animation:k78 13.392312s linear infinite; }
-.layer-237 { animation:k78 13.392312s linear infinite; }
-.layer-238 { animation:k78 13.392312s linear infinite; }
-.layer-239 { animation:k78 13.392312s linear infinite; }
-.layer-240 { animation:k78 13.392312s linear infinite; }
-.layer-241 { animation:k78 13.392312s linear infinite; }
-.layer-242 { animation:k78 13.392312s linear infinite; }
-.layer-243 { animation:k78 13.392312s linear infinite; }
-.layer-244 { animation:k78 13.392312s linear infinite; }
-.layer-245 { animation:k78 13.392312s linear infinite; }
-.layer-246 { animation:k78 13.392312s linear infinite; }
-.layer-247 { animation:k78 13.392312s linear infinite; }
-.layer-248 { animation:k78 13.392312s linear infinite; }
-.layer-249 { animation:k78 13.392312s linear infinite; }
-.layer-250 { animation:k78 13.392312s linear infinite; }
-.layer-251 { animation:k78 13.392312s linear infinite; }
-.layer-252 { animation:k78 13.392312s linear infinite; }
-.layer-253 { animation:k78 13.392312s linear infinite; }
-.layer-254 { animation:k78 13.392312s linear infinite; }
-.layer-255 { animation:k78 13.392312s linear infinite; }
-.layer-256 { animation:k78 13.392312s linear infinite; }
-.layer-257 { animation:k78 13.392312s linear infinite; }
-.layer-258 { animation:k78 13.392312s linear infinite; }
-.layer-259 { animation:k78 13.392312s linear infinite; }
-.layer-260 { animation:k78 13.392312s linear infinite; }
-.layer-261 { animation:k78 13.392312s linear infinite; }
-.layer-262 { animation:k78 13.392312s linear infinite; }
-.layer-263 { animation:k79 13.392312s linear infinite; }
-.cursor-layer-0 { animation:k0 13.392312s linear infinite; }
-.cursor-layer-1 { animation:k1 13.392312s linear infinite; }
-.cursor-layer-2 { animation:k2 13.392312s linear infinite; }
-.cursor-layer-3 { animation:k80 13.392312s linear infinite; }
-.cursor-layer-4 { animation:k81 13.392312s linear infinite; }
-.cursor-layer-5 { animation:k4 13.392312s linear infinite; }
-.cursor-layer-6 { animation:k5 13.392312s linear infinite; }
-.cursor-layer-7 { animation:k6 13.392312s linear infinite; }
-.cursor-layer-8 { animation:k7 13.392312s linear infinite; }
-.cursor-layer-9 { animation:k8 13.392312s linear infinite; }
-.cursor-layer-10 { animation:k9 13.392312s linear infinite; }
-.cursor-layer-11 { animation:k10 13.392312s linear infinite; }
-.cursor-layer-12 { animation:k11 13.392312s linear infinite; }
-.cursor-layer-13 { animation:k82 13.392312s linear infinite; }
-.cursor-layer-14 { animation:k83 13.392312s linear infinite; }
-.cursor-layer-15 { animation:k84 13.392312s linear infinite; }
-.cursor-layer-16 { animation:k14 13.392312s linear infinite; }
-.cursor-layer-17 { animation:k15 13.392312s linear infinite; }
-.cursor-layer-18 { animation:k16 13.392312s linear infinite; }
-.cursor-layer-19 { animation:k85 13.392312s linear infinite; }
-.cursor-layer-20 { animation:k86 13.392312s linear infinite; }
-.cursor-layer-21 { animation:k18 13.392312s linear infinite; }
-.cursor-layer-22 { animation:k19 13.392312s linear infinite; }
-.cursor-layer-23 { animation:k20 13.392312s linear infinite; }
-.cursor-layer-24 { animation:k21 13.392312s linear infinite; }
-.cursor-layer-25 { animation:k22 13.392312s linear infinite; }
-.cursor-layer-26 { animation:k87 13.392312s linear infinite; }
-.cursor-layer-27 { animation:k88 13.392312s linear infinite; }
-.cursor-layer-28 { animation:k89 13.392312s linear infinite; }
-.cursor-layer-29 { animation:k25 13.392312s linear infinite; }
-.cursor-layer-30 { animation:k26 13.392312s linear infinite; }
-.cursor-layer-31 { animation:k27 13.392312s linear infinite; }
-.cursor-layer-32 { animation:k90 13.392312s linear infinite; }
-.cursor-layer-33 { animation:k91 13.392312s linear infinite; }
-.cursor-layer-34 { animation:k29 13.392312s linear infinite; }
-.cursor-layer-35 { animation:k30 13.392312s linear infinite; }
-.cursor-layer-36 { animation:k92 13.392312s linear infinite; }
-.cursor-layer-37 { animation:k93 13.392312s linear infinite; }
-.cursor-layer-38 { animation:k32 13.392312s linear infinite; }
-.cursor-layer-39 { animation:k33 13.392312s linear infinite; }
-.cursor-layer-40 { animation:k34 13.392312s linear infinite; }
-.cursor-layer-41 { animation:k35 13.392312s linear infinite; }
-.cursor-layer-42 { animation:k36 13.392312s linear infinite; }
-.cursor-layer-43 { animation:k37 13.392312s linear infinite; }
-.cursor-layer-44 { animation:k38 13.392312s linear infinite; }
-.cursor-layer-45 { animation:k39 13.392312s linear infinite; }
-.cursor-layer-46 { animation:k94 13.392312s linear infinite; }
-.cursor-layer-47 { animation:k95 13.392312s linear infinite; }
-.cursor-layer-48 { animation:k41 13.392312s linear infinite; }
-.cursor-layer-49 { animation:k42 13.392312s linear infinite; }
-.cursor-layer-50 { animation:k96 13.392312s linear infinite; }
-.cursor-layer-51 { animation:k45 13.392312s linear infinite; }
-.cursor-layer-52 { animation:k46 13.392312s linear infinite; }
-.cursor-layer-53 { animation:k47 13.392312s linear infinite; }
-.cursor-layer-54 { animation:k97 13.392312s linear infinite; }
-.cursor-layer-55 { animation:k98 13.392312s linear infinite; }
-.cursor-layer-56 { animation:k49 13.392312s linear infinite; }
-.cursor-layer-57 { animation:k50 13.392312s linear infinite; }
-.cursor-layer-58 { animation:k51 13.392312s linear infinite; }
-.cursor-layer-59 { animation:k52 13.392312s linear infinite; }
-.cursor-layer-60 { animation:k53 13.392312s linear infinite; }
-.cursor-layer-61 { animation:k54 13.392312s linear infinite; }
-.cursor-layer-62 { animation:k99 13.392312s linear infinite; }
-.cursor-layer-63 { animation:k57 13.392312s linear infinite; }
-.cursor-layer-64 { animation:k58 13.392312s linear infinite; }
-.cursor-layer-65 { animation:k59 13.392312s linear infinite; }
-.cursor-layer-66 { animation:k100 13.392312s linear infinite; }
-.cursor-layer-67 { animation:k101 13.392312s linear infinite; }
-.cursor-layer-68 { animation:k61 13.392312s linear infinite; }
-.cursor-layer-69 { animation:k62 13.392312s linear infinite; }
-.cursor-layer-70 { animation:k63 13.392312s linear infinite; }
-.cursor-layer-71 { animation:k102 13.392312s linear infinite; }
-.cursor-layer-72 { animation:k103 13.392312s linear infinite; }
-.cursor-layer-73 { animation:k65 13.392312s linear infinite; }
-.cursor-layer-74 { animation:k66 13.392312s linear infinite; }
-.cursor-layer-75 { animation:k67 13.392312s linear infinite; }
-.cursor-layer-76 { animation:k68 13.392312s linear infinite; }
-.cursor-layer-77 { animation:k69 13.392312s linear infinite; }
-.cursor-layer-78 { animation:k104 13.392312s linear infinite; }
-.cursor-layer-79 { animation:k105 13.392312s linear infinite; }
-.cursor-layer-80 { animation:k71 13.392312s linear infinite; }
-.cursor-layer-81 { animation:k72 13.392312s linear infinite; }
-.cursor-layer-82 { animation:k73 13.392312s linear infinite; }
-.cursor-layer-83 { animation:k74 13.392312s linear infinite; }
-.cursor-layer-84 { animation:k75 13.392312s linear infinite; }
-.cursor-layer-85 { animation:k76 13.392312s linear infinite; }
-.cursor-layer-86 { animation:k106 13.392312s linear infinite; }
-.cursor-layer-87 { animation:k79 13.392312s linear infinite; }
-.viewport-mask-0,.viewport-bg-0 { animation:k107 13.392312s linear infinite; }
+.layer-0 { animation:k0 15.042312s linear infinite; }
+.layer-1 { animation:k1 15.042312s linear infinite; }
+.layer-2 { animation:k2 15.042312s linear infinite; }
+.layer-3 { animation:k3 15.042312s linear infinite; }
+.layer-4 { animation:k4 15.042312s linear infinite; }
+.layer-5 { animation:k5 15.042312s linear infinite; }
+.layer-6 { animation:k6 15.042312s linear infinite; }
+.layer-7 { animation:k7 15.042312s linear infinite; }
+.layer-8 { animation:k8 15.042312s linear infinite; }
+.layer-9 { animation:k9 15.042312s linear infinite; }
+.layer-10 { animation:k10 15.042312s linear infinite; }
+.layer-11 { animation:k11 15.042312s linear infinite; }
+.layer-12 { animation:k12 15.042312s linear infinite; }
+.layer-13 { animation:k13 15.042312s linear infinite; }
+.layer-14 { animation:k14 15.042312s linear infinite; }
+.layer-15 { animation:k15 15.042312s linear infinite; }
+.layer-16 { animation:k16 15.042312s linear infinite; }
+.layer-17 { animation:k17 15.042312s linear infinite; }
+.layer-18 { animation:k18 15.042312s linear infinite; }
+.layer-19 { animation:k19 15.042312s linear infinite; }
+.layer-20 { animation:k20 15.042312s linear infinite; }
+.layer-21 { animation:k21 15.042312s linear infinite; }
+.layer-22 { animation:k22 15.042312s linear infinite; }
+.layer-23 { animation:k23 15.042312s linear infinite; }
+.layer-24 { animation:k24 15.042312s linear infinite; }
+.layer-25 { animation:k24 15.042312s linear infinite; }
+.layer-26 { animation:k24 15.042312s linear infinite; }
+.layer-27 { animation:k24 15.042312s linear infinite; }
+.layer-28 { animation:k24 15.042312s linear infinite; }
+.layer-29 { animation:k24 15.042312s linear infinite; }
+.layer-30 { animation:k24 15.042312s linear infinite; }
+.layer-31 { animation:k24 15.042312s linear infinite; }
+.layer-32 { animation:k24 15.042312s linear infinite; }
+.layer-33 { animation:k24 15.042312s linear infinite; }
+.layer-34 { animation:k24 15.042312s linear infinite; }
+.layer-35 { animation:k24 15.042312s linear infinite; }
+.layer-36 { animation:k24 15.042312s linear infinite; }
+.layer-37 { animation:k24 15.042312s linear infinite; }
+.layer-38 { animation:k24 15.042312s linear infinite; }
+.layer-39 { animation:k24 15.042312s linear infinite; }
+.layer-40 { animation:k24 15.042312s linear infinite; }
+.layer-41 { animation:k24 15.042312s linear infinite; }
+.layer-42 { animation:k24 15.042312s linear infinite; }
+.layer-43 { animation:k24 15.042312s linear infinite; }
+.layer-44 { animation:k24 15.042312s linear infinite; }
+.layer-45 { animation:k24 15.042312s linear infinite; }
+.layer-46 { animation:k24 15.042312s linear infinite; }
+.layer-47 { animation:k24 15.042312s linear infinite; }
+.layer-48 { animation:k24 15.042312s linear infinite; }
+.layer-49 { animation:k24 15.042312s linear infinite; }
+.layer-50 { animation:k24 15.042312s linear infinite; }
+.layer-51 { animation:k25 15.042312s linear infinite; }
+.layer-52 { animation:k26 15.042312s linear infinite; }
+.layer-53 { animation:k27 15.042312s linear infinite; }
+.layer-54 { animation:k28 15.042312s linear infinite; }
+.layer-55 { animation:k29 15.042312s linear infinite; }
+.layer-56 { animation:k30 15.042312s linear infinite; }
+.layer-57 { animation:k31 15.042312s linear infinite; }
+.layer-58 { animation:k32 15.042312s linear infinite; }
+.layer-59 { animation:k33 15.042312s linear infinite; }
+.layer-60 { animation:k34 15.042312s linear infinite; }
+.layer-61 { animation:k35 15.042312s linear infinite; }
+.layer-62 { animation:k36 15.042312s linear infinite; }
+.layer-63 { animation:k37 15.042312s linear infinite; }
+.layer-64 { animation:k38 15.042312s linear infinite; }
+.layer-65 { animation:k39 15.042312s linear infinite; }
+.layer-66 { animation:k40 15.042312s linear infinite; }
+.layer-67 { animation:k41 15.042312s linear infinite; }
+.layer-68 { animation:k42 15.042312s linear infinite; }
+.layer-69 { animation:k43 15.042312s linear infinite; }
+.layer-70 { animation:k43 15.042312s linear infinite; }
+.layer-71 { animation:k43 15.042312s linear infinite; }
+.layer-72 { animation:k43 15.042312s linear infinite; }
+.layer-73 { animation:k43 15.042312s linear infinite; }
+.layer-74 { animation:k43 15.042312s linear infinite; }
+.layer-75 { animation:k43 15.042312s linear infinite; }
+.layer-76 { animation:k43 15.042312s linear infinite; }
+.layer-77 { animation:k43 15.042312s linear infinite; }
+.layer-78 { animation:k43 15.042312s linear infinite; }
+.layer-79 { animation:k43 15.042312s linear infinite; }
+.layer-80 { animation:k43 15.042312s linear infinite; }
+.layer-81 { animation:k43 15.042312s linear infinite; }
+.layer-82 { animation:k43 15.042312s linear infinite; }
+.layer-83 { animation:k43 15.042312s linear infinite; }
+.layer-84 { animation:k43 15.042312s linear infinite; }
+.layer-85 { animation:k43 15.042312s linear infinite; }
+.layer-86 { animation:k43 15.042312s linear infinite; }
+.layer-87 { animation:k43 15.042312s linear infinite; }
+.layer-88 { animation:k43 15.042312s linear infinite; }
+.layer-89 { animation:k43 15.042312s linear infinite; }
+.layer-90 { animation:k43 15.042312s linear infinite; }
+.layer-91 { animation:k43 15.042312s linear infinite; }
+.layer-92 { animation:k43 15.042312s linear infinite; }
+.layer-93 { animation:k43 15.042312s linear infinite; }
+.layer-94 { animation:k43 15.042312s linear infinite; }
+.layer-95 { animation:k43 15.042312s linear infinite; }
+.layer-96 { animation:k44 15.042312s linear infinite; }
+.layer-97 { animation:k44 15.042312s linear infinite; }
+.layer-98 { animation:k44 15.042312s linear infinite; }
+.layer-99 { animation:k44 15.042312s linear infinite; }
+.layer-100 { animation:k44 15.042312s linear infinite; }
+.layer-101 { animation:k44 15.042312s linear infinite; }
+.layer-102 { animation:k44 15.042312s linear infinite; }
+.layer-103 { animation:k44 15.042312s linear infinite; }
+.layer-104 { animation:k44 15.042312s linear infinite; }
+.layer-105 { animation:k44 15.042312s linear infinite; }
+.layer-106 { animation:k44 15.042312s linear infinite; }
+.layer-107 { animation:k44 15.042312s linear infinite; }
+.layer-108 { animation:k44 15.042312s linear infinite; }
+.layer-109 { animation:k44 15.042312s linear infinite; }
+.layer-110 { animation:k44 15.042312s linear infinite; }
+.layer-111 { animation:k44 15.042312s linear infinite; }
+.layer-112 { animation:k44 15.042312s linear infinite; }
+.layer-113 { animation:k44 15.042312s linear infinite; }
+.layer-114 { animation:k44 15.042312s linear infinite; }
+.layer-115 { animation:k44 15.042312s linear infinite; }
+.layer-116 { animation:k44 15.042312s linear infinite; }
+.layer-117 { animation:k44 15.042312s linear infinite; }
+.layer-118 { animation:k44 15.042312s linear infinite; }
+.layer-119 { animation:k44 15.042312s linear infinite; }
+.layer-120 { animation:k44 15.042312s linear infinite; }
+.layer-121 { animation:k44 15.042312s linear infinite; }
+.layer-122 { animation:k44 15.042312s linear infinite; }
+.layer-123 { animation:k45 15.042312s linear infinite; }
+.layer-124 { animation:k46 15.042312s linear infinite; }
+.layer-125 { animation:k47 15.042312s linear infinite; }
+.layer-126 { animation:k48 15.042312s linear infinite; }
+.layer-127 { animation:k49 15.042312s linear infinite; }
+.layer-128 { animation:k50 15.042312s linear infinite; }
+.layer-129 { animation:k51 15.042312s linear infinite; }
+.layer-130 { animation:k52 15.042312s linear infinite; }
+.layer-131 { animation:k53 15.042312s linear infinite; }
+.layer-132 { animation:k54 15.042312s linear infinite; }
+.layer-133 { animation:k55 15.042312s linear infinite; }
+.layer-134 { animation:k55 15.042312s linear infinite; }
+.layer-135 { animation:k55 15.042312s linear infinite; }
+.layer-136 { animation:k55 15.042312s linear infinite; }
+.layer-137 { animation:k55 15.042312s linear infinite; }
+.layer-138 { animation:k55 15.042312s linear infinite; }
+.layer-139 { animation:k55 15.042312s linear infinite; }
+.layer-140 { animation:k55 15.042312s linear infinite; }
+.layer-141 { animation:k55 15.042312s linear infinite; }
+.layer-142 { animation:k55 15.042312s linear infinite; }
+.layer-143 { animation:k55 15.042312s linear infinite; }
+.layer-144 { animation:k55 15.042312s linear infinite; }
+.layer-145 { animation:k55 15.042312s linear infinite; }
+.layer-146 { animation:k55 15.042312s linear infinite; }
+.layer-147 { animation:k55 15.042312s linear infinite; }
+.layer-148 { animation:k55 15.042312s linear infinite; }
+.layer-149 { animation:k55 15.042312s linear infinite; }
+.layer-150 { animation:k55 15.042312s linear infinite; }
+.layer-151 { animation:k55 15.042312s linear infinite; }
+.layer-152 { animation:k55 15.042312s linear infinite; }
+.layer-153 { animation:k55 15.042312s linear infinite; }
+.layer-154 { animation:k55 15.042312s linear infinite; }
+.layer-155 { animation:k55 15.042312s linear infinite; }
+.layer-156 { animation:k55 15.042312s linear infinite; }
+.layer-157 { animation:k55 15.042312s linear infinite; }
+.layer-158 { animation:k55 15.042312s linear infinite; }
+.layer-159 { animation:k55 15.042312s linear infinite; }
+.layer-160 { animation:k56 15.042312s linear infinite; }
+.layer-161 { animation:k56 15.042312s linear infinite; }
+.layer-162 { animation:k56 15.042312s linear infinite; }
+.layer-163 { animation:k56 15.042312s linear infinite; }
+.layer-164 { animation:k56 15.042312s linear infinite; }
+.layer-165 { animation:k56 15.042312s linear infinite; }
+.layer-166 { animation:k56 15.042312s linear infinite; }
+.layer-167 { animation:k56 15.042312s linear infinite; }
+.layer-168 { animation:k56 15.042312s linear infinite; }
+.layer-169 { animation:k56 15.042312s linear infinite; }
+.layer-170 { animation:k56 15.042312s linear infinite; }
+.layer-171 { animation:k56 15.042312s linear infinite; }
+.layer-172 { animation:k56 15.042312s linear infinite; }
+.layer-173 { animation:k56 15.042312s linear infinite; }
+.layer-174 { animation:k56 15.042312s linear infinite; }
+.layer-175 { animation:k56 15.042312s linear infinite; }
+.layer-176 { animation:k56 15.042312s linear infinite; }
+.layer-177 { animation:k56 15.042312s linear infinite; }
+.layer-178 { animation:k56 15.042312s linear infinite; }
+.layer-179 { animation:k56 15.042312s linear infinite; }
+.layer-180 { animation:k56 15.042312s linear infinite; }
+.layer-181 { animation:k56 15.042312s linear infinite; }
+.layer-182 { animation:k56 15.042312s linear infinite; }
+.layer-183 { animation:k56 15.042312s linear infinite; }
+.layer-184 { animation:k56 15.042312s linear infinite; }
+.layer-185 { animation:k56 15.042312s linear infinite; }
+.layer-186 { animation:k56 15.042312s linear infinite; }
+.layer-187 { animation:k57 15.042312s linear infinite; }
+.layer-188 { animation:k58 15.042312s linear infinite; }
+.layer-189 { animation:k59 15.042312s linear infinite; }
+.layer-190 { animation:k60 15.042312s linear infinite; }
+.layer-191 { animation:k61 15.042312s linear infinite; }
+.layer-192 { animation:k62 15.042312s linear infinite; }
+.layer-193 { animation:k63 15.042312s linear infinite; }
+.layer-194 { animation:k64 15.042312s linear infinite; }
+.layer-195 { animation:k65 15.042312s linear infinite; }
+.layer-196 { animation:k66 15.042312s linear infinite; }
+.layer-197 { animation:k67 15.042312s linear infinite; }
+.layer-198 { animation:k68 15.042312s linear infinite; }
+.layer-199 { animation:k69 15.042312s linear infinite; }
+.layer-200 { animation:k70 15.042312s linear infinite; }
+.layer-201 { animation:k71 15.042312s linear infinite; }
+.layer-202 { animation:k72 15.042312s linear infinite; }
+.layer-203 { animation:k73 15.042312s linear infinite; }
+.layer-204 { animation:k74 15.042312s linear infinite; }
+.layer-205 { animation:k75 15.042312s linear infinite; }
+.layer-206 { animation:k76 15.042312s linear infinite; }
+.layer-207 { animation:k77 15.042312s linear infinite; }
+.layer-208 { animation:k77 15.042312s linear infinite; }
+.layer-209 { animation:k77 15.042312s linear infinite; }
+.layer-210 { animation:k77 15.042312s linear infinite; }
+.layer-211 { animation:k77 15.042312s linear infinite; }
+.layer-212 { animation:k77 15.042312s linear infinite; }
+.layer-213 { animation:k77 15.042312s linear infinite; }
+.layer-214 { animation:k77 15.042312s linear infinite; }
+.layer-215 { animation:k77 15.042312s linear infinite; }
+.layer-216 { animation:k77 15.042312s linear infinite; }
+.layer-217 { animation:k77 15.042312s linear infinite; }
+.layer-218 { animation:k77 15.042312s linear infinite; }
+.layer-219 { animation:k77 15.042312s linear infinite; }
+.layer-220 { animation:k77 15.042312s linear infinite; }
+.layer-221 { animation:k77 15.042312s linear infinite; }
+.layer-222 { animation:k77 15.042312s linear infinite; }
+.layer-223 { animation:k77 15.042312s linear infinite; }
+.layer-224 { animation:k77 15.042312s linear infinite; }
+.layer-225 { animation:k77 15.042312s linear infinite; }
+.layer-226 { animation:k77 15.042312s linear infinite; }
+.layer-227 { animation:k77 15.042312s linear infinite; }
+.layer-228 { animation:k77 15.042312s linear infinite; }
+.layer-229 { animation:k77 15.042312s linear infinite; }
+.layer-230 { animation:k77 15.042312s linear infinite; }
+.layer-231 { animation:k77 15.042312s linear infinite; }
+.layer-232 { animation:k77 15.042312s linear infinite; }
+.layer-233 { animation:k77 15.042312s linear infinite; }
+.layer-234 { animation:k78 15.042312s linear infinite; }
+.layer-235 { animation:k78 15.042312s linear infinite; }
+.layer-236 { animation:k78 15.042312s linear infinite; }
+.layer-237 { animation:k78 15.042312s linear infinite; }
+.layer-238 { animation:k78 15.042312s linear infinite; }
+.layer-239 { animation:k78 15.042312s linear infinite; }
+.layer-240 { animation:k78 15.042312s linear infinite; }
+.layer-241 { animation:k78 15.042312s linear infinite; }
+.layer-242 { animation:k78 15.042312s linear infinite; }
+.layer-243 { animation:k78 15.042312s linear infinite; }
+.layer-244 { animation:k78 15.042312s linear infinite; }
+.layer-245 { animation:k78 15.042312s linear infinite; }
+.layer-246 { animation:k78 15.042312s linear infinite; }
+.layer-247 { animation:k78 15.042312s linear infinite; }
+.layer-248 { animation:k78 15.042312s linear infinite; }
+.layer-249 { animation:k78 15.042312s linear infinite; }
+.layer-250 { animation:k78 15.042312s linear infinite; }
+.layer-251 { animation:k78 15.042312s linear infinite; }
+.layer-252 { animation:k78 15.042312s linear infinite; }
+.layer-253 { animation:k78 15.042312s linear infinite; }
+.layer-254 { animation:k78 15.042312s linear infinite; }
+.layer-255 { animation:k78 15.042312s linear infinite; }
+.layer-256 { animation:k78 15.042312s linear infinite; }
+.layer-257 { animation:k78 15.042312s linear infinite; }
+.layer-258 { animation:k78 15.042312s linear infinite; }
+.layer-259 { animation:k78 15.042312s linear infinite; }
+.layer-260 { animation:k78 15.042312s linear infinite; }
+.layer-261 { animation:k78 15.042312s linear infinite; }
+.layer-262 { animation:k78 15.042312s linear infinite; }
+.layer-263 { animation:k79 15.042312s linear infinite; }
+.cursor-layer-0 { animation:k0 15.042312s linear infinite; }
+.cursor-layer-1 { animation:k1 15.042312s linear infinite; }
+.cursor-layer-2 { animation:k2 15.042312s linear infinite; }
+.cursor-layer-3 { animation:k80 15.042312s linear infinite; }
+.cursor-layer-4 { animation:k81 15.042312s linear infinite; }
+.cursor-layer-5 { animation:k4 15.042312s linear infinite; }
+.cursor-layer-6 { animation:k5 15.042312s linear infinite; }
+.cursor-layer-7 { animation:k6 15.042312s linear infinite; }
+.cursor-layer-8 { animation:k7 15.042312s linear infinite; }
+.cursor-layer-9 { animation:k8 15.042312s linear infinite; }
+.cursor-layer-10 { animation:k9 15.042312s linear infinite; }
+.cursor-layer-11 { animation:k10 15.042312s linear infinite; }
+.cursor-layer-12 { animation:k11 15.042312s linear infinite; }
+.cursor-layer-13 { animation:k82 15.042312s linear infinite; }
+.cursor-layer-14 { animation:k83 15.042312s linear infinite; }
+.cursor-layer-15 { animation:k84 15.042312s linear infinite; }
+.cursor-layer-16 { animation:k14 15.042312s linear infinite; }
+.cursor-layer-17 { animation:k15 15.042312s linear infinite; }
+.cursor-layer-18 { animation:k16 15.042312s linear infinite; }
+.cursor-layer-19 { animation:k85 15.042312s linear infinite; }
+.cursor-layer-20 { animation:k86 15.042312s linear infinite; }
+.cursor-layer-21 { animation:k18 15.042312s linear infinite; }
+.cursor-layer-22 { animation:k19 15.042312s linear infinite; }
+.cursor-layer-23 { animation:k20 15.042312s linear infinite; }
+.cursor-layer-24 { animation:k21 15.042312s linear infinite; }
+.cursor-layer-25 { animation:k22 15.042312s linear infinite; }
+.cursor-layer-26 { animation:k87 15.042312s linear infinite; }
+.cursor-layer-27 { animation:k88 15.042312s linear infinite; }
+.cursor-layer-28 { animation:k89 15.042312s linear infinite; }
+.cursor-layer-29 { animation:k25 15.042312s linear infinite; }
+.cursor-layer-30 { animation:k26 15.042312s linear infinite; }
+.cursor-layer-31 { animation:k27 15.042312s linear infinite; }
+.cursor-layer-32 { animation:k90 15.042312s linear infinite; }
+.cursor-layer-33 { animation:k91 15.042312s linear infinite; }
+.cursor-layer-34 { animation:k29 15.042312s linear infinite; }
+.cursor-layer-35 { animation:k30 15.042312s linear infinite; }
+.cursor-layer-36 { animation:k92 15.042312s linear infinite; }
+.cursor-layer-37 { animation:k93 15.042312s linear infinite; }
+.cursor-layer-38 { animation:k32 15.042312s linear infinite; }
+.cursor-layer-39 { animation:k33 15.042312s linear infinite; }
+.cursor-layer-40 { animation:k34 15.042312s linear infinite; }
+.cursor-layer-41 { animation:k35 15.042312s linear infinite; }
+.cursor-layer-42 { animation:k36 15.042312s linear infinite; }
+.cursor-layer-43 { animation:k37 15.042312s linear infinite; }
+.cursor-layer-44 { animation:k38 15.042312s linear infinite; }
+.cursor-layer-45 { animation:k39 15.042312s linear infinite; }
+.cursor-layer-46 { animation:k94 15.042312s linear infinite; }
+.cursor-layer-47 { animation:k95 15.042312s linear infinite; }
+.cursor-layer-48 { animation:k41 15.042312s linear infinite; }
+.cursor-layer-49 { animation:k42 15.042312s linear infinite; }
+.cursor-layer-50 { animation:k96 15.042312s linear infinite; }
+.cursor-layer-51 { animation:k45 15.042312s linear infinite; }
+.cursor-layer-52 { animation:k46 15.042312s linear infinite; }
+.cursor-layer-53 { animation:k47 15.042312s linear infinite; }
+.cursor-layer-54 { animation:k97 15.042312s linear infinite; }
+.cursor-layer-55 { animation:k98 15.042312s linear infinite; }
+.cursor-layer-56 { animation:k49 15.042312s linear infinite; }
+.cursor-layer-57 { animation:k50 15.042312s linear infinite; }
+.cursor-layer-58 { animation:k51 15.042312s linear infinite; }
+.cursor-layer-59 { animation:k52 15.042312s linear infinite; }
+.cursor-layer-60 { animation:k53 15.042312s linear infinite; }
+.cursor-layer-61 { animation:k54 15.042312s linear infinite; }
+.cursor-layer-62 { animation:k99 15.042312s linear infinite; }
+.cursor-layer-63 { animation:k57 15.042312s linear infinite; }
+.cursor-layer-64 { animation:k58 15.042312s linear infinite; }
+.cursor-layer-65 { animation:k59 15.042312s linear infinite; }
+.cursor-layer-66 { animation:k100 15.042312s linear infinite; }
+.cursor-layer-67 { animation:k101 15.042312s linear infinite; }
+.cursor-layer-68 { animation:k61 15.042312s linear infinite; }
+.cursor-layer-69 { animation:k62 15.042312s linear infinite; }
+.cursor-layer-70 { animation:k63 15.042312s linear infinite; }
+.cursor-layer-71 { animation:k102 15.042312s linear infinite; }
+.cursor-layer-72 { animation:k103 15.042312s linear infinite; }
+.cursor-layer-73 { animation:k65 15.042312s linear infinite; }
+.cursor-layer-74 { animation:k66 15.042312s linear infinite; }
+.cursor-layer-75 { animation:k67 15.042312s linear infinite; }
+.cursor-layer-76 { animation:k68 15.042312s linear infinite; }
+.cursor-layer-77 { animation:k69 15.042312s linear infinite; }
+.cursor-layer-78 { animation:k104 15.042312s linear infinite; }
+.cursor-layer-79 { animation:k105 15.042312s linear infinite; }
+.cursor-layer-80 { animation:k71 15.042312s linear infinite; }
+.cursor-layer-81 { animation:k72 15.042312s linear infinite; }
+.cursor-layer-82 { animation:k73 15.042312s linear infinite; }
+.cursor-layer-83 { animation:k74 15.042312s linear infinite; }
+.cursor-layer-84 { animation:k75 15.042312s linear infinite; }
+.cursor-layer-85 { animation:k76 15.042312s linear infinite; }
+.cursor-layer-86 { animation:k106 15.042312s linear infinite; }
+.cursor-layer-87 { animation:k79 15.042312s linear infinite; }
+.viewport-mask-0,.viewport-bg-0 { animation:k107 15.042312s linear infinite; }
 </style>
 <defs>
 <mask id="viewport-mask" x="0" y="0" width="829.6" height="624" maskUnits="userSpaceOnUse">
@@ -548,85 +548,85 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacing">$ git status</text>
 </g>
 <g class="layer layer-24">
-<text x="37.84" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="486.08" lengthAdjust="spacing">(use &quot;git restore --staged &lt;file&gt;...&quot; to unstage)</text>
+<text x="97.36" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/basic.gif</text>
 </g>
 <g class="layer layer-25">
-<text x="97.36" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   .github/docs/spec_svg.md</text>
+<text x="97.36" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/basic.svg</text>
 </g>
 <g class="layer layer-26">
-<text x="97.36" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacing">modified:   CastReader.cs</text>
+<text x="97.36" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/demo.gif</text>
 </g>
 <g class="layer layer-27">
-<text x="97.36" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">modified:   Svg.cs</text>
+<text x="97.36" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/demo.svg</text>
 </g>
 <g class="layer layer-28">
-<text x="97.36" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">modified:   Terminal.cs</text>
+<text x="97.36" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/git.cast</text>
 </g>
 <g class="layer layer-29">
-<text x="97.36" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/basic.cast</text>
+<text x="97.36" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">modified:   samples/git.gif</text>
 </g>
 <g class="layer layer-30">
-<text x="97.36" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/basic.svg</text>
+<text x="97.36" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">modified:   samples/git.svg</text>
 </g>
 <g class="layer layer-31">
-<text x="97.36" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/demo.svg</text>
+<text x="97.36" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="337.28" lengthAdjust="spacing">modified:   samples/highlight.cast</text>
 </g>
 <g class="layer layer-32">
-<text x="97.36" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/git.cast</text>
+<text x="97.36" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">modified:   samples/highlight.gif</text>
 </g>
 <g class="layer layer-33">
-<text x="97.36" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">modified:   samples/git.svg</text>
+<text x="97.36" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">modified:   samples/highlight.svg</text>
 </g>
 <g class="layer layer-34">
-<text x="97.36" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="337.28" lengthAdjust="spacing">modified:   samples/highlight.cast</text>
+<text x="97.36" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/resize.gif</text>
 </g>
 <g class="layer layer-35">
-<text x="97.36" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">modified:   samples/highlight.svg</text>
+<text x="97.36" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">modified:   samples/theme-macos.gif</text>
 </g>
 <g class="layer layer-36">
-<text x="97.36" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/resize.svg</text>
+<text x="97.36" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">modified:   samples/theme-macos.svg</text>
 </g>
 <g class="layer layer-37">
-<text x="97.36" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">modified:   samples/theme-macos.svg</text>
+<text x="97.36" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">modified:   samples/theme-windows.gif</text>
 </g>
 <g class="layer layer-38">
 <text x="97.36" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">modified:   samples/theme-windows.svg</text>
 </g>
 <g class="layer layer-39">
-<text x="97.36" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.svg</text>
+<text x="97.36" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.gif</text>
 </g>
 <g class="layer layer-40">
-<text x="97.36" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">modified:   scenetake.cs</text>
+<text x="97.36" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.svg</text>
 </g>
 <g class="layer layer-41">
 <text x="97.36" y="364.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   tests/svg_render_test.cs</text>
 </g>
 <g class="layer layer-42">
-<text x="97.36" y="384.8" fill="#d0d0d0" font-weight="normal" textLength="386.88" lengthAdjust="spacing">modified:   tests/window_chrome_test.cs</text>
+<text x="18" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacing">Untracked files:</text>
 </g>
 <g class="layer layer-43">
-<text x="18" y="424.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">Changes not staged for commit:</text>
+<text x="37.84" y="424.8" fill="#d0d0d0" font-weight="normal" textLength="615.04" lengthAdjust="spacing">(use &quot;git add &lt;file&gt;...&quot; to include in what will be committed)</text>
 </g>
 <g class="layer layer-44">
-<text x="37.84" y="444.8" fill="#d0d0d0" font-weight="normal" textLength="575.36" lengthAdjust="spacing">(use &quot;git add &lt;file&gt;...&quot; to update what will be committed)</text>
+<text x="97.36" y="444.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">samples/basic-agg-match.gif</text>
 </g>
 <g class="layer layer-45">
-<text x="37.84" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="684.48" lengthAdjust="spacing">(use &quot;git restore &lt;file&gt;...&quot; to discard changes in working directory)</text>
+<text x="97.36" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">samples/basic-agg0-idle0.gif</text>
 </g>
 <g class="layer layer-46">
-<text x="97.36" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">modified:   Svg.cs</text>
+<text x="97.36" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">samples/basic-agg0-v.gif</text>
 </g>
 <g class="layer layer-47">
-<text x="97.36" y="504.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/basic.cast</text>
+<text x="97.36" y="504.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">samples/basic-agg0.gif</text>
 </g>
 <g class="layer layer-48">
-<text x="97.36" y="524.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/basic.svg</text>
+<text x="97.36" y="524.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">samples/resize-agg.gif</text>
 </g>
 <g class="layer layer-49">
-<text x="97.36" y="544.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/demo.svg</text>
+<text x="97.36" y="544.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">tests/marker-delay.gif</text>
 </g>
 <g class="layer layer-50">
-<text x="97.36" y="564.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   tests/svg_render_test.cs</text>
+<text x="18" y="584.8" fill="#d0d0d0" font-weight="normal" textLength="644.8" lengthAdjust="spacing">no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)</text>
 </g>
 <g class="layer layer-51">
 <text x="18" y="604.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
@@ -683,166 +683,166 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="604.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">$ git log --oneline -5</text>
 </g>
 <g class="layer layer-69">
-<text x="97.36" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   .github/docs/spec_svg.md</text>
+<text x="97.36" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/basic.svg</text>
 </g>
 <g class="layer layer-70">
-<text x="97.36" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacing">modified:   CastReader.cs</text>
+<text x="97.36" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/demo.gif</text>
 </g>
 <g class="layer layer-71">
-<text x="97.36" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">modified:   Svg.cs</text>
+<text x="97.36" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/demo.svg</text>
 </g>
 <g class="layer layer-72">
-<text x="97.36" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">modified:   Terminal.cs</text>
+<text x="97.36" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/git.cast</text>
 </g>
 <g class="layer layer-73">
-<text x="97.36" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/basic.cast</text>
+<text x="97.36" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">modified:   samples/git.gif</text>
 </g>
 <g class="layer layer-74">
-<text x="97.36" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/basic.svg</text>
+<text x="97.36" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">modified:   samples/git.svg</text>
 </g>
 <g class="layer layer-75">
-<text x="97.36" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/demo.svg</text>
+<text x="97.36" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="337.28" lengthAdjust="spacing">modified:   samples/highlight.cast</text>
 </g>
 <g class="layer layer-76">
-<text x="97.36" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/git.cast</text>
+<text x="97.36" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">modified:   samples/highlight.gif</text>
 </g>
 <g class="layer layer-77">
-<text x="97.36" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">modified:   samples/git.svg</text>
+<text x="97.36" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">modified:   samples/highlight.svg</text>
 </g>
 <g class="layer layer-78">
-<text x="97.36" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="337.28" lengthAdjust="spacing">modified:   samples/highlight.cast</text>
+<text x="97.36" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/resize.gif</text>
 </g>
 <g class="layer layer-79">
-<text x="97.36" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">modified:   samples/highlight.svg</text>
+<text x="97.36" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">modified:   samples/theme-macos.gif</text>
 </g>
 <g class="layer layer-80">
-<text x="97.36" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/resize.svg</text>
+<text x="97.36" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">modified:   samples/theme-macos.svg</text>
 </g>
 <g class="layer layer-81">
-<text x="97.36" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">modified:   samples/theme-macos.svg</text>
+<text x="97.36" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">modified:   samples/theme-windows.gif</text>
 </g>
 <g class="layer layer-82">
 <text x="97.36" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">modified:   samples/theme-windows.svg</text>
 </g>
 <g class="layer layer-83">
-<text x="97.36" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.svg</text>
+<text x="97.36" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.gif</text>
 </g>
 <g class="layer layer-84">
-<text x="97.36" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">modified:   scenetake.cs</text>
+<text x="97.36" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.svg</text>
 </g>
 <g class="layer layer-85">
 <text x="97.36" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   tests/svg_render_test.cs</text>
 </g>
 <g class="layer layer-86">
-<text x="97.36" y="364.8" fill="#d0d0d0" font-weight="normal" textLength="386.88" lengthAdjust="spacing">modified:   tests/window_chrome_test.cs</text>
+<text x="18" y="384.8" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacing">Untracked files:</text>
 </g>
 <g class="layer layer-87">
-<text x="18" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">Changes not staged for commit:</text>
+<text x="37.84" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="615.04" lengthAdjust="spacing">(use &quot;git add &lt;file&gt;...&quot; to include in what will be committed)</text>
 </g>
 <g class="layer layer-88">
-<text x="37.84" y="424.8" fill="#d0d0d0" font-weight="normal" textLength="575.36" lengthAdjust="spacing">(use &quot;git add &lt;file&gt;...&quot; to update what will be committed)</text>
+<text x="97.36" y="424.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">samples/basic-agg-match.gif</text>
 </g>
 <g class="layer layer-89">
-<text x="37.84" y="444.8" fill="#d0d0d0" font-weight="normal" textLength="684.48" lengthAdjust="spacing">(use &quot;git restore &lt;file&gt;...&quot; to discard changes in working directory)</text>
+<text x="97.36" y="444.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">samples/basic-agg0-idle0.gif</text>
 </g>
 <g class="layer layer-90">
-<text x="97.36" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">modified:   Svg.cs</text>
+<text x="97.36" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">samples/basic-agg0-v.gif</text>
 </g>
 <g class="layer layer-91">
-<text x="97.36" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/basic.cast</text>
+<text x="97.36" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">samples/basic-agg0.gif</text>
 </g>
 <g class="layer layer-92">
-<text x="97.36" y="504.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/basic.svg</text>
+<text x="97.36" y="504.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">samples/resize-agg.gif</text>
 </g>
 <g class="layer layer-93">
-<text x="97.36" y="524.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/demo.svg</text>
+<text x="97.36" y="524.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">tests/marker-delay.gif</text>
 </g>
 <g class="layer layer-94">
-<text x="97.36" y="544.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   tests/svg_render_test.cs</text>
+<text x="18" y="564.8" fill="#d0d0d0" font-weight="normal" textLength="644.8" lengthAdjust="spacing">no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)</text>
 </g>
 <g class="layer layer-95">
 <text x="18" y="584.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">$ git log --oneline -5</text>
 </g>
 <g class="layer layer-96">
-<text x="97.36" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/demo.svg</text>
+<text x="97.36" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">modified:   samples/git.svg</text>
 </g>
 <g class="layer layer-97">
-<text x="97.36" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/git.cast</text>
+<text x="97.36" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="337.28" lengthAdjust="spacing">modified:   samples/highlight.cast</text>
 </g>
 <g class="layer layer-98">
-<text x="97.36" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">modified:   samples/git.svg</text>
+<text x="97.36" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">modified:   samples/highlight.gif</text>
 </g>
 <g class="layer layer-99">
-<text x="97.36" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="337.28" lengthAdjust="spacing">modified:   samples/highlight.cast</text>
+<text x="97.36" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">modified:   samples/highlight.svg</text>
 </g>
 <g class="layer layer-100">
-<text x="97.36" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">modified:   samples/highlight.svg</text>
+<text x="97.36" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/resize.gif</text>
 </g>
 <g class="layer layer-101">
-<text x="97.36" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/resize.svg</text>
+<text x="97.36" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">modified:   samples/theme-macos.gif</text>
 </g>
 <g class="layer layer-102">
 <text x="97.36" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">modified:   samples/theme-macos.svg</text>
 </g>
 <g class="layer layer-103">
-<text x="97.36" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">modified:   samples/theme-windows.svg</text>
+<text x="97.36" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">modified:   samples/theme-windows.gif</text>
 </g>
 <g class="layer layer-104">
-<text x="97.36" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.svg</text>
+<text x="97.36" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">modified:   samples/theme-windows.svg</text>
 </g>
 <g class="layer layer-105">
-<text x="97.36" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">modified:   scenetake.cs</text>
+<text x="97.36" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.gif</text>
 </g>
 <g class="layer layer-106">
-<text x="97.36" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   tests/svg_render_test.cs</text>
+<text x="97.36" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.svg</text>
 </g>
 <g class="layer layer-107">
-<text x="97.36" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="386.88" lengthAdjust="spacing">modified:   tests/window_chrome_test.cs</text>
+<text x="97.36" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   tests/svg_render_test.cs</text>
 </g>
 <g class="layer layer-108">
-<text x="18" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">Changes not staged for commit:</text>
+<text x="18" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacing">Untracked files:</text>
 </g>
 <g class="layer layer-109">
-<text x="37.84" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="575.36" lengthAdjust="spacing">(use &quot;git add &lt;file&gt;...&quot; to update what will be committed)</text>
+<text x="37.84" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="615.04" lengthAdjust="spacing">(use &quot;git add &lt;file&gt;...&quot; to include in what will be committed)</text>
 </g>
 <g class="layer layer-110">
-<text x="37.84" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="684.48" lengthAdjust="spacing">(use &quot;git restore &lt;file&gt;...&quot; to discard changes in working directory)</text>
+<text x="97.36" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">samples/basic-agg-match.gif</text>
 </g>
 <g class="layer layer-111">
-<text x="97.36" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">modified:   Svg.cs</text>
+<text x="97.36" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">samples/basic-agg0-idle0.gif</text>
 </g>
 <g class="layer layer-112">
-<text x="97.36" y="364.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/basic.cast</text>
+<text x="97.36" y="364.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">samples/basic-agg0-v.gif</text>
 </g>
 <g class="layer layer-113">
-<text x="97.36" y="384.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/basic.svg</text>
+<text x="97.36" y="384.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">samples/basic-agg0.gif</text>
 </g>
 <g class="layer layer-114">
-<text x="97.36" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/demo.svg</text>
+<text x="97.36" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">samples/resize-agg.gif</text>
 </g>
 <g class="layer layer-115">
-<text x="97.36" y="424.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   tests/svg_render_test.cs</text>
+<text x="97.36" y="424.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">tests/marker-delay.gif</text>
 </g>
 <g class="layer layer-116">
-<text x="18" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">$ git log --oneline -5</text>
+<text x="18" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="644.8" lengthAdjust="spacing">no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)</text>
 </g>
 <g class="layer layer-117">
-<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">81c9108 docs: update</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">$ git log --oneline -5</text>
 </g>
 <g class="layer layer-118">
-<text x="18" y="504.8" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacing">677c9db docs: update spec</text>
+<text x="18" y="504.8" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacing">b9ca230 feat: svg infinite loop</text>
 </g>
 <g class="layer layer-119">
-<text x="18" y="524.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">d8098b0 chore: rename project (#25)</text>
+<text x="18" y="524.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">81c9108 docs: update</text>
 </g>
 <g class="layer layer-120">
-<text x="18" y="544.8" fill="#d0d0d0" font-weight="normal" textLength="496" lengthAdjust="spacing">3e7b04b feat: add windows/macos window theme (#24)</text>
+<text x="18" y="544.8" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacing">677c9db docs: update spec</text>
 </g>
 <g class="layer layer-121">
-<text x="18" y="564.8" fill="#d0d0d0" font-weight="normal" textLength="793.6" lengthAdjust="spacing">450c31d feat: Replace built-in SVG renderer with VT emulator and row-diff animat</text>
+<text x="18" y="564.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">d8098b0 chore: rename project (#25)</text>
 </g>
 <g class="layer layer-122">
-<text x="18" y="584.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">ion (#23)</text>
+<text x="18" y="584.8" fill="#d0d0d0" font-weight="normal" textLength="496" lengthAdjust="spacing">3e7b04b feat: add windows/macos window theme (#24)</text>
 </g>
 <g class="layer layer-123">
 <text x="18" y="604.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
@@ -875,157 +875,157 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="604.8" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacing">$ git branch</text>
 </g>
 <g class="layer layer-133">
-<text x="97.36" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/git.cast</text>
+<text x="97.36" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="337.28" lengthAdjust="spacing">modified:   samples/highlight.cast</text>
 </g>
 <g class="layer layer-134">
-<text x="97.36" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">modified:   samples/git.svg</text>
+<text x="97.36" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">modified:   samples/highlight.gif</text>
 </g>
 <g class="layer layer-135">
-<text x="97.36" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="337.28" lengthAdjust="spacing">modified:   samples/highlight.cast</text>
+<text x="97.36" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">modified:   samples/highlight.svg</text>
 </g>
 <g class="layer layer-136">
-<text x="97.36" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">modified:   samples/highlight.svg</text>
+<text x="97.36" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/resize.gif</text>
 </g>
 <g class="layer layer-137">
-<text x="97.36" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/resize.svg</text>
+<text x="97.36" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">modified:   samples/theme-macos.gif</text>
 </g>
 <g class="layer layer-138">
 <text x="97.36" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">modified:   samples/theme-macos.svg</text>
 </g>
 <g class="layer layer-139">
-<text x="97.36" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">modified:   samples/theme-windows.svg</text>
+<text x="97.36" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">modified:   samples/theme-windows.gif</text>
 </g>
 <g class="layer layer-140">
-<text x="97.36" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.svg</text>
+<text x="97.36" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">modified:   samples/theme-windows.svg</text>
 </g>
 <g class="layer layer-141">
-<text x="97.36" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">modified:   scenetake.cs</text>
+<text x="97.36" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.gif</text>
 </g>
 <g class="layer layer-142">
-<text x="97.36" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   tests/svg_render_test.cs</text>
+<text x="97.36" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.svg</text>
 </g>
 <g class="layer layer-143">
-<text x="97.36" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="386.88" lengthAdjust="spacing">modified:   tests/window_chrome_test.cs</text>
+<text x="97.36" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   tests/svg_render_test.cs</text>
 </g>
 <g class="layer layer-144">
-<text x="18" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">Changes not staged for commit:</text>
+<text x="18" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacing">Untracked files:</text>
 </g>
 <g class="layer layer-145">
-<text x="37.84" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="575.36" lengthAdjust="spacing">(use &quot;git add &lt;file&gt;...&quot; to update what will be committed)</text>
+<text x="37.84" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="615.04" lengthAdjust="spacing">(use &quot;git add &lt;file&gt;...&quot; to include in what will be committed)</text>
 </g>
 <g class="layer layer-146">
-<text x="37.84" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="684.48" lengthAdjust="spacing">(use &quot;git restore &lt;file&gt;...&quot; to discard changes in working directory)</text>
+<text x="97.36" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">samples/basic-agg-match.gif</text>
 </g>
 <g class="layer layer-147">
-<text x="97.36" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">modified:   Svg.cs</text>
+<text x="97.36" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">samples/basic-agg0-idle0.gif</text>
 </g>
 <g class="layer layer-148">
-<text x="97.36" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/basic.cast</text>
+<text x="97.36" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">samples/basic-agg0-v.gif</text>
 </g>
 <g class="layer layer-149">
-<text x="97.36" y="364.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/basic.svg</text>
+<text x="97.36" y="364.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">samples/basic-agg0.gif</text>
 </g>
 <g class="layer layer-150">
-<text x="97.36" y="384.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/demo.svg</text>
+<text x="97.36" y="384.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">samples/resize-agg.gif</text>
 </g>
 <g class="layer layer-151">
-<text x="97.36" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   tests/svg_render_test.cs</text>
+<text x="97.36" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">tests/marker-delay.gif</text>
 </g>
 <g class="layer layer-152">
-<text x="18" y="444.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">$ git log --oneline -5</text>
+<text x="18" y="444.8" fill="#d0d0d0" font-weight="normal" textLength="644.8" lengthAdjust="spacing">no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)</text>
 </g>
 <g class="layer layer-153">
-<text x="18" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">81c9108 docs: update</text>
+<text x="18" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">$ git log --oneline -5</text>
 </g>
 <g class="layer layer-154">
-<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacing">677c9db docs: update spec</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacing">b9ca230 feat: svg infinite loop</text>
 </g>
 <g class="layer layer-155">
-<text x="18" y="504.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">d8098b0 chore: rename project (#25)</text>
+<text x="18" y="504.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">81c9108 docs: update</text>
 </g>
 <g class="layer layer-156">
-<text x="18" y="524.8" fill="#d0d0d0" font-weight="normal" textLength="496" lengthAdjust="spacing">3e7b04b feat: add windows/macos window theme (#24)</text>
+<text x="18" y="524.8" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacing">677c9db docs: update spec</text>
 </g>
 <g class="layer layer-157">
-<text x="18" y="544.8" fill="#d0d0d0" font-weight="normal" textLength="793.6" lengthAdjust="spacing">450c31d feat: Replace built-in SVG renderer with VT emulator and row-diff animat</text>
+<text x="18" y="544.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">d8098b0 chore: rename project (#25)</text>
 </g>
 <g class="layer layer-158">
-<text x="18" y="564.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">ion (#23)</text>
+<text x="18" y="564.8" fill="#d0d0d0" font-weight="normal" textLength="496" lengthAdjust="spacing">3e7b04b feat: add windows/macos window theme (#24)</text>
 </g>
 <g class="layer layer-159">
 <text x="18" y="584.8" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacing">$ git branch</text>
 </g>
 <g class="layer layer-160">
-<text x="97.36" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="337.28" lengthAdjust="spacing">modified:   samples/highlight.cast</text>
+<text x="97.36" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">modified:   samples/highlight.svg</text>
 </g>
 <g class="layer layer-161">
-<text x="97.36" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">modified:   samples/highlight.svg</text>
+<text x="97.36" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/resize.gif</text>
 </g>
 <g class="layer layer-162">
-<text x="97.36" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/resize.svg</text>
+<text x="97.36" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">modified:   samples/theme-macos.gif</text>
 </g>
 <g class="layer layer-163">
 <text x="97.36" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">modified:   samples/theme-macos.svg</text>
 </g>
 <g class="layer layer-164">
-<text x="97.36" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">modified:   samples/theme-windows.svg</text>
+<text x="97.36" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">modified:   samples/theme-windows.gif</text>
 </g>
 <g class="layer layer-165">
-<text x="97.36" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.svg</text>
+<text x="97.36" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">modified:   samples/theme-windows.svg</text>
 </g>
 <g class="layer layer-166">
-<text x="97.36" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">modified:   scenetake.cs</text>
+<text x="97.36" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.gif</text>
 </g>
 <g class="layer layer-167">
-<text x="97.36" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   tests/svg_render_test.cs</text>
+<text x="97.36" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.svg</text>
 </g>
 <g class="layer layer-168">
-<text x="97.36" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="386.88" lengthAdjust="spacing">modified:   tests/window_chrome_test.cs</text>
+<text x="97.36" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   tests/svg_render_test.cs</text>
 </g>
 <g class="layer layer-169">
-<text x="18" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">Changes not staged for commit:</text>
+<text x="18" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacing">Untracked files:</text>
 </g>
 <g class="layer layer-170">
-<text x="37.84" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="575.36" lengthAdjust="spacing">(use &quot;git add &lt;file&gt;...&quot; to update what will be committed)</text>
+<text x="37.84" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="615.04" lengthAdjust="spacing">(use &quot;git add &lt;file&gt;...&quot; to include in what will be committed)</text>
 </g>
 <g class="layer layer-171">
-<text x="37.84" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="684.48" lengthAdjust="spacing">(use &quot;git restore &lt;file&gt;...&quot; to discard changes in working directory)</text>
+<text x="97.36" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">samples/basic-agg-match.gif</text>
 </g>
 <g class="layer layer-172">
-<text x="97.36" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">modified:   Svg.cs</text>
+<text x="97.36" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">samples/basic-agg0-idle0.gif</text>
 </g>
 <g class="layer layer-173">
-<text x="97.36" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/basic.cast</text>
+<text x="97.36" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">samples/basic-agg0-v.gif</text>
 </g>
 <g class="layer layer-174">
-<text x="97.36" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/basic.svg</text>
+<text x="97.36" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">samples/basic-agg0.gif</text>
 </g>
 <g class="layer layer-175">
-<text x="97.36" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/demo.svg</text>
+<text x="97.36" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">samples/resize-agg.gif</text>
 </g>
 <g class="layer layer-176">
-<text x="97.36" y="364.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   tests/svg_render_test.cs</text>
+<text x="97.36" y="364.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">tests/marker-delay.gif</text>
 </g>
 <g class="layer layer-177">
-<text x="18" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">$ git log --oneline -5</text>
+<text x="18" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="644.8" lengthAdjust="spacing">no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)</text>
 </g>
 <g class="layer layer-178">
-<text x="18" y="424.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">81c9108 docs: update</text>
+<text x="18" y="424.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">$ git log --oneline -5</text>
 </g>
 <g class="layer layer-179">
-<text x="18" y="444.8" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacing">677c9db docs: update spec</text>
+<text x="18" y="444.8" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacing">b9ca230 feat: svg infinite loop</text>
 </g>
 <g class="layer layer-180">
-<text x="18" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">d8098b0 chore: rename project (#25)</text>
+<text x="18" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">81c9108 docs: update</text>
 </g>
 <g class="layer layer-181">
-<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="496" lengthAdjust="spacing">3e7b04b feat: add windows/macos window theme (#24)</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacing">677c9db docs: update spec</text>
 </g>
 <g class="layer layer-182">
-<text x="18" y="504.8" fill="#d0d0d0" font-weight="normal" textLength="793.6" lengthAdjust="spacing">450c31d feat: Replace built-in SVG renderer with VT emulator and row-diff animat</text>
+<text x="18" y="504.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">d8098b0 chore: rename project (#25)</text>
 </g>
 <g class="layer layer-183">
-<text x="18" y="524.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">ion (#23)</text>
+<text x="18" y="524.8" fill="#d0d0d0" font-weight="normal" textLength="496" lengthAdjust="spacing">3e7b04b feat: add windows/macos window theme (#24)</text>
 </g>
 <g class="layer layer-184">
 <text x="18" y="544.8" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacing">$ git branch</text>
@@ -1097,73 +1097,73 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="604.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">$ git diff --stat HEAD~1</text>
 </g>
 <g class="layer layer-207">
-<text x="97.36" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">modified:   samples/highlight.svg</text>
+<text x="97.36" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/resize.gif</text>
 </g>
 <g class="layer layer-208">
-<text x="97.36" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/resize.svg</text>
+<text x="97.36" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">modified:   samples/theme-macos.gif</text>
 </g>
 <g class="layer layer-209">
 <text x="97.36" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">modified:   samples/theme-macos.svg</text>
 </g>
 <g class="layer layer-210">
-<text x="97.36" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">modified:   samples/theme-windows.svg</text>
+<text x="97.36" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">modified:   samples/theme-windows.gif</text>
 </g>
 <g class="layer layer-211">
-<text x="97.36" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.svg</text>
+<text x="97.36" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">modified:   samples/theme-windows.svg</text>
 </g>
 <g class="layer layer-212">
-<text x="97.36" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">modified:   scenetake.cs</text>
+<text x="97.36" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.gif</text>
 </g>
 <g class="layer layer-213">
-<text x="97.36" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   tests/svg_render_test.cs</text>
+<text x="97.36" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/theme.svg</text>
 </g>
 <g class="layer layer-214">
-<text x="97.36" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="386.88" lengthAdjust="spacing">modified:   tests/window_chrome_test.cs</text>
+<text x="97.36" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   tests/svg_render_test.cs</text>
 </g>
 <g class="layer layer-215">
-<text x="18" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">Changes not staged for commit:</text>
+<text x="18" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacing">Untracked files:</text>
 </g>
 <g class="layer layer-216">
-<text x="37.84" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="575.36" lengthAdjust="spacing">(use &quot;git add &lt;file&gt;...&quot; to update what will be committed)</text>
+<text x="37.84" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="615.04" lengthAdjust="spacing">(use &quot;git add &lt;file&gt;...&quot; to include in what will be committed)</text>
 </g>
 <g class="layer layer-217">
-<text x="37.84" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="684.48" lengthAdjust="spacing">(use &quot;git restore &lt;file&gt;...&quot; to discard changes in working directory)</text>
+<text x="97.36" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">samples/basic-agg-match.gif</text>
 </g>
 <g class="layer layer-218">
-<text x="97.36" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">modified:   Svg.cs</text>
+<text x="97.36" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">samples/basic-agg0-idle0.gif</text>
 </g>
 <g class="layer layer-219">
-<text x="97.36" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">modified:   samples/basic.cast</text>
+<text x="97.36" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">samples/basic-agg0-v.gif</text>
 </g>
 <g class="layer layer-220">
-<text x="97.36" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">modified:   samples/basic.svg</text>
+<text x="97.36" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">samples/basic-agg0.gif</text>
 </g>
 <g class="layer layer-221">
-<text x="97.36" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">modified:   samples/demo.svg</text>
+<text x="97.36" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">samples/resize-agg.gif</text>
 </g>
 <g class="layer layer-222">
-<text x="97.36" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">modified:   tests/svg_render_test.cs</text>
+<text x="97.36" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">tests/marker-delay.gif</text>
 </g>
 <g class="layer layer-223">
-<text x="18" y="384.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">$ git log --oneline -5</text>
+<text x="18" y="384.8" fill="#d0d0d0" font-weight="normal" textLength="644.8" lengthAdjust="spacing">no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)</text>
 </g>
 <g class="layer layer-224">
-<text x="18" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">81c9108 docs: update</text>
+<text x="18" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">$ git log --oneline -5</text>
 </g>
 <g class="layer layer-225">
-<text x="18" y="424.8" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacing">677c9db docs: update spec</text>
+<text x="18" y="424.8" fill="#d0d0d0" font-weight="normal" textLength="307.52" lengthAdjust="spacing">b9ca230 feat: svg infinite loop</text>
 </g>
 <g class="layer layer-226">
-<text x="18" y="444.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">d8098b0 chore: rename project (#25)</text>
+<text x="18" y="444.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">81c9108 docs: update</text>
 </g>
 <g class="layer layer-227">
-<text x="18" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="496" lengthAdjust="spacing">3e7b04b feat: add windows/macos window theme (#24)</text>
+<text x="18" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="248" lengthAdjust="spacing">677c9db docs: update spec</text>
 </g>
 <g class="layer layer-228">
-<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="793.6" lengthAdjust="spacing">450c31d feat: Replace built-in SVG renderer with VT emulator and row-diff animat</text>
+<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">d8098b0 chore: rename project (#25)</text>
 </g>
 <g class="layer layer-229">
-<text x="18" y="504.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">ion (#23)</text>
+<text x="18" y="504.8" fill="#d0d0d0" font-weight="normal" textLength="496" lengthAdjust="spacing">3e7b04b feat: add windows/macos window theme (#24)</text>
 </g>
 <g class="layer layer-230">
 <text x="18" y="524.8" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacing">$ git branch</text>
@@ -1178,91 +1178,91 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="584.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">$ git diff --stat HEAD~1</text>
 </g>
 <g class="layer layer-234">
-<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">ion (#23)</text>
+<text x="27.92" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">samples/highlight.cast      |    4 +-</text>
 </g>
 <g class="layer layer-235">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacing">$ git branch</text>
+<text x="27.92" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="565.44" lengthAdjust="spacing">samples/highlight.gif       |  Bin 587281 -&gt; 575058 bytes</text>
 </g>
 <g class="layer layer-236">
-<text x="18" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">* loop</text>
+<text x="27.92" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="773.76" lengthAdjust="spacing">samples/highlight.svg       | 1636 +++++++++++++++++++++++++------------------</text>
 </g>
 <g class="layer layer-237">
-<text x="37.84" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="39.68" lengthAdjust="spacing">main</text>
+<text x="27.92" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacing">samples/resize.gif          |  Bin 8209 -&gt; 8209 bytes</text>
 </g>
 <g class="layer layer-238">
-<text x="18" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">$ git diff --stat HEAD~1</text>
+<text x="27.92" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">samples/resize.svg          |   54 +-</text>
 </g>
 <g class="layer layer-239">
-<text x="27.92" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">.github/docs/spec_svg.md    |    3 +-</text>
+<text x="27.92" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="545.6" lengthAdjust="spacing">samples/theme-macos.gif     |  Bin 43616 -&gt; 43616 bytes</text>
 </g>
 <g class="layer layer-240">
-<text x="27.92" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">CastReader.cs               |   11 +-</text>
+<text x="27.92" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacing">samples/theme-macos.svg     |  410 ++++++-----</text>
 </g>
 <g class="layer layer-241">
-<text x="27.92" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">README.md                   |    2 +-</text>
+<text x="27.92" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="545.6" lengthAdjust="spacing">samples/theme-windows.gif   |  Bin 42176 -&gt; 42176 bytes</text>
 </g>
 <g class="layer layer-242">
-<text x="27.92" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="386.88" lengthAdjust="spacing">Svg.cs                      |  175 +++-</text>
+<text x="27.92" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacing">samples/theme-windows.svg   |  420 ++++++-----</text>
 </g>
 <g class="layer layer-243">
-<text x="27.92" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="357.12" lengthAdjust="spacing">Terminal.cs                 |    9 +</text>
+<text x="27.92" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="545.6" lengthAdjust="spacing">samples/theme.gif           |  Bin 33519 -&gt; 33519 bytes</text>
 </g>
 <g class="layer layer-244">
-<text x="27.92" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">samples/basic.cast          |    2 +-</text>
+<text x="27.92" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="436.48" lengthAdjust="spacing">samples/theme.svg           |  328 +++++----</text>
 </g>
 <g class="layer layer-245">
-<text x="27.92" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="615.04" lengthAdjust="spacing">samples/basic.svg           | 1274 +++++++++++++++------------</text>
+<text x="27.92" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">scenetake.cs                |    5 +-</text>
 </g>
 <g class="layer layer-246">
-<text x="27.92" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="585.28" lengthAdjust="spacing">samples/demo.svg            | 1110 ++++++++++++++----------</text>
+<text x="27.92" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="376.96" lengthAdjust="spacing">tests/svg_render_test.cs    |  108 ++-</text>
 </g>
 <g class="layer layer-247">
-<text x="27.92" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">samples/git.cast            |    8 +-</text>
+<text x="27.92" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">tests/window_chrome_test.cs |    2 +-</text>
 </g>
 <g class="layer layer-248">
-<text x="27.92" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="734.08" lengthAdjust="spacing">samples/git.svg             | 1825 +++++++++++++++++++--------------------</text>
+<text x="27.92" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="545.6" lengthAdjust="spacing">27 files changed, 4026 insertions(+), 2726 deletions(-)</text>
 </g>
 <g class="layer layer-249">
-<text x="27.92" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">samples/highlight.cast      |    4 +-</text>
+<text x="18" y="324.8" fill="#ac4142" font-weight="normal" textLength="793.6" lengthAdjust="spacing">warning: in the working copy of 'samples/basic.svg', CRLF will be replaced by LF</text>
 </g>
 <g class="layer layer-250">
-<text x="27.92" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="773.76" lengthAdjust="spacing">samples/highlight.svg       | 1998 ++++++++++++++++++++++++++++---------------</text>
+<text x="27.92" y="344.8" fill="#ac4142" font-weight="normal" textLength="277.76" lengthAdjust="spacing">the next time Git touches it</text>
 </g>
 <g class="layer layer-251">
-<text x="27.92" y="364.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">samples/resize.svg          |   59 +-</text>
+<text x="18" y="364.8" fill="#ac4142" font-weight="normal" textLength="783.68" lengthAdjust="spacing">warning: in the working copy of 'samples/demo.svg', CRLF will be replaced by LF</text>
 </g>
 <g class="layer layer-252">
-<text x="27.92" y="384.8" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacing">samples/theme-macos.svg     |  472 ++++++----</text>
+<text x="18" y="384.8" fill="#ac4142" font-weight="normal" textLength="277.76" lengthAdjust="spacing">the next time Git touches it</text>
 </g>
 <g class="layer layer-253">
-<text x="27.92" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacing">samples/theme-windows.svg   |  484 +++++++----</text>
+<text x="18" y="404.8" fill="#ac4142" font-weight="normal" textLength="793.6" lengthAdjust="spacing">warning: in the working copy of 'samples/git.svg', CRLF will be replaced by LF t</text>
 </g>
 <g class="layer layer-254">
-<text x="27.92" y="424.8" fill="#d0d0d0" font-weight="normal" textLength="426.56" lengthAdjust="spacing">samples/theme.svg           |  379 +++++---</text>
+<text x="18" y="424.8" fill="#ac4142" font-weight="normal" textLength="267.84" lengthAdjust="spacing">he next time Git touches it</text>
 </g>
 <g class="layer layer-255">
-<text x="27.92" y="444.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">scenetake.cs                |    5 +-</text>
+<text x="18" y="444.8" fill="#ac4142" font-weight="normal" textLength="793.6" lengthAdjust="spacing">warning: in the working copy of 'samples/highlight.svg', CRLF will be replaced b</text>
 </g>
 <g class="layer layer-256">
-<text x="27.92" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="376.96" lengthAdjust="spacing">tests/svg_render_test.cs    |   97 ++-</text>
+<text x="18" y="464.8" fill="#ac4142" font-weight="normal" textLength="327.36" lengthAdjust="spacing">y LF the next time Git touches it</text>
 </g>
 <g class="layer layer-257">
-<text x="27.92" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">tests/window_chrome_test.cs |    2 +-</text>
+<text x="18" y="484.8" fill="#ac4142" font-weight="normal" textLength="793.6" lengthAdjust="spacing">warning: in the working copy of 'samples/theme-macos.svg', CRLF will be replaced</text>
 </g>
 <g class="layer layer-258">
-<text x="27.92" y="504.8" fill="#d0d0d0" font-weight="normal" textLength="545.6" lengthAdjust="spacing">19 files changed, 4779 insertions(+), 3140 deletions(-)</text>
+<text x="27.92" y="504.8" fill="#ac4142" font-weight="normal" textLength="337.28" lengthAdjust="spacing">by LF the next time Git touches it</text>
 </g>
 <g class="layer layer-259">
-<text x="18" y="524.8" fill="#ac4142" font-weight="normal" textLength="793.6" lengthAdjust="spacing">warning: in the working copy of 'samples/basic.svg', CRLF will be replaced by LF</text>
+<text x="18" y="524.8" fill="#ac4142" font-weight="normal" textLength="793.6" lengthAdjust="spacing">warning: in the working copy of 'samples/theme-windows.svg', CRLF will be replac</text>
 </g>
 <g class="layer layer-260">
-<text x="27.92" y="544.8" fill="#ac4142" font-weight="normal" textLength="277.76" lengthAdjust="spacing">the next time Git touches it</text>
+<text x="18" y="544.8" fill="#ac4142" font-weight="normal" textLength="367.04" lengthAdjust="spacing">ed by LF the next time Git touches it</text>
 </g>
 <g class="layer layer-261">
-<text x="18" y="564.8" fill="#ac4142" font-weight="normal" textLength="783.68" lengthAdjust="spacing">warning: in the working copy of 'samples/demo.svg', CRLF will be replaced by LF</text>
+<text x="18" y="564.8" fill="#ac4142" font-weight="normal" textLength="793.6" lengthAdjust="spacing">warning: in the working copy of 'samples/theme.svg', CRLF will be replaced by LF</text>
 </g>
 <g class="layer layer-262">
-<text x="18" y="584.8" fill="#ac4142" font-weight="normal" textLength="277.76" lengthAdjust="spacing">the next time Git touches it</text>
+<text x="27.92" y="584.8" fill="#ac4142" font-weight="normal" textLength="277.76" lengthAdjust="spacing">the next time Git touches it</text>
 </g>
 <g class="layer layer-263">
 <text x="18" y="604.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
