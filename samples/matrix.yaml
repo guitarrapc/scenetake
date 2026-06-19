@@ -1,0 +1,41 @@
+title: "Matrix Rain Tint"
+width: 80
+height: 24
+shell: bash
+
+settings:
+  prompt: "$ "
+  typing-speed: 0.02
+  typing-jitter: 0.01
+  pre-delay: 0.3
+  post-delay: 0.08
+  execution-duration: 0.0
+
+render:
+  font-size: 16
+  window: macos
+  theme:
+    preset: dark
+
+# Simulated matrix rain for SVG matrix-tint testing (pipe recording).
+# Each step prints one frame; white column heads sit beside green trails.
+#
+# Real cmatrix needs a PTY — record externally, then convert:
+#   asciinema rec samples/matrix.cast -- cmatrix -ab
+#   scenetake svg samples/matrix.cast --window macos
+
+steps:
+  - echo "Matrix rain tint demo (simulated frames)"
+  - run: bash samples/matrix-frame.sh 0
+  - run: bash samples/matrix-frame.sh 1
+  - run: bash samples/matrix-frame.sh 2
+  - run: bash samples/matrix-frame.sh 3
+  - run: bash samples/matrix-frame.sh 4
+  - run: bash samples/matrix-frame.sh 5
+  - run: bash samples/matrix-frame.sh 6
+  - run: bash samples/matrix-frame.sh 7
+  - run: bash samples/matrix-frame.sh 8
+  - run: bash samples/matrix-frame.sh 9
+  - run: bash samples/matrix-frame.sh 10
+  - run: bash samples/matrix-frame.sh 11
+  - echo "Done"
