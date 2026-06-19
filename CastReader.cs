@@ -330,8 +330,6 @@ internal static class CastReader
                     ev = CastEvent.Resize(time, resizeWidth, resizeHeight);
                     return true;
                 case 'm':
-                    ev = CastEvent.Marker(time, data);
-                    return true;
                 case 'x':
                 case 'i':
                     return true;

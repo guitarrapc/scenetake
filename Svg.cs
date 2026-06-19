@@ -319,7 +319,7 @@ internal static class SvgFrameRenderer
         var theme = TerminalTheme.FromResolved(render.Theme);
         var metrics = CreateMetrics(render.FontSize, canvasWidth, canvasHeight);
 
-        var layers = BuildLayers(frames, canvasWidth, canvasHeight, theme);
+        var layers = BuildLayers(frames, canvasWidth, canvasHeight);
 
         return BuildLayeredSvg(layers, metrics, render, theme, canvasWidth, canvasHeight);
     }
@@ -327,8 +327,7 @@ internal static class SvgFrameRenderer
     private static LayerSet BuildLayers(
         IReadOnlyList<ReplayFrame> frames,
         int canvasWidth,
-        int canvasHeight,
-        TerminalTheme theme)
+        int canvasHeight)
     {
         var rows = new List<AnimLayer>();
         var cursors = new List<AnimLayer>();
@@ -375,24 +374,19 @@ internal static class SvgFrameRenderer
                 if (activeByRow[row] is null && previous is not null && previous.RowEquals(buffer, row))
                     continue;
 
-                var rowBlank = buffer.IsRowBlank(row);
-                if (rowBlank)
+                if (buffer.IsRowBlank(row))
                 {
-                    if (activeByRow[row] is not { Buffer: ScreenBuffer prior } priorActive)
+                    if (activeByRow[row] is not { Buffer: ScreenBuffer prior } || prior.IsRowBlank(row))
                         continue;
 
-                    if (prior.IsRowBlank(row))
-                        continue;
-
-                    priorActive.Hide = time;
-                    activeByRow[row] = null;
-
+                    RetireRowLayer(activeByRow, row, time);
                     if (!IsLikelyFullClear(previous, buffer))
                         continue;
                 }
-
-                if (activeByRow[row] is { } active)
-                    active.Hide = time;
+                else
+                {
+                    HideRowLayer(activeByRow, row, time);
+                }
 
                 var layer = new AnimLayer(time, row, buffer: buffer);
                 rows.Add(layer);
@@ -403,6 +397,18 @@ internal static class SvgFrameRenderer
         }
 
         return new LayerSet(rows, cursors, viewports);
+    }
+
+    private static void HideRowLayer(AnimLayer?[] activeByRow, int row, double time)
+    {
+        if (activeByRow[row] is { } layer)
+            layer.Hide = time;
+    }
+
+    private static void RetireRowLayer(AnimLayer?[] activeByRow, int row, double time)
+    {
+        HideRowLayer(activeByRow, row, time);
+        activeByRow[row] = null;
     }
 
     private static bool IsLikelyFullClear(ScreenBuffer? previous, ScreenBuffer current)
@@ -769,19 +775,8 @@ internal static class SvgFrameRenderer
         for (var i = 1; i < frames.Count - 1; i++)
         {
             var frame = frames[i];
-            var signature = frame.Signature;
-            var visualChanged = signature != lastKeptSignature;
-            var elapsed = frame.Time - lastKeptTime;
-            if (elapsed < minimumInterval)
-            {
-                if (visualChanged)
-                {
-                    pending = frame;
-                    pendingSignature = signature;
-                }
-
+            if (TryDeferFrame(frame, minimumInterval, ref lastKeptTime, ref lastKeptSignature, ref pending, ref pendingSignature))
                 continue;
-            }
 
             if (pending is not null)
             {
@@ -789,27 +784,16 @@ internal static class SvgFrameRenderer
                 lastKeptTime = pending.Time;
                 lastKeptSignature = pendingSignature;
                 pending = null;
-                signature = frame.Signature;
-                visualChanged = signature != lastKeptSignature;
-                elapsed = frame.Time - lastKeptTime;
-                if (elapsed < minimumInterval)
-                {
-                    if (visualChanged)
-                    {
-                        pending = frame;
-                        pendingSignature = signature;
-                    }
-
+                if (TryDeferFrame(frame, minimumInterval, ref lastKeptTime, ref lastKeptSignature, ref pending, ref pendingSignature))
                     continue;
-                }
 
-                if (!visualChanged)
+                if (frame.Signature == lastKeptSignature)
                     continue;
             }
 
             reduced.Add(frame);
             lastKeptTime = frame.Time;
-            lastKeptSignature = signature;
+            lastKeptSignature = frame.Signature;
         }
 
         if (pending is not null && !ReferenceEquals(reduced[^1], pending))
@@ -820,6 +804,26 @@ internal static class SvgFrameRenderer
             reduced.Add(last);
 
         return reduced;
+    }
+
+    private static bool TryDeferFrame(
+        ReplayFrame frame,
+        double minimumInterval,
+        ref double lastKeptTime,
+        ref ulong lastKeptSignature,
+        ref ReplayFrame? pending,
+        ref ulong pendingSignature)
+    {
+        if (frame.Time - lastKeptTime >= minimumInterval)
+            return false;
+
+        if (frame.Signature != lastKeptSignature)
+        {
+            pending = frame;
+            pendingSignature = frame.Signature;
+        }
+
+        return true;
     }
 
     private static List<ReplayFrame> SpreadCollapsedFrameTimes(IReadOnlyList<ReplayFrame> frames, int maxFps)
