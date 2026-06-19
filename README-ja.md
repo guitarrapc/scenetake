@@ -45,6 +45,12 @@ steps:
 | --- | --- |
 | ![](samples/basic.gif) | ![](samples/basic.svg) |
 
+svgはフォントやテーマを指定して出力できます。
+
+| macOS | Windows |
+| --- | --- |
+| ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
+
 **動機**
 
 作りたいのはasciinemaのcastファイルであって、コマンドのレコードを頑張りたくない、scenetakeはこんな動機で作ったツールです。asciinemaの周辺に様々なツールがありますが、シェルスクリプトに寄っていたり、asciinema 本体を前提にしていたり、実行パスがcastに出力されたり、実行せずにそれっぽい出力だけを作るものだったりして、どれも欲しい形とはずれています。欲しいのは、シナリオを素直に書けて、列挙したコマンドを実際に実行し、その結果から cast ファイルを直接生成できるものです。
@@ -275,4 +281,13 @@ dotnet run scenetake.cs -- svg <scenario.cast> [output.svg]
 
 # ビルド
 dotnet publish scenetake.cs --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None
+```
+
+サンプルシナリオを `.cast` と `.gif` に変換するには、以下のようにします。
+
+```bash
+dotnet run samples/regenerate.cs
+foreach ($file in Get-ChildItem samples/*.cast) {
+  docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/samples/$($file.BaseName).cast /data/samples/$($file.BaseName).gif  --last-frame-duration 0
+}
 ```

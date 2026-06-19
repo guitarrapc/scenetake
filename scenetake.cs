@@ -107,9 +107,8 @@ if (args[0] is "svg")
             return 1;
         }
 
-        SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath);
-        var svgDuration = recording.Events.Count > 0 ? recording.Events[^1].Time : 0.0;
-        Console.Error.WriteLine($"Written: {svgOutputPath}  ({recording.Events.Count} events, {svgDuration:F1}s)");
+        SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath, recording.LoopDuration);
+        Console.Error.WriteLine($"Written: {svgOutputPath}  ({recording.Events.Count} events, {recording.LoopDuration:F1}s)");
         Console.Error.WriteLine($"Done: {svgOutputPath}");
         return 0;
     }

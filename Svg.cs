@@ -8,12 +8,14 @@ internal static class SvgRender
         int width,
         int height,
         ResolvedRenderSettings render,
-        string outputPath)
+        string outputPath,
+        double? loopDurationOverride = null)
     {
         var (canvasWidth, canvasHeight) = TerminalReplay.ResolveCanvasSize(width, height, events);
         var theme = TerminalTheme.FromResolved(render.Theme);
         var frames = TerminalReplay.BuildFrames(events, width, height, canvasWidth, canvasHeight, theme);
-        var svg = SvgFrameRenderer.Render(frames, render, canvasWidth, canvasHeight);
+        var loopDuration = loopDurationOverride ?? TerminalReplay.ComputeLoopDuration(events);
+        var svg = SvgFrameRenderer.Render(frames, render, canvasWidth, canvasHeight, loopDuration);
         File.WriteAllText(outputPath, svg, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     }
 }
@@ -385,7 +387,8 @@ internal static class SvgFrameRenderer
         IReadOnlyList<ReplayFrame> frames,
         ResolvedRenderSettings render,
         int canvasWidth,
-        int canvasHeight)
+        int canvasHeight,
+        double loopDuration)
     {
         if (frames.Count == 0)
             return BuildEmptySvg(render, canvasWidth, canvasHeight);
@@ -395,8 +398,35 @@ internal static class SvgFrameRenderer
         var metrics = CreateMetrics(render.FontSize, canvasWidth, canvasHeight, render.Window);
 
         var layers = BuildLayers(frames, canvasWidth, canvasHeight);
+        loopDuration = ResolveLoopDuration(loopDuration, layers);
 
-        return BuildLayeredSvg(layers, metrics, render, theme, canvasWidth, canvasHeight);
+        return BuildLayeredSvg(layers, metrics, render, theme, canvasWidth, canvasHeight, loopDuration);
+    }
+
+    private static double ResolveLoopDuration(double loopDuration, LayerSet layers)
+    {
+        if (loopDuration > 0)
+            return loopDuration;
+
+        var maxTime = 0.0;
+        foreach (var layer in EnumerateLayers(layers))
+        {
+            maxTime = Math.Max(maxTime, layer.Show);
+            if (layer.Hide is double hide)
+                maxTime = Math.Max(maxTime, hide);
+        }
+
+        return Math.Max(maxTime + LayerFadeSeconds, LayerFadeSeconds);
+    }
+
+    private static IEnumerable<AnimLayer> EnumerateLayers(LayerSet layers)
+    {
+        foreach (var layer in layers.Rows)
+            yield return layer;
+        foreach (var layer in layers.Cursors)
+            yield return layer;
+        foreach (var layer in layers.Viewports)
+            yield return layer;
     }
 
     private static LayerSet BuildLayers(
@@ -507,12 +537,13 @@ internal static class SvgFrameRenderer
         ResolvedRenderSettings render,
         TerminalTheme theme,
         int canvasWidth,
-        int canvasHeight)
+        int canvasHeight,
+        double loopDuration)
     {
         var rowLayers = layers.Rows;
         var cursorLayers = layers.Cursors;
         var viewportLayers = layers.Viewports;
-        var fadeText = LayerFadeSeconds.ToString("0.######", CultureInfo.InvariantCulture);
+        var loopDurationText = loopDuration.ToString("0.######", CultureInfo.InvariantCulture);
         var cursorOpacityText = CursorBlockOpacity.ToString("0.######", CultureInfo.InvariantCulture);
 
         if (viewportLayers.Count == 0)
@@ -528,26 +559,37 @@ internal static class SvgFrameRenderer
             $"text {{ font-family: {render.FontFamily}; font-size: {render.FontSize}px; white-space: pre; }}");
         sb.AppendLine("text { dominant-baseline: alphabetic; }");
         sb.AppendLine(".bg { shape-rendering: crispEdges; }");
-        sb.AppendLine(CultureInfo.InvariantCulture,
-            $".layer {{ opacity: 0; animation-duration: {fadeText}s; animation-timing-function: linear; animation-fill-mode: forwards; }}");
-        sb.AppendLine("@keyframes layer-in { from { opacity: 0; } to { opacity: 1; } }");
-        sb.AppendLine("@keyframes layer-out { from { opacity: 1; } to { opacity: 0; } }");
+        sb.AppendLine(".layer { opacity: 0; }");
         sb.AppendLine(CultureInfo.InvariantCulture,
             $".cursor-block {{ fill: {theme.Foreground}; fill-opacity: {cursorOpacityText}; }}");
 
+        var keyframes = new LoopKeyframeRegistry();
+        var layerRules = new List<(string Selector, string Keyframe)>();
+
         for (var i = 0; i < rowLayers.Count; i++)
-            AppendLayerStyle(sb, $".layer-{i}", rowLayers[i].Show, rowLayers[i].Hide);
+        {
+            var keyframe = keyframes.Register(rowLayers[i].Show, rowLayers[i].Hide, loopDuration);
+            layerRules.Add(($".layer-{i}", keyframe));
+        }
 
         for (var i = 0; i < cursorLayers.Count; i++)
-            AppendLayerStyle(sb, $".cursor-layer-{i}", cursorLayers[i].Show, cursorLayers[i].Hide);
+        {
+            var keyframe = keyframes.Register(cursorLayers[i].Show, cursorLayers[i].Hide, loopDuration);
+            layerRules.Add(($".cursor-layer-{i}", keyframe));
+        }
 
         for (var i = 0; i < viewportLayers.Count; i++)
         {
             var viewportSelector = metrics.HasChrome
-                ? $".viewport-mask-{i}, .viewport-bg-{i}, .viewport-chrome-{i}"
-                : $".viewport-mask-{i}, .viewport-bg-{i}";
-            AppendLayerStyle(sb, viewportSelector, viewportLayers[i].Show, viewportLayers[i].Hide);
+                ? $".viewport-mask-{i},.viewport-bg-{i},.viewport-chrome-{i}"
+                : $".viewport-mask-{i},.viewport-bg-{i}";
+            var keyframe = keyframes.Register(viewportLayers[i].Show, viewportLayers[i].Hide, loopDuration);
+            layerRules.Add((viewportSelector, keyframe));
         }
+
+        keyframes.AppendAll(sb);
+        foreach (var (selector, keyframe) in layerRules)
+            AppendLayerCycleStyle(sb, selector, keyframe, loopDurationText);
 
         sb.AppendLine("</style>");
 
@@ -612,22 +654,103 @@ internal static class SvgFrameRenderer
         return sb.ToString();
     }
 
-    private static void AppendLayerStyle(StringBuilder sb, string selector, double showTime, double? hideTime)
+    private static void AppendLayerCycleStyle(StringBuilder sb, string selector, string keyframeName, string loopDurationText)
     {
         sb.Append(selector);
-        if (hideTime is double hide)
+        sb.Append(" { animation:");
+        sb.Append(keyframeName);
+        sb.Append(' ');
+        sb.Append(loopDurationText);
+        sb.AppendLine("s linear infinite; }");
+    }
+
+    private sealed class LoopKeyframeRegistry
+    {
+        private readonly Dictionary<string, string> _namesByBody = new(StringComparer.Ordinal);
+        private readonly List<(string Name, string Body)> _ordered = [];
+
+        private int _nextId;
+
+        internal string Register(double showTime, double? hideTime, double loopDuration)
         {
-            sb.Append(" { animation-name: layer-in, layer-out; animation-delay: ");
-            sb.Append(showTime.ToString("0.######", CultureInfo.InvariantCulture));
-            sb.Append("s, ");
-            sb.Append(hide.ToString("0.######", CultureInfo.InvariantCulture));
-            sb.AppendLine("s; }");
-            return;
+            var body = BuildCompactCycleKeyframesBody(showTime, hideTime, loopDuration);
+            if (_namesByBody.TryGetValue(body, out var existing))
+                return existing;
+
+            var name = $"k{_nextId++}";
+            _namesByBody[body] = name;
+            _ordered.Add((name, body));
+            return name;
         }
 
-        sb.Append(" { animation-name: layer-in; animation-delay: ");
-        sb.Append(showTime.ToString("0.######", CultureInfo.InvariantCulture));
-        sb.AppendLine("s; }");
+        internal void AppendAll(StringBuilder sb)
+        {
+            foreach (var (name, body) in _ordered)
+            {
+                sb.Append("@keyframes ");
+                sb.Append(name);
+                sb.Append(" { ");
+                sb.Append(body);
+                sb.AppendLine(" }");
+            }
+        }
+    }
+
+    private static string BuildCompactCycleKeyframesBody(double showTime, double? hideTime, double loopDuration)
+    {
+        var sb = new StringBuilder(96);
+        if (showTime <= 0)
+        {
+            if (hideTime is double hide)
+            {
+                AppendOpacityRange(sb, 0, hide, loopDuration, 1);
+                AppendOpacityRange(sb, GapAfter(hide, loopDuration), loopDuration, loopDuration, 0);
+                return sb.ToString();
+            }
+
+            AppendOpacityRange(sb, 0, loopDuration, loopDuration, 1);
+            return sb.ToString();
+        }
+
+        AppendOpacityRange(sb, 0, GapBefore(showTime, loopDuration), loopDuration, 0);
+        if (hideTime is double hideTimeValue)
+        {
+            AppendOpacityRange(sb, showTime, hideTimeValue, loopDuration, 1);
+            AppendOpacityRange(sb, GapAfter(hideTimeValue, loopDuration), loopDuration, loopDuration, 0);
+            return sb.ToString();
+        }
+
+        AppendOpacityRange(sb, showTime, loopDuration, loopDuration, 1);
+        return sb.ToString();
+    }
+
+    private static double GapBefore(double time, double loopDuration) =>
+        Math.Max(0, time - (LayerFadeSeconds * 0.5));
+
+    private static double GapAfter(double time, double loopDuration) =>
+        Math.Min(loopDuration, time + LayerFadeSeconds);
+
+    private static void AppendOpacityRange(
+        StringBuilder sb,
+        double startTime,
+        double endTime,
+        double loopDuration,
+        int opacity)
+    {
+        if (sb.Length > 0)
+            sb.Append(' ');
+
+        sb.Append(CultureInfo.InvariantCulture, $"{FormatCyclePercent(startTime, loopDuration)}%,");
+        sb.Append(CultureInfo.InvariantCulture, $"{FormatCyclePercent(endTime, loopDuration)}%");
+        sb.Append(CultureInfo.InvariantCulture, $"{{opacity:{opacity};}}");
+    }
+
+    private static string FormatCyclePercent(double time, double loopDuration)
+    {
+        if (loopDuration <= 0)
+            return "0";
+
+        return (time / loopDuration * 100.0).ToString("0.######", CultureInfo.InvariantCulture);
     }
 
     private static ChromePalette ResolveChromePalette(WindowStyle window, string terminalBg)

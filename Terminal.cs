@@ -1307,6 +1307,28 @@ internal sealed class ReplayFrame
 internal static class TerminalReplay
 {
     private const string Space = " ";
+    internal const double CastExitIntervalSeconds = 0.05;
+
+    /// <summary>
+    /// Matches agg GIF loop period with <c>--last-frame-duration 0</c>: the final
+    /// frame is held for one more idle gap (time since the previous output event).
+    /// </summary>
+    internal static double ComputeLoopDuration(IReadOnlyList<CastEvent> events)
+    {
+        if (events.Count == 0)
+            return 0;
+
+        var lastTime = events[^1].Time;
+        for (var i = events.Count - 2; i >= 0; i--)
+        {
+            if (events[i].Kind != CastEventKind.Output)
+                continue;
+
+            return lastTime + Math.Max(0, lastTime - events[i].Time);
+        }
+
+        return lastTime + CastExitIntervalSeconds;
+    }
 
     internal static List<ReplayFrame> BuildFrames(
         IReadOnlyList<CastEvent> events,

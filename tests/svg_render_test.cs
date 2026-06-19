@@ -11,6 +11,9 @@ var failures = 0;
 failures += Run("CurlOutputSurvivesFrameSampling", CurlOutputSurvivesFrameSampling);
 failures += Run("EchoOutputNoDuplicateCommandLine", EchoOutputNoDuplicateCommandLine);
 failures += Run("MarkerDelayAdvancesTiming", MarkerDelayAdvancesTiming);
+failures += Run("SvgLoopsWithCastDuration", SvgLoopsWithCastDuration);
+failures += Run("LoopDurationMatchesAggGifCycle", LoopDurationMatchesAggGifCycle);
+failures += Run("MaxFpsDoesNotChangeLoopDuration", MaxFpsDoesNotChangeLoopDuration);
 
 return failures == 0 ? 0 : 1;
 
@@ -43,7 +46,7 @@ static string RenderCast(string castPath, int? maxFps = null)
     var render = maxFps is int fps
         ? recording.RenderSettings with { MaxFps = fps }
         : recording.RenderSettings;
-    return SvgFrameRenderer.Render(frames, render, cw, ch);
+    return SvgFrameRenderer.Render(frames, render, cw, ch, recording.LoopDuration);
 }
 
 static bool CurlOutputSurvivesFrameSampling()
@@ -71,20 +74,51 @@ static bool MarkerDelayAdvancesTiming()
         return false;
 
     var svg = RenderCast("tests/marker-delay.cast");
-    return svg.Contains("animation-delay: 0.5s, 1.5s", StringComparison.Ordinal)
-        && svg.Contains("animation-delay: 1.5s", StringComparison.Ordinal);
+    return svg.Contains("animation:k", StringComparison.Ordinal)
+        && svg.Contains("2.5s linear infinite", StringComparison.Ordinal)
+        && svg.Contains("@keyframes k0", StringComparison.Ordinal);
+}
+
+static bool LoopDurationMatchesAggGifCycle()
+{
+    var recording = CastReader.Read("samples/basic.cast");
+    if (recording.Events.Count < 2)
+        return false;
+
+    // Verified against: agg samples/basic.cast --last-frame-duration 0 → 18.11s GIF loop.
+    return Math.Abs(recording.LoopDuration - 18.11) < 0.05;
+}
+
+static bool SvgLoopsWithCastDuration()
+{
+    var recording = CastReader.Read("samples/basic.cast");
+    var svg = RenderCast("samples/basic.cast");
+    var durationText = recording.LoopDuration.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
+    return svg.Contains($"animation:k0 {durationText}s linear infinite", StringComparison.Ordinal)
+        && svg.Contains("@keyframes k0", StringComparison.Ordinal);
+}
+
+static bool MaxFpsDoesNotChangeLoopDuration()
+{
+    var recording = CastReader.Read("samples/basic.cast");
+    var durationText = recording.LoopDuration.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
+    var full = RenderCast("samples/basic.cast");
+    var sampled = RenderCast("samples/basic.cast", maxFps: 12);
+    return full.Contains($"{durationText}s linear infinite", StringComparison.Ordinal)
+        && sampled.Contains($"{durationText}s linear infinite", StringComparison.Ordinal);
 }
 
 static int CountVisibleLayersWithText(string svg, double timeSeconds, string text)
 {
-    var styles = SvgRenderTestPatterns.LayerStylePattern.Matches(svg)
+    var loopDuration = ParseLoopDuration(svg);
+    var keyframes = SvgRenderTestPatterns.KeyframePattern.Matches(svg)
+        .ToDictionary(
+            m => m.Groups[1].Value,
+            m => ParseCycleTiming(m.Groups[2].Value, loopDuration));
+    var layerKeyframes = SvgRenderTestPatterns.LayerAnimationPattern.Matches(svg)
         .ToDictionary(
             m => int.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture),
-            m => (
-                Show: double.Parse(m.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture),
-                Hide: m.Groups[3].Success
-                    ? double.Parse(m.Groups[3].Value, System.Globalization.CultureInfo.InvariantCulture)
-                    : (double?)null));
+            m => m.Groups[2].Value);
 
     var count = 0;
     foreach (var match in SvgRenderTestPatterns.LayerTextPattern.Matches(svg).Cast<System.Text.RegularExpressions.Match>())
@@ -93,7 +127,7 @@ static int CountVisibleLayersWithText(string svg, double timeSeconds, string tex
             continue;
 
         var id = int.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
-        if (!styles.TryGetValue(id, out var timing))
+        if (!layerKeyframes.TryGetValue(id, out var keyframeName) || !keyframes.TryGetValue(keyframeName, out var timing))
             continue;
 
         if (timing.Show <= timeSeconds && (timing.Hide is null || timing.Hide > timeSeconds))
@@ -103,13 +137,63 @@ static int CountVisibleLayersWithText(string svg, double timeSeconds, string tex
     return count;
 }
 
+static double ParseLoopDuration(string svg)
+{
+    var match = SvgRenderTestPatterns.DurationPattern.Match(svg);
+    if (!match.Success)
+        return 0;
+
+    return double.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+}
+
+static (double Show, double? Hide) ParseCycleTiming(string keyframesBody, double loopDuration)
+{
+    if (loopDuration <= 0)
+        return (0, null);
+
+    var ranges = SvgRenderTestPatterns.OpacityRangePattern.Matches(keyframesBody)
+        .Select(m => (
+            Start: double.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) / 100.0 * loopDuration,
+            End: double.Parse(m.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture) / 100.0 * loopDuration,
+            Opacity: int.Parse(m.Groups[3].Value, System.Globalization.CultureInfo.InvariantCulture)))
+        .ToList();
+
+    if (ranges.Count == 0)
+        return (0, null);
+
+    double? show = null;
+    double? hide = null;
+    foreach (var range in ranges)
+    {
+        if (range.Opacity == 1)
+            show ??= range.Start;
+
+        if (range.Opacity == 0 && show is not null && range.Start > show)
+            hide ??= range.Start;
+    }
+
+    return (show ?? 0, hide);
+}
+
 file static class SvgRenderTestPatterns
 {
     internal static readonly System.Text.RegularExpressions.Regex LayerTextPattern = new(
         """<g class="layer layer-(\d+)">\s*<text[^>]*>(.*?)</text>""",
         System.Text.RegularExpressions.RegexOptions.Singleline | System.Text.RegularExpressions.RegexOptions.Compiled);
 
-    internal static readonly System.Text.RegularExpressions.Regex LayerStylePattern = new(
-        """\.layer-(\d+) \{ animation-name: layer-in(?:, layer-out)?; animation-delay: ([0-9.]+)s(?:, ([0-9.]+)s)?; \}""",
+    internal static readonly System.Text.RegularExpressions.Regex KeyframePattern = new(
+        """^@keyframes (k\d+) \{ (.+) \}$""",
+        System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    internal static readonly System.Text.RegularExpressions.Regex LayerAnimationPattern = new(
+        """\.layer-(\d+) \{ animation:(k\d+)""",
+        System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    internal static readonly System.Text.RegularExpressions.Regex DurationPattern = new(
+        """animation:k\d+ ([0-9.]+)s linear infinite""",
+        System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    internal static readonly System.Text.RegularExpressions.Regex OpacityRangePattern = new(
+        """([0-9.]+)%,([0-9.]+)%\{opacity:([01]);\}""",
         System.Text.RegularExpressions.RegexOptions.Compiled);
 }

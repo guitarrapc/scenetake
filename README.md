@@ -45,6 +45,12 @@ steps:
 | --- | --- |
 | ![](samples/basic.gif) | ![](samples/basic.svg) |
 
+svg also supports custom font and theme.
+
+| macOS | Windows |
+| --- | --- |
+| ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
+
 **Motivation**
 
 I want terminal demos without the hassle of typing commands into asciinema. That is the motivation behind scenetake. There are various tools in the asciinema ecosystem, but none quite fit: some lean heavily on shell scripts, some require asciinema itself as a dependency, some leak execution paths into the cast output, and some only fake the output rather than running real commands. What I want is something where I can write a scenario plainly, have the listed commands actually executed, and get a cast file generated directly from the real output.
@@ -85,10 +91,10 @@ scenetake --verbose scenario.yaml
 asciinema play scenario.cast
 
 # Convert to gif with agg (Linux/macOS) — requires agg 1.6.0+ for v3 cast files
-docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20
+docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20 --last-frame-duration 0
 
 # Convert to gif with agg (Windows PowerShell)
-docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20
+docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20 --last-frame-duration 0
 ```
 
 **Usage**
@@ -282,6 +288,6 @@ Regenerate samples cast/svg files:
 ```bash
 dotnet run samples/regenerate.cs
 foreach ($file in Get-ChildItem samples/*.cast) {
-  docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/samples/$($file.BaseName).cast /data/samples/$($file.BaseName).gif --font-size 20
+  docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/samples/$($file.BaseName).cast /data/samples/$($file.BaseName).gif  --last-frame-duration 0
 }
 ```
