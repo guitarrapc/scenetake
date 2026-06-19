@@ -741,11 +741,12 @@ internal static class SvgFrameRenderer
         SvgMetrics metrics,
         WindowChromePalette chrome)
     {
-        var diameter = metrics.TitleBarHeight * 0.5;
+        var diameter = metrics.FontSize * 1.0;
         var radius = diameter / 2d;
         var gap = diameter * 0.6;
-        var leftPadding = metrics.TitleBarHeight * 0.5;
-        var centerY = frameY + metrics.TitleBarHeight / 2d;
+        var leftPadding = metrics.FontSize * 0.875;
+        var topPadding = metrics.FontSize * 0.56;
+        var centerY = frameY + topPadding + radius;
         var centerX = frameX + leftPadding + radius;
         var colors = new[] { chrome.MacClose, chrome.MacMinimize, chrome.MacMaximize };
         for (var i = 0; i < colors.Length; i++)
@@ -765,10 +766,11 @@ internal static class SvgFrameRenderer
         SvgMetrics metrics,
         WindowChromePalette chrome)
     {
-        var size = metrics.TitleBarHeight * 0.52;
+        var size = metrics.FontSize * 1.04;
         var gap = size * 0.33;
-        var rightPadding = metrics.TitleBarHeight * 0.5;
-        var top = frameY + (metrics.TitleBarHeight - size) / 2d;
+        var rightPadding = metrics.FontSize * 0.875;
+        var topPadding = metrics.FontSize * 0.56;
+        var top = frameY + topPadding;
         var left = frameX + frameWidth - rightPadding - (size * 3) - (gap * 2);
         for (var i = 0; i < 3; i++)
         {
@@ -1208,7 +1210,7 @@ internal static class SvgFrameRenderer
         else
         {
             outerMargin = Math.Max(4, fontSize * 0.375);
-            titleBarHeight = fontSize * 1.75;
+            titleBarHeight = fontSize * 2.15;
             cornerRadius = window == WindowStyle.Macos ? fontSize * 0.5 : fontSize * 0.25;
         }
 
