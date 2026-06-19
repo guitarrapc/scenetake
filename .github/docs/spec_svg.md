@@ -62,6 +62,7 @@ Tests: `tests/terminal_tests.cs`.
   - **Outer:** 8px transparent margin.
   - **Inner:** horizontal `font-size × 10/16`, vertical `font-size × 4/16`, clamped (horizontal 4–16px, vertical 2–8px).
 - Block cursor at the emulator position when visible; hidden by `\e[?25l`.
+- **Matrix rain tint:** ANSI bright white (`palette` index 7) adjacent to green (`2` or `10`) renders as bright green (`10`). Helps `cmatrix`-style casts where white highlights sit in green columns.
 
 ### Window chrome
 
@@ -129,7 +130,7 @@ The cast file is never modified by the `svg` subcommand.
 | Suite | Coverage |
 |-------|----------|
 | `tests/terminal_tests.cs` | VT emulator (CSI, Unicode, alt screen) |
-| `tests/svg_render_test.cs` | Row-diff smoke, marker timing, `--max-fps` |
+| `tests/svg_render_test.cs` | Row-diff smoke, marker timing, `--max-fps`, matrix rain tint |
 | `tests/window_chrome_test.cs` | `render.window` / cast tag / CLI resolution; chrome SVG structure |
 
 Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs all three.

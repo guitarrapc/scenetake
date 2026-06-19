@@ -888,7 +888,7 @@ internal static class SvgFrameRenderer
             }
 
             var runStart = col;
-            var runFg = ResolveForeground(cell, theme);
+            var runFg = ResolveTintedForeground(buffer, row, col, cell, theme);
             var runBg = ResolveBackground(cell, theme);
             var runBold = cell.Bold;
             var runItalic = cell.Italic;
@@ -905,7 +905,7 @@ internal static class SvgFrameRenderer
                 if (next.IsWideContinuation)
                     break;
 
-                var nextFg = ResolveForeground(next, theme);
+                var nextFg = ResolveTintedForeground(buffer, row, col, next, theme);
                 var nextBg = ResolveBackground(next, theme);
                 if (nextFg != runFg || nextBg != runBg || next.Bold != runBold
                     || next.Italic != runItalic || next.Underline != runUnderline || next.IsWide)
@@ -952,6 +952,39 @@ internal static class SvgFrameRenderer
 
     private static string ResolveForeground(ScreenCell cell, TerminalTheme theme) =>
         ApplyIntensity(cell.Reversed ? cell.Background : cell.Foreground, cell.Bold, cell.Faint);
+
+    private static string ResolveTintedForeground(
+        ScreenBuffer buffer, int row, int col, ScreenCell cell, TerminalTheme theme)
+    {
+        var fg = ResolveForeground(cell, theme);
+        var white = theme.AnsiPalette[7];
+        if (fg != white && !string.Equals(fg, white, StringComparison.OrdinalIgnoreCase))
+            return fg;
+
+        return IsNearGreen(buffer, row, col, theme) ? theme.AnsiPalette[10] : fg;
+    }
+
+    private static bool IsNearGreen(ScreenBuffer buffer, int row, int col, TerminalTheme theme)
+    {
+        var green = theme.AnsiPalette[2];
+        var brightGreen = theme.AnsiPalette[10];
+
+        bool GreenAt(int r, int c)
+        {
+            var neighbor = buffer.GetCell(r, c);
+            var fg = neighbor.Reversed ? neighbor.Background : neighbor.Foreground;
+            return fg == green || fg == brightGreen
+                || string.Equals(fg, green, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(fg, brightGreen, StringComparison.OrdinalIgnoreCase);
+        }
+
+        var width = buffer.Width;
+        var height = buffer.Height;
+        return (col > 0 && GreenAt(row, col - 1))
+            || (col + 1 < width && GreenAt(row, col + 1))
+            || (row > 0 && GreenAt(row - 1, col))
+            || (row + 1 < height && GreenAt(row + 1, col));
+    }
 
     private static string? ResolveBackground(ScreenCell cell, TerminalTheme theme)
     {

@@ -22,7 +22,7 @@ Reference behavior is documented from `.references/console2svg` (read-only; **no
 | Item | Notes |
 |------|-------|
 | PTY / `asciinema rec` in scenario path | Still out of scope; external casts + `svg` subcommand |
-| Matrix rain contextual tint | Deferred |
+| ~~Matrix rain contextual tint~~ | Done — white ANSI highlight near green neighbors tints to bright green |
 | Crop / command header line in SVG | Deferred |
 | `loop` / `video-fps` CLI knobs | Deferred; `--max-fps` covers sampling |
 | `linux` window chrome preset | Not in v2 scope |

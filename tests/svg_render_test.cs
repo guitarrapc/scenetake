@@ -14,6 +14,7 @@ failures += Run("MarkerDelayAdvancesTiming", MarkerDelayAdvancesTiming);
 failures += Run("SvgLoopsWithCastDuration", SvgLoopsWithCastDuration);
 failures += Run("LoopDurationMatchesAggGifCycle", LoopDurationMatchesAggGifCycle);
 failures += Run("MaxFpsDoesNotChangeLoopDuration", MaxFpsDoesNotChangeLoopDuration);
+failures += Run("MatrixTintWhiteNearGreen", MatrixTintWhiteNearGreen);
 
 return failures == 0 ? 0 : 1;
 
@@ -96,6 +97,27 @@ static bool SvgLoopsWithCastDuration()
     var durationText = recording.LoopDuration.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
     return svg.Contains($"animation:k0 {durationText}s linear infinite", StringComparison.Ordinal)
         && svg.Contains("@keyframes k0", StringComparison.Ordinal);
+}
+
+static bool MatrixTintWhiteNearGreen()
+{
+    const string cast = """
+        {"version":3,"term":{"cols":8,"rows":2,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":0,"title":"matrix-tint","env":{}}
+        [0.0, "o", "\u001b[32mA\u001b[37mB\u001b[39m"]
+        """;
+
+    var path = Path.Combine(Path.GetTempPath(), $"scenetake-matrix-tint-{Guid.NewGuid():N}.cast");
+    try
+    {
+        File.WriteAllText(path, cast);
+        var svg = RenderCast(path);
+        return svg.Contains("fill=\"#7e8e50\"", StringComparison.OrdinalIgnoreCase)
+            && !svg.Contains("fill=\"#d0d0d0\"", StringComparison.OrdinalIgnoreCase);
+    }
+    finally
+    {
+        File.Delete(path);
+    }
 }
 
 static bool MaxFpsDoesNotChangeLoopDuration()
