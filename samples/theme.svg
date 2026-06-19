@@ -4,135 +4,207 @@
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
 .bg { shape-rendering: crispEdges; }
-.layer { opacity: 0; animation-duration: 0.001s; animation-timing-function: linear; animation-fill-mode: forwards; }
-@keyframes layer-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes layer-out { from { opacity: 1; } to { opacity: 0; } }
+.layer { opacity: 0; }
 .cursor-block { fill: #383838; fill-opacity: 0.5; }
-.layer-0 { animation-name: layer-in, layer-out; animation-delay: 0.8s, 0.85s; }
-.layer-1 { animation-name: layer-in, layer-out; animation-delay: 0.85s, 0.879338s; }
-.layer-2 { animation-name: layer-in, layer-out; animation-delay: 0.879338s, 0.915451s; }
-.layer-3 { animation-name: layer-in, layer-out; animation-delay: 0.915451s, 0.954668s; }
-.layer-4 { animation-name: layer-in, layer-out; animation-delay: 0.954668s, 0.989945s; }
-.layer-5 { animation-name: layer-in, layer-out; animation-delay: 0.989945s, 1.029497s; }
-.layer-6 { animation-name: layer-in, layer-out; animation-delay: 1.029497s, 1.080904s; }
-.layer-7 { animation-name: layer-in, layer-out; animation-delay: 1.080904s, 1.106375s; }
-.layer-8 { animation-name: layer-in, layer-out; animation-delay: 1.106375s, 1.141994s; }
-.layer-9 { animation-name: layer-in, layer-out; animation-delay: 1.141994s, 1.181719s; }
-.layer-10 { animation-name: layer-in, layer-out; animation-delay: 1.181719s, 1.205974s; }
-.layer-11 { animation-name: layer-in, layer-out; animation-delay: 1.205974s, 1.226602s; }
-.layer-12 { animation-name: layer-in, layer-out; animation-delay: 1.226602s, 1.254681s; }
-.layer-13 { animation-name: layer-in, layer-out; animation-delay: 1.254681s, 1.282058s; }
-.layer-14 { animation-name: layer-in, layer-out; animation-delay: 1.282058s, 1.314032s; }
-.layer-15 { animation-name: layer-in, layer-out; animation-delay: 1.314032s, 1.347848s; }
-.layer-16 { animation-name: layer-in, layer-out; animation-delay: 1.347848s, 1.387127s; }
-.layer-17 { animation-name: layer-in, layer-out; animation-delay: 1.387127s, 1.417793s; }
-.layer-18 { animation-name: layer-in, layer-out; animation-delay: 1.417793s, 1.455834s; }
-.layer-19 { animation-name: layer-in, layer-out; animation-delay: 1.455834s, 1.490138s; }
-.layer-20 { animation-name: layer-in, layer-out; animation-delay: 1.490138s, 1.519213s; }
-.layer-21 { animation-name: layer-in, layer-out; animation-delay: 1.519213s, 1.543144s; }
-.layer-22 { animation-name: layer-in, layer-out; animation-delay: 1.543144s, 1.60683s; }
-.layer-23 { animation-name: layer-in, layer-out; animation-delay: 1.60683s, 1.635777s; }
-.layer-24 { animation-name: layer-in, layer-out; animation-delay: 1.635777s, 1.661813s; }
-.layer-25 { animation-name: layer-in, layer-out; animation-delay: 1.661813s, 1.695108s; }
-.layer-26 { animation-name: layer-in, layer-out; animation-delay: 1.695108s, 1.726526s; }
-.layer-27 { animation-name: layer-in, layer-out; animation-delay: 1.726526s, 1.795792s; }
-.layer-28 { animation-name: layer-in, layer-out; animation-delay: 1.795792s, 1.827531s; }
-.layer-29 { animation-name: layer-in, layer-out; animation-delay: 1.827531s, 1.855339s; }
-.layer-30 { animation-name: layer-in, layer-out; animation-delay: 1.855339s, 1.885591s; }
-.layer-31 { animation-name: layer-in, layer-out; animation-delay: 1.885591s, 1.921282s; }
-.layer-32 { animation-name: layer-in, layer-out; animation-delay: 1.921282s, 1.952855s; }
-.layer-33 { animation-name: layer-in, layer-out; animation-delay: 1.952855s, 1.975352s; }
-.layer-34 { animation-name: layer-in, layer-out; animation-delay: 1.975352s, 1.996872s; }
-.layer-35 { animation-name: layer-in, layer-out; animation-delay: 1.996872s, 2.02063s; }
-.layer-36 { animation-name: layer-in, layer-out; animation-delay: 2.02063s, 2.040907s; }
-.layer-37 { animation-name: layer-in, layer-out; animation-delay: 2.040907s, 2.074124s; }
-.layer-38 { animation-name: layer-in, layer-out; animation-delay: 2.074124s, 2.103571s; }
-.layer-39 { animation-name: layer-in, layer-out; animation-delay: 2.103571s, 2.137465s; }
-.layer-40 { animation-name: layer-in, layer-out; animation-delay: 2.137465s, 2.174941s; }
-.layer-41 { animation-name: layer-in, layer-out; animation-delay: 2.174941s, 2.196696s; }
-.layer-42 { animation-name: layer-in, layer-out; animation-delay: 2.196696s, 2.236685s; }
-.layer-43 { animation-name: layer-in; animation-delay: 2.236685s; }
-.layer-44 { animation-name: layer-in; animation-delay: 2.458047s; }
-.layer-45 { animation-name: layer-in, layer-out; animation-delay: 3.558047s, 3.608047s; }
-.layer-46 { animation-name: layer-in, layer-out; animation-delay: 3.608047s, 3.62893s; }
-.layer-47 { animation-name: layer-in, layer-out; animation-delay: 3.62893s, 3.665905s; }
-.layer-48 { animation-name: layer-in, layer-out; animation-delay: 3.665905s, 3.699157s; }
-.layer-49 { animation-name: layer-in, layer-out; animation-delay: 3.699157s, 3.764197s; }
-.layer-50 { animation-name: layer-in, layer-out; animation-delay: 3.764197s, 3.799146s; }
-.layer-51 { animation-name: layer-in, layer-out; animation-delay: 3.799146s, 3.830063s; }
-.layer-52 { animation-name: layer-in, layer-out; animation-delay: 3.830063s, 3.866866s; }
-.layer-53 { animation-name: layer-in, layer-out; animation-delay: 3.866866s, 3.905826s; }
-.layer-54 { animation-name: layer-in, layer-out; animation-delay: 3.905826s, 3.931233s; }
-.layer-55 { animation-name: layer-in, layer-out; animation-delay: 3.931233s, 3.961592s; }
-.layer-56 { animation-name: layer-in; animation-delay: 3.961592s; }
-.layer-57 { animation-name: layer-in; animation-delay: 4.182877s; }
-.layer-58 { animation-name: layer-in; animation-delay: 5.282877s; }
-.cursor-layer-0 { animation-name: layer-in, layer-out; animation-delay: 0.8s, 0.85s; }
-.cursor-layer-1 { animation-name: layer-in, layer-out; animation-delay: 0.85s, 0.879338s; }
-.cursor-layer-2 { animation-name: layer-in, layer-out; animation-delay: 0.879338s, 0.915451s; }
-.cursor-layer-3 { animation-name: layer-in, layer-out; animation-delay: 0.915451s, 0.954668s; }
-.cursor-layer-4 { animation-name: layer-in, layer-out; animation-delay: 0.954668s, 0.989945s; }
-.cursor-layer-5 { animation-name: layer-in, layer-out; animation-delay: 0.989945s, 1.029497s; }
-.cursor-layer-6 { animation-name: layer-in, layer-out; animation-delay: 1.029497s, 1.058191s; }
-.cursor-layer-7 { animation-name: layer-in, layer-out; animation-delay: 1.058191s, 1.080904s; }
-.cursor-layer-8 { animation-name: layer-in, layer-out; animation-delay: 1.080904s, 1.106375s; }
-.cursor-layer-9 { animation-name: layer-in, layer-out; animation-delay: 1.106375s, 1.141994s; }
-.cursor-layer-10 { animation-name: layer-in, layer-out; animation-delay: 1.141994s, 1.181719s; }
-.cursor-layer-11 { animation-name: layer-in, layer-out; animation-delay: 1.181719s, 1.205974s; }
-.cursor-layer-12 { animation-name: layer-in, layer-out; animation-delay: 1.205974s, 1.226602s; }
-.cursor-layer-13 { animation-name: layer-in, layer-out; animation-delay: 1.226602s, 1.254681s; }
-.cursor-layer-14 { animation-name: layer-in, layer-out; animation-delay: 1.254681s, 1.282058s; }
-.cursor-layer-15 { animation-name: layer-in, layer-out; animation-delay: 1.282058s, 1.314032s; }
-.cursor-layer-16 { animation-name: layer-in, layer-out; animation-delay: 1.314032s, 1.347848s; }
-.cursor-layer-17 { animation-name: layer-in, layer-out; animation-delay: 1.347848s, 1.387127s; }
-.cursor-layer-18 { animation-name: layer-in, layer-out; animation-delay: 1.387127s, 1.417793s; }
-.cursor-layer-19 { animation-name: layer-in, layer-out; animation-delay: 1.417793s, 1.455834s; }
-.cursor-layer-20 { animation-name: layer-in, layer-out; animation-delay: 1.455834s, 1.490138s; }
-.cursor-layer-21 { animation-name: layer-in, layer-out; animation-delay: 1.490138s, 1.519213s; }
-.cursor-layer-22 { animation-name: layer-in, layer-out; animation-delay: 1.519213s, 1.543144s; }
-.cursor-layer-23 { animation-name: layer-in, layer-out; animation-delay: 1.543144s, 1.568898s; }
-.cursor-layer-24 { animation-name: layer-in, layer-out; animation-delay: 1.568898s, 1.60683s; }
-.cursor-layer-25 { animation-name: layer-in, layer-out; animation-delay: 1.60683s, 1.635777s; }
-.cursor-layer-26 { animation-name: layer-in, layer-out; animation-delay: 1.635777s, 1.661813s; }
-.cursor-layer-27 { animation-name: layer-in, layer-out; animation-delay: 1.661813s, 1.695108s; }
-.cursor-layer-28 { animation-name: layer-in, layer-out; animation-delay: 1.695108s, 1.726526s; }
-.cursor-layer-29 { animation-name: layer-in, layer-out; animation-delay: 1.726526s, 1.764213s; }
-.cursor-layer-30 { animation-name: layer-in, layer-out; animation-delay: 1.764213s, 1.795792s; }
-.cursor-layer-31 { animation-name: layer-in, layer-out; animation-delay: 1.795792s, 1.827531s; }
-.cursor-layer-32 { animation-name: layer-in, layer-out; animation-delay: 1.827531s, 1.855339s; }
-.cursor-layer-33 { animation-name: layer-in, layer-out; animation-delay: 1.855339s, 1.885591s; }
-.cursor-layer-34 { animation-name: layer-in, layer-out; animation-delay: 1.885591s, 1.921282s; }
-.cursor-layer-35 { animation-name: layer-in, layer-out; animation-delay: 1.921282s, 1.952855s; }
-.cursor-layer-36 { animation-name: layer-in, layer-out; animation-delay: 1.952855s, 1.975352s; }
-.cursor-layer-37 { animation-name: layer-in, layer-out; animation-delay: 1.975352s, 1.996872s; }
-.cursor-layer-38 { animation-name: layer-in, layer-out; animation-delay: 1.996872s, 2.02063s; }
-.cursor-layer-39 { animation-name: layer-in, layer-out; animation-delay: 2.02063s, 2.040907s; }
-.cursor-layer-40 { animation-name: layer-in, layer-out; animation-delay: 2.040907s, 2.074124s; }
-.cursor-layer-41 { animation-name: layer-in, layer-out; animation-delay: 2.074124s, 2.103571s; }
-.cursor-layer-42 { animation-name: layer-in, layer-out; animation-delay: 2.103571s, 2.137465s; }
-.cursor-layer-43 { animation-name: layer-in, layer-out; animation-delay: 2.137465s, 2.174941s; }
-.cursor-layer-44 { animation-name: layer-in, layer-out; animation-delay: 2.174941s, 2.196696s; }
-.cursor-layer-45 { animation-name: layer-in, layer-out; animation-delay: 2.196696s, 2.236685s; }
-.cursor-layer-46 { animation-name: layer-in, layer-out; animation-delay: 2.236685s, 2.258047s; }
-.cursor-layer-47 { animation-name: layer-in, layer-out; animation-delay: 2.258047s, 2.458047s; }
-.cursor-layer-48 { animation-name: layer-in, layer-out; animation-delay: 2.458047s, 3.558047s; }
-.cursor-layer-49 { animation-name: layer-in, layer-out; animation-delay: 3.558047s, 3.608047s; }
-.cursor-layer-50 { animation-name: layer-in, layer-out; animation-delay: 3.608047s, 3.62893s; }
-.cursor-layer-51 { animation-name: layer-in, layer-out; animation-delay: 3.62893s, 3.665905s; }
-.cursor-layer-52 { animation-name: layer-in, layer-out; animation-delay: 3.665905s, 3.699157s; }
-.cursor-layer-53 { animation-name: layer-in, layer-out; animation-delay: 3.699157s, 3.735397s; }
-.cursor-layer-54 { animation-name: layer-in, layer-out; animation-delay: 3.735397s, 3.764197s; }
-.cursor-layer-55 { animation-name: layer-in, layer-out; animation-delay: 3.764197s, 3.799146s; }
-.cursor-layer-56 { animation-name: layer-in, layer-out; animation-delay: 3.799146s, 3.830063s; }
-.cursor-layer-57 { animation-name: layer-in, layer-out; animation-delay: 3.830063s, 3.866866s; }
-.cursor-layer-58 { animation-name: layer-in, layer-out; animation-delay: 3.866866s, 3.905826s; }
-.cursor-layer-59 { animation-name: layer-in, layer-out; animation-delay: 3.905826s, 3.931233s; }
-.cursor-layer-60 { animation-name: layer-in, layer-out; animation-delay: 3.931233s, 3.961592s; }
-.cursor-layer-61 { animation-name: layer-in, layer-out; animation-delay: 3.961592s, 3.982877s; }
-.cursor-layer-62 { animation-name: layer-in, layer-out; animation-delay: 3.982877s, 4.182877s; }
-.cursor-layer-63 { animation-name: layer-in, layer-out; animation-delay: 4.182877s, 5.282877s; }
-.cursor-layer-64 { animation-name: layer-in; animation-delay: 5.282877s; }
-.viewport-mask-0, .viewport-bg-0 { animation-name: layer-in; animation-delay: 0s; }
+@keyframes k0 { 0%,14.992%{opacity:0;} 15.001%,15.939%{opacity:1;} 15.958%,100%{opacity:0;} }
+@keyframes k1 { 0%,15.929%{opacity:0;} 15.939%,16.489%{opacity:1;} 16.508%,100%{opacity:0;} }
+@keyframes k2 { 0%,16.48%{opacity:0;} 16.489%,17.166%{opacity:1;} 17.185%,100%{opacity:0;} }
+@keyframes k3 { 0%,17.157%{opacity:0;} 17.166%,17.902%{opacity:1;} 17.92%,100%{opacity:0;} }
+@keyframes k4 { 0%,17.892%{opacity:0;} 17.902%,18.563%{opacity:1;} 18.582%,100%{opacity:0;} }
+@keyframes k5 { 0%,18.554%{opacity:0;} 18.563%,19.305%{opacity:1;} 19.323%,100%{opacity:0;} }
+@keyframes k6 { 0%,19.295%{opacity:0;} 19.305%,20.269%{opacity:1;} 20.287%,100%{opacity:0;} }
+@keyframes k7 { 0%,20.259%{opacity:0;} 20.269%,20.746%{opacity:1;} 20.765%,100%{opacity:0;} }
+@keyframes k8 { 0%,20.737%{opacity:0;} 20.746%,21.414%{opacity:1;} 21.433%,100%{opacity:0;} }
+@keyframes k9 { 0%,21.405%{opacity:0;} 21.414%,22.159%{opacity:1;} 22.178%,100%{opacity:0;} }
+@keyframes k10 { 0%,22.15%{opacity:0;} 22.159%,22.614%{opacity:1;} 22.633%,100%{opacity:0;} }
+@keyframes k11 { 0%,22.605%{opacity:0;} 22.614%,23.001%{opacity:1;} 23.02%,100%{opacity:0;} }
+@keyframes k12 { 0%,22.991%{opacity:0;} 23.001%,23.527%{opacity:1;} 23.546%,100%{opacity:0;} }
+@keyframes k13 { 0%,23.518%{opacity:0;} 23.527%,24.041%{opacity:1;} 24.059%,100%{opacity:0;} }
+@keyframes k14 { 0%,24.031%{opacity:0;} 24.041%,24.64%{opacity:1;} 24.659%,100%{opacity:0;} }
+@keyframes k15 { 0%,24.631%{opacity:0;} 24.64%,25.274%{opacity:1;} 25.293%,100%{opacity:0;} }
+@keyframes k16 { 0%,25.265%{opacity:0;} 25.274%,26.011%{opacity:1;} 26.03%,100%{opacity:0;} }
+@keyframes k17 { 0%,26.001%{opacity:0;} 26.011%,26.586%{opacity:1;} 26.605%,100%{opacity:0;} }
+@keyframes k18 { 0%,26.577%{opacity:0;} 26.586%,27.299%{opacity:1;} 27.318%,100%{opacity:0;} }
+@keyframes k19 { 0%,27.29%{opacity:0;} 27.299%,27.942%{opacity:1;} 27.961%,100%{opacity:0;} }
+@keyframes k20 { 0%,27.933%{opacity:0;} 27.942%,28.488%{opacity:1;} 28.506%,100%{opacity:0;} }
+@keyframes k21 { 0%,28.478%{opacity:0;} 28.488%,28.936%{opacity:1;} 28.955%,100%{opacity:0;} }
+@keyframes k22 { 0%,28.927%{opacity:0;} 28.936%,30.131%{opacity:1;} 30.149%,100%{opacity:0;} }
+@keyframes k23 { 0%,30.121%{opacity:0;} 30.131%,30.673%{opacity:1;} 30.692%,100%{opacity:0;} }
+@keyframes k24 { 0%,30.664%{opacity:0;} 30.673%,31.162%{opacity:1;} 31.18%,100%{opacity:0;} }
+@keyframes k25 { 0%,31.152%{opacity:0;} 31.162%,31.786%{opacity:1;} 31.805%,100%{opacity:0;} }
+@keyframes k26 { 0%,31.777%{opacity:0;} 31.786%,32.375%{opacity:1;} 32.394%,100%{opacity:0;} }
+@keyframes k27 { 0%,32.366%{opacity:0;} 32.375%,33.674%{opacity:1;} 33.693%,100%{opacity:0;} }
+@keyframes k28 { 0%,33.665%{opacity:0;} 33.674%,34.269%{opacity:1;} 34.288%,100%{opacity:0;} }
+@keyframes k29 { 0%,34.26%{opacity:0;} 34.269%,34.791%{opacity:1;} 34.809%,100%{opacity:0;} }
+@keyframes k30 { 0%,34.781%{opacity:0;} 34.791%,35.358%{opacity:1;} 35.377%,100%{opacity:0;} }
+@keyframes k31 { 0%,35.348%{opacity:0;} 35.358%,36.027%{opacity:1;} 36.046%,100%{opacity:0;} }
+@keyframes k32 { 0%,36.018%{opacity:0;} 36.027%,36.619%{opacity:1;} 36.638%,100%{opacity:0;} }
+@keyframes k33 { 0%,36.61%{opacity:0;} 36.619%,37.041%{opacity:1;} 37.06%,100%{opacity:0;} }
+@keyframes k34 { 0%,37.032%{opacity:0;} 37.041%,37.445%{opacity:1;} 37.463%,100%{opacity:0;} }
+@keyframes k35 { 0%,37.435%{opacity:0;} 37.445%,37.89%{opacity:1;} 37.909%,100%{opacity:0;} }
+@keyframes k36 { 0%,37.881%{opacity:0;} 37.89%,38.27%{opacity:1;} 38.289%,100%{opacity:0;} }
+@keyframes k37 { 0%,38.261%{opacity:0;} 38.27%,38.893%{opacity:1;} 38.912%,100%{opacity:0;} }
+@keyframes k38 { 0%,38.884%{opacity:0;} 38.893%,39.445%{opacity:1;} 39.464%,100%{opacity:0;} }
+@keyframes k39 { 0%,39.436%{opacity:0;} 39.445%,40.081%{opacity:1;} 40.1%,100%{opacity:0;} }
+@keyframes k40 { 0%,40.072%{opacity:0;} 40.081%,40.784%{opacity:1;} 40.802%,100%{opacity:0;} }
+@keyframes k41 { 0%,40.774%{opacity:0;} 40.784%,41.192%{opacity:1;} 41.21%,100%{opacity:0;} }
+@keyframes k42 { 0%,41.182%{opacity:0;} 41.192%,41.941%{opacity:1;} 41.96%,100%{opacity:0;} }
+@keyframes k43 { 0%,41.932%{opacity:0;} 41.941%,100%{opacity:1;} }
+@keyframes k44 { 0%,46.083%{opacity:0;} 46.092%,100%{opacity:1;} }
+@keyframes k45 { 0%,66.71%{opacity:0;} 66.719%,67.657%{opacity:1;} 67.675%,100%{opacity:0;} }
+@keyframes k46 { 0%,67.647%{opacity:0;} 67.657%,68.048%{opacity:1;} 68.067%,100%{opacity:0;} }
+@keyframes k47 { 0%,68.039%{opacity:0;} 68.048%,68.742%{opacity:1;} 68.76%,100%{opacity:0;} }
+@keyframes k48 { 0%,68.732%{opacity:0;} 68.742%,69.365%{opacity:1;} 69.384%,100%{opacity:0;} }
+@keyframes k49 { 0%,69.356%{opacity:0;} 69.365%,70.585%{opacity:1;} 70.603%,100%{opacity:0;} }
+@keyframes k50 { 0%,70.575%{opacity:0;} 70.585%,71.24%{opacity:1;} 71.259%,100%{opacity:0;} }
+@keyframes k51 { 0%,71.231%{opacity:0;} 71.24%,71.82%{opacity:1;} 71.839%,100%{opacity:0;} }
+@keyframes k52 { 0%,71.81%{opacity:0;} 71.82%,72.51%{opacity:1;} 72.529%,100%{opacity:0;} }
+@keyframes k53 { 0%,72.501%{opacity:0;} 72.51%,73.241%{opacity:1;} 73.259%,100%{opacity:0;} }
+@keyframes k54 { 0%,73.231%{opacity:0;} 73.241%,73.717%{opacity:1;} 73.736%,100%{opacity:0;} }
+@keyframes k55 { 0%,73.708%{opacity:0;} 73.717%,74.286%{opacity:1;} 74.305%,100%{opacity:0;} }
+@keyframes k56 { 0%,74.277%{opacity:0;} 74.286%,100%{opacity:1;} }
+@keyframes k57 { 0%,78.426%{opacity:0;} 78.436%,100%{opacity:1;} }
+@keyframes k58 { 0%,99.053%{opacity:0;} 99.062%,100%{opacity:1;} }
+@keyframes k59 { 0%,19.295%{opacity:0;} 19.305%,19.843%{opacity:1;} 19.862%,100%{opacity:0;} }
+@keyframes k60 { 0%,19.833%{opacity:0;} 19.843%,20.269%{opacity:1;} 20.287%,100%{opacity:0;} }
+@keyframes k61 { 0%,28.927%{opacity:0;} 28.936%,29.419%{opacity:1;} 29.438%,100%{opacity:0;} }
+@keyframes k62 { 0%,29.41%{opacity:0;} 29.419%,30.131%{opacity:1;} 30.149%,100%{opacity:0;} }
+@keyframes k63 { 0%,32.366%{opacity:0;} 32.375%,33.082%{opacity:1;} 33.101%,100%{opacity:0;} }
+@keyframes k64 { 0%,33.072%{opacity:0;} 33.082%,33.674%{opacity:1;} 33.693%,100%{opacity:0;} }
+@keyframes k65 { 0%,41.932%{opacity:0;} 41.941%,42.342%{opacity:1;} 42.361%,100%{opacity:0;} }
+@keyframes k66 { 0%,42.333%{opacity:0;} 42.342%,46.092%{opacity:1;} 46.111%,100%{opacity:0;} }
+@keyframes k67 { 0%,46.083%{opacity:0;} 46.092%,66.719%{opacity:1;} 66.738%,100%{opacity:0;} }
+@keyframes k68 { 0%,69.356%{opacity:0;} 69.365%,70.045%{opacity:1;} 70.063%,100%{opacity:0;} }
+@keyframes k69 { 0%,70.035%{opacity:0;} 70.045%,70.585%{opacity:1;} 70.603%,100%{opacity:0;} }
+@keyframes k70 { 0%,74.277%{opacity:0;} 74.286%,74.685%{opacity:1;} 74.704%,100%{opacity:0;} }
+@keyframes k71 { 0%,74.676%{opacity:0;} 74.685%,78.436%{opacity:1;} 78.454%,100%{opacity:0;} }
+@keyframes k72 { 0%,78.426%{opacity:0;} 78.436%,99.062%{opacity:1;} 99.081%,100%{opacity:0;} }
+@keyframes k73 { 0%,100%{opacity:1;} }
+.layer-0 { animation:k0 5.332877s linear infinite; }
+.layer-1 { animation:k1 5.332877s linear infinite; }
+.layer-2 { animation:k2 5.332877s linear infinite; }
+.layer-3 { animation:k3 5.332877s linear infinite; }
+.layer-4 { animation:k4 5.332877s linear infinite; }
+.layer-5 { animation:k5 5.332877s linear infinite; }
+.layer-6 { animation:k6 5.332877s linear infinite; }
+.layer-7 { animation:k7 5.332877s linear infinite; }
+.layer-8 { animation:k8 5.332877s linear infinite; }
+.layer-9 { animation:k9 5.332877s linear infinite; }
+.layer-10 { animation:k10 5.332877s linear infinite; }
+.layer-11 { animation:k11 5.332877s linear infinite; }
+.layer-12 { animation:k12 5.332877s linear infinite; }
+.layer-13 { animation:k13 5.332877s linear infinite; }
+.layer-14 { animation:k14 5.332877s linear infinite; }
+.layer-15 { animation:k15 5.332877s linear infinite; }
+.layer-16 { animation:k16 5.332877s linear infinite; }
+.layer-17 { animation:k17 5.332877s linear infinite; }
+.layer-18 { animation:k18 5.332877s linear infinite; }
+.layer-19 { animation:k19 5.332877s linear infinite; }
+.layer-20 { animation:k20 5.332877s linear infinite; }
+.layer-21 { animation:k21 5.332877s linear infinite; }
+.layer-22 { animation:k22 5.332877s linear infinite; }
+.layer-23 { animation:k23 5.332877s linear infinite; }
+.layer-24 { animation:k24 5.332877s linear infinite; }
+.layer-25 { animation:k25 5.332877s linear infinite; }
+.layer-26 { animation:k26 5.332877s linear infinite; }
+.layer-27 { animation:k27 5.332877s linear infinite; }
+.layer-28 { animation:k28 5.332877s linear infinite; }
+.layer-29 { animation:k29 5.332877s linear infinite; }
+.layer-30 { animation:k30 5.332877s linear infinite; }
+.layer-31 { animation:k31 5.332877s linear infinite; }
+.layer-32 { animation:k32 5.332877s linear infinite; }
+.layer-33 { animation:k33 5.332877s linear infinite; }
+.layer-34 { animation:k34 5.332877s linear infinite; }
+.layer-35 { animation:k35 5.332877s linear infinite; }
+.layer-36 { animation:k36 5.332877s linear infinite; }
+.layer-37 { animation:k37 5.332877s linear infinite; }
+.layer-38 { animation:k38 5.332877s linear infinite; }
+.layer-39 { animation:k39 5.332877s linear infinite; }
+.layer-40 { animation:k40 5.332877s linear infinite; }
+.layer-41 { animation:k41 5.332877s linear infinite; }
+.layer-42 { animation:k42 5.332877s linear infinite; }
+.layer-43 { animation:k43 5.332877s linear infinite; }
+.layer-44 { animation:k44 5.332877s linear infinite; }
+.layer-45 { animation:k45 5.332877s linear infinite; }
+.layer-46 { animation:k46 5.332877s linear infinite; }
+.layer-47 { animation:k47 5.332877s linear infinite; }
+.layer-48 { animation:k48 5.332877s linear infinite; }
+.layer-49 { animation:k49 5.332877s linear infinite; }
+.layer-50 { animation:k50 5.332877s linear infinite; }
+.layer-51 { animation:k51 5.332877s linear infinite; }
+.layer-52 { animation:k52 5.332877s linear infinite; }
+.layer-53 { animation:k53 5.332877s linear infinite; }
+.layer-54 { animation:k54 5.332877s linear infinite; }
+.layer-55 { animation:k55 5.332877s linear infinite; }
+.layer-56 { animation:k56 5.332877s linear infinite; }
+.layer-57 { animation:k57 5.332877s linear infinite; }
+.layer-58 { animation:k58 5.332877s linear infinite; }
+.cursor-layer-0 { animation:k0 5.332877s linear infinite; }
+.cursor-layer-1 { animation:k1 5.332877s linear infinite; }
+.cursor-layer-2 { animation:k2 5.332877s linear infinite; }
+.cursor-layer-3 { animation:k3 5.332877s linear infinite; }
+.cursor-layer-4 { animation:k4 5.332877s linear infinite; }
+.cursor-layer-5 { animation:k5 5.332877s linear infinite; }
+.cursor-layer-6 { animation:k59 5.332877s linear infinite; }
+.cursor-layer-7 { animation:k60 5.332877s linear infinite; }
+.cursor-layer-8 { animation:k7 5.332877s linear infinite; }
+.cursor-layer-9 { animation:k8 5.332877s linear infinite; }
+.cursor-layer-10 { animation:k9 5.332877s linear infinite; }
+.cursor-layer-11 { animation:k10 5.332877s linear infinite; }
+.cursor-layer-12 { animation:k11 5.332877s linear infinite; }
+.cursor-layer-13 { animation:k12 5.332877s linear infinite; }
+.cursor-layer-14 { animation:k13 5.332877s linear infinite; }
+.cursor-layer-15 { animation:k14 5.332877s linear infinite; }
+.cursor-layer-16 { animation:k15 5.332877s linear infinite; }
+.cursor-layer-17 { animation:k16 5.332877s linear infinite; }
+.cursor-layer-18 { animation:k17 5.332877s linear infinite; }
+.cursor-layer-19 { animation:k18 5.332877s linear infinite; }
+.cursor-layer-20 { animation:k19 5.332877s linear infinite; }
+.cursor-layer-21 { animation:k20 5.332877s linear infinite; }
+.cursor-layer-22 { animation:k21 5.332877s linear infinite; }
+.cursor-layer-23 { animation:k61 5.332877s linear infinite; }
+.cursor-layer-24 { animation:k62 5.332877s linear infinite; }
+.cursor-layer-25 { animation:k23 5.332877s linear infinite; }
+.cursor-layer-26 { animation:k24 5.332877s linear infinite; }
+.cursor-layer-27 { animation:k25 5.332877s linear infinite; }
+.cursor-layer-28 { animation:k26 5.332877s linear infinite; }
+.cursor-layer-29 { animation:k63 5.332877s linear infinite; }
+.cursor-layer-30 { animation:k64 5.332877s linear infinite; }
+.cursor-layer-31 { animation:k28 5.332877s linear infinite; }
+.cursor-layer-32 { animation:k29 5.332877s linear infinite; }
+.cursor-layer-33 { animation:k30 5.332877s linear infinite; }
+.cursor-layer-34 { animation:k31 5.332877s linear infinite; }
+.cursor-layer-35 { animation:k32 5.332877s linear infinite; }
+.cursor-layer-36 { animation:k33 5.332877s linear infinite; }
+.cursor-layer-37 { animation:k34 5.332877s linear infinite; }
+.cursor-layer-38 { animation:k35 5.332877s linear infinite; }
+.cursor-layer-39 { animation:k36 5.332877s linear infinite; }
+.cursor-layer-40 { animation:k37 5.332877s linear infinite; }
+.cursor-layer-41 { animation:k38 5.332877s linear infinite; }
+.cursor-layer-42 { animation:k39 5.332877s linear infinite; }
+.cursor-layer-43 { animation:k40 5.332877s linear infinite; }
+.cursor-layer-44 { animation:k41 5.332877s linear infinite; }
+.cursor-layer-45 { animation:k42 5.332877s linear infinite; }
+.cursor-layer-46 { animation:k65 5.332877s linear infinite; }
+.cursor-layer-47 { animation:k66 5.332877s linear infinite; }
+.cursor-layer-48 { animation:k67 5.332877s linear infinite; }
+.cursor-layer-49 { animation:k45 5.332877s linear infinite; }
+.cursor-layer-50 { animation:k46 5.332877s linear infinite; }
+.cursor-layer-51 { animation:k47 5.332877s linear infinite; }
+.cursor-layer-52 { animation:k48 5.332877s linear infinite; }
+.cursor-layer-53 { animation:k68 5.332877s linear infinite; }
+.cursor-layer-54 { animation:k69 5.332877s linear infinite; }
+.cursor-layer-55 { animation:k50 5.332877s linear infinite; }
+.cursor-layer-56 { animation:k51 5.332877s linear infinite; }
+.cursor-layer-57 { animation:k52 5.332877s linear infinite; }
+.cursor-layer-58 { animation:k53 5.332877s linear infinite; }
+.cursor-layer-59 { animation:k54 5.332877s linear infinite; }
+.cursor-layer-60 { animation:k55 5.332877s linear infinite; }
+.cursor-layer-61 { animation:k70 5.332877s linear infinite; }
+.cursor-layer-62 { animation:k71 5.332877s linear infinite; }
+.cursor-layer-63 { animation:k72 5.332877s linear infinite; }
+.cursor-layer-64 { animation:k58 5.332877s linear infinite; }
+.viewport-mask-0,.viewport-bg-0 { animation:k73 5.332877s linear infinite; }
 </style>
 <defs>
 <mask id="viewport-mask" x="0" y="0" width="829.6" height="504" maskUnits="userSpaceOnUse">

@@ -1307,6 +1307,15 @@ internal sealed class ReplayFrame
 internal static class TerminalReplay
 {
     private const string Space = " ";
+    internal const double CastExitIntervalSeconds = 0.05;
+
+    internal static double ComputeLoopDuration(IReadOnlyList<CastEvent> events)
+    {
+        if (events.Count == 0)
+            return 0;
+
+        return events[^1].Time + CastExitIntervalSeconds;
+    }
 
     internal static List<ReplayFrame> BuildFrames(
         IReadOnlyList<CastEvent> events,

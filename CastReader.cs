@@ -11,7 +11,8 @@ internal readonly record struct CastRecording(
     int Width,
     int Height,
     ResolvedRenderSettings RenderSettings,
-    List<CastEvent> Events);
+    List<CastEvent> Events,
+    double LoopDuration);
 
 internal static class CastReader
 {
@@ -109,7 +110,13 @@ internal static class CastReader
             events.Add(usesRelativeTime ? ev.Value with { Time = absoluteTime } : ev.Value);
         }
 
-        return new CastRecording(width, height, renderSettings, events);
+        var loopDuration = usesRelativeTime
+            ? absoluteTime
+            : events.Count > 0
+                ? events[^1].Time
+                : 0.0;
+
+        return new CastRecording(width, height, renderSettings, events, loopDuration);
     }
 
     private static void ReadRenderTags(JsonElement tags, ref int fontSize, ref string fontFamily, ref WindowStyle window)
