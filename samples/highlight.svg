@@ -1047,7 +1047,7 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ date</text>
 </g>
 <g class="layer layer-30">
-<text x="18" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-31">
 <text x="18" y="204.8" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacing"># run color override</text>
@@ -1072,7 +1072,9 @@ text { dominant-baseline: alphabetic; }
 <text x="37.84" y="224.8" fill="#97aa60" font-weight="bold" textLength="39.68" lengthAdjust="spacing" style="text-decoration:underline;">date</text>
 </g>
 <g class="layer layer-37">
-<text x="18" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="19.84" lengthAdjust="spacing">Fr</text>
+<text x="37.84" y="244.8" fill="#7e8e50" font-weight="normal" textLength="39.68" lengthAdjust="spacing">i, J</text>
+<text x="77.52" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">un 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-38">
 <text x="18" y="264.8" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacing"># stdout color override</text>
@@ -1388,7 +1390,7 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ date</text>
 </g>
 <g class="layer layer-141">
-<text x="18" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-142">
 <text x="18" y="184.8" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacing"># run color override</text>
@@ -1398,7 +1400,9 @@ text { dominant-baseline: alphabetic; }
 <text x="37.84" y="204.8" fill="#97aa60" font-weight="bold" textLength="39.68" lengthAdjust="spacing" style="text-decoration:underline;">date</text>
 </g>
 <g class="layer layer-144">
-<text x="18" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="19.84" lengthAdjust="spacing">Fr</text>
+<text x="37.84" y="224.8" fill="#7e8e50" font-weight="normal" textLength="39.68" lengthAdjust="spacing">i, J</text>
+<text x="77.52" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">un 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-145">
 <text x="18" y="244.8" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacing"># stdout color override</text>
@@ -1546,7 +1550,7 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ date</text>
 </g>
 <g class="layer layer-192">
-<text x="18" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-193">
 <text x="18" y="164.8" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacing"># run color override</text>
@@ -1556,7 +1560,9 @@ text { dominant-baseline: alphabetic; }
 <text x="37.84" y="184.8" fill="#97aa60" font-weight="bold" textLength="39.68" lengthAdjust="spacing" style="text-decoration:underline;">date</text>
 </g>
 <g class="layer layer-195">
-<text x="18" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="19.84" lengthAdjust="spacing">Fr</text>
+<text x="37.84" y="204.8" fill="#7e8e50" font-weight="normal" textLength="39.68" lengthAdjust="spacing">i, J</text>
+<text x="77.52" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">un 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-196">
 <text x="18" y="224.8" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacing"># stdout color override</text>
@@ -1617,7 +1623,7 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ date</text>
 </g>
 <g class="layer layer-214">
-<text x="18" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-215">
 <text x="18" y="144.8" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacing"># run color override</text>
@@ -1627,7 +1633,9 @@ text { dominant-baseline: alphabetic; }
 <text x="37.84" y="164.8" fill="#97aa60" font-weight="bold" textLength="39.68" lengthAdjust="spacing" style="text-decoration:underline;">date</text>
 </g>
 <g class="layer layer-217">
-<text x="18" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="19.84" lengthAdjust="spacing">Fr</text>
+<text x="37.84" y="184.8" fill="#7e8e50" font-weight="normal" textLength="39.68" lengthAdjust="spacing">i, J</text>
+<text x="77.52" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">un 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-218">
 <text x="18" y="204.8" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacing"># stdout color override</text>
@@ -1688,7 +1696,7 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ date</text>
 </g>
 <g class="layer layer-236">
-<text x="18" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-237">
 <text x="18" y="124.8" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacing"># run color override</text>
@@ -1698,7 +1706,9 @@ text { dominant-baseline: alphabetic; }
 <text x="37.84" y="144.8" fill="#97aa60" font-weight="bold" textLength="39.68" lengthAdjust="spacing" style="text-decoration:underline;">date</text>
 </g>
 <g class="layer layer-239">
-<text x="18" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="19.84" lengthAdjust="spacing">Fr</text>
+<text x="37.84" y="164.8" fill="#7e8e50" font-weight="normal" textLength="39.68" lengthAdjust="spacing">i, J</text>
+<text x="77.52" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">un 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-240">
 <text x="18" y="184.8" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacing"># stdout color override</text>
@@ -1828,7 +1838,7 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ date</text>
 </g>
 <g class="layer layer-281">
-<text x="18" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-282">
 <text x="18" y="104.8" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacing"># run color override</text>
@@ -1838,7 +1848,9 @@ text { dominant-baseline: alphabetic; }
 <text x="37.84" y="124.8" fill="#97aa60" font-weight="bold" textLength="39.68" lengthAdjust="spacing" style="text-decoration:underline;">date</text>
 </g>
 <g class="layer layer-284">
-<text x="18" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="19.84" lengthAdjust="spacing">Fr</text>
+<text x="37.84" y="144.8" fill="#7e8e50" font-weight="normal" textLength="39.68" lengthAdjust="spacing">i, J</text>
+<text x="77.52" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">un 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-285">
 <text x="18" y="164.8" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacing"># stdout color override</text>
@@ -1899,7 +1911,7 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ date</text>
 </g>
 <g class="layer layer-303">
-<text x="18" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-304">
 <text x="18" y="84.8" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacing"># run color override</text>
@@ -1909,7 +1921,9 @@ text { dominant-baseline: alphabetic; }
 <text x="37.84" y="104.8" fill="#97aa60" font-weight="bold" textLength="39.68" lengthAdjust="spacing" style="text-decoration:underline;">date</text>
 </g>
 <g class="layer layer-306">
-<text x="18" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="19.84" lengthAdjust="spacing">Fr</text>
+<text x="37.84" y="124.8" fill="#7e8e50" font-weight="normal" textLength="39.68" lengthAdjust="spacing">i, J</text>
+<text x="77.52" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">un 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-307">
 <text x="18" y="144.8" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacing"># stdout color override</text>
@@ -1971,7 +1985,7 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ date</text>
 </g>
 <g class="layer layer-325">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-326">
 <text x="18" y="64.8" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacing"># run color override</text>
@@ -1981,7 +1995,9 @@ text { dominant-baseline: alphabetic; }
 <text x="37.84" y="84.8" fill="#97aa60" font-weight="bold" textLength="39.68" lengthAdjust="spacing" style="text-decoration:underline;">date</text>
 </g>
 <g class="layer layer-328">
-<text x="18" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="19.84" lengthAdjust="spacing">Fr</text>
+<text x="37.84" y="104.8" fill="#7e8e50" font-weight="normal" textLength="39.68" lengthAdjust="spacing">i, J</text>
+<text x="77.52" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">un 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-329">
 <text x="18" y="124.8" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacing"># stdout color override</text>
@@ -2103,7 +2119,7 @@ text { dominant-baseline: alphabetic; }
 <text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">$ printf 'true color\n'</text>
 </g>
 <g class="layer layer-367">
-<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-368">
 <text x="18" y="44.8" fill="#7dd6cf" font-weight="normal" textLength="198.4" lengthAdjust="spacing"># run color override</text>
@@ -2113,7 +2129,9 @@ text { dominant-baseline: alphabetic; }
 <text x="37.84" y="64.8" fill="#97aa60" font-weight="bold" textLength="39.68" lengthAdjust="spacing" style="text-decoration:underline;">date</text>
 </g>
 <g class="layer layer-370">
-<text x="18" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="19.84" lengthAdjust="spacing">Fr</text>
+<text x="37.84" y="84.8" fill="#7e8e50" font-weight="normal" textLength="39.68" lengthAdjust="spacing">i, J</text>
+<text x="77.52" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">un 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-371">
 <text x="18" y="104.8" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacing"># stdout color override</text>
@@ -2185,7 +2203,9 @@ text { dominant-baseline: alphabetic; }
 <text x="37.84" y="44.8" fill="#97aa60" font-weight="bold" textLength="39.68" lengthAdjust="spacing" style="text-decoration:underline;">date</text>
 </g>
 <g class="layer layer-392">
-<text x="18" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">Fri, Jun 19, 2026  6:33:33 PM</text>
+<text x="18" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="19.84" lengthAdjust="spacing">Fr</text>
+<text x="37.84" y="64.8" fill="#7e8e50" font-weight="normal" textLength="39.68" lengthAdjust="spacing">i, J</text>
+<text x="77.52" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">un 19, 2026 11:50:12 PM</text>
 </g>
 <g class="layer layer-393">
 <text x="18" y="84.8" fill="#7dd6cf" font-weight="normal" textLength="228.16" lengthAdjust="spacing"># stdout color override</text>

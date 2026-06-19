@@ -53,7 +53,7 @@ Subcommands accept `-h` / `--help` for subcommand-specific usage.
 
 ## Logging
 
-Progress and status go to stderr (`Loading:`, `Written:`, `Done:`). Step `running:` lines are always shown on the scenario path.
+Progress and status go to stderr (`Loading:`, `Written:`, `Done:`). File paths in these messages are shown relative to the current working directory, using `/` separators; when a path cannot be relativized (for example, another drive on Windows), the full path is shown instead. Step `running:` lines are always shown on the scenario path.
 
 **`pre` / `post`.** stdout and stderr are forwarded after each command exits (live streaming not required in v1). Failure prints phase, full command text, and exit code unconditionally. See [spec_pre_post.md](spec_pre_post.md).
 
