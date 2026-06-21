@@ -13,6 +13,11 @@ public readonly record struct CommandOutputChunk(double Time, string Data);
 
 public readonly record struct PtyLaunchContext(string Shell, int Columns, int Rows, string? Cwd);
 
+public sealed record PtyCaptureOptions
+{
+    public Encoding OutputEncoding { get; init; } = Encoding.UTF8;
+}
+
 static class PtyDiagnostics
 {
     public static void Fail(string step, Exception exception, PtyLaunchContext context)
@@ -127,19 +132,21 @@ public static class PseudoTerminal
         string? cwd,
         int width,
         int height,
-        PtyLaunchContext context)
+        PtyLaunchContext context,
+        PtyCaptureOptions? options = null)
     {
         width = Math.Clamp(width, 1, 512);
         height = Math.Clamp(height, 1, 512);
         context = context with { Columns = width, Rows = height };
+        options ??= new PtyCaptureOptions();
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            return new PseudoTerminalSession(WindowsPseudoTerminal.Start(fileName, arguments, cwd, width, height, context));
+            return new PseudoTerminalSession(WindowsPseudoTerminal.Start(fileName, arguments, cwd, width, height, context, options));
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
             RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ||
             RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
-            return new PseudoTerminalSession(UnixPseudoTerminal.Start(fileName, arguments, cwd, width, height, context));
+            return new PseudoTerminalSession(UnixPseudoTerminal.Start(fileName, arguments, cwd, width, height, context, options));
 
         throw new PlatformNotSupportedException("PTY recording is not supported on this operating system.");
     }
@@ -153,9 +160,10 @@ public static class PseudoTerminal
         PtyLaunchContext context,
         string? input = null,
         bool verbose = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        PtyCaptureOptions? options = null)
     {
-        using var session = Start(fileName, arguments, cwd, width, height, context);
+        using var session = Start(fileName, arguments, cwd, width, height, context, options);
         if (input is not null)
         {
             if (input.Length > 0)
@@ -184,7 +192,8 @@ static partial class WindowsPseudoTerminal
         string? cwd,
         int width,
         int height,
-        PtyLaunchContext context)
+        PtyLaunchContext context,
+        PtyCaptureOptions options)
     {
         CreateConPtyPipes(out var inputRead, out var inputWrite, out var outputRead, out var outputWrite);
         var inputWriteHandle = inputWrite;
@@ -250,7 +259,8 @@ static partial class WindowsPseudoTerminal
             }
 
             var stopwatch = Stopwatch.StartNew();
-            var outputTask = Task.Run(() => ReadChunks(outputReadHandle, stopwatch));
+            var outputEncoding = options.OutputEncoding;
+            var outputTask = Task.Run(() => ReadChunks(outputReadHandle, stopwatch, outputEncoding));
             return new WindowsPtySession(
                 inputWriteHandle,
                 outputReadHandle,
@@ -485,10 +495,10 @@ static partial class WindowsPseudoTerminal
         }
     }
 
-    private static List<CommandOutputChunk> ReadChunks(SafeFileHandle handle, Stopwatch stopwatch)
+    private static List<CommandOutputChunk> ReadChunks(SafeFileHandle handle, Stopwatch stopwatch, Encoding outputEncoding)
     {
         using var stream = new FileStream(handle, FileAccess.Read, 4096, false);
-        return TerminalChunkReader.Read(stream, stopwatch);
+        return TerminalChunkReader.Read(stream, stopwatch, outputEncoding);
     }
 
     private const uint HANDLE_FLAG_INHERIT = 0x00000001;
@@ -703,7 +713,8 @@ static partial class UnixPseudoTerminal
         string? cwd,
         int width,
         int height,
-        PtyLaunchContext context)
+        PtyLaunchContext context,
+        PtyCaptureOptions options)
     {
         var winsize = new Winsize { ws_col = (ushort)width, ws_row = (ushort)height };
         if (OpenPty(out var master, out var slave, ref winsize) != 0)
@@ -732,7 +743,8 @@ static partial class UnixPseudoTerminal
 
             close(slave);
             var stopwatch = Stopwatch.StartNew();
-            var outputTask = Task.Run(() => ReadChunks(master, stopwatch));
+            var outputEncoding = options.OutputEncoding;
+            var outputTask = Task.Run(() => ReadChunks(master, stopwatch, outputEncoding));
             return new UnixPtySession(master, pid, outputTask, stopwatch, fileName, arguments, context);
         }
         finally
@@ -987,11 +999,11 @@ static partial class UnixPseudoTerminal
         }
     }
 
-    private static List<CommandOutputChunk> ReadChunks(int fd, Stopwatch stopwatch)
+    private static List<CommandOutputChunk> ReadChunks(int fd, Stopwatch stopwatch, Encoding outputEncoding)
     {
         using var handle = new SafeFileHandle((IntPtr)fd, ownsHandle: false);
         using var stream = new FileStream(handle, FileAccess.Read, 4096, false);
-        return TerminalChunkReader.Read(stream, stopwatch);
+        return TerminalChunkReader.Read(stream, stopwatch, outputEncoding);
     }
 
     private static bool WIFEXITED(int status) => (status & 0x7f) == 0;
@@ -1114,12 +1126,12 @@ static partial class UnixPseudoTerminal
 
 static class TerminalChunkReader
 {
-    public static List<CommandOutputChunk> Read(Stream stream, Stopwatch stopwatch, Action<long>? onChunk = null)
+    public static List<CommandOutputChunk> Read(Stream stream, Stopwatch stopwatch, Encoding outputEncoding, Action<long>? onChunk = null)
     {
         var chunks = new List<CommandOutputChunk>();
         var bytes = new byte[4096];
-        var chars = new char[Console.OutputEncoding.GetMaxCharCount(bytes.Length)];
-        var decoder = Console.OutputEncoding.GetDecoder();
+        var chars = new char[outputEncoding.GetMaxCharCount(bytes.Length)];
+        var decoder = outputEncoding.GetDecoder();
 
         while (true)
         {

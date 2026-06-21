@@ -38,6 +38,7 @@ Library callers should prefer `PseudoTerminal.Start` → `PseudoTerminalSession`
 | `Complete(verbose)` | After exit, drains the read task and returns `CommandOutput`. |
 | `Dispose()` | If the child is still running, **kills** it, then closes ConPTY/pipes/process handles. Unlike `System.Diagnostics.Process.Dispose`, this is intentional for short-lived PTY sessions. |
 | `PseudoTerminal.Run(..., input: string?)` | `input: null` — stdin stays open (TUI / no stdin). `input: ""` or text — write (if non-empty) then `CloseInput()` before wait. |
+| `PtyCaptureOptions.OutputEncoding` | Byte-to-text decoding for captured chunks (default `Encoding.UTF8`). |
 
 The scenetake CLI uses `Run` with `CancellationToken.None` (no scenario-level timeout in Phase 1).
 
@@ -156,7 +157,7 @@ PTY output is a **byte stream**, not lines or Unicode strings:
 
 - Do not translate `\n` ↔ `\r\n`.
 - Do not use line-based APIs (`ReadLine`) as the primary read path.
-- ANSI sequences may arrive split across reads; the cast layer stores chunks as received (decoded with the console output encoding for text chunks).
+- Decode PTY bytes with `PtyCaptureOptions.OutputEncoding` (default **UTF-8**). Do not use `Console.OutputEncoding` — in NativeAOT, containers, and CI it may not match the child terminal.
 
 `TerminalChunkReader` timestamps each read while a `Stopwatch` runs during child lifetime.
 
