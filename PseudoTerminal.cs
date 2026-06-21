@@ -344,7 +344,7 @@ static partial class WindowsPseudoTerminal
         public void WriteInput(string input)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            if (_exited || _inputClosed || input.Length == 0)
+            if (_exited || _inputClosed || _eofSignaled || input.Length == 0)
                 return;
 
             WriteAll(_inputWriteHandle, Encoding.UTF8.GetBytes(input));
@@ -356,9 +356,9 @@ static partial class WindowsPseudoTerminal
             if (_exited || _inputClosed)
                 return;
 
-            // Input pipe close is deferred to WaitForExitAsync (or CloseTransport on exit/dispose).
-            // ConPTY may not have wired child stdin yet right after CreateProcess; closing too early
-            // can yield STATUS_CONTROL_C_EXIT (0xC000013A) instead of normal EOF.
+            // Windows: always defer pipe close to WaitForExitAsync (or CloseTransport).
+            // WriteFile success does not imply the child has attached stdin yet; closing too early
+            // yields STATUS_CONTROL_C_EXIT (0xC000013A). Unix uses staged immediate EOT instead.
             _eofSignaled = true;
         }
 
@@ -850,6 +850,8 @@ static partial class UnixPseudoTerminal
         private readonly string[] _arguments;
         private readonly PtyLaunchContext _context;
         private bool _eofSent;
+        private bool _eofPending;
+        private bool _inputWritten;
         private bool _masterClosed;
         private bool _exited;
         private int _exitCode;
@@ -880,16 +882,27 @@ static partial class UnixPseudoTerminal
         public void WriteInput(string input)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            if (_exited || _eofSent || input.Length == 0)
+            if (_exited || _eofSent || _eofPending || input.Length == 0)
                 return;
 
             WriteAll(_master, Encoding.UTF8.GetBytes(input));
+            _inputWritten = true;
         }
 
         public void SendEof()
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            WriteEotToMaster();
+            if (_exited || _eofSent)
+                return;
+
+            if (_inputWritten)
+            {
+                WriteEotToMaster();
+                return;
+            }
+
+            // Empty stdin EOF: defer EOT until the wait loop gives the child time to attach.
+            _eofPending = true;
         }
 
         public void Kill()
@@ -925,6 +938,8 @@ static partial class UnixPseudoTerminal
                     _exited = true;
                     break;
                 }
+
+                SendEotIfPending();
 
                 await Task.Delay(WaitPollMs, cancellationToken);
             }
@@ -987,11 +1002,18 @@ static partial class UnixPseudoTerminal
 
         private void CloseTransport()
         {
+            SendEotIfPending();
             if (_masterClosed)
                 return;
 
             close(_master);
             _masterClosed = true;
+        }
+
+        private void SendEotIfPending()
+        {
+            if (_eofPending)
+                WriteEotToMaster();
         }
 
         private void WriteEotToMaster()
@@ -1000,6 +1022,7 @@ static partial class UnixPseudoTerminal
                 return;
 
             WriteAll(_master, [InputEot]);
+            _eofPending = false;
             _eofSent = true;
         }
 
