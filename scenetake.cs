@@ -5,11 +5,14 @@
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
 #:package VYaml@1.3.0
+#:package MiniPty@0.3.0
+#:package MiniPty.Capture@0.3.0
 #:include Terminal.cs
 #:include Svg.cs
 #:include CastReader.cs
-#:include PseudoTerminal.cs
 
+using MiniPty;
+using MiniPty.Capture;
 using System.Diagnostics;
 using System.Globalization;
 using System.Buffers;
@@ -189,7 +192,7 @@ var deterministicTimestamp = ComputeDeterministicTimestamp(deterministicSeed);
 var shell = ResolveShell(scenario);
 Console.Error.WriteLine($"Using shell: {shell.DisplayName}");
 
-var preExitCode = RunScenarioCommands(scenario.Pre, "pre", scenario.Cwd, shell, verbose);
+var preExitCode = await RunScenarioCommandsAsync(scenario.Pre, "pre", scenario.Cwd, shell, verbose);
 if (preExitCode != 0)
     return preExitCode;
 
@@ -197,7 +200,7 @@ if (verbose)
     PrintPhase("steps");
 
 Console.Error.WriteLine("Generating cast...");
-var events = Generate(scenario, shell, deterministicSeed, verbose);
+var events = await GenerateAsync(scenario, shell, deterministicSeed, verbose);
 
 WriteCast(scenario, events, outputPath, shell, deterministicTimestamp, renderSettings);
 
@@ -223,7 +226,7 @@ if (outputFormat == OutputFormat.Svg)
     }
 }
 
-var postExitCode = RunScenarioCommands(scenario.Post, "post", scenario.Cwd, shell, verbose);
+var postExitCode = await RunScenarioCommandsAsync(scenario.Post, "post", scenario.Cwd, shell, verbose);
 if (postExitCode != 0)
     return postExitCode;
 
@@ -712,7 +715,7 @@ static Scenario ParseScenario(string yaml)
     return YamlSerializer.Deserialize<Scenario>(bytes) ?? new Scenario();
 }
 
-static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int deterministicSeed, bool verbose)
+static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch shell, int deterministicSeed, bool verbose)
 {
     var settings = scenario.Settings ?? new ScenarioSettings();
     var prompt    = settings.Prompt ?? DefaultPrompt;
@@ -775,26 +778,26 @@ static List<CastEvent> Generate(Scenario scenario, ShellLaunch shell, int determ
         }
 
         Console.Error.WriteLine($"  running: {command.Cmd}");
-        var execution = RunCommandCore(command.Cmd, scenario.Cwd, shell, usePty, scenario.Width ?? 120, scenario.Height ?? 24, verbose);
-        if (execution.IsTerminalOutput)
+        var execution = await RunCommandCoreAsync(command.Cmd, scenario.Cwd, shell, usePty, scenario.Width ?? 120, scenario.Height ?? 24, verbose);
+        if (execution.IsPty)
         {
             var commandStart = t;
-            foreach (var chunk in execution.Chunks)
+            foreach (var chunk in execution.PtyChunks!)
             {
                 if (string.IsNullOrEmpty(chunk.Data))
                     continue;
 
-                events.Add(CastEvent.Output(Math.Round(commandStart + chunk.Time, 6), NormalizeNewlines(chunk.Data)));
+                events.Add(CastEvent.Output(Math.Round(commandStart + chunk.Time.TotalSeconds, 6), NormalizeNewlines(chunk.Data)));
             }
 
-            t = execution.Chunks.Count > 0
-                ? Math.Max(t + cmdExecutionDuration, commandStart + execution.Chunks[^1].Time)
+            t = execution.PtyChunks.Count > 0
+                ? Math.Max(t + cmdExecutionDuration, commandStart + execution.PtyChunks[^1].Time.TotalSeconds)
                 : t + cmdExecutionDuration;
         }
         else
         {
             t += cmdExecutionDuration;
-            var mergedOutput = MergeCommandOutput(execution, cmdStderrStyle);
+            var mergedOutput = MergePipeOutput(execution.Output, execution.Stderr, cmdStderrStyle);
 
             if (!string.IsNullOrEmpty(mergedOutput))
             {
@@ -853,22 +856,23 @@ static CommandEntry ParseCommand(object? item)
     return new CommandEntry();
 }
 
-static CommandOutput RunCommand(string cmd, string? cwd, ShellLaunch shell) =>
-    RunCommandCore(cmd, cwd, shell, false, 120, 24);
+static Task<CommandExecution> RunCommand(string cmd, string? cwd, ShellLaunch shell) =>
+    RunCommandCoreAsync(cmd, cwd, shell, false, 120, 24);
 
-static CommandOutput RunCommandCore(string cmd, string? cwd, ShellLaunch shell, bool usePty, int width, int height, bool verbose = false)
+static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd, ShellLaunch shell, bool usePty, int width, int height, bool verbose = false)
 {
     if (usePty)
     {
-        var context = new PtyLaunchContext(shell.DisplayName, width, height, cwd);
-        return PseudoTerminal.Run(
-            shell.FileName,
-            BuildPtyShellArguments(shell, cmd),
-            cwd,
-            width,
-            height,
-            context,
-            verbose: verbose);
+        var result = await PtyCapture.RunAsync(new PtyStartInfo
+        {
+            FileName = shell.FileName,
+            Arguments = BuildPtyShellArguments(shell, cmd),
+            WorkingDirectory = cwd,
+            Size = new(width, height),
+        });
+        if (verbose)
+            Console.Error.WriteLine($"scenetake: pty verbose: chunks={result.Chunks.Count} chars={result.Output.Length}");
+        return CommandExecution.FromCapture(result);
     }
 
     var psi = new ProcessStartInfo(shell.FileName)
@@ -888,7 +892,7 @@ static CommandOutput RunCommandCore(string cmd, string? cwd, ShellLaunch shell, 
     var stdout = proc.StandardOutput.ReadToEnd();
     var stderr = proc.StandardError.ReadToEnd();
     proc.WaitForExit();
-    return new CommandOutput(stdout, stderr, proc.ExitCode, false);
+    return CommandExecution.FromPipe(stdout, stderr, proc.ExitCode);
 }
 
 static string[] BuildPtyShellArguments(ShellLaunch shell, string cmd)
@@ -902,7 +906,7 @@ static string[] BuildPtyShellArguments(ShellLaunch shell, string cmd)
     return [.. shell.Arguments, cmd];
 }
 
-static int RunScenarioCommands(List<string>? commands, string phase, string? cwd, ShellLaunch shell, bool verbose)
+static async Task<int> RunScenarioCommandsAsync(List<string>? commands, string phase, string? cwd, ShellLaunch shell, bool verbose)
 {
     if (commands is null || commands.Count == 0)
         return 0;
@@ -925,10 +929,10 @@ static int RunScenarioCommands(List<string>? commands, string phase, string? cwd
             Console.Error.WriteLine(cmd);
         }
 
-        CommandOutput execution;
+        CommandExecution execution;
         try
         {
-            execution = RunCommand(cmd, cwd, shell);
+            execution = await RunCommand(cmd, cwd, shell);
         }
         catch (Exception ex)
         {
@@ -937,10 +941,18 @@ static int RunScenarioCommands(List<string>? commands, string phase, string? cwd
             return 1;
         }
 
-        if (!string.IsNullOrEmpty(execution.Stdout))
-            Console.Out.Write(execution.Stdout);
-        if (!string.IsNullOrEmpty(execution.Stderr))
-            Console.Error.Write(execution.Stderr);
+        if (execution.IsPty)
+        {
+            if (!string.IsNullOrEmpty(execution.Output))
+                Console.Out.Write(execution.Output);
+        }
+        else
+        {
+            if (!string.IsNullOrEmpty(execution.Output))
+                Console.Out.Write(execution.Output);
+            if (!string.IsNullOrEmpty(execution.Stderr))
+                Console.Error.Write(execution.Stderr);
+        }
 
         if (execution.ExitCode == 0)
             continue;
@@ -960,23 +972,23 @@ static void PrintScenarioCommandFailure(string phase, string cmd, int exitCode)
     Console.Error.WriteLine(cmd);
 }
 
-static string MergeCommandOutput(CommandOutput output, string stderrStyle)
+static string MergePipeOutput(string stdout, string stderr, string stderrStyle)
 {
-    if (string.IsNullOrEmpty(output.Stdout))
+    if (string.IsNullOrEmpty(stdout))
     {
-        if (string.IsNullOrEmpty(output.Stderr) || string.IsNullOrEmpty(stderrStyle) || ContainsAnsiSgr(output.Stderr))
-            return output.Stderr;
+        if (string.IsNullOrEmpty(stderr) || string.IsNullOrEmpty(stderrStyle) || ContainsAnsiSgr(stderr))
+            return stderr;
 
-        return WrapWithStylePreserveTrailingNewlines(output.Stderr, stderrStyle);
+        return WrapWithStylePreserveTrailingNewlines(stderr, stderrStyle);
     }
 
-    if (string.IsNullOrEmpty(output.Stderr))
-        return output.Stdout;
+    if (string.IsNullOrEmpty(stderr))
+        return stdout;
 
-    if (string.IsNullOrEmpty(stderrStyle) || ContainsAnsiSgr(output.Stderr))
-        return string.Concat(output.Stdout, output.Stderr);
+    if (string.IsNullOrEmpty(stderrStyle) || ContainsAnsiSgr(stderr))
+        return string.Concat(stdout, stderr);
 
-    return string.Concat(output.Stdout, WrapWithStylePreserveTrailingNewlines(output.Stderr, stderrStyle));
+    return string.Concat(stdout, WrapWithStylePreserveTrailingNewlines(stderr, stderrStyle));
 }
 
 static string WrapWithStylePreserveTrailingNewlines(string text, string styleOpen)
@@ -2269,6 +2281,20 @@ static class TypingChars
 }
 
 record HighlightSpec(string ColorOpen, List<string> At);
+
+readonly record struct CommandExecution(
+    int ExitCode,
+    bool IsPty,
+    string Output,
+    string Stderr,
+    IReadOnlyList<PtyCaptureChunk>? PtyChunks)
+{
+    public static CommandExecution FromCapture(PtyCaptureResult result) =>
+        new(result.ExitCode, true, result.Output, "", result.Chunks);
+
+    public static CommandExecution FromPipe(string stdout, string stderr, int exitCode) =>
+        new(exitCode, false, stdout, stderr, null);
+}
 
 record ShellLaunch(string FileName, string[] Arguments, string EnvValue, string DisplayName);
 

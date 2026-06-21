@@ -131,7 +131,7 @@ Deterministic seed and timestamp are derived from the whole YAML file (normalize
 ## Cross-Document Notes
 
 - [spec_pre_post.md](spec_pre_post.md) — `pre`/`post` recording exclusion and failure behavior.
-- [spec_pty.md](spec_pty.md) — `pty: true` recording behavior and platform support.
+- [spec_pty.md](spec_pty.md) — `pty: true` capture behavior and platform support.
 - [spec_highlight.md](spec_highlight.md) — coloring semantics and style strings.
 - [spec_cast.md](spec_cast.md) — cast header mapping, event stream, recording boundary.
 - [spec_svg.md](spec_svg.md) — SVG renderer.

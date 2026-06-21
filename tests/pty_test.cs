@@ -3,30 +3,34 @@
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
-#:include ../PseudoTerminal.cs
+#:package MiniPty@0.3.0
+#:package MiniPty.Capture@0.3.0
 
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using MiniPty;
+using MiniPty.Capture;
 
 var repoRoot = FindRepoRoot(Directory.GetCurrentDirectory());
 var failures = 0;
 
-failures += Run("PtyEchoOutput", PtyEchoOutput);
-failures += Run("PtyTtyCheck", PtyTtyCheck);
-failures += Run("PtyStdinEof", PtyStdinEof);
-failures += Run("PtyHasExitedPolls", PtyHasExitedPolls);
-failures += Run("PtyCancellationKill", PtyCancellationKill);
-failures += Run("PtyCancellationWait", PtyCancellationWait);
+failures += await RunAsync("PtyEchoOutput", PtyEchoOutput);
+failures += await RunAsync("PtyTtyCheck", PtyTtyCheck);
+failures += await RunAsync("PtyStdinEof", PtyStdinEof);
+failures += await RunAsync("PtyHasExitedPolls", () => Task.FromResult(PtyHasExitedPolls()));
+failures += await RunAsync("PtyCancellationKill", PtyCancellationKill);
+failures += await RunAsync("PtyCancellationWait", PtyCancellationWait);
+failures += await RunAsync("PtyResizeUpdatesSize", () => Task.FromResult(PtyResizeUpdatesSize()));
 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && TryResolvePwsh(out var pwshPath))
-    failures += Run("PtyMatrixPwsh", () => PtyMatrixPwsh(pwshPath));
+    failures += await RunAsync("PtyMatrixPwsh", () => PtyMatrixPwsh(pwshPath));
 else if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-    failures += Run("PtyMatrixUnix", PtyMatrixUnix);
+    failures += await RunAsync("PtyMatrixUnix", PtyMatrixUnix);
 
-failures += Run("IntegrationPtyCmdFixture", () => IntegrationFixture(repoRoot, "pty-cmd.yaml", "pty-cmd-output"));
-failures += Run("IntegrationPtyTtyFixture", () => IntegrationFixture(repoRoot, "pty-tty-check.yaml", "redirected=False"));
+failures += await RunAsync("IntegrationPtyCmdFixture", () => Task.FromResult(IntegrationFixture(repoRoot, "pty-cmd.yaml", "pty-cmd-output")));
+failures += await RunAsync("IntegrationPtyTtyFixture", () => Task.FromResult(IntegrationFixture(repoRoot, "pty-tty-check.yaml", "redirected=False")));
 if (TryResolvePwsh(out var pwshForFixture))
-    failures += Run("IntegrationMatrixFixture", () => IntegrationMatrixFixture(repoRoot, pwshForFixture));
+    failures += await RunAsync("IntegrationMatrixFixture", () => Task.FromResult(IntegrationMatrixFixture(repoRoot, pwshForFixture)));
 
 return failures == 0 ? 0 : 1;
 
@@ -40,11 +44,11 @@ static bool IntegrationTestsEnabled(string repoRoot)
     return false;
 }
 
-static int Run(string name, Func<bool> test)
+static async Task<int> RunAsync(string name, Func<Task<bool>> test)
 {
     try
     {
-        if (test())
+        if (await test())
         {
             Console.Error.WriteLine($"ok {name}");
             return 0;
@@ -60,70 +64,45 @@ static int Run(string name, Func<bool> test)
     }
 }
 
-static PtyLaunchContext TestContext(string shell) => new(shell, 40, 8, null);
+static PtyStartInfo Spawn(string fileName, IReadOnlyList<string> arguments, int columns = 40, int rows = 8) =>
+    new() { FileName = fileName, Arguments = arguments, Size = new(columns, rows) };
 
-static bool PtyEchoOutput()
+static async Task<bool> PtyEchoOutput()
 {
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     {
         var cmd = Environment.GetEnvironmentVariable("ComSpec") ?? @"C:\Windows\System32\cmd.exe";
-        var output = PseudoTerminal.Run(
-            cmd,
-            ["/c", "echo pty-layer-echo"],
-            null,
-            40,
-            8,
-            TestContext("cmd"));
-        return output.ExitCode == 0
-            && output.IsTerminalOutput
-            && output.Stdout.Contains("pty-layer-echo", StringComparison.Ordinal);
+        var result = await PtyCapture.RunAsync(Spawn(cmd, ["/c", "echo pty-layer-echo"]));
+        return result.ExitCode == 0 && result.Output.Contains("pty-layer-echo", StringComparison.Ordinal);
     }
 
     var shell = Environment.GetEnvironmentVariable("SHELL");
     if (string.IsNullOrWhiteSpace(shell))
         shell = "/bin/bash";
 
-    var unixOutput = PseudoTerminal.Run(
-        shell,
-        ["-lc", "printf pty-layer-echo"],
-        null,
-        40,
-        8,
-        TestContext(shell));
-    return unixOutput.ExitCode == 0
-        && unixOutput.IsTerminalOutput
-        && unixOutput.Stdout.Contains("pty-layer-echo", StringComparison.Ordinal);
+    var unix = await PtyCapture.RunAsync(Spawn(shell, ["-lc", "printf pty-layer-echo"]));
+    return unix.ExitCode == 0 && unix.Output.Contains("pty-layer-echo", StringComparison.Ordinal);
 }
 
-static bool PtyStdinEof()
+static async Task<bool> PtyStdinEof()
 {
     const string marker = "pty-stdin-eof";
 
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     {
         var sort = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "sort.exe");
-        var output = PseudoTerminal.Run(
-            sort,
-            [],
-            null,
-            40,
-            8,
-            TestContext("sort"),
-            input: $"zzz\r\n{marker}\r\naaa\r\n");
-        return output.Stdout.Contains(marker, StringComparison.Ordinal)
-            && output.Stdout.Contains("aaa", StringComparison.Ordinal);
+        var result = await PtyCapture.RunAsync(
+            Spawn(sort, []),
+            new PtyCaptureOptions { Completion = new() { Input = $"zzz\r\n{marker}\r\naaa\r\n" } });
+        return result.Output.Contains(marker, StringComparison.Ordinal)
+            && result.Output.Contains("aaa", StringComparison.Ordinal);
     }
 
     var shell = Environment.GetEnvironmentVariable("SHELL") ?? "/bin/bash";
-    var unixOutput = PseudoTerminal.Run(
-        shell,
-        ["-lc", "cat"],
-        null,
-        40,
-        8,
-        TestContext(shell),
-        input: marker);
-    return unixOutput.ExitCode == 0 && unixOutput.Stdout.Contains(marker, StringComparison.Ordinal);
+    var unix = await PtyCapture.RunAsync(
+        Spawn(shell, ["-lc", "cat"]),
+        new PtyCaptureOptions { Completion = new() { Input = marker } });
+    return unix.ExitCode == 0 && unix.Output.Contains(marker, StringComparison.Ordinal);
 }
 
 static bool PtyHasExitedPolls()
@@ -131,94 +110,64 @@ static bool PtyHasExitedPolls()
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     {
         var cmd = Environment.GetEnvironmentVariable("ComSpec") ?? @"C:\Windows\System32\cmd.exe";
-        using var session = PseudoTerminal.Start(
-            cmd,
-            ["/c", "exit 0"],
-            null,
-            40,
-            8,
-            TestContext("cmd"));
+        using var session = Pty.Start(Spawn(cmd, ["/c", "exit 0"]));
         for (var i = 0; i < 50 && !session.HasExited; i++)
             Thread.Sleep(20);
         return session.HasExited;
     }
 
     var shell = Environment.GetEnvironmentVariable("SHELL") ?? "/bin/bash";
-    using var unixSession = PseudoTerminal.Start(
-        shell,
-        ["-lc", "exit 0"],
-        null,
-        40,
-        8,
-        TestContext(shell));
+    using var unixSession = Pty.Start(Spawn(shell, ["-lc", "exit 0"]));
     for (var i = 0; i < 50 && !unixSession.HasExited; i++)
         Thread.Sleep(20);
     return unixSession.HasExited;
 }
 
-static bool PtyCancellationKill()
+static async Task<bool> PtyCancellationKill()
 {
     using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
 
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     {
         var cmd = Environment.GetEnvironmentVariable("ComSpec") ?? @"C:\Windows\System32\cmd.exe";
-        using var session = PseudoTerminal.Start(
-            cmd,
-            ["/c", "ping -n 30 127.0.0.1 >nul"],
-            null,
-            40,
-            8,
-            TestContext("cmd"));
+        await using var session = Pty.Start(Spawn(cmd, ["/c", "ping -n 30 127.0.0.1 >nul"]));
         try
         {
-            session.WaitForExitOrKillAsync(cts.Token).GetAwaiter().GetResult();
+            await session.CompleteAsync(new PtyCompleteOptions { KillOnCancellation = true }, cts.Token);
             return false;
         }
         catch (OperationCanceledException)
         {
-            Thread.Sleep(200);
+            await Task.Delay(200);
             return session.HasExited;
         }
     }
 
     var shell = Environment.GetEnvironmentVariable("SHELL") ?? "/bin/bash";
-    using var unixSession = PseudoTerminal.Start(
-        shell,
-        ["-lc", "sleep 30"],
-        null,
-        40,
-        8,
-        TestContext(shell));
+    await using var unixSession = Pty.Start(Spawn(shell, ["-lc", "sleep 30"]));
     try
     {
-        unixSession.WaitForExitOrKillAsync(cts.Token).GetAwaiter().GetResult();
+        await unixSession.CompleteAsync(new PtyCompleteOptions { KillOnCancellation = true }, cts.Token);
         return false;
     }
     catch (OperationCanceledException)
     {
-        Thread.Sleep(200);
+        await Task.Delay(200);
         return unixSession.HasExited;
     }
 }
 
-static bool PtyCancellationWait()
+static async Task<bool> PtyCancellationWait()
 {
     using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
 
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     {
         var cmd = Environment.GetEnvironmentVariable("ComSpec") ?? @"C:\Windows\System32\cmd.exe";
-        using var session = PseudoTerminal.Start(
-            cmd,
-            ["/c", "ping -n 30 127.0.0.1 >nul"],
-            null,
-            40,
-            8,
-            TestContext("cmd"));
+        await using var session = Pty.Start(Spawn(cmd, ["/c", "ping -n 30 127.0.0.1 >nul"]));
         try
         {
-            session.WaitForExitAsync(cts.Token).GetAwaiter().GetResult();
+            await session.WaitForExitAsync(cts.Token);
             return false;
         }
         catch (OperationCanceledException)
@@ -228,16 +177,10 @@ static bool PtyCancellationWait()
     }
 
     var shell = Environment.GetEnvironmentVariable("SHELL") ?? "/bin/bash";
-    using var unixSession = PseudoTerminal.Start(
-        shell,
-        ["-lc", "sleep 30"],
-        null,
-        40,
-        8,
-        TestContext(shell));
+    await using var unixSession = Pty.Start(Spawn(shell, ["-lc", "sleep 30"]));
     try
     {
-        unixSession.WaitForExitAsync(cts.Token).GetAwaiter().GetResult();
+        await unixSession.WaitForExitAsync(cts.Token);
         return false;
     }
     catch (OperationCanceledException)
@@ -246,7 +189,23 @@ static bool PtyCancellationWait()
     }
 }
 
-static bool PtyTtyCheck()
+static bool PtyResizeUpdatesSize()
+{
+    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+    {
+        var cmd = Environment.GetEnvironmentVariable("ComSpec") ?? @"C:\Windows\System32\cmd.exe";
+        using var session = Pty.Start(Spawn(cmd, ["/c", "exit 0"]));
+        session.Resize(new(100, 30));
+        return session.Size.Columns == 100 && session.Size.Rows == 30;
+    }
+
+    var shell = Environment.GetEnvironmentVariable("SHELL") ?? "/bin/bash";
+    using var unixSession = Pty.Start(Spawn(shell, ["-lc", "exit 0"]));
+    unixSession.Resize(new(100, 30));
+    return unixSession.Size.Columns == 100 && unixSession.Size.Rows == 30;
+}
+
+static async Task<bool> PtyTtyCheck()
 {
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     {
@@ -256,57 +215,33 @@ static bool PtyTtyCheck()
             return true;
         }
 
-        var output = PseudoTerminal.Run(
-            pwsh,
-            ["-NoLogo", "-NoProfile", "-Command", "Write-Output (\"redirected=$([Console]::IsOutputRedirected)\")"],
-            null,
-            40,
-            8,
-            TestContext("pwsh"));
-        return output.ExitCode == 0 && output.Stdout.Contains("redirected=False", StringComparison.OrdinalIgnoreCase);
+        var result = await PtyCapture.RunAsync(Spawn(pwsh, ["-NoLogo", "-NoProfile", "-Command", "Write-Output (\"redirected=$([Console]::IsOutputRedirected)\")"]));
+        return result.ExitCode == 0 && result.Output.Contains("redirected=False", StringComparison.OrdinalIgnoreCase);
     }
 
     var shell = Environment.GetEnvironmentVariable("SHELL") ?? "/bin/bash";
-    var unixOutput = PseudoTerminal.Run(
-        shell,
-        ["-lc", "if [ -t 1 ]; then echo redirected=False; else echo redirected=True; fi"],
-        null,
-        40,
-        8,
-        TestContext(shell));
-    return unixOutput.ExitCode == 0 && unixOutput.Stdout.Contains("redirected=False", StringComparison.Ordinal);
+    var unix = await PtyCapture.RunAsync(Spawn(shell, ["-lc", "if [ -t 1 ]; then echo redirected=False; else echo redirected=True; fi"]));
+    return unix.ExitCode == 0 && unix.Output.Contains("redirected=False", StringComparison.Ordinal);
 }
 
-static bool PtyMatrixPwsh(string pwshPath)
+static async Task<bool> PtyMatrixPwsh(string pwshPath)
 {
-    var output = PseudoTerminal.Run(
-        pwshPath,
-        ["-NoLogo", "-Command", "matrix 3"],
-        null,
-        80,
-        24,
-        new PtyLaunchContext("pwsh", 80, 24, null));
-    return output.ExitCode == 0
-        && output.Chunks.Count >= 2
-        && output.Stdout.Contains('\u001b')
-        && output.Stdout.Length > 100;
+    var result = await PtyCapture.RunAsync(Spawn(pwshPath, ["-NoLogo", "-Command", "matrix 3"], 80, 24));
+    return result.ExitCode == 0
+        && result.Chunks.Count >= 2
+        && result.Output.Contains('\u001b')
+        && result.Output.Length > 100;
 }
 
-static bool PtyMatrixUnix()
+static async Task<bool> PtyMatrixUnix()
 {
     if (!TryFindExecutable("cmatrix", out var cmatrix))
         return true;
 
-    var output = PseudoTerminal.Run(
-        cmatrix,
-        ["-C", "-s", "-l", "3"],
-        null,
-        80,
-        24,
-        new PtyLaunchContext("cmatrix", 80, 24, null));
-    return output.ExitCode == 0
-        && output.Chunks.Count >= 2
-        && output.Stdout.Length > 50;
+    var result = await PtyCapture.RunAsync(Spawn(cmatrix, ["-C", "-s", "-l", "3"], 80, 24));
+    return result.ExitCode == 0
+        && result.Chunks.Count >= 2
+        && result.Output.Length > 50;
 }
 
 static bool IntegrationFixture(string repoRoot, string fixtureName, string expectedSubstring)

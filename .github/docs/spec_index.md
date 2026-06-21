@@ -12,7 +12,7 @@ scenetake behavior is split into focused specs under `.github/docs/`. Each spec 
 | [spec_highlight.md](spec_highlight.md) | Coloring — `highlight`, `run-highlight`, `stderr-color`, `name` prefix, style strings, `at` ranges |
 | [spec_pre_post.md](spec_pre_post.md) | `pre` / `post` — recording exclusion, fail-fast, exit-code semantics |
 | [spec_svg.md](spec_svg.md) | SVG output — renderer, `svg` subcommand consumption of cast events |
-| [spec_pty.md](spec_pty.md) | PTY recording — `pty: true`, platform support, capture model, failure behavior, CI |
+| [spec_pty.md](spec_pty.md) | PTY — `pty: true`, MiniPty / MiniPty.Capture, capture model, failure behavior, CI |
 
 All listed specs are **Implemented**.
 
@@ -29,7 +29,7 @@ Use this when you know the goal but not the document.
 | Add setup/teardown commands | [spec_scenario.md](spec_scenario.md) → `pre`/`post`, then [spec_pre_post.md](spec_pre_post.md) for behavior |
 | Color command output, typed text, or stderr | [spec_highlight.md](spec_highlight.md); key placement in [spec_scenario.md](spec_scenario.md) → `steps` |
 | Record a TUI or TTY-dependent command | [spec_pty.md](spec_pty.md); YAML key in [spec_scenario.md](spec_scenario.md) → `pty` |
-| Implement or debug PTY backend code | [references/pty_crossplatform.md](references/pty_crossplatform.md) |
+| Implement or debug PTY backend code | [references/pty_crossplatform.md](references/pty_crossplatform.md); libraries in [MiniPty](https://github.com/guitarrapc/MiniPty) |
 | Set terminal theme or font size for cast / SVG | [spec_scenario.md](spec_scenario.md) → `render`; header mapping in [spec_cast.md](spec_cast.md) |
 | Run scenetake from the command line | [spec_cli.md](spec_cli.md) |
 | Produce `.svg` alongside or from a `.cast` | [spec_cli.md](spec_cli.md) → `--format svg` / `svg` subcommand; rendering in [spec_svg.md](spec_svg.md) |
