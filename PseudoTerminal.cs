@@ -695,6 +695,7 @@ static partial class UnixPseudoTerminal
     private const int WaitNoHang = 1;
     private const int SigKill = 9;
     private const int WaitPollMs = 100;
+    private const int EINTR = 4;
 
     public static IPtySessionBackend Start(
         string fileName,
@@ -878,16 +879,15 @@ static partial class UnixPseudoTerminal
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var result = waitpid(_pid, out var status, WaitNoHang);
+                if (!TryWaitPid(_pid, WaitNoHang, out var status, out var result))
+                    throw new Win32Exception(Marshal.GetLastPInvokeError(), "waitpid failed");
+
                 if (result == _pid)
                 {
                     _exitCode = WIFEXITED(status) ? WEXITSTATUS(status) : 1;
                     _exited = true;
                     break;
                 }
-
-                if (result < 0)
-                    throw new Win32Exception(Marshal.GetLastPInvokeError(), "waitpid failed");
 
                 await Task.Delay(WaitPollMs, cancellationToken);
             }
@@ -996,6 +996,19 @@ static partial class UnixPseudoTerminal
 
     private static bool WIFEXITED(int status) => (status & 0x7f) == 0;
     private static int WEXITSTATUS(int status) => (status >> 8) & 0xff;
+
+    private static bool TryWaitPid(int pid, int options, out int status, out int result)
+    {
+        while (true)
+        {
+            result = waitpid(pid, out status, options);
+            if (result >= 0)
+                return true;
+            if (Marshal.GetLastPInvokeError() == EINTR)
+                continue;
+            return false;
+        }
+    }
 
     private static int OpenPty(out int master, out int slave, ref Winsize winsize)
     {
