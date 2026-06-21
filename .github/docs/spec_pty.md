@@ -2,8 +2,6 @@
 
 User-facing behavior for `pty: true` in scenetake scenarios and the underlying [MiniPty](https://github.com/guitarrapc/MiniPty) libraries.
 
-Implementation details (ConPTY, `openpty`, EOF staging) live in [references/pty_crossplatform.md](references/pty_crossplatform.md).
-
 ## Scope
 
 | Layer | Package | Responsibility |
@@ -126,5 +124,6 @@ Integration tests require `SCENETAKE_BIN` pointing at a published scenetake bina
 ## Related documents
 
 - [spec_scenario.md](spec_scenario.md) — `pty` YAML key
-- [references/pty_crossplatform.md](references/pty_crossplatform.md) — OS implementation reference
+- [MiniPty spec.md](https://github.com/guitarrapc/MiniPty/blob/main/.github/docs/spec.md) — library API contract
+- [MiniPty references/pty_crossplatform.md](https://github.com/guitarrapc/MiniPty/blob/main/.github/docs/references/pty_crossplatform.md) — OS implementation reference
 - [spec_cast.md](spec_cast.md) — cast event format
