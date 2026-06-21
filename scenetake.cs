@@ -3,6 +3,7 @@
 #:property Version=1.0.0
 #:property Nullable=enable
 #:property ImplicitUsings=enable
+#:property AllowUnsafeBlocks=true
 #:package VYaml@1.3.0
 #:include Terminal.cs
 #:include Svg.cs

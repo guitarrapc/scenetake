@@ -2,6 +2,7 @@
 #:property TargetFramework=net10.0
 #:property Nullable=enable
 #:property ImplicitUsings=enable
+#:property AllowUnsafeBlocks=true
 #:include ../PseudoTerminal.cs
 
 using System.Diagnostics;

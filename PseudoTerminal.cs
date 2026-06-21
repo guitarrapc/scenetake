@@ -78,7 +78,7 @@ static class PseudoTerminal
     }
 }
 
-static class WindowsPseudoTerminal
+static partial class WindowsPseudoTerminal
 {
     private const int PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE = 0x00020016;
     private const uint EXTENDED_STARTUPINFO_PRESENT = 0x00080000;
@@ -116,9 +116,13 @@ static class WindowsPseudoTerminal
         var processInfo = new PROCESS_INFORMATION();
         try
         {
-            InitializeProcThreadAttributeList(IntPtr.Zero, 1, 0, out var attrListSize);
-            attrList = Marshal.AllocHGlobal((IntPtr)attrListSize);
-            if (!InitializeProcThreadAttributeList(attrList, 1, 0, out attrListSize))
+            nuint attrListSize = 0;
+            _ = InitializeProcThreadAttributeList(IntPtr.Zero, 1, 0, ref attrListSize);
+            if (attrListSize == 0)
+                throw new Win32Exception(Marshal.GetLastPInvokeError(), "InitializeProcThreadAttributeList size query failed");
+
+            attrList = Marshal.AllocHGlobal((IntPtr)(nint)attrListSize);
+            if (!InitializeProcThreadAttributeList(attrList, 1, 0, ref attrListSize))
                 throw new Win32Exception(Marshal.GetLastPInvokeError(), "InitializeProcThreadAttributeList failed");
 
             if (!UpdateProcThreadAttribute(attrList, 0, (IntPtr)PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, hpc, (IntPtr)IntPtr.Size, IntPtr.Zero, IntPtr.Zero))
@@ -140,7 +144,7 @@ static class WindowsPseudoTerminal
             var commandLineText = arguments.Length == 0
                 ? QuoteArg(fileName)
                 : QuoteArg(fileName) + " " + string.Join(" ", arguments.Select(QuoteArg));
-            var commandLine = new StringBuilder(commandLineText, commandLineText.Length + 1);
+            var commandLine = (commandLineText + '\0').ToCharArray();
             if (!CreateProcessW(
                     null,
                     commandLine,
@@ -219,10 +223,19 @@ static class WindowsPseudoTerminal
             nLength = Marshal.SizeOf<SECURITY_ATTRIBUTES>(),
             bInheritHandle = true,
         };
-        if (!CreatePipe(out inputRead, out inputWrite, ref securityAttributes, 0))
-            throw new Win32Exception(Marshal.GetLastPInvokeError(), "CreatePipe failed");
-        if (!CreatePipe(out outputRead, out outputWrite, ref securityAttributes, 0))
-            throw new Win32Exception(Marshal.GetLastPInvokeError(), "CreatePipe failed");
+        var attrPtr = Marshal.AllocHGlobal(securityAttributes.nLength);
+        try
+        {
+            Marshal.StructureToPtr(securityAttributes, attrPtr, false);
+            if (!CreatePipe(out inputRead, out inputWrite, attrPtr, 0))
+                throw new Win32Exception(Marshal.GetLastPInvokeError(), "CreatePipe failed");
+            if (!CreatePipe(out outputRead, out outputWrite, attrPtr, 0))
+                throw new Win32Exception(Marshal.GetLastPInvokeError(), "CreatePipe failed");
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(attrPtr);
+        }
         if (!SetHandleInformation(inputWrite, HANDLE_FLAG_INHERIT, 0))
             throw new Win32Exception(Marshal.GetLastPInvokeError(), "SetHandleInformation failed");
         if (!SetHandleInformation(outputRead, HANDLE_FLAG_INHERIT, 0))
@@ -264,48 +277,55 @@ static class WindowsPseudoTerminal
         return sb.ToString();
     }
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool CreatePipe(out SafeFileHandle hReadPipe, out SafeFileHandle hWritePipe, ref SECURITY_ATTRIBUTES lpPipeAttributes, uint nSize);
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CreatePipe(out SafeFileHandle hReadPipe, out SafeFileHandle hWritePipe, IntPtr lpPipeAttributes, uint nSize);
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool SetHandleInformation(SafeFileHandle hObject, uint dwMask, uint dwFlags);
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool SetHandleInformation(SafeFileHandle hObject, uint dwMask, uint dwFlags);
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern int CreatePseudoConsole(COORD size, SafeFileHandle hInput, SafeFileHandle hOutput, uint dwFlags, out IntPtr phPC);
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial int CreatePseudoConsole(COORD size, SafeFileHandle hInput, SafeFileHandle hOutput, uint dwFlags, out IntPtr phPC);
 
-    [DllImport("kernel32.dll")]
-    private static extern void ClosePseudoConsole(IntPtr hPC);
+    [LibraryImport("kernel32.dll")]
+    private static partial void ClosePseudoConsole(IntPtr hPC);
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool InitializeProcThreadAttributeList(IntPtr lpAttributeList, int dwAttributeCount, int dwFlags, out nuint lpSize);
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool InitializeProcThreadAttributeList(IntPtr lpAttributeList, int dwAttributeCount, int dwFlags, ref nuint lpSize);
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool UpdateProcThreadAttribute(IntPtr lpAttributeList, uint dwFlags, IntPtr attribute, IntPtr lpValue, IntPtr cbSize, IntPtr lpPreviousValue, IntPtr lpReturnSize);
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool UpdateProcThreadAttribute(IntPtr lpAttributeList, uint dwFlags, IntPtr attribute, IntPtr lpValue, IntPtr cbSize, IntPtr lpPreviousValue, IntPtr lpReturnSize);
 
-    [DllImport("kernel32.dll")]
-    private static extern void DeleteProcThreadAttributeList(IntPtr lpAttributeList);
+    [LibraryImport("kernel32.dll")]
+    private static partial void DeleteProcThreadAttributeList(IntPtr lpAttributeList);
 
-    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-    private static extern bool CreateProcessW(
+    [LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CreateProcessW(
         string? lpApplicationName,
-        StringBuilder lpCommandLine,
+        char[] lpCommandLine,
         IntPtr lpProcessAttributes,
         IntPtr lpThreadAttributes,
-        bool bInheritHandles,
+        [MarshalAs(UnmanagedType.Bool)] bool bInheritHandles,
         uint dwCreationFlags,
         IntPtr lpEnvironment,
         string? lpCurrentDirectory,
         ref STARTUPINFOEX lpStartupInfo,
         out PROCESS_INFORMATION lpProcessInformation);
 
-    [DllImport("kernel32.dll")]
-    private static extern uint WaitForSingleObject(IntPtr hHandle, uint dwMilliseconds);
+    [LibraryImport("kernel32.dll")]
+    private static partial uint WaitForSingleObject(IntPtr hHandle, uint dwMilliseconds);
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool GetExitCodeProcess(IntPtr hProcess, out uint lpExitCode);
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetExitCodeProcess(IntPtr hProcess, out uint lpExitCode);
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool CloseHandle(IntPtr hObject);
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CloseHandle(IntPtr hObject);
 
     [StructLayout(LayoutKind.Sequential)]
     private readonly struct COORD(short x, short y)
@@ -363,7 +383,7 @@ static class WindowsPseudoTerminal
     }
 }
 
-static class UnixPseudoTerminal
+static partial class UnixPseudoTerminal
 {
     private const int ShutWrite = 1;
 
@@ -464,41 +484,41 @@ static class UnixPseudoTerminal
 
     private const ulong TIOCSCTTY = 0x540E;
 
-    [DllImport("libc", SetLastError = true)]
-    private static extern int openpty(out int amaster, out int aslave, IntPtr name, IntPtr termp, ref Winsize winp);
+    [LibraryImport("libc", SetLastError = true)]
+    private static partial int openpty(out int amaster, out int aslave, IntPtr name, IntPtr termp, ref Winsize winp);
 
-    [DllImport("libc", SetLastError = true)]
-    private static extern int fork();
+    [LibraryImport("libc", SetLastError = true)]
+    private static partial int fork();
 
-    [DllImport("libc", SetLastError = true)]
-    private static extern int setsid();
+    [LibraryImport("libc", SetLastError = true)]
+    private static partial int setsid();
 
-    [DllImport("libc", SetLastError = true)]
-    private static extern int ioctl(int fd, ulong request, int arg);
+    [LibraryImport("libc", SetLastError = true)]
+    private static partial int ioctl(int fd, ulong request, int arg);
 
-    [DllImport("libc", SetLastError = true)]
-    private static extern int dup2(int oldfd, int newfd);
+    [LibraryImport("libc", SetLastError = true)]
+    private static partial int dup2(int oldfd, int newfd);
 
-    [DllImport("libc", SetLastError = true)]
-    private static extern int chdir(string path);
+    [LibraryImport("libc", SetLastError = true, StringMarshalling = StringMarshalling.Utf8)]
+    private static partial int chdir(string path);
 
-    [DllImport("libc", SetLastError = true)]
-    private static extern int execvp(string file, string[] argv);
+    [LibraryImport("libc", SetLastError = true, StringMarshalling = StringMarshalling.Utf8)]
+    private static partial int execvp(string file, string[] argv);
 
-    [DllImport("libc", SetLastError = true)]
-    private static extern int close(int fd);
+    [LibraryImport("libc", SetLastError = true)]
+    private static partial int close(int fd);
 
-    [DllImport("libc", SetLastError = true)]
-    private static extern int shutdown(int fd, int how);
+    [LibraryImport("libc", SetLastError = true)]
+    private static partial int shutdown(int fd, int how);
 
-    [DllImport("libc", SetLastError = true)]
-    private static extern int waitpid(int pid, out int status, int options);
+    [LibraryImport("libc", SetLastError = true)]
+    private static partial int waitpid(int pid, out int status, int options);
 
-    [DllImport("libc", SetLastError = true)]
-    private static extern int write(int fd, byte[] buf, nuint count);
+    [LibraryImport("libc", SetLastError = true)]
+    private static partial int write(int fd, byte[] buf, nuint count);
 
-    [DllImport("libc")]
-    private static extern void _exit(int status);
+    [LibraryImport("libc")]
+    private static partial void _exit(int status);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct Winsize
