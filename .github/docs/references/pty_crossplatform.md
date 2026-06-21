@@ -32,7 +32,7 @@ Library callers should prefer `PseudoTerminal.Start` → `PseudoTerminalSession`
 |---|---|
 | `PseudoTerminal.Start(...)` | Spawns the child and starts the background PTY read. Does not wait. |
 | `WriteInput(string)` | Writes UTF-8 bytes to the PTY stdin. Does not close stdin. |
-| `SendEof()` | **Windows:** closes the ConPTY input pipe write end (kernel EOF). **Unix:** writes EOT (`0x04`, Ctrl-D) — not an fd close; see [Unix stdin EOF](#unix-stdin-eof). |
+| `SendEof()` | **Windows:** marks stdin EOF; the ConPTY input pipe write end is closed on the first `WaitForExitAsync` poll (or on exit/dispose via `CloseTransport`) — not synchronously in `SendEof()`. **Unix:** writes EOT (`0x04`, Ctrl-D) — not an fd close; see [Unix stdin EOF](#unix-stdin-eof). |
 | `WaitForExitAsync(CancellationToken)` | Polls the child (`WaitForSingleObject` / `waitpid(WNOHANG)`). On cancellation, calls `Kill()` then throws `OperationCanceledException`. |
 | `Kill()` | `TerminateProcess` (Windows) or `kill(SIGKILL)` (Unix). Does not release handles; call `Dispose` or `Complete` afterward. |
 | `Complete(verbose)` | After exit, drains the read task and returns `CommandOutput`. |
@@ -66,7 +66,7 @@ Redirecting `CreateProcess` stdin/stdout to anonymous pipes **without** ConPTY i
 5. Build `STARTUPINFOEX` with `PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE`.
 6. `CreateProcessW` with `EXTENDED_STARTUPINFO_PRESENT` and `bInheritHandles = false`.
 7. Start a background read on `outputRead` before or as the child runs.
-8. On shutdown: if one-shot stdin was used, `SendEof()` before wait → wait for child → `ClosePseudoConsole` → drain read task.
+8. On shutdown: if one-shot stdin was used, `SendEof()` before wait (Windows: defers pipe close until the wait loop) → wait for child → `ClosePseudoConsole` → drain read task.
 
 ### Parent console attachment
 
@@ -144,7 +144,7 @@ EOT is a **terminal convention**, not a kernel EOF like closing a pipe. It is re
 
 For those cases, omit `SendEof()` (keep stdin open), use `Kill()` / process exit, or plan P3 interactive APIs.
 
-**Windows vs Unix asymmetry:** `SendEof()` closes the ConPTY input pipe on Windows (kernel EOF). On Unix it writes Ctrl-D only — it does **not** close the PTY master fd. Callers should not assume identical semantics across platforms.
+**Windows vs Unix asymmetry:** `SendEof()` closes the ConPTY input pipe on Windows (kernel EOF), but only after the wait loop's first poll or on shutdown — not synchronously in the call. On Unix it writes Ctrl-D only — it does **not** close the PTY master fd. Callers should not assume identical semantics across platforms.
 
 ### Platform differences
 

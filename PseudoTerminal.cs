@@ -307,6 +307,7 @@ static partial class WindowsPseudoTerminal
         private readonly string[] _arguments;
         private readonly PtyLaunchContext _context;
         private bool _inputClosed;
+        private bool _eofSignaled;
         private bool _hpcClosed;
         private bool _exited;
         private int _exitCode;
@@ -355,11 +356,10 @@ static partial class WindowsPseudoTerminal
             if (_exited || _inputClosed)
                 return;
 
-            // ConPTY may not have wired child stdin yet right after CreateProcess.
-            Thread.Sleep(100);
-            FlushFileBuffers(_inputWriteHandle);
-            _inputWriteHandle.Dispose();
-            _inputClosed = true;
+            // Input pipe close is deferred to WaitForExitAsync (or CloseTransport on exit/dispose).
+            // ConPTY may not have wired child stdin yet right after CreateProcess; closing too early
+            // can yield STATUS_CONTROL_C_EXIT (0xC000013A) instead of normal EOF.
+            _eofSignaled = true;
         }
 
         public void Kill()
@@ -387,6 +387,7 @@ static partial class WindowsPseudoTerminal
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var waitResult = WaitForSingleObject(_processInfo.hProcess, WaitPollMs);
+                CloseInputPipeIfEofSignaled();
                 if (waitResult == WaitObject0)
                 {
                     if (!GetExitCodeProcess(_processInfo.hProcess, out var exitCode))
@@ -454,8 +455,26 @@ static partial class WindowsPseudoTerminal
             _outputReadHandle.Dispose();
         }
 
+        private void CloseInputPipeIfEofSignaled()
+        {
+            if (_eofSignaled)
+                CloseInputPipe();
+        }
+
+        private void CloseInputPipe()
+        {
+            if (_inputClosed)
+                return;
+
+            // Best-effort; named pipes often return ERROR_INVALID_FUNCTION — safe to ignore.
+            _ = FlushFileBuffers(_inputWriteHandle);
+            _inputWriteHandle.Dispose();
+            _inputClosed = true;
+        }
+
         private void CloseTransport()
         {
+            CloseInputPipeIfEofSignaled();
             if (!_inputClosed)
             {
                 _inputWriteHandle.Dispose();
