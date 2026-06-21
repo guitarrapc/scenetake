@@ -884,7 +884,7 @@ static partial class UnixPseudoTerminal
 
                 if (result == _pid)
                 {
-                    _exitCode = WIFEXITED(status) ? WEXITSTATUS(status) : 1;
+                    _exitCode = MapWaitStatusToExitCode(status);
                     _exited = true;
                     break;
                 }
@@ -996,6 +996,17 @@ static partial class UnixPseudoTerminal
 
     private static bool WIFEXITED(int status) => (status & 0x7f) == 0;
     private static int WEXITSTATUS(int status) => (status >> 8) & 0xff;
+    private static bool WIFSIGNALED(int status) => (((status & 0x7f) + 1) >> 1) > 0;
+    private static int WTERMSIG(int status) => status & 0x7f;
+
+    private static int MapWaitStatusToExitCode(int status)
+    {
+        if (WIFEXITED(status))
+            return WEXITSTATUS(status);
+        if (WIFSIGNALED(status))
+            return 128 + WTERMSIG(status);
+        return 1;
+    }
 
     private static bool TryWaitPid(int pid, int options, out int status, out int result)
     {
