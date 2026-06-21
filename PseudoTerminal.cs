@@ -16,6 +16,12 @@ public readonly record struct PtyLaunchContext(string Shell, int Columns, int Ro
 public sealed record PtyCaptureOptions
 {
     public Encoding OutputEncoding { get; init; } = Encoding.UTF8;
+
+    /// <summary>After child exit, how long <see cref="PseudoTerminalSession.Complete"/> waits for the read task to finish naturally.</summary>
+    public TimeSpan OutputDrainTimeout { get; init; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>After <see cref="OutputDrainTimeout"/>, transport is closed; this is how long to wait for the read task to observe EOF.</summary>
+    public TimeSpan OutputCloseGrace { get; init; } = TimeSpan.FromSeconds(1);
 }
 
 static class PtyDiagnostics
@@ -103,6 +109,9 @@ public sealed class PseudoTerminalSession : IAsyncDisposable, IDisposable
     public Task<int> WaitForExitOrKillAsync(CancellationToken cancellationToken = default) =>
         _backend.WaitForExitAsync(cancellationToken, killOnCancellation: true);
 
+    /// <summary>
+    /// After child exit, waits for the background read task (natural EOF first, then closes transport on timeout).
+    /// </summary>
     public CommandOutput Complete(bool verbose = false) => _backend.Complete(verbose);
 
     public void Dispose()
@@ -280,7 +289,9 @@ static partial class WindowsPseudoTerminal
                 stopwatch,
                 fileName,
                 arguments,
-                context);
+                context,
+                options.OutputDrainTimeout,
+                options.OutputCloseGrace);
         }
         catch
         {
@@ -312,6 +323,8 @@ static partial class WindowsPseudoTerminal
         private readonly string _fileName;
         private readonly string[] _arguments;
         private readonly PtyLaunchContext _context;
+        private readonly TimeSpan _outputDrainTimeout;
+        private readonly TimeSpan _outputCloseGrace;
         private bool _inputClosed;
         private bool _eofSignaled;
         private bool _hpcClosed;
@@ -329,7 +342,9 @@ static partial class WindowsPseudoTerminal
             Stopwatch stopwatch,
             string fileName,
             string[] arguments,
-            PtyLaunchContext context)
+            PtyLaunchContext context,
+            TimeSpan outputDrainTimeout,
+            TimeSpan outputCloseGrace)
         {
             _inputWriteHandle = inputWriteHandle;
             _outputReadHandle = outputReadHandle;
@@ -341,6 +356,8 @@ static partial class WindowsPseudoTerminal
             _fileName = fileName;
             _arguments = arguments;
             _context = context;
+            _outputDrainTimeout = outputDrainTimeout;
+            _outputCloseGrace = outputCloseGrace;
         }
 
         public int ProcessId => _processInfo.dwProcessId;
@@ -438,7 +455,7 @@ static partial class WindowsPseudoTerminal
             if (!_exited)
                 throw new InvalidOperationException("The PTY child process has not exited yet.");
 
-            var chunks = _outputTask.GetAwaiter().GetResult();
+            var chunks = AwaitOutputChunks(throwOnTimeout: true);
             var totalChars = chunks.Sum(static x => x.Data.Length);
             if (verbose)
                 PtyDiagnostics.VerboseLog(_context, _fileName, _arguments, _processInfo.dwProcessId, chunks.Count, totalChars);
@@ -509,11 +526,67 @@ static partial class WindowsPseudoTerminal
         {
             try
             {
-                _ = _outputTask.GetAwaiter().GetResult();
+                _ = AwaitOutputChunks(throwOnTimeout: false, transportAlreadyClosed: true);
             }
             catch
             {
             }
+        }
+
+        private List<CommandOutputChunk> AwaitOutputChunks(bool throwOnTimeout, bool transportAlreadyClosed = false)
+        {
+            if (_outputTask.IsCompleted)
+                return _outputTask.GetAwaiter().GetResult();
+
+            if (!transportAlreadyClosed)
+            {
+                if (_outputTask.Wait(ToWaitMilliseconds(_outputDrainTimeout)))
+                    return _outputTask.GetAwaiter().GetResult();
+
+                CloseOutputTransportForDrain();
+            }
+
+            if (_outputTask.Wait(ToWaitMilliseconds(_outputCloseGrace)))
+                return _outputTask.GetAwaiter().GetResult();
+
+            if (throwOnTimeout)
+                throw new TimeoutException("PTY output did not finish draining within the configured timeout.");
+
+            try
+            {
+                if (_outputTask.IsCompleted)
+                    return _outputTask.GetAwaiter().GetResult();
+            }
+            catch
+            {
+            }
+
+            return [];
+        }
+
+        private void CloseOutputTransportForDrain()
+        {
+            if (!_hpcClosed)
+                CloseTransport();
+            if (_outputTask.IsCompleted)
+                return;
+
+            try
+            {
+                _outputReadHandle.Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+        }
+
+        private static int ToWaitMilliseconds(TimeSpan timeout)
+        {
+            if (timeout <= TimeSpan.Zero)
+                return 0;
+            if (timeout >= TimeSpan.FromMilliseconds(int.MaxValue))
+                return int.MaxValue;
+            return (int)timeout.TotalMilliseconds;
         }
     }
 
@@ -809,7 +882,16 @@ static partial class UnixPseudoTerminal
             var stopwatch = Stopwatch.StartNew();
             var outputEncoding = options.OutputEncoding;
             var outputTask = Task.Run(() => ReadChunks(master, stopwatch, outputEncoding));
-            return new UnixPtySession(master, pid, outputTask, stopwatch, fileName, arguments, context);
+            return new UnixPtySession(
+                master,
+                pid,
+                outputTask,
+                stopwatch,
+                fileName,
+                arguments,
+                context,
+                options.OutputDrainTimeout,
+                options.OutputCloseGrace);
         }
         finally
         {
@@ -889,6 +971,8 @@ static partial class UnixPseudoTerminal
         private readonly string _fileName;
         private readonly string[] _arguments;
         private readonly PtyLaunchContext _context;
+        private readonly TimeSpan _outputDrainTimeout;
+        private readonly TimeSpan _outputCloseGrace;
         private bool _eofSent;
         private bool _eofPending;
         private bool _inputWritten;
@@ -904,7 +988,9 @@ static partial class UnixPseudoTerminal
             Stopwatch stopwatch,
             string fileName,
             string[] arguments,
-            PtyLaunchContext context)
+            PtyLaunchContext context,
+            TimeSpan outputDrainTimeout,
+            TimeSpan outputCloseGrace)
         {
             _master = master;
             _pid = pid;
@@ -913,6 +999,8 @@ static partial class UnixPseudoTerminal
             _fileName = fileName;
             _arguments = arguments;
             _context = context;
+            _outputDrainTimeout = outputDrainTimeout;
+            _outputCloseGrace = outputCloseGrace;
         }
 
         public int ProcessId => _pid;
@@ -1005,7 +1093,7 @@ static partial class UnixPseudoTerminal
             if (!_exited)
                 throw new InvalidOperationException("The PTY child process has not exited yet.");
 
-            var output = _outputTask.GetAwaiter().GetResult();
+            var output = AwaitOutputChunks(throwOnTimeout: true);
             var totalChars = output.Sum(static x => x.Data.Length);
             if (verbose)
                 PtyDiagnostics.VerboseLog(_context, _fileName, _arguments, _pid, output.Count, totalChars);
@@ -1081,11 +1169,53 @@ static partial class UnixPseudoTerminal
         {
             try
             {
-                _ = _outputTask.GetAwaiter().GetResult();
+                _ = AwaitOutputChunks(throwOnTimeout: false, transportAlreadyClosed: true);
             }
             catch
             {
             }
+        }
+
+        private List<CommandOutputChunk> AwaitOutputChunks(bool throwOnTimeout, bool transportAlreadyClosed = false)
+        {
+            if (_outputTask.IsCompleted)
+                return _outputTask.GetAwaiter().GetResult();
+
+            if (!transportAlreadyClosed)
+            {
+                if (_outputTask.Wait(ToWaitMilliseconds(_outputDrainTimeout)))
+                    return _outputTask.GetAwaiter().GetResult();
+
+                CloseOutputTransportForDrain();
+            }
+
+            if (_outputTask.Wait(ToWaitMilliseconds(_outputCloseGrace)))
+                return _outputTask.GetAwaiter().GetResult();
+
+            if (throwOnTimeout)
+                throw new TimeoutException("PTY output did not finish draining within the configured timeout.");
+
+            try
+            {
+                if (_outputTask.IsCompleted)
+                    return _outputTask.GetAwaiter().GetResult();
+            }
+            catch
+            {
+            }
+
+            return [];
+        }
+
+        private void CloseOutputTransportForDrain() => CloseTransport();
+
+        private static int ToWaitMilliseconds(TimeSpan timeout)
+        {
+            if (timeout <= TimeSpan.Zero)
+                return 0;
+            if (timeout >= TimeSpan.FromMilliseconds(int.MaxValue))
+                return int.MaxValue;
+            return (int)timeout.TotalMilliseconds;
         }
     }
 

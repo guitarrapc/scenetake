@@ -36,7 +36,9 @@ Library callers should prefer `PseudoTerminal.Start` → `PseudoTerminalSession`
 | `WaitForExitAsync(CancellationToken)` | Polls the child (`WaitForSingleObject` / `waitpid(WNOHANG)`). Cancellation stops waiting only; the child keeps running (`OperationCanceledException`). |
 | `WaitForExitOrKillAsync(CancellationToken)` | Same polling. Cancellation calls `Kill()` then throws `OperationCanceledException`. Used by `PseudoTerminal.Run`. |
 | `Kill()` | `TerminateProcess` (Windows) or `kill(SIGKILL)` (Unix). Does not release handles; call `Dispose` or `Complete` afterward. |
-| `Complete(verbose)` | After exit, drains the read task and returns `CommandOutput`. |
+| `Complete(verbose)` | After exit, waits for the read task: natural EOF up to <code>PtyCaptureOptions.OutputDrainTimeout</code>, then closes transport and waits <code>OutputCloseGrace</code>. Throws <code>TimeoutException</code> if the read task still has not finished. |
+| `PtyCaptureOptions.OutputDrainTimeout` | Default 5s — post-exit drain before forcing transport close. |
+| `PtyCaptureOptions.OutputCloseGrace` | Default 1s — wait after transport close for the read task to observe EOF. |
 | `Dispose()` | If the child is still running, **kills** it, then closes ConPTY/pipes/process handles. Unlike `System.Diagnostics.Process.Dispose`, this is intentional for short-lived PTY sessions. On Unix, `Dispose` also attempts a bounded `waitpid` after `SIGKILL` to avoid leaving a zombie (up to ~1s). |
 | `PseudoTerminal.Run(..., input: string?)` | `input: null` — stdin stays open (TUI / no stdin). `input: ""` or text — write (if non-empty) then `SendEof()` before wait. |
 | `PtyCaptureOptions.OutputEncoding` | Byte-to-text decoding for captured chunks (default `Encoding.UTF8`). |
@@ -122,7 +124,7 @@ execvp via UTF-8 argv built with NativeMemory (byte**)
 2. Start background read on `master`.
 3. If one-shot stdin was provided, `SendEof()` before waiting — see [Unix stdin EOF](#unix-stdin-eof).
 4. If no stdin bytes, leave the master open for writes until the child exits (TUI programs).
-5. `waitpid`, then `close(master)` after the read task drains on the normal exit path; on `Dispose`, close the master before draining the read task (same ordering as Windows `CloseTransport` → `DrainOutputTask`).
+5. `waitpid`; on the normal exit path, `Complete()` drains output (natural EOF, then `close(master)` on timeout). `Dispose()` closes the master immediately, then drains with `OutputCloseGrace` only.
 
 ### Unix stdin EOF
 
