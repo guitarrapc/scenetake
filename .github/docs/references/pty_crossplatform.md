@@ -87,8 +87,12 @@ close(master)
 setsid()
 ioctl(slave, TIOCSCTTY, 0)
 dup2(slave, 0..2)
-execvp(file, argv)
+execvp via UTF-8 argv built with NativeMemory (byte**)
 ```
+
+`execvp` uses `LibraryImport` with `byte* file` and `byte** argv` — not `string[]` marshalling — so NativeAOT does not depend on runtime array marshalling for the exec boundary. Each argument is a null-terminated UTF-8 C string; the pointer array ends with `NULL`.
+
+`execve` (explicit environment block) is a future option if scenetake needs to override `TERM` or other variables independently of the parent process.
 
 ### Parent I/O
 
@@ -179,8 +183,15 @@ Not implemented yet; listed for planning:
 | Phase | Features |
 |---|---|
 | **1 (current)** | spawn, read, wait, exit code, timestamped chunks, shell launch |
-| **2** | resize, explicit `CloseInput`, Ctrl-C (`\x03` write), cancellation |
-| **3+** | Long-lived interactive sessions, disk spill for huge captures, optional env tuning |
+| **2** | resize, explicit `CloseInput`, Ctrl-C (`\x03` write), cancellation, `execve` env control |
+| **3+** | Long-lived interactive sessions, disk spill for huge captures |
+
+## NativeAOT interop
+
+- Use `[LibraryImport]` (source-generated P/Invoke), not `[DllImport]`. `AllowUnsafeBlocks` is required in the project.
+- Windows `CreateProcessW` takes a writable `char[]` command line; `InitializeProcThreadAttributeList` size query uses `ref nuint` (not `out`).
+- Unix `execvp` is declared as `execvp(byte* file, byte** argv)`. The child builds a UTF-8 `argv` with `NativeMemory.Alloc` — do not marshal `string[]` across the exec boundary.
+- `execve` remains an option when scenetake needs an explicit environment block instead of inheriting the parent env.
 
 ## References
 

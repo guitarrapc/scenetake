@@ -427,8 +427,7 @@ static partial class UnixPseudoTerminal
                 close(slave);
             if (!string.IsNullOrWhiteSpace(cwd))
                 chdir(cwd);
-            execvp(fileName, BuildArgv(fileName, arguments));
-            _exit(127);
+            ExecvpOrExit(fileName, arguments);
         }
 
         close(slave);
@@ -450,13 +449,50 @@ static partial class UnixPseudoTerminal
         return new CommandOutput(string.Concat(output.Select(static x => x.Data)), "", exitCode, true, output);
     }
 
-    private static string[] BuildArgv(string fileName, string[] arguments)
+    private static unsafe void ExecvpOrExit(string fileName, string[] arguments)
     {
-        var argv = new string[arguments.Length + 2];
-        argv[0] = fileName;
-        Array.Copy(arguments, 0, argv, 1, arguments.Length);
-        argv[^1] = null!;
+        var owned = new List<IntPtr>();
+        try
+        {
+            var argv = AllocUtf8Argv(fileName, arguments, owned);
+            execvp(argv[0], argv);
+        }
+        finally
+        {
+            FreeUtf8Allocations(owned);
+        }
+
+        _exit(127);
+    }
+
+    private static unsafe byte** AllocUtf8Argv(string fileName, string[] arguments, List<IntPtr> owned)
+    {
+        var argc = arguments.Length + 1;
+        var argv = (byte**)NativeMemory.Alloc((nuint)(argc + 1) * (nuint)IntPtr.Size);
+        owned.Add((IntPtr)argv);
+
+        argv[0] = AllocUtf8CString(fileName, owned);
+        for (var i = 0; i < arguments.Length; i++)
+            argv[i + 1] = AllocUtf8CString(arguments[i], owned);
+        argv[argc] = null;
         return argv;
+    }
+
+    private static unsafe byte* AllocUtf8CString(string value, List<IntPtr> owned)
+    {
+        var bytes = Encoding.UTF8.GetBytes(value);
+        var ptr = (byte*)NativeMemory.Alloc((nuint)bytes.Length + 1);
+        owned.Add((IntPtr)ptr);
+        bytes.AsSpan().CopyTo(new Span<byte>(ptr, bytes.Length));
+        ptr[bytes.Length] = 0;
+        return ptr;
+    }
+
+    private static unsafe void FreeUtf8Allocations(List<IntPtr> owned)
+    {
+        foreach (var ptr in owned)
+            NativeMemory.Free((void*)ptr);
+        owned.Clear();
     }
 
     private static void WriteAll(int fd, byte[] bytes)
@@ -502,8 +538,8 @@ static partial class UnixPseudoTerminal
     [LibraryImport("libc", SetLastError = true, StringMarshalling = StringMarshalling.Utf8)]
     private static partial int chdir(string path);
 
-    [LibraryImport("libc", SetLastError = true, StringMarshalling = StringMarshalling.Utf8)]
-    private static partial int execvp(string file, string[] argv);
+    [LibraryImport("libc", SetLastError = true)]
+    private static unsafe partial int execvp(byte* file, byte** argv);
 
     [LibraryImport("libc", SetLastError = true)]
     private static partial int close(int fd);
