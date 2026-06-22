@@ -96,7 +96,7 @@ Only `steps` content is recorded.
 | `steps` | Yes — simulated typing, command output, markers, comments. |
 | `post` | No — runs after the cast file is written. |
 
-Step command exit codes are captured during execution but do not stop later steps and do not determine scenetake's exit code. See [spec_pre_post.md](spec_pre_post.md).
+Step command exit codes are observed during execution. Non-zero exits print a warning to stderr but do not stop later steps and do not determine scenetake's exit code. See [spec_pre_post.md](spec_pre_post.md) and [spec_cli.md](spec_cli.md).
 
 ## External Tool Compatibility
 

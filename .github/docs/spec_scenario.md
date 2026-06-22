@@ -114,7 +114,7 @@ Coloring value formats, range grammar, and validation: [spec_highlight.md](spec_
 
 1. Resolve settings, shell, cwd, deterministic seed, and timestamp from the YAML file.
 2. Execute `pre` commands.
-3. Execute and record `steps`.
+3. Execute and record `steps` (non-zero step exits warn on stderr; recording continues).
 4. Write the cast file (including `render` metadata).
 5. If `--format svg`, render SVG. See [spec_svg.md](spec_svg.md).
 6. Execute `post` commands.

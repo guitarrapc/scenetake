@@ -59,6 +59,8 @@ Progress and status go to stderr (`Loading:`, `Written:`, `Done:`). File paths i
 
 **Warnings.** Non-fatal issues print `Warning: …` to stderr and execution continues. Feature-specific warn-and-continue rules: [spec_highlight.md](spec_highlight.md), [spec_svg.md](spec_svg.md).
 
+**Recorded `steps`.** When a step command exits non-zero, scenetake prints `Warning: step exited <code>: <run>` (or `Warning: step exited <code> (<name>): <run>` when the step has a `name`). Recording continues and later steps still run. The process exit code remains `0` unless `pre`, `post`, SVG, or another fatal error occurs. See [spec_pre_post.md](spec_pre_post.md).
+
 **Errors.** Fatal issues print `Error: …` to stderr and exit non-zero.
 
 ## Exit Codes

@@ -780,6 +780,8 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
 
         Console.Error.WriteLine($"  running: {command.Cmd}");
         var execution = await RunCommandCoreAsync(command.Cmd, scenario.Cwd, shell, usePty, scenario.Width ?? 120, scenario.Height ?? 24, verbose);
+        if (execution.ExitCode != 0)
+            WarnStepExitCode(command.Name, command.Cmd, execution.ExitCode);
         if (execution.IsPty)
         {
             var commandStart = t;
@@ -1843,6 +1845,14 @@ static void Warn(string scope, string? cmd, string detail)
         Console.Error.WriteLine($"Warning: {scope}: {detail}");
     else
         Console.Error.WriteLine($"Warning: {scope} ({cmd}): {detail}");
+}
+
+static void WarnStepExitCode(string? name, string cmd, int exitCode)
+{
+    if (string.IsNullOrWhiteSpace(name))
+        Console.Error.WriteLine($"Warning: step exited {exitCode}: {cmd}");
+    else
+        Console.Error.WriteLine($"Warning: step exited {exitCode} ({name}): {cmd}");
 }
 
 static void WriteCast(

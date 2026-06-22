@@ -103,10 +103,13 @@ PTY commands do not simulate typing or prompt in the cast (the real TUI output i
 
 ## Failure behavior
 
+PTY steps follow the same exit-code rules as pipe-recorded `steps`. See [spec_pre_post.md](spec_pre_post.md) and [spec_cli.md](spec_cli.md).
+
 | Condition | Behavior |
 |-----------|----------|
-| Child non-zero exit | scenetake fails the scenario run (same as pipe commands) |
-| Output drain timeout | `TimeoutException` from `CompleteAsync` / Capture |
+| Child non-zero exit | Warning on stderr; recording continues; scenetake exits `0` (same as pipe `steps`) |
+| PTY spawn / ConPTY / `openpty` failure | Fatal error; scenario run aborts (no cast, or cast not reached) |
+| Output drain timeout | `TimeoutException` from `CompleteAsync` / Capture; fatal error |
 | Cancel during `WaitForExitAsync` | Wait ends; child may still run |
 | Cancel during `CompleteAsync` | Child killed when `KillOnCancellation` is true (default) |
 | Dispose while running | Child killed |
