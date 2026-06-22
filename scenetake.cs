@@ -5,8 +5,8 @@
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
 #:package VYaml@1.3.0
-#:package MiniPty@0.3.0
-#:package MiniPty.Capture@0.3.0
+#:package MiniPty@1.0.0
+#:package MiniPty.Capture@1.0.0
 #:include Terminal.cs
 #:include Svg.cs
 #:include CastReader.cs
@@ -784,10 +784,10 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
             var commandStart = t;
             foreach (var chunk in execution.PtyChunks!)
             {
-                if (string.IsNullOrEmpty(chunk.Data))
+                if (chunk.Text.IsEmpty)
                     continue;
 
-                events.Add(CastEvent.Output(Math.Round(commandStart + chunk.Time.TotalSeconds, 6), NormalizeNewlines(chunk.Data)));
+                events.Add(CastEvent.Output(Math.Round(commandStart + chunk.Time.TotalSeconds, 6), NormalizeNewlines(new string(chunk.Text.Span))));
             }
 
             t = execution.PtyChunks.Count > 0
@@ -871,7 +871,7 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
             Size = new(width, height),
         });
         if (verbose)
-            Console.Error.WriteLine($"scenetake: pty verbose: chunks={result.Chunks.Count} chars={result.Output.Length}");
+            Console.Error.WriteLine($"scenetake: pty verbose: chunks={result.Chunks.Count} chars={result.GetTextString().Length}");
         return CommandExecution.FromCapture(result);
     }
 
@@ -2287,10 +2287,10 @@ readonly record struct CommandExecution(
     bool IsPty,
     string Output,
     string Stderr,
-    IReadOnlyList<PtyCaptureChunk>? PtyChunks)
+    IReadOnlyList<PtyCaptureTextChunk>? PtyChunks)
 {
     public static CommandExecution FromCapture(PtyCaptureResult result) =>
-        new(result.ExitCode, true, result.Output, "", result.Chunks);
+        new(result.ExitCode, true, result.GetTextString(), "", result.GetTextChunks());
 
     public static CommandExecution FromPipe(string stdout, string stderr, int exitCode) =>
         new(exitCode, false, stdout, stderr, null);

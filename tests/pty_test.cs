@@ -3,8 +3,8 @@
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
-#:package MiniPty@0.3.0
-#:package MiniPty.Capture@0.3.0
+#:package MiniPty@1.0.0
+#:package MiniPty.Capture@1.0.0
 
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -73,7 +73,7 @@ static async Task<bool> PtyEchoOutput()
     {
         var cmd = Environment.GetEnvironmentVariable("ComSpec") ?? @"C:\Windows\System32\cmd.exe";
         var result = await PtyCapture.RunAsync(Spawn(cmd, ["/c", "echo pty-layer-echo"]));
-        return result.ExitCode == 0 && result.Output.Contains("pty-layer-echo", StringComparison.Ordinal);
+        return result.ExitCode == 0 && result.Contains("pty-layer-echo", StringComparison.Ordinal);
     }
 
     var shell = Environment.GetEnvironmentVariable("SHELL");
@@ -81,7 +81,7 @@ static async Task<bool> PtyEchoOutput()
         shell = "/bin/bash";
 
     var unix = await PtyCapture.RunAsync(Spawn(shell, ["-lc", "printf pty-layer-echo"]));
-    return unix.ExitCode == 0 && unix.Output.Contains("pty-layer-echo", StringComparison.Ordinal);
+    return unix.ExitCode == 0 && unix.Contains("pty-layer-echo", StringComparison.Ordinal);
 }
 
 static async Task<bool> PtyStdinEof()
@@ -94,15 +94,15 @@ static async Task<bool> PtyStdinEof()
         var result = await PtyCapture.RunAsync(
             Spawn(sort, []),
             new PtyCaptureOptions { Completion = new() { Input = $"zzz\r\n{marker}\r\naaa\r\n" } });
-        return result.Output.Contains(marker, StringComparison.Ordinal)
-            && result.Output.Contains("aaa", StringComparison.Ordinal);
+        return result.Contains(marker, StringComparison.Ordinal)
+            && result.Contains("aaa", StringComparison.Ordinal);
     }
 
     var shell = Environment.GetEnvironmentVariable("SHELL") ?? "/bin/bash";
     var unix = await PtyCapture.RunAsync(
         Spawn(shell, ["-lc", "cat"]),
         new PtyCaptureOptions { Completion = new() { Input = marker } });
-    return unix.ExitCode == 0 && unix.Output.Contains(marker, StringComparison.Ordinal);
+    return unix.ExitCode == 0 && unix.Contains(marker, StringComparison.Ordinal);
 }
 
 static bool PtyHasExitedPolls()
@@ -216,12 +216,12 @@ static async Task<bool> PtyTtyCheck()
         }
 
         var result = await PtyCapture.RunAsync(Spawn(pwsh, ["-NoLogo", "-NoProfile", "-Command", "Write-Output (\"redirected=$([Console]::IsOutputRedirected)\")"]));
-        return result.ExitCode == 0 && result.Output.Contains("redirected=False", StringComparison.OrdinalIgnoreCase);
+        return result.ExitCode == 0 && result.Contains("redirected=False", StringComparison.OrdinalIgnoreCase);
     }
 
     var shell = Environment.GetEnvironmentVariable("SHELL") ?? "/bin/bash";
     var unix = await PtyCapture.RunAsync(Spawn(shell, ["-lc", "if [ -t 1 ]; then echo redirected=False; else echo redirected=True; fi"]));
-    return unix.ExitCode == 0 && unix.Output.Contains("redirected=False", StringComparison.Ordinal);
+    return unix.ExitCode == 0 && unix.Contains("redirected=False", StringComparison.Ordinal);
 }
 
 static async Task<bool> PtyMatrixPwsh(string pwshPath)
@@ -229,7 +229,7 @@ static async Task<bool> PtyMatrixPwsh(string pwshPath)
     var result = await PtyCapture.RunAsync(Spawn(pwshPath, ["-NoLogo", "-Command", "matrix 3"], 80, 24));
     return result.ExitCode == 0
         && result.Chunks.Count >= 2
-        && result.Output.Contains('\u001b')
+        && result.Contains("\u001b")
         && result.Output.Length > 100;
 }
 
