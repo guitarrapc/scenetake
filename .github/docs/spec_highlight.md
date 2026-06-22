@@ -28,6 +28,7 @@ This spec defines declarative coloring controls that keep demos readable without
 
 - String-form step coloring defaults (for example `- echo "foo"`).
 - `settings` defaults for `highlight` ranges.
+- Coloring on `pty: true` steps (PTY output is recorded raw). See [spec_pty.md](spec_pty.md).
 - Regex selectors.
 - Terminal theme in the cast header (`term.theme`). See [spec_scenario.md](spec_scenario.md) `render.theme` and [spec_cast.md](spec_cast.md).
 - Relative indices (for example `-1` = last line).

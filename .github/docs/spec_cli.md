@@ -57,9 +57,14 @@ Progress and status go to stderr (`Loading:`, `Written:`, `Done:`). File paths i
 
 **`pre` / `post`.** stdout and stderr are forwarded after each command exits (live streaming not required in v1). Failure prints phase, full command text, and exit code unconditionally. See [spec_pre_post.md](spec_pre_post.md).
 
-**Warnings.** Non-fatal issues print `Warning: …` to stderr and execution continues. Feature-specific warn-and-continue rules: [spec_highlight.md](spec_highlight.md), [spec_svg.md](spec_svg.md).
+**Warnings.** Non-fatal issues print `Warning: …` to stderr and execution continues. Feature-specific warn-and-continue rules: [spec_highlight.md](spec_highlight.md), [spec_svg.md](spec_svg.md), [spec_scenario.md](spec_scenario.md) → Step exit codes.
 
-**Recorded `steps`.** When a step command exits non-zero, scenetake prints `Warning: step exited <code>: <run>` (or `Warning: step exited <code> (<name>): <run>` when the step has a `name`). Recording continues and later steps still run. The process exit code remains `0` unless `pre`, `post`, SVG, or another fatal error occurs. See [spec_pre_post.md](spec_pre_post.md).
+**Recorded `steps`.** When a step command exits non-zero, scenetake prints:
+
+- `Warning: step exited <code>: <run>`
+- `Warning: step exited <code> (<name>): <run>` when the step has a `name`
+
+Semantics (recording continues, process exit code stays `0`): [spec_scenario.md](spec_scenario.md) → Step exit codes.
 
 **Errors.** Fatal issues print `Error: …` to stderr and exit non-zero.
 
@@ -71,7 +76,7 @@ Progress and status go to stderr (`Loading:`, `Written:`, `Done:`). File paths i
 | Parse / validation error, missing file, cast/SVG write failure | `1` (or command-specific for `pre`/`post`) |
 | Failed `pre` or `post` command | Failed command's exit code |
 
-Recorded step exit codes do not affect the process exit code. See [spec_pre_post.md](spec_pre_post.md).
+Recorded step exit codes do not affect the process exit code. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
 
 ## Init
 

@@ -8,7 +8,7 @@ For README and documentation embeds, animated SVG is often preferable to GIF: sm
 
 External tools such as [agg](https://docs.asciinema.org/manual/agg/) (GIF) and [asg](https://github.com/kingsword09/asg) (SVG) can convert cast files, but requiring a second install and a second command adds friction. Built-in SVG output lets users produce `.cast` and `.svg` in one invocation while keeping cast as the canonical artifact defined in [spec_cast.md](spec_cast.md).
 
-Rich TUI recordings (`copilot --banner`, `sl`, etc.) are expected from **external asciinema casts** converted via the `svg` subcommand. The scenario path records commands via pipes (no PTY).
+Rich TUI recordings (`copilot --banner`, `sl`, `matrix`, etc.) work on the scenario path when a step sets `pty: true` ([spec_pty.md](spec_pty.md)), or from **external asciinema casts** converted via the `svg` subcommand.
 
 ## Scope
 

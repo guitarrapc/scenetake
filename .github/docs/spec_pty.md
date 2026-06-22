@@ -1,132 +1,90 @@
-# PTY specification
+# PTY Recording Specification
 
-User-facing behavior for `pty: true` in scenetake scenarios and the underlying [MiniPty](https://github.com/guitarrapc/MiniPty) libraries.
+Status: **Implemented**
+
+## Motivation
+
+Some CLI tools and terminal UIs behave differently when stdout is not a TTY: they disable color, skip animations, or refuse to run. scenetake records demos as asciinema casts; for commands that need a real terminal session, a step can opt into pseudo-terminal capture without changing the rest of the scenario format.
+
+PTY mode stays opt-in so ordinary steps keep predictable pipe-based stdout/stderr capture and declarative highlighting. YAML keys (`pty`, `width`, `height`): [spec_scenario.md](spec_scenario.md).
 
 ## Scope
 
-| Layer | Package | Responsibility |
-|-------|---------|----------------|
-| PTY session | **MiniPty** | Spawn, `Input`/`Output` streams, `SendEof`, `Resize`, `WaitForExitAsync`, `CompleteAsync` |
-| Timestamped capture | **MiniPty.Capture** | `PtyCapture.RunAsync` → `PtyCaptureResult` with `Chunks` |
-| Cast generation | **scenetake** | `PtyCaptureChunk` → cast `o` events; YAML `pty: true` |
+### In scope
 
-Recording semantics (timestamps, chunks) are **not** part of the core PTY API. scenetake depends on **MiniPty** + **MiniPty.Capture**.
+| Layer | Responsibility |
+|---|---|
+| **MiniPty** / **MiniPty.Capture** | Spawn child in PTY, timestamped byte capture ([MiniPty spec](https://github.com/guitarrapc/MiniPty/blob/main/.github/docs/spec.md)) |
+| **scenetake** | Map capture chunks to cast `o` events; shell launch; failure handling |
 
-## YAML
+### Out of scope (v1)
 
-```yaml
-pty: true   # optional per step; default false
-width: 120  # scenario-level terminal columns
-height: 24  # scenario-level terminal rows
-```
+- Long-lived interactive sessions (vim, REPLs)
+- Step-level stdin beyond what the shell command provides
+- YAML keys beyond those defined in [spec_scenario.md](spec_scenario.md)
+- MiniPty library API details — [MiniPty docs](https://github.com/guitarrapc/MiniPty/blob/main/.github/docs/spec_index.md)
 
-When `pty: true`:
+## Recording behavior
 
-- The command runs in a pseudo-terminal (TTY semantics for the child).
-- stdout and stderr are merged into one byte stream.
-- Output is captured with timestamps via `MiniPty.Capture`.
-- Cast events use chunk times relative to command start in the scenario timeline.
+When a map-form step has `pty: true` (default `false`):
+
+- **No simulated typing** — the cast does not emit prompt, per-character typing, or synthetic Enter for that step. Other steps without `pty` keep the usual typing recording.
+- **PTY geometry** — uses scenario `width` × `height` (same as cast header terminal size).
+- **Shell interpretation** — the `run` string is passed to the scenario `shell` the same way as non-PTY execution (`pwsh -Command`, `cmd /c`, `bash -lc`, etc.). PTY does not bypass the shell.
+- **Merged output** — stdout and stderr are one byte stream. `stderr-color` and pipe-style `highlight` do not apply to PTY output for that step.
+- **Timestamped chunks** — output is read while the child runs; cast `o` events use `command_start + chunk_time` on the scenario timeline.
+- **Raw byte stream** — no newline normalization; ANSI sequences may span chunk boundaries.
+- **No fallback** — if a PTY cannot be created, the run fails fatally. scenetake does not fall back to pipe redirect or simulated typing.
 
 When `pty: false` (default):
 
 - stdout and stderr are captured separately via pipe redirect.
 - Typing animation and prompt are simulated in the cast.
+- Coloring keys apply per [spec_highlight.md](spec_highlight.md).
+
+PTY capture records bytes from the child session. Terminal rendering (ANSI parsing, SVG) is separate: [spec_svg.md](spec_svg.md). OS implementation notes: [MiniPty references/pty_crossplatform.md](https://github.com/guitarrapc/MiniPty/blob/main/.github/docs/references/pty_crossplatform.md).
 
 ## Platform support
 
-| OS | Backend |
-|----|---------|
-| Windows 10 1809+ | ConPTY (`CreatePseudoConsole`) |
-| Linux | `openpty` + `fork` + `execvp` |
-| macOS | `openpty` + `fork` + `execvp` |
-| FreeBSD | `openpty` + `fork` + `execvp` |
+| OS | Backend | Minimum |
+|---|---|---|
+| Windows | ConPTY (`CreatePseudoConsole`) | Windows 10 1809+, Windows 11 |
+| Linux | `openpty` + `fork` + `execvp` | Common glibc/musl targets |
+| macOS | `openpty` + `fork` + `execvp` | Supported runners |
+| FreeBSD | `openpty` + `fork` + `execvp` | `libutil` + BSD `TIOCSCTTY` |
 
 Pipe redirect without ConPTY is **not** a PTY. TUI tools (`matrix`, `vim`, etc.) require `pty: true` on Windows.
 
-## MiniPty core API
-
-### `Pty.Start(PtyStartInfo)` → `PtySession`
-
-Spawns a child. Does not wait for exit.
-
-| Member | Behavior |
-|--------|----------|
-| `Input` / `Output` | Read/write streams (bytes; no line translation) |
-| `WriteInputAsync` | UTF-8 (default) or byte write helpers |
-| `SendEof()` | End stdin (platform-specific; see reference doc) |
-| `Resize(PtySize)` | Terminal resize |
-| `WaitForExitAsync` | Wait for child exit only; **cancel = stop waiting, child keeps running** |
-| `CompleteAsync` | Pump output, optional stdin, wait, drain, return `PtyResult` |
-| `Kill()` | SIGKILL / `TerminateProcess` |
-| `HasExited` / `ExitCode?` | Poll exit state; `ExitCode` is null until exited |
-| `Dispose` | Kill if still running, release handles |
-
-### `PtyCompleteOptions`
-
-Used by `CompleteAsync` (and by Capture via composition):
-
-| Option | Default | Purpose |
-|--------|---------|---------|
-| `OutputEncoding` | UTF-8 | Decode PTY bytes |
-| `Input` | null | Stdin text; null = leave open (TUI) |
-| `SendEofAfterInput` | true | Call `SendEof` after writing input |
-| `ExitTimeout` | null | Max wait for child exit |
-| `OutputDrainGrace` | 1s | Drain after exit before closing transport |
-| `OutputReaderCloseTimeout` | 5s | Wait for reader after transport close |
-| `KillOnCancellation` | true | **CompleteAsync only** — cancel kills child |
-
-### Backpressure warning
-
-A PTY has backpressure. If the child writes output and nobody reads `PtySession.Output`, the child may block when the terminal buffer is full. Use `CompleteAsync`, `PtyCapture.RunAsync`, or continuously read `Output`.
-
-## MiniPty.Capture API
-
-```csharp
-PtyCaptureResult result = await PtyCapture.RunAsync(startInfo, options);
-// result.Output   — merged text
-// result.ExitCode
-// result.Chunks   — PtyCaptureChunk(TimeSpan Time, string Data)
-```
-
-- `PtyCaptureOptions.Completion` wraps `PtyCompleteOptions` (drain, stdin, timeouts).
-- Chunk `Time` is elapsed since **session start** (`SessionStart`).
-- Future capture-only options (not implemented yet): `TimeProvider`, `ChunkTimestampMode`, `MaxChunkSize`, etc.
-
-## scenetake integration
-
-1. Resolve shell and scenario `width` × `height`.
-2. `await PtyCapture.RunAsync(...)` for `pty: true` steps.
-3. Map each `PtyCaptureChunk` to `CastEvent.Output(scenarioTime + chunk.Time, data)`.
-4. Pipe-redirected steps unchanged (`CommandExecution.FromPipe`).
-
-PTY commands do not simulate typing or prompt in the cast (the real TUI output is recorded).
-
 ## Failure behavior
 
-PTY steps follow the same exit-code rules as pipe-recorded `steps`. See [spec_pre_post.md](spec_pre_post.md) and [spec_cli.md](spec_cli.md).
+PTY steps follow the same **recorded step** exit-code rules as pipe steps. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
 
 | Condition | Behavior |
-|-----------|----------|
+|---|---|
 | Child non-zero exit | Warning on stderr; recording continues; scenetake exits `0` (same as pipe `steps`) |
-| PTY spawn / ConPTY / `openpty` failure | Fatal error; scenario run aborts (no cast, or cast not reached) |
-| Output drain timeout | `TimeoutException` from `CompleteAsync` / Capture; fatal error |
-| Cancel during `WaitForExitAsync` | Wait ends; child may still run |
-| Cancel during `CompleteAsync` | Child killed when `KillOnCancellation` is true (default) |
-| Dispose while running | Child killed |
+| PTY spawn / ConPTY / `openpty` failure | Fatal error; scenario run aborts |
+| Output drain timeout | Fatal error (`TimeoutException` from capture) |
+| Cancel during interactive API use | Not used by scenetake scenario path in v1 |
 
 ## Verification
 
 | Test | Location |
-|------|----------|
-| MiniPty core + Capture | `MiniPty/tests/MiniPty.Tests` |
-| PTY layer + integration | `scenetake/tests/pty_test.cs` |
+|---|---|
+| MiniPty core + Capture | [MiniPty/tests](https://github.com/guitarrapc/MiniPty) |
+| PTY layer | `scenetake/tests/pty_test.cs` |
 | Fixture scenarios | `scenetake/tests/fixtures/pty-*.yaml` |
 
 Integration tests require `SCENETAKE_BIN` pointing at a published scenetake binary.
 
-## Related documents
+## Cross-Document Notes
 
-- [spec_scenario.md](spec_scenario.md) — `pty` YAML key
-- [MiniPty spec.md](https://github.com/guitarrapc/MiniPty/blob/main/.github/docs/spec.md) — library API contract
-- [MiniPty references/pty_crossplatform.md](https://github.com/guitarrapc/MiniPty/blob/main/.github/docs/references/pty_crossplatform.md) — OS implementation reference
+- [spec_scenario.md](spec_scenario.md) — `pty`, `width`, `height` keys and defaults
 - [spec_cast.md](spec_cast.md) — cast event format
+- [spec_cli.md](spec_cli.md) — stderr warnings for non-zero step exits
+- [spec_pre_post.md](spec_pre_post.md) — contrast with `pre`/`post` fail-fast
+
+## Lessons Learned
+
+- Pipe redirect is not a PTY; ConPTY is required on Windows for TUI tools.
+- Keeping `pty` opt-in preserves simpler pipe behavior for ordinary commands.
+- Recorded step failures belong in the cast as demo content; only infrastructure failures (spawn, drain timeout) should abort the run. See [spec_scenario.md](spec_scenario.md) → Step exit codes.

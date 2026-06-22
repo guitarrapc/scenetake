@@ -30,7 +30,7 @@ YAML structure for `pre`/`post`: [spec_scenario.md](spec_scenario.md). CLI loggi
 | Phase | On failure |
 |---|---|
 | `pre` | Fail-fast; `steps`, cast write, and `post` are skipped; exit with the command's code. |
-| `steps` | Recording continues; later steps still run. Non-zero exit prints a warning to stderr (`Warning: step exited …`) and does not affect scenetake's exit code. Fatal errors (PTY spawn failure, output drain timeout, etc.) abort the run. |
+| `steps` | Recording continues. Non-zero exits warn on stderr; scenetake exits `0` unless another fatal error occurs. See [spec_scenario.md](spec_scenario.md) → Step exit codes. |
 | `post` | Fail-fast; remaining `post` commands skipped; cast file retained; exit with the command's code. |
 
 If no `pre` or `post` command fails, scenetake exits `0` regardless of individual step exit codes.
