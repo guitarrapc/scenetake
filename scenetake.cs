@@ -968,18 +968,10 @@ static async Task<int> RunScenarioCommandsAsync(List<string>? commands, string p
             return 1;
         }
 
-        if (execution.IsPty)
-        {
-            if (!string.IsNullOrEmpty(execution.Output))
-                Console.Out.Write(execution.Output);
-        }
-        else
-        {
-            if (!string.IsNullOrEmpty(execution.Output))
-                Console.Out.Write(execution.Output);
-            if (!string.IsNullOrEmpty(execution.Stderr))
-                Console.Error.Write(execution.Stderr);
-        }
+        if (!string.IsNullOrEmpty(execution.Output))
+            Console.Out.Write(execution.Output);
+        if (!string.IsNullOrEmpty(execution.Stderr))
+            Console.Error.Write(execution.Stderr);
 
         if (execution.ExitCode == 0)
             continue;
@@ -2011,6 +2003,7 @@ static void WriteJsonUtf8String(TextWriter writer, ReadOnlySpan<byte> utf8)
         var status = Rune.DecodeFromUtf8(utf8[index..], out var rune, out var consumed);
         if (status != OperationStatus.Done)
         {
+            writer.Write("\\uFFFD");
             index++;
             continue;
         }
@@ -2112,14 +2105,6 @@ static ShellLaunch ResolveWindowsShell(string? requested)
             return new ShellLaunch(resolved, ["-NoLogo", "-NoProfile", "-Command"], resolved, exeName);
 
         throw new InvalidOperationException($"Shell '{requested}' was requested, but '{exeName}' could not be found on Windows.");
-    }
-
-    if (string.Equals(NormalizeWindowsShellName(requested), "cmd", StringComparison.OrdinalIgnoreCase))
-    {
-        if (TryResolveExecutableOnWindows("cmd", out var resolved))
-            return new ShellLaunch(resolved, ["/c"], resolved, "cmd");
-
-        throw new InvalidOperationException("Shell 'cmd' was requested, but cmd.exe could not be found on Windows.");
     }
 
     if (string.Equals(NormalizeWindowsShellName(requested), "cmd", StringComparison.OrdinalIgnoreCase))
