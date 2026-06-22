@@ -152,7 +152,6 @@ Deterministic seed and timestamp are derived from the whole YAML file (normalize
 - [spec_cast.md](spec_cast.md) — cast header mapping, event stream, recording boundary.
 - [spec_svg.md](spec_svg.md) — SVG renderer.
 - [spec_cli.md](spec_cli.md) — CLI overrides and `init` command.
-- [spec_pty.md](spec_pty.md) — `pty: true` recording (keys in this document).
 
 ## Lessons Learned
 
