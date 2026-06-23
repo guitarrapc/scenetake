@@ -65,8 +65,20 @@ jobs:
               curl -fsSL -o "$RUNNER_TEMP/matrix.zip" "https://github.com/guitarrapc/matrix/releases/download/${matrix_version}/matrix-win-amd64.zip"
               unzip -o "$RUNNER_TEMP/matrix.zip" -d "$matrix_dir"
               ;;
+            win-arm64)
+              curl -fsSL -o "$RUNNER_TEMP/matrix.zip" "https://github.com/guitarrapc/matrix/releases/download/${matrix_version}/matrix-win-arm64.zip"
+              unzip -o "$RUNNER_TEMP/matrix.zip" -d "$matrix_dir"
+              ;;
             linux-x64)
               curl -fsSL -o "$RUNNER_TEMP/matrix.tar.gz" "https://github.com/guitarrapc/matrix/releases/download/${matrix_version}/matrix-linux-amd64.tar.gz"
+              tar -xzf "$RUNNER_TEMP/matrix.tar.gz" -C "$matrix_dir"
+              ;;
+            linux-arm64)
+              curl -fsSL -o "$RUNNER_TEMP/matrix.tar.gz" "https://github.com/guitarrapc/matrix/releases/download/${matrix_version}/matrix-linux-arm64.tar.gz"
+              tar -xzf "$RUNNER_TEMP/matrix.tar.gz" -C "$matrix_dir"
+              ;;
+            osx-x64)
+              curl -fsSL -o "$RUNNER_TEMP/matrix.tar.gz" "https://github.com/guitarrapc/matrix/releases/download/${matrix_version}/matrix-osx-amd64.tar.gz"
               tar -xzf "$RUNNER_TEMP/matrix.tar.gz" -C "$matrix_dir"
               ;;
             osx-arm64)

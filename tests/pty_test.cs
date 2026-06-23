@@ -282,6 +282,12 @@ static async Task<bool> PtyTtyCheck()
 
 static async Task<bool> PtyMatrixPwsh(string pwshPath)
 {
+    if (!TryFindExecutable("matrix", out _))
+    {
+        Console.Error.WriteLine("skip PtyMatrixPwsh: matrix not found");
+        return true;
+    }
+
     var result = await PtyCapture.RunAsync(Spawn(pwshPath, ["-NoLogo", "-Command", "matrix 3"], 80, 24));
     return result.ExitCode == 0
         && result.Chunks.Count >= 2
