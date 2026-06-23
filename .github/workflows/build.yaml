@@ -123,6 +123,7 @@ jobs:
 
           dotnet run tests/terminal_tests.cs
           dotnet run tests/json_escape_test.cs
+          dotnet run tests/pty_timing_test.cs
           SCENETAKE_BIN="$binary_path" dotnet run tests/pty_test.cs
           dotnet run tests/readme_sync_test.cs
           dotnet run tests/svg_render_test.cs

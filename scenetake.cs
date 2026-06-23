@@ -768,35 +768,60 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
             var commandStart = t;
             var ptyFilter = new PtyLeadingInitFilter();
             TimeSpan? lastChunkTime = null;
+            var startupOffset = 0.0;
+            var startupOffsetResolved = false;
+            var emittedAny = false;
+            var lastAdjustedSeconds = cmdExecutionDuration;
+
             foreach (var chunk in execution.PtyByteChunks!)
             {
                 lastChunkTime = chunk.Time;
-                var data = ptyFilter?.Process(chunk.Data) ?? chunk.Data;
+                var chunkSeconds = chunk.Time.TotalSeconds;
+                var data = ptyFilter.Process(chunk.Data);
                 if (data.IsEmpty)
                     continue;
 
+                if (!startupOffsetResolved)
+                {
+                    startupOffset = PtyCastTiming.ComputeStartupOffset(chunkSeconds, cmdExecutionDuration);
+                    startupOffsetResolved = true;
+                    if (verbose && startupOffset > 0)
+                        Console.Error.WriteLine($"scenetake: pty startup compress: {startupOffset:F3}s");
+                }
+
+                var adjusted = PtyCastTiming.AdjustChunkSeconds(chunkSeconds, startupOffset);
+                lastAdjustedSeconds = adjusted;
+                emittedAny = true;
                 events.Add(CastEvent.OutputUtf8(
-                    Math.Round(commandStart + chunk.Time.TotalSeconds, 6),
+                    Math.Round(commandStart + adjusted, 6),
                     data));
             }
 
-            if (ptyFilter is not null)
+            var tail = ptyFilter.Complete();
+            if (!tail.IsEmpty)
             {
-                var tail = ptyFilter.Complete();
-                if (!tail.IsEmpty)
+                var tailSeconds = (lastChunkTime ?? TimeSpan.Zero).TotalSeconds;
+                if (!startupOffsetResolved)
                 {
-                    var tailTime = lastChunkTime ?? TimeSpan.Zero;
-                    events.Add(CastEvent.OutputUtf8(
-                        Math.Round(commandStart + tailTime.TotalSeconds, 6),
-                        tail));
+                    startupOffset = PtyCastTiming.ComputeStartupOffset(tailSeconds, cmdExecutionDuration);
+                    startupOffsetResolved = true;
+                    if (verbose && startupOffset > 0)
+                        Console.Error.WriteLine($"scenetake: pty startup compress: {startupOffset:F3}s");
                 }
 
-                if (verbose)
-                    Console.Error.WriteLine($"scenetake: pty cleanup: stripped {ptyFilter.StrippedByteCount} bytes");
+                var adjusted = PtyCastTiming.AdjustChunkSeconds(tailSeconds, startupOffset);
+                lastAdjustedSeconds = adjusted;
+                emittedAny = true;
+                events.Add(CastEvent.OutputUtf8(
+                    Math.Round(commandStart + adjusted, 6),
+                    tail));
             }
 
-            t = execution.PtyByteChunks.Count > 0
-                ? Math.Max(t + cmdExecutionDuration, commandStart + execution.PtyByteChunks[^1].Time.TotalSeconds)
+            if (verbose)
+                Console.Error.WriteLine($"scenetake: pty cleanup: stripped {ptyFilter.StrippedByteCount} bytes");
+
+            t = emittedAny
+                ? Math.Max(t + cmdExecutionDuration, commandStart + lastAdjustedSeconds)
                 : t + cmdExecutionDuration;
         }
         else
@@ -2244,6 +2269,15 @@ enum OutputFormat
 {
     Cast,
     Svg,
+}
+
+internal static class PtyCastTiming
+{
+    internal static double ComputeStartupOffset(double firstEmittedChunkSeconds, double executionDuration) =>
+        Math.Max(0.0, firstEmittedChunkSeconds - Math.Max(0.0, executionDuration));
+
+    internal static double AdjustChunkSeconds(double chunkSeconds, double startupOffset) =>
+        chunkSeconds - startupOffset;
 }
 
 static class TypingChars
