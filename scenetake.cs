@@ -1,6 +1,6 @@
 ﻿#:sdk Microsoft.NET.Sdk
 #:property TargetFramework=net10.0
-#:property Version=1.1.0
+#:property Version=1.2.0
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
@@ -25,7 +25,7 @@ using System.Text;
 using VYaml.Annotations;
 using VYaml.Serialization;
 
-const string AppVersion = "1.1.0";
+const string AppVersion = "1.2.0";
 const string DefaultPrompt    = "$ ";
 const double DefaultSpeed     = 0.05;
 const double DefaultJitter    = 0.015;
