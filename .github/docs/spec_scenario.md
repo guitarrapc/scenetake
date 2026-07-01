@@ -71,7 +71,7 @@ Defaults for all steps. Map-form steps may override individual keys.
 
 ### Output timing (pipe and PTY)
 
-By default, pipe steps capture stdout/stderr in parallel during execution but write **one** cast `o` event at `command_start + execution-duration`. This preserves typed-command playback and avoids choppy SVG/GIF output from read-boundary chunks or progress-bar streams.
+By default, pipe steps capture stdout/stderr in parallel during execution but write **one** cast `o` event at `command_start + execution-duration`. The event text is **stdout then stderr** (not chronologically interleaved), matching pre-stream-output merge order and keeping stdout `highlight` line numbers stable. This preserves typed-command playback and avoids choppy SVG/GIF output from read-boundary chunks or progress-bar streams.
 
 **Stream emit** is enabled when a step or `settings` sets `stream-output: true` or `max-duration`. In stream mode, scenetake records chunk arrival times, then applies:
 
@@ -179,6 +179,6 @@ Deterministic seed and timestamp are derived from the whole YAML file (normalize
 - Separating `settings` (recording) from `render` (presentation) keeps cast behavior independent of SVG output.
 - String-form steps cover simple demos; map-form steps carry per-command timing, coloring, and optional `pty` without a second schema.
 - Recorded step non-zero exits warn but do not stop the scenario; setup/teardown and infrastructure failures use different rules ([spec_pre_post.md](spec_pre_post.md), [spec_pty.md](spec_pty.md)).
-- **Default instant emit is required for good playback.** Replaying every pipe read chunk made typing hard to see, caused choppy SVG/GIF output, and broke progress-bar tools that emit many `\r`-based lines (for example `agg`). Capture still reads stdout/stderr in parallel; only cast event timing changes.
+- **Default instant emit is required for good playback.** Replaying every pipe read chunk made typing hard to see, caused choppy SVG/GIF output, and broke progress-bar tools that emit many `\r`-based lines (for example `agg`). Capture still reads stdout/stderr in parallel; cast text merges stdout then stderr, and only event timing changes.
 - **`execution-duration` is a presentation knob**, not wall-clock duration. It controls how long after Enter the first output appears, not how long the shell command runs.
 - **Stream emit is opt-in** (`stream-output: true` or `max-duration`). Idle-collapse defaults are lenient (`silence-threshold: 2.0`) so only clearly idle gaps shrink when stream mode is on.

@@ -11,6 +11,8 @@ var failures = 0;
 
 failures += Run("IntegrationStreamStagger", () => IntegrationStreamStagger(repoRoot));
 failures += Run("IntegrationInstantDefault", () => IntegrationInstantDefault(repoRoot));
+failures += Run("IntegrationInstantMergeOrder", () => IntegrationInstantMergeOrder(repoRoot));
+failures += Run("IntegrationDockerBuildStream", () => IntegrationDockerBuildStream(repoRoot));
 
 return failures == 0 ? 0 : 1;
 
@@ -93,6 +95,102 @@ static bool IntegrationInstantDefault(string repoRoot)
     finally
     {
         Cleanup(outputStem);
+    }
+}
+
+static bool IntegrationInstantMergeOrder(string repoRoot)
+{
+    if (!IntegrationTestsEnabled())
+        return true;
+
+    var fixturePath = Path.Combine(repoRoot, "tests", "fixtures", "pipe-instant-merge-order.yaml");
+    var outputStem = Path.Combine(Path.GetTempPath(), $"scenetake-merge-{Guid.NewGuid():N}");
+    try
+    {
+        if (!RunScenetake(fixturePath, outputStem, out var exitCode) || exitCode != 0)
+            return false;
+
+        var events = ReadCastTimedOutputEvents(outputStem + ".cast");
+        var outputEvents = events
+            .Where(ev => ev.Text.Contains("SCENETAKE_STDOUT", StringComparison.Ordinal)
+                || ev.Text.Contains("SCENETAKE_STDERR_A", StringComparison.Ordinal))
+            .ToList();
+        if (outputEvents.Count != 1)
+            return false;
+
+        var text = outputEvents[0].Text;
+        var stdoutIndex = text.IndexOf("SCENETAKE_STDOUT", StringComparison.Ordinal);
+        var stderrIndex = text.IndexOf("SCENETAKE_STDERR_A", StringComparison.Ordinal);
+        return stdoutIndex >= 0 && stderrIndex >= 0 && stdoutIndex < stderrIndex;
+    }
+    finally
+    {
+        Cleanup(outputStem);
+    }
+}
+
+static bool IntegrationDockerBuildStream(string repoRoot)
+{
+    if (!IntegrationTestsEnabled())
+        return true;
+
+    if (!DockerEnabled())
+    {
+        Console.Error.WriteLine("skip IntegrationDockerBuildStream: docker not available");
+        return true;
+    }
+
+    const double maxDuration = 12.0;
+    var fixturePath = Path.Combine(repoRoot, "tests", "fixtures", "stream-output-docker.yaml");
+    var outputStem = Path.Combine(Path.GetTempPath(), $"scenetake-stream-docker-{Guid.NewGuid():N}");
+    try
+    {
+        if (!RunScenetake(fixturePath, outputStem, out var exitCode) || exitCode != 0)
+            return false;
+
+        var events = ReadCastTimedOutputEvents(outputStem + ".cast");
+        var combined = string.Concat(events.Select(static ev => ev.Text));
+        if (!combined.Contains("scenetake-layer-1", StringComparison.Ordinal)
+            || !combined.Contains("scenetake-layer-2", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var layerEvents = events
+            .Where(ev => ev.Text.Contains("scenetake-layer", StringComparison.Ordinal))
+            .ToList();
+        if (layerEvents.Count < 2)
+            return false;
+
+        var span = layerEvents[^1].Time - layerEvents[0].Time;
+        return span > 0.1 && span <= maxDuration + 0.5;
+    }
+    finally
+    {
+        Cleanup(outputStem);
+    }
+}
+
+static bool DockerEnabled()
+{
+    try
+    {
+        var psi = new ProcessStartInfo("docker", ["version", "--format", "{{.Server.Version}}"])
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+        };
+        using var process = Process.Start(psi);
+        if (process is null)
+            return false;
+
+        process.WaitForExit();
+        return process.ExitCode == 0;
+    }
+    catch
+    {
+        return false;
     }
 }
 

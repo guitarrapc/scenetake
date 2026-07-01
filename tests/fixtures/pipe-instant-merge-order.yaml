@@ -1,0 +1,14 @@
+title: pipe instant merge order
+shell: bash
+
+settings:
+  prompt: "$ "
+  typing-speed: 0.01
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+  execution-duration: 0.05
+
+steps:
+  - name: stderr then stdout then stderr chronologically
+    run: bash -c 'echo SCENETAKE_STDERR_A 1>&2; sleep 0.1; echo SCENETAKE_STDOUT; sleep 0.1; echo SCENETAKE_STDERR_B 1>&2'

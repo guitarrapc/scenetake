@@ -43,7 +43,7 @@ capture chunks (pipe stream or PTY bytes) + wall-clock time
 
 ### Default (no stream mode)
 
-Pipe steps still capture stdout/stderr in parallel (for faithful merge order), but emit **one** cast event at `commandStart + execution-duration` — same as pre-stream-output behavior.
+Pipe steps still capture stdout/stderr in parallel, but instant emit merges **stdout then stderr** (not chronological interleaving). Emit **one** cast event at `commandStart + execution-duration` — same as pre-stream-output behavior.
 
 ### Defaults
 
@@ -108,6 +108,8 @@ Gaps are measured from **original** chunk timestamps before adjustment. A long i
 - [x] PTY steps still pass existing `pty_timing_test` / `pty_test`
 - [x] `samples/basic.yaml` smoke still passes
 - [x] `samples/demo.yaml` matches pre-stream event shape (instant emit, agg progress in one event)
+- [x] `IntegrationDockerBuildStream` — real `docker build` with `stream-output` + `max-duration`
+- [x] `samples/scenario_format.svg` / `.cast` regenerated after `stream-output` step added
 
 ## Lessons learned
 
@@ -169,7 +171,20 @@ chunk 単位で `highlight` を当てると ANSI 境界で壊れやすい。stre
 
 `Silence-threshold: 2.0` / `max-idle: 0.2` は stream モード向けの緩い値。デフォルト instant emit なら既存シナリオへの影響は小さいが、stream を有効にしたステップだけ挙動が変わる点は spec に明記すべき。
 
-### 10. 次にやるべきこと
+### 10. Dogfooding（完了）
 
-- 本物の長時間 `docker build` ステップでの dogfooding → `max-duration` の妥当なデフォルト検証
-- `samples/scenario_format.svg` の再生成（`scenario_format.yaml` 追加分の反映）
+- `tests/fixtures/stream-output-docker.yaml` + `IntegrationDockerBuildStream` — 実際の `docker build`（レイヤーごと `sleep 2`）で stream emit + `max-duration: 12` を検証。Docker 未導入環境では skip。
+- `samples/scenario_format.cast` / `.svg` を再生成済み。`stream-output` ステップは `stream-first` / `stream-second` が別イベント（0.25s / 0.1s gap）で記録されることを確認。
+
+### 11. instant emit は stdout→stderr 連結（時系列インターリーブではない）
+
+pipe capture は stdout/stderr を並行読み取りするが、**デフォルト（instant emit）の cast テキストは旧挙動どおり stdout 全文 + stderr 全文** とする。
+
+時系列で chunk を連結すると、`curl -I` のように stderr プログレスと stdout ヘッダが途中で混ざり、`HTTP/1.1` がプログレス行に連結される（`basic.svg` で `TP/1.1` と分裂）など playback が壊れる。`highlight` の行番号も stdout 向け指定がずれる。
+
+**stream emit**（`stream-output: true` / `max-duration`）のときだけ chunk 時系列マージを使う。
+
+### 12. 今後の検討（任意）
+
+- CI で Docker 統合テストを常時実行するか（runner に Docker が必要）
+- 長時間ビルド向け `max-duration` の推奨値を README に追記するか

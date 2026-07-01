@@ -853,7 +853,9 @@ static double EmitPipeStepOutputInstant(
     string cmd,
     double executionDuration)
 {
-    var merged = MergePipeChunksText(chunks, stderrStyle);
+    var stdout = string.Concat(chunks.Where(static chunk => !chunk.IsStderr).Select(static chunk => chunk.Text));
+    var stderr = string.Concat(chunks.Where(static chunk => chunk.IsStderr).Select(static chunk => chunk.Text));
+    var merged = MergePipeOutput(stdout, stderr, stderrStyle);
     if (string.IsNullOrEmpty(merged))
         return commandStart + executionDuration;
 
@@ -866,15 +868,23 @@ static double EmitPipeStepOutputInstant(
     return commandStart + executionDuration;
 }
 
-static string MergePipeChunksText(IReadOnlyList<PipeStreamChunk> chunks, string stderrStyle)
+static string MergePipeOutput(string stdout, string stderr, string stderrStyle)
 {
-    if (chunks.Count == 0)
-        return "";
+    if (string.IsNullOrEmpty(stdout))
+    {
+        if (string.IsNullOrEmpty(stderr) || string.IsNullOrEmpty(stderrStyle) || ContainsAnsiSgr(stderr))
+            return stderr;
 
-    var sb = new StringBuilder();
-    foreach (var chunk in chunks)
-        sb.Append(FormatPipeChunkText(chunk, stderrStyle));
-    return sb.ToString();
+        return WrapWithStylePreserveTrailingNewlines(stderr, stderrStyle);
+    }
+
+    if (string.IsNullOrEmpty(stderr))
+        return stdout;
+
+    if (string.IsNullOrEmpty(stderrStyle) || ContainsAnsiSgr(stderr))
+        return string.Concat(stdout, stderr);
+
+    return string.Concat(stdout, WrapWithStylePreserveTrailingNewlines(stderr, stderrStyle));
 }
 
 static void ApplyBurstMergeToChunks(

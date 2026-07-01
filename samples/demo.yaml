@@ -20,15 +20,7 @@ steps:
   - run: cat scenario.yaml
   - run: scenetake scenario.yaml --format svg
   - run: MSYS_NO_PATHCONV=1 docker run --rm -v "//${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif
-    stream-output: true
-    max-duration: 15
-    silence-threshold: 0.3
-    max-idle: 0.1
-  - run: ping 127.0.0.1
-    stream-output: true
-    max-duration: 15
-    silence-threshold: 0.3
-    max-idle: 0.1
+    execution-duration: 1.0
 
 Post:
   - rm -f scenario.*
