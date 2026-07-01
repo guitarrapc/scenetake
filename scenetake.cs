@@ -2408,6 +2408,10 @@ static string CreateInitialScenarioYaml()
       post-delay: {DefaultPostDelay}          # Pause after output before the next step.
       execution-duration: {DefaultExecutionDuration} # Optional cast wait after command execution.
       stderr-color: {DefaultStderrColorSpec}       # Applied only when stderr has no ANSI SGR.
+      # stream-output: false         # When true, replay captured chunk times in the cast.
+      # max-duration: 15             # Cap step output timeline; also enables stream emit.
+      # silence-threshold: {DefaultSilenceThreshold}       # Stream mode: collapse idle gaps longer than this (seconds).
+      # max-idle: {DefaultMaxIdle}                # Stream mode: collapsed idle gap duration (seconds).
 
     # Optional setup commands. They run before steps, but are not recorded in the cast.
     # pre:

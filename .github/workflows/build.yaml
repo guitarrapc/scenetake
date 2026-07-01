@@ -125,6 +125,7 @@ jobs:
           dotnet run tests/json_escape_test.cs
           dotnet run tests/pty_timing_test.cs
           dotnet run tests/cast_timing_test.cs
+          SCENETAKE_BIN="$binary_path" dotnet run tests/stream_output_test.cs
           SCENETAKE_BIN="$binary_path" dotnet run tests/pty_test.cs
           dotnet run tests/readme_sync_test.cs
           dotnet run tests/svg_render_test.cs

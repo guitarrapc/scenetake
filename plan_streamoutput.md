@@ -1,6 +1,6 @@
 # Stream Output Timing Plan
 
-Status: **Phase 1 implemented**
+Status: **Phase 2 implemented**
 
 ## Motivation
 
@@ -81,11 +81,13 @@ Pipe steps still capture stdout/stderr in parallel (for faithful merge order), b
 
 5. **CI** — register `tests/cast_timing_test.cs` in `build.yaml`
 
-### Phase 2 — Docs (follow-up)
+### Phase 2 — Docs and integration (done)
 
-- Update `.github/docs/spec_scenario.md` with new keys
-- Update README samples / `CreateInitialScenarioYaml` comments
-- Lessons learned in spec if behavior surprises during dogfooding
+- [x] Update `.github/docs/spec_scenario.md` with new keys and lessons learned
+- [x] Update `.github/docs/spec_pty.md` stream-mode cross-reference
+- [x] Update `spec_index.md`, README / README-ja tips, `samples/scenario_format.yaml`, `CreateInitialScenarioYaml`
+- [x] `tests/fixtures/stream-output-stagger.yaml` + `tests/stream_output_test.cs`
+- [x] CI registers `stream_output_test.cs`
 
 ### Idle collapse detail
 
@@ -102,7 +104,7 @@ Gaps are measured from **original** chunk timestamps before adjustment. A long i
 - [x] `CollapseIdleGaps` short gap unchanged, long gap collapsed to `max-idle`
 - [x] `LinearCompress` only when actual > `max-duration`
 - [x] Coalesce merges same-timestamp chunks
-- [ ] Pipe stream: multi-chunk cast with distinct event times for staggered `echo` + `sleep` (needs fixture + `stream-output: true`)
+- [x] Pipe stream: multi-chunk cast with distinct event times for staggered `echo` + `sleep` (`stream-output-stagger.yaml`)
 - [x] PTY steps still pass existing `pty_timing_test` / `pty_test`
 - [x] `samples/basic.yaml` smoke still passes
 - [x] `samples/demo.yaml` matches pre-stream event shape (instant emit, agg progress in one event)
@@ -169,6 +171,5 @@ chunk 単位で `highlight` を当てると ANSI 境界で壊れやすい。stre
 
 ### 10. 次にやるべきこと
 
-- Phase 2: `spec_scenario.md` に `stream-output` / `max-duration` / idle キーを追記
-- `stream-output: true` + `sleep` の integration fixture（test plan 未完了項目）
 - 本物の長時間 `docker build` ステップでの dogfooding → `max-duration` の妥当なデフォルト検証
+- `samples/scenario_format.svg` の再生成（`scenario_format.yaml` 追加分の反映）

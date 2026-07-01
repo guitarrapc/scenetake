@@ -1,0 +1,19 @@
+title: stream output integration
+shell: bash
+
+settings:
+  prompt: "$ "
+  typing-speed: 0.01
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+  execution-duration: 0.05
+
+steps:
+  - run: echo SCENETAKE_INSTANT_MARKER
+  - name: stream
+    run: bash -c 'echo SCENETAKE_STREAM_FIRST; sleep 1; echo SCENETAKE_STREAM_SECOND'
+    stream-output: true
+    max-duration: 10
+    silence-threshold: 2.0
+    max-idle: 0.1

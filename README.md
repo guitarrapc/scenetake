@@ -155,6 +155,7 @@ scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light]
   - Steps are executed for real, so use caution with commands that modify files or affect external systems.
   - Commands that need a terminal can opt into pseudo-terminal capture with `pty: true`. See [Limitations (scenario recording)](#limitations-scenario-recording).
   - For long-running commands, use `execution-duration` to keep playback readable.
+  - For natural replay of long output (`docker build`, staged `sleep`, …), set `stream-output: true` and optionally `max-duration` on that step. Default pipe emit stays instant for typing and short demos.
 
 ## Limitations (scenario recording)
 
@@ -199,6 +200,10 @@ settings:                        # Defaults for all steps; map-form steps can ov
   post-delay: 1.0                # Pause after output before the next step
   execution-duration: 0.1        # Cast wait after command execution
   stderr-color: red              # When stderr has no ANSI SGR sequences
+  # stream-output: false         # When true, replay captured chunk times in the cast
+  # max-duration: 15             # Cap step output timeline; also enables stream emit
+  # silence-threshold: 2.0       # Stream mode: collapse idle gaps longer than this (seconds)
+  # max-idle: 0.2                # Stream mode: collapsed idle gap duration (seconds)
 
 # Optional setup; runs before steps, not recorded in cast
 pre:
@@ -222,6 +227,13 @@ steps:
   - name: "execution-duration"
     run: sleep 1
     execution-duration: 0.5
+
+  - name: "stream-output (staggered replay)"
+    run: bash -c 'echo stream-first; sleep 1; echo stream-second'
+    stream-output: true
+    max-duration: 10
+    silence-threshold: 0.3
+    max-idle: 0.1
 
   - name: "pty demo"
     run: echo "This command runs in a PTY, so output appears immediately and can include interactive features like colors and progress bars."

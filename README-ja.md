@@ -155,6 +155,7 @@ scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light]
   - 実際に実行されるため、ファイル変更や外部システムを操作するような副作用のあるコマンドは慎重に使ってください
   - ターミナルを必要とするコマンドは `pty: true` で pseudo-terminal capture を有効化できます。詳細は [制限事項（シナリオ録画）](#制限事項シナリオ録画)。
   - 実行時間が長いコマンドは `execution-duration` で見やすく調整できます
+  - 長い出力を自然にリプレイしたい場合（`docker build` や `sleep` を挟むステップなど）は、その step に `stream-output: true` と必要なら `max-duration` を指定します。デフォルトの pipe emit はタイピング演出のため一括表示のままです
 
 ## 制限事項（シナリオ録画）
 
@@ -199,6 +200,10 @@ settings:                        # Defaults for all steps; map-form steps can ov
   post-delay: 1.0                # Pause after output before the next step
   execution-duration: 0.1        # Cast wait after command execution
   stderr-color: red              # When stderr has no ANSI SGR sequences
+  # stream-output: false         # When true, replay captured chunk times in the cast
+  # max-duration: 15             # Cap step output timeline; also enables stream emit
+  # silence-threshold: 2.0       # Stream mode: collapse idle gaps longer than this (seconds)
+  # max-idle: 0.2                # Stream mode: collapsed idle gap duration (seconds)
 
 # Optional setup; runs before steps, not recorded in cast
 pre:
@@ -222,6 +227,13 @@ steps:
   - name: "execution-duration"
     run: sleep 1
     execution-duration: 0.5
+
+  - name: "stream-output (staggered replay)"
+    run: bash -c 'echo stream-first; sleep 1; echo stream-second'
+    stream-output: true
+    max-duration: 10
+    silence-threshold: 0.3
+    max-idle: 0.1
 
   - name: "pty demo"
     run: echo "This command runs in a PTY, so output appears immediately and can include interactive features like colors and progress bars."
