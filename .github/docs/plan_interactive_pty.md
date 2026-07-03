@@ -1,6 +1,6 @@
 # Interactive PTY Recording Plan
 
-Status: **Planned** (grill-me complete; implementation not started)
+Status: **Phase 1 implemented** (manual TTY smoke pending)
 
 ## Motivation
 
@@ -217,8 +217,8 @@ MiniPty.Console owns host stdin. Clean input tap needs an optional callback on `
 
 ## Test plan
 
-- [ ] `interactive: true` without `pty: true` → parse/validation error
-- [ ] Non-TTY host → clear error when step runs (or skip in CI with message)
+- [x] `interactive: true` without `pty: true` → parse/validation error
+- [x] Non-TTY host → clear error when step runs (or skip in CI with message)
 - [ ] Non-interactive PTY fixtures still pass (`pty_test`, `pty_timing_test`, `pty_continue_test`)
 - [ ] Manual: `copilot --banner` — motion timing looks real in cast/SVG
 - [ ] Manual: `vim file` — edit, `:wq`, cast contains session; next scenario step composes if applicable
