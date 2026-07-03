@@ -1,4 +1,4 @@
-﻿#:sdk Microsoft.NET.Sdk
+#:sdk Microsoft.NET.Sdk
 #:property TargetFramework=net10.0
 #:property Version=1.3.0
 #:property Nullable=enable
@@ -870,6 +870,7 @@ static double EmitPipeStepOutputInstant(
 
 static string MergePipeOutput(string stdout, string stderr, string stderrStyle)
 {
+    stdout = SanitizeInstantEmitStdout(stdout);
     if (string.IsNullOrEmpty(stdout))
     {
         if (string.IsNullOrEmpty(stderr) || string.IsNullOrEmpty(stderrStyle) || ContainsAnsiSgr(stderr))
@@ -885,6 +886,35 @@ static string MergePipeOutput(string stdout, string stderr, string stderrStyle)
         return string.Concat(stdout, stderr);
 
     return string.Concat(stdout, WrapWithStylePreserveTrailingNewlines(stderr, stderrStyle));
+}
+
+static string SanitizeInstantEmitStdout(string stdout)
+{
+    if (string.IsNullOrEmpty(stdout))
+        return stdout;
+
+    return stdout.IndexOf('\0') >= 0 ? "" : stdout;
+}
+
+static void ConfigureChildProcessEnvironment(ProcessStartInfo psi)
+{
+    var processPath = Environment.ProcessPath;
+    if (string.IsNullOrWhiteSpace(processPath))
+        return;
+
+    var directory = Path.GetDirectoryName(processPath);
+    var scenetakeBin = processPath.Replace('\\', '/');
+    psi.EnvironmentVariables["SCENETAKE_BIN"] = scenetakeBin;
+    if (string.IsNullOrWhiteSpace(directory))
+        return;
+
+    var path = psi.EnvironmentVariables["PATH"];
+    if (string.IsNullOrEmpty(path))
+        path = Environment.GetEnvironmentVariable("PATH") ?? "";
+
+    psi.EnvironmentVariables["PATH"] = string.IsNullOrEmpty(path)
+        ? directory
+        : directory + Path.PathSeparator + path;
 }
 
 static void ApplyBurstMergeToChunks(
@@ -1159,6 +1189,7 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
         psi.ArgumentList.Add(arg);
     psi.ArgumentList.Add(cmd);
     if (!string.IsNullOrWhiteSpace(cwd)) psi.WorkingDirectory = cwd;
+    ConfigureChildProcessEnvironment(psi);
 
     using var proc = new Process { StartInfo = psi };
     proc.Start();
