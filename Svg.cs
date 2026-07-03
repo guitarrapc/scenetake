@@ -893,6 +893,21 @@ internal static class SvgFrameRenderer
             var runBold = cell.Bold;
             var runItalic = cell.Italic;
             var runUnderline = cell.Underline;
+
+            if (IsBlockElement(cell.Text))
+            {
+                var blockX = originX + runStart * metrics.CharWidth;
+                if (runBg is not null)
+                {
+                    sb.AppendLine(CultureInfo.InvariantCulture,
+                        $"<rect class=\"bg\" x=\"{blockX:0.##}\" y=\"{rowY:0.##}\" width=\"{metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\" fill=\"{runBg}\"/>");
+                }
+
+                RenderBlockElement(sb, cell.Text, blockX, rowY, metrics.CharWidth, metrics.LineHeight, runFg);
+                col = runStart + (cell.IsWide ? 2 : 1);
+                continue;
+            }
+
             var runText = (t_runText ??= new StringBuilder(64));
             runText.Clear();
             runText.Append(cell.Text);
@@ -903,6 +918,9 @@ internal static class SvgFrameRenderer
             {
                 var next = buffer.GetCell(row, col);
                 if (next.IsWideContinuation)
+                    break;
+
+                if (IsBlockElement(next.Text))
                     break;
 
                 var nextFg = ResolveTintedForeground(buffer, row, col, next, theme);
@@ -932,12 +950,6 @@ internal static class SvgFrameRenderer
             {
                 sb.AppendLine(CultureInfo.InvariantCulture,
                     $"<rect class=\"bg\" x=\"{x:0.##}\" y=\"{rowY:0.##}\" width=\"{runWidth * metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\" fill=\"{runBg}\"/>");
-            }
-
-            if (IsBlockElement(cell.Text))
-            {
-                RenderBlockElement(sb, cell.Text, x, rowY, runWidth * metrics.CharWidth, metrics.LineHeight, runFg);
-                continue;
             }
 
             var weight = runBold ? "bold" : "normal";
@@ -1240,18 +1252,25 @@ internal static class SvgFrameRenderer
         string text,
         double x,
         double y,
-        double cellRectWidth,
-        double cellRectHeight,
+        double cellWidth,
+        double cellHeight,
         string fill)
     {
         var cp = text.Length == 1 ? text[0] : char.ConvertToUtf32(text[0], text[1]);
-        var w = cellRectWidth;
-        var h = cellRectHeight;
+        var w = cellWidth;
+        var h = cellHeight;
         var hh = h / 2d;
         var hw = w / 2d;
+        var h4 = h / 4d;
+        var w4 = w / 4d;
+        var h8 = h / 8d;
+        var w8 = w / 8d;
 
         void R(double rx, double ry, double rw, double rh)
         {
+            if (rw <= 0 || rh <= 0)
+                return;
+
             sb.AppendLine(CultureInfo.InvariantCulture,
                 $"<rect class=\"bg\" x=\"{rx:0.##}\" y=\"{ry:0.##}\" width=\"{rw:0.##}\" height=\"{rh:0.##}\" fill=\"{fill}\"/>");
         }
@@ -1259,11 +1278,59 @@ internal static class SvgFrameRenderer
         switch (cp)
         {
             case 0x2580: R(x, y, w, hh); break;
+            case 0x2581: R(x, y + h - h8, w, h8); break;
+            case 0x2582: R(x, y + h - h4, w, h4); break;
+            case 0x2583: R(x, y + h - (3 * h8), w, 3 * h8); break;
             case 0x2584: R(x, y + hh, w, hh); break;
+            case 0x2585: R(x, y + (3 * h8), w, 5 * h8); break;
+            case 0x2586: R(x, y + h4, w, 3 * h4); break;
+            case 0x2587: R(x, y + h8, w, 7 * h8); break;
             case 0x2588: R(x, y, w, h); break;
+            case 0x2589: R(x, y, 7 * w8, h); break;
+            case 0x258A: R(x, y, 3 * w4, h); break;
+            case 0x258B: R(x, y, 5 * w8, h); break;
             case 0x258C: R(x, y, hw, h); break;
+            case 0x258D: R(x, y, 3 * w8, h); break;
+            case 0x258E: R(x, y, w4, h); break;
+            case 0x258F: R(x, y, w8, h); break;
             case 0x2590: R(x + hw, y, hw, h); break;
-            default: R(x, y, w, h); break;
+            case 0x2594: R(x, y, w, h8); break;
+            case 0x2595: R(x + (7 * w8), y, w8, h); break;
+            case 0x2596: R(x, y, hw, hh); break;
+            case 0x2597: R(x + hw, y, hw, hh); break;
+            case 0x2598: R(x, y + hh, hw, hh); break;
+            case 0x2599: R(x + hw, y + hh, hw, hh); break;
+            case 0x259A:
+                R(x, y, hw, hh);
+                R(x + hw, y + hh, hw, hh);
+                break;
+            case 0x259B:
+                R(x, y, hw, hh);
+                R(x, y + hh, hw, hh);
+                R(x + hw, y + hh, hw, hh);
+                break;
+            case 0x259C:
+                R(x, y, hw, hh);
+                R(x + hw, y, hw, hh);
+                R(x, y + hh, hw, hh);
+                break;
+            case 0x259D:
+                R(x + hw, y, hw, hh);
+                R(x, y + hh, hw, hh);
+                break;
+            case 0x259E:
+                R(x + hw, y, hw, hh);
+                R(x, y + hh, hw, hh);
+                R(x + hw, y + hh, hw, hh);
+                break;
+            case 0x259F:
+                R(x, y, hw, hh);
+                R(x + hw, y, hw, hh);
+                R(x + hw, y + hh, hw, hh);
+                break;
+            default:
+                R(x, y, w, h);
+                break;
         }
     }
 

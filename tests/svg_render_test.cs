@@ -16,6 +16,7 @@ failures += Run("LoopDurationMatchesAggGifCycle", LoopDurationMatchesAggGifCycle
 failures += Run("MaxFpsDoesNotChangeLoopDuration", MaxFpsDoesNotChangeLoopDuration);
 failures += Run("MatrixTintWhiteNearGreen", MatrixTintWhiteNearGreen);
 failures += Run("MatrixTintIgnoresVerticalNeighbors", MatrixTintIgnoresVerticalNeighbors);
+failures += Run("CopilotBannerBlockGlyphs", CopilotBannerBlockGlyphs);
 
 return failures == 0 ? 0 : 1;
 
@@ -245,6 +246,29 @@ static (double Show, double? Hide) ParseCycleTiming(string keyframesBody, double
     }
 
     return (show ?? 0, hide);
+}
+
+static bool CopilotBannerBlockGlyphs()
+{
+    const string cast = """
+        {"version":3,"term":{"cols":40,"rows":6,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":0,"title":"copilot-banner-glyphs","env":{}}
+        [0.0, "o", "\u001b[38;2;133;52;243m  ╭─╮╭─╮\r\n  ╰─╯╰─╯  \u001b[38;2;145;152;161mCopilot v1.0.68 uses AI.\u001b[38;2;133;52;243m\r\n  █ \u001b[38;2;95;237;131m▘▝ \u001b[38;2;133;52;243m█  \u001b[38;2;145;152;161mCheck for mistakes.\u001b[38;2;133;52;243m\r\n   ▔▔▔▔ \u001b[m"]
+        """;
+
+    var path = Path.Combine(Path.GetTempPath(), $"scenetake-copilot-glyphs-{Guid.NewGuid():N}.cast");
+    try
+    {
+        File.WriteAllText(path, cast);
+        var svg = RenderCast(path);
+        // font-size 16 → line height 20; ▘ is lower-left quadrant (half height), ▔ is upper eighth.
+        return svg.Contains("height=\"10\"", StringComparison.Ordinal)
+            && svg.Contains("height=\"2.5\"", StringComparison.Ordinal)
+            && svg.Contains("╭─╮╭─╮", StringComparison.Ordinal);
+    }
+    finally
+    {
+        File.Delete(path);
+    }
 }
 
 file static class SvgRenderTestPatterns
