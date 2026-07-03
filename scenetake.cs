@@ -896,27 +896,6 @@ static string SanitizeInstantEmitStdout(string stdout)
     return stdout.IndexOf('\0') >= 0 ? "" : stdout;
 }
 
-static void ConfigureChildProcessEnvironment(ProcessStartInfo psi)
-{
-    var processPath = Environment.ProcessPath;
-    if (string.IsNullOrWhiteSpace(processPath))
-        return;
-
-    var directory = Path.GetDirectoryName(processPath);
-    var scenetakeBin = processPath.Replace('\\', '/');
-    psi.EnvironmentVariables["SCENETAKE_BIN"] = scenetakeBin;
-    if (string.IsNullOrWhiteSpace(directory))
-        return;
-
-    var path = psi.EnvironmentVariables["PATH"];
-    if (string.IsNullOrEmpty(path))
-        path = Environment.GetEnvironmentVariable("PATH") ?? "";
-
-    psi.EnvironmentVariables["PATH"] = string.IsNullOrEmpty(path)
-        ? directory
-        : directory + Path.PathSeparator + path;
-}
-
 static void ApplyBurstMergeToChunks(
     List<(double Time, string Text)> chunks,
     IReadOnlyList<PipeStreamChunk> rawChunks)
@@ -1189,7 +1168,6 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
         psi.ArgumentList.Add(arg);
     psi.ArgumentList.Add(cmd);
     if (!string.IsNullOrWhiteSpace(cwd)) psi.WorkingDirectory = cwd;
-    ConfigureChildProcessEnvironment(psi);
 
     using var proc = new Process { StartInfo = psi };
     proc.Start();
