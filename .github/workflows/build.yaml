@@ -47,6 +47,17 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Pack MiniPty local feed
+        shell: bash
+        run: |
+          minipty_root="$(dirname "$GITHUB_WORKSPACE")/MiniPty"
+          if ls "$minipty_root/publish/MiniPty.Console."*.nupkg >/dev/null 2>&1; then
+            echo "MiniPty packages already present at $minipty_root/publish"
+            exit 0
+          fi
+          git clone --depth 1 https://github.com/guitarrapc/MiniPty.git "$minipty_root"
+          bash "$minipty_root/scripts/pack-with-native.sh" 1.0.3-local "$minipty_root/publish"
+
       - name: Publish NativeAOT binary
         shell: bash
         run: |
@@ -128,6 +139,7 @@ jobs:
           dotnet run tests/cast_timing_test.cs
           SCENETAKE_BIN="$binary_path" dotnet run tests/stream_output_test.cs
           SCENETAKE_BIN="$binary_path" dotnet run tests/pty_test.cs
+          SCENETAKE_BIN="$binary_path" dotnet run tests/interactive_pty_test.cs
           dotnet run tests/readme_sync_test.cs
           dotnet run tests/svg_render_test.cs
           dotnet run tests/window_chrome_test.cs

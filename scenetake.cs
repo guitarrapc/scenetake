@@ -5,9 +5,9 @@
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
 #:package VYaml@1.3.0
-#:package MiniPty@1.0.2-local
-#:package MiniPty.Capture@1.0.2-local
-#:package MiniPty.Console@1.0.2-local
+#:package MiniPty@1.0.3-local
+#:package MiniPty.Capture@1.0.3-local
+#:package MiniPty.Console@1.0.3-local
 #:include Terminal.cs
 #:include Svg.cs
 #:include CastReader.cs
@@ -1386,7 +1386,7 @@ static async Task<CommandExecution> RunInteractivePtyAsync(
 
     int exitCode;
     using (var attachCts = new CancellationTokenSource())
-    using (var consoleInput = PtyConsoleInput.Attach(session))
+    using (var consoleInput = PtyConsoleInput.Attach(session, new PtyConsoleAttachOptions { SyncHostSize = false }))
     {
         var exitTask = session.WaitForExitAsync(attachCts.Token);
         _ = exitTask.ContinueWith(

@@ -14,6 +14,7 @@ scenetake のサンプル集です。各シナリオの**目的**と**生成物*
 | [git](#git) | 実コマンドの git デモ | [git.yaml](git.yaml) | [cast](git.cast) · [gif](git.gif) · [svg](git.svg) |
 | [highlight](#highlight) | コメント・stdout / stderr の色指定 | [highlight.yaml](highlight.yaml) | [cast](highlight.cast) · [gif](highlight.gif) · [svg](highlight.svg) |
 | [pty](#pty) | `pty: true` で TTY 依存コマンド（`matrix`）を録画 | [pty.yaml](pty.yaml) | [cast](pty.cast) · [gif](pty.gif) · [svg](pty.svg) |
+| [interactive-pty](#interactive-pty) | ホスト端末での対話録画（`interactive: true`） | [interactive-pty.yaml](interactive-pty.yaml) | 手動のみ |
 | [theme](#theme) | light テーマ・16 / 256 色 | [theme.yaml](theme.yaml) | [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
 | [theme-macos](#theme-macos) | macOS ウィンドウ chrome | [theme-macos.yaml](theme-macos.yaml) | [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
 | [theme-windows](#theme-windows) | Windows ウィンドウ chrome | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
@@ -126,7 +127,7 @@ scenetake --format svg samples/highlight.yaml
 
 **目的:** 疑似端末（`pty: true`）で TTY 依存コマンドを録画するサンプル。
 
-- 導入 step はタイピング演出あり。その後 `matrix 5` を `pty: true` で実行（PTY step にはタイピング演出なし）
+- 導入 step はタイピング演出あり。その後 `matrix 5` を `pty: true` で実行（コマンドのタイピング演出のあと PTY キャプチャ）
 - [`matrix`](https://github.com/guitarrapc/matrix) の出力で SVG の **Matrix rain contextual tint**（緑の隣の白ハイライトを明るい緑で描画）も確認できる
 - 再生成時は `matrix` CLI が `PATH` に必要
 - 追加依存なしの最小 `pty: true` 例は [scenario-format の pty demo step](#scenario-format) を参照
@@ -137,6 +138,20 @@ scenetake --format svg samples/highlight.yaml
 
 ```bash
 scenetake --format svg samples/pty.yaml
+```
+
+---
+
+## interactive-pty
+
+**目的:** ホスト端末で TUI を操作しながら録画する（`pty: true` + `interactive: true`）。
+
+- セッション開始前に `run` のタイピング演出を cast に記録
+- 操作中の PTY 出力を実時間でバッファし、子プロセス終了で step 終了（`:wq` など）
+- **手動のみ** — 実ターミナル（stdin/stdout TTY）と `vim` 等が必要。事前生成 cast/SVG なし
+
+```bash
+scenetake --format svg samples/interactive-pty.yaml out/interactive-pty
 ```
 
 ---

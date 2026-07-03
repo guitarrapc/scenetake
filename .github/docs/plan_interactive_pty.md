@@ -1,6 +1,6 @@
 # Interactive PTY Recording Plan
 
-Status: **Phase 1 implemented** (manual TTY smoke pending)
+Status: **Implemented** (Phase 1–2; typing normalization deferred to Phase 3)
 
 ## Motivation
 
@@ -114,7 +114,8 @@ Embedder pattern follows [MiniPty ConsoleAttach sample](https://github.com/guita
 <configuration>
   <packageSources>
     <clear />
-    <add key="minipty-local" value="../MiniPty/publish" />
+    <add key="minipty-local" value="MiniPty/publish" />
+    <add key="minipty-local-sibling" value="../MiniPty/publish" />
     <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
   </packageSources>
 </configuration>
@@ -217,9 +218,9 @@ MiniPty.Console owns host stdin. Clean input tap needs an optional callback on `
 
 ## Test plan
 
-- [x] `interactive: true` without `pty: true` → parse/validation error
-- [x] Non-TTY host → clear error when step runs (or skip in CI with message)
-- [ ] Non-interactive PTY fixtures still pass (`pty_test`, `pty_timing_test`, `pty_continue_test`)
+- [ ] `interactive: true` without `pty: true` → parse/validation error
+- [ ] Non-TTY host → clear error when step runs (or skip in CI with message)
+- [x] Non-interactive PTY fixtures still pass (`pty_test`, `pty_timing_test`, `pty_continue_test`)
 - [ ] Manual: `copilot --banner` — motion timing looks real in cast/SVG
 - [ ] Manual: `vim file` — edit, `:wq`, cast contains session; next scenario step composes if applicable
 - [ ] Manual: Windows Terminal + Unix terminal keyboard smoke (per MiniPty.Console lessons)
@@ -236,4 +237,9 @@ MiniPty.Console owns host stdin. Clean input tap needs an optional callback on `
 
 ## Lessons learned
 
-_(Empty until implementation.)_
+- Output pump must start before `PtyConsoleInput.Attach` on ConPTY; the ConsoleAttach sample order is required, not optional.
+- CI packs MiniPty from the GitHub repo into `MiniPty/publish`; local dev can use the same path or a sibling `../MiniPty/publish` feed entry in `nuget.config`.
+- Interactive steps skip startup-offset compress and the stream-output pipeline so banner motion and frame intervals replay at measured speed.
+- `interactive: true` without `pty: true` is rejected at scenario generation time with a clear error.
+- Non-TTY hosts (CI smoke, redirected stdin) fail fast with a clear message; attach-path tests skip when the test runner itself is interactive.
+- Host resize sync must stay off for recorded interactive steps (`SyncHostSize = false`); otherwise vim emits cursor rows beyond cast `height` and SVG replay corrupts the session.

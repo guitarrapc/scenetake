@@ -16,6 +16,7 @@ failures += Run("StripAlternateScreenExitCleanup", StripAlternateScreenExitClean
 failures += Run("StripOscAndInitOnly", StripOscAndInitOnly);
 failures += Run("KeepLineEraseDuringLeadingPhase", KeepLineEraseDuringLeadingPhase);
 failures += Run("StripPrivateModes", StripPrivateModes);
+failures += Run("StripLeadingNewlines", StripLeadingNewlines);
 failures += Run("KeepLargePassthroughChunk", KeepLargePassthroughChunk);
 failures += Run("FastPathOutputIsBufferIndependent", FastPathOutputIsBufferIndependent);
 
@@ -107,6 +108,12 @@ static bool StripPrivateModes()
 {
     var output = Filter("\u001b[?9001h\u001b[?1004l\u001b[?2004htext");
     return output == "text";
+}
+
+static bool StripLeadingNewlines()
+{
+    var output = Filter(string.Join("", Enumerable.Repeat("\r\n", 20)), "\u001b[?1049hvim");
+    return output == "\u001b[?1049hvim";
 }
 
 static bool KeepLargePassthroughChunk()

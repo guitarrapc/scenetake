@@ -15,12 +15,13 @@ PTY mode stays opt-in so ordinary steps keep predictable pipe-based stdout/stder
 | Layer | Responsibility |
 |---|---|
 | **MiniPty** / **MiniPty.Capture** | Spawn child in PTY, timestamped byte capture ([MiniPty spec](https://github.com/guitarrapc/MiniPty/blob/main/.github/docs/spec.md)) |
+| **MiniPty.Console** | Host-terminal attach for interactive `pty: true` steps ([MiniPty Console spec](https://github.com/guitarrapc/MiniPty/blob/main/.github/docs/spec_console.md)) |
 | **scenetake** | Map capture chunks to cast `o` events; shell launch; failure handling |
 
 ### Out of scope (v1)
 
-- Long-lived interactive sessions (vim, REPLs)
-- Step-level stdin beyond what the shell command provides
+- Typing normalization for interactive steps (`normalize-typing` — future)
+- Step-level stdin beyond what the shell command provides (non-interactive PTY)
 - YAML keys beyond those defined in [spec_scenario.md](spec_scenario.md)
 - MiniPty library API details — [MiniPty docs](https://github.com/guitarrapc/MiniPty/blob/main/.github/docs/spec_index.md)
 
@@ -53,6 +54,27 @@ When `pty: false` (default):
 
 PTY capture records bytes from the child session. Terminal rendering (ANSI parsing, SVG) is separate: [spec_svg.md](spec_svg.md). OS implementation notes: [MiniPty references/pty_crossplatform.md](https://github.com/guitarrapc/MiniPty/blob/main/.github/docs/references/pty_crossplatform.md).
 
+### Interactive PTY (`interactive: true`)
+
+When a map-form step has `pty: true` and `interactive: true` (default `false`):
+
+- **Host terminal required** — stdin and stdout on the scenetake process must not be redirected. scenetake attaches the host console to the PTY child via **MiniPty.Console** until the child exits.
+- **Simulated typing first** — the same prompt, per-character command typing, and synthetic Enter used by other steps are emitted on the cast timeline **before** the interactive session begins. Typing is a recording effect; keystrokes during the session go to the PTY through the host terminal, not through the pre-recorded typing.
+- **Live output on host** — PTY output is pumped to the host stdout while the session runs so the author can see the TUI.
+- **Wall-clock cast times** — buffered PTY chunks keep measured arrival times. cast `o` events use `command_start + chunk_time`. **No** startup-offset compress, burst merge, idle collapse, or `stream-output` pipeline for interactive steps.
+- **Startup cleanup only** — `PtyLeadingInitFilter` runs on the buffered bytes (same screen-state continuity rules as non-interactive PTY). Other post-filter bytes are recorded unchanged.
+- **Fixed PTY geometry** — host resize is **not** forwarded to the PTY (`SyncHostSize = false`) so child programs such as vim use the scenario `width` × `height` recorded in the cast header. Without this, a larger host terminal would resize the PTY, vim would emit row addresses beyond the cast height, and SVG replay would mis-render the session.
+- **Step ends on child exit** — for example `:wq` in vim or command completion. There is no separate “stop recording” key in v1.
+- **Status on stderr** — attach progress and verbose chunk logs go to stderr so they do not mix with the PTY byte stream on Unix.
+
+| Condition | Behavior |
+|---|---|
+| `interactive: true` without `pty: true` | Fatal error |
+| Host stdin or stdout redirected | Fatal error at step entry |
+| `Pty.IsSupported` false | Fatal error (same as other PTY steps) |
+
+Non-interactive `pty: true` behavior is unchanged. See cast timing contrast in [spec_scenario.md](spec_scenario.md) → Output timing.
+
 ## Platform support
 
 | OS | Backend | Minimum |
@@ -73,7 +95,8 @@ PTY steps follow the same **recorded step** exit-code rules as pipe steps. See [
 | Child non-zero exit | Warning on stderr; recording continues; scenetake exits `0` (same as pipe `steps`) |
 | PTY spawn / ConPTY / `openpty` failure | Fatal error; scenario run aborts |
 | Output drain timeout | Fatal error (`TimeoutException` from capture) |
-| Cancel during interactive API use | Not used by scenetake scenario path in v1 |
+| Interactive step on non-TTY host | Fatal error at step entry |
+| Cancel during interactive attach | Host terminal restored on dispose; scenario aborts if the run is interrupted |
 
 ## Verification
 
@@ -82,13 +105,14 @@ PTY steps follow the same **recorded step** exit-code rules as pipe steps. See [
 | MiniPty core + Capture | [MiniPty/tests](https://github.com/guitarrapc/MiniPty) |
 | PTY layer | `scenetake/tests/pty_test.cs` |
 | PTY startup cleanup filter | `scenetake/tests/pty_continue_test.cs` |
+| Interactive PTY validation | `scenetake/tests/interactive_pty_test.cs` |
 | Fixture scenarios | `scenetake/tests/fixtures/pty-*.yaml` |
 
 Integration tests require `SCENETAKE_BIN` pointing at a published scenetake binary.
 
 ## Cross-Document Notes
 
-- [spec_scenario.md](spec_scenario.md) — `pty`, `width`, `height` keys and defaults
+- [spec_scenario.md](spec_scenario.md) — `pty`, `interactive`, `width`, `height` keys and defaults
 - [spec_cast.md](spec_cast.md) — cast event format
 - [spec_cli.md](spec_cli.md) — stderr warnings for non-zero step exits
 - [spec_pre_post.md](spec_pre_post.md) — contrast with `pre`/`post` fail-fast
@@ -100,4 +124,7 @@ Integration tests require `SCENETAKE_BIN` pointing at a published scenetake bina
 - Treating screen-state continuity as the default PTY behavior matches user expectations: `pty: true` means a command needs a terminal, not that shell startup clears should become visible demo content.
 - PTY command typing should be emitted by default for visual continuity with pipe steps, but it remains a recording effect. The command still runs through the configured shell in the PTY; scenetake does not inject the typed characters into PTY stdin.
 - Alternate-screen TUI tools may restore the main screen and then emit extra cleanup controls. Preserving the alternate-screen enter/exit while filtering that immediate main-screen cleanup keeps the TUI behavior intact and returns the viewer to the previous history.
+- Interactive PTY steps need the output pump running **before** `PtyConsoleInput.Attach` on Windows ConPTY; reversing that order can stall the session.
+- Interactive steps record wall-clock chunk times so TUI motion (banner animations, spinner frames) replays at real speed in cast/SVG. Startup-offset compress applies only to non-interactive PTY.
+- **Host resize sync breaks vim/svg replay**: `PtyConsoleInput.Attach` defaults to resizing the PTY to the host console. vim then emits cursor addresses for the larger height (for example row 44 on a 44-row host) while the cast header stays at scenario `height` (24). SVG replay clamps out-of-range rows and corrupts the session. scenetake uses `PtyConsoleAttachOptions.SyncHostSize = false` so the PTY keeps scenario geometry.
 - Recorded step failures belong in the cast as demo content; only infrastructure failures (spawn, drain timeout) should abort the run. See [spec_scenario.md](spec_scenario.md) → Step exit codes.

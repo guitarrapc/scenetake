@@ -101,6 +101,10 @@ internal sealed class PtyLeadingInitFilter
                 return false;
             }
         }
+        else if (first is (byte)'\r' or (byte)'\n' or (byte)'\t')
+        {
+            StripPending(1);
+        }
         else
         {
             output.Add(first);
