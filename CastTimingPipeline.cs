@@ -1,4 +1,5 @@
 using System.Text;
+using System.Runtime.InteropServices;
 
 internal readonly record struct CastTimingSettings(
     double SilenceThreshold,
@@ -102,23 +103,33 @@ internal static class CastTimingPipeline
         if (chunks.Count == 0)
             return [];
 
+        static byte[] GetBytes(ReadOnlyMemory<byte> data)
+        {
+            return MemoryMarshal.TryGetArray(data, out ArraySegment<byte> segment)
+                   && segment.Array is not null
+                   && segment.Offset == 0
+                   && segment.Count == segment.Array.Length
+                ? segment.Array
+                : data.ToArray();
+        }
+
         var result = new List<(double Time, byte[] Data)>(chunks.Count);
         var currentTime = chunks[0].Time;
         var currentLength = chunks[0].Data.Length;
-        var buffers = new List<byte[]>(4) { chunks[0].Data.ToArray() };
+        var buffers = new List<byte[]>(4) { GetBytes(chunks[0].Data) };
         for (var i = 1; i < chunks.Count; i++)
         {
             var (time, data) = chunks[i];
             if (HaveSameTime(time, currentTime))
             {
-                buffers.Add(data.ToArray());
+                buffers.Add(GetBytes(data));
                 currentLength += data.Length;
                 continue;
             }
 
             result.Add((currentTime, ConcatUtf8(buffers, currentLength)));
             currentTime = time;
-            buffers = [data.ToArray()];
+            buffers = [GetBytes(data)];
             currentLength = data.Length;
         }
 
