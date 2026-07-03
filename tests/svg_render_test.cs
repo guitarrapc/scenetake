@@ -260,10 +260,13 @@ static bool CopilotBannerBlockGlyphs()
     {
         File.WriteAllText(path, cast);
         var svg = RenderCast(path);
-        // font-size 16 → line height 20; ▘ is lower-left quadrant (half height), ▔ is upper eighth.
-        return svg.Contains("height=\"10\"", StringComparison.Ordinal)
-            && svg.Contains("height=\"2.5\"", StringComparison.Ordinal)
-            && svg.Contains("╭─╮╭─╮", StringComparison.Ordinal);
+        // Block glyphs render as text (same baseline as box drawing), not oversized rects.
+        return svg.Contains("╭─╮╭─╮", StringComparison.Ordinal)
+            && svg.Contains("▘", StringComparison.Ordinal)
+            && svg.Contains("▝", StringComparison.Ordinal)
+            && svg.Contains("▔", StringComparison.Ordinal)
+            && svg.Contains("lengthAdjust=\"spacingAndGlyphs\"", StringComparison.Ordinal)
+            && !svg.Contains("height=\"10\"", StringComparison.Ordinal);
     }
     finally
     {

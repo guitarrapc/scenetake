@@ -45,7 +45,7 @@ Cast file format (header, versions, written event codes): [spec_cast.md](spec_ca
 | SGR: bold, faint, italic, underline, reverse, 16/256/true color | Yes — `;` and `:` forms |
 | Unicode wide chars, surrogate pairs, combining marks, VS | Yes |
 | OSC / DCS / charset designations | Skipped (not rendered) |
-| Block elements U+2580–U+259F | Yes — SVG rects |
+| Block elements U+2580–U+259F | Yes — monospace font glyphs (aligned with box drawing on the same baseline) |
 
 Tests: `tests/terminal_tests.cs`.
 
