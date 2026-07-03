@@ -10,20 +10,13 @@ settings:
   execution-duration: 0.05
 
 steps:
-  - name: docker build stream
+  - name: docker stream
     run: |
-      dockerdir=".scenetake-docker-$RANDOM-$$"
-      dockerfile="$dockerdir/Dockerfile"
-      rm -rf "$dockerdir"
-      mkdir -p "$dockerdir"
-      trap 'rm -rf "$dockerdir"' EXIT
-      cat >"$dockerfile" <<'EOF'
-      FROM alpine:3.20
-      RUN echo "scenetake-layer-1"
-      RUN sleep 2
-      RUN echo "scenetake-layer-2"
-      EOF
-      MSYS_NO_PATHCONV=1 docker build --no-cache --progress=plain -f "$dockerfile" "$dockerdir"
+      echo "scenetake-layer-1"
+      docker version --format '{{.Server.Version}}'
+      sleep 2
+      echo "scenetake-layer-2"
+      docker version --format '{{.Server.Version}}'
     stream-output: true
     max-duration: 12
     silence-threshold: 2.0
