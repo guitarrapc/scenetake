@@ -22,7 +22,7 @@ steps:
       RUN sleep 2
       RUN echo "scenetake-layer-2"
       EOF
-      docker build --no-cache --progress=plain -f "$dockerfile" -t "scenetake-stream-docker-test:$RANDOM" "$dockerdir"
+      docker build --no-cache --progress=plain -f "$dockerfile" "$dockerdir"
     stream-output: true
     max-duration: 12
     silence-threshold: 2.0
