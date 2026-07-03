@@ -12,8 +12,9 @@ settings:
 steps:
   - name: docker build stream
     run: |
-      dockerdir="$(pwd)/.scenetake-docker-$RANDOM-$$"
+      dockerdir=".scenetake-docker-$RANDOM-$$"
       dockerfile="$dockerdir/Dockerfile"
+      rm -rf "$dockerdir"
       mkdir -p "$dockerdir"
       trap 'rm -rf "$dockerdir"' EXIT
       cat >"$dockerfile" <<'EOF'
@@ -22,7 +23,7 @@ steps:
       RUN sleep 2
       RUN echo "scenetake-layer-2"
       EOF
-      docker build --no-cache --progress=plain -f "$dockerfile" "$dockerdir"
+      MSYS_NO_PATHCONV=1 docker build --no-cache --progress=plain -f "$dockerfile" "$dockerdir"
     stream-output: true
     max-duration: 12
     silence-threshold: 2.0
