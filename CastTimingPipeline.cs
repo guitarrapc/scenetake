@@ -166,13 +166,30 @@ internal static class HighlightSplitter
         var visibleStart = 0;
         foreach (var raw in rawSegments)
         {
-            var length = NormalizeToLf(raw).Length;
+            var length = VisibleLength(NormalizeToLf(raw));
             var visibleEnd = visibleStart + length;
             results.Add(ExtractVisibleRange(highlighted, visibleStart, visibleEnd));
             visibleStart = visibleEnd;
         }
 
         return results;
+    }
+
+    private static int VisibleLength(string text)
+    {
+        var visible = 0;
+        for (var i = 0; i < text.Length; i++)
+        {
+            if (text[i] == '\u001b')
+            {
+                i = SkipAnsiSequence(text, i) - 1;
+                continue;
+            }
+
+            visible++;
+        }
+
+        return visible;
     }
 
     private static int SkipAnsiSequence(string text, int index)

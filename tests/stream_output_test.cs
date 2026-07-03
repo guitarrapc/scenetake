@@ -202,8 +202,8 @@ static bool DockerEnabled()
     {
         var psi = new ProcessStartInfo("docker", ["version", "--format", "{{.Server.Version}}"])
         {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
+            RedirectStandardOutput = false,
+            RedirectStandardError = false,
             UseShellExecute = false,
         };
         using var process = Process.Start(psi);
@@ -228,8 +228,8 @@ static bool RunScenetake(string fixturePath, string outputStem, out int exitCode
 
     var psi = new ProcessStartInfo(scenetakePath, [fixturePath, outputStem])
     {
-        RedirectStandardOutput = true,
-        RedirectStandardError = true,
+        RedirectStandardOutput = false,
+        RedirectStandardError = false,
         UseShellExecute = false,
     };
 
