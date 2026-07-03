@@ -228,12 +228,15 @@ steps:
     run: sleep 1
     execution-duration: 0.5
 
-  - name: "stream-output (staggered replay)"
-    run: bash -c 'echo stream-first; sleep 1; echo stream-second'
+  - name: "instant emit (ping, one blob)"
+    run: bash -c 'case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) ping -n 4 127.0.0.1 ;; *) ping -c 4 127.0.0.1 ;; esac'
+    execution-duration: 0.2
+
+  - name: "stream-output (ping, staggered replay)"
+    run: bash -c 'case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) ping -n 4 127.0.0.1 ;; *) ping -c 4 127.0.0.1 ;; esac'
     stream-output: true
-    max-duration: 10
-    silence-threshold: 0.3
-    max-idle: 0.1
+    silence-threshold: 2.0
+    max-idle: 0.2
 
   - name: "pty demo"
     run: echo "This command runs in a PTY, so output appears immediately and can include interactive features like colors and progress bars."
