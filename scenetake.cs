@@ -5,9 +5,9 @@
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
 #:package VYaml@1.3.0
-#:package MiniPty@1.0.3-local
-#:package MiniPty.Capture@1.0.3-local
-#:package MiniPty.Console@1.0.3-local
+#:package MiniPty@1.0.4-local
+#:package MiniPty.Capture@1.0.4-local
+#:package MiniPty.Console@1.0.4-local
 #:include Terminal.cs
 #:include Svg.cs
 #:include CastReader.cs
@@ -15,6 +15,7 @@
 #:include PtyLeadingInitFilter.cs
 #:include CastTimingPipeline.cs
 #:include PipeStreamCapture.cs
+#:include InteractivePtyInputRecorder.cs
 
 using MiniPty;
 using MiniPty.Capture;
@@ -1380,13 +1381,19 @@ static async Task<CommandExecution> RunInteractivePtyAsync(
 
     var stopwatch = Stopwatch.StartNew();
     var chunks = new List<PtyCaptureChunk>();
+    var inputChunks = new List<PtyInputChunk>();
+    var inputRecorder = new InteractivePtyInputRecorder(stopwatch, inputChunks);
     var pumpTask = PumpInteractiveOutputAsync(session, chunks, stopwatch, verbose);
 
     Console.Error.WriteLine("  attaching host terminal for interactive PTY input...");
 
     int exitCode;
     using (var attachCts = new CancellationTokenSource())
-    using (var consoleInput = PtyConsoleInput.Attach(session, new PtyConsoleAttachOptions { SyncHostSize = false }))
+    using (var consoleInput = PtyConsoleInput.Attach(session, new PtyConsoleAttachOptions
+    {
+        SyncHostSize = false,
+        InputObserver = inputRecorder,
+    }))
     {
         var exitTask = session.WaitForExitAsync(attachCts.Token);
         _ = exitTask.ContinueWith(
@@ -1406,9 +1413,11 @@ static async Task<CommandExecution> RunInteractivePtyAsync(
         ResetUnixHostCursorColumn();
 
     if (verbose)
-        Console.Error.WriteLine($"scenetake: interactive pty verbose: chunks={chunks.Count}");
+    {
+        Console.Error.WriteLine($"scenetake: interactive pty verbose: chunks={chunks.Count} input={inputChunks.Count}");
+    }
 
-    return CommandExecution.FromInteractivePty(exitCode, chunks);
+    return CommandExecution.FromInteractivePty(exitCode, chunks, inputChunks);
 }
 
 static async Task PumpInteractiveOutputAsync(
@@ -2800,23 +2809,27 @@ readonly record struct CommandExecution(
     string Output,
     string Stderr,
     IReadOnlyList<PtyCaptureChunk>? PtyByteChunks,
+    IReadOnlyList<PtyInputChunk>? PtyInputChunks,
     IReadOnlyList<PipeStreamChunk>? PipeStreamChunks)
 {
     public static CommandExecution FromCapture(PtyCaptureResult result) =>
-        new(result.ExitCode, true, "", "", result.Chunks, null);
+        new(result.ExitCode, true, "", "", result.Chunks, null, null);
 
-    public static CommandExecution FromInteractivePty(int exitCode, IReadOnlyList<PtyCaptureChunk> chunks) =>
-        new(exitCode, true, "", "", chunks, null);
+    public static CommandExecution FromInteractivePty(
+        int exitCode,
+        IReadOnlyList<PtyCaptureChunk> outputChunks,
+        IReadOnlyList<PtyInputChunk> inputChunks) =>
+        new(exitCode, true, "", "", outputChunks, inputChunks, null);
 
     public static CommandExecution FromPipeStream(
         string stdout,
         string stderr,
         int exitCode,
         IReadOnlyList<PipeStreamChunk> chunks) =>
-        new(exitCode, false, stdout, stderr, null, chunks);
+        new(exitCode, false, stdout, stderr, null, null, chunks);
 
     public static CommandExecution FromPipe(string stdout, string stderr, int exitCode) =>
-        new(exitCode, false, stdout, stderr, null, []);
+        new(exitCode, false, stdout, stderr, null, null, []);
 }
 
 record ShellLaunch(string FileName, string[] Arguments, string EnvValue, string DisplayName);

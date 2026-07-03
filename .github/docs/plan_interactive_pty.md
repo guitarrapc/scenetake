@@ -1,6 +1,6 @@
 # Interactive PTY Recording Plan
 
-Status: **Implemented** (Phase 1–2; typing normalization deferred to Phase 3)
+Status: **Implemented** (Phase 1–2; input tap Phase 2.5; typing normalization deferred to Phase 3)
 
 ## Motivation
 
@@ -21,7 +21,7 @@ A second motivation (deferred) is **typing normalization**: the author should no
 | Cast timing (v1) | **Option C**: raw measured times; **only** `PtyLeadingInitFilter` from existing PTY path. No startup offset compress, burst merge, idle collapse, or `stream-output` pipeline for interactive steps |
 | TUI animations | Record at actual duration (e.g. `copilot --banner` banner motion) |
 | Typing normalization | **Deferred** — optional future `normalize-typing: true` per step |
-| Normalization mechanism (future) | Screen-state diff on `ScreenBuffer` for insert-mode corrections; input tap via MiniPty.Console callback only if needed later |
+| Normalization mechanism (future) | **Input-attributed**: host stdin windows drive normalization; banner/AI output stays wall-clock. Screen diff on `ScreenBuffer` for insert-mode corrections; `IPtyConsoleInputObserver` on MiniPty.Console records parallel input log |
 | Normalization v1 scope (future) | Insert-mode end-of-line typing + Backspace; Normal-mode `hjkl` silent; `x`/`dd`/`dw` → v2 |
 | Package wiring | Local dev via **`nuget.config`** pointing at `../MiniPty/publish`; pack MiniPty with `scripts/pack-with-native.sh` |
 | New dependency | `MiniPty.Console` (plus existing `MiniPty`, `MiniPty.Capture` for non-interactive PTY) |
@@ -83,11 +83,12 @@ Per interactive step, after simulated typing is written to the cast timeline:
 3. Start ReadOutputAsync pump:
      - write each chunk to host stdout (user sees the TUI)
      - buffer (wall-clock time, bytes) for cast emit after session ends
-4. PtyConsoleInput.Attach(session)
+4. PtyConsoleInput.Attach(session, InputObserver = InteractivePtyInputRecorder)
 5. Link CancellationToken to WaitForExitAsync; PumpInputUntil(token)
 6. Await output pump + exit code
 7. Dispose console attach (restore host terminal)
-8. Apply PtyLeadingInitFilter to buffered chunks; emit cast o events at commandStart + chunk_time
+8. Apply PtyLeadingInitFilter to buffered output chunks; emit cast o events at commandStart + chunk_time
+   (input chunks stored on CommandExecution.PtyInputChunks for future normalize-typing; not written to cast in v1)
 9. Continue scenario (post-delay, next step)
 ```
 
@@ -172,6 +173,13 @@ Revert to published versions on nuget.org after MiniPty.Console release.
 - Sample YAML under `samples/` (e.g. `interactive-vim.yaml`) if a portable smoke command exists
 - Lessons learned appended below
 
+### Phase 2.5 — Input tap (done)
+
+- **MiniPty.Console** — optional `IPtyConsoleInputObserver` on `PtyConsoleAttachOptions.InputObserver` (zero alloc when unset).
+- **scenetake** — `InteractivePtyInputRecorder` wired in `RunInteractivePtyAsync`; `CommandExecution.PtyInputChunks` parallel to output chunks (same `Stopwatch`).
+- Cast emit unchanged (wall-clock `o` events only); input log is foundation for Phase 3 `normalize-typing`.
+- Tests: `tests/interactive_pty_input_test.cs`.
+
 ### Phase 3 — Typing normalization (future)
 
 - `normalize-typing: true` opt-in per step
@@ -186,8 +194,9 @@ Revert to published versions on nuget.org after MiniPty.Console release.
 | `GenerateAsync` | Read `interactive`; branch execution + emit |
 | `RunCommandCoreAsync` | Delegate interactive to new path; keep `PtyCapture.RunAsync` for non-interactive |
 | `EmitPtyStepOutput` | Split or parameterize: interactive omits startup offset and `CastTimingSettings` |
-| `CommandExecution` | Unchanged shape if chunk list matches `PtyCaptureChunk` |
-| `tests/pty_test.cs` | Validation tests; optional interactive integration behind TTY guard |
+| `CommandExecution` | `PtyByteChunks` + `PtyInputChunks` for interactive steps |
+| `InteractivePtyInputRecorder.cs` | `IPtyConsoleInputObserver` → timestamped input bytes |
+| `tests/interactive_pty_input_test.cs` | Unit tests for input recorder (no TTY) |
 
 ## Future: typing normalization
 
@@ -202,7 +211,18 @@ Authors type naturally; cast shows polished typing at `typing-speed`. Backspace 
 | Layer | Responsibility |
 |---|---|
 | Layer 1 (`interactive: true`) | Raw PTY + wall-clock (required) |
-| Layer 2 (`normalize-typing: true`) | Post-process or inline filter: screen diff on `ScreenBuffer`, prefix tracking on edit text, shrink → silent rollback, grow → emit chars at `typing-speed` |
+| Layer 2 (`normalize-typing: true`) | During stdin-attributed windows: screen diff on `ScreenBuffer`, prefix tracking, shrink → silent rollback, grow → emit chars at `typing-speed`. Outside stdin windows (banner, streamed AI): keep wall-clock output |
+
+### Input vs output attribution (agreed for Phase 3)
+
+| Source | Cast timing |
+|---|---|
+| No host stdin in window | Wall-clock PTY output (banner, idle, AI stream) |
+| Host stdin forwarded | Normalize visible typing via screen diff + `typing-speed` |
+
+### Why input tap is in place before normalization
+
+MiniPty.Console now exposes `IPtyConsoleInputObserver` so scenetake can distinguish “author typing” from “program output” without cast markers. Screen diff still handles echo and backspace stripping; the observer defines **when** normalization applies.
 
 ### v1 normalization scope (agreed for future, not current work)
 
@@ -212,10 +232,6 @@ Authors type naturally; cast shows polished typing at `typing-speed`. Backspace 
 | Normal mode `hjkl` (cursor only) | Do not emit extra cast events |
 | Normal mode `x` / `dd` / `dw` | v2 |
 
-### Why not input tap first
-
-MiniPty.Console owns host stdin. Clean input tap needs an optional callback on `Attach`. Screen diff reuses existing `Terminal.cs` / `ScreenBuffer` and aligns with “record what appeared on screen.” Input tap remains a v2 enhancement for echo-off edge cases.
-
 ## Test plan
 
 - [ ] `interactive: true` without `pty: true` → parse/validation error
@@ -223,7 +239,7 @@ MiniPty.Console owns host stdin. Clean input tap needs an optional callback on `
 - [x] Non-interactive PTY fixtures still pass (`pty_test`, `pty_timing_test`, `pty_continue_test`)
 - [ ] Manual: `copilot --banner` — motion timing looks real in cast/SVG
 - [ ] Manual: `vim file` — edit, `:wq`, cast contains session; next scenario step composes if applicable
-- [ ] Manual: Windows Terminal + Unix terminal keyboard smoke (per MiniPty.Console lessons)
+- [x] Input recorder unit tests (`interactive_pty_input_test.cs`)
 
 ## Risks and mitigations
 
@@ -243,3 +259,4 @@ MiniPty.Console owns host stdin. Clean input tap needs an optional callback on `
 - `interactive: true` without `pty: true` is rejected at scenario generation time with a clear error.
 - Non-TTY hosts (CI smoke, redirected stdin) fail fast with a clear message; attach-path tests skip when the test runner itself is interactive.
 - Host resize sync must stay off for recorded interactive steps (`SyncHostSize = false`); otherwise vim emits cursor rows beyond cast `height` and SVG replay corrupts the session.
+- Parallel input log (`PtyInputChunks`) uses the same `Stopwatch` as output chunks; cast v1 still emits only `o` events at wall-clock times.

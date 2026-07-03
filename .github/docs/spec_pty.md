@@ -65,7 +65,8 @@ When a map-form step has `pty: true` and `interactive: true` (default `false`):
 - **Startup cleanup only** — `PtyLeadingInitFilter` runs on the buffered bytes (same screen-state continuity rules as non-interactive PTY). Other post-filter bytes are recorded unchanged.
 - **Fixed PTY geometry** — host resize is **not** forwarded to the PTY (`SyncHostSize = false`) so child programs such as vim use the scenario `width` × `height` recorded in the cast header. Without this, a larger host terminal would resize the PTY, vim would emit row addresses beyond the cast height, and SVG replay would mis-render the session.
 - **Step ends on child exit** — for example `:wq` in vim or command completion. There is no separate “stop recording” key in v1.
-- **Status on stderr** — attach progress and verbose chunk logs go to stderr so they do not mix with the PTY byte stream on Unix.
+- **Parallel input log** — host keystrokes forwarded to the PTY are recorded as timestamped byte chunks (`PtyInputChunks` on `CommandExecution`) via `IPtyConsoleInputObserver`. v1 does **not** write cast `i` events or apply `normalize-typing`; the log exists for future typing normalization.
+- **Status on stderr** — attach progress and verbose chunk logs (output + input event counts) go to stderr so they do not mix with the PTY byte stream on Unix.
 
 | Condition | Behavior |
 |---|---|
@@ -106,6 +107,7 @@ PTY steps follow the same **recorded step** exit-code rules as pipe steps. See [
 | PTY layer | `scenetake/tests/pty_test.cs` |
 | PTY startup cleanup filter | `scenetake/tests/pty_continue_test.cs` |
 | Interactive PTY validation | `scenetake/tests/interactive_pty_test.cs` |
+| Interactive input recorder | `scenetake/tests/interactive_pty_input_test.cs` |
 | Fixture scenarios | `scenetake/tests/fixtures/pty-*.yaml` |
 
 Integration tests require `SCENETAKE_BIN` pointing at a published scenetake binary.
