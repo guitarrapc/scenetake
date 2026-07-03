@@ -266,9 +266,6 @@ internal sealed class PtyLeadingInitFilter
                 return true;
             }
 
-            if (context == EscapeContext.AfterAlternateScreenExit)
-                mode = FilterMode.Passthrough;
-
             AppendRange(output, pending, 0, length);
             pending.RemoveRange(0, length);
             return true;
@@ -319,7 +316,10 @@ internal sealed class PtyLeadingInitFilter
     private bool ConsumeUnknownEscape(List<byte> output)
     {
         if (mode == FilterMode.AfterAlternateScreenExit)
-            mode = FilterMode.Passthrough;
+        {
+            StripPending(2);
+            return true;
+        }
 
         output.Add(pending[0]);
         output.Add(pending[1]);
@@ -378,7 +378,7 @@ internal sealed class PtyLeadingInitFilter
         foreach (var mode in SplitModes(parameters[1..]))
         {
             anyMode = true;
-            if (!IsOneOf(mode, "25"u8, "9001"u8, "1004"u8, "2004"u8))
+            if (!IsOneOf(mode, "12"u8, "25"u8, "9001"u8, "1004"u8, "2004"u8))
                 return false;
         }
 
@@ -408,6 +408,9 @@ internal sealed class PtyLeadingInitFilter
 
     private static bool IsOneOf(ReadOnlySpan<byte> value, ReadOnlySpan<byte> first, ReadOnlySpan<byte> second, ReadOnlySpan<byte> third, ReadOnlySpan<byte> fourth) =>
         value.SequenceEqual(first) || value.SequenceEqual(second) || value.SequenceEqual(third) || value.SequenceEqual(fourth);
+
+    private static bool IsOneOf(ReadOnlySpan<byte> value, ReadOnlySpan<byte> first, ReadOnlySpan<byte> second, ReadOnlySpan<byte> third, ReadOnlySpan<byte> fourth, ReadOnlySpan<byte> fifth) =>
+        value.SequenceEqual(first) || value.SequenceEqual(second) || value.SequenceEqual(third) || value.SequenceEqual(fourth) || value.SequenceEqual(fifth);
 
     private static ModeSplitEnumerable SplitModes(ReadOnlySpan<byte> modes) => new(modes);
 
