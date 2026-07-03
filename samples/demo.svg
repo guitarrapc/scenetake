@@ -1126,7 +1126,7 @@ text { dominant-baseline: alphabetic; }
 <text x="22" y="442.8" fill="#ac4142" font-weight="normal" textLength="39.68" lengthAdjust="spacing">put&quot;</text>
 </g>
 <g class="layer layer-129">
-<text x="22" y="462.8" fill="#ac4142" font-weight="normal" textLength="426.56" lengthAdjust="spacing">Written: scenario.cast  (206 events, 15.8s)</text>
+<text x="22" y="462.8" fill="#ac4142" font-weight="normal" textLength="426.56" lengthAdjust="spacing">Written: scenario.cast  (206 events, 15.6s)</text>
 </g>
 <g class="layer layer-130">
 <text x="22" y="482.8" fill="#ac4142" font-weight="normal" textLength="208.32" lengthAdjust="spacing">Written: scenario.svg</text>
@@ -1405,7 +1405,7 @@ text { dominant-baseline: alphabetic; }
 <text x="22" y="422.8" fill="#ac4142" font-weight="normal" textLength="39.68" lengthAdjust="spacing">put&quot;</text>
 </g>
 <g class="layer layer-222">
-<text x="22" y="442.8" fill="#ac4142" font-weight="normal" textLength="426.56" lengthAdjust="spacing">Written: scenario.cast  (206 events, 15.8s)</text>
+<text x="22" y="442.8" fill="#ac4142" font-weight="normal" textLength="426.56" lengthAdjust="spacing">Written: scenario.cast  (206 events, 15.6s)</text>
 </g>
 <g class="layer layer-223">
 <text x="22" y="462.8" fill="#ac4142" font-weight="normal" textLength="208.32" lengthAdjust="spacing">Written: scenario.svg</text>
@@ -1576,7 +1576,7 @@ text { dominant-baseline: alphabetic; }
 <text x="22" y="402.8" fill="#ac4142" font-weight="normal" textLength="39.68" lengthAdjust="spacing">put&quot;</text>
 </g>
 <g class="layer layer-279">
-<text x="22" y="422.8" fill="#ac4142" font-weight="normal" textLength="426.56" lengthAdjust="spacing">Written: scenario.cast  (206 events, 15.8s)</text>
+<text x="22" y="422.8" fill="#ac4142" font-weight="normal" textLength="426.56" lengthAdjust="spacing">Written: scenario.cast  (206 events, 15.6s)</text>
 </g>
 <g class="layer layer-280">
 <text x="22" y="442.8" fill="#ac4142" font-weight="normal" textLength="208.32" lengthAdjust="spacing">Written: scenario.svg</text>
@@ -1591,73 +1591,73 @@ text { dominant-baseline: alphabetic; }
 <text x="22" y="502.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">data/scenario.cast /data/scenario.gif</text>
 </g>
 <g class="layer layer-284">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">179 / 201 [==========================================&gt;-----] 89.05 % 59.29/s 0s</text>
+<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">180 / 201 [==========================================&gt;----] 89.55 % 108.63/s 0s</text>
 </g>
 <g class="layer layer-285">
-<text x="22" y="82.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">180 / 201 [==========================================&gt;-----] 89.55 % 59.31/s 0s</text>
+<text x="22" y="82.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">181 / 201 [==========================================&gt;----] 90.05 % 109.13/s 0s</text>
 </g>
 <g class="layer layer-286">
-<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">181 / 201 [===========================================&gt;----] 90.05 % 59.33/s 0s</text>
+<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">182 / 201 [==========================================&gt;----] 90.55 % 109.38/s 0s</text>
 </g>
 <g class="layer layer-287">
-<text x="22" y="122.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">182 / 201 [===========================================&gt;----] 90.55 % 59.35/s 0s</text>
+<text x="22" y="122.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">183 / 201 [==========================================&gt;----] 91.04 % 109.62/s 0s</text>
 </g>
 <g class="layer layer-288">
-<text x="22" y="142.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">183 / 201 [===========================================&gt;----] 91.04 % 59.37/s 0s</text>
+<text x="22" y="142.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">184 / 201 [===========================================&gt;---] 91.54 % 109.85/s 0s</text>
 </g>
 <g class="layer layer-289">
-<text x="22" y="162.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">184 / 201 [===========================================&gt;----] 91.54 % 59.39/s 0s</text>
+<text x="22" y="162.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">185 / 201 [===========================================&gt;---] 92.04 % 110.11/s 0s</text>
 </g>
 <g class="layer layer-290">
-<text x="22" y="182.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">185 / 201 [============================================&gt;---] 92.04 % 59.42/s 0s</text>
+<text x="22" y="182.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">186 / 201 [===========================================&gt;---] 92.54 % 110.34/s 0s</text>
 </g>
 <g class="layer layer-291">
-<text x="22" y="202.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">186 / 201 [============================================&gt;---] 92.54 % 59.46/s 0s</text>
+<text x="22" y="202.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">187 / 201 [===========================================&gt;---] 93.03 % 110.57/s 0s</text>
 </g>
 <g class="layer layer-292">
-<text x="22" y="222.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">187 / 201 [============================================&gt;---] 93.03 % 59.48/s 0s</text>
+<text x="22" y="222.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">188 / 201 [===========================================&gt;---] 93.53 % 110.82/s 0s</text>
 </g>
 <g class="layer layer-293">
-<text x="22" y="242.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">188 / 201 [============================================&gt;---] 93.53 % 59.50/s 0s</text>
+<text x="22" y="242.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">189 / 201 [============================================&gt;--] 94.03 % 111.07/s 0s</text>
 </g>
 <g class="layer layer-294">
-<text x="22" y="262.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">189 / 201 [=============================================&gt;--] 94.03 % 59.52/s 0s</text>
+<text x="22" y="262.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">190 / 201 [============================================&gt;--] 94.53 % 111.32/s 0s</text>
 </g>
 <g class="layer layer-295">
-<text x="22" y="282.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">190 / 201 [=============================================&gt;--] 94.53 % 59.49/s 0s</text>
+<text x="22" y="282.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">191 / 201 [============================================&gt;--] 95.02 % 111.57/s 0s</text>
 </g>
 <g class="layer layer-296">
-<text x="22" y="302.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">191 / 201 [=============================================&gt;--] 95.02 % 59.52/s 0s</text>
+<text x="22" y="302.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">192 / 201 [============================================&gt;--] 95.52 % 111.82/s 0s</text>
 </g>
 <g class="layer layer-297">
-<text x="22" y="322.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">192 / 201 [=============================================&gt;--] 95.52 % 59.55/s 0s</text>
+<text x="22" y="322.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">193 / 201 [=============================================&gt;-] 96.02 % 112.09/s 0s</text>
 </g>
 <g class="layer layer-298">
-<text x="22" y="342.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">193 / 201 [==============================================&gt;-] 96.02 % 59.63/s 0s</text>
+<text x="22" y="342.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">194 / 201 [=============================================&gt;-] 96.52 % 112.34/s 0s</text>
 </g>
 <g class="layer layer-299">
-<text x="22" y="362.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">194 / 201 [==============================================&gt;-] 96.52 % 59.84/s 0s</text>
+<text x="22" y="362.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">195 / 201 [=============================================&gt;-] 97.01 % 112.59/s 0s</text>
 </g>
 <g class="layer layer-300">
-<text x="22" y="382.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">195 / 201 [==============================================&gt;-] 97.01 % 60.06/s 0s</text>
+<text x="22" y="382.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">196 / 201 [=============================================&gt;-] 97.51 % 112.84/s 0s</text>
 </g>
 <g class="layer layer-301">
-<text x="22" y="402.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">196 / 201 [==============================================&gt;-] 97.51 % 60.27/s 0s</text>
+<text x="22" y="402.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">197 / 201 [===============================================] 98.01 % 113.09/s 0s</text>
 </g>
 <g class="layer layer-302">
-<text x="22" y="422.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">197 / 201 [================================================] 98.01 % 60.48/s 0s</text>
+<text x="22" y="422.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">198 / 201 [===============================================] 98.51 % 113.36/s 0s</text>
 </g>
 <g class="layer layer-303">
-<text x="22" y="442.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">198 / 201 [================================================] 98.51 % 60.69/s 0s</text>
+<text x="22" y="442.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">199 / 201 [===============================================] 99.00 % 113.60/s 0s</text>
 </g>
 <g class="layer layer-304">
-<text x="22" y="462.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">199 / 201 [================================================] 99.00 % 60.90/s 0s</text>
+<text x="22" y="462.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">200 / 201 [===============================================] 99.50 % 112.51/s 0s</text>
 </g>
 <g class="layer layer-305">
-<text x="22" y="482.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">200 / 201 [================================================] 99.50 % 60.76/s 0s</text>
+<text x="22" y="482.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">201 / 201 [=================================================] 100.00 % 112.69/s</text>
 </g>
 <g class="layer layer-306">
-<text x="22" y="502.8" fill="#d0d0d0" font-weight="normal" textLength="783.68" lengthAdjust="spacing">201 / 201 [==================================================] 100.00 % 60.97/s</text>
+<text x="22" y="502.8" fill="#ac4142" font-weight="normal" textLength="605.12" lengthAdjust="spacing">[WARN  fontdb] Fallback to loading from known font dir paths.</text>
 </g>
 <g class="layer layer-307">
 <text x="22" y="522.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
