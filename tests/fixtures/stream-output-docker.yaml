@@ -12,9 +12,10 @@ settings:
 steps:
   - name: docker build stream
     run: |
-      dockerfile="$(mktemp)"
-      dockerdir="$(dirname "$dockerfile")"
-      trap 'rm -f "$dockerfile"' EXIT
+      dockerdir="$(pwd)/.scenetake-docker-$RANDOM-$$"
+      dockerfile="$dockerdir/Dockerfile"
+      mkdir -p "$dockerdir"
+      trap 'rm -rf "$dockerdir"' EXIT
       cat >"$dockerfile" <<'EOF'
       FROM alpine:3.20
       RUN echo "scenetake-layer-1"

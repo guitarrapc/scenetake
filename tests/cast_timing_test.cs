@@ -14,6 +14,7 @@ failures += Run("CoalesceTimedTextMerges", CoalesceTimedTextMerges);
 failures += Run("CoalesceTimedUtf8Merges", CoalesceTimedUtf8Merges);
 failures += Run("MergeBurstGapsCollapses", MergeBurstGapsCollapses);
 failures += Run("HighlightSplitterPreservesSegments", HighlightSplitterPreservesSegments);
+failures += Run("HighlightSplitterKeepsSgrAcrossBoundary", HighlightSplitterKeepsSgrAcrossBoundary);
 
 return failures == 0 ? 0 : 1;
 
@@ -37,56 +38,24 @@ static int Run(string name, Func<bool> test)
     }
 }
 
-static void CollapseIdleGaps(Span<double> times, double silenceThreshold, double maxIdle)
-{
-    if (times.Length <= 1 || silenceThreshold < 0 || maxIdle < 0)
-        return;
-
-    var original = times.ToArray();
-    var cursor = original[0];
-    times[0] = cursor;
-    for (var i = 1; i < original.Length; i++)
-    {
-        var gap = original[i] - original[i - 1];
-        if (gap > silenceThreshold)
-            gap = maxIdle;
-        cursor += gap;
-        times[i] = cursor;
-    }
-}
-
-static void LinearCompress(Span<double> times, double maxDuration)
-{
-    if (times.Length == 0)
-        return;
-
-    var total = times[^1];
-    if (total <= maxDuration || total <= 0)
-        return;
-
-    var scale = maxDuration / total;
-    for (var i = 0; i < times.Length; i++)
-        times[i] *= scale;
-}
-
 static bool CollapseIdleGapLong()
 {
     var times = new[] { 0.0, 30.0, 30.5 };
-    CollapseIdleGaps(times, silenceThreshold: 2.0, maxIdle: 0.2);
+    CastTimingPipeline.CollapseIdleGaps(times, silenceThreshold: 2.0, maxIdle: 0.2);
     return Math.Abs(times[1] - 0.2) < 1e-9 && Math.Abs(times[2] - 0.7) < 1e-9;
 }
 
 static bool PreserveShortGap()
 {
     var times = new[] { 0.0, 0.5, 1.0 };
-    CollapseIdleGaps(times, silenceThreshold: 2.0, maxIdle: 0.2);
+    CastTimingPipeline.CollapseIdleGaps(times, silenceThreshold: 2.0, maxIdle: 0.2);
     return Math.Abs(times[1] - 0.5) < 1e-9 && Math.Abs(times[2] - 1.0) < 1e-9;
 }
 
 static bool LinearCompressScales()
 {
     var times = new[] { 0.0, 5.0, 10.0 };
-    LinearCompress(times, maxDuration: 5.0);
+    CastTimingPipeline.LinearCompress(times, maxDuration: 5.0);
     return Math.Abs(times[0]) < 1e-9
         && Math.Abs(times[1] - 2.5) < 1e-9
         && Math.Abs(times[2] - 5.0) < 1e-9;
@@ -95,27 +64,15 @@ static bool LinearCompressScales()
 static bool LinearCompressUnderMax()
 {
     var times = new[] { 0.0, 1.0, 2.0 };
-    LinearCompress(times, maxDuration: 5.0);
+    CastTimingPipeline.LinearCompress(times, maxDuration: 5.0);
     return Math.Abs(times[1] - 1.0) < 1e-9 && Math.Abs(times[2] - 2.0) < 1e-9;
-}
-
-static void MergeBurstGaps(Span<double> times, ReadOnlySpan<double> originalSeconds, double burstThreshold)
-{
-    if (times.Length <= 1 || burstThreshold <= 0)
-        return;
-
-    for (var i = 1; i < times.Length; i++)
-    {
-        if (originalSeconds[i] - originalSeconds[i - 1] <= burstThreshold)
-            times[i] = times[i - 1];
-    }
 }
 
 static bool MergeBurstGapsCollapses()
 {
     var times = new[] { 0.0, 0.02, 0.04, 1.0 };
     var original = new[] { 0.0, 0.01, 0.02, 1.0 };
-    MergeBurstGaps(times, original, burstThreshold: 0.05);
+    CastTimingPipeline.MergeBurstGaps(times, original, burstThreshold: 0.05);
     return Math.Abs(times[1]) < 1e-9
         && Math.Abs(times[2]) < 1e-9
         && Math.Abs(times[3] - 1.0) < 1e-9;
@@ -163,4 +120,17 @@ static bool HighlightSplitterPreservesSegments()
     return split.Count == 2
         && split[0].Contains("hello")
         && split[1].Contains("world");
+}
+
+static bool HighlightSplitterKeepsSgrAcrossBoundary()
+{
+    var highlighted = "\u001b[31mhello world\u001b[0m";
+    var split = HighlightSplitter.SplitByRawSegments(highlighted, ["hello ", "world"]);
+    return split.Count == 2
+        && split[0].Contains("hello ", StringComparison.Ordinal)
+        && split[0].Contains("\u001b[31m", StringComparison.Ordinal)
+        && split[0].Contains("\u001b[0m", StringComparison.Ordinal)
+        && split[1].Contains("\u001b[31m", StringComparison.Ordinal)
+        && split[1].Contains("world", StringComparison.Ordinal)
+        && split[1].Contains("\u001b[0m", StringComparison.Ordinal);
 }

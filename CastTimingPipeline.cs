@@ -9,7 +9,7 @@ internal readonly record struct CastTimingSettings(
 internal static class CastTimingSettingsExtensions
 {
     internal static bool UsesStreamEmission(this CastTimingSettings settings) =>
-        settings.StreamOutput || settings.MaxDuration is not null;
+        settings.StreamOutput || (settings.MaxDuration is double maxDuration && maxDuration > 0);
 }
 
 internal static class CastTimingPipeline
@@ -241,24 +241,106 @@ internal static class HighlightSplitter
             return "";
 
         var sb = new System.Text.StringBuilder();
+        var activeSgr = new System.Text.StringBuilder();
         var visible = 0;
+        var prefixedActiveSgr = false;
         for (var index = 0; index < text.Length && visible < visibleEnd; index++)
         {
             if (text[index] == '\u001b')
             {
                 var end = SkipAnsiSequence(text, index);
+                if (IsSgrSequence(text, index, end))
+                {
+                    if (ContainsReset(text, index, end))
+                    {
+                        activeSgr.Clear();
+                    }
+                    else
+                    {
+                        activeSgr.Append(text, index, end - index);
+                    }
+                }
+
                 if (visible >= visibleStart)
+                {
+                    if (!prefixedActiveSgr)
+                    {
+                        sb.Append(activeSgr);
+                        prefixedActiveSgr = true;
+                    }
                     sb.Append(text, index, end - index);
+                }
                 index = end - 1;
                 continue;
             }
 
             if (visible >= visibleStart)
+            {
+                if (!prefixedActiveSgr)
+                {
+                    sb.Append(activeSgr);
+                    prefixedActiveSgr = true;
+                }
                 sb.Append(text[index]);
+            }
             visible++;
         }
 
+        if (prefixedActiveSgr && activeSgr.Length > 0 && !EndsWithReset(sb))
+            sb.Append("\u001b[0m");
+
         return sb.ToString();
+    }
+
+    private static bool IsSgrSequence(string text, int start, int end) =>
+        end > start + 2 && text[start] == '\u001b' && text[start + 1] == '[' && text[end - 1] == 'm';
+
+    private static bool ContainsReset(string text, int start, int end)
+    {
+        var span = text.AsSpan(start, end - start);
+        var i = 2; // skip ESC[
+        var hasDigits = false;
+        var hasCurrentValue = false;
+        var value = 0;
+        while (i < span.Length - 1) // final 'm'
+        {
+            var ch = span[i++];
+            if ((uint)(ch - '0') <= 9)
+            {
+                hasDigits = true;
+                hasCurrentValue = true;
+                value = value * 10 + (ch - '0');
+                continue;
+            }
+
+            if (ch == ';')
+            {
+                if (!hasCurrentValue || value == 0)
+                    return true;
+                value = 0;
+                hasCurrentValue = false;
+                continue;
+            }
+
+            return true;
+        }
+
+        return !hasDigits || !hasCurrentValue || value == 0;
+    }
+
+    private static bool EndsWithReset(StringBuilder sb)
+    {
+        const string reset = "\u001b[0m";
+        if (sb.Length < reset.Length)
+            return false;
+
+        for (var i = 0; i < reset.Length; i++)
+        {
+            if (sb[sb.Length - reset.Length + i] != reset[i])
+                return false;
+        }
+
+        return true;
     }
 
     private static string NormalizeToLf(string text)
