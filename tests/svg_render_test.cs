@@ -15,6 +15,7 @@ failures += Run("SvgLoopsWithCastDuration", SvgLoopsWithCastDuration);
 failures += Run("LoopDurationMatchesAggGifCycle", LoopDurationMatchesAggGifCycle);
 failures += Run("MaxFpsDoesNotChangeLoopDuration", MaxFpsDoesNotChangeLoopDuration);
 failures += Run("MatrixTintWhiteNearGreen", MatrixTintWhiteNearGreen);
+failures += Run("MatrixTintIgnoresVerticalNeighbors", MatrixTintIgnoresVerticalNeighbors);
 
 return failures == 0 ? 0 : 1;
 
@@ -117,6 +118,55 @@ static bool MatrixTintWhiteNearGreen()
     finally
     {
         File.Delete(path);
+    }
+}
+
+static bool MatrixTintIgnoresVerticalNeighbors()
+{
+    const string cast = """
+        {"version":3,"term":{"cols":16,"rows":3,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":0,"title":"matrix-tint-vertical","env":{}}
+        [0.0, "o", "$ \u001b[1;4;32mdate\u001b[0m\r\nFri, Jul  3, 2026\r\n"]
+        """;
+
+    var path = Path.Combine(Path.GetTempPath(), $"scenetake-matrix-tint-vertical-{Guid.NewGuid():N}.cast");
+    try
+    {
+        File.WriteAllText(path, cast);
+        var svg = RenderCast(path);
+        return svg.Contains("Fri, Jul", StringComparison.Ordinal)
+            && !svg.Contains(">i, J<", StringComparison.Ordinal)
+            && CountVisibleGreenDateFragments(svg) == 0;
+    }
+    finally
+    {
+        File.Delete(path);
+    }
+}
+
+static int CountVisibleGreenDateFragments(string svg)
+{
+    const string green = "fill=\"#7e8e50\"";
+    var count = 0;
+    var searchFrom = 0;
+    while (true)
+    {
+        var fill = svg.IndexOf(green, searchFrom, StringComparison.OrdinalIgnoreCase);
+        if (fill < 0)
+            return count;
+
+        var textStart = svg.IndexOf('>', fill) + 1;
+        var textEnd = svg.IndexOf('<', textStart);
+        if (textStart > 0 && textEnd > textStart)
+        {
+            var text = svg[textStart..textEnd];
+            if (text.Contains("Fri", StringComparison.Ordinal)
+                || text.Contains("Jul", StringComparison.Ordinal))
+            {
+                count++;
+            }
+        }
+
+        searchFrom = fill + green.Length;
     }
 }
 

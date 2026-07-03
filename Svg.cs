@@ -979,11 +979,8 @@ internal static class SvgFrameRenderer
         }
 
         var width = buffer.Width;
-        var height = buffer.Height;
         return (col > 0 && GreenAt(row, col - 1))
-            || (col + 1 < width && GreenAt(row, col + 1))
-            || (row > 0 && GreenAt(row - 1, col))
-            || (row + 1 < height && GreenAt(row + 1, col));
+            || (col + 1 < width && GreenAt(row, col + 1));
     }
 
     private static string? ResolveBackground(ScreenCell cell, TerminalTheme theme)

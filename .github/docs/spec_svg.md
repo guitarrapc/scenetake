@@ -62,7 +62,7 @@ Tests: `tests/terminal_tests.cs`.
   - **Outer:** 8px transparent margin.
   - **Inner:** horizontal `font-size × 10/16`, vertical `font-size × 4/16`, clamped (horizontal 4–16px, vertical 2–8px).
 - Block cursor at the emulator position when visible; hidden by `\e[?25l`.
-- **Matrix rain tint:** ANSI bright white (`palette` index 7) adjacent to green (`2` or `10`) renders as bright green (`10`). Helps `cmatrix`-style casts where white highlights sit in green columns.
+- **Matrix rain tint:** ANSI bright white (`palette` index 7) horizontally adjacent to green (`2` or `10`) on the same row renders as bright green (`10`). Helps `cmatrix`-style casts where white highlights sit in green columns. Vertical neighbors are ignored so output on the line below a `run-highlight` command is not tinted.
 
 ### Window chrome
 
