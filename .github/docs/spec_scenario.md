@@ -62,8 +62,28 @@ Defaults for all steps. Map-form steps may override individual keys.
 | `typing-jitter` | `0.015` | Random variance (± seconds) per character |
 | `pre-delay` | `0.2` | Pause before typing a step |
 | `post-delay` | `0.5` | Pause after output before the next step |
-| `execution-duration` | `0.05` | Cast wait after command execution |
+| `execution-duration` | `0.05` | Minimum cast wait after Enter before step output appears (seconds). With default pipe emit, all output is written at `command_start + execution-duration`. |
+| `stream-output` | `false` | When `true`, emit pipe/PTY output as timed chunks using wall-clock capture instead of a single instant blob |
+| `max-duration` | — | When set, enables stream emit and linearly scales the step output timeline to this ceiling (seconds) |
+| `silence-threshold` | `2.0` | Stream mode only: gaps longer than this between chunks are treated as idle (seconds) |
+| `max-idle` | `0.2` | Stream mode only: collapsed idle gap duration (seconds) |
 | `stderr-color` | `red` | Fallback color when stderr has no ANSI SGR. Value format: [spec_highlight.md](spec_highlight.md) |
+
+### Output timing (pipe and PTY)
+
+By default, pipe steps capture stdout/stderr in parallel during execution but write **one** cast `o` event at `command_start + execution-duration`. The event text is **stdout then stderr** (not chronologically interleaved), matching pre-stream-output merge order and keeping stdout `highlight` line numbers stable. This preserves typed-command playback and avoids choppy SVG/GIF output from read-boundary chunks or progress-bar streams.
+
+**Stream emit** is enabled when a step or `settings` sets `stream-output: true` or `max-duration`. In stream mode, scenetake records chunk arrival times, then applies:
+
+1. Startup offset (align slow first chunk with `execution-duration`; same rule as [spec_pty.md](spec_pty.md))
+2. Burst merge (gaps under 50ms share a timestamp)
+3. Idle collapse (`silence-threshold` / `max-idle`)
+4. Linear compression when `max-duration` is set
+
+PTY steps use the same stream pipeline only when stream emit is enabled; otherwise only the existing PTY startup offset applies.
+
+Stream emit suits long-running commands (for example `docker build`) where replay pacing matters. Short demos, nested tool stderr, and progress-bar tools (for example `agg`) should usually keep the default instant emit. See Lessons Learned below.
+
 
 ## `render`
 
@@ -105,6 +125,7 @@ Map-form steps recognize:
 | `run` | yes | Command string |
 | `name` | no | Comment line before typing. Optional `[style]` prefix: [spec_highlight.md](spec_highlight.md) |
 | `typing-speed`, `typing-jitter`, `pre-delay`, `post-delay`, `execution-duration` | no | Override `settings` for this step |
+| `stream-output`, `max-duration`, `silence-threshold`, `max-idle` | no | Override `settings` output-timing keys for this step |
 | `run-highlight` | no | Style for typed command text |
 | `highlight` | no | List of `{ color, at }` for command output |
 | `stderr-color` | no | Override `settings.stderr-color` for this step. Ignored when `pty: true` |
@@ -158,3 +179,6 @@ Deterministic seed and timestamp are derived from the whole YAML file (normalize
 - Separating `settings` (recording) from `render` (presentation) keeps cast behavior independent of SVG output.
 - String-form steps cover simple demos; map-form steps carry per-command timing, coloring, and optional `pty` without a second schema.
 - Recorded step non-zero exits warn but do not stop the scenario; setup/teardown and infrastructure failures use different rules ([spec_pre_post.md](spec_pre_post.md), [spec_pty.md](spec_pty.md)).
+- **Default instant emit is required for good playback.** Replaying every pipe read chunk made typing hard to see, caused choppy SVG/GIF output, and broke progress-bar tools that emit many `\r`-based lines (for example `agg`). Capture still reads stdout/stderr in parallel; cast text merges stdout then stderr, and only event timing changes.
+- **`execution-duration` is a presentation knob**, not wall-clock duration. It controls how long after Enter the first output appears, not how long the shell command runs.
+- **Stream emit is opt-in** (`stream-output: true` or `max-duration`). Idle-collapse defaults are lenient (`silence-threshold: 2.0`) so only clearly idle gaps shrink when stream mode is on.

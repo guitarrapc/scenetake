@@ -24,6 +24,7 @@ Use this when you know the goal but not the document.
 |---|---|
 | Write or review a scenario YAML file | [spec_scenario.md](spec_scenario.md) |
 | Know defaults for `typing-speed`, `prompt`, etc. | [spec_scenario.md](spec_scenario.md) → `settings` |
+| Tune long-running step replay (`docker build`, `sleep`, …) | [spec_scenario.md](spec_scenario.md) → Output timing |
 | Understand the `.cast` file scenetake produces | [spec_cast.md](spec_cast.md) |
 | Know v3 vs v2, header fields, markers, or agg compatibility | [spec_cast.md](spec_cast.md) |
 | Add setup/teardown commands | [spec_scenario.md](spec_scenario.md) → `pre`/`post`, then [spec_pre_post.md](spec_pre_post.md) for behavior |

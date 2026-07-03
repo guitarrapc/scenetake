@@ -22,6 +22,10 @@ settings:                        # Defaults for all steps; map-form steps can ov
   post-delay: 1.0                # Pause after output before the next step
   execution-duration: 0.1        # Cast wait after command execution
   stderr-color: red              # When stderr has no ANSI SGR sequences
+  # stream-output: false         # When true, replay captured chunk times in the cast
+  # max-duration: 15             # Cap step output timeline; also enables stream emit
+  # silence-threshold: 2.0       # Stream mode: collapse idle gaps longer than this (seconds)
+  # max-idle: 0.2                # Stream mode: collapsed idle gap duration (seconds)
 
 # Optional setup; runs before steps, not recorded in cast
 pre:
@@ -45,6 +49,16 @@ steps:
   - name: "execution-duration"
     run: sleep 1
     execution-duration: 0.5
+
+  - name: "instant emit (ping, one blob)"
+    run: bash -c 'case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) ping -n 4 127.0.0.1 ;; *) ping -c 4 127.0.0.1 ;; esac'
+    execution-duration: 0.2
+
+  - name: "stream-output (ping, staggered replay)"
+    run: bash -c 'case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) ping -n 4 127.0.0.1 ;; *) ping -c 4 127.0.0.1 ;; esac'
+    stream-output: true
+    silence-threshold: 2.0
+    max-idle: 0.2
 
   - name: "pty demo"
     run: echo "This command runs in a PTY, so output appears immediately and can include interactive features like colors and progress bars."
