@@ -853,8 +853,7 @@ static double EmitPipeStepOutputInstant(
     string cmd,
     double executionDuration)
 {
-    var stdout = string.Concat(chunks.Where(static chunk => !chunk.IsStderr).Select(static chunk => chunk.Text));
-    var stderr = string.Concat(chunks.Where(static chunk => chunk.IsStderr).Select(static chunk => chunk.Text));
+    var (stdout, stderr) = CollectPipeOutputs(chunks);
     var merged = MergePipeOutput(stdout, stderr, stderrStyle);
     if (string.IsNullOrEmpty(merged))
         return commandStart + executionDuration;
@@ -896,6 +895,29 @@ static string SanitizeInstantEmitStdout(string stdout)
     return stdout.IndexOf('\0') >= 0 ? "" : stdout;
 }
 
+static (string Stdout, string Stderr) CollectPipeOutputs(IReadOnlyList<PipeStreamChunk> chunks)
+{
+    if (chunks.Count == 0)
+        return ("", "");
+
+    StringBuilder? stdoutBuilder = null;
+    StringBuilder? stderrBuilder = null;
+    foreach (var chunk in chunks)
+    {
+        if (chunk.IsStderr)
+        {
+            stderrBuilder ??= new StringBuilder();
+            stderrBuilder.Append(chunk.Text);
+            continue;
+        }
+
+        stdoutBuilder ??= new StringBuilder();
+        stdoutBuilder.Append(chunk.Text);
+    }
+
+    return (stdoutBuilder?.ToString() ?? "", stderrBuilder?.ToString() ?? "");
+}
+
 static void ApplyBurstMergeToChunks(
     List<(double Time, string Text)> chunks,
     IReadOnlyList<PipeStreamChunk> rawChunks)
@@ -903,14 +925,35 @@ static void ApplyBurstMergeToChunks(
     if (chunks.Count <= 1)
         return;
 
-    var originalSeconds = new double[rawChunks.Count];
-    for (var i = 0; i < rawChunks.Count; i++)
-        originalSeconds[i] = rawChunks[i].Time.TotalSeconds;
+    var count = rawChunks.Count;
+    var useStack = count <= 256;
+    double[]? rentedOriginal = null;
+    double[]? rentedTimes = null;
+    Span<double> originalSeconds = useStack
+        ? stackalloc double[count]
+        : (rentedOriginal = ArrayPool<double>.Shared.Rent(count)).AsSpan(0, count);
+    Span<double> times = useStack
+        ? stackalloc double[count]
+        : (rentedTimes = ArrayPool<double>.Shared.Rent(count)).AsSpan(0, count);
+    try
+    {
+        for (var i = 0; i < rawChunks.Count; i++)
+        {
+            originalSeconds[i] = rawChunks[i].Time.TotalSeconds;
+            times[i] = chunks[i].Time;
+        }
 
-    var times = chunks.Select(static chunk => chunk.Time).ToArray();
-    CastTimingPipeline.MergeBurstGaps(times, originalSeconds, DefaultBurstThreshold);
-    for (var i = 0; i < chunks.Count; i++)
-        chunks[i] = (times[i], chunks[i].Text);
+        CastTimingPipeline.MergeBurstGaps(times, originalSeconds, DefaultBurstThreshold);
+        for (var i = 0; i < chunks.Count; i++)
+            chunks[i] = (times[i], chunks[i].Text);
+    }
+    finally
+    {
+        if (rentedOriginal is not null)
+            ArrayPool<double>.Shared.Return(rentedOriginal, clearArray: false);
+        if (rentedTimes is not null)
+            ArrayPool<double>.Shared.Return(rentedTimes, clearArray: false);
+    }
 }
 
 static double EmitPtyStepOutput(
@@ -972,8 +1015,10 @@ static double EmitPtyStepOutput(
         ApplyCastTimingToPtyChunks(timedChunks, timing);
     }
 
-    var coalesced = CastTimingPipeline.CoalesceTimedUtf8(
-        timedChunks.Select(static chunk => (chunk.Time, chunk.Data)).ToList());
+    var coalescedInput = new List<(double Time, ReadOnlyMemory<byte> Data)>(timedChunks.Count);
+    for (var i = 0; i < timedChunks.Count; i++)
+        coalescedInput.Add((timedChunks[i].Time, timedChunks[i].Data));
+    var coalesced = CastTimingPipeline.CoalesceTimedUtf8(coalescedInput);
     foreach (var (time, data) in coalesced)
     {
         events.Add(CastEvent.OutputUtf8(
@@ -1017,10 +1062,26 @@ static void ApplyCastTimingToChunks(List<(double Time, string Text)> chunks, Cas
     if (chunks.Count == 0)
         return;
 
-    var times = chunks.Select(static chunk => chunk.Time).ToArray();
-    var adjusted = CastTimingPipeline.AdjustTimeline(times, timing);
-    for (var i = 0; i < chunks.Count; i++)
-        chunks[i] = (adjusted[i], chunks[i].Text);
+    var count = chunks.Count;
+    var useStack = count <= 256;
+    double[]? rentedTimes = null;
+    Span<double> times = useStack
+        ? stackalloc double[count]
+        : (rentedTimes = ArrayPool<double>.Shared.Rent(count)).AsSpan(0, count);
+    try
+    {
+        for (var i = 0; i < count; i++)
+            times[i] = chunks[i].Time;
+
+        CastTimingPipeline.AdjustTimelineInPlace(times, timing);
+        for (var i = 0; i < chunks.Count; i++)
+            chunks[i] = (times[i], chunks[i].Text);
+    }
+    finally
+    {
+        if (rentedTimes is not null)
+            ArrayPool<double>.Shared.Return(rentedTimes, clearArray: false);
+    }
 }
 
 static void ApplyCastTimingToPtyChunks(
@@ -1030,10 +1091,26 @@ static void ApplyCastTimingToPtyChunks(
     if (chunks.Count == 0)
         return;
 
-    var times = chunks.Select(static chunk => chunk.Time).ToArray();
-    var adjusted = CastTimingPipeline.AdjustTimeline(times, timing);
-    for (var i = 0; i < chunks.Count; i++)
-        chunks[i] = (adjusted[i], chunks[i].OriginalTime, chunks[i].Data);
+    var count = chunks.Count;
+    var useStack = count <= 256;
+    double[]? rentedTimes = null;
+    Span<double> times = useStack
+        ? stackalloc double[count]
+        : (rentedTimes = ArrayPool<double>.Shared.Rent(count)).AsSpan(0, count);
+    try
+    {
+        for (var i = 0; i < count; i++)
+            times[i] = chunks[i].Time;
+
+        CastTimingPipeline.AdjustTimelineInPlace(times, timing);
+        for (var i = 0; i < chunks.Count; i++)
+            chunks[i] = (times[i], chunks[i].OriginalTime, chunks[i].Data);
+    }
+    finally
+    {
+        if (rentedTimes is not null)
+            ArrayPool<double>.Shared.Return(rentedTimes, clearArray: false);
+    }
 }
 
 static void ApplyBurstMergeToPtyChunks(List<(double Time, double OriginalTime, ReadOnlyMemory<byte> Data)> chunks)
@@ -1041,11 +1118,35 @@ static void ApplyBurstMergeToPtyChunks(List<(double Time, double OriginalTime, R
     if (chunks.Count <= 1)
         return;
 
-    var originalSeconds = chunks.Select(static chunk => chunk.OriginalTime).ToArray();
-    var times = chunks.Select(static chunk => chunk.Time).ToArray();
-    CastTimingPipeline.MergeBurstGaps(times, originalSeconds, DefaultBurstThreshold);
-    for (var i = 0; i < chunks.Count; i++)
-        chunks[i] = (times[i], chunks[i].OriginalTime, chunks[i].Data);
+    var count = chunks.Count;
+    var useStack = count <= 256;
+    double[]? rentedOriginal = null;
+    double[]? rentedTimes = null;
+    Span<double> originalSeconds = useStack
+        ? stackalloc double[count]
+        : (rentedOriginal = ArrayPool<double>.Shared.Rent(count)).AsSpan(0, count);
+    Span<double> times = useStack
+        ? stackalloc double[count]
+        : (rentedTimes = ArrayPool<double>.Shared.Rent(count)).AsSpan(0, count);
+    try
+    {
+        for (var i = 0; i < count; i++)
+        {
+            originalSeconds[i] = chunks[i].OriginalTime;
+            times[i] = chunks[i].Time;
+        }
+
+        CastTimingPipeline.MergeBurstGaps(times, originalSeconds, DefaultBurstThreshold);
+        for (var i = 0; i < chunks.Count; i++)
+            chunks[i] = (times[i], chunks[i].OriginalTime, chunks[i].Data);
+    }
+    finally
+    {
+        if (rentedOriginal is not null)
+            ArrayPool<double>.Shared.Return(rentedOriginal, clearArray: false);
+        if (rentedTimes is not null)
+            ArrayPool<double>.Shared.Return(rentedTimes, clearArray: false);
+    }
 }
 
 static void EmitTimedTextCastEvents(
@@ -1065,9 +1166,17 @@ static void EmitTimedTextCastEvents(
         return;
     }
 
-    var merged = string.Concat(coalesced.Select(static chunk => chunk.Text));
+    var mergedBuilder = new StringBuilder();
+    var rawSegments = new List<string>(coalesced.Count);
+    for (var i = 0; i < coalesced.Count; i++)
+    {
+        var text = coalesced[i].Text;
+        mergedBuilder.Append(text);
+        rawSegments.Add(text);
+    }
+
+    var merged = mergedBuilder.ToString();
     var highlighted = ApplyHighlights(merged, highlights, cmd);
-    var rawSegments = coalesced.Select(static chunk => chunk.Text).ToList();
     var split = HighlightSplitter.SplitByRawSegments(highlighted, rawSegments);
     for (var i = 0; i < coalesced.Count; i++)
     {
@@ -1173,8 +1282,7 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
     proc.Start();
     var pipeChunks = await PipeStreamCapture.ReadAsync(proc);
     await proc.WaitForExitAsync();
-    var stdout = string.Concat(pipeChunks.Where(static chunk => !chunk.IsStderr).Select(static chunk => chunk.Text));
-    var stderr = string.Concat(pipeChunks.Where(static chunk => chunk.IsStderr).Select(static chunk => chunk.Text));
+    var (stdout, stderr) = CollectPipeOutputs(pipeChunks);
     return CommandExecution.FromPipeStream(stdout, stderr, proc.ExitCode, pipeChunks);
 }
 

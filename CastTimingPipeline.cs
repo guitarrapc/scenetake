@@ -1,3 +1,5 @@
+using System.Text;
+
 internal readonly record struct CastTimingSettings(
     double SilenceThreshold,
     double MaxIdle,
@@ -18,10 +20,18 @@ internal static class CastTimingPipeline
             return [];
 
         var times = relativeSeconds.ToArray();
+        AdjustTimelineInPlace(times, settings);
+        return times;
+    }
+
+    internal static void AdjustTimelineInPlace(Span<double> times, CastTimingSettings settings)
+    {
+        if (times.Length == 0)
+            return;
+
         CollapseIdleGaps(times, settings.SilenceThreshold, settings.MaxIdle);
         if (settings.MaxDuration is double maxDuration && maxDuration > 0)
             LinearCompress(times, maxDuration);
-        return times;
     }
 
     internal static void CollapseIdleGaps(Span<double> times, double silenceThreshold, double maxIdle)
@@ -29,16 +39,18 @@ internal static class CastTimingPipeline
         if (times.Length <= 1 || silenceThreshold < 0 || maxIdle < 0)
             return;
 
-        var original = times.ToArray();
-        var cursor = original[0];
+        var previousOriginal = times[0];
+        var cursor = previousOriginal;
         times[0] = cursor;
-        for (var i = 1; i < original.Length; i++)
+        for (var i = 1; i < times.Length; i++)
         {
-            var gap = original[i] - original[i - 1];
+            var currentOriginal = times[i];
+            var gap = currentOriginal - previousOriginal;
             if (gap > silenceThreshold)
                 gap = maxIdle;
             cursor += gap;
             times[i] = cursor;
+            previousOriginal = currentOriginal;
         }
     }
 
@@ -64,21 +76,24 @@ internal static class CastTimingPipeline
         var result = new List<(double Time, string Text)>(chunks.Count);
         var currentTime = chunks[0].Time;
         var currentText = chunks[0].Text;
+        StringBuilder? currentBuilder = null;
         for (var i = 1; i < chunks.Count; i++)
         {
             var (time, text) = chunks[i];
             if (HaveSameTime(time, currentTime))
             {
-                currentText += text;
+                currentBuilder ??= new StringBuilder(currentText.Length + text.Length).Append(currentText);
+                currentBuilder.Append(text);
                 continue;
             }
 
-            result.Add((currentTime, currentText));
+            result.Add((currentTime, currentBuilder?.ToString() ?? currentText));
             currentTime = time;
             currentText = text;
+            currentBuilder = null;
         }
 
-        result.Add((currentTime, currentText));
+        result.Add((currentTime, currentBuilder?.ToString() ?? currentText));
         return result;
     }
 

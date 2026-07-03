@@ -45,9 +45,22 @@ internal static class PipeStreamCapture
             return [.. stdoutChunks];
 
         var merged = new List<PipeStreamChunk>(stdoutChunks.Count + stderrChunks.Count);
-        merged.AddRange(stdoutChunks);
-        merged.AddRange(stderrChunks);
-        merged.Sort(static (left, right) => left.Time.CompareTo(right.Time));
+        var stdoutIndex = 0;
+        var stderrIndex = 0;
+        while (stdoutIndex < stdoutChunks.Count && stderrIndex < stderrChunks.Count)
+        {
+            if (stdoutChunks[stdoutIndex].Time <= stderrChunks[stderrIndex].Time)
+                merged.Add(stdoutChunks[stdoutIndex++]);
+            else
+                merged.Add(stderrChunks[stderrIndex++]);
+        }
+
+        while (stdoutIndex < stdoutChunks.Count)
+            merged.Add(stdoutChunks[stdoutIndex++]);
+
+        while (stderrIndex < stderrChunks.Count)
+            merged.Add(stderrChunks[stderrIndex++]);
+
         return merged;
     }
 }
