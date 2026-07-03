@@ -776,6 +776,23 @@ internal sealed class ScreenBuffer
         if (value > max) return max;
         return value;
     }
+
+    internal string GetTrimmedRowText(int row)
+    {
+        if ((uint)row >= (uint)Height)
+            return "";
+
+        var sb = new StringBuilder(Width);
+        for (var col = 0; col < Width; col++)
+        {
+            var cell = GetCell(row, col);
+            if (cell.IsWideContinuation)
+                continue;
+            sb.Append(cell.Text);
+        }
+
+        return sb.ToString().TrimEnd();
+    }
 }
 
 internal sealed class AnsiParser
@@ -1694,5 +1711,253 @@ internal static class TerminalReplay
         }
 
         return false;
+    }
+}
+
+internal static class InteractivePtyCastEmit
+{
+    private const double InputEchoGraceSeconds = 0.45;
+    private const double InputEchoMergeGapSeconds = 0.12;
+
+    internal static List<(double Start, double End)> BuildInputWindows(IReadOnlyList<double> inputTimes) =>
+        BuildInputEchoWindows(inputTimes);
+
+    internal static List<(double Start, double End)> BuildInputEchoWindows(IReadOnlyList<double> inputTimes)
+    {
+        if (inputTimes.Count == 0)
+            return [];
+
+        var sorted = inputTimes.ToArray();
+        Array.Sort(sorted);
+
+        var windows = new List<(double Start, double End)>();
+        foreach (var t in sorted)
+        {
+            var end = t + InputEchoGraceSeconds;
+            if (windows.Count > 0 && t <= windows[^1].End + InputEchoMergeGapSeconds)
+                windows[^1] = (windows[^1].Start, Math.Max(windows[^1].End, end));
+            else
+                windows.Add((t, end));
+        }
+
+        return windows;
+    }
+
+    internal static bool IsInInputWindow(double seconds, IReadOnlyList<(double Start, double End)> windows)
+    {
+        for (var i = 0; i < windows.Count; i++)
+        {
+            var (start, end) = windows[i];
+            if (seconds >= start && seconds <= end)
+                return true;
+        }
+
+        return false;
+    }
+
+    internal static List<(double Time, ReadOnlyMemory<byte> Data)> NormalizeOutputChunks(
+        IReadOnlyList<(double Time, ReadOnlyMemory<byte> Data)> outputChunks,
+        IReadOnlyList<(double Start, double End)> inputWindows,
+        double typingSpeed,
+        int width,
+        int height,
+        IReadOnlyList<(double Time, ReadOnlyMemory<byte> Data)>? inputChunks = null)
+    {
+        _ = width;
+        _ = height;
+        if (outputChunks.Count == 0 || inputWindows.Count == 0)
+            return outputChunks.ToList();
+
+        var committedEcho = inputChunks is { Count: > 0 }
+            ? BuildCommittedTypingEcho(inputChunks)
+            : null;
+
+        var result = new List<(double Time, ReadOnlyMemory<byte> Data)>(outputChunks.Count);
+        var emitClock = 0.0;
+        var inTypingBurst = false;
+        var committedIndex = 0;
+
+        foreach (var (chunkTime, data) in outputChunks)
+        {
+            if (ShouldPassthroughWallClock(chunkTime, data.Span, inputWindows))
+            {
+                inTypingBurst = false;
+                emitClock = Math.Max(emitClock, chunkTime);
+                result.Add((chunkTime, data));
+                continue;
+            }
+
+            if (committedEcho is not null)
+            {
+                if (IsBackspaceEcho(data.Span))
+                    continue;
+
+                if (committedIndex >= committedEcho.Count
+                    || !EchoMatchesCommitted(data.Span, committedEcho[committedIndex].Data.Span))
+                {
+                    continue;
+                }
+
+                committedIndex++;
+            }
+
+            if (!inTypingBurst)
+            {
+                emitClock = Math.Max(emitClock, chunkTime);
+                inTypingBurst = true;
+            }
+
+            result.Add((emitClock, data));
+            emitClock += typingSpeed * CountTypingUnits(data.Span);
+        }
+
+        return result;
+    }
+
+    private static List<(double Time, ReadOnlyMemory<byte> Data)> BuildCommittedTypingEcho(
+        IReadOnlyList<(double Time, ReadOnlyMemory<byte> Data)> inputChunks)
+    {
+        var committed = new List<(double Time, ReadOnlyMemory<byte> Data)>();
+        var ordered = inputChunks.ToArray();
+        Array.Sort(ordered, (a, b) => a.Time.CompareTo(b.Time));
+
+        foreach (var (time, data) in ordered)
+        {
+            AppendInputKeys(data.Span, committed, time);
+        }
+
+        return committed;
+    }
+
+    private static void AppendInputKeys(
+        ReadOnlySpan<byte> data,
+        List<(double Time, ReadOnlyMemory<byte> Data)> committed,
+        double time)
+    {
+        for (var i = 0; i < data.Length; i++)
+        {
+            var b = data[i];
+            if (b == 0x1b)
+            {
+                i += SkipEscapeSequence(data, i + 1);
+                continue;
+            }
+
+            if (b is 0x08 or 0x7f)
+            {
+                if (committed.Count > 0)
+                    committed.RemoveAt(committed.Count - 1);
+                continue;
+            }
+
+            if (b is 0x0d or 0x0a or 0x07 or 0x09)
+                continue;
+
+            if (b < 0x20)
+                continue;
+
+            if (b <= 0x7f)
+            {
+                committed.Add((time, new[] { b }.AsMemory()));
+                continue;
+            }
+
+            var remaining = data.Slice(i);
+            var decoded = Encoding.UTF8.GetString(remaining);
+            if (decoded.Length == 0)
+                continue;
+
+            committed.Add((time, new[] { (byte)decoded[0] }.AsMemory()));
+            i += Encoding.UTF8.GetByteCount(decoded.AsSpan(0, 1)) - 1;
+        }
+    }
+
+    private static bool EchoMatchesCommitted(ReadOnlySpan<byte> echo, ReadOnlySpan<byte> committed) =>
+        echo.Length == committed.Length && echo.SequenceEqual(committed);
+
+    private static bool IsBackspaceEcho(ReadOnlySpan<byte> data)
+    {
+        if (data.IsEmpty)
+            return false;
+
+        var hasErase = false;
+        foreach (var b in data)
+        {
+            if (b is 0x08 or 0x7f)
+                hasErase = true;
+            else if (b is not ((byte)' ' or 0x09))
+                return false;
+        }
+
+        return hasErase;
+    }
+
+    private static int SkipEscapeSequence(ReadOnlySpan<byte> data, int index)
+    {
+        if ((uint)index >= (uint)data.Length)
+            return 0;
+
+        if (data[index] == (byte)'O' && index + 1 < data.Length)
+            return 2;
+
+        if (data[index] == (byte)'[')
+        {
+            var i = index + 1;
+            while (i < data.Length && data[i] is >= (byte)0x30 and <= (byte)0x3f)
+                i++;
+            while (i < data.Length && data[i] is >= (byte)0x20 and <= (byte)0x2f)
+                i++;
+            if (i < data.Length)
+                return i - index + 1;
+        }
+
+        return 1;
+    }
+
+    private static bool ShouldPassthroughWallClock(
+        double chunkTime,
+        ReadOnlySpan<byte> data,
+        IReadOnlyList<(double Start, double End)> inputWindows) =>
+        !IsInInputWindow(chunkTime, inputWindows)
+        || ContainsEscape(data)
+        || !IsLikelyTypingEcho(data);
+
+    private static bool ContainsEscape(ReadOnlySpan<byte> data)
+    {
+        for (var i = 0; i < data.Length; i++)
+        {
+            if (data[i] == 0x1b)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsLikelyTypingEcho(ReadOnlySpan<byte> data)
+    {
+        if (data.IsEmpty || data.Length > 16)
+            return false;
+
+        for (var i = 0; i < data.Length; i++)
+        {
+            var b = data[i];
+            if (b is 0x08 or 0x7f or 0x09)
+                continue;
+            if (b is 0x0a or 0x0d or 0x07)
+                return false;
+            if (b >= 0x20)
+                continue;
+            return false;
+        }
+
+        return true;
+    }
+
+    private static double CountTypingUnits(ReadOnlySpan<byte> data)
+    {
+        if (data.IsEmpty)
+            return 0;
+
+        return 1;
     }
 }

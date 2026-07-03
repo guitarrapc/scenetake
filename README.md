@@ -2,6 +2,10 @@
 
 # scenetake
 
+foobar
+
+
+
 English | [日本語](README-ja.md)
 
 Run a YAML **scenario** and record a terminal scene take [asciinema v3 `.cast`](https://docs.asciinema.org/manual/asciicast/v3/), animated `.svg`. You do not need to install or launch `asciinema` to record. Write a YAML scenario with steps, and this tool executes those steps and records the output as `.cast` (and optionally `.svg`)—ordinary steps get simulated typing; steps with `pty: true` capture the terminal stream in real time.

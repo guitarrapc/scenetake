@@ -15,7 +15,6 @@
 #:include PtyLeadingInitFilter.cs
 #:include CastTimingPipeline.cs
 #:include PipeStreamCapture.cs
-#:include InteractivePtyInputRecorder.cs
 
 using MiniPty;
 using MiniPty.Capture;
@@ -765,8 +764,11 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
         var hasRunHighlight = TryGetStepStyle(command.Extra, "run-highlight", "run-highlight", command.Cmd, out var runHighlightStyle);
         var usePty = GetBool(command.Extra, false, "pty");
         var useInteractive = GetBool(command.Extra, false, "interactive");
+        var normalizeTyping = GetBool(command.Extra, false, "normalize-typing");
         if (useInteractive && !usePty)
             throw new InvalidOperationException("Step key 'interactive: true' requires 'pty: true'.");
+        if (normalizeTyping && !useInteractive)
+            throw new InvalidOperationException("Step key 'normalize-typing: true' requires 'interactive: true'.");
 
         if (events.Count == 0)
             t += preDelay;
@@ -793,7 +795,16 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
         if (execution.IsPty)
         {
             t = useInteractive
-                ? EmitInteractivePtyStepOutput(events, commandStart, execution.PtyByteChunks!, verbose)
+                ? EmitInteractivePtyStepOutput(
+                    events,
+                    commandStart,
+                    execution.PtyByteChunks!,
+                    execution.PtyInputChunks,
+                    normalizeTyping,
+                    cmdSpeed,
+                    width,
+                    height,
+                    verbose)
                 : EmitPtyStepOutput(
                     events,
                     commandStart,
@@ -1054,6 +1065,11 @@ static double EmitInteractivePtyStepOutput(
     List<CastEvent> events,
     double commandStart,
     IReadOnlyList<PtyCaptureChunk> chunks,
+    IReadOnlyList<PtyInputChunk>? inputChunks,
+    bool normalizeTyping,
+    double typingSpeed,
+    int width,
+    int height,
     bool verbose)
 {
     var ptyFilter = new PtyLeadingInitFilter();
@@ -1078,10 +1094,38 @@ static double EmitInteractivePtyStepOutput(
     }
 
     if (verbose)
-        Console.Error.WriteLine($"scenetake: interactive pty cleanup: stripped {ptyFilter.StrippedByteCount} bytes");
+    {
+        var inputCount = inputChunks?.Count ?? 0;
+        Console.Error.WriteLine(
+            $"scenetake: interactive pty cleanup: stripped {ptyFilter.StrippedByteCount} bytes, input={inputCount}, normalize-typing={normalizeTyping}");
+    }
 
     if (timedChunks.Count == 0)
         return commandStart;
+
+    if (normalizeTyping && inputChunks is { Count: > 0 })
+    {
+        var inputTimes = new double[inputChunks.Count];
+        var inputBytes = new (double Time, ReadOnlyMemory<byte> Data)[inputChunks.Count];
+        for (var i = 0; i < inputChunks.Count; i++)
+        {
+            inputTimes[i] = inputChunks[i].Time.TotalSeconds;
+            inputBytes[i] = (inputChunks[i].Time.TotalSeconds, inputChunks[i].Data);
+        }
+
+        var windows = InteractivePtyCastEmit.BuildInputEchoWindows(inputTimes);
+        timedChunks = InteractivePtyCastEmit.NormalizeOutputChunks(
+            timedChunks,
+            windows,
+            typingSpeed,
+            width,
+            height,
+            inputBytes);
+    }
+    else if (normalizeTyping && verbose)
+    {
+        Console.Error.WriteLine("scenetake: normalize-typing: no input chunks; using wall-clock output");
+    }
 
     var coalescedInput = new List<(double Time, ReadOnlyMemory<byte> Data)>(timedChunks.Count);
     for (var i = 0; i < timedChunks.Count; i++)
@@ -2802,6 +2846,26 @@ static class TypingChars
 }
 
 record HighlightSpec(string ColorOpen, List<string> At);
+
+/// <summary>
+/// Records host keyboard bytes forwarded by <see cref="PtyConsoleInput.Attach"/> during an interactive PTY step.
+/// </summary>
+sealed class InteractivePtyInputRecorder(Stopwatch stopwatch, List<PtyInputChunk> chunks) : IPtyConsoleInputObserver
+{
+    public void OnForwardedInput(TimeSpan elapsed, ReadOnlySpan<byte> data)
+    {
+        _ = elapsed;
+        if (data.IsEmpty)
+            return;
+
+        chunks.Add(new PtyInputChunk(stopwatch.Elapsed, data.ToArray().AsMemory()));
+    }
+}
+
+/// <summary>
+/// Timestamped host→PTY input bytes captured during an interactive step (same clock as <see cref="PtyCaptureChunk"/> output).
+/// </summary>
+readonly record struct PtyInputChunk(TimeSpan Time, ReadOnlyMemory<byte> Data);
 
 readonly record struct CommandExecution(
     int ExitCode,

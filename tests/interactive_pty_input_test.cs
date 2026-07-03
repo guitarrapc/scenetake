@@ -3,7 +3,7 @@
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 #:package MiniPty.Console@1.0.4-local
-#:include ../InteractivePtyInputRecorder.cs
+#:include ../Terminal.cs
 
 using System.Diagnostics;
 using System.Text;
@@ -11,6 +11,12 @@ using System.Text;
 var failures = 0;
 failures += Run("OnForwardedInput_RecordsElapsedAndBytes", OnForwardedInput_RecordsElapsedAndBytes);
 failures += Run("OnForwardedInput_IgnoresEmptySpan", OnForwardedInput_IgnoresEmptySpan);
+failures += Run("BuildInputWindows_MergesBurst", BuildInputWindows_MergesBurst);
+failures += Run("NormalizeOutput_StripsBackspaceCorrections", NormalizeOutput_StripsBackspaceCorrections);
+failures += Run("NormalizeOutput_PreservesWallClockOutsideInput", NormalizeOutput_PreservesWallClockOutsideInput);
+failures += Run("NormalizeOutput_PassthroughAnsiInEchoWindow", NormalizeOutput_PassthroughAnsiInEchoWindow);
+failures += Run("NormalizeOutput_PassthroughBannerUtf8InEchoWindow", NormalizeOutput_PassthroughBannerUtf8InEchoWindow);
+failures += Run("NormalizeOutput_RetimesEchoPreservesBytes", NormalizeOutput_RetimesEchoPreservesBytes);
 
 return failures == 0 ? 0 : 1;
 
@@ -63,3 +69,131 @@ static bool OnForwardedInput_IgnoresEmptySpan()
 
     return chunks.Count == 0;
 }
+
+static bool BuildInputWindows_MergesBurst()
+{
+    var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0, 1.2, 1.4, 5.0, 5.1]);
+    if (windows.Count != 2)
+        return false;
+    if (Math.Abs(windows[0].Start - 1.0) > 0.001)
+        return false;
+    if (windows[0].End < 1.59)
+        return false;
+    return Math.Abs(windows[1].Start - 5.0) < 0.001;
+}
+
+static bool NormalizeOutput_StripsBackspaceCorrections()
+{
+    var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7]);
+    var inputs = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (1.0, "a"u8.ToArray().AsMemory()),
+        (1.1, "b"u8.ToArray().AsMemory()),
+        (1.2, "v"u8.ToArray().AsMemory()),
+        (1.3, "\x7f"u8.ToArray().AsMemory()),
+        (1.4, "c"u8.ToArray().AsMemory()),
+        (1.5, "d"u8.ToArray().AsMemory()),
+        (1.6, "e"u8.ToArray().AsMemory()),
+    };
+    var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (0.5, "> "u8.ToArray().AsMemory()),
+        (1.1, "a"u8.ToArray().AsMemory()),
+        (1.2, "b"u8.ToArray().AsMemory()),
+        (1.3, "v"u8.ToArray().AsMemory()),
+        (1.4, "\b \b"u8.ToArray().AsMemory()),
+        (1.5, "c"u8.ToArray().AsMemory()),
+        (1.6, "d"u8.ToArray().AsMemory()),
+        (1.7, "e"u8.ToArray().AsMemory()),
+    };
+
+    var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 40, 3, inputs);
+    var text = string.Concat(normalized.Select(c => Encoding.UTF8.GetString(c.Data.Span)));
+
+    if (text.Contains('v'))
+        return false;
+    return text.Contains("abcde", StringComparison.Ordinal);
+}
+
+static bool NormalizeOutput_PreservesWallClockOutsideInput()
+{
+    var windows = InteractivePtyCastEmit.BuildInputEchoWindows([2.0]);
+    var banner = "BANNER"u8.ToArray().AsMemory();
+    var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (0.5, banner),
+        (3.0, "z"u8.ToArray().AsMemory()),
+    };
+
+    var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 40, 3);
+    if (normalized.Count != 2)
+        return false;
+    if (normalized[0].Time != 0.5)
+        return false;
+    return Encoding.UTF8.GetString(normalized[0].Data.Span) == "BANNER";
+}
+
+static bool NormalizeOutput_PassthroughAnsiInEchoWindow()
+{
+    var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0]);
+    var ansi = "\u001b[1mX\u001b[0m"u8.ToArray().AsMemory();
+    var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (1.1, ansi),
+    };
+
+    var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24);
+    return normalized.Count == 1
+        && normalized[0].Time == 1.1
+        && normalized[0].Data.Span.SequenceEqual(ansi.Span);
+}
+
+static bool NormalizeOutput_PassthroughBannerUtf8InEchoWindow()
+{
+    var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0]);
+    var box = "└"u8.ToArray().AsMemory();
+    var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (1.05, box),
+    };
+
+    var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24);
+    return normalized.Count == 1
+        && Math.Abs(normalized[0].Time - 1.05) < 0.001
+        && normalized[0].Data.Span.SequenceEqual(box.Span);
+}
+
+static bool NormalizeOutput_RetimesEchoPreservesBytes()
+{
+    var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0]);
+    var inputs = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (1.0, "a"u8.ToArray().AsMemory()),
+    };
+    var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (1.01, "a"u8.ToArray().AsMemory()),
+    };
+
+    var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24, inputs);
+    return normalized.Count == 1
+        && normalized[0].Time >= 1.0
+        && Encoding.UTF8.GetString(normalized[0].Data.Span) == "a";
+}
+
+// Mirrors scenetake.cs — isolated here so this test does not pull in the full CLI entry point.
+sealed class InteractivePtyInputRecorder(Stopwatch stopwatch, List<PtyInputChunk> chunks) : MiniPty.Console.IPtyConsoleInputObserver
+{
+    public void OnForwardedInput(TimeSpan elapsed, ReadOnlySpan<byte> data)
+    {
+        _ = elapsed;
+        if (data.IsEmpty)
+            return;
+
+        chunks.Add(new PtyInputChunk(stopwatch.Elapsed, data.ToArray().AsMemory()));
+    }
+}
+
+readonly record struct PtyInputChunk(TimeSpan Time, ReadOnlyMemory<byte> Data);
+
+internal readonly record struct ResolvedTheme(string Fg, string Bg, string Palette);

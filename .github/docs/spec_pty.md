@@ -20,7 +20,6 @@ PTY mode stays opt-in so ordinary steps keep predictable pipe-based stdout/stder
 
 ### Out of scope (v1)
 
-- Typing normalization for interactive steps (`normalize-typing` — future)
 - Step-level stdin beyond what the shell command provides (non-interactive PTY)
 - YAML keys beyond those defined in [spec_scenario.md](spec_scenario.md)
 - MiniPty library API details — [MiniPty docs](https://github.com/guitarrapc/MiniPty/blob/main/.github/docs/spec_index.md)
@@ -61,16 +60,18 @@ When a map-form step has `pty: true` and `interactive: true` (default `false`):
 - **Host terminal required** — stdin and stdout on the scenetake process must not be redirected. scenetake attaches the host console to the PTY child via **MiniPty.Console** until the child exits.
 - **Simulated typing first** — the same prompt, per-character command typing, and synthetic Enter used by other steps are emitted on the cast timeline **before** the interactive session begins. Typing is a recording effect; keystrokes during the session go to the PTY through the host terminal, not through the pre-recorded typing.
 - **Live output on host** — PTY output is pumped to the host stdout while the session runs so the author can see the TUI.
-- **Wall-clock cast times** — buffered PTY chunks keep measured arrival times. cast `o` events use `command_start + chunk_time`. **No** startup-offset compress, burst merge, idle collapse, or `stream-output` pipeline for interactive steps.
-- **Startup cleanup only** — `PtyLeadingInitFilter` runs on the buffered bytes (same screen-state continuity rules as non-interactive PTY). Other post-filter bytes are recorded unchanged.
-- **Fixed PTY geometry** — host resize is **not** forwarded to the PTY (`SyncHostSize = false`) so child programs such as vim use the scenario `width` × `height` recorded in the cast header. Without this, a larger host terminal would resize the PTY, vim would emit row addresses beyond the cast height, and SVG replay would mis-render the session.
-- **Step ends on child exit** — for example `:wq` in vim or command completion. There is no separate “stop recording” key in v1.
-- **Parallel input log** — host keystrokes forwarded to the PTY are recorded as timestamped byte chunks (`PtyInputChunks` on `CommandExecution`) via `IPtyConsoleInputObserver`. v1 does **not** write cast `i` events or apply `normalize-typing`; the log exists for future typing normalization.
+- **Wall-clock cast times (default)** — buffered PTY chunks keep measured arrival times. cast `o` events use `command_start + chunk_time`. **No** startup-offset compress, burst merge, idle collapse, or `stream-output` pipeline for interactive steps.
+- **`normalize-typing: true` (opt-in)** — requires `interactive: true`. Each host keystroke opens a short **echo window** (~450ms). PTY output **outside** those windows (banner, streamed AI, redraws) stays wall-clock. **Inside** echo windows: chunks with ANSI/ESC pass through unchanged; multi-byte or long chunks pass through (banner box-drawing); short printable echo bytes are **retimed** at `typing-speed` while preserving raw PTY bytes (cursor layout intact). Input log filters out echo for characters later erased by Backspace before they reach the cast.
+- **Parallel input log** — host keystrokes are recorded as `PtyInputChunks` via `IPtyConsoleInputObserver` (required for `normalize-typing`).
+- **Startup cleanup only** — `PtyLeadingInitFilter` runs on the buffered bytes (same screen-state continuity rules as non-interactive PTY).
+- **Fixed PTY geometry** — `SyncHostSize = false` so the child uses scenario `width` × `height`.
+- **Step ends on child exit** — for example `:wq` in vim or command completion.
 - **Status on stderr** — attach progress and verbose chunk logs (output + input event counts) go to stderr so they do not mix with the PTY byte stream on Unix.
 
 | Condition | Behavior |
 |---|---|
 | `interactive: true` without `pty: true` | Fatal error |
+| `normalize-typing: true` without `interactive: true` | Fatal error |
 | Host stdin or stdout redirected | Fatal error at step entry |
 | `Pty.IsSupported` false | Fatal error (same as other PTY steps) |
 

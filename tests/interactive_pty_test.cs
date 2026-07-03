@@ -16,6 +16,7 @@ var repoRoot = FindRepoRoot(Directory.GetCurrentDirectory());
 var failures = 0;
 
 failures += await RunAsync("InteractiveWithoutPtyRejected", InteractiveWithoutPtyRejected);
+failures += await RunAsync("NormalizeTypingRequiresInteractive", NormalizeTypingRequiresInteractive);
 failures += await RunAsync("InteractiveRequiresHostTty", InteractiveRequiresHostTty);
 
 return failures == 0 ? 0 : 1;
@@ -63,6 +64,28 @@ static async Task<bool> InteractiveWithoutPtyRejected()
         return false;
 
     return true;
+}
+
+static async Task<bool> NormalizeTypingRequiresInteractive()
+{
+    var env = Environment.GetEnvironmentVariable("SCENETAKE_BIN");
+    if (string.IsNullOrWhiteSpace(env) || !File.Exists(env))
+    {
+        Console.Error.WriteLine("skip NormalizeTypingRequiresInteractive: set SCENETAKE_BIN to a published scenetake binary");
+        return true;
+    }
+
+    var repoRoot = FindRepoRoot(Directory.GetCurrentDirectory());
+    var fixture = Path.Combine(repoRoot, "tests", "fixtures", "pty-interactive-normalize-without-interactive.yaml");
+    if (!File.Exists(fixture))
+    {
+        Console.Error.WriteLine($"skip NormalizeTypingRequiresInteractive: missing fixture {fixture}");
+        return true;
+    }
+
+    var outputStem = Path.Combine(Path.GetTempPath(), $"scenetake-normalize-invalid-{Guid.NewGuid():N}");
+    var exitCode = await RunScenetake(env, fixture, outputStem);
+    return exitCode != 0;
 }
 
 static async Task<bool> InteractiveRequiresHostTty()

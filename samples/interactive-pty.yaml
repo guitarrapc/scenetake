@@ -4,6 +4,8 @@
 #   scenetake --format svg samples/interactive-pty.yaml out/interactive-pty
 #
 # The step records wall-clock PTY output while you operate the TUI on the host.
+# Add normalize-typing: true to re-time typing (Backspace corrections hidden) while
+# keeping banner / streamed output at real wall-clock speed.
 # Pre-generated .cast / .svg are intentionally omitted.
 
 title: "Interactive PTY Demo"
@@ -26,5 +28,6 @@ steps:
     run: copilot --banner
     pty: true
     interactive: true
+    normalize-typing: true   # banner at real speed; prompt typing at typing-speed
 
   - echo "continued after interactive step"

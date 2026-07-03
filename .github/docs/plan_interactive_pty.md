@@ -1,6 +1,6 @@
 # Interactive PTY Recording Plan
 
-Status: **Implemented** (Phase 1–2; input tap Phase 2.5; typing normalization deferred to Phase 3)
+Status: **Implemented** (Phase 1–2.5; Phase 3 `normalize-typing` implemented)
 
 ## Motivation
 
@@ -20,7 +20,7 @@ A second motivation (deferred) is **typing normalization**: the author should no
 | v1 recording | **Real PTY bytes + wall-clock chunk times** (no typing normalization) |
 | Cast timing (v1) | **Option C**: raw measured times; **only** `PtyLeadingInitFilter` from existing PTY path. No startup offset compress, burst merge, idle collapse, or `stream-output` pipeline for interactive steps |
 | TUI animations | Record at actual duration (e.g. `copilot --banner` banner motion) |
-| Typing normalization | **Deferred** — optional future `normalize-typing: true` per step |
+| Typing normalization | **`normalize-typing: true`** opt-in per step (requires `interactive: true`) |
 | Normalization mechanism (future) | **Input-attributed**: host stdin windows drive normalization; banner/AI output stays wall-clock. Screen diff on `ScreenBuffer` for insert-mode corrections; `IPtyConsoleInputObserver` on MiniPty.Console records parallel input log |
 | Normalization v1 scope (future) | Insert-mode end-of-line typing + Backspace; Normal-mode `hjkl` silent; `x`/`dd`/`dw` → v2 |
 | Package wiring | Local dev via **`nuget.config`** pointing at `../MiniPty/publish`; pack MiniPty with `scripts/pack-with-native.sh` |
@@ -180,12 +180,12 @@ Revert to published versions on nuget.org after MiniPty.Console release.
 - Cast emit unchanged (wall-clock `o` events only); input log is foundation for Phase 3 `normalize-typing`.
 - Tests: `tests/interactive_pty_input_test.cs`.
 
-### Phase 3 — Typing normalization (future)
+### Phase 3 — Typing normalization (done)
 
-- `normalize-typing: true` opt-in per step
-- Default `interactive: true` remains real-time
-- Screen diff layer for insert-mode correction stripping + `typing-speed` re-time
-- See “Future: typing normalization” below
+- `normalize-typing: true` opt-in per step; requires `interactive: true`.
+- `InteractivePtyCastEmit` in `Terminal.cs`: input windows from `PtyInputChunks`, screen diff on `ScreenBuffer`, Backspace rollback, `typing-speed` re-time.
+- Banner / non-input output stays wall-clock.
+- Tests: `tests/interactive_pty_input_test.cs` (`NormalizeOutput_*`, `BuildInputWindows_*`).
 
 ## Code touchpoints (scenetake)
 
@@ -195,7 +195,8 @@ Revert to published versions on nuget.org after MiniPty.Console release.
 | `RunCommandCoreAsync` | Delegate interactive to new path; keep `PtyCapture.RunAsync` for non-interactive |
 | `EmitPtyStepOutput` | Split or parameterize: interactive omits startup offset and `CastTimingSettings` |
 | `CommandExecution` | `PtyByteChunks` + `PtyInputChunks` for interactive steps |
-| `InteractivePtyInputRecorder.cs` | `IPtyConsoleInputObserver` → timestamped input bytes |
+| `InteractivePtyInputRecorder` (in `scenetake.cs`) | `IPtyConsoleInputObserver` → timestamped input bytes |
+| `InteractivePtyCastEmit` (in `Terminal.cs`) | Input-window detection + typing normalization emit |
 | `tests/interactive_pty_input_test.cs` | Unit tests for input recorder (no TTY) |
 
 ## Future: typing normalization
