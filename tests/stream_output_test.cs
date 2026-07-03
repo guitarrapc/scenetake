@@ -12,6 +12,7 @@ var failures = 0;
 failures += Run("IntegrationStreamStagger", () => IntegrationStreamStagger(repoRoot));
 failures += Run("IntegrationInstantDefault", () => IntegrationInstantDefault(repoRoot));
 failures += Run("IntegrationInstantMergeOrder", () => IntegrationInstantMergeOrder(repoRoot));
+failures += Run("IntegrationInstantProgressBar", () => IntegrationInstantProgressBar(repoRoot));
 failures += Run("IntegrationDockerBuildStream", () => IntegrationDockerBuildStream(repoRoot));
 
 return failures == 0 ? 0 : 1;
@@ -122,6 +123,30 @@ static bool IntegrationInstantMergeOrder(string repoRoot)
         var stdoutIndex = text.IndexOf("SCENETAKE_STDOUT", StringComparison.Ordinal);
         var stderrIndex = text.IndexOf("SCENETAKE_STDERR_A", StringComparison.Ordinal);
         return stdoutIndex >= 0 && stderrIndex >= 0 && stdoutIndex < stderrIndex;
+    }
+    finally
+    {
+        Cleanup(outputStem);
+    }
+}
+
+static bool IntegrationInstantProgressBar(string repoRoot)
+{
+    if (!IntegrationTestsEnabled())
+        return true;
+
+    var fixturePath = Path.Combine(repoRoot, "tests", "fixtures", "pipe-instant-progress.yaml");
+    var outputStem = Path.Combine(Path.GetTempPath(), $"scenetake-progress-{Guid.NewGuid():N}");
+    try
+    {
+        if (!RunScenetake(fixturePath, outputStem, out var exitCode) || exitCode != 0)
+            return false;
+
+        var events = ReadCastTimedOutputEvents(outputStem + ".cast");
+        var progressOutputs = events
+            .Where(ev => ev.Text.Contains("SCENETAKE_PROGRESS", StringComparison.Ordinal))
+            .ToList();
+        return progressOutputs.Count == 1 && progressOutputs[0].Text.Contains("30/30", StringComparison.Ordinal);
     }
     finally
     {

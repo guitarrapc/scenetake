@@ -1,6 +1,6 @@
 # Stream Output Timing Plan
 
-Status: **Phase 2 implemented**
+Status: **Complete (v1)** — verified 2026-07-01
 
 ## Motivation
 
@@ -108,8 +108,21 @@ Gaps are measured from **original** chunk timestamps before adjustment. A long i
 - [x] PTY steps still pass existing `pty_timing_test` / `pty_test`
 - [x] `samples/basic.yaml` smoke still passes
 - [x] `samples/demo.yaml` matches pre-stream event shape (instant emit, agg progress in one event)
+- [x] `IntegrationInstantMergeOrder` — instant emit merges stdout before stderr (not chronological interleave)
+- [x] `IntegrationInstantProgressBar` — `\r` progress bar collapses to one instant event (agg-like)
 - [x] `IntegrationDockerBuildStream` — real `docker build` with `stream-output` + `max-duration`
 - [x] `samples/scenario_format.svg` / `.cast` regenerated after `stream-output` step added
+- [x] `svg_render_test` `CurlOutputSurvivesFrameSampling` — `basic.cast` curl lines render in SVG
+
+### Verification gaps (acceptable for v1)
+
+| Gap | Risk | Mitigation |
+|---|---|---|
+| Docker stream test skipped when Docker unavailable | Low | Runs locally/CI with Docker; `--no-cache` keeps timing stable |
+| `max-duration` alone (no `stream-output: true`) | Low | Same code path via `UsesStreamEmission()`; stagger fixture sets both |
+| PTY + stream emit integration | Low | PTY non-stream covered by `pty_timing_test` / `pty_test`; stream path shares pipeline |
+| `highlight` in stream emit | Low | `HighlightSplitterPreservesSegments` unit test |
+| `curl -I` order in SVG | Low | `IntegrationInstantMergeOrder` + fixed `basic.cast` + `CurlOutputSurvivesFrameSampling` |
 
 ## Lessons learned
 
