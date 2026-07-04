@@ -55,7 +55,7 @@ internal sealed class PtyLeadingInitFilter
             return true;
         }
 
-        if (mode is FilterMode.LeadingInit or FilterMode.AfterAlternateScreenExit && IsPrintableUtf8Start(span[0]))
+        if (mode == FilterMode.LeadingInit && IsPrintableUtf8Start(span[0]))
         {
             mode = FilterMode.Passthrough;
             output = input.ToArray();
@@ -148,6 +148,20 @@ internal sealed class PtyLeadingInitFilter
         var first = pending[0];
         if (IsPrintableUtf8Start(first))
         {
+            if (TryFindCursorPositionCsiEnd(0, out var cursorCsiEnd))
+            {
+                StripPending(cursorCsiEnd);
+                cleanupBytesSeen += cursorCsiEnd;
+                return true;
+            }
+
+            if (PendingEndsWithIncompleteCsi()
+                || (pending.IndexOf(Esc) >= 0 && cleanupBytesSeen + pending.Count <= CleanupByteLimit))
+            {
+                incomplete = true;
+                return false;
+            }
+
             mode = FilterMode.Passthrough;
             AppendAndClear(output, pending);
             return true;
@@ -173,8 +187,7 @@ internal sealed class PtyLeadingInitFilter
         }
         else
         {
-            output.Add(first);
-            pending.RemoveAt(0);
+            StripPending(1);
         }
 
         cleanupBytesSeen++;
@@ -478,6 +491,66 @@ internal sealed class PtyLeadingInitFilter
 
     private static bool IsPrintableUtf8Start(byte value) =>
         value != Esc && value != 0x7F && (value >= 0x20 || value >= 0x80);
+
+    private bool TryFindCursorPositionCsiEnd(int startIndex, out int endIndex)
+    {
+        endIndex = 0;
+        for (var i = startIndex; i < pending.Count; i++)
+        {
+            if (pending[i] != Esc || i + 1 >= pending.Count || pending[i + 1] != (byte)'[')
+                continue;
+
+            var finalIndex = -1;
+            for (var j = i + 2; j < pending.Count; j++)
+            {
+                var value = pending[j];
+                if (value is >= 0x40 and <= 0x7E)
+                {
+                    finalIndex = j;
+                    break;
+                }
+            }
+
+            if (finalIndex < 0)
+                return false;
+
+            if (pending[finalIndex] is (byte)'H' or (byte)'f' && !CsiParametersStartWithPrivate(i + 2, finalIndex))
+            {
+                endIndex = finalIndex + 1;
+                return true;
+            }
+
+            i = finalIndex;
+        }
+
+        return false;
+    }
+
+    private bool CsiParametersStartWithPrivate(int start, int finalIndex)
+    {
+        for (var i = start; i < finalIndex; i++)
+        {
+            if (pending[i] == (byte)'?')
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool PendingEndsWithIncompleteCsi()
+    {
+        var escIndex = pending.LastIndexOf(Esc);
+        if (escIndex < 0 || escIndex + 1 >= pending.Count || pending[escIndex + 1] != (byte)'[')
+            return false;
+
+        for (var i = escIndex + 2; i < pending.Count; i++)
+        {
+            if (pending[i] is >= 0x40 and <= 0x7E)
+                return false;
+        }
+
+        return true;
+    }
 
     private static void AppendAndClear(List<byte> output, List<byte> source)
     {
