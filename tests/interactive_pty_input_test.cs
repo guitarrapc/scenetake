@@ -4,6 +4,7 @@
 #:property ImplicitUsings=enable
 #:package MiniPty.Console@1.0.4-local
 #:include ../Terminal.cs
+#:include ../CastTimingPipeline.cs
 
 using System.Diagnostics;
 using System.Text;
@@ -17,6 +18,7 @@ failures += Run("NormalizeOutput_PreservesWallClockOutsideInput", NormalizeOutpu
 failures += Run("NormalizeOutput_PassthroughAnsiInEchoWindow", NormalizeOutput_PassthroughAnsiInEchoWindow);
 failures += Run("NormalizeOutput_PassthroughBannerUtf8InEchoWindow", NormalizeOutput_PassthroughBannerUtf8InEchoWindow);
 failures += Run("NormalizeOutput_RetimesEchoPreservesBytes", NormalizeOutput_RetimesEchoPreservesBytes);
+failures += Run("NormalizeOutput_CollapsesLongIdleGap", NormalizeOutput_CollapsesLongIdleGap);
 
 return failures == 0 ? 0 : 1;
 
@@ -131,6 +133,28 @@ static bool NormalizeOutput_PreservesWallClockOutsideInput()
     if (normalized[0].Time != 0.5)
         return false;
     return Encoding.UTF8.GetString(normalized[0].Data.Span) == "BANNER";
+}
+
+static bool NormalizeOutput_CollapsesLongIdleGap()
+{
+    var banner = "BANNER"u8.ToArray().AsMemory();
+    var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (0.0, banner),
+        (0.1, banner),
+        (12.0, banner),
+        (12.1, banner),
+    };
+
+    var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, [], 0.05, 40, 3);
+    InteractivePtyCastEmit.CollapseIdleAfterNormalize(normalized, silenceThreshold: 2.0, maxIdle: 0.2);
+    if (normalized.Count != 4)
+        return false;
+    if (Math.Abs(normalized[1].Time - 0.1) > 0.001)
+        return false;
+    // 12s wall gap → 0.2s collapsed; prior emit ends at 0.1
+    return Math.Abs(normalized[2].Time - 0.3) < 0.001
+        && Math.Abs(normalized[3].Time - 0.4) < 0.001;
 }
 
 static bool NormalizeOutput_PassthroughAnsiInEchoWindow()

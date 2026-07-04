@@ -55,6 +55,32 @@ internal static class CastTimingPipeline
         }
     }
 
+    /// <summary>
+    /// Collapse long gaps measured on <paramref name="originalTimes"/> while writing adjusted values to <paramref name="emitTimes"/>.
+    /// </summary>
+    internal static void CollapseIdleGapsWithOriginal(
+        Span<double> emitTimes,
+        ReadOnlySpan<double> originalTimes,
+        double silenceThreshold,
+        double maxIdle)
+    {
+        if (emitTimes.Length <= 1 || emitTimes.Length != originalTimes.Length || silenceThreshold < 0 || maxIdle < 0)
+            return;
+
+        var previousOriginal = originalTimes[0];
+        var cursor = emitTimes[0];
+        emitTimes[0] = cursor;
+        for (var i = 1; i < emitTimes.Length; i++)
+        {
+            var gap = originalTimes[i] - previousOriginal;
+            if (gap > silenceThreshold)
+                gap = maxIdle;
+            cursor += gap;
+            emitTimes[i] = cursor;
+            previousOriginal = originalTimes[i];
+        }
+    }
+
     internal static void LinearCompress(Span<double> times, double maxDuration)
     {
         if (times.Length == 0)

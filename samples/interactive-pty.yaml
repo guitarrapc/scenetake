@@ -5,7 +5,8 @@
 #
 # The step records wall-clock PTY output while you operate the TUI on the host.
 # Add normalize-typing: true to re-time typing (Backspace corrections hidden) while
-# keeping banner / streamed output at real wall-clock speed.
+# keeping banner / streamed output at real wall-clock speed. Long idle gaps (> silence-threshold)
+# collapse to max-idle; tune via settings silence-threshold / max-idle.
 # Pre-generated .cast / .svg are intentionally omitted.
 
 title: "Interactive PTY Demo"

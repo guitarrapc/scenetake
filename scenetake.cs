@@ -802,6 +802,7 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
                     execution.PtyInputChunks,
                     normalizeTyping,
                     cmdSpeed,
+                    cmdCastTiming,
                     width,
                     height,
                     verbose)
@@ -1068,6 +1069,7 @@ static double EmitInteractivePtyStepOutput(
     IReadOnlyList<PtyInputChunk>? inputChunks,
     bool normalizeTyping,
     double typingSpeed,
+    CastTimingSettings castTiming,
     int width,
     int height,
     bool verbose)
@@ -1103,6 +1105,8 @@ static double EmitInteractivePtyStepOutput(
     if (timedChunks.Count == 0)
         return commandStart;
 
+    List<(double Time, ReadOnlyMemory<byte> Data)> emitChunks;
+
     if (normalizeTyping && inputChunks is { Count: > 0 })
     {
         var inputTimes = new double[inputChunks.Count];
@@ -1114,22 +1118,29 @@ static double EmitInteractivePtyStepOutput(
         }
 
         var windows = InteractivePtyCastEmit.BuildInputEchoWindows(inputTimes);
-        timedChunks = InteractivePtyCastEmit.NormalizeOutputChunks(
+        var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(
             timedChunks,
             windows,
             typingSpeed,
             width,
             height,
             inputBytes);
+        InteractivePtyCastEmit.CollapseIdleAfterNormalize(
+            normalized,
+            castTiming.SilenceThreshold,
+            castTiming.MaxIdle);
+        emitChunks = normalized.Select(c => (c.Time, c.Data)).ToList();
     }
-    else if (normalizeTyping && verbose)
+    else
     {
-        Console.Error.WriteLine("scenetake: normalize-typing: no input chunks; using wall-clock output");
+        if (normalizeTyping && verbose)
+            Console.Error.WriteLine("scenetake: normalize-typing: no input chunks; using wall-clock output");
+        emitChunks = timedChunks;
     }
 
-    var coalescedInput = new List<(double Time, ReadOnlyMemory<byte> Data)>(timedChunks.Count);
-    for (var i = 0; i < timedChunks.Count; i++)
-        coalescedInput.Add((timedChunks[i].Time, timedChunks[i].Data));
+    var coalescedInput = new List<(double Time, ReadOnlyMemory<byte> Data)>(emitChunks.Count);
+    for (var i = 0; i < emitChunks.Count; i++)
+        coalescedInput.Add((emitChunks[i].Time, emitChunks[i].Data));
     var coalesced = CastTimingPipeline.CoalesceTimedUtf8(coalescedInput);
     foreach (var (time, data) in coalesced)
     {

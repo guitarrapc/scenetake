@@ -1755,7 +1755,7 @@ internal static class InteractivePtyCastEmit
         return false;
     }
 
-    internal static List<(double Time, ReadOnlyMemory<byte> Data)> NormalizeOutputChunks(
+    internal static List<(double Time, double OriginalTime, ReadOnlyMemory<byte> Data)> NormalizeOutputChunks(
         IReadOnlyList<(double Time, ReadOnlyMemory<byte> Data)> outputChunks,
         IReadOnlyList<(double Start, double End)> inputWindows,
         double typingSpeed,
@@ -1766,13 +1766,17 @@ internal static class InteractivePtyCastEmit
         _ = width;
         _ = height;
         if (outputChunks.Count == 0 || inputWindows.Count == 0)
-            return outputChunks.ToList();
+        {
+            return outputChunks
+                .Select(c => (c.Time, c.Time, c.Data))
+                .ToList();
+        }
 
         var committedEcho = inputChunks is { Count: > 0 }
             ? BuildCommittedTypingEcho(inputChunks)
             : null;
 
-        var result = new List<(double Time, ReadOnlyMemory<byte> Data)>(outputChunks.Count);
+        var result = new List<(double Time, double OriginalTime, ReadOnlyMemory<byte> Data)>(outputChunks.Count);
         var emitClock = 0.0;
         var inTypingBurst = false;
         var committedIndex = 0;
@@ -1783,7 +1787,7 @@ internal static class InteractivePtyCastEmit
             {
                 inTypingBurst = false;
                 emitClock = Math.Max(emitClock, chunkTime);
-                result.Add((chunkTime, data));
+                result.Add((chunkTime, chunkTime, data));
                 continue;
             }
 
@@ -1807,11 +1811,33 @@ internal static class InteractivePtyCastEmit
                 inTypingBurst = true;
             }
 
-            result.Add((emitClock, data));
+            result.Add((emitClock, chunkTime, data));
             emitClock += typingSpeed * CountTypingUnits(data.Span);
         }
 
         return result;
+    }
+
+    internal static void CollapseIdleAfterNormalize(
+        List<(double Time, double OriginalTime, ReadOnlyMemory<byte> Data)> chunks,
+        double silenceThreshold,
+        double maxIdle)
+    {
+        if (chunks.Count <= 1 || silenceThreshold < 0 || maxIdle < 0)
+            return;
+
+        var count = chunks.Count;
+        var emitTimes = new double[count];
+        var originalTimes = new double[count];
+        for (var i = 0; i < count; i++)
+        {
+            emitTimes[i] = chunks[i].Time;
+            originalTimes[i] = chunks[i].OriginalTime;
+        }
+
+        CastTimingPipeline.CollapseIdleGapsWithOriginal(emitTimes, originalTimes, silenceThreshold, maxIdle);
+        for (var i = 0; i < count; i++)
+            chunks[i] = (emitTimes[i], chunks[i].OriginalTime, chunks[i].Data);
     }
 
     private static List<(double Time, ReadOnlyMemory<byte> Data)> BuildCommittedTypingEcho(
