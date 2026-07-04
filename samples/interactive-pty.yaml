@@ -20,15 +20,15 @@ settings:
   post-delay: 1.0
 
 steps:
-  - name: "edit in vim"
-    run: vim README.md
-    pty: true
-    interactive: true
-
   - name: "Copilot CLI with banner"
     run: copilot --banner
     pty: true
     interactive: true
-    normalize-typing: true   # banner at real speed; prompt typing at typing-speed
+    normalize-typing: true # banner at real speed; prompt typing at typing-speed
+
+  - name: "edit in vim"
+    run: vim README.md
+    pty: true
+    interactive: true
 
   - echo "continued after interactive step"
