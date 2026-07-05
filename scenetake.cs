@@ -5,9 +5,9 @@
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
 #:package VYaml@1.3.0
-#:package MiniPty@1.1.0
-#:package MiniPty.Capture@1.1.0
-#:package MiniPty.Console@1.1.0
+#:package MiniPty@1.2.0
+#:package MiniPty.Capture@1.2.0
+#:package MiniPty.Console@1.2.0
 #:include Terminal.cs
 #:include Svg.cs
 #:include CastReader.cs
