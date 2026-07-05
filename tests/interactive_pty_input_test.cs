@@ -19,6 +19,8 @@ failures += Run("NormalizeOutput_PassthroughAnsiInEchoWindow", NormalizeOutput_P
 failures += Run("NormalizeOutput_PassthroughBannerUtf8InEchoWindow", NormalizeOutput_PassthroughBannerUtf8InEchoWindow);
 failures += Run("NormalizeOutput_RetimesEchoPreservesBytes", NormalizeOutput_RetimesEchoPreservesBytes);
 failures += Run("NormalizeOutput_CollapsesLongIdleGap", NormalizeOutput_CollapsesLongIdleGap);
+failures += Run("NormalizeOutput_RetimesUtf8Echo", NormalizeOutput_RetimesUtf8Echo);
+failures += Run("NormalizeOutput_CountsMultiCharEchoUnits", NormalizeOutput_CountsMultiCharEchoUnits);
 
 return failures == 0 ? 0 : 1;
 
@@ -203,6 +205,41 @@ static bool NormalizeOutput_RetimesEchoPreservesBytes()
     return normalized.Count == 1
         && normalized[0].Time >= 1.0
         && Encoding.UTF8.GetString(normalized[0].Data.Span) == "a";
+}
+
+static bool NormalizeOutput_RetimesUtf8Echo()
+{
+    var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0]);
+    var glyph = "あ"u8.ToArray().AsMemory();
+    var inputs = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (1.0, glyph),
+    };
+    var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (1.05, glyph),
+    };
+
+    var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24, inputs);
+    return normalized.Count == 1
+        && Encoding.UTF8.GetString(normalized[0].Data.Span) == "あ";
+}
+
+static bool NormalizeOutput_CountsMultiCharEchoUnits()
+{
+    var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0]);
+    var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (1.0, "ab"u8.ToArray().AsMemory()),
+        (1.1, "c"u8.ToArray().AsMemory()),
+    };
+
+    var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24);
+    if (normalized.Count != 2)
+        return false;
+
+    // "ab" counts as 2 typing units → second chunk starts at 1.0 + 2 * 0.05
+    return Math.Abs(normalized[1].Time - 1.1) < 0.001;
 }
 
 // Mirrors scenetake.cs — isolated here so this test does not pull in the full CLI entry point.

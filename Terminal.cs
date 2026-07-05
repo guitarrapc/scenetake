@@ -1889,12 +1889,13 @@ internal static class InteractivePtyCastEmit
             }
 
             var remaining = data.Slice(i);
-            var decoded = Encoding.UTF8.GetString(remaining);
-            if (decoded.Length == 0)
+            if (Rune.DecodeFromUtf8(remaining, out _, out var consumed) != OperationStatus.Done || consumed <= 0)
                 continue;
 
-            committed.Add((time, new[] { (byte)decoded[0] }.AsMemory()));
-            i += Encoding.UTF8.GetByteCount(decoded.AsSpan(0, 1)) - 1;
+            var bytes = new byte[consumed];
+            remaining[..consumed].CopyTo(bytes);
+            committed.Add((time, bytes.AsMemory()));
+            i += consumed - 1;
         }
     }
 
@@ -1984,6 +1985,24 @@ internal static class InteractivePtyCastEmit
         if (data.IsEmpty)
             return 0;
 
-        return 1;
+        var units = 0;
+        var remaining = data;
+        while (!remaining.IsEmpty)
+        {
+            if (remaining[0] <= 0x7F)
+            {
+                units++;
+                remaining = remaining[1..];
+                continue;
+            }
+
+            if (Rune.DecodeFromUtf8(remaining, out _, out var consumed) != OperationStatus.Done || consumed <= 0)
+                break;
+
+            units++;
+            remaining = remaining[consumed..];
+        }
+
+        return units;
     }
 }
