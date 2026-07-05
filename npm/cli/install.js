@@ -103,6 +103,9 @@ function download(downloadUrl, redirects = 0) {
       }
     );
 
+    request.setTimeout(60_000, () => {
+      request.destroy(new Error('download timed out'));
+    });
     request.on('error', reject);
   });
 }
@@ -131,14 +134,51 @@ function parseChecksumFile(text, artifactName) {
 function extractArchive(archivePath, destDir, artifact) {
   fs.mkdirSync(destDir, { recursive: true });
 
-  const args = artifact.endsWith('.tar.gz')
-    ? ['-xzf', archivePath, '-C', destDir]
-    : ['-xf', archivePath, '-C', destDir];
+  if (artifact.endsWith('.zip')) {
+    if (process.platform !== 'win32') {
+      throw new Error(`zip extraction requires Windows: ${artifact}`);
+    }
+    extractZip(archivePath, destDir);
+    return;
+  }
 
-  const result = spawnSync('tar', args, { stdio: 'pipe' });
+  if (artifact.endsWith('.tar.gz')) {
+    extractTarGz(archivePath, destDir);
+    return;
+  }
+
+  throw new Error(`unsupported archive format: ${artifact}`);
+}
+
+function extractTarGz(archivePath, destDir) {
+  runCommand('tar', ['-xzf', archivePath, '-C', destDir], 'archive extraction');
+}
+
+function extractZip(archivePath, destDir) {
+  const script = [
+    '$ErrorActionPreference = "Stop"',
+    `Expand-Archive -LiteralPath ${psLiteral(archivePath)} -DestinationPath ${psLiteral(destDir)} -Force`,
+  ].join('; ');
+
+  runCommand(
+    'powershell.exe',
+    ['-NoProfile', '-NonInteractive', '-Command', script],
+    'zip extraction'
+  );
+}
+
+function psLiteral(value) {
+  return `'${value.replace(/'/g, "''")}'`;
+}
+
+function runCommand(command, args, label) {
+  const result = spawnSync(command, args, { stdio: 'pipe' });
   if (result.status !== 0) {
-    const detail = result.stderr?.toString().trim() || `exit ${result.status}`;
-    throw new Error(`archive extraction failed: ${detail}`);
+    const detail =
+      result.stderr?.toString().trim() ||
+      result.stdout?.toString().trim() ||
+      `exit ${result.status}`;
+    throw new Error(`${label} failed: ${detail}`);
   }
 }
 

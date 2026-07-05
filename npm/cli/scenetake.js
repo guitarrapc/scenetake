@@ -16,6 +16,10 @@ if (!fs.existsSync(binPath)) {
 }
 
 const child = spawn(binPath, process.argv.slice(2), { stdio: 'inherit' });
+child.on('error', (err) => {
+  console.error('scenetake: failed to launch binary.', err.message || err);
+  process.exit(1);
+});
 child.on('exit', (code) => {
   process.exit(code == null ? 1 : code);
 });
