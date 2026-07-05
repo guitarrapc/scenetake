@@ -279,8 +279,6 @@ post:
 
 Use `dotnet` for local development, debugging, or publishing.
 
-### Requirements
-
 - .NET 10 SDK (file-based C# app)
 
 ```bash
@@ -302,3 +300,15 @@ foreach ($file in Get-ChildItem samples/*.cast) {
   docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/samples/$($file.BaseName).cast /data/samples/$($file.BaseName).gif  --last-frame-duration 0
 }
 ```
+
+### Release
+
+Before tagging, bump `Directory.Build.props` and `npm/package.json` together. The script uses the latest `v*` git tag as the base version (falls back to the current files when no tags exist).
+
+```bash
+dotnet run scripts/bump_version.cs -- patch   # e.g. v1.3.0 -> 1.3.1
+dotnet run scripts/bump_version.cs -- minor   # e.g. v1.3.0 -> 1.4.0
+dotnet run scripts/bump_version.cs -- major   # e.g. v1.3.0 -> 2.0.0
+```
+
+Commit the version bump, then create and push a tag matching the new version (for example `v1.4.0`). Pushing the tag starts the release workflow, which builds native binaries, creates a GitHub Release, and publishes the npm package.

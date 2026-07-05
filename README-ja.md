@@ -300,3 +300,15 @@ foreach ($file in Get-ChildItem samples/*.cast) {
   docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/samples/$($file.BaseName).cast /data/samples/$($file.BaseName).gif  --last-frame-duration 0
 }
 ```
+
+### Release
+
+タグを打つ前に、`Directory.Build.props` と `npm/package.json` をまとめて更新します。スクリプトは最新の `v*` git タグを基準にします（タグがない場合はファイル上の現在値を使います）。
+
+```bash
+dotnet run scripts/bump_version.cs -- patch   # 例: v1.3.0 -> 1.3.1
+dotnet run scripts/bump_version.cs -- minor   # 例: v1.3.0 -> 1.4.0
+dotnet run scripts/bump_version.cs -- major   # 例: v1.3.0 -> 2.0.0
+```
+
+バージョン更新をコミットしたあと、新しいバージョンに対応するタグ（例: `v1.4.0`）を作成して push します。タグの push で release workflow が走り、ネイティブバイナリのビルド、GitHub Release の作成、npm パッケージの公開が行われます。
