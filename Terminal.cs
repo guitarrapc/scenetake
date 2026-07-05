@@ -1786,8 +1786,9 @@ internal static class InteractivePtyCastEmit
             if (ShouldPassthroughWallClock(chunkTime, data.Span, inputWindows))
             {
                 inTypingBurst = false;
-                emitClock = Math.Max(emitClock, chunkTime);
-                result.Add((chunkTime, chunkTime, data));
+                var emitTime = result.Count > 0 ? Math.Max(result[^1].Time, chunkTime) : chunkTime;
+                emitClock = Math.Max(emitClock, emitTime);
+                result.Add((emitTime, chunkTime, data));
                 continue;
             }
 

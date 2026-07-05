@@ -3,6 +3,7 @@
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 #:include ../Terminal.cs
+#:include ../CastTimingPipeline.cs
 
 using System.Text;
 

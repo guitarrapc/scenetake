@@ -21,6 +21,7 @@ failures += Run("NormalizeOutput_RetimesEchoPreservesBytes", NormalizeOutput_Ret
 failures += Run("NormalizeOutput_CollapsesLongIdleGap", NormalizeOutput_CollapsesLongIdleGap);
 failures += Run("NormalizeOutput_RetimesUtf8Echo", NormalizeOutput_RetimesUtf8Echo);
 failures += Run("NormalizeOutput_CountsMultiCharEchoUnits", NormalizeOutput_CountsMultiCharEchoUnits);
+failures += Run("NormalizeOutput_PassthroughClampsToMonotonicEmitTime", NormalizeOutput_PassthroughClampsToMonotonicEmitTime);
 
 return failures == 0 ? 0 : 1;
 
@@ -240,6 +241,31 @@ static bool NormalizeOutput_CountsMultiCharEchoUnits()
 
     // "ab" counts as 2 typing units → second chunk starts at 1.0 + 2 * 0.05
     return Math.Abs(normalized[1].Time - 1.1) < 0.001;
+}
+
+static bool NormalizeOutput_PassthroughClampsToMonotonicEmitTime()
+{
+    var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0]);
+    var ansi = "\u001b[1mX\u001b[0m"u8.ToArray().AsMemory();
+    var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (1.0, "a"u8.ToArray().AsMemory()),
+        (1.0, "b"u8.ToArray().AsMemory()),
+        (1.0, "c"u8.ToArray().AsMemory()),
+        (1.01, ansi),
+    };
+
+    var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24);
+    if (normalized.Count != 4)
+        return false;
+
+    for (var i = 1; i < normalized.Count; i++)
+    {
+        if (normalized[i].Time < normalized[i - 1].Time)
+            return false;
+    }
+
+    return normalized[3].Time >= normalized[2].Time;
 }
 
 // Mirrors scenetake.cs — isolated here so this test does not pull in the full CLI entry point.
