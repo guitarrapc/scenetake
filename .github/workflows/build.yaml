@@ -57,7 +57,7 @@ jobs:
       - name: Install matrix CLI
         shell: bash
         run: |
-          matrix_version="v1.0.1"
+          matrix_version="v1.0.2"
           matrix_dir="$RUNNER_TEMP/matrix"
           mkdir -p "$matrix_dir"
           case "${{ matrix.rid }}" in
