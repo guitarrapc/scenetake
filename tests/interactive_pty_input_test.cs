@@ -22,6 +22,7 @@ failures += Run("NormalizeOutput_CollapsesLongIdleGap", NormalizeOutput_Collapse
 failures += Run("NormalizeOutput_RetimesUtf8Echo", NormalizeOutput_RetimesUtf8Echo);
 failures += Run("NormalizeOutput_CountsMultiCharEchoUnits", NormalizeOutput_CountsMultiCharEchoUnits);
 failures += Run("NormalizeOutput_PassthroughClampsToMonotonicEmitTime", NormalizeOutput_PassthroughClampsToMonotonicEmitTime);
+failures += Run("CollapseIdle_PreservesNormalizedEmitSpacing", CollapseIdle_PreservesNormalizedEmitSpacing);
 
 return failures == 0 ? 0 : 1;
 
@@ -266,6 +267,24 @@ static bool NormalizeOutput_PassthroughClampsToMonotonicEmitTime()
     }
 
     return normalized[3].Time >= normalized[2].Time;
+}
+
+static bool CollapseIdle_PreservesNormalizedEmitSpacing()
+{
+    var chunks = new List<(double Time, double OriginalTime, ReadOnlyMemory<byte> Data)>
+    {
+        (0.0, 0.0, "a"u8.ToArray().AsMemory()),
+        (0.15, 0.1, "b"u8.ToArray().AsMemory()),
+        (12.0, 12.0, "c"u8.ToArray().AsMemory()),
+        (12.15, 12.1, "d"u8.ToArray().AsMemory()),
+    };
+
+    InteractivePtyCastEmit.CollapseIdleAfterNormalize(chunks, silenceThreshold: 2.0, maxIdle: 0.2);
+    if (Math.Abs(chunks[1].Time - 0.15) > 0.001)
+        return false;
+    if (Math.Abs(chunks[2].Time - 0.35) > 0.001)
+        return false;
+    return Math.Abs(chunks[3].Time - 0.50) < 0.001;
 }
 
 // Mirrors scenetake.cs — isolated here so this test does not pull in the full CLI entry point.

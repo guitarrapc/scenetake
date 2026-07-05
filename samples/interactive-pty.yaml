@@ -7,7 +7,7 @@
 # Add normalize-typing: true to re-time typing (Backspace corrections hidden) while
 # keeping banner / streamed output at real wall-clock speed. Long idle gaps (> silence-threshold)
 # collapse to max-idle; tune via settings silence-threshold / max-idle.
-# Pre-generated .cast / .svg are intentionally omitted.
+# Reference `.cast` / `.svg` / `.gif` are checked in; regenerating still requires a real host terminal.
 
 title: "Interactive PTY Demo"
 width: 80

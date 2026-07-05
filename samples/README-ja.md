@@ -14,7 +14,7 @@ scenetake のサンプル集です。各シナリオの**目的**と**生成物*
 | [git](#git) | 実コマンドの git デモ | [git.yaml](git.yaml) | [cast](git.cast) · [gif](git.gif) · [svg](git.svg) |
 | [highlight](#highlight) | コメント・stdout / stderr の色指定 | [highlight.yaml](highlight.yaml) | [cast](highlight.cast) · [gif](highlight.gif) · [svg](highlight.svg) |
 | [pty](#pty) | `pty: true` で TTY 依存コマンド（`matrix`）を録画 | [pty.yaml](pty.yaml) | [cast](pty.cast) · [gif](pty.gif) · [svg](pty.svg) |
-| [interactive-pty](#interactive-pty) | ホスト端末での対話録画（`interactive: true`） | [interactive-pty.yaml](interactive-pty.yaml) | 手動のみ |
+| [interactive-pty](#interactive-pty) | ホスト端末での対話録画（`interactive: true`） | [interactive-pty.yaml](interactive-pty.yaml) | [cast](interactive-pty.cast) · [gif](interactive-pty.gif) · [svg](interactive-pty.svg) |
 | [theme](#theme) | light テーマ・16 / 256 色 | [theme.yaml](theme.yaml) | [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
 | [theme-macos](#theme-macos) | macOS ウィンドウ chrome | [theme-macos.yaml](theme-macos.yaml) | [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
 | [theme-windows](#theme-windows) | Windows ウィンドウ chrome | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
@@ -148,7 +148,11 @@ scenetake --format svg samples/pty.yaml
 
 - セッション開始前に `run` のタイピング演出を cast に記録
 - 操作中の PTY 出力を実時間でバッファし、子プロセス終了で step 終了（`:wq` など）
-- **手動のみ** — 実ターミナル（stdin/stdout TTY）と `vim` 等が必要。事前生成 cast/SVG なし
+- 参照用 `.cast` / `.svg` / `.gif` を同梱。**再生成は手動** — 実ターミナル（stdin/stdout TTY）と `vim` 等が必要
+
+| GIF | SVG |
+|-----|-----|
+| ![](interactive-pty.gif) | ![](interactive-pty.svg) |
 
 ```bash
 scenetake --format svg samples/interactive-pty.yaml out/interactive-pty

@@ -14,7 +14,7 @@ Sample scenarios for scenetake. Use this page to quickly see each scenario’s *
 | [git](#git) | Real `git` command demo | [git.yaml](git.yaml) | [cast](git.cast) · [gif](git.gif) · [svg](git.svg) |
 | [highlight](#highlight) | Comment, stdout, and stderr coloring | [highlight.yaml](highlight.yaml) | [cast](highlight.cast) · [gif](highlight.gif) · [svg](highlight.svg) |
 | [pty](#pty) | TTY-dependent command with `pty: true` (`matrix`) | [pty.yaml](pty.yaml) | [cast](pty.cast) · [gif](pty.gif) · [svg](pty.svg) |
-| [interactive-pty](#interactive-pty) | Host-terminal interactive session (`interactive: true`) | [interactive-pty.yaml](interactive-pty.yaml) | manual only |
+| [interactive-pty](#interactive-pty) | Host-terminal interactive session (`interactive: true`) | [interactive-pty.yaml](interactive-pty.yaml) | [cast](interactive-pty.cast) · [gif](interactive-pty.gif) · [svg](interactive-pty.svg) |
 | [theme](#theme) | Light theme, 16 / 256 colors | [theme.yaml](theme.yaml) | [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
 | [theme-macos](#theme-macos) | macOS window chrome | [theme-macos.yaml](theme-macos.yaml) | [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
 | [theme-windows](#theme-windows) | Windows window chrome | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
@@ -148,7 +148,11 @@ scenetake --format svg samples/pty.yaml
 
 - Simulated typing of `run` is emitted on the cast timeline before the session starts
 - Wall-clock PTY output is buffered while you interact; step ends when the child exits (`:wq`, etc.)
-- **Manual only** — requires a real stdin/stdout TTY and tools such as `vim` on `PATH`. No pre-generated cast/SVG.
+- Reference `.cast` / `.svg` / `.gif` are checked in; **regeneration is manual** — requires a real stdin/stdout TTY and tools such as `vim` on `PATH`
+
+| GIF | SVG |
+|-----|-----|
+| ![](interactive-pty.gif) | ![](interactive-pty.svg) |
 
 ```bash
 scenetake --format svg samples/interactive-pty.yaml out/interactive-pty

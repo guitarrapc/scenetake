@@ -67,16 +67,17 @@ internal static class CastTimingPipeline
         if (emitTimes.Length <= 1 || emitTimes.Length != originalTimes.Length || silenceThreshold < 0 || maxIdle < 0)
             return;
 
+        var emitGaps = new double[emitTimes.Length - 1];
+        for (var i = 1; i < emitTimes.Length; i++)
+            emitGaps[i - 1] = emitTimes[i] - emitTimes[i - 1];
+
         var previousOriginal = originalTimes[0];
-        var cursor = emitTimes[0];
-        emitTimes[0] = cursor;
         for (var i = 1; i < emitTimes.Length; i++)
         {
-            var gap = originalTimes[i] - previousOriginal;
-            if (gap > silenceThreshold)
-                gap = maxIdle;
-            cursor += gap;
-            emitTimes[i] = cursor;
+            var originalGap = originalTimes[i] - previousOriginal;
+            emitTimes[i] = originalGap > silenceThreshold
+                ? emitTimes[i - 1] + maxIdle
+                : emitTimes[i - 1] + emitGaps[i - 1];
             previousOriginal = originalTimes[i];
         }
     }
