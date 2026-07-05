@@ -76,6 +76,15 @@ jobs:
 
           test -f "$binary_path"
 
+          if [[ "${{ matrix.rid }}" == linux-* ]]; then
+            test ! -f "$artifact_dir/libminipty_unix.so"
+          fi
+
+          if [[ "${{ matrix.rid }}" == osx-* ]]; then
+            test ! -f "$artifact_dir/libminipty_unix.dylib"
+            test -f "$artifact_dir/minipty_spawn_helper"
+          fi
+
           "$binary_path" samples/basic.yaml "$output_path"
 
           test -f "$output_path"
@@ -88,7 +97,13 @@ jobs:
           archive_path="$GITHUB_WORKSPACE/${{ matrix.artifact }}.tar.gz"
           checksum_path="$archive_path.sha256"
 
-          tar -czf "$archive_path" -C "$artifact_dir" .
+          if [[ "${{ matrix.rid }}" == linux-* ]]; then
+            tar -czf "$archive_path" -C "$artifact_dir" scenetake
+          elif [[ "${{ matrix.rid }}" == osx-* ]]; then
+            tar -czf "$archive_path" -C "$artifact_dir" scenetake minipty_spawn_helper
+          else
+            tar -czf "$archive_path" -C "$artifact_dir" .
+          fi
 
           if command -v sha256sum >/dev/null 2>&1; then
             checksum_value=$(sha256sum "$archive_path" | awk '{print $1}')
@@ -109,7 +124,7 @@ jobs:
           $archivePath = "$env:GITHUB_WORKSPACE\${{ matrix.artifact }}.zip"
           $checksumPath = "$archivePath.sha256"
 
-          Compress-Archive -Path "$artifactDir\*" -DestinationPath $archivePath
+          Compress-Archive -Path "$artifactDir\scenetake.exe" -DestinationPath $archivePath
 
           $hash = (Get-FileHash $archivePath -Algorithm SHA256).Hash.ToLower()
           "$hash  ${{ matrix.artifact }}.zip" | Set-Content $checksumPath -NoNewline
