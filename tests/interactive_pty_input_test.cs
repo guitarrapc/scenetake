@@ -1,8 +1,8 @@
-#:sdk Microsoft.NET.Sdk
+﻿#:sdk Microsoft.NET.Sdk
 #:property TargetFramework=net10.0
 #:property Nullable=enable
 #:property ImplicitUsings=enable
-#:package MiniPty.Console@1.1.0
+#:package MiniPty.Console@1.2.0
 #:include ../Terminal.cs
 #:include ../CastTimingPipeline.cs
 
