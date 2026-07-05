@@ -1,6 +1,5 @@
 ﻿#:sdk Microsoft.NET.Sdk
 #:property TargetFramework=net10.0
-#:property Version=1.3.0
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
@@ -29,7 +28,6 @@ using System.Text;
 using VYaml.Annotations;
 using VYaml.Serialization;
 
-const string AppVersion = "1.3.0";
 const string DefaultPrompt = "$ ";
 const double DefaultSpeed = 0.05;
 const double DefaultJitter = 0.015;
@@ -2825,7 +2823,13 @@ static void PrintSvgUsage()
 
 static void PrintVersion()
 {
-    Console.WriteLine(AppVersion);
+    Console.WriteLine(GetAppVersion());
+}
+
+static string GetAppVersion()
+{
+    var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+    return version?.ToString(3) ?? "0.0.0";
 }
 
 enum OutputFormat
