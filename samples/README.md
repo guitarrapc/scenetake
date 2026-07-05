@@ -14,6 +14,7 @@ Sample scenarios for scenetake. Use this page to quickly see each scenario’s *
 | [git](#git) | Real `git` command demo | [git.yaml](git.yaml) | [cast](git.cast) · [gif](git.gif) · [svg](git.svg) |
 | [highlight](#highlight) | Comment, stdout, and stderr coloring | [highlight.yaml](highlight.yaml) | [cast](highlight.cast) · [gif](highlight.gif) · [svg](highlight.svg) |
 | [pty](#pty) | TTY-dependent command with `pty: true` (`matrix`) | [pty.yaml](pty.yaml) | [cast](pty.cast) · [gif](pty.gif) · [svg](pty.svg) |
+| [interactive-pty](#interactive-pty) | Host-terminal interactive session (`interactive: true`) | [interactive-pty.yaml](interactive-pty.yaml) | [cast](interactive-pty.cast) · [gif](interactive-pty.gif) · [svg](interactive-pty.svg) |
 | [theme](#theme) | Light theme, 16 / 256 colors | [theme.yaml](theme.yaml) | [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
 | [theme-macos](#theme-macos) | macOS window chrome | [theme-macos.yaml](theme-macos.yaml) | [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
 | [theme-windows](#theme-windows) | Windows window chrome | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
@@ -126,7 +127,7 @@ scenetake --format svg samples/highlight.yaml
 
 **Purpose:** Record a TTY-dependent command in a real pseudo-terminal (`pty: true`).
 
-- Intro step with typing animation, then `matrix 5` with `pty: true` (no simulated typing on the PTY step)
+- Intro step with typing animation, then `matrix 5` with `pty: true` (simulated typing of the command, then PTY capture)
 - [`matrix`](https://github.com/guitarrapc/matrix) output also exercises SVG **Matrix rain contextual tint** (white highlights beside green render as bright green)
 - Requires the `matrix` CLI on `PATH` when regenerating
 - For a minimal `pty: true` example without extra dependencies, see the [pty demo step in scenario-format](#scenario-format)
@@ -137,6 +138,24 @@ scenetake --format svg samples/highlight.yaml
 
 ```bash
 scenetake --format svg samples/pty.yaml
+```
+
+---
+
+## interactive-pty
+
+**Purpose:** Record a step where **you** operate the TUI on the host terminal (`pty: true` + `interactive: true`).
+
+- Simulated typing of `run` is emitted on the cast timeline before the session starts
+- Wall-clock PTY output is buffered while you interact; step ends when the child exits (`:wq`, etc.)
+- Reference `.cast` / `.svg` / `.gif` are checked in; **regeneration is manual** — requires a real stdin/stdout TTY and tools such as `vim` on `PATH`
+
+| GIF | SVG |
+|-----|-----|
+| ![](interactive-pty.gif) | ![](interactive-pty.svg) |
+
+```bash
+scenetake --format svg samples/interactive-pty.yaml out/interactive-pty
 ```
 
 ---

@@ -1,0 +1,34 @@
+# Interactive PTY demo — run manually from a real terminal (not CI).
+# Requires: host stdin/stdout TTY, and the command installed (vim, copilot, etc.).
+#
+#   scenetake --format svg samples/interactive-pty.yaml out/interactive-pty
+#
+# The step records wall-clock PTY output while you operate the TUI on the host.
+# Add normalize-typing: true to re-time typing (Backspace corrections hidden) while
+# keeping banner / streamed output at real wall-clock speed. Long idle gaps (> silence-threshold)
+# collapse to max-idle; tune via settings silence-threshold / max-idle.
+# Reference `.cast` / `.svg` / `.gif` are checked in; regenerating still requires a real host terminal.
+
+title: "Interactive PTY Demo"
+width: 80
+height: 24
+
+settings:
+  prompt: "$ "
+  typing-speed: 0.05
+  pre-delay: 0.4
+  post-delay: 1.0
+
+steps:
+  - name: "Copilot CLI with banner"
+    run: copilot --banner
+    pty: true
+    interactive: true
+    normalize-typing: true # banner at real speed; prompt typing at typing-speed
+
+  - name: "edit in vim"
+    run: vim README.md
+    pty: true
+    interactive: true
+
+  - echo "continued after interactive step"

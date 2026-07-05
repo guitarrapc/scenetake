@@ -7,6 +7,7 @@
 var failures = 0;
 failures += Run("CollapseIdleGapLong", CollapseIdleGapLong);
 failures += Run("PreserveShortGap", PreserveShortGap);
+failures += Run("CollapseIdleGapsWithOriginalPreservesEmitSpacing", CollapseIdleGapsWithOriginalPreservesEmitSpacing);
 failures += Run("LinearCompressScales", LinearCompressScales);
 failures += Run("LinearCompressUnderMax", LinearCompressUnderMax);
 failures += Run("AdjustTimelineCombined", AdjustTimelineCombined);
@@ -50,6 +51,16 @@ static bool PreserveShortGap()
     var times = new[] { 0.0, 0.5, 1.0 };
     CastTimingPipeline.CollapseIdleGaps(times, silenceThreshold: 2.0, maxIdle: 0.2);
     return Math.Abs(times[1] - 0.5) < 1e-9 && Math.Abs(times[2] - 1.0) < 1e-9;
+}
+
+static bool CollapseIdleGapsWithOriginalPreservesEmitSpacing()
+{
+    var emit = new[] { 0.0, 0.15, 12.0, 12.15 };
+    var original = new[] { 0.0, 0.1, 12.0, 12.1 };
+    CastTimingPipeline.CollapseIdleGapsWithOriginal(emit, original, silenceThreshold: 2.0, maxIdle: 0.2);
+    return Math.Abs(emit[1] - 0.15) < 1e-9
+        && Math.Abs(emit[2] - 0.35) < 1e-9
+        && Math.Abs(emit[3] - 0.50) < 1e-9;
 }
 
 static bool LinearCompressScales()

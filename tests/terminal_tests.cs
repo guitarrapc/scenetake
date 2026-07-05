@@ -3,6 +3,7 @@
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 #:include ../Terminal.cs
+#:include ../CastTimingPipeline.cs
 
 using System.Text;
 
@@ -23,6 +24,7 @@ failures += Run("InsertBlankCharacters", InsertBlankCharacters);
 failures += Run("ScrollRegion", ScrollRegion);
 failures += Run("NameCommentPrefixIgnoresTrailingAnsiControls", NameCommentPrefixIgnoresTrailingAnsiControls);
 failures += Run("AlternateScreenRestoreKeepsNextPromptAdjacent", AlternateScreenRestoreKeepsNextPromptAdjacent);
+failures += Run("VimRedrawAtScenarioHeight", VimRedrawAtScenarioHeight);
 
 return failures == 0 ? 0 : 1;
 
@@ -250,6 +252,23 @@ static bool NameCommentPrefixIgnoresTrailingAnsiControls()
     };
 
     return CastEventLayout.NameCommentPrefixForLastEvent(events) == "";
+}
+
+static bool VimRedrawAtScenarioHeight()
+{
+    var theme = DarkTheme();
+    var buffer = new ScreenBuffer(80, 24, theme);
+    var parser = new AnsiParser(buffer, theme);
+
+    parser.Process("\u001b[?1049h\u001b[2J");
+    parser.Process("\u001b[3;1H#\u001b[10X");
+    parser.Process("\u001b[3;3Hscenetake\u001b[5;1HEnglish\u001b[24;1H-- INSERT --\u001b[3;1H");
+
+    return buffer.GetCell(2, 0).Text == "#"
+        && buffer.GetCell(2, 2).Text == "s"
+        && RowText(buffer, 23).Contains("INSERT", StringComparison.Ordinal)
+        && buffer.CursorRow == 2
+        && buffer.CursorCol == 0;
 }
 
 static bool AlternateScreenRestoreKeepsNextPromptAdjacent()

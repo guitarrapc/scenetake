@@ -80,7 +80,7 @@ By default, pipe steps capture stdout/stderr in parallel during execution but wr
 3. Idle collapse (`silence-threshold` / `max-idle`)
 4. Linear compression when `max-duration` is set
 
-PTY steps use the same stream pipeline only when stream emit is enabled; otherwise only the existing PTY startup offset applies.
+PTY steps use the same stream pipeline only when stream emit is enabled **and** the step is not `interactive: true`; otherwise only the existing PTY startup offset applies. Interactive PTY steps use wall-clock chunk times with `PtyLeadingInitFilter` only, unless `normalize-typing: true` is set ([spec_pty.md](spec_pty.md) → Interactive PTY).
 
 Stream emit suits long-running commands (for example `docker build`) where replay pacing matters. Short demos, nested tool stderr, and progress-bar tools (for example `agg`) should usually keep the default instant emit. See Lessons Learned below.
 
@@ -130,6 +130,8 @@ Map-form steps recognize:
 | `highlight` | no | List of `{ color, at }` for command output |
 | `stderr-color` | no | Override `settings.stderr-color` for this step. Ignored when `pty: true` |
 | `pty` | no | default `false`. Pseudo-terminal capture for TUI commands. Recording behavior: [spec_pty.md](spec_pty.md) |
+| `interactive` | no | default `false`. Requires `pty: true`. Human operates the host terminal until the child exits. Recording behavior: [spec_pty.md](spec_pty.md) → Interactive PTY |
+| `normalize-typing` | no | default `false`. Requires `interactive: true`. During host-input windows, re-time visible typing at `typing-speed` and strip Backspace corrections; banner and other program output stay wall-clock ([spec_pty.md](spec_pty.md) → Interactive PTY) |
 
 Coloring value formats, range grammar, and validation: [spec_highlight.md](spec_highlight.md). Coloring does not apply to PTY-captured output.
 

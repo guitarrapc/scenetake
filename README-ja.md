@@ -61,7 +61,7 @@ SVG 出力ではフォント、ライト/ダークテーマ、ウィンドウ枠
 | フォント・テーマ・ウィンドウ枠を調整する | YAML の `render`、または `--font-size` / `--font-family` / `--theme` / `--window` |
 | 非 TTY 実行で CLI が色を出さない出力を着色する | step の `highlight` / `run-highlight` / `stderr-color` — [samples/highlight.yaml](samples/highlight.yaml) を参照 |
 | TTY 依存コマンド（`matrix`、ターミナルアニメーションなど）を録画する | step に `pty: true` — [samples/pty.yaml](samples/pty.yaml) または [制限事項（シナリオ録画）](#制限事項シナリオ録画) |
-| ユーザー入力が必要な完全対話（`vim` 操作、REPL など）を録画する | [asciinema](https://asciinema.org/) で録画し、`scenetake svg recording.cast` |
+| ユーザー入力が必要な完全対話（`vim` 操作、REPL など）を録画する | step に `pty: true` と `interactive: true` — [samples/interactive-pty.yaml](samples/interactive-pty.yaml)（実ターミナルが必要） |
 | スターターシナリオを作る | `scenetake init` |
 | サンプルとプレビューを見る | [samples/README-ja.md](samples/README-ja.md) |
 | 仕様の詳細を読む | [.github/docs/spec_index.md](.github/docs/spec_index.md) |
@@ -167,7 +167,7 @@ steps:
     pty: true
 ```
 
-`pty: true` はターミナル UI コマンドやリアルタイムのターミナルアニメーション向けです。端末ストリームをそのまま記録するため、stdout と stderr は分離されず、その step では `stderr-color` は適用されません。ユーザー入力を必要とする完全な対話フローは引き続きシナリオモデルの範囲外です。これらを扱う場合は [asciinema](https://asciinema.org/) で録画し、`scenetake svg` で変換してください。
+`pty: true` はターミナル UI コマンドやリアルタイムのターミナルアニメーション向けです。端末ストリームをそのまま記録するため、stdout と stderr は分離されず、その step では `stderr-color` は適用されません。ホスト端末で TUI を操作する対話録画（`vim` やバナーデモなど）には、同じ step に `interactive: true` を追加します — [samples/interactive-pty.yaml](samples/interactive-pty.yaml) と [spec_pty.md](.github/docs/spec_pty.md) の Interactive PTY を参照してください。
 
 ## シナリオファイル形式
 

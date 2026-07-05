@@ -61,7 +61,7 @@ SVG output supports custom font, light/dark theme, and optional window chrome (`
 | Tune font, theme, or window chrome | Set `render` in YAML, or pass `--font-size`, `--font-family`, `--theme`, `--window` |
 | Color output when CLI tools stay plain without a TTY | Use `highlight`, `run-highlight`, or `stderr-color` on steps — see [samples/highlight.yaml](samples/highlight.yaml) |
 | Record TTY-dependent commands (`matrix`, terminal animations, etc.) | `pty: true` on a step — see [samples/pty.yaml](samples/pty.yaml) or [Limitations (scenario recording)](#limitations-scenario-recording) |
-| Record fully interactive sessions (`vim`, REPLs, user input) | Record with [asciinema](https://asciinema.org/), then `scenetake svg recording.cast` |
+| Record fully interactive sessions (`vim`, REPLs, user input) | `pty: true` + `interactive: true` on a step — see [samples/interactive-pty.yaml](samples/interactive-pty.yaml) (requires a real host terminal) |
 | Scaffold a starter scenario | `scenetake init` |
 | Browse examples and previews | [samples/README.md](samples/README.md) |
 | Read full behavior specs | [.github/docs/spec_index.md](.github/docs/spec_index.md) |
@@ -167,7 +167,7 @@ steps:
     pty: true
 ```
 
-`pty: true` is intended for terminal UI commands and real-time terminal animations. It records the terminal stream directly, so stdout and stderr are not separated and `stderr-color` does not apply to that step. Fully interactive workflows that require user input are still outside the scenario model; for those, record with [asciinema](https://asciinema.org/) and convert with `scenetake svg`.
+`pty: true` is intended for terminal UI commands and real-time terminal animations. It records the terminal stream directly, so stdout and stderr are not separated and `stderr-color` does not apply to that step. For **interactive** sessions where you operate the TUI on the host terminal (for example `vim` or a banner demo), add `interactive: true` on the same step — see [samples/interactive-pty.yaml](samples/interactive-pty.yaml) and [spec_pty.md](.github/docs/spec_pty.md) → Interactive PTY.
 
 ## Scenario Format
 

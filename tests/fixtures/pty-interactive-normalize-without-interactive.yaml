@@ -1,0 +1,7 @@
+settings:
+  typing-speed: 0.05
+
+steps:
+  - run: echo normalize-invalid
+    pty: true
+    normalize-typing: true

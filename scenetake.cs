@@ -1,12 +1,13 @@
-#:sdk Microsoft.NET.Sdk
+﻿#:sdk Microsoft.NET.Sdk
 #:property TargetFramework=net10.0
 #:property Version=1.3.0
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
 #:package VYaml@1.3.0
-#:package MiniPty@1.0.1
-#:package MiniPty.Capture@1.0.1
+#:package MiniPty@1.1.0
+#:package MiniPty.Capture@1.1.0
+#:package MiniPty.Console@1.1.0
 #:include Terminal.cs
 #:include Svg.cs
 #:include CastReader.cs
@@ -17,6 +18,7 @@
 
 using MiniPty;
 using MiniPty.Capture;
+using MiniPty.Console;
 using System.Diagnostics;
 using System.Globalization;
 using System.Buffers;
@@ -207,7 +209,16 @@ if (verbose)
     PrintPhase("steps");
 
 Console.Error.WriteLine("Generating cast...");
-var events = await GenerateAsync(scenario, shell, deterministicSeed, verbose);
+List<CastEvent> events;
+try
+{
+    events = await GenerateAsync(scenario, shell, deterministicSeed, verbose);
+}
+catch (InvalidOperationException ex)
+{
+    Console.Error.WriteLine($"Error: {ex.Message}");
+    return 1;
+}
 
 WriteCast(scenario, events, outputPath, shell, deterministicTimestamp, renderSettings);
 
@@ -752,6 +763,12 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
         var cmdHighlights = GetHighlights(command.Extra, command.Cmd);
         var hasRunHighlight = TryGetStepStyle(command.Extra, "run-highlight", "run-highlight", command.Cmd, out var runHighlightStyle);
         var usePty = GetBool(command.Extra, false, "pty");
+        var useInteractive = GetBool(command.Extra, false, "interactive");
+        var normalizeTyping = GetBool(command.Extra, false, "normalize-typing");
+        if (useInteractive && !usePty)
+            throw new InvalidOperationException("Step key 'interactive: true' requires 'pty: true'.");
+        if (normalizeTyping && !useInteractive)
+            throw new InvalidOperationException("Step key 'normalize-typing: true' requires 'interactive: true'.");
 
         if (events.Count == 0)
             t += preDelay;
@@ -767,19 +784,35 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
         EmitTypedCommand(events, ref t, prompt, command.Cmd, cmdSpeed, cmdJitter, rng, hasRunHighlight, runHighlightStyle);
 
         Console.Error.WriteLine($"  running: {command.Cmd}");
-        var execution = await RunCommandCoreAsync(command.Cmd, scenario.Cwd, shell, usePty, scenario.Width ?? 120, scenario.Height ?? 24, verbose);
+        var width = scenario.Width ?? 120;
+        var height = scenario.Height ?? 24;
+        var execution = useInteractive
+            ? await RunInteractivePtyAsync(command.Cmd, scenario.Cwd, shell, width, height, verbose)
+            : await RunCommandCoreAsync(command.Cmd, scenario.Cwd, shell, usePty, width, height, verbose);
         if (execution.ExitCode != 0)
             WarnStepExitCode(command.Name, command.Cmd, execution.ExitCode);
         var commandStart = t;
         if (execution.IsPty)
         {
-            t = EmitPtyStepOutput(
-                events,
-                commandStart,
-                execution.PtyByteChunks!,
-                cmdExecutionDuration,
-                cmdCastTiming,
-                verbose);
+            t = useInteractive
+                ? EmitInteractivePtyStepOutput(
+                    events,
+                    commandStart,
+                    execution.PtyByteChunks!,
+                    execution.PtyInputChunks,
+                    normalizeTyping,
+                    cmdSpeed,
+                    cmdCastTiming,
+                    width,
+                    height,
+                    verbose)
+                : EmitPtyStepOutput(
+                    events,
+                    commandStart,
+                    execution.PtyByteChunks!,
+                    cmdExecutionDuration,
+                    cmdCastTiming,
+                    verbose);
         }
         else
         {
@@ -1027,6 +1060,100 @@ static double EmitPtyStepOutput(
     }
 
     return Math.Max(commandStart + executionDuration, commandStart + coalesced[^1].Time);
+}
+
+static double EmitInteractivePtyStepOutput(
+    List<CastEvent> events,
+    double commandStart,
+    IReadOnlyList<PtyCaptureChunk> chunks,
+    IReadOnlyList<PtyInputChunk>? inputChunks,
+    bool normalizeTyping,
+    double typingSpeed,
+    CastTimingSettings castTiming,
+    int width,
+    int height,
+    bool verbose)
+{
+    var ptyFilter = new PtyLeadingInitFilter();
+    var timedChunks = new List<(double Time, ReadOnlyMemory<byte> Data)>();
+
+    foreach (var chunk in chunks)
+    {
+        var data = ptyFilter.Process(chunk.Data);
+        if (data.IsEmpty)
+            continue;
+
+        timedChunks.Add((chunk.Time.TotalSeconds, data));
+    }
+
+    var tail = ptyFilter.Complete();
+    if (!tail.IsEmpty)
+    {
+        var tailSeconds = chunks.Count > 0
+            ? chunks[^1].Time.TotalSeconds
+            : 0.0;
+        timedChunks.Add((tailSeconds, tail));
+    }
+
+    if (verbose)
+    {
+        var inputCount = inputChunks?.Count ?? 0;
+        Console.Error.WriteLine(
+            $"scenetake: interactive pty cleanup: stripped {ptyFilter.StrippedByteCount} bytes, input={inputCount}, normalize-typing={normalizeTyping}");
+    }
+
+    if (timedChunks.Count == 0)
+    {
+        var lastSeconds = 0.0;
+        if (chunks.Count > 0)
+            lastSeconds = Math.Max(lastSeconds, chunks[^1].Time.TotalSeconds);
+        if (inputChunks is { Count: > 0 })
+            lastSeconds = Math.Max(lastSeconds, inputChunks[^1].Time.TotalSeconds);
+        return commandStart + lastSeconds;
+    }
+
+    List<(double Time, ReadOnlyMemory<byte> Data)> emitChunks;
+
+    if (normalizeTyping && inputChunks is { Count: > 0 })
+    {
+        var inputTimes = new double[inputChunks.Count];
+        var inputBytes = new (double Time, ReadOnlyMemory<byte> Data)[inputChunks.Count];
+        for (var i = 0; i < inputChunks.Count; i++)
+        {
+            inputTimes[i] = inputChunks[i].Time.TotalSeconds;
+            inputBytes[i] = (inputChunks[i].Time.TotalSeconds, inputChunks[i].Data);
+        }
+
+        var windows = InteractivePtyCastEmit.BuildInputEchoWindows(inputTimes);
+        var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(
+            timedChunks,
+            windows,
+            typingSpeed,
+            width,
+            height,
+            inputBytes);
+        InteractivePtyCastEmit.CollapseIdleAfterNormalize(
+            normalized,
+            castTiming.SilenceThreshold,
+            castTiming.MaxIdle);
+        emitChunks = normalized.Select(c => (c.Time, c.Data)).ToList();
+    }
+    else
+    {
+        if (normalizeTyping && verbose)
+            Console.Error.WriteLine("scenetake: normalize-typing: no input chunks; using wall-clock output");
+        emitChunks = timedChunks;
+    }
+
+    var coalesced = CastTimingPipeline.CoalesceTimedUtf8(emitChunks);
+    foreach (var (time, data) in coalesced)
+    {
+        events.Add(CastEvent.OutputUtf8(
+            Math.Round(commandStart + time, 6),
+            data));
+    }
+
+    return commandStart + coalesced[^1].Time;
 }
 
 static List<(double Time, string Text)> BuildStartupAdjustedPipeChunks(
@@ -1284,6 +1411,105 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
     await proc.WaitForExitAsync();
     var (stdout, stderr) = CollectPipeOutputs(pipeChunks);
     return CommandExecution.FromPipeStream(stdout, stderr, proc.ExitCode, pipeChunks);
+}
+
+static async Task<CommandExecution> RunInteractivePtyAsync(
+    string cmd,
+    string? cwd,
+    ShellLaunch shell,
+    int width,
+    int height,
+    bool verbose)
+{
+    if (!Pty.IsSupported)
+        throw new InvalidOperationException("PTY is not supported on this operating system.");
+
+    if (Console.IsInputRedirected || Console.IsOutputRedirected)
+    {
+        throw new InvalidOperationException(
+            "Interactive PTY steps require a real terminal (stdin and stdout must not be redirected).");
+    }
+
+    using var session = Pty.Start(new PtyStartInfo
+    {
+        FileName = shell.FileName,
+        Arguments = BuildPtyShellArguments(shell, cmd),
+        WorkingDirectory = cwd,
+        Size = new(width, height),
+    });
+
+    var stopwatch = Stopwatch.StartNew();
+    var chunks = new List<PtyCaptureChunk>();
+    var inputChunks = new List<PtyInputChunk>();
+    var inputRecorder = new InteractivePtyInputRecorder(stopwatch, inputChunks);
+    var pumpTask = PumpInteractiveOutputAsync(session, chunks, stopwatch, verbose);
+
+    Console.Error.WriteLine("  attaching host terminal for interactive PTY input...");
+
+    int exitCode;
+    using (var attachCts = new CancellationTokenSource())
+    using (var consoleInput = PtyConsoleInput.Attach(session, new PtyConsoleAttachOptions
+    {
+        SyncHostSize = false,
+        InputObserver = inputRecorder,
+    }))
+    {
+        var exitTask = session.WaitForExitAsync(attachCts.Token);
+        _ = exitTask.ContinueWith(
+            static (_, state) => ((CancellationTokenSource)state!).Cancel(),
+            attachCts,
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
+
+        consoleInput.PumpInputUntil(attachCts.Token);
+
+        exitCode = exitTask.IsCompletedSuccessfully ? exitTask.Result : session.ExitCode ?? -1;
+        await pumpTask.ConfigureAwait(false);
+    }
+
+    if (!OperatingSystem.IsWindows())
+        ResetUnixHostCursorColumn();
+
+    if (verbose)
+    {
+        Console.Error.WriteLine($"scenetake: interactive pty verbose: chunks={chunks.Count} input={inputChunks.Count}");
+    }
+
+    return CommandExecution.FromInteractivePty(exitCode, chunks, inputChunks);
+}
+
+static async Task PumpInteractiveOutputAsync(
+    PtySession session,
+    List<PtyCaptureChunk> chunks,
+    Stopwatch stopwatch,
+    bool verbose)
+{
+#pragma warning disable CA2000 // Host standard output is process-owned and must not be disposed.
+    var stdout = Console.OpenStandardOutput();
+#pragma warning restore CA2000
+
+    await foreach (var chunk in session.ReadOutputAsync().ConfigureAwait(false))
+    {
+        var elapsed = stopwatch.Elapsed;
+        var data = chunk.Data.ToArray().AsMemory();
+        chunks.Add(new PtyCaptureChunk(elapsed, data));
+
+        await stdout.WriteAsync(chunk.Data, CancellationToken.None).ConfigureAwait(false);
+
+        if (verbose)
+            Console.Error.WriteLine($"scenetake: interactive pty chunk: {data.Length} bytes at {elapsed.TotalSeconds:F3}s");
+    }
+}
+
+static void ResetUnixHostCursorColumn()
+{
+#pragma warning disable CA2000 // Host standard output is process-owned and must not be disposed.
+    var stdout = Console.OpenStandardOutput();
+#pragma warning restore CA2000
+
+    stdout.Write("\r\n"u8);
+    stdout.Flush();
 }
 
 static string[] BuildPtyShellArguments(ShellLaunch shell, string cmd)
@@ -2635,26 +2861,53 @@ static class TypingChars
 
 record HighlightSpec(string ColorOpen, List<string> At);
 
+/// <summary>
+/// Records host keyboard bytes forwarded by <see cref="PtyConsoleInput.Attach"/> during an interactive PTY step.
+/// </summary>
+sealed class InteractivePtyInputRecorder(Stopwatch stopwatch, List<PtyInputChunk> chunks) : IPtyConsoleInputObserver
+{
+    public void OnForwardedInput(TimeSpan elapsed, ReadOnlySpan<byte> data)
+    {
+        _ = elapsed;
+        if (data.IsEmpty)
+            return;
+
+        chunks.Add(new PtyInputChunk(stopwatch.Elapsed, data.ToArray().AsMemory()));
+    }
+}
+
+/// <summary>
+/// Timestamped host→PTY input bytes captured during an interactive step (same clock as <see cref="PtyCaptureChunk"/> output).
+/// </summary>
+readonly record struct PtyInputChunk(TimeSpan Time, ReadOnlyMemory<byte> Data);
+
 readonly record struct CommandExecution(
     int ExitCode,
     bool IsPty,
     string Output,
     string Stderr,
     IReadOnlyList<PtyCaptureChunk>? PtyByteChunks,
+    IReadOnlyList<PtyInputChunk>? PtyInputChunks,
     IReadOnlyList<PipeStreamChunk>? PipeStreamChunks)
 {
     public static CommandExecution FromCapture(PtyCaptureResult result) =>
-        new(result.ExitCode, true, "", "", result.Chunks, null);
+        new(result.ExitCode, true, "", "", result.Chunks, null, null);
+
+    public static CommandExecution FromInteractivePty(
+        int exitCode,
+        IReadOnlyList<PtyCaptureChunk> outputChunks,
+        IReadOnlyList<PtyInputChunk> inputChunks) =>
+        new(exitCode, true, "", "", outputChunks, inputChunks, null);
 
     public static CommandExecution FromPipeStream(
         string stdout,
         string stderr,
         int exitCode,
         IReadOnlyList<PipeStreamChunk> chunks) =>
-        new(exitCode, false, stdout, stderr, null, chunks);
+        new(exitCode, false, stdout, stderr, null, null, chunks);
 
     public static CommandExecution FromPipe(string stdout, string stderr, int exitCode) =>
-        new(exitCode, false, stdout, stderr, null, []);
+        new(exitCode, false, stdout, stderr, null, null, []);
 }
 
 record ShellLaunch(string FileName, string[] Arguments, string EnvValue, string DisplayName);

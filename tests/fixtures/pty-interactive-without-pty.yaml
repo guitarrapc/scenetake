@@ -1,0 +1,8 @@
+settings:
+  typing-speed: 0.01
+  pre-delay: 0.1
+  post-delay: 0.1
+
+steps:
+  - run: echo interactive-without-pty
+    interactive: true

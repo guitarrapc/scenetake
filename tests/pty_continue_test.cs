@@ -16,7 +16,10 @@ failures += Run("StripAlternateScreenExitCleanup", StripAlternateScreenExitClean
 failures += Run("StripOscAndInitOnly", StripOscAndInitOnly);
 failures += Run("KeepLineEraseDuringLeadingPhase", KeepLineEraseDuringLeadingPhase);
 failures += Run("StripPrivateModes", StripPrivateModes);
+failures += Run("StripLeadingNewlines", StripLeadingNewlines);
 failures += Run("KeepLargePassthroughChunk", KeepLargePassthroughChunk);
+failures += Run("StripCopilotStyleAlternateScreenExit", StripCopilotStyleAlternateScreenExit);
+failures += Run("StripCopilotBannerTeardownAfterAlternateScreenExit", StripCopilotBannerTeardownAfterAlternateScreenExit);
 failures += Run("FastPathOutputIsBufferIndependent", FastPathOutputIsBufferIndependent);
 
 return failures == 0 ? 0 : 1;
@@ -109,11 +112,38 @@ static bool StripPrivateModes()
     return output == "text";
 }
 
+static bool StripLeadingNewlines()
+{
+    var output = Filter(string.Join("", Enumerable.Repeat("\r\n", 20)), "\u001b[?1049hvim");
+    return output == "\u001b[?1049hvim";
+}
+
 static bool KeepLargePassthroughChunk()
 {
     var payload = new string('x', 100_000);
     var output = Filter("start", payload + "\u001b[2Jtail");
     return output == "start" + payload + "\u001b[2Jtail";
+}
+
+static bool StripCopilotStyleAlternateScreenExit()
+{
+    var output = Filter(
+        "\u001b[?1049hcopilot",
+        "\u001b[?1049l\u001b[?12h\u001b[?25l\u001b[H\u001b[K\r\n\u001b[K\r\n\u001b[H\u001b[?25hafter");
+    return output == "\u001b[?1049hcopilot\u001b[?1049lafter";
+}
+
+static bool StripCopilotBannerTeardownAfterAlternateScreenExit()
+{
+    var output = Filter(
+        "\u001b[?1049hcopilot",
+        "\u001b[=0;1u\u001b[>4;0m\u001b[?1049l",
+        "  \r\n  \u001b[38;2;145;152;161m╭─╮╭─╮   Changes    \u001b[38;2;22;198;12m+0 \u001b[38;2;231;72;86m-0\u001b[m\r\n" +
+        "  \u001b[38;2;145;152;161m╰─╯╰─╯   AI Credits \u001b[m7.62 (13s)\r\n" +
+        "  \u001b[38;2;145;152;161m█ ▘▝ █   Tokens     ↑ \u001b[m30.3k \u001b[38;2;145;152;161m(30.3k written) • ↓ \u001b[m47\r\n" +
+        "   \u001b[38;2;145;152;161m▔▔▔▔    Resume     \u001b[mcopilot --resume=d8f9c819-9dde-4249-a215-bb41236820c5\u001b[8;1H\u001b[?25h",
+        "$ ");
+    return output == "\u001b[?1049hcopilot\u001b[=0;1u\u001b[>4;0m\u001b[?1049l$ ";
 }
 
 static bool FastPathOutputIsBufferIndependent()

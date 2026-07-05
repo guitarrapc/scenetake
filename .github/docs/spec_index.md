@@ -30,6 +30,7 @@ Use this when you know the goal but not the document.
 | Add setup/teardown commands | [spec_scenario.md](spec_scenario.md) → `pre`/`post`, then [spec_pre_post.md](spec_pre_post.md) for behavior |
 | Color command output, typed text, or stderr | [spec_highlight.md](spec_highlight.md); key placement in [spec_scenario.md](spec_scenario.md) → `steps` |
 | Record a TUI or TTY-dependent command | [spec_scenario.md](spec_scenario.md) → `pty`; behavior in [spec_pty.md](spec_pty.md) |
+| Operate a TUI on the host terminal (`vim`, banner demos, etc.) | [spec_scenario.md](spec_scenario.md) → `interactive`; behavior in [spec_pty.md](spec_pty.md) → Interactive PTY |
 | Continue the previous screen after a PTY command or alternate-screen TUI | [spec_scenario.md](spec_scenario.md) → `pty`; behavior in [spec_pty.md](spec_pty.md) |
 | Understand step exit codes vs `pre`/`post` failures | [spec_scenario.md](spec_scenario.md) → Step exit codes |
 | Set terminal theme or font size for cast / SVG | [spec_scenario.md](spec_scenario.md) → `render`; header mapping in [spec_cast.md](spec_cast.md) |

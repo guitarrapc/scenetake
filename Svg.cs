@@ -893,6 +893,23 @@ internal static class SvgFrameRenderer
             var runBold = cell.Bold;
             var runItalic = cell.Italic;
             var runUnderline = cell.Underline;
+
+            if (IsBlockElement(cell.Text))
+            {
+                var blockX = originX + runStart * metrics.CharWidth;
+                if (runBg is not null)
+                {
+                    sb.AppendLine(CultureInfo.InvariantCulture,
+                        $"<rect class=\"bg\" x=\"{blockX:0.##}\" y=\"{rowY:0.##}\" width=\"{metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\" fill=\"{runBg}\"/>");
+                }
+
+                var blockWeight = runBold ? "bold" : "normal";
+                sb.AppendLine(CultureInfo.InvariantCulture,
+                    $"<text x=\"{blockX:0.##}\" y=\"{textY:0.##}\" fill=\"{runFg}\" font-weight=\"{blockWeight}\" textLength=\"{metrics.CharWidth:0.##}\" lengthAdjust=\"spacingAndGlyphs\">{EscapeXml(cell.Text)}</text>");
+                col = runStart + (cell.IsWide ? 2 : 1);
+                continue;
+            }
+
             var runText = (t_runText ??= new StringBuilder(64));
             runText.Clear();
             runText.Append(cell.Text);
@@ -903,6 +920,9 @@ internal static class SvgFrameRenderer
             {
                 var next = buffer.GetCell(row, col);
                 if (next.IsWideContinuation)
+                    break;
+
+                if (IsBlockElement(next.Text))
                     break;
 
                 var nextFg = ResolveTintedForeground(buffer, row, col, next, theme);
@@ -932,12 +952,6 @@ internal static class SvgFrameRenderer
             {
                 sb.AppendLine(CultureInfo.InvariantCulture,
                     $"<rect class=\"bg\" x=\"{x:0.##}\" y=\"{rowY:0.##}\" width=\"{runWidth * metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\" fill=\"{runBg}\"/>");
-            }
-
-            if (IsBlockElement(cell.Text))
-            {
-                RenderBlockElement(sb, cell.Text, x, rowY, runWidth * metrics.CharWidth, metrics.LineHeight, runFg);
-                continue;
             }
 
             var weight = runBold ? "bold" : "normal";
@@ -1233,38 +1247,6 @@ internal static class SvgFrameRenderer
 
         var cp = text.Length == 1 ? text[0] : char.ConvertToUtf32(text[0], text[1]);
         return cp is >= 0x2580 and <= 0x259F and not (0x2591 or 0x2592 or 0x2593);
-    }
-
-    private static void RenderBlockElement(
-        StringBuilder sb,
-        string text,
-        double x,
-        double y,
-        double cellRectWidth,
-        double cellRectHeight,
-        string fill)
-    {
-        var cp = text.Length == 1 ? text[0] : char.ConvertToUtf32(text[0], text[1]);
-        var w = cellRectWidth;
-        var h = cellRectHeight;
-        var hh = h / 2d;
-        var hw = w / 2d;
-
-        void R(double rx, double ry, double rw, double rh)
-        {
-            sb.AppendLine(CultureInfo.InvariantCulture,
-                $"<rect class=\"bg\" x=\"{rx:0.##}\" y=\"{ry:0.##}\" width=\"{rw:0.##}\" height=\"{rh:0.##}\" fill=\"{fill}\"/>");
-        }
-
-        switch (cp)
-        {
-            case 0x2580: R(x, y, w, hh); break;
-            case 0x2584: R(x, y + hh, w, hh); break;
-            case 0x2588: R(x, y, w, h); break;
-            case 0x258C: R(x, y, hw, h); break;
-            case 0x2590: R(x + hw, y, hw, h); break;
-            default: R(x, y, w, h); break;
-        }
     }
 
     private static SvgMetrics CreateMetrics(int fontSize, int cols, int rows, WindowStyle window)
