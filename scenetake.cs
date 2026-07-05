@@ -1103,7 +1103,14 @@ static double EmitInteractivePtyStepOutput(
     }
 
     if (timedChunks.Count == 0)
-        return commandStart;
+    {
+        var lastSeconds = 0.0;
+        if (chunks.Count > 0)
+            lastSeconds = Math.Max(lastSeconds, chunks[^1].Time.TotalSeconds);
+        if (inputChunks is { Count: > 0 })
+            lastSeconds = Math.Max(lastSeconds, inputChunks[^1].Time.TotalSeconds);
+        return commandStart + lastSeconds;
+    }
 
     List<(double Time, ReadOnlyMemory<byte> Data)> emitChunks;
 
@@ -1138,10 +1145,7 @@ static double EmitInteractivePtyStepOutput(
         emitChunks = timedChunks;
     }
 
-    var coalescedInput = new List<(double Time, ReadOnlyMemory<byte> Data)>(emitChunks.Count);
-    for (var i = 0; i < emitChunks.Count; i++)
-        coalescedInput.Add((emitChunks[i].Time, emitChunks[i].Data));
-    var coalesced = CastTimingPipeline.CoalesceTimedUtf8(coalescedInput);
+    var coalesced = CastTimingPipeline.CoalesceTimedUtf8(emitChunks);
     foreach (var (time, data) in coalesced)
     {
         events.Add(CastEvent.OutputUtf8(
@@ -1492,7 +1496,6 @@ static async Task PumpInteractiveOutputAsync(
         chunks.Add(new PtyCaptureChunk(elapsed, data));
 
         await stdout.WriteAsync(chunk.Data, CancellationToken.None).ConfigureAwait(false);
-        await stdout.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
         if (verbose)
             Console.Error.WriteLine($"scenetake: interactive pty chunk: {data.Length} bytes at {elapsed.TotalSeconds:F3}s");
