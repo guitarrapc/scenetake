@@ -173,6 +173,9 @@ function psLiteral(value) {
 
 function runCommand(command, args, label) {
   const result = spawnSync(command, args, { stdio: 'pipe' });
+  if (result.error) {
+    throw new Error(`${label} failed: ${result.error.message}`);
+  }
   if (result.status !== 0) {
     const detail =
       result.stderr?.toString().trim() ||
