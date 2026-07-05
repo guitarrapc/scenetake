@@ -67,6 +67,8 @@ When a map-form step has `pty: true` and `interactive: true` (default `false`):
 - **Fixed PTY geometry** — `SyncHostSize = false` so the child uses scenario `width` × `height`.
 - **Step ends on child exit** — for example `:wq` in vim or command completion.
 - **Status on stderr** — attach progress and verbose chunk logs (output + input event counts) go to stderr so they do not mix with the PTY byte stream on Unix.
+- **`normalize-typing` scope** — insert-mode end-of-line typing with Backspace correction stripping; normal-mode cursor motion (`hjkl`) does not add extra cast events. Normal-mode destructive edits (`x`, `dd`, `dw`) are not normalized yet.
+- **No stream pipeline or forced kill** — `stream-output`, `max-duration`, and per-step timeline compression do not apply to interactive steps. There is no `max-duration` forced kill of a running interactive session.
 
 | Condition | Behavior |
 |---|---|
@@ -130,4 +132,5 @@ Integration tests require `SCENETAKE_BIN` pointing at a published scenetake bina
 - Interactive PTY steps need the output pump running **before** `PtyConsoleInput.Attach` on Windows ConPTY; reversing that order can stall the session.
 - Interactive steps record wall-clock chunk times so TUI motion (banner animations, spinner frames) replays at real speed in cast/SVG. Startup-offset compress applies only to non-interactive PTY.
 - **Host resize sync breaks vim/svg replay**: `PtyConsoleInput.Attach` defaults to resizing the PTY to the host console. vim then emits cursor addresses for the larger height (for example row 44 on a 44-row host) while the cast header stays at scenario `height` (24). SVG replay clamps out-of-range rows and corrupts the session. scenetake uses `PtyConsoleAttachOptions.SyncHostSize = false` so the PTY keeps scenario geometry.
+- On Unix, scenetake writes `\r\n` to host stdout after detach so the parent shell prompt realigns after raw-mode interactive output.
 - Recorded step failures belong in the cast as demo content; only infrastructure failures (spawn, drain timeout) should abort the run. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
