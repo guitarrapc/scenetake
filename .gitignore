@@ -404,3 +404,7 @@ FodyWeavers.xsd
 
 # custom
 .references/
+!npm/packages/*
+!npm/packages/scenetake/bin/
+*.dylib
+*.so

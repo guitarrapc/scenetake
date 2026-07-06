@@ -1,9 +1,19 @@
-# scenetake
+# npm packages
 
-Record YAML terminal scenarios as [asciinema v3 `.cast`](https://docs.asciinema.org/manual/asciicast/v3/) and animated `.svg`.
+Platform-specific binaries are published as optional dependencies (esbuild-style). No install scripts are used.
 
-```sh
-npm install -g scenetake
+```
+packages/
+  scenetake/          # meta package (bin wrapper)
+  linux-x64/          # @scenetake/linux-x64
+  linux-arm64/
+  darwin-x64/
+  darwin-arm64/
+  win32-x64/
+  win32-arm64/
+scripts/
+  assemble-packages.sh
+  stage-all.sh
 ```
 
-See the [GitHub repository](https://github.com/guitarrapc/scenetake) for usage, scenario format, and examples.
+Release CI assembles binaries into `packages/*` and runs `npm stage publish` for each package.

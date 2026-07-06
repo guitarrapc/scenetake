@@ -12,18 +12,19 @@
     "url": "https://github.com/guitarrapc/scenetake/issues"
   },
   "bin": {
-    "scenetake": "cli/scenetake.js"
+    "scenetake": "bin/scenetake.js"
   },
   "files": [
-    "cli",
+    "bin",
     "README.md"
   ],
-  "scripts": {
-    "postinstall": "node cli/install.js"
-  },
-  "dependencies": {
-    "https-proxy-agent": "^7.0.6",
-    "proxy-from-env": "^1.1.0"
+  "optionalDependencies": {
+    "@scenetake/darwin-arm64": "1.3.0",
+    "@scenetake/darwin-x64": "1.3.0",
+    "@scenetake/linux-arm64": "1.3.0",
+    "@scenetake/linux-x64": "1.3.0",
+    "@scenetake/win32-arm64": "1.3.0",
+    "@scenetake/win32-x64": "1.3.0"
   },
   "os": [
     "darwin",

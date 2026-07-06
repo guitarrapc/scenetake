@@ -303,12 +303,22 @@ foreach ($file in Get-ChildItem samples/*.cast) {
 
 ### Release
 
-タグを打つ前に、`Directory.Build.props` と `npm/package.json` をまとめて更新します。スクリプトは最新の `v*` git タグを基準にします（タグがない場合はファイル上の現在値を使います）。
+タグを打つ前に、`Directory.Build.props` と `npm/packages/` 配下の npm パッケージをまとめて更新します。スクリプトは最新の `v*` git タグを基準にします（タグがない場合はファイル上の現在値を使います）。
 
 ```bash
-dotnet run scripts/bump_version.cs -- patch   # 例: v1.3.0 -> 1.3.1
-dotnet run scripts/bump_version.cs -- minor   # 例: v1.3.0 -> 1.4.0
-dotnet run scripts/bump_version.cs -- major   # 例: v1.3.0 -> 2.0.0
+dotnet run scripts/set_version.cs -- patch   # 例: v1.3.0 -> 1.3.1
+dotnet run scripts/set_version.cs -- minor   # 例: v1.3.0 -> 1.4.0
+dotnet run scripts/set_version.cs -- major   # 例: v1.3.0 -> 2.0.0
 ```
 
-バージョン更新をコミットしたあと、新しいバージョンに対応するタグ（例: `v1.4.0`）を作成して push します。タグの push で release workflow が走り、ネイティブバイナリのビルド、GitHub Release の作成、npm パッケージの公開が行われます。
+バージョン更新をコミットしたあと、新しいバージョンに対応するタグ（例: `v1.4.0`）を作成して push します。タグの push で release workflow が走り、ネイティブバイナリのビルド、GitHub Release の作成、`scenetake` と `@scenetake/*` プラットフォームパッケージの stage が行われます。
+
+workflow 完了後、ローカルで 2FA を使って staged パッケージを approve します。
+
+```bash
+npm stage list @scenetake
+npm stage list scenetake
+npm stage approve <stage-id>
+```
+
+初回の npm リリースだけは手動の `npm publish` が必要です。staged publishing は registry 上にパッケージが既に存在していることが前提です。メインの `scenetake` より先に、プラットフォームパッケージ（`@scenetake/linux-x64` など）を approve してください。
