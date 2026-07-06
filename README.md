@@ -81,7 +81,7 @@ scenetake is a cross-platform tool that records those scenarios as `.cast` files
 Download the asset for your OS from GitHub Releases, then place `scenetake` (or `scenetake.exe` on Windows) where you want.
 
 ```sh
-# .NET global tool (.NET 10 runtime required)
+# .NET global tool (.NET 10 SDK required; .NET 10 runtime required to run)
 dotnet tool install -g scenetake
 
 # npm
