@@ -33,7 +33,7 @@ extract_windows() {
   local dest="$2"
   rm -rf "$dest"
   mkdir -p "$dest"
-  unzip -o "$archive" -d "$dest"
+  unzip -q -o "$archive" -d "$dest"
 }
 
 copy_package_json() {
