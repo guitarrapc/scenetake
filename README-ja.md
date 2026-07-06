@@ -81,7 +81,7 @@ scenetake は、asciinema を介さずシナリオから `.cast`（任意で `.s
 GitHub の Releases ページから利用 OS 向けアセットをダウンロードし、`scenetake`（Windows は `scenetake.exe`）を任意の場所に配置します。
 
 ```sh
-# .NET グローバルツール（.NET 10 ランタイムが必要）
+# .NET グローバルツール（インストールには .NET 10 SDK が必要。実行には .NET 10 ランタイムが必要）
 dotnet tool install -g scenetake
 
 # npm
