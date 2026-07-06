@@ -69,6 +69,10 @@ extract_windows "$assets_dir/scenetake-win-arm64.zip" "$stage_dir/win32-arm64"
 copy_package_json win32-arm64 "$stage_dir/win32-arm64"
 
 mkdir -p "$stage_dir/scenetake"
+if [ ! -f "$packages_dir/scenetake/bin/scenetake.js" ]; then
+  echo "Error: missing $packages_dir/scenetake/bin/scenetake.js" >&2
+  exit 1
+fi
 cp "$packages_dir/scenetake/package.json" "$stage_dir/scenetake/package.json"
 cp "$packages_dir/scenetake/README.md" "$stage_dir/scenetake/README.md"
 cp -r "$packages_dir/scenetake/bin" "$stage_dir/scenetake/bin"

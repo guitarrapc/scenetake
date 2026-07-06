@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 <packages-dir>" >&2
+  exit 1
+fi
+
 packages_dir="$1"
 platform_packages=(
   linux-x64
