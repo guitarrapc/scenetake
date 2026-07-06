@@ -319,8 +319,7 @@ Commit the version bump, then create and push a tag matching the new version (fo
 After the workflow finishes, approve the staged npm packages locally with 2FA:
 
 ```bash
-npm stage list @scenetake
-npm stage list scenetake
+npm stage list
 npm stage approve <stage-id>
 ```
 

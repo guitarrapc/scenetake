@@ -31,5 +31,4 @@ echo "Staging scenetake..."
 )
 
 echo "Staged packages:"
-npm stage list @scenetake --json || true
-npm stage list scenetake --json
+npm stage list --json || true

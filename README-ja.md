@@ -319,8 +319,7 @@ dotnet run scripts/set_version.cs -- major   # 例: v1.3.0 -> 2.0.0
 workflow 完了後、ローカルで 2FA を使って staged パッケージを approve します。
 
 ```bash
-npm stage list @scenetake
-npm stage list scenetake
+npm stage list
 npm stage approve <stage-id>
 ```
 

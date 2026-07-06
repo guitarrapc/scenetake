@@ -284,8 +284,7 @@ jobs:
           echo "### npm staged" >> "$GITHUB_STEP_SUMMARY"
           echo 'Approve locally with 2FA to publish:' >> "$GITHUB_STEP_SUMMARY"
           echo '```sh' >> "$GITHUB_STEP_SUMMARY"
-          echo "npm stage list @scenetake" >> "$GITHUB_STEP_SUMMARY"
-          echo "npm stage list scenetake" >> "$GITHUB_STEP_SUMMARY"
+          echo "npm stage list" >> "$GITHUB_STEP_SUMMARY"
           echo "npm stage approve <stage-id>" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
