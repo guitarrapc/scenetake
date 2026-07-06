@@ -9,6 +9,7 @@ scenetake ships as a **native binary** (NativeAOT). Install channels differ in w
 | Channel | Primary audience | Platform selection | Node.js required |
 |---|---|---|---|
 | [GitHub Releases](https://github.com/guitarrapc/scenetake/releases) | Anyone | User picks the archive | No |
+| NuGet (`dotnet tool install -g scenetake`) | .NET developers | Automatic (install RID) | No |
 | npm (`scenetake`) | Node / npm users | Automatic (`optionalDependencies`) | Yes (runtime wrapper only) |
 | Scoop | Windows users | Automatic (`architecture` in manifest) | No |
 
@@ -28,6 +29,68 @@ Each tagged release publishes six archives plus checksum sidecars:
 Linux archives contain `scenetake`. macOS archives contain `scenetake` and `minipty_spawn_helper`. Windows archives contain `scenetake.exe`.
 
 Users download one archive, extract it, and run the binary directly. No installer or package manager is involved.
+
+---
+
+## NuGet (dotnet global tool)
+
+### Motivation
+
+.NET developers often prefer `dotnet tool install -g scenetake`. Unlike GitHub Releases and npm (which ship **NativeAOT** binaries), the NuGet package is a **framework-dependent** global tool: it requires the [.NET 10 runtime](https://dotnet.microsoft.com/download) on the host, but installs through the standard `dotnet tool` workflow without Node.js.
+
+MiniPty native assets are resolved at install time for the host RID, same as any other .NET app with native dependencies.
+
+### Install
+
+```sh
+dotnet tool install -g scenetake
+scenetake --help
+```
+
+Update with `dotnet tool update -g scenetake`.
+
+### Package layout
+
+| Item | Value |
+|---|---|
+| Package ID | `scenetake` |
+| Command | `scenetake` (`ToolCommandName`) |
+| Version source | `Directory.Build.props` → MSBuild `Version` |
+| Build | `dotnet pack scenetake.cs -c Release` (framework-dependent, not NativeAOT) |
+
+Packaging metadata lives in `Directory.Build.props` (`PackAsTool`, `ToolCommandName`, `PackageId`, etc.).
+
+### Publish (release CI)
+
+The `nuget-publish` job runs **after** the `release` job (GitHub Release created), in parallel with `npm-stage`. NativeAOT builds and smoke tests must succeed first; a failed matrix build or release step blocks NuGet push.
+
+```
+verify → publish (matrix) → release → nuget-publish
+                                    └→ npm-stage
+```
+
+Steps in `nuget-publish`:
+
+1. `dotnet pack scenetake.cs -c Release`
+2. `NuGet/login@v1` exchanges the GitHub OIDC token for a short-lived NuGet API key ([trusted publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing))
+3. `dotnet nuget push` to `https://api.nuget.org/v3/index.json`
+
+**Prerequisites (maintainer):**
+
+- Register a [trusted publisher](https://www.nuget.org/manage/package/settings) on nuget.org for `guitarrapc/scenetake`, workflow file `release.yaml`
+- Set repository secret `NUGET_USER` to the nuget.org **username** (profile name, not email)
+- Reserve the `scenetake` package ID on nuget.org before the first automated push
+
+Unlike npm staged publishing, NuGet push from CI is immediate once trusted publishing is configured.
+
+### Relationship to other channels
+
+| | NuGet tool | GitHub Release / npm |
+|---|---|---|
+| Deployment | Framework-dependent | NativeAOT self-contained |
+| .NET runtime | Required (.NET 10) | Not required |
+| Binary source | Built from source in CI | Prebuilt per-RID NativeAOT archives |
+| Best for | .NET developers already on SDK/runtime | Standalone CLI, no runtime install |
 
 ---
 
@@ -196,7 +259,7 @@ Both channels should reference the **same release version** as GitHub tags (`v*`
 Release versions must stay consistent across:
 
 - Git tag (`v1.4.0`)
-- `Directory.Build.props` (`1.4.0`)
+- `Directory.Build.props` (`1.4.0`) — also drives NuGet package version
 - All `npm/packages/*/package.json` versions and meta `optionalDependencies` pins
 - Scoop manifest `version` and download URLs
 - GitHub Release asset names (`.../v1.4.0/...`)
