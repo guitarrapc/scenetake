@@ -49,8 +49,8 @@ jobs:
             fi
           done < <(find npm/packages -name package.json | sort)
 
-          node - "$TAG_VERSION" <<'EOF'
-          const version = process.argv[1];
+          node <<'EOF'
+          const version = process.env.TAG_VERSION;
           const pkg = require('./npm/packages/scenetake/package.json');
           for (const [name, depVersion] of Object.entries(pkg.optionalDependencies ?? {})) {
             if (depVersion !== version) {

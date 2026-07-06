@@ -88,11 +88,23 @@ if (distinctVersions.Length != 1)
 }
 
 var oldVersion = distinctVersions[0];
-var baseVersion = TryGetLatestTagVersion(repoRoot) ?? oldVersion;
-if (!TryParseVersion(baseVersion, numericVersionRegex, out var current))
+if (!TryParseVersion(oldVersion, numericVersionRegex, out var current))
 {
-    Console.Error.WriteLine($"Error: could not parse version: {baseVersion}");
+    Console.Error.WriteLine($"Error: could not parse version: {oldVersion}");
     return 1;
+}
+
+var baseVersion = oldVersion;
+var latestTagVersion = TryGetLatestTagVersion(repoRoot);
+if (latestTagVersion is not null && TryParseVersion(latestTagVersion, numericVersionRegex, out var tag))
+{
+    if (tag.Major > current.Major ||
+        (tag.Major == current.Major && (tag.Minor > current.Minor ||
+            (tag.Minor == current.Minor && tag.Patch > current.Patch))))
+    {
+        baseVersion = latestTagVersion;
+        current = tag;
+    }
 }
 
 if (!TryResolveTargetVersion(args[0], current, versionRegex, out var newVersion))
@@ -205,7 +217,7 @@ static string? TryGetLatestTagVersion(string repoRoot)
         FileName = "git",
         WorkingDirectory = repoRoot,
         RedirectStandardOutput = true,
-        RedirectStandardError = true,
+        RedirectStandardError = false,
         UseShellExecute = false,
     };
     psi.ArgumentList.Add("tag");
