@@ -9,7 +9,7 @@ scenetake behavior is split into focused specs under `.github/docs/`. Each spec 
 | [spec_scenario.md](spec_scenario.md) | Scenario YAML structure — keys, defaults, `steps` forms, execution order, determinism |
 | [spec_cast.md](spec_cast.md) | Cast file format — v3 write / v2–v3 read, header, event stream, recording boundary, tool compatibility |
 | [spec_cli.md](spec_cli.md) | Commands, flags, output paths, logging, exit codes, `init` |
-| [spec_install.md](spec_install.md) | Install channels — npm optionalDependencies, Scoop, GitHub Releases |
+| [spec_install.md](spec_install.md) | Install channels — NuGet dotnet tool, npm optionalDependencies, Scoop, GitHub Releases |
 | [spec_highlight.md](spec_highlight.md) | Coloring — `highlight`, `run-highlight`, `stderr-color`, `name` prefix, style strings, `at` ranges |
 | [spec_pre_post.md](spec_pre_post.md) | `pre` / `post` — recording exclusion, fail-fast, exit-code semantics |
 | [spec_svg.md](spec_svg.md) | SVG output — renderer, `svg` subcommand consumption of cast events |
@@ -36,7 +36,7 @@ Use this when you know the goal but not the document.
 | Understand step exit codes vs `pre`/`post` failures | [spec_scenario.md](spec_scenario.md) → Step exit codes |
 | Set terminal theme or font size for cast / SVG | [spec_scenario.md](spec_scenario.md) → `render`; header mapping in [spec_cast.md](spec_cast.md) |
 | Run scenetake from the command line | [spec_cli.md](spec_cli.md) |
-| Install scenetake (npm, Scoop, releases) | [spec_install.md](spec_install.md) |
+| Install scenetake (NuGet, npm, Scoop, releases) | [spec_install.md](spec_install.md) |
 | Produce `.svg` alongside or from a `.cast` | [spec_cli.md](spec_cli.md) → `--format svg` / `svg` subcommand; rendering in [spec_svg.md](spec_svg.md) |
 | Understand exit codes or stderr output | [spec_cli.md](spec_cli.md) |
 | Know what happens when `pre`, SVG, or `post` fails | [spec_pre_post.md](spec_pre_post.md) + [spec_svg.md](spec_svg.md) failure tables |

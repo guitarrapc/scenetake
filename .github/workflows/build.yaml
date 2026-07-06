@@ -72,6 +72,13 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Pack global tool
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet pack scenetake.cs -c Release -o ./nupkg
+          test -f nupkg/scenetake.*.nupkg
+
       - name: Publish NativeAOT binary
         shell: bash
         run: |
