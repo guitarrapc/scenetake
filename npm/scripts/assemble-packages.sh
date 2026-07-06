@@ -42,7 +42,11 @@ copy_package_json() {
   cp "$packages_dir/$platform/package.json" "$dest/package.json"
 }
 
-stage_dir="$RUNNER_TEMP/scenetake-npm-packages"
+if [ -n "${RUNNER_TEMP:-}" ]; then
+  stage_dir="${RUNNER_TEMP}/scenetake-npm-packages"
+else
+  stage_dir="$(mktemp -d -t scenetake-npm-packages.XXXXXX)"
+fi
 rm -rf "$stage_dir"
 mkdir -p "$stage_dir"
 
