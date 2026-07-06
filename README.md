@@ -303,12 +303,22 @@ foreach ($file in Get-ChildItem samples/*.cast) {
 
 ### Release
 
-Before tagging, bump `Directory.Build.props` and `npm/package.json` together. The script uses the latest `v*` git tag as the base version (falls back to the current files when no tags exist).
+Before tagging, bump `Directory.Build.props` and all npm packages under `npm/packages/` together. The script uses the latest `v*` git tag as the base version (falls back to the current files when no tags exist).
 
 ```bash
-dotnet run scripts/bump_version.cs -- patch   # e.g. v1.3.0 -> 1.3.1
-dotnet run scripts/bump_version.cs -- minor   # e.g. v1.3.0 -> 1.4.0
-dotnet run scripts/bump_version.cs -- major   # e.g. v1.3.0 -> 2.0.0
+dotnet run scripts/set_version.cs -- patch   # e.g. v1.3.0 -> 1.3.1
+dotnet run scripts/set_version.cs -- minor   # e.g. v1.3.0 -> 1.4.0
+dotnet run scripts/set_version.cs -- major   # e.g. v1.3.0 -> 2.0.0
 ```
 
-Commit the version bump, then create and push a tag matching the new version (for example `v1.4.0`). Pushing the tag starts the release workflow, which builds native binaries, creates a GitHub Release, and publishes the npm package.
+Commit the version bump, then create and push a tag matching the new version (for example `v1.4.0`). Pushing the tag starts the release workflow, which builds native binaries, creates a GitHub Release, and stages npm packages (`scenetake` plus `@scenetake/*` platform binaries).
+
+After the workflow finishes, approve the staged npm packages locally with 2FA:
+
+```bash
+npm stage list @scenetake
+npm stage list scenetake
+npm stage approve <stage-id>
+```
+
+The first npm release must be published manually (`npm publish`), because staged publishing requires the package to already exist on the registry. Platform packages (`@scenetake/linux-x64`, etc.) must be approved before the main `scenetake` package.

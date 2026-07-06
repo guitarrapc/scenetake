@@ -30,22 +30,35 @@ jobs:
           TAG_VERSION="${TAG#v}"
 
           PROPS_VERSION=$(grep -oP '(?<=<Version>)[^<]+' Directory.Build.props)
-          PKG_VERSION=$(node -p "require('./npm/package.json').version")
 
           if [ "$PROPS_VERSION" != "$TAG_VERSION" ]; then
             echo "::error::Directory.Build.props has '$PROPS_VERSION' but tag '$TAG' expects '$TAG_VERSION'"
             exit 1
           fi
 
-          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "::error::npm/package.json has '$PKG_VERSION' but tag '$TAG' expects '$TAG_VERSION'"
-            exit 1
-          fi
+          while IFS= read -r package_json; do
+            PKG_VERSION=$(node -p "require('./$package_json').version")
+            if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+              echo "::error::$package_json has '$PKG_VERSION' but tag '$TAG' expects '$TAG_VERSION'"
+              exit 1
+            fi
+          done < <(find npm/packages -name package.json | sort)
+
+          node - "$TAG_VERSION" <<'EOF'
+          const version = process.argv[1];
+          const pkg = require('./npm/packages/scenetake/package.json');
+          for (const [name, depVersion] of Object.entries(pkg.optionalDependencies ?? {})) {
+            if (depVersion !== version) {
+              console.error(`::error::optionalDependencies['${name}'] is '${depVersion}', expected '${version}'`);
+              process.exit(1);
+            }
+          }
+          EOF
 
           echo "### Version check passed" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Tag:** \`${TAG}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Directory.Build.props:** \`${PROPS_VERSION}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **npm/package.json:** \`${PKG_VERSION}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **npm packages:** \`${TAG_VERSION}\`" >> "$GITHUB_STEP_SUMMARY"
 
   publish:
     name: Publish ${{ matrix.os }}
@@ -222,10 +235,10 @@ jobs:
           TAG: ${{ github.ref_name }}
 
   npm-stage:
-    name: Stage npm package
+    name: Stage npm packages
     needs: release
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       contents: read
       id-token: write
@@ -234,6 +247,18 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: artifacts/
+
+      - name: Collect release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          find artifacts/ -type f \( -name '*.tar.gz' -o -name '*.zip' \) -exec cp {} release/ \;
 
       - name: Set up Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
@@ -244,21 +269,18 @@ jobs:
       - name: Upgrade npm
         run: npm install -g npm@11
 
-      - name: Stage npm package
+      - name: Assemble and stage npm packages
         shell: bash
         run: |
           set -euo pipefail
-          cd npm
-          npm stage publish --access public --provenance
-          npm stage list scenetake --json | tee "$RUNNER_TEMP/staged.json"
+          packages_dir="$(bash npm/scripts/assemble-packages.sh "$GITHUB_WORKSPACE/release")"
+          bash npm/scripts/stage-all.sh "$packages_dir" | tee "$RUNNER_TEMP/staged.log"
           echo "### npm staged" >> "$GITHUB_STEP_SUMMARY"
           echo 'Approve locally with 2FA to publish:' >> "$GITHUB_STEP_SUMMARY"
           echo '```sh' >> "$GITHUB_STEP_SUMMARY"
+          echo "npm stage list @scenetake" >> "$GITHUB_STEP_SUMMARY"
           echo "npm stage list scenetake" >> "$GITHUB_STEP_SUMMARY"
           echo "npm stage approve <stage-id>" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          echo '```json' >> "$GITHUB_STEP_SUMMARY"
-          cat "$RUNNER_TEMP/staged.json" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

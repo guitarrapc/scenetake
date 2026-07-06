@@ -1,3 +1,5 @@
-dist/
-node_modules/
+packages/*/scenetake
+packages/*/scenetake.exe
+packages/*/minipty_spawn_helper
 *.tgz
+node_modules/
