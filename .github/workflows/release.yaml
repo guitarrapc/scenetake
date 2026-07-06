@@ -314,7 +314,7 @@ jobs:
         run: |
           set -euo pipefail
           dotnet pack scenetake.cs -c Release -o ./nupkg
-          test -f nupkg/scenetake-*.nupkg
+          test -f nupkg/scenetake.*.nupkg
 
       - name: NuGet login (OIDC)
         uses: NuGet/login@ebc737b6fc418a6ca0073cf116ec8dc156d8b81e # v1
