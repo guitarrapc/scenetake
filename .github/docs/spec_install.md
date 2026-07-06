@@ -36,8 +36,7 @@ Users download one archive, extract it, and run the binary directly. No installe
 
 ### Motivation
 
-.NET developers often prefer `dotnet tool install -g scenetake`. Unlike GitHub Releases and npm (which ship **NativeAOT** binaries), the NuGet package is a **framework-dependent** global tool: it requires the [.NET 10 runtime](https://dotnet.microsoft.com/download) on the host, but installs through the standard `dotnet tool` workflow without Node.js.
-
+.NET developers often prefer `dotnet tool install -g scenetake`. Unlike GitHub Releases and npm (which ship **NativeAOT** binaries), the NuGet package is a **framework-dependent** global tool: it installs via the standard `dotnet tool` workflow (requires the .NET 10 SDK) and requires the [.NET 10 runtime](https://dotnet.microsoft.com/download) to run.
 MiniPty native assets are resolved at install time for the host RID, same as any other .NET app with native dependencies.
 
 ### Install
