@@ -405,3 +405,5 @@ FodyWeavers.xsd
 # custom
 .references/
 !npm/packages/*
+*.dylib
+*.so
