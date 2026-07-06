@@ -51,24 +51,9 @@ SVG output supports custom font, light/dark theme, and optional window chrome (`
 | --- | --- |
 | ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
 
-## What you can do
+## Motivation
 
-| I want to… | How |
-|---|---|
-| Record a terminal demo from a list of commands (no live typing) | Write a YAML scenario, then `scenetake scenario.yaml` |
-| Get an animated SVG for a README or docs | `scenetake --format svg scenario.yaml` |
-| Convert an existing asciinema `.cast` to SVG | `scenetake svg recording.cast` |
-| Tune font, theme, or window chrome | Set `render` in YAML, or pass `--font-size`, `--font-family`, `--theme`, `--window` |
-| Color output when CLI tools stay plain without a TTY | Use `highlight`, `run-highlight`, or `stderr-color` on steps — see [samples/highlight.yaml](samples/highlight.yaml) |
-| Record TTY-dependent commands (`matrix`, terminal animations, etc.) | `pty: true` on a step — see [samples/pty.yaml](samples/pty.yaml) or [Limitations (scenario recording)](#limitations-scenario-recording) |
-| Record fully interactive sessions (`vim`, REPLs, user input) | `pty: true` + `interactive: true` on a step — see [samples/interactive-pty.yaml](samples/interactive-pty.yaml) (requires a real host terminal) |
-| Scaffold a starter scenario | `scenetake init` |
-| Browse examples and previews | [samples/README.md](samples/README.md) |
-| Read full behavior specs | [.github/docs/spec_index.md](.github/docs/spec_index.md) |
-
-**Motivation**
-
-I want terminal demos without the hassle of typing commands into asciinema. That is the motivation behind scenetake. There are various tools in the asciinema ecosystem, but none quite fit: some lean heavily on shell scripts, some require asciinema itself as a dependency, some leak execution paths into the cast output, and some only fake the output rather than running real commands. What I want is something where I can write a scenario plainly, have the listed commands actually executed, and get a cast file generated directly from the real output.
+I wanted a tool that could capture commands without making me type them all out by hand, and that is the motivation behind scenetake. There are many tools around asciinema, but they often miss the mark: some are tied to shell scripts, some assume asciinema itself as a dependency, some leak execution paths into the cast output, and some only fake the output instead of running real commands. What I want is something I can describe in a straightforward scenario, have the listed commands actually executed, and generate a cast file directly from the results.
 
 scenetake is a cross-platform tool that records those scenarios as `.cast` files, optionally with `.svg`, without going through asciinema at all.
 
@@ -159,21 +144,89 @@ scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light]
 - `pre` / `post` run setup and teardown commands outside the recording flow. Their stdout/stderr are printed to the CLI, but are never written to the cast file.
 - `steps`:
   - Steps are executed for real, so use caution with commands that modify files or affect external systems.
-  - Commands that need a terminal can opt into pseudo-terminal capture with `pty: true`. See [Limitations (scenario recording)](#limitations-scenario-recording).
+  - Commands that need a terminal can opt into pseudo-terminal capture with `pty: true`. See [PTY recording](#pty-recording).
   - For long-running commands, use `execution-duration` to keep playback readable.
   - For natural replay of long output (`docker build`, staged `sleep`, …), set `stream-output: true` and optionally `max-duration` on that step. Default pipe emit stays instant for typing and short demos.
 
-## Limitations (scenario recording)
+## Output modes
 
-Scenario recording normally runs commands without a PTY and captures each command's output in one batch after it finishes. For terminal-aware commands, use map-form steps with `pty: true`; the PTY size comes from scenario `width` / `height`.
+There are four output modes: ordinary output, stream output, TUI output, and interactive application output. You can switch mode per step.
+
+### Ordinary output
+
+Ordinary steps capture command stdout/stderr and record them with simulated typing. This mode is suitable for one-shot commands and commands that do not require a TTY. Even if output has no color, you can apply color with `highlight` and `stderr-color`. Output appears instantly regardless of how long the real command took to print.
+
+```yaml
+steps:
+  - name: comment color is cyan
+    run: echo hello
+  - name: "[yellow] comment color override"
+    run: echo world
+  - name: run & stdout color default
+    run: date
+  - name: run color override
+    run: date
+    run-highlight: "bold underline green"
+```
+
+| GIF | SVG |
+| --- | --- |
+| ![](samples/highlight.gif) | ![](samples/highlight.svg) |
+
+### Stream output
+
+For commands that emit output intermittently, set `stream-output: true` to replay output at captured timing. If you set `max-duration`, the step output timeline is capped and long idle gaps can be compressed by stream emit.
+
+```yaml
+steps:
+  - name: "stream-output (ping, staggered replay)"
+    run: ping -n 4 127.0.0.1
+    stream-output: true
+```
+
+| GIF | SVG |
+| --- | --- |
+| ![](samples/stream-output.gif) | ![](samples/stream-output.svg) |
+
+### TUI output
+
+To capture terminal UIs or real-time animation (`matrix`, progress bars, etc.), set `pty: true`. PTY mode records the terminal byte stream while the child process is running. PTY size comes from the scenario `width` / `height`.
 
 ```yaml
 steps:
   - run: matrix --duration 5
-    pty: true
+    pty: true               # Capture TTY-dependent output in real time; enough when no interaction is needed
 ```
 
-`pty: true` is intended for terminal UI commands and real-time terminal animations. It records the terminal stream directly, so stdout and stderr are not separated and `stderr-color` does not apply to that step. For **interactive** sessions where you operate the TUI on the host terminal (for example `vim` or a banner demo), add `interactive: true` on the same step — see [samples/interactive-pty.yaml](samples/interactive-pty.yaml) and [spec_pty.md](.github/docs/spec_pty.md) → Interactive PTY.
+| GIF | SVG |
+| --- | --- |
+| ![](samples/pty.gif) | ![](samples/pty.svg) |
+
+> [!WARNING] With `pty: true`, stdout and stderr are merged into one byte stream, so `stderr-color` and pipe-style `highlight` do not apply to that step. See [samples/pty.yaml](samples/pty.yaml) and [spec_pty.md](.github/docs/spec_pty.md).
+
+### Interactive application output
+
+For interactive applications (`vim`, `copilot`, etc.), set both `pty: true` and `interactive: true`. PTY is enabled and interactive child-process input becomes possible. If you set `normalize-typing: true`, banners/help output keeps real timing while only user typing is re-timed for readability.
+
+```yaml
+steps:
+  - name: "Copilot CLI with banner"
+    run: copilot --banner
+    pty: true               # Capture TTY-dependent output in real time
+    interactive: true       # For interactive applications
+    normalize-typing: true  # Keep banner timing; re-time typed input only for readability
+
+  - name: "edit in vim"
+    run: vim README.md
+    pty: true               # Capture TTY-dependent output in real time
+    interactive: true       # For interactive applications
+```
+
+| GIF | SVG |
+| --- | --- |
+| ![](samples/interactive-pty.gif) | ![](samples/interactive-pty.svg) |
+
+> [!WARNING] With `pty: true`, stdout and stderr are merged into one byte stream, so `stderr-color` and pipe-style `highlight` do not apply to that step. See [samples/interactive-pty.yaml](samples/interactive-pty.yaml) and Interactive PTY in [spec_pty.md](.github/docs/spec_pty.md).
 
 ## Scenario Format
 

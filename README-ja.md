@@ -51,24 +51,9 @@ SVG 出力ではフォント、ライト/ダークテーマ、ウィンドウ枠
 | --- | --- |
 | ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
 
-## できること
+## モチベーション
 
-| やりたいこと | 方法 |
-|---|---|
-| コマンド一覧からターミナルデモを録画する（手入力なし） | YAML シナリオを書いて `scenetake scenario.yaml` |
-| README やドキュメント用のアニメーション SVG を作る | `scenetake --format svg scenario.yaml` |
-| 既存の asciinema `.cast` を SVG に変換する | `scenetake svg recording.cast` |
-| フォント・テーマ・ウィンドウ枠を調整する | YAML の `render`、または `--font-size` / `--font-family` / `--theme` / `--window` |
-| 非 TTY 実行で CLI が色を出さない出力を着色する | step の `highlight` / `run-highlight` / `stderr-color` — [samples/highlight.yaml](samples/highlight.yaml) を参照 |
-| TTY 依存コマンド（`matrix`、ターミナルアニメーションなど）を録画する | step に `pty: true` — [samples/pty.yaml](samples/pty.yaml) または [制限事項（シナリオ録画）](#制限事項シナリオ録画) |
-| ユーザー入力が必要な完全対話（`vim` 操作、REPL など）を録画する | step に `pty: true` と `interactive: true` — [samples/interactive-pty.yaml](samples/interactive-pty.yaml)（実ターミナルが必要） |
-| スターターシナリオを作る | `scenetake init` |
-| サンプルとプレビューを見る | [samples/README-ja.md](samples/README-ja.md) |
-| 仕様の詳細を読む | [.github/docs/spec_index.md](.github/docs/spec_index.md) |
-
-**動機**
-
-作りたいのはasciinemaのcastファイルであって、コマンドのレコードを頑張りたくない、scenetakeはこんな動機で作ったツールです。asciinemaの周辺に様々なツールがありますが、シェルスクリプトに寄っていたり、asciinema 本体を前提にしていたり、実行パスがcastに出力されたり、実行せずにそれっぽい出力だけを作るものだったりして、どれも欲しい形とはずれています。欲しいのは、シナリオを素直に書けて、列挙したコマンドを実際に実行し、その結果から cast ファイルを直接生成できるものです。
+「コマンドをキャプチャしたいけど、コマンドのタイピングを頑張りたくない」、scenetakeはこんな動機で作ったツールです。asciinemaの周辺に様々なツールがありますが、シェルスクリプトに寄っていたり、asciinema 本体を前提にしていたり、実行パスがcastに出力されたり、実行せずにそれっぽい出力だけを作るものだったりして、どれも欲しい形とはずれています。欲しいのは、シナリオを素直に書けて、コマンドを実際に実行し、その結果から cast ファイルを直接生成できるものです。
 
 scenetake は、asciinema を介さずシナリオから `.cast`（任意で `.svg` も）を直接生成するクロスプラットフォームツールです。
 
@@ -159,21 +144,90 @@ scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light]
 - `pre` / `post` は録画フロー外で setup / teardown コマンドを実行します。stdout/stderr は CLI に表示されますが、cast ファイルには一切書き込まれません。
 - `steps`:
   - 実際に実行されるため、ファイル変更や外部システムを操作するような副作用のあるコマンドは慎重に使ってください
-  - ターミナルを必要とするコマンドは `pty: true` で pseudo-terminal capture を有効化できます。詳細は [制限事項（シナリオ録画）](#制限事項シナリオ録画)。
+  - ターミナルを必要とするコマンドは `pty: true` で pseudo-terminal capture を有効化できます。詳細は [PTY 録画](#pty-録画)。
   - 実行時間が長いコマンドは `execution-duration` で見やすく調整できます
   - 長い出力を自然にリプレイしたい場合（`docker build` や `sleep` を挟むステップなど）は、その step に `stream-output: true` と必要なら `max-duration` を指定します。デフォルトの pipe emit はタイピング演出のため一括表示のままです
 
-## 制限事項（シナリオ録画）
+## 出力モード
 
-シナリオ録画は通常 PTY を使わずコマンドを実行し、各コマンドの出力は終了後にまとめて取得します。ターミナル対応コマンドでは、map form step に `pty: true` を指定できます。PTY サイズはシナリオの `width` / `height` です。
+出力モードは、通常出力、ストリーム出力、TUI出力、対話型アプリケーション出力の4種類があります。モードはstepごとに切り替えられます。
+
+### 通常出力
+
+通常のstepは、コマンドの stdout/stderr をキャプチャしてタイピング演出付きで記録します。このモードは単発出力のコマンドや、TTYを必要としないコマンドに適しています。出力に色がついていなくても、`highlight` や `stderr-color` で色を付けることができます。出力は、実際の出力に関わらず、一瞬で表示されます。
+
+```yaml
+steps:
+  - name: comment color is cyan
+    run: echo hello
+  - name: "[yellow] comment color override"
+    run: echo world
+  - name: run & stdout color default
+    run: date
+  - name: run color override
+    run: date
+    run-highlight: "bold underline green"
+```
+
+| GIF | SVG |
+| --- | --- |
+| ![](samples/highlight.gif) | ![](samples/highlight.svg) |
+
+### ストリーム出力
+
+出力が間欠的に発生するコマンドは、`stream-output: true` を指定することで、キャプチャしたタイミングをそのまま再生できます。`max-duration` を指定すると、step の出力タイムラインを制限し、長時間の idle gap を stream emit で圧縮できます。
+
+```yaml
+steps:
+  - name: "stream-output (ping, staggered replay)"
+    run: ping -n 4 127.0.0.1
+    stream-output: true
+```
+
+| GIF | SVG |
+| --- | --- |
+| ![](samples/stream-output.gif) | ![](samples/stream-output.svg) |
+
+### TUI 出力
+
+ターミナル UI やリアルタイムアニメーション（`matrix`、プログレスバーなど）をキャプチャする場合、`pty: true` を指定します。PTY が有効になり、子プロセスの実行中に端末バイトストリームを記録します。PTY サイズはシナリオの `width` / `height` を用います。
 
 ```yaml
 steps:
   - run: matrix --duration 5
-    pty: true
+    pty: true               # TTY依存コマンドの出力をリアルタイムでキャプチャ。対話しないならこれだけでOK
 ```
 
-`pty: true` はターミナル UI コマンドやリアルタイムのターミナルアニメーション向けです。端末ストリームをそのまま記録するため、stdout と stderr は分離されず、その step では `stderr-color` は適用されません。ホスト端末で TUI を操作する対話録画（`vim` やバナーデモなど）には、同じ step に `interactive: true` を追加します — [samples/interactive-pty.yaml](samples/interactive-pty.yaml) と [spec_pty.md](.github/docs/spec_pty.md) の Interactive PTY を参照してください。
+| GIF | SVG |
+| --- | --- |
+| ![](samples/pty.gif) | ![](samples/pty.svg) |
+
+> [!WARNING] `pty: true` では stdout と stderr はバイトストリームに統合されるため、その step に `stderr-color` やパイプ向けの `highlight` は適用されません。[samples/pty.yaml](samples/pty.yaml) と [spec_pty.md](.github/docs/spec_pty.md) を参照してください。
+
+### 対話型アプリケーション出力
+
+対話型アプリケーション（`vim`、`copilot` など）をキャプチャする場合、`pty: true` と `interactive: true` を指定します。PTY が有効になり、子プロセスでの対話を可能にします。`normalize-typing: true` を指定すると、バナーやヘルプなどの出力は実時間のまま、ユーザー入力のタイピングだけを読みやすく再タイミングします。
+
+```yaml
+steps:
+  - name: "Copilot CLI with banner"
+    run: copilot --banner
+    pty: true               # TTY依存コマンドの出力をリアルタイムでキャプチャ
+    interactive: true       # 対話アプリケーション用
+    normalize-typing: true  # バナーは実時間のまま、入力タイピングだけ読みやすく再タイミング
+
+  - name: "edit in vim"
+    run: vim README.md
+    pty: true               # TTY依存コマンドの出力をリアルタイムでキャプチャ
+    interactive: true       # 対話アプリケーション用
+```
+
+| GIF | SVG |
+| --- | --- |
+| ![](samples/interactive-pty.gif) | ![](samples/interactive-pty.svg) |
+
+> [!WARNING] `pty: true` では stdout と stderr はバイトストリームに統合されるため、その step に `stderr-color` やパイプ向けの `highlight` は適用されません。[samples/interactive-pty.yaml](samples/interactive-pty.yaml) と [spec_pty.md](.github/docs/spec_pty.md) の Interactive PTY を参照してください。
+
 
 ## シナリオファイル形式
 
