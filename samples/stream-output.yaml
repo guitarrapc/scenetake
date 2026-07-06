@@ -1,0 +1,15 @@
+title: "Stream Output Demo"
+width: 80
+height: 24
+shell: bash
+
+steps:
+  - name: "instant emit (ping, one blob)"
+    run: ping -n 4 127.0.0.1
+    execution-duration: 0.2
+
+  - name: "stream-output (ping, staggered replay)"
+    run: ping -n 4 127.0.0.1
+    stream-output: true
+    silence-threshold: 2.0
+    max-idle: 2.0
