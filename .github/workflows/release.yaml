@@ -221,8 +221,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
 
-  npm-publish:
-    name: Publish npm package
+  npm-stage:
+    name: Stage npm package
     needs: release
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -241,11 +241,24 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
-      - name: Publish npm package
+      - name: Upgrade npm
+        run: npm install -g npm@11
+
+      - name: Stage npm package
         shell: bash
         run: |
           set -euo pipefail
           cd npm
-          npm publish --access public --provenance
+          npm stage publish --access public --provenance
+          npm stage list scenetake --json | tee "$RUNNER_TEMP/staged.json"
+          echo "### npm staged" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Approve locally with 2FA to publish:' >> "$GITHUB_STEP_SUMMARY"
+          echo '```sh' >> "$GITHUB_STEP_SUMMARY"
+          echo "npm stage list scenetake" >> "$GITHUB_STEP_SUMMARY"
+          echo "npm stage approve <stage-id>" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat "$RUNNER_TEMP/staged.json" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
