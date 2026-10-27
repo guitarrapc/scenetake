@@ -3,8 +3,8 @@
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
-#:package MiniPty@1.0.1
-#:package MiniPty.Capture@1.0.1
+#:package MiniPty@1.4.0
+#:package MiniPty.Capture@1.4.0
 
 using System.Diagnostics;
 using System.Runtime.InteropServices;
