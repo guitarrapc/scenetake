@@ -1,6 +1,6 @@
 {
   "name": "@scenetake/darwin-x64",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "macOS x64 binary for scenetake",
   "license": "MIT",
   "repository": {
