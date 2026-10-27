@@ -4,9 +4,9 @@
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
 #:package VYaml@1.3.0
-#:package MiniPty@1.2.0
-#:package MiniPty.Capture@1.2.0
-#:package MiniPty.Console@1.2.0
+#:package MiniPty@1.4.0
+#:package MiniPty.Capture@1.4.0
+#:package MiniPty.Console@1.4.0
 #:include Terminal.cs
 #:include Svg.cs
 #:include CastReader.cs
@@ -1462,7 +1462,7 @@ static async Task<CommandExecution> RunInteractivePtyAsync(
 
         consoleInput.PumpInputUntil(attachCts.Token);
 
-        exitCode = exitTask.IsCompletedSuccessfully ? exitTask.Result : session.ExitCode ?? -1;
+        exitCode = exitTask.IsCompletedSuccessfully ? exitTask.Result.ExitCode : session.ExitCode ?? -1;
         await pumpTask.ConfigureAwait(false);
     }
 
