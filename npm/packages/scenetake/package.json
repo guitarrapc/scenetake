@@ -1,6 +1,6 @@
 {
   "name": "scenetake",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Run a YAML scenario and record terminal output as asciinema v3 .cast and animated .svg without installing asciinema",
   "license": "MIT",
   "repository": {
@@ -19,12 +19,12 @@
     "README.md"
   ],
   "optionalDependencies": {
-    "@scenetake/darwin-arm64": "1.4.1",
-    "@scenetake/darwin-x64": "1.4.1",
-    "@scenetake/linux-arm64": "1.4.1",
-    "@scenetake/linux-x64": "1.4.1",
-    "@scenetake/win32-arm64": "1.4.1",
-    "@scenetake/win32-x64": "1.4.1"
+    "@scenetake/darwin-arm64": "1.4.2",
+    "@scenetake/darwin-x64": "1.4.2",
+    "@scenetake/linux-arm64": "1.4.2",
+    "@scenetake/linux-x64": "1.4.2",
+    "@scenetake/win32-arm64": "1.4.2",
+    "@scenetake/win32-x64": "1.4.2"
   },
   "os": [
     "darwin",
