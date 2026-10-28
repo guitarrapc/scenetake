@@ -115,7 +115,11 @@ asciinema play scenario.cast
 docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20 --last-frame-duration 0
 
 # Convert to gif with agg (Windows PowerShell)
-docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20 --last-frame-duration 0
+# Write the GIF inside the container and copy it out: Docker Desktop on Windows can corrupt a GIF written straight to a bind mount
+$id = docker create -v "$($PWD.Path):/data:ro" ghcr.io/asciinema/agg /data/scenario.cast /tmp/scenario.gif --font-size 20 --last-frame-duration 0
+docker start -a $id
+docker cp "${id}:/tmp/scenario.gif" scenario.gif
+docker rm $id
 ```
 
 **Usage**
@@ -358,8 +362,12 @@ Regenerate samples cast/svg files:
 
 ```bash
 dotnet run samples/regenerate.cs
+# GIFs are written inside the container and copied out; see the Windows agg note in Quick Start
 foreach ($file in Get-ChildItem samples/*.cast) {
-  docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/samples/$($file.BaseName).cast /data/samples/$($file.BaseName).gif  --last-frame-duration 0
+  $id = docker create -v "$($PWD.Path):/data:ro" ghcr.io/asciinema/agg /data/samples/$($file.BaseName).cast /tmp/out.gif --last-frame-duration 0
+  docker start -a $id
+  docker cp "${id}:/tmp/out.gif" samples/$($file.BaseName).gif
+  docker rm $id
 }
 ```
 

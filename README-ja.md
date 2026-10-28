@@ -115,7 +115,11 @@ asciinema play scenario.cast
 docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20 --last-frame-duration 0
 
 # agg で gif に変換 (Windows PowerShell)
-docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20 --last-frame-duration 0
+# GIF はコンテナ内に書き出してから取り出す。Windows の Docker Desktop でバインドマウントに直接書くと GIF が壊れることがある
+$id = docker create -v "$($PWD.Path):/data:ro" ghcr.io/asciinema/agg /data/scenario.cast /tmp/scenario.gif --font-size 20 --last-frame-duration 0
+docker start -a $id
+docker cp "${id}:/tmp/scenario.gif" scenario.gif
+docker rm $id
 ```
 
 **Usage**
@@ -359,8 +363,12 @@ dotnet publish scenetake.cs --self-contained true -p:PublishAot=true -p:StripSym
 
 ```bash
 dotnet run samples/regenerate.cs
+# GIF はコンテナ内に書き出してから取り出す（クイックスタートの Windows 向け agg の注記を参照）
 foreach ($file in Get-ChildItem samples/*.cast) {
-  docker run --rm -v "$($PWD.Path):/data" ghcr.io/asciinema/agg /data/samples/$($file.BaseName).cast /data/samples/$($file.BaseName).gif  --last-frame-duration 0
+  $id = docker create -v "$($PWD.Path):/data:ro" ghcr.io/asciinema/agg /data/samples/$($file.BaseName).cast /tmp/out.gif --last-frame-duration 0
+  docker start -a $id
+  docker cp "${id}:/tmp/out.gif" samples/$($file.BaseName).gif
+  docker rm $id
 }
 ```
 
