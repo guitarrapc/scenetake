@@ -35,6 +35,7 @@ if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     failures += await RunAsync("IntegrationPtyTtyFixture", () => Task.FromResult(IntegrationFixture(repoRoot, "pty-tty-check.yaml", "redirected=False")));
     failures += await RunAsync("IntegrationPtyScreenStateFixture", () => Task.FromResult(IntegrationPtyScreenStateFixture(repoRoot, "pty-screen-state-cmd.yaml")));
     failures += await RunAsync("IntegrationPtyDefaultTypingFixture", () => Task.FromResult(IntegrationPtyDefaultTypingFixture(repoRoot, "pty-default-typing-cmd.yaml", "echo pty-typed-output")));
+    failures += await RunAsync("IntegrationChildEnvironmentFixture", () => Task.FromResult(IntegrationChildEnvironmentFixture(repoRoot, "child-env-cmd.yaml")));
     if (TryResolvePwsh(out var pwshForFixture))
         failures += await RunAsync("IntegrationMatrixFixture", () => Task.FromResult(IntegrationMatrixFixture(repoRoot, "matrix-pwsh-pty.yaml")));
 }
@@ -44,6 +45,7 @@ else
     failures += await RunAsync("IntegrationPtyTtyFixture", () => Task.FromResult(IntegrationFixture(repoRoot, "pty-tty-check-unix.yaml", "redirected=False")));
     failures += await RunAsync("IntegrationPtyScreenStateFixture", () => Task.FromResult(IntegrationPtyScreenStateFixture(repoRoot, "pty-screen-state.yaml")));
     failures += await RunAsync("IntegrationPtyDefaultTypingFixture", () => Task.FromResult(IntegrationPtyDefaultTypingFixture(repoRoot, "pty-default-typing.yaml", "printf 'pty-typed-output\\n'")));
+    failures += await RunAsync("IntegrationChildEnvironmentFixture", () => Task.FromResult(IntegrationChildEnvironmentFixture(repoRoot, "child-env.yaml")));
     if (!TryFindExecutable("matrix", out _))
         Console.Error.WriteLine("skip IntegrationMatrixFixture: matrix not found");
     else
@@ -435,13 +437,46 @@ static bool IntegrationPtyDefaultTypingFixture(string repoRoot, string fixtureNa
     }
 }
 
+static bool IntegrationChildEnvironmentFixture(string repoRoot, string fixtureName)
+{
+    if (!IntegrationTestsEnabled(repoRoot))
+        return true;
+
+    var fixturePath = Path.Combine(repoRoot, "tests", "fixtures", fixtureName);
+    var outputStem = Path.Combine(Path.GetTempPath(), $"scenetake-child-env-{Guid.NewGuid():N}");
+    try
+    {
+        // A host value other than truecolor shows that scenetake replaces it instead of passing the host's through.
+        var hostEnvironment = new Dictionary<string, string> { ["COLORTERM"] = "256color" };
+        if (!RunScenetake(repoRoot, fixturePath, outputStem, out var exitCode, hostEnvironment))
+            return false;
+        if (exitCode != 0)
+            return false;
+
+        var combinedOutput = ReadCastOutput(outputStem + ".cast");
+        var ok = combinedOutput.Contains("pipe-colorterm=truecolor", StringComparison.Ordinal)
+            && combinedOutput.Contains("pty-colorterm=truecolor", StringComparison.Ordinal);
+        if (!ok)
+            Console.Error.WriteLine($"  cast output: {combinedOutput.ReplaceLineEndings(" ")}");
+        return ok;
+    }
+    finally
+    {
+        foreach (var path in new[] { outputStem + ".cast", outputStem + ".svg" })
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+}
+
 static bool LooksLikeMatrixOutput(string text) =>
     text.Length > 100
     && (text.Contains("\u001b[?1049h", StringComparison.Ordinal)
         || text.Contains("\u001b[2J", StringComparison.Ordinal)
         || text.Contains("\u001b[H", StringComparison.Ordinal));
 
-static bool RunScenetake(string repoRoot, string fixturePath, string outputStem, out int exitCode)
+static bool RunScenetake(string repoRoot, string fixturePath, string outputStem, out int exitCode, IReadOnlyDictionary<string, string>? environment = null)
 {
     exitCode = -1;
     var scenetakePath = Environment.GetEnvironmentVariable("SCENETAKE_BIN");
@@ -455,6 +490,11 @@ static bool RunScenetake(string repoRoot, string fixturePath, string outputStem,
         RedirectStandardError = true,
         UseShellExecute = false,
     };
+    if (environment is not null)
+    {
+        foreach (var (name, value) in environment)
+            psi.Environment[name] = value;
+    }
 
     using var process = Process.Start(psi);
     if (process is null)

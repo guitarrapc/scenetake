@@ -31,6 +31,7 @@ When a map-form step has `pty: true` (default `false`):
 - **Simulated typing** — scenetake emits the same prompt, per-character typed command, optional `run-highlight`, and synthetic Enter used by non-PTY steps before the PTY output begins. The command is still executed as a PTY shell command; typing is a recording effect, not PTY stdin.
 - **PTY geometry** — uses scenario `width` × `height` (same as cast header terminal size).
 - **Shell interpretation** — the `run` string is passed to the scenario `shell` the same way as non-PTY execution (`pwsh -Command`, `cmd /c`, `bash -lc`, etc.). PTY does not bypass the shell.
+- **Color environment** — the PTY child gets `COLORTERM=truecolor` like every scenario command, replacing any host value ([spec_scenario.md](spec_scenario.md) → Command Environment). The child sees scenetake's PTY, not the host terminal, so host hints such as `WT_SESSION` say nothing about what the recording can show.
 - **Merged output** — stdout and stderr are one byte stream. `stderr-color` and pipe-style `highlight` do not apply to PTY output for that step.
 - **Timestamped chunks** — output is read while the child runs; cast `o` events use `command_start + chunk_time` on the scenario timeline when stream emit is enabled (see [spec_scenario.md](spec_scenario.md) → Output timing). When stream emit is off, PTY bytes are still timestamped internally but merged according to the existing startup-offset rules before write.
 - **Startup timing** — after `PtyLeadingInitFilter` produces the first cast `o` event, scenetake may shift all chunk times earlier so that output appears no later than non-PTY steps (`execution-duration` after `command_start`). When the first emitted chunk is already faster than that threshold, times are unchanged. Inter-chunk spacing (for example TUI frame intervals) is not scaled unless stream emit and `max-duration` are set.
@@ -111,7 +112,8 @@ PTY steps follow the same **recorded step** exit-code rules as pipe steps. See [
 | PTY startup cleanup filter | `scenetake/tests/pty_continue_test.cs` |
 | Interactive PTY validation | `scenetake/tests/interactive_pty_test.cs` |
 | Interactive input recorder | `scenetake/tests/interactive_pty_input_test.cs` |
-| Fixture scenarios | `scenetake/tests/fixtures/pty-*.yaml` |
+| Command environment (`COLORTERM`) for pipe and PTY steps | `scenetake/tests/pty_test.cs` (`IntegrationChildEnvironmentFixture`) |
+| Fixture scenarios | `scenetake/tests/fixtures/pty-*.yaml`, `scenetake/tests/fixtures/child-env*.yaml` |
 
 Integration tests require `SCENETAKE_BIN` pointing at a published scenetake binary.
 
@@ -134,3 +136,4 @@ Integration tests require `SCENETAKE_BIN` pointing at a published scenetake bina
 - **Host resize sync breaks vim/svg replay**: `PtyConsoleInput.Attach` defaults to resizing the PTY to the host console. vim then emits cursor addresses for the larger height (for example row 44 on a 44-row host) while the cast header stays at scenario `height` (24). SVG replay clamps out-of-range rows and corrupts the session. scenetake uses `PtyConsoleAttachOptions.SyncHostSize = false` so the PTY keeps scenario geometry.
 - On Unix, scenetake writes `\r\n` to host stdout after detach so the parent shell prompt realigns after raw-mode interactive output.
 - Recorded step failures belong in the cast as demo content; only infrastructure failures (spawn, drain timeout) should abort the run. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
+- A TUI behind ConPTY cannot detect Windows Terminal; it can only read `WT_SESSION` inherited from the shell that started scenetake. A pwsh without `WT_SESSION` made `matrix` fall back to 16 colors even though the recording renders 24-bit color. scenetake now sets `COLORTERM=truecolor` for PTY children instead of relying on host hints ([spec_scenario.md](spec_scenario.md) → Lessons Learned).

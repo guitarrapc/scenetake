@@ -149,6 +149,14 @@ scenetake exits `0` after a successful cast write even when individual steps exi
 
 Contrast with `pre` / `post` (fail-fast): [spec_pre_post.md](spec_pre_post.md). Warning message format: [spec_cli.md](spec_cli.md) → Logging.
 
+## Command Environment
+
+Every command scenetake runs from a scenario (`pre`, `steps` with pipe, PTY, or interactive PTY capture, and `post`) inherits scenetake's own environment with `COLORTERM=truecolor` set. A `COLORTERM` value from the host is replaced, not kept. Other variables pass through unchanged.
+
+Why: commands never draw on the host terminal. They run behind scenetake's pipe or PTY, and the recording is replayed by cast players and the built-in SVG renderer, which support 24-bit color ([spec_svg.md](spec_svg.md)). A tool that cannot query its terminal picks a color depth from environment hints, and hints such as `WT_SESSION` or `TERM_PROGRAM` describe the terminal scenetake was started from. Without a fixed `COLORTERM`, the same scenario recorded true color from one terminal and a 16-color fallback from another. Replacing the host value makes the recording independent of where scenetake runs.
+
+A command that needs another value sets it itself, for example `COLORTERM= tool` in bash or `$env:COLORTERM = ''; tool` in pwsh.
+
 ## Execution Order
 
 1. Resolve settings, shell, cwd, deterministic seed, and timestamp from the YAML file.
@@ -184,3 +192,4 @@ Deterministic seed and timestamp are derived from the whole YAML file (normalize
 - **Default instant emit is required for good playback.** Replaying every pipe read chunk made typing hard to see, caused choppy SVG/GIF output, and broke progress-bar tools that emit many `\r`-based lines (for example `agg`). Capture still reads stdout/stderr in parallel; cast text merges stdout then stderr, and only event timing changes.
 - **`execution-duration` is a presentation knob**, not wall-clock duration. It controls how long after Enter the first output appears, not how long the shell command runs.
 - **Stream emit is opt-in** (`stream-output: true` or `max-duration`). Idle-collapse defaults are lenient (`silence-threshold: 2.0`) so only clearly idle gaps shrink when stream mode is on.
+- **Host terminal hints leak into recordings.** `matrix` decides true color from `COLORTERM`, `TERM`, `WT_SESSION`, or `TERM_PROGRAM`. When scenetake ran from a pwsh without `WT_SESSION`, `matrix` printed `warning: true color not supported` into the cast and recorded 16 colors; with `WT_SESSION` set, the same scenario recorded true color. Users reasonably expect a Windows Terminal session to have it, but not every shell shown in Windows Terminal does. Setting `COLORTERM=truecolor` for every command removed that dependency (see Command Environment).

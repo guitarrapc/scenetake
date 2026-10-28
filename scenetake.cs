@@ -1385,6 +1385,7 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
             Arguments = BuildPtyShellArguments(shell, cmd),
             WorkingDirectory = cwd,
             Size = new(width, height),
+            Environment = CreateChildEnvironmentOverlay(),
         }, new PtyCaptureOptions { Completion = new PtyCompleteOptions { DecodeOutput = false } });
         if (verbose)
             Console.Error.WriteLine($"scenetake: pty verbose: chunks={result.Chunks.Count} bytes={result.Output.Length}");
@@ -1402,6 +1403,8 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
         psi.ArgumentList.Add(arg);
     psi.ArgumentList.Add(cmd);
     if (!string.IsNullOrWhiteSpace(cwd)) psi.WorkingDirectory = cwd;
+    foreach (var (name, value) in CreateChildEnvironmentOverlay())
+        psi.Environment[name] = value;
 
     using var proc = new Process { StartInfo = psi };
     proc.Start();
@@ -1434,6 +1437,7 @@ static async Task<CommandExecution> RunInteractivePtyAsync(
         Arguments = BuildPtyShellArguments(shell, cmd),
         WorkingDirectory = cwd,
         Size = new(width, height),
+        Environment = CreateChildEnvironmentOverlay(),
     });
 
     var stopwatch = Stopwatch.StartNew();
@@ -1509,6 +1513,12 @@ static void ResetUnixHostCursorColumn()
     stdout.Write("\r\n"u8);
     stdout.Flush();
 }
+
+// Commands run behind scenetake's pipe or PTY, never the host terminal, so they guess color depth from environment
+// hints such as WT_SESSION or TERM_PROGRAM that depend on where scenetake was launched. The cast and SVG renderer
+// supports 24-bit color, so every command is told so and records the same colors from any host.
+static Dictionary<string, string?> CreateChildEnvironmentOverlay() =>
+    new(StringComparer.Ordinal) { ["COLORTERM"] = "truecolor" };
 
 static string[] BuildPtyShellArguments(ShellLaunch shell, string cmd)
 {
