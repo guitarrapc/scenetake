@@ -6,7 +6,7 @@ scenetake behavior is split into focused specs under `.github/docs/`. Each spec 
 
 | Spec | Covers |
 |---|---|
-| [spec_scenario.md](spec_scenario.md) | Scenario YAML structure — keys, defaults, `steps` forms, execution order, determinism |
+| [spec_scenario.md](spec_scenario.md) | Scenario YAML structure — keys, defaults, `steps` forms, command environment, execution order, determinism |
 | [spec_cast.md](spec_cast.md) | Cast file format — v3 write / v2–v3 read, header, event stream, recording boundary, tool compatibility |
 | [spec_cli.md](spec_cli.md) | Commands, flags, output paths, logging, exit codes, `init` |
 | [spec_install.md](spec_install.md) | Install channels — NuGet dotnet tool, npm optionalDependencies, Scoop, GitHub Releases |
@@ -34,6 +34,7 @@ Use this when you know the goal but not the document.
 | Operate a TUI on the host terminal (`vim`, banner demos, etc.) | [spec_scenario.md](spec_scenario.md) → `interactive`; behavior in [spec_pty.md](spec_pty.md) → Interactive PTY |
 | Continue the previous screen after a PTY command or alternate-screen TUI | [spec_scenario.md](spec_scenario.md) → `pty`; behavior in [spec_pty.md](spec_pty.md) |
 | Understand step exit codes vs `pre`/`post` failures | [spec_scenario.md](spec_scenario.md) → Step exit codes |
+| Know which environment recorded commands see (`COLORTERM`, true color) | [spec_scenario.md](spec_scenario.md) → Command Environment |
 | Set terminal theme or font size for cast / SVG | [spec_scenario.md](spec_scenario.md) → `render`; header mapping in [spec_cast.md](spec_cast.md) |
 | Run scenetake from the command line | [spec_cli.md](spec_cli.md) |
 | Install scenetake (NuGet, npm, Scoop, releases) | [spec_install.md](spec_install.md) |

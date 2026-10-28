@@ -208,6 +208,8 @@ steps:
 
 > [!WARNING] With `pty: true`, stdout and stderr are merged into one byte stream, so `stderr-color` and pipe-style `highlight` do not apply to that step. See [samples/pty.yaml](samples/pty.yaml) and [spec_pty.md](.github/docs/spec_pty.md).
 
+scenetake runs every command with `COLORTERM=truecolor`, so tools that pick their color depth from the environment will use true color.
+
 ### Interactive application output
 
 For interactive applications (`vim`, `copilot`, etc.), set both `pty: true` and `interactive: true`. PTY is enabled and interactive child-process input becomes possible. If you set `normalize-typing: true`, banners/help output keeps real timing while only user typing is re-timed for readability.

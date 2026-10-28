@@ -1,0 +1,8 @@
+title: "Child env cmd"
+width: 40
+height: 8
+shell: cmd
+steps:
+  - run: echo pipe-colorterm=%COLORTERM%
+  - run: echo pty-colorterm=%COLORTERM%
+    pty: true

@@ -208,6 +208,8 @@ steps:
 
 > [!WARNING] `pty: true` では stdout と stderr はバイトストリームに統合されるため、その step に `stderr-color` やパイプ向けの `highlight` は適用されません。[samples/pty.yaml](samples/pty.yaml) と [spec_pty.md](.github/docs/spec_pty.md) を参照してください。
 
+scenetake はすべてのコマンドを `COLORTERM=truecolor` 付きで実行します。そのため環境変数から色数を決めるツールも、24bit カラーで記録されます。
+
 ### 対話型アプリケーション出力
 
 対話型アプリケーション（`vim`、`copilot` など）をキャプチャする場合、`pty: true` と `interactive: true` を指定します。PTY が有効になり、子プロセスでの対話を可能にします。`normalize-typing: true` を指定すると、バナーやヘルプなどの出力は実時間のまま、ユーザー入力のタイピングだけを読みやすく再タイミングします。
