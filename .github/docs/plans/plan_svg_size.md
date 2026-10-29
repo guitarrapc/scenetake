@@ -107,6 +107,8 @@ The scenario path and the `svg` subcommand produce different SVGs from the same 
 
 ## A2. Compact Row Encoding
 
+Status: **Implemented** (2026-10-29). See [A2 Results](#a2-results). The rest of this section is the original proposal.
+
 ### Prototype Results
 
 These numbers come from a scratch copy of `Svg.cs` with an environment-variable switch to a compact encoder. All runs used the `svg` subcommand.
@@ -175,6 +177,46 @@ Run this manually before merging, for every sample, every fixture, and the matri
 - No sample or fixture grows by more than 1% compared with A1.
 - Visual verification passes.
 - `samples/*.svg` are regenerated in the same PR (`dotnet run samples/regenerate.cs`).
+
+### A2 Results
+
+Built as proposed, including item 4: row layers that share a keyframe share one rule, `.layer-1,.layer-5 { animation:… }`. Each row layer is also written on one line. Separately, a crash on cells holding combining marks (present in 1.4.x) was found by a new test and fixed.
+
+Sizes from the `svg` subcommand:
+
+| Cast | A1 | A2 | Change |
+|---|---|---|---|
+| `samples/basic.cast` | 129.8KB | 107.9KB | −16.9% |
+| `samples/demo.cast` | 131.4KB | 110.7KB | −15.7% |
+| `samples/git.cast` | 89.7KB | 68.3KB | −23.8% |
+| `samples/highlight.cast` | 172.5KB | 141.3KB | −18.1% |
+| `samples/interactive-pty.cast` | 1.31MB | 0.96MB | −26.5% |
+| `samples/pty.cast` | 2.39MB | 0.61MB | −74.4% |
+| `samples/scenario_format.cast` | 432.9KB | 361.8KB | −16.4% |
+| `samples/theme*.cast`, `stream-output`, `quickstart`, fixtures | — | — | −3.5% to −15.5% |
+| matrix 200×60 | 117.1MB | 26.9MB | −77.0% |
+| matrix 200×60, `--max-fps 20` | 25.6MB | 5.9MB | −76.9% |
+| matrix 384×108 | 454.9MB | 96.7MB | −78.7% |
+
+- Every sample and fixture shrank, with and without `--max-fps 20`. The acceptance targets (matrix at most 30MB, pty at most 0.7MB, no growth) are met.
+- The `<style>` block of the 200×60 matrix SVG went from 1.19MB to 0.36MB.
+- Peak memory for 200×60 went from 234MB to 143MB, because there is less to buffer.
+
+#### Visual Verification Results
+
+**Setup.**
+
+- **Casts:** 19 SVGs, from 16 samples and fixtures plus `--max-fps 20` renders of `pty`, `interactive-pty`, and matrix 200×60.
+- **Times:** 5 times each, at 15/35/55/75/95% of the loop.
+- **Rendering:** headless Edge, with the time pinned by page CSS (`animation-delay: -Ts; animation-play-state: paused`) and a scratch profile.
+- **Retries:** headless Edge sometimes captures a frame before painting finishes. Any nonzero comparison was retaken up to twice and the smallest count kept.
+
+| Comparison with A1 | Differing pixels |
+|---|---|
+| A2 forced to the run form for every row | 0 in 91 of 95 shots; 5–7px in 4 shots of the matrix-style casts (`pty`, matrix 200×60), from merged background rects |
+| A2 as shipped (shorter form per row) | 0 in 66 of 95 shots. The rest were 31–6,374px (at most 1.5% of the frame, in interactive-pty), only where glyph-list rows are on screen. |
+
+**Cause.** The run form lets the browser spread glyphs with `textLength`, which puts them up to "cell width − font advance" right of their cell (about 0.3px with Cascadia Mono at 16px). The glyph-list form places each glyph exactly at its cell. Zoomed side-by-side crops of the largest differences (interactive-pty, basic) show no visible change. This replaces the original expectation of identical output.
 
 ## A3. Size Warning
 

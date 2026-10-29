@@ -54,7 +54,7 @@ Tests: `tests/terminal_tests.cs`.
 - Replay follows cast event timestamps. **`--max-fps`** (default **off**) caps sampling when set.
 - Output is self-contained animated SVG (CSS only, no JavaScript).
 - Animations **loop indefinitely**; one cycle matches agg GIF timing with `--last-frame-duration 0`: cast playback through the last output event, then hold the final frame for the preceding output-to-output idle gap before restarting at `t = 0`.
-- **Row-diff** animation: only changed rows are emitted as timed layers (deduplicated `@keyframes kN` with compact percentage ranges). Cursor and viewport resize use separate layers.
+- **Row-diff** animation: only changed rows are emitted as timed layers (deduplicated `@keyframes kN` with compact percentage ranges). Row layers that share a keyframe share one animation rule. Cursor and viewport resize use separate layers. Row encoding: [Row encoding](#row-encoding).
 - Trailing blank frames after alternate-screen restore are trimmed when the event stream indicates a screen clear.
 - Background from `theme.bg`; monospace font at resolved `font-size` and `font-family`.
 - Cell metrics: `CharWidthFactor` 0.62, `LineHeightFactor` 1.25.
@@ -63,6 +63,32 @@ Tests: `tests/terminal_tests.cs`.
   - **Inner:** horizontal `font-size × 10/16`, vertical `font-size × 4/16`, clamped (horizontal 4–16px, vertical 2–8px).
 - Block cursor at the emulator position when visible; hidden by `\e[?25l`.
 - **Matrix rain tint:** ANSI bright white (`palette` index 7) horizontally adjacent to green (`2` or `10`) on the same row renders as bright green (`10`). Helps `cmatrix`-style casts where white highlights sit in green columns. Vertical neighbors are ignored so output on the line below a `run-highlight` command is not tinted.
+
+### Row encoding
+
+Each row layer is one line. It holds the row's background rects, then its text.
+
+- **Background.** One `<rect>` covers each run of cells with the same non-theme background, whatever the foreground or style. A single CSS rule gives these rects crisp edges.
+- **Text.** Each row uses whichever of two encodings is shorter:
+  - **Run form:** one `<text>` per run of identical style, spread to the run's cells with `textLength`. This is small for prose and typing.
+  - **Glyph-list form:** one `<text>` per foreground and weight/slant, with an `x` for each glyph and spaces left out. This is small for sparse colored output such as matrix rain, gauges, and TUI chrome.
+- **Rows with underlined cells** always use the run form, because the underline also runs under spaces between words.
+- **Block elements** (U+2580–U+259F) are stretched to exactly one cell in either form.
+- **Multi-unit cells.** A cell whose text is more than one UTF-16 unit (surrogate pair, combining mark) gets its own `<text>`. SVG gives one `x` per addressable character, and browsers count those differently.
+- **No default attributes** (`font-weight="normal"`, `lengthAdjust="spacing"`) are written.
+
+The glyph-list form puts each glyph at its cell's left edge. The run form lets the browser spread glyphs with `textLength`, which can place them up to "cell width − font advance" apart. That is a sub-pixel shift for the default fonts (about 0.3px with Cascadia Mono at 16px), so rows look the same either way.
+
+| Cast (`svg` subcommand) | Before (1.4.2) | After |
+|---|---|---|
+| `samples/basic.cast` (typing) | 130KB | 108KB (−17%) |
+| `samples/interactive-pty.cast` | 1.31MB | 0.96MB (−27%) |
+| `samples/pty.cast` (small matrix) | 2.39MB | 0.61MB (−74%) |
+| `matrix --fps 60`, 200×60, 7.5s | 117MB | 26.9MB (−77%) |
+| Same, `--max-fps 20` | 25.6MB | 5.9MB (−77%) |
+| Same, 384×108 | 455MB | 96.7MB (−79%) |
+
+Every sample and fixture got smaller; the smallest gain was −3.5% (`tests/marker-delay.cast`).
 
 ### Memory
 
@@ -140,7 +166,7 @@ The cast file is never modified by the `svg` subcommand.
 | Suite | Coverage |
 |-------|----------|
 | `tests/terminal_tests.cs` | VT emulator (CSI, Unicode, alt screen) |
-| `tests/svg_render_test.cs` | Row-diff smoke, marker timing, `--max-fps`, matrix rain tint, streamed file output matches in-memory render |
+| `tests/svg_render_test.cs` | Row-diff smoke, marker timing, `--max-fps`, matrix rain tint, streamed file output matches in-memory render, row encoding choice (glyph list vs run, underline, multi-unit cells, background spans, shared keyframe rules), combining marks. Text checks decode either encoding back to row text. |
 | `tests/window_chrome_test.cs` | `render.window` / cast tag / CLI resolution; chrome SVG structure |
 
 Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs all three.
@@ -161,6 +187,10 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 ## Lessons Learned
 
 - Row-diff layers keep typing-heavy casts small (~80KB for `basic.cast`); full-screen redraws emit one layer per changed row.
+- **Where the bytes went.** Before the row encoding change, a full-screen matrix SVG spent about 113 bytes per `<text>` for 1.26 characters on average. Because matrix paints its own black background, it also had a background `<rect>` per text run. Those two were 57% and 40% of the file.
+- **Choose the encoding per row.** A glyph-list encoding applied to every row made the typing demo 19% larger, because prose is cheaper as runs. Choosing per row made every sample smaller.
+- **Grouped animation rules.** With one animation rule per row layer, the `<style>` block of the 200×60 matrix SVG was 1.19MB. Grouping row layers by keyframe cut it to 0.36MB.
+- **Combining marks.** A cell holding a combining mark (for example a decomposed `é`) crashed rendering in 1.4.x, because the block-element check assumed a second UTF-16 unit was a low surrogate.
 - Frame sampling is optional (`--max-fps`); default off keeps full timing for typing and bulk output (e.g. curl).
 - Trailing blank alternate-screen restore frames should be trimmed when the event stream contains screen-clear sequences.
 - Window chrome should stay **fixed px** like a real desktop window; scaling chrome with `font-size` looked wrong in README embeds.

@@ -3,195 +3,171 @@
 <style>
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
-.bg { shape-rendering: crispEdges; }
+.bg,g.layer>rect:not([class]) { shape-rendering: crispEdges; }
 .layer { opacity: 0; }
 .cursor-block { fill: #d0d0d0; fill-opacity: 0.5; }
-@keyframes k0 { 0%,8.30428%{opacity:0;} 8.310216%,83.379568%{opacity:1;} 83.39144%,100%{opacity:0;} }
-@keyframes k1 { 0%,8.897867%{opacity:0;} 8.903803%,9.49739%{opacity:1;} 9.509262%,100%{opacity:0;} }
-@keyframes k2 { 0%,9.491454%{opacity:0;} 9.49739%,10.150513%{opacity:1;} 10.162385%,100%{opacity:0;} }
-@keyframes k3 { 0%,10.144578%{opacity:0;} 10.150513%,10.758251%{opacity:1;} 10.770123%,100%{opacity:0;} }
-@keyframes k4 { 0%,10.752316%{opacity:0;} 10.758251%,11.233073%{opacity:1;} 11.244945%,100%{opacity:0;} }
-@keyframes k5 { 0%,11.227138%{opacity:0;} 11.233073%,12.411165%{opacity:1;} 12.423037%,100%{opacity:0;} }
-@keyframes k6 { 0%,12.405229%{opacity:0;} 12.411165%,13.050755%{opacity:1;} 13.062627%,100%{opacity:0;} }
-@keyframes k7 { 0%,13.044819%{opacity:0;} 13.050755%,14.099837%{opacity:1;} 14.111709%,100%{opacity:0;} }
-@keyframes k8 { 0%,14.093901%{opacity:0;} 14.099837%,15.11227%{opacity:1;} 15.124142%,100%{opacity:0;} }
-@keyframes k9 { 0%,15.106335%{opacity:0;} 15.11227%,15.583353%{opacity:1;} 15.595225%,100%{opacity:0;} }
-@keyframes k10 { 0%,15.577417%{opacity:0;} 15.583353%,16.103513%{opacity:1;} 16.115385%,100%{opacity:0;} }
-@keyframes k11 { 0%,16.097577%{opacity:0;} 16.103513%,16.75184%{opacity:1;} 16.763712%,100%{opacity:0;} }
-@keyframes k12 { 0%,16.745905%{opacity:0;} 16.75184%,17.346994%{opacity:1;} 17.358866%,100%{opacity:0;} }
-@keyframes k13 { 0%,17.341059%{opacity:0;} 17.346994%,17.93886%{opacity:1;} 17.950732%,100%{opacity:0;} }
-@keyframes k14 { 0%,17.932924%{opacity:0;} 17.93886%,18.622446%{opacity:1;} 18.634318%,100%{opacity:0;} }
-@keyframes k15 { 0%,18.61651%{opacity:0;} 18.622446%,19.392293%{opacity:1;} 19.404165%,100%{opacity:0;} }
-@keyframes k16 { 0%,19.386357%{opacity:0;} 19.392293%,19.938333%{opacity:1;} 19.950205%,100%{opacity:0;} }
-@keyframes k17 { 0%,19.932398%{opacity:0;} 19.938333%,83.379568%{opacity:1;} 83.39144%,100%{opacity:0;} }
-@keyframes k18 { 0%,24.513748%{opacity:0;} 24.519684%,83.379568%{opacity:1;} 83.39144%,100%{opacity:0;} }
-@keyframes k19 { 0%,24.513748%{opacity:0;} 24.519684%,100%{opacity:1;} }
-@keyframes k20 { 0%,32.823965%{opacity:0;} 32.8299%,83.379568%{opacity:1;} 83.39144%,100%{opacity:0;} }
-@keyframes k21 { 0%,33.417551%{opacity:0;} 33.423487%,34.017074%{opacity:1;} 34.028946%,100%{opacity:0;} }
-@keyframes k22 { 0%,34.011138%{opacity:0;} 34.017074%,34.543906%{opacity:1;} 34.555778%,100%{opacity:0;} }
-@keyframes k23 { 0%,34.53797%{opacity:0;} 34.543906%,35.265007%{opacity:1;} 35.276879%,100%{opacity:0;} }
-@keyframes k24 { 0%,35.259072%{opacity:0;} 35.265007%,35.837011%{opacity:1;} 35.848883%,100%{opacity:0;} }
-@keyframes k25 { 0%,35.831076%{opacity:0;} 35.837011%,37.264529%{opacity:1;} 37.2764%,100%{opacity:0;} }
-@keyframes k26 { 0%,37.258593%{opacity:0;} 37.264529%,37.842753%{opacity:1;} 37.854625%,100%{opacity:0;} }
-@keyframes k27 { 0%,37.836818%{opacity:0;} 37.842753%,39.082222%{opacity:1;} 39.094094%,100%{opacity:0;} }
-@keyframes k28 { 0%,39.076286%{opacity:0;} 39.082222%,40.148803%{opacity:1;} 40.160674%,100%{opacity:0;} }
-@keyframes k29 { 0%,40.142867%{opacity:0;} 40.148803%,40.878273%{opacity:1;} 40.890145%,100%{opacity:0;} }
-@keyframes k30 { 0%,40.872338%{opacity:0;} 40.878273%,41.44744%{opacity:1;} 41.459312%,100%{opacity:0;} }
-@keyframes k31 { 0%,41.441504%{opacity:0;} 41.44744%,41.984304%{opacity:1;} 41.996176%,100%{opacity:0;} }
-@keyframes k32 { 0%,41.978368%{opacity:0;} 41.984304%,42.48611%{opacity:1;} 42.497982%,100%{opacity:0;} }
-@keyframes k33 { 0%,42.480174%{opacity:0;} 42.48611%,43.250247%{opacity:1;} 43.262118%,100%{opacity:0;} }
-@keyframes k34 { 0%,43.244311%{opacity:0;} 43.250247%,43.840379%{opacity:1;} 43.852251%,100%{opacity:0;} }
-@keyframes k35 { 0%,43.834443%{opacity:0;} 43.840379%,44.380958%{opacity:1;} 44.39283%,100%{opacity:0;} }
-@keyframes k36 { 0%,44.375022%{opacity:0;} 44.380958%,44.883691%{opacity:1;} 44.895563%,100%{opacity:0;} }
-@keyframes k37 { 0%,44.877755%{opacity:0;} 44.883691%,83.379568%{opacity:1;} 83.39144%,100%{opacity:0;} }
-@keyframes k38 { 0%,47.726948%{opacity:0;} 47.732884%,83.379568%{opacity:1;} 83.39144%,100%{opacity:0;} }
-@keyframes k39 { 0%,47.726948%{opacity:0;} 47.732884%,100%{opacity:1;} }
-@keyframes k40 { 0%,59.614095%{opacity:0;} 59.620031%,83.379568%{opacity:1;} 83.39144%,100%{opacity:0;} }
-@keyframes k41 { 0%,71.49343%{opacity:0;} 71.499366%,83.379568%{opacity:1;} 83.39144%,100%{opacity:0;} }
-@keyframes k42 { 0%,83.373632%{opacity:0;} 83.379568%,100%{opacity:1;} }
-@keyframes k43 { 0%,91.683848%{opacity:0;} 91.689784%,100%{opacity:1;} }
-@keyframes k44 { 0%,8.30428%{opacity:0;} 8.310216%,8.903803%{opacity:1;} 8.915675%,100%{opacity:0;} }
-@keyframes k45 { 0%,11.227138%{opacity:0;} 11.233073%,11.905524%{opacity:1;} 11.917396%,100%{opacity:0;} }
-@keyframes k46 { 0%,11.899588%{opacity:0;} 11.905524%,12.411165%{opacity:1;} 12.423037%,100%{opacity:0;} }
-@keyframes k47 { 0%,13.044819%{opacity:0;} 13.050755%,13.596606%{opacity:1;} 13.608477%,100%{opacity:0;} }
-@keyframes k48 { 0%,13.59067%{opacity:0;} 13.596606%,14.099837%{opacity:1;} 14.111709%,100%{opacity:0;} }
-@keyframes k49 { 0%,14.093901%{opacity:0;} 14.099837%,14.632486%{opacity:1;} 14.644358%,100%{opacity:0;} }
-@keyframes k50 { 0%,14.62655%{opacity:0;} 14.632486%,15.11227%{opacity:1;} 15.124142%,100%{opacity:0;} }
-@keyframes k51 { 0%,19.932398%{opacity:0;} 19.938333%,20.364576%{opacity:1;} 20.376448%,100%{opacity:0;} }
-@keyframes k52 { 0%,20.35864%{opacity:0;} 20.364576%,24.519684%{opacity:1;} 24.531556%,100%{opacity:0;} }
-@keyframes k53 { 0%,24.513748%{opacity:0;} 24.519684%,32.8299%{opacity:1;} 32.841772%,100%{opacity:0;} }
-@keyframes k54 { 0%,32.823965%{opacity:0;} 32.8299%,33.423487%{opacity:1;} 33.435359%,100%{opacity:0;} }
-@keyframes k55 { 0%,35.831076%{opacity:0;} 35.837011%,36.50767%{opacity:1;} 36.519541%,100%{opacity:0;} }
-@keyframes k56 { 0%,36.501734%{opacity:0;} 36.50767%,37.264529%{opacity:1;} 37.2764%,100%{opacity:0;} }
-@keyframes k57 { 0%,37.836818%{opacity:0;} 37.842753%,38.394184%{opacity:1;} 38.406055%,100%{opacity:0;} }
-@keyframes k58 { 0%,38.388248%{opacity:0;} 38.394184%,39.082222%{opacity:1;} 39.094094%,100%{opacity:0;} }
-@keyframes k59 { 0%,39.076286%{opacity:0;} 39.082222%,39.65869%{opacity:1;} 39.670562%,100%{opacity:0;} }
-@keyframes k60 { 0%,39.652754%{opacity:0;} 39.65869%,40.148803%{opacity:1;} 40.160674%,100%{opacity:0;} }
-@keyframes k61 { 0%,44.877755%{opacity:0;} 44.883691%,45.358537%{opacity:1;} 45.370408%,100%{opacity:0;} }
-@keyframes k62 { 0%,45.352601%{opacity:0;} 45.358537%,47.732884%{opacity:1;} 47.744756%,100%{opacity:0;} }
-@keyframes k63 { 0%,47.726948%{opacity:0;} 47.732884%,59.620031%{opacity:1;} 59.631903%,100%{opacity:0;} }
-@keyframes k64 { 0%,59.614095%{opacity:0;} 59.620031%,71.499366%{opacity:1;} 71.511238%,100%{opacity:0;} }
-@keyframes k65 { 0%,83.373632%{opacity:0;} 83.379568%,91.689784%{opacity:1;} 91.701656%,100%{opacity:0;} }
+@keyframes k0 { 0%,8.304642%{opacity:0;} 8.310578%,83.378844%{opacity:1;} 83.390716%,100%{opacity:0;} }
+@keyframes k1 { 0%,8.898255%{opacity:0;} 8.904191%,9.497804%{opacity:1;} 9.509676%,100%{opacity:0;} }
+@keyframes k2 { 0%,9.491868%{opacity:0;} 9.497804%,10.150778%{opacity:1;} 10.16265%,100%{opacity:0;} }
+@keyframes k3 { 0%,10.144842%{opacity:0;} 10.150778%,10.756263%{opacity:1;} 10.768135%,100%{opacity:0;} }
+@keyframes k4 { 0%,10.750326%{opacity:0;} 10.756263%,11.231153%{opacity:1;} 11.243025%,100%{opacity:0;} }
+@keyframes k5 { 0%,11.225217%{opacity:0;} 11.231153%,12.406506%{opacity:1;} 12.418378%,100%{opacity:0;} }
+@keyframes k6 { 0%,12.40057%{opacity:0;} 12.406506%,13.047608%{opacity:1;} 13.05948%,100%{opacity:0;} }
+@keyframes k7 { 0%,13.041672%{opacity:0;} 13.047608%,14.104238%{opacity:1;} 14.116111%,100%{opacity:0;} }
+@keyframes k8 { 0%,14.098302%{opacity:0;} 14.104238%,15.11338%{opacity:1;} 15.125252%,100%{opacity:0;} }
+@keyframes k9 { 0%,15.107444%{opacity:0;} 15.11338%,15.58827%{opacity:1;} 15.600142%,100%{opacity:0;} }
+@keyframes k10 { 0%,15.582334%{opacity:0;} 15.58827%,16.098777%{opacity:1;} 16.110649%,100%{opacity:0;} }
+@keyframes k11 { 0%,16.092841%{opacity:0;} 16.098777%,16.751751%{opacity:1;} 16.763623%,100%{opacity:0;} }
+@keyframes k12 { 0%,16.745815%{opacity:0;} 16.751751%,17.345364%{opacity:1;} 17.357236%,100%{opacity:0;} }
+@keyframes k13 { 0%,17.339428%{opacity:0;} 17.345364%,17.938977%{opacity:1;} 17.950849%,100%{opacity:0;} }
+@keyframes k14 { 0%,17.93304%{opacity:0;} 17.938977%,18.627567%{opacity:1;} 18.63944%,100%{opacity:0;} }
+@keyframes k15 { 0%,18.621631%{opacity:0;} 18.627567%,19.387392%{opacity:1;} 19.399264%,100%{opacity:0;} }
+@keyframes k16 { 0%,19.381456%{opacity:0;} 19.387392%,19.933515%{opacity:1;} 19.945388%,100%{opacity:0;} }
+@keyframes k17 { 0%,19.927579%{opacity:0;} 19.933515%,83.378844%{opacity:1;} 83.390716%,100%{opacity:0;} }
+@keyframes k18 { 0%,24.51027%{opacity:0;} 24.516206%,83.378844%{opacity:1;} 83.390716%,100%{opacity:0;} }
+@keyframes k19 { 0%,24.51027%{opacity:0;} 24.516206%,100%{opacity:1;} }
+@keyframes k20 { 0%,32.820848%{opacity:0;} 32.826784%,83.378844%{opacity:1;} 83.390716%,100%{opacity:0;} }
+@keyframes k21 { 0%,33.41446%{opacity:0;} 33.420397%,34.014009%{opacity:1;} 34.025882%,100%{opacity:0;} }
+@keyframes k22 { 0%,34.008073%{opacity:0;} 34.014009%,34.548261%{opacity:1;} 34.560133%,100%{opacity:0;} }
+@keyframes k23 { 0%,34.542325%{opacity:0;} 34.548261%,35.272468%{opacity:1;} 35.28434%,100%{opacity:0;} }
+@keyframes k24 { 0%,35.266532%{opacity:0;} 35.272468%,35.842336%{opacity:1;} 35.854209%,100%{opacity:0;} }
+@keyframes k25 { 0%,35.8364%{opacity:0;} 35.842336%,37.267007%{opacity:1;} 37.278879%,100%{opacity:0;} }
+@keyframes k26 { 0%,37.261071%{opacity:0;} 37.267007%,37.848747%{opacity:1;} 37.86062%,100%{opacity:0;} }
+@keyframes k27 { 0%,37.842811%{opacity:0;} 37.848747%,39.083462%{opacity:1;} 39.095334%,100%{opacity:0;} }
+@keyframes k28 { 0%,39.077526%{opacity:0;} 39.083462%,40.151965%{opacity:1;} 40.163837%,100%{opacity:0;} }
+@keyframes k29 { 0%,40.146029%{opacity:0;} 40.151965%,40.876172%{opacity:1;} 40.888045%,100%{opacity:0;} }
+@keyframes k30 { 0%,40.870236%{opacity:0;} 40.876172%,41.446041%{opacity:1;} 41.457913%,100%{opacity:0;} }
+@keyframes k31 { 0%,41.440104%{opacity:0;} 41.446041%,41.980292%{opacity:1;} 41.992164%,100%{opacity:0;} }
+@keyframes k32 { 0%,41.974356%{opacity:0;} 41.980292%,42.490799%{opacity:1;} 42.502671%,100%{opacity:0;} }
+@keyframes k33 { 0%,42.484863%{opacity:0;} 42.490799%,43.250623%{opacity:1;} 43.262496%,100%{opacity:0;} }
+@keyframes k34 { 0%,43.244687%{opacity:0;} 43.250623%,43.844236%{opacity:1;} 43.856108%,100%{opacity:0;} }
+@keyframes k35 { 0%,43.8383%{opacity:0;} 43.844236%,44.378487%{opacity:1;} 44.39036%,100%{opacity:0;} }
+@keyframes k36 { 0%,44.372551%{opacity:0;} 44.378487%,44.888994%{opacity:1;} 44.900867%,100%{opacity:0;} }
+@keyframes k37 { 0%,44.883058%{opacity:0;} 44.888994%,83.378844%{opacity:1;} 83.390716%,100%{opacity:0;} }
+@keyframes k38 { 0%,47.732399%{opacity:0;} 47.738336%,83.378844%{opacity:1;} 83.390716%,100%{opacity:0;} }
+@keyframes k39 { 0%,47.732399%{opacity:0;} 47.738336%,100%{opacity:1;} }
+@keyframes k40 { 0%,59.616526%{opacity:0;} 59.622462%,83.378844%{opacity:1;} 83.390716%,100%{opacity:0;} }
+@keyframes k41 { 0%,71.500653%{opacity:0;} 71.506589%,83.378844%{opacity:1;} 83.390716%,100%{opacity:0;} }
+@keyframes k42 { 0%,83.372908%{opacity:0;} 83.378844%,100%{opacity:1;} }
+@keyframes k43 { 0%,91.683486%{opacity:0;} 91.689422%,100%{opacity:1;} }
+@keyframes k44 { 0%,8.304642%{opacity:0;} 8.310578%,8.904191%{opacity:1;} 8.916063%,100%{opacity:0;} }
+@keyframes k45 { 0%,11.225217%{opacity:0;} 11.231153%,11.907871%{opacity:1;} 11.919744%,100%{opacity:0;} }
+@keyframes k46 { 0%,11.901935%{opacity:0;} 11.907871%,12.406506%{opacity:1;} 12.418378%,100%{opacity:0;} }
+@keyframes k47 { 0%,13.041672%{opacity:0;} 13.047608%,13.593731%{opacity:1;} 13.605604%,100%{opacity:0;} }
+@keyframes k48 { 0%,13.587795%{opacity:0;} 13.593731%,14.104238%{opacity:1;} 14.116111%,100%{opacity:0;} }
+@keyframes k49 { 0%,14.098302%{opacity:0;} 14.104238%,14.63849%{opacity:1;} 14.650362%,100%{opacity:0;} }
+@keyframes k50 { 0%,14.632554%{opacity:0;} 14.63849%,15.11338%{opacity:1;} 15.125252%,100%{opacity:0;} }
+@keyframes k51 { 0%,19.927579%{opacity:0;} 19.933515%,20.360917%{opacity:1;} 20.372789%,100%{opacity:0;} }
+@keyframes k52 { 0%,20.35498%{opacity:0;} 20.360917%,24.516206%{opacity:1;} 24.528078%,100%{opacity:0;} }
+@keyframes k53 { 0%,24.51027%{opacity:0;} 24.516206%,32.826784%{opacity:1;} 32.838656%,100%{opacity:0;} }
+@keyframes k54 { 0%,32.820848%{opacity:0;} 32.826784%,33.420397%{opacity:1;} 33.432269%,100%{opacity:0;} }
+@keyframes k55 { 0%,35.8364%{opacity:0;} 35.842336%,36.507183%{opacity:1;} 36.519055%,100%{opacity:0;} }
+@keyframes k56 { 0%,36.501247%{opacity:0;} 36.507183%,37.267007%{opacity:1;} 37.278879%,100%{opacity:0;} }
+@keyframes k57 { 0%,37.842811%{opacity:0;} 37.848747%,38.394871%{opacity:1;} 38.406743%,100%{opacity:0;} }
+@keyframes k58 { 0%,38.388935%{opacity:0;} 38.394871%,39.083462%{opacity:1;} 39.095334%,100%{opacity:0;} }
+@keyframes k59 { 0%,39.077526%{opacity:0;} 39.083462%,39.665202%{opacity:1;} 39.677075%,100%{opacity:0;} }
+@keyframes k60 { 0%,39.659266%{opacity:0;} 39.665202%,40.151965%{opacity:1;} 40.163837%,100%{opacity:0;} }
+@keyframes k61 { 0%,44.883058%{opacity:0;} 44.888994%,45.363885%{opacity:1;} 45.375757%,100%{opacity:0;} }
+@keyframes k62 { 0%,45.357948%{opacity:0;} 45.363885%,47.738336%{opacity:1;} 47.750208%,100%{opacity:0;} }
+@keyframes k63 { 0%,47.732399%{opacity:0;} 47.738336%,59.622462%{opacity:1;} 59.634335%,100%{opacity:0;} }
+@keyframes k64 { 0%,59.616526%{opacity:0;} 59.622462%,71.506589%{opacity:1;} 71.518461%,100%{opacity:0;} }
+@keyframes k65 { 0%,83.372908%{opacity:0;} 83.378844%,91.689422%{opacity:1;} 91.701294%,100%{opacity:0;} }
 @keyframes k66 { 0%,100%{opacity:1;} }
-.layer-0 { animation:k0 8.423367s linear infinite; }
-.layer-1 { animation:k1 8.423367s linear infinite; }
-.layer-2 { animation:k2 8.423367s linear infinite; }
-.layer-3 { animation:k3 8.423367s linear infinite; }
-.layer-4 { animation:k4 8.423367s linear infinite; }
-.layer-5 { animation:k5 8.423367s linear infinite; }
-.layer-6 { animation:k6 8.423367s linear infinite; }
-.layer-7 { animation:k7 8.423367s linear infinite; }
-.layer-8 { animation:k8 8.423367s linear infinite; }
-.layer-9 { animation:k9 8.423367s linear infinite; }
-.layer-10 { animation:k10 8.423367s linear infinite; }
-.layer-11 { animation:k11 8.423367s linear infinite; }
-.layer-12 { animation:k12 8.423367s linear infinite; }
-.layer-13 { animation:k13 8.423367s linear infinite; }
-.layer-14 { animation:k14 8.423367s linear infinite; }
-.layer-15 { animation:k15 8.423367s linear infinite; }
-.layer-16 { animation:k16 8.423367s linear infinite; }
-.layer-17 { animation:k17 8.423367s linear infinite; }
-.layer-18 { animation:k18 8.423367s linear infinite; }
-.layer-19 { animation:k19 8.423367s linear infinite; }
-.layer-20 { animation:k18 8.423367s linear infinite; }
-.layer-21 { animation:k18 8.423367s linear infinite; }
-.layer-22 { animation:k18 8.423367s linear infinite; }
-.layer-23 { animation:k18 8.423367s linear infinite; }
-.layer-24 { animation:k18 8.423367s linear infinite; }
-.layer-25 { animation:k18 8.423367s linear infinite; }
-.layer-26 { animation:k18 8.423367s linear infinite; }
-.layer-27 { animation:k20 8.423367s linear infinite; }
-.layer-28 { animation:k21 8.423367s linear infinite; }
-.layer-29 { animation:k22 8.423367s linear infinite; }
-.layer-30 { animation:k23 8.423367s linear infinite; }
-.layer-31 { animation:k24 8.423367s linear infinite; }
-.layer-32 { animation:k25 8.423367s linear infinite; }
-.layer-33 { animation:k26 8.423367s linear infinite; }
-.layer-34 { animation:k27 8.423367s linear infinite; }
-.layer-35 { animation:k28 8.423367s linear infinite; }
-.layer-36 { animation:k29 8.423367s linear infinite; }
-.layer-37 { animation:k30 8.423367s linear infinite; }
-.layer-38 { animation:k31 8.423367s linear infinite; }
-.layer-39 { animation:k32 8.423367s linear infinite; }
-.layer-40 { animation:k33 8.423367s linear infinite; }
-.layer-41 { animation:k34 8.423367s linear infinite; }
-.layer-42 { animation:k35 8.423367s linear infinite; }
-.layer-43 { animation:k36 8.423367s linear infinite; }
-.layer-44 { animation:k37 8.423367s linear infinite; }
-.layer-45 { animation:k38 8.423367s linear infinite; }
-.layer-46 { animation:k39 8.423367s linear infinite; }
-.layer-47 { animation:k40 8.423367s linear infinite; }
-.layer-48 { animation:k41 8.423367s linear infinite; }
-.layer-49 { animation:k42 8.423367s linear infinite; }
-.layer-50 { animation:k42 8.423367s linear infinite; }
-.layer-51 { animation:k42 8.423367s linear infinite; }
-.layer-52 { animation:k42 8.423367s linear infinite; }
-.layer-53 { animation:k42 8.423367s linear infinite; }
-.layer-54 { animation:k42 8.423367s linear infinite; }
-.layer-55 { animation:k42 8.423367s linear infinite; }
-.layer-56 { animation:k42 8.423367s linear infinite; }
-.layer-57 { animation:k42 8.423367s linear infinite; }
-.layer-58 { animation:k42 8.423367s linear infinite; }
-.layer-59 { animation:k42 8.423367s linear infinite; }
-.layer-60 { animation:k42 8.423367s linear infinite; }
-.layer-61 { animation:k42 8.423367s linear infinite; }
-.layer-62 { animation:k42 8.423367s linear infinite; }
-.layer-63 { animation:k42 8.423367s linear infinite; }
-.layer-64 { animation:k42 8.423367s linear infinite; }
-.layer-65 { animation:k42 8.423367s linear infinite; }
-.layer-66 { animation:k42 8.423367s linear infinite; }
-.layer-67 { animation:k43 8.423367s linear infinite; }
-.cursor-layer-0 { animation:k44 8.423367s linear infinite; }
-.cursor-layer-1 { animation:k1 8.423367s linear infinite; }
-.cursor-layer-2 { animation:k2 8.423367s linear infinite; }
-.cursor-layer-3 { animation:k3 8.423367s linear infinite; }
-.cursor-layer-4 { animation:k4 8.423367s linear infinite; }
-.cursor-layer-5 { animation:k45 8.423367s linear infinite; }
-.cursor-layer-6 { animation:k46 8.423367s linear infinite; }
-.cursor-layer-7 { animation:k6 8.423367s linear infinite; }
-.cursor-layer-8 { animation:k47 8.423367s linear infinite; }
-.cursor-layer-9 { animation:k48 8.423367s linear infinite; }
-.cursor-layer-10 { animation:k49 8.423367s linear infinite; }
-.cursor-layer-11 { animation:k50 8.423367s linear infinite; }
-.cursor-layer-12 { animation:k9 8.423367s linear infinite; }
-.cursor-layer-13 { animation:k10 8.423367s linear infinite; }
-.cursor-layer-14 { animation:k11 8.423367s linear infinite; }
-.cursor-layer-15 { animation:k12 8.423367s linear infinite; }
-.cursor-layer-16 { animation:k13 8.423367s linear infinite; }
-.cursor-layer-17 { animation:k14 8.423367s linear infinite; }
-.cursor-layer-18 { animation:k15 8.423367s linear infinite; }
-.cursor-layer-19 { animation:k16 8.423367s linear infinite; }
-.cursor-layer-20 { animation:k51 8.423367s linear infinite; }
-.cursor-layer-21 { animation:k52 8.423367s linear infinite; }
-.cursor-layer-22 { animation:k53 8.423367s linear infinite; }
-.cursor-layer-23 { animation:k54 8.423367s linear infinite; }
-.cursor-layer-24 { animation:k21 8.423367s linear infinite; }
-.cursor-layer-25 { animation:k22 8.423367s linear infinite; }
-.cursor-layer-26 { animation:k23 8.423367s linear infinite; }
-.cursor-layer-27 { animation:k24 8.423367s linear infinite; }
-.cursor-layer-28 { animation:k55 8.423367s linear infinite; }
-.cursor-layer-29 { animation:k56 8.423367s linear infinite; }
-.cursor-layer-30 { animation:k26 8.423367s linear infinite; }
-.cursor-layer-31 { animation:k57 8.423367s linear infinite; }
-.cursor-layer-32 { animation:k58 8.423367s linear infinite; }
-.cursor-layer-33 { animation:k59 8.423367s linear infinite; }
-.cursor-layer-34 { animation:k60 8.423367s linear infinite; }
-.cursor-layer-35 { animation:k29 8.423367s linear infinite; }
-.cursor-layer-36 { animation:k30 8.423367s linear infinite; }
-.cursor-layer-37 { animation:k31 8.423367s linear infinite; }
-.cursor-layer-38 { animation:k32 8.423367s linear infinite; }
-.cursor-layer-39 { animation:k33 8.423367s linear infinite; }
-.cursor-layer-40 { animation:k34 8.423367s linear infinite; }
-.cursor-layer-41 { animation:k35 8.423367s linear infinite; }
-.cursor-layer-42 { animation:k36 8.423367s linear infinite; }
-.cursor-layer-43 { animation:k61 8.423367s linear infinite; }
-.cursor-layer-44 { animation:k62 8.423367s linear infinite; }
-.cursor-layer-45 { animation:k63 8.423367s linear infinite; }
-.cursor-layer-46 { animation:k64 8.423367s linear infinite; }
-.cursor-layer-47 { animation:k41 8.423367s linear infinite; }
-.cursor-layer-48 { animation:k65 8.423367s linear infinite; }
-.cursor-layer-49 { animation:k43 8.423367s linear infinite; }
-.viewport-mask-0,.viewport-bg-0 { animation:k66 8.423367s linear infinite; }
+.layer-0 { animation:k0 8.423s linear infinite; }
+.layer-1 { animation:k1 8.423s linear infinite; }
+.layer-2 { animation:k2 8.423s linear infinite; }
+.layer-3 { animation:k3 8.423s linear infinite; }
+.layer-4 { animation:k4 8.423s linear infinite; }
+.layer-5 { animation:k5 8.423s linear infinite; }
+.layer-6 { animation:k6 8.423s linear infinite; }
+.layer-7 { animation:k7 8.423s linear infinite; }
+.layer-8 { animation:k8 8.423s linear infinite; }
+.layer-9 { animation:k9 8.423s linear infinite; }
+.layer-10 { animation:k10 8.423s linear infinite; }
+.layer-11 { animation:k11 8.423s linear infinite; }
+.layer-12 { animation:k12 8.423s linear infinite; }
+.layer-13 { animation:k13 8.423s linear infinite; }
+.layer-14 { animation:k14 8.423s linear infinite; }
+.layer-15 { animation:k15 8.423s linear infinite; }
+.layer-16 { animation:k16 8.423s linear infinite; }
+.layer-17 { animation:k17 8.423s linear infinite; }
+.layer-18,.layer-20,.layer-21,.layer-22,.layer-23,.layer-24,.layer-25,.layer-26 { animation:k18 8.423s linear infinite; }
+.layer-19 { animation:k19 8.423s linear infinite; }
+.layer-27 { animation:k20 8.423s linear infinite; }
+.layer-28 { animation:k21 8.423s linear infinite; }
+.layer-29 { animation:k22 8.423s linear infinite; }
+.layer-30 { animation:k23 8.423s linear infinite; }
+.layer-31 { animation:k24 8.423s linear infinite; }
+.layer-32 { animation:k25 8.423s linear infinite; }
+.layer-33 { animation:k26 8.423s linear infinite; }
+.layer-34 { animation:k27 8.423s linear infinite; }
+.layer-35 { animation:k28 8.423s linear infinite; }
+.layer-36 { animation:k29 8.423s linear infinite; }
+.layer-37 { animation:k30 8.423s linear infinite; }
+.layer-38 { animation:k31 8.423s linear infinite; }
+.layer-39 { animation:k32 8.423s linear infinite; }
+.layer-40 { animation:k33 8.423s linear infinite; }
+.layer-41 { animation:k34 8.423s linear infinite; }
+.layer-42 { animation:k35 8.423s linear infinite; }
+.layer-43 { animation:k36 8.423s linear infinite; }
+.layer-44 { animation:k37 8.423s linear infinite; }
+.layer-45 { animation:k38 8.423s linear infinite; }
+.layer-46 { animation:k39 8.423s linear infinite; }
+.layer-47 { animation:k40 8.423s linear infinite; }
+.layer-48 { animation:k41 8.423s linear infinite; }
+.layer-49,.layer-50,.layer-51,.layer-52,.layer-53,.layer-54,.layer-55,.layer-56,.layer-57,.layer-58,.layer-59,.layer-60,.layer-61,.layer-62,.layer-63,.layer-64,.layer-65,.layer-66 { animation:k42 8.423s linear infinite; }
+.layer-67 { animation:k43 8.423s linear infinite; }
+.cursor-layer-0 { animation:k44 8.423s linear infinite; }
+.cursor-layer-1 { animation:k1 8.423s linear infinite; }
+.cursor-layer-2 { animation:k2 8.423s linear infinite; }
+.cursor-layer-3 { animation:k3 8.423s linear infinite; }
+.cursor-layer-4 { animation:k4 8.423s linear infinite; }
+.cursor-layer-5 { animation:k45 8.423s linear infinite; }
+.cursor-layer-6 { animation:k46 8.423s linear infinite; }
+.cursor-layer-7 { animation:k6 8.423s linear infinite; }
+.cursor-layer-8 { animation:k47 8.423s linear infinite; }
+.cursor-layer-9 { animation:k48 8.423s linear infinite; }
+.cursor-layer-10 { animation:k49 8.423s linear infinite; }
+.cursor-layer-11 { animation:k50 8.423s linear infinite; }
+.cursor-layer-12 { animation:k9 8.423s linear infinite; }
+.cursor-layer-13 { animation:k10 8.423s linear infinite; }
+.cursor-layer-14 { animation:k11 8.423s linear infinite; }
+.cursor-layer-15 { animation:k12 8.423s linear infinite; }
+.cursor-layer-16 { animation:k13 8.423s linear infinite; }
+.cursor-layer-17 { animation:k14 8.423s linear infinite; }
+.cursor-layer-18 { animation:k15 8.423s linear infinite; }
+.cursor-layer-19 { animation:k16 8.423s linear infinite; }
+.cursor-layer-20 { animation:k51 8.423s linear infinite; }
+.cursor-layer-21 { animation:k52 8.423s linear infinite; }
+.cursor-layer-22 { animation:k53 8.423s linear infinite; }
+.cursor-layer-23 { animation:k54 8.423s linear infinite; }
+.cursor-layer-24 { animation:k21 8.423s linear infinite; }
+.cursor-layer-25 { animation:k22 8.423s linear infinite; }
+.cursor-layer-26 { animation:k23 8.423s linear infinite; }
+.cursor-layer-27 { animation:k24 8.423s linear infinite; }
+.cursor-layer-28 { animation:k55 8.423s linear infinite; }
+.cursor-layer-29 { animation:k56 8.423s linear infinite; }
+.cursor-layer-30 { animation:k26 8.423s linear infinite; }
+.cursor-layer-31 { animation:k57 8.423s linear infinite; }
+.cursor-layer-32 { animation:k58 8.423s linear infinite; }
+.cursor-layer-33 { animation:k59 8.423s linear infinite; }
+.cursor-layer-34 { animation:k60 8.423s linear infinite; }
+.cursor-layer-35 { animation:k29 8.423s linear infinite; }
+.cursor-layer-36 { animation:k30 8.423s linear infinite; }
+.cursor-layer-37 { animation:k31 8.423s linear infinite; }
+.cursor-layer-38 { animation:k32 8.423s linear infinite; }
+.cursor-layer-39 { animation:k33 8.423s linear infinite; }
+.cursor-layer-40 { animation:k34 8.423s linear infinite; }
+.cursor-layer-41 { animation:k35 8.423s linear infinite; }
+.cursor-layer-42 { animation:k36 8.423s linear infinite; }
+.cursor-layer-43 { animation:k61 8.423s linear infinite; }
+.cursor-layer-44 { animation:k62 8.423s linear infinite; }
+.cursor-layer-45 { animation:k63 8.423s linear infinite; }
+.cursor-layer-46 { animation:k64 8.423s linear infinite; }
+.cursor-layer-47 { animation:k41 8.423s linear infinite; }
+.cursor-layer-48 { animation:k65 8.423s linear infinite; }
+.cursor-layer-49 { animation:k43 8.423s linear infinite; }
+.viewport-mask-0,.viewport-bg-0 { animation:k66 8.423s linear infinite; }
 </style>
 <defs>
 <mask id="viewport-mask" x="0" y="0" width="829.6" height="504" maskUnits="userSpaceOnUse">
@@ -200,210 +176,74 @@ text { dominant-baseline: alphabetic; }
 </defs>
 <g mask="url(#viewport-mask)">
 <rect class="bg layer viewport-bg-0" x="8" y="8" width="813.6" height="488" fill="#282c34"/>
-<g class="layer layer-0">
-<text x="18" y="24.8" fill="#7dd6cf" font-weight="normal" textLength="307.52" lengthAdjust="spacing"># instant emit (ping, one blob)</text>
-</g>
-<g class="layer layer-1">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
-</g>
-<g class="layer layer-2">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">$ p</text>
-</g>
-<g class="layer layer-3">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="39.68" lengthAdjust="spacing">$ pi</text>
-</g>
-<g class="layer layer-4">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">$ pin</text>
-</g>
-<g class="layer layer-5">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ ping</text>
-</g>
-<g class="layer layer-6">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">$ ping -</text>
-</g>
-<g class="layer layer-7">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">$ ping -n</text>
-</g>
-<g class="layer layer-8">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="109.12" lengthAdjust="spacing">$ ping -n 4</text>
-</g>
-<g class="layer layer-9">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">$ ping -n 4 1</text>
-</g>
-<g class="layer layer-10">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">$ ping -n 4 12</text>
-</g>
-<g class="layer layer-11">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="148.8" lengthAdjust="spacing">$ ping -n 4 127</text>
-</g>
-<g class="layer layer-12">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacing">$ ping -n 4 127.</text>
-</g>
-<g class="layer layer-13">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="168.64" lengthAdjust="spacing">$ ping -n 4 127.0</text>
-</g>
-<g class="layer layer-14">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">$ ping -n 4 127.0.</text>
-</g>
-<g class="layer layer-15">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="188.48" lengthAdjust="spacing">$ ping -n 4 127.0.0</text>
-</g>
-<g class="layer layer-16">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">$ ping -n 4 127.0.0.</text>
-</g>
-<g class="layer layer-17">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="208.32" lengthAdjust="spacing">$ ping -n 4 127.0.0.1</text>
-</g>
-<g class="layer layer-18">
-<text x="18" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="396.8" lengthAdjust="spacing">Pinging 127.0.0.1 with 32 bytes of data:</text>
-</g>
-<g class="layer layer-19">
-<text x="18" y="104.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text>
-</g>
-<g class="layer layer-20">
-<text x="18" y="124.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text>
-</g>
-<g class="layer layer-21">
-<text x="18" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text>
-</g>
-<g class="layer layer-22">
-<text x="18" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text>
-</g>
-<g class="layer layer-23">
-<text x="18" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">Ping statistics for 127.0.0.1:</text>
-</g>
-<g class="layer layer-24">
-<text x="57.68" y="224.8" fill="#d0d0d0" font-weight="normal" textLength="515.84" lengthAdjust="spacing">Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),</text>
-</g>
-<g class="layer layer-25">
-<text x="18" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacing">Approximate round trip times in milli-seconds:</text>
-</g>
-<g class="layer layer-26">
-<text x="57.68" y="264.8" fill="#d0d0d0" font-weight="normal" textLength="426.56" lengthAdjust="spacing">Minimum = 0ms, Maximum = 0ms, Average = 0ms</text>
-</g>
-<g class="layer layer-27">
-<text x="18" y="284.8" fill="#7dd6cf" font-weight="normal" textLength="396.8" lengthAdjust="spacing"># stream-output (ping, staggered replay)</text>
-</g>
-<g class="layer layer-28">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
-</g>
-<g class="layer layer-29">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">$ p</text>
-</g>
-<g class="layer layer-30">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="39.68" lengthAdjust="spacing">$ pi</text>
-</g>
-<g class="layer layer-31">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">$ pin</text>
-</g>
-<g class="layer layer-32">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ ping</text>
-</g>
-<g class="layer layer-33">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">$ ping -</text>
-</g>
-<g class="layer layer-34">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">$ ping -n</text>
-</g>
-<g class="layer layer-35">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="109.12" lengthAdjust="spacing">$ ping -n 4</text>
-</g>
-<g class="layer layer-36">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">$ ping -n 4 1</text>
-</g>
-<g class="layer layer-37">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">$ ping -n 4 12</text>
-</g>
-<g class="layer layer-38">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="148.8" lengthAdjust="spacing">$ ping -n 4 127</text>
-</g>
-<g class="layer layer-39">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacing">$ ping -n 4 127.</text>
-</g>
-<g class="layer layer-40">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="168.64" lengthAdjust="spacing">$ ping -n 4 127.0</text>
-</g>
-<g class="layer layer-41">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">$ ping -n 4 127.0.</text>
-</g>
-<g class="layer layer-42">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="188.48" lengthAdjust="spacing">$ ping -n 4 127.0.0</text>
-</g>
-<g class="layer layer-43">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">$ ping -n 4 127.0.0.</text>
-</g>
-<g class="layer layer-44">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="208.32" lengthAdjust="spacing">$ ping -n 4 127.0.0.1</text>
-</g>
-<g class="layer layer-45">
-<text x="18" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="396.8" lengthAdjust="spacing">Pinging 127.0.0.1 with 32 bytes of data:</text>
-</g>
-<g class="layer layer-46">
-<text x="18" y="364.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text>
-</g>
-<g class="layer layer-47">
-<text x="18" y="384.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text>
-</g>
-<g class="layer layer-48">
-<text x="18" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text>
-</g>
-<g class="layer layer-49">
-<text x="18" y="24.8" fill="#d0d0d0" font-weight="normal" textLength="396.8" lengthAdjust="spacing">Pinging 127.0.0.1 with 32 bytes of data:</text>
-</g>
-<g class="layer layer-50">
-<text x="18" y="44.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text>
-</g>
-<g class="layer layer-51">
-<text x="18" y="64.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text>
-</g>
-<g class="layer layer-52">
-<text x="18" y="84.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text>
-</g>
-<g class="layer layer-53">
-<text x="18" y="144.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">Ping statistics for 127.0.0.1:</text>
-</g>
-<g class="layer layer-54">
-<text x="57.68" y="164.8" fill="#d0d0d0" font-weight="normal" textLength="515.84" lengthAdjust="spacing">Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),</text>
-</g>
-<g class="layer layer-55">
-<text x="18" y="184.8" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacing">Approximate round trip times in milli-seconds:</text>
-</g>
-<g class="layer layer-56">
-<text x="57.68" y="204.8" fill="#d0d0d0" font-weight="normal" textLength="426.56" lengthAdjust="spacing">Minimum = 0ms, Maximum = 0ms, Average = 0ms</text>
-</g>
-<g class="layer layer-57">
-<text x="18" y="224.8" fill="#7dd6cf" font-weight="normal" textLength="396.8" lengthAdjust="spacing"># stream-output (ping, staggered replay)</text>
-</g>
-<g class="layer layer-58">
-<text x="18" y="244.8" fill="#d0d0d0" font-weight="normal" textLength="208.32" lengthAdjust="spacing">$ ping -n 4 127.0.0.1</text>
-</g>
-<g class="layer layer-59">
-<text x="18" y="284.8" fill="#d0d0d0" font-weight="normal" textLength="396.8" lengthAdjust="spacing">Pinging 127.0.0.1 with 32 bytes of data:</text>
-</g>
-<g class="layer layer-60">
-<text x="18" y="304.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text>
-</g>
-<g class="layer layer-61">
-<text x="18" y="324.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text>
-</g>
-<g class="layer layer-62">
-<text x="18" y="344.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text>
-</g>
-<g class="layer layer-63">
-<text x="18" y="404.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">Ping statistics for 127.0.0.1:</text>
-</g>
-<g class="layer layer-64">
-<text x="57.68" y="424.8" fill="#d0d0d0" font-weight="normal" textLength="515.84" lengthAdjust="spacing">Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),</text>
-</g>
-<g class="layer layer-65">
-<text x="18" y="444.8" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacing">Approximate round trip times in milli-seconds:</text>
-</g>
-<g class="layer layer-66">
-<text x="57.68" y="464.8" fill="#d0d0d0" font-weight="normal" textLength="426.56" lengthAdjust="spacing">Minimum = 0ms, Maximum = 0ms, Average = 0ms</text>
-</g>
-<g class="layer layer-67">
-<text x="18" y="484.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
-</g>
+<g class="layer layer-0"><text x="18" y="24.8" fill="#7dd6cf" textLength="307.52"># instant emit (ping, one blob)</text></g>
+<g class="layer layer-1"><text x="18" y="44.8" fill="#d0d0d0">$</text></g>
+<g class="layer layer-2"><text x="18 37.84" y="44.8" fill="#d0d0d0">$p</text></g>
+<g class="layer layer-3"><text x="18 37.84 47.76" y="44.8" fill="#d0d0d0">$pi</text></g>
+<g class="layer layer-4"><text x="18 37.84 47.76 57.68" y="44.8" fill="#d0d0d0">$pin</text></g>
+<g class="layer layer-5"><text x="18" y="44.8" fill="#d0d0d0" textLength="59.52">$ ping</text></g>
+<g class="layer layer-6"><text x="18" y="44.8" fill="#d0d0d0" textLength="79.36">$ ping -</text></g>
+<g class="layer layer-7"><text x="18" y="44.8" fill="#d0d0d0" textLength="89.28">$ ping -n</text></g>
+<g class="layer layer-8"><text x="18" y="44.8" fill="#d0d0d0" textLength="109.12">$ ping -n 4</text></g>
+<g class="layer layer-9"><text x="18" y="44.8" fill="#d0d0d0" textLength="128.96">$ ping -n 4 1</text></g>
+<g class="layer layer-10"><text x="18" y="44.8" fill="#d0d0d0" textLength="138.88">$ ping -n 4 12</text></g>
+<g class="layer layer-11"><text x="18" y="44.8" fill="#d0d0d0" textLength="148.8">$ ping -n 4 127</text></g>
+<g class="layer layer-12"><text x="18" y="44.8" fill="#d0d0d0" textLength="158.72">$ ping -n 4 127.</text></g>
+<g class="layer layer-13"><text x="18" y="44.8" fill="#d0d0d0" textLength="168.64">$ ping -n 4 127.0</text></g>
+<g class="layer layer-14"><text x="18" y="44.8" fill="#d0d0d0" textLength="178.56">$ ping -n 4 127.0.</text></g>
+<g class="layer layer-15"><text x="18" y="44.8" fill="#d0d0d0" textLength="188.48">$ ping -n 4 127.0.0</text></g>
+<g class="layer layer-16"><text x="18" y="44.8" fill="#d0d0d0" textLength="198.4">$ ping -n 4 127.0.0.</text></g>
+<g class="layer layer-17"><text x="18" y="44.8" fill="#d0d0d0" textLength="208.32">$ ping -n 4 127.0.0.1</text></g>
+<g class="layer layer-18"><text x="18" y="84.8" fill="#d0d0d0" textLength="396.8">Pinging 127.0.0.1 with 32 bytes of data:</text></g>
+<g class="layer layer-19"><text x="18" y="104.8" fill="#d0d0d0" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g>
+<g class="layer layer-20"><text x="18" y="124.8" fill="#d0d0d0" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g>
+<g class="layer layer-21"><text x="18" y="144.8" fill="#d0d0d0" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g>
+<g class="layer layer-22"><text x="18" y="164.8" fill="#d0d0d0" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g>
+<g class="layer layer-23"><text x="18" y="204.8" fill="#d0d0d0" textLength="297.6">Ping statistics for 127.0.0.1:</text></g>
+<g class="layer layer-24"><text x="57.68" y="224.8" fill="#d0d0d0" textLength="515.84">Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),</text></g>
+<g class="layer layer-25"><text x="18" y="244.8" fill="#d0d0d0" textLength="456.32">Approximate round trip times in milli-seconds:</text></g>
+<g class="layer layer-26"><text x="57.68" y="264.8" fill="#d0d0d0" textLength="426.56">Minimum = 0ms, Maximum = 0ms, Average = 0ms</text></g>
+<g class="layer layer-27"><text x="18" y="284.8" fill="#7dd6cf" textLength="396.8"># stream-output (ping, staggered replay)</text></g>
+<g class="layer layer-28"><text x="18" y="304.8" fill="#d0d0d0">$</text></g>
+<g class="layer layer-29"><text x="18 37.84" y="304.8" fill="#d0d0d0">$p</text></g>
+<g class="layer layer-30"><text x="18 37.84 47.76" y="304.8" fill="#d0d0d0">$pi</text></g>
+<g class="layer layer-31"><text x="18 37.84 47.76 57.68" y="304.8" fill="#d0d0d0">$pin</text></g>
+<g class="layer layer-32"><text x="18" y="304.8" fill="#d0d0d0" textLength="59.52">$ ping</text></g>
+<g class="layer layer-33"><text x="18" y="304.8" fill="#d0d0d0" textLength="79.36">$ ping -</text></g>
+<g class="layer layer-34"><text x="18" y="304.8" fill="#d0d0d0" textLength="89.28">$ ping -n</text></g>
+<g class="layer layer-35"><text x="18" y="304.8" fill="#d0d0d0" textLength="109.12">$ ping -n 4</text></g>
+<g class="layer layer-36"><text x="18" y="304.8" fill="#d0d0d0" textLength="128.96">$ ping -n 4 1</text></g>
+<g class="layer layer-37"><text x="18" y="304.8" fill="#d0d0d0" textLength="138.88">$ ping -n 4 12</text></g>
+<g class="layer layer-38"><text x="18" y="304.8" fill="#d0d0d0" textLength="148.8">$ ping -n 4 127</text></g>
+<g class="layer layer-39"><text x="18" y="304.8" fill="#d0d0d0" textLength="158.72">$ ping -n 4 127.</text></g>
+<g class="layer layer-40"><text x="18" y="304.8" fill="#d0d0d0" textLength="168.64">$ ping -n 4 127.0</text></g>
+<g class="layer layer-41"><text x="18" y="304.8" fill="#d0d0d0" textLength="178.56">$ ping -n 4 127.0.</text></g>
+<g class="layer layer-42"><text x="18" y="304.8" fill="#d0d0d0" textLength="188.48">$ ping -n 4 127.0.0</text></g>
+<g class="layer layer-43"><text x="18" y="304.8" fill="#d0d0d0" textLength="198.4">$ ping -n 4 127.0.0.</text></g>
+<g class="layer layer-44"><text x="18" y="304.8" fill="#d0d0d0" textLength="208.32">$ ping -n 4 127.0.0.1</text></g>
+<g class="layer layer-45"><text x="18" y="344.8" fill="#d0d0d0" textLength="396.8">Pinging 127.0.0.1 with 32 bytes of data:</text></g>
+<g class="layer layer-46"><text x="18" y="364.8" fill="#d0d0d0" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g>
+<g class="layer layer-47"><text x="18" y="384.8" fill="#d0d0d0" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g>
+<g class="layer layer-48"><text x="18" y="404.8" fill="#d0d0d0" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g>
+<g class="layer layer-49"><text x="18" y="24.8" fill="#d0d0d0" textLength="396.8">Pinging 127.0.0.1 with 32 bytes of data:</text></g>
+<g class="layer layer-50"><text x="18" y="44.8" fill="#d0d0d0" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g>
+<g class="layer layer-51"><text x="18" y="64.8" fill="#d0d0d0" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g>
+<g class="layer layer-52"><text x="18" y="84.8" fill="#d0d0d0" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g>
+<g class="layer layer-53"><text x="18" y="144.8" fill="#d0d0d0" textLength="297.6">Ping statistics for 127.0.0.1:</text></g>
+<g class="layer layer-54"><text x="57.68" y="164.8" fill="#d0d0d0" textLength="515.84">Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),</text></g>
+<g class="layer layer-55"><text x="18" y="184.8" fill="#d0d0d0" textLength="456.32">Approximate round trip times in milli-seconds:</text></g>
+<g class="layer layer-56"><text x="57.68" y="204.8" fill="#d0d0d0" textLength="426.56">Minimum = 0ms, Maximum = 0ms, Average = 0ms</text></g>
+<g class="layer layer-57"><text x="18" y="224.8" fill="#7dd6cf" textLength="396.8"># stream-output (ping, staggered replay)</text></g>
+<g class="layer layer-58"><text x="18" y="244.8" fill="#d0d0d0" textLength="208.32">$ ping -n 4 127.0.0.1</text></g>
+<g class="layer layer-59"><text x="18" y="284.8" fill="#d0d0d0" textLength="396.8">Pinging 127.0.0.1 with 32 bytes of data:</text></g>
+<g class="layer layer-60"><text x="18" y="304.8" fill="#d0d0d0" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g>
+<g class="layer layer-61"><text x="18" y="324.8" fill="#d0d0d0" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g>
+<g class="layer layer-62"><text x="18" y="344.8" fill="#d0d0d0" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g>
+<g class="layer layer-63"><text x="18" y="404.8" fill="#d0d0d0" textLength="297.6">Ping statistics for 127.0.0.1:</text></g>
+<g class="layer layer-64"><text x="57.68" y="424.8" fill="#d0d0d0" textLength="515.84">Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),</text></g>
+<g class="layer layer-65"><text x="18" y="444.8" fill="#d0d0d0" textLength="456.32">Approximate round trip times in milli-seconds:</text></g>
+<g class="layer layer-66"><text x="57.68" y="464.8" fill="#d0d0d0" textLength="426.56">Minimum = 0ms, Maximum = 0ms, Average = 0ms</text></g>
+<g class="layer layer-67"><text x="18" y="484.8" fill="#d0d0d0">$</text></g>
 <g class="layer cursor-layer-0">
 <rect class="cursor-block" x="18" y="32" width="9.92" height="20"/>
 </g>

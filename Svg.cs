@@ -477,6 +477,9 @@ internal static class SvgFrameRenderer
     private readonly record struct ChromePalette(string TitleBarBg, string Border, string WinButton);
 
     [ThreadStatic] private static StringBuilder? t_runText;
+    [ThreadStatic] private static StringBuilder? t_runForm;
+    [ThreadStatic] private static StringBuilder? t_listForm;
+    [ThreadStatic] private static List<GlyphGroup>? t_glyphGroups;
     [ThreadStatic] private static StringBuilder? t_escape;
 
     /// <summary>
@@ -631,7 +634,7 @@ internal static class SvgFrameRenderer
                 }
 
                 fragment.Clear();
-                fragment.AppendLine(CultureInfo.InvariantCulture, $"<g class=\"layer layer-{rows.Count}\">");
+                fragment.Append(CultureInfo.InvariantCulture, $"<g class=\"layer layer-{rows.Count}\">");
                 AppendRow(fragment, buffer, row, origin.X, origin.Y, metrics, theme);
                 fragment.AppendLine("</g>");
                 rowLayers.Append(fragment);
@@ -708,7 +711,8 @@ internal static class SvgFrameRenderer
         sb.AppendLine(CultureInfo.InvariantCulture,
             $"text {{ font-family: {render.FontFamily}; font-size: {render.FontSize}px; white-space: pre; }}");
         sb.AppendLine("text { dominant-baseline: alphabetic; }");
-        sb.AppendLine(".bg { shape-rendering: crispEdges; }");
+        // Row-layer background rects carry no class; this selector gives them crisp edges.
+        sb.AppendLine(".bg,g.layer>rect:not([class]) { shape-rendering: crispEdges; }");
         sb.AppendLine(".layer { opacity: 0; }");
         sb.AppendLine(CultureInfo.InvariantCulture,
             $".cursor-block {{ fill: {theme.Foreground}; fill-opacity: {cursorOpacityText}; }}");
@@ -716,11 +720,25 @@ internal static class SvgFrameRenderer
         var keyframes = new LoopKeyframeRegistry();
         var layerRules = new List<(string Selector, string Keyframe)>();
 
+        // Row layers that share a keyframe share one rule: ".layer-1,.layer-5 { animation:… }".
+        // Full-screen redraws make thousands of row layers, so one rule each was a large share of the style.
+        var rowSelectors = new Dictionary<string, StringBuilder>(StringComparer.Ordinal);
         for (var i = 0; i < rowLayers.Count; i++)
         {
             var keyframe = keyframes.Register(rowLayers[i].Show, rowLayers[i].Hide, loopDuration);
-            layerRules.Add(($".layer-{i}", keyframe));
+            if (rowSelectors.TryGetValue(keyframe, out var selectors))
+            {
+                selectors.Append(",.layer-").Append(i.ToString(CultureInfo.InvariantCulture));
+            }
+            else
+            {
+                rowSelectors[keyframe] = new StringBuilder(".layer-").Append(i.ToString(CultureInfo.InvariantCulture));
+                layerRules.Add((keyframe, keyframe)); // placeholder, resolved below in first-use order
+            }
         }
+
+        for (var i = 0; i < layerRules.Count; i++)
+            layerRules[i] = (rowSelectors[layerRules[i].Keyframe].ToString(), layerRules[i].Keyframe);
 
         for (var i = 0; i < cursorLayers.Count; i++)
         {
@@ -1001,6 +1019,16 @@ internal static class SvgFrameRenderer
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Appends one row on a single line: background spans first, then the row's text in
+    /// whichever encoding is shorter for it.
+    /// <list type="bullet">
+    /// <item>Run form: one &lt;text&gt; per style run, spread with <c>textLength</c>. Small for prose.</item>
+    /// <item>Glyph-list form: one &lt;text&gt; per style with an <c>x</c> per glyph and no spaces.
+    /// Small for sparse colored output such as matrix rain.</item>
+    /// </list>
+    /// Rows with underlined cells always use the run form, because the underline runs under the spaces.
+    /// </summary>
     private static void AppendRow(
         StringBuilder sb,
         ScreenBuffer buffer,
@@ -1012,6 +1040,67 @@ internal static class SvgFrameRenderer
     {
         var rowY = originY + row * metrics.LineHeight;
         var textY = rowY + metrics.BaselineOffset;
+        var hasUnderline = AppendBackgroundSpans(sb, buffer, row, originX, rowY, metrics, theme);
+
+        var runForm = t_runForm ??= new StringBuilder(1024);
+        runForm.Clear();
+        AppendRunText(runForm, buffer, row, originX, textY, metrics, theme);
+        if (hasUnderline)
+        {
+            sb.Append(runForm);
+            return;
+        }
+
+        var listForm = t_listForm ??= new StringBuilder(1024);
+        listForm.Clear();
+        AppendGlyphListText(listForm, buffer, row, originX, textY, metrics, theme);
+        sb.Append(listForm.Length < runForm.Length ? listForm : runForm);
+    }
+
+    /// <summary>
+    /// One rect per run of cells with the same non-theme background, regardless of foreground
+    /// or style. A wide cell's continuation takes the wide cell's background. Returns whether
+    /// any cell in the row is underlined.
+    /// </summary>
+    private static bool AppendBackgroundSpans(
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, double rowY, SvgMetrics metrics, TerminalTheme theme)
+    {
+        var hasUnderline = false;
+        string? spanBg = null;
+        string? previousBg = null;
+        var spanStart = 0;
+        for (var col = 0; col <= buffer.Width; col++)
+        {
+            string? bg = null;
+            if (col < buffer.Width)
+            {
+                var cell = buffer.GetCell(row, col);
+                hasUnderline |= cell.Underline;
+                bg = cell.IsWideContinuation ? previousBg : CellColors.ResolveBackground(cell, theme);
+            }
+
+            if (!string.Equals(bg, spanBg, StringComparison.Ordinal))
+            {
+                if (spanBg is not null)
+                {
+                    sb.Append(CultureInfo.InvariantCulture,
+                        $"<rect x=\"{originX + spanStart * metrics.CharWidth:0.##}\" y=\"{rowY:0.##}\" width=\"{(col - spanStart) * metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\" fill=\"{spanBg}\"/>");
+                }
+
+                spanBg = bg;
+                spanStart = col;
+            }
+
+            previousBg = bg;
+        }
+
+        return hasUnderline;
+    }
+
+    /// <summary>Run form: the original encoding (runs break on any color or style change), without background rects.</summary>
+    private static void AppendRunText(
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, double textY, SvgMetrics metrics, TerminalTheme theme)
+    {
         var col = 0;
         while (col < buffer.Width)
         {
@@ -1022,14 +1111,10 @@ internal static class SvgFrameRenderer
                 continue;
             }
 
-            if (cell.Text == Space)
+            if (cell.Text == Space && CellColors.ResolveBackground(cell, theme) is null)
             {
-                var cellBg = CellColors.ResolveBackground(cell, theme);
-                if (cellBg is null)
-                {
-                    col++;
-                    continue;
-                }
+                col++;
+                continue;
             }
 
             var runStart = col;
@@ -1041,16 +1126,7 @@ internal static class SvgFrameRenderer
 
             if (IsBlockElement(cell.Text))
             {
-                var blockX = originX + runStart * metrics.CharWidth;
-                if (runBg is not null)
-                {
-                    sb.AppendLine(CultureInfo.InvariantCulture,
-                        $"<rect class=\"bg\" x=\"{blockX:0.##}\" y=\"{rowY:0.##}\" width=\"{metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\" fill=\"{runBg}\"/>");
-                }
-
-                var blockWeight = runBold ? "bold" : "normal";
-                sb.AppendLine(CultureInfo.InvariantCulture,
-                    $"<text x=\"{blockX:0.##}\" y=\"{textY:0.##}\" fill=\"{runFg}\" font-weight=\"{blockWeight}\" textLength=\"{metrics.CharWidth:0.##}\" lengthAdjust=\"spacingAndGlyphs\">{EscapeXml(cell.Text)}</text>");
+                AppendBlockElement(sb, originX + runStart * metrics.CharWidth, textY, runFg, runBold, cell.Text, metrics);
                 col = runStart + (cell.IsWide ? 2 : 1);
                 continue;
             }
@@ -1058,7 +1134,6 @@ internal static class SvgFrameRenderer
             var runText = (t_runText ??= new StringBuilder(64));
             runText.Clear();
             runText.Append(cell.Text);
-            var runWidth = cell.IsWide ? 2 : 1;
             col++;
 
             while (col < buffer.Width)
@@ -1079,7 +1154,6 @@ internal static class SvgFrameRenderer
                 }
 
                 runText.Append(next.Text);
-                runWidth += next.IsWide ? 2 : 1;
                 col++;
             }
 
@@ -1087,25 +1161,121 @@ internal static class SvgFrameRenderer
             while (visibleLen > 0 && runText[visibleLen - 1] == ' ')
                 visibleLen--;
 
-            if (visibleLen == 0 && runBg is null)
+            if (visibleLen == 0)
+                continue; // only spaces: the background span already covers them
+
+            var drawText = visibleLen == runText.Length ? runText.ToString() : runText.ToString(0, visibleLen);
+            sb.Append(CultureInfo.InvariantCulture,
+                $"<text x=\"{originX + runStart * metrics.CharWidth:0.##}\" y=\"{textY:0.##}\" fill=\"{runFg}\"");
+            AppendFontStyle(sb, runBold, runItalic, runUnderline);
+            sb.Append(CultureInfo.InvariantCulture, $" textLength=\"{visibleLen * metrics.CharWidth:0.##}\">{EscapeXml(drawText)}</text>");
+        }
+    }
+
+    /// <summary>
+    /// Glyph-list form: one &lt;text&gt; per (fg, bold, italic) with an x per glyph, spaces omitted.
+    /// Block elements keep their stretched single-glyph encoding, and cells of more than one
+    /// UTF-16 unit (surrogate pairs, combining marks) get their own &lt;text&gt;: SVG assigns x
+    /// values per addressable character, which browsers count differently for those.
+    /// </summary>
+    private static void AppendGlyphListText(
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, double textY, SvgMetrics metrics, TerminalTheme theme)
+    {
+        var groups = t_glyphGroups ??= [];
+        var used = 0;
+        for (var col = 0; col < buffer.Width; col++)
+        {
+            var cell = buffer.GetCell(row, col);
+            var text = cell.Text;
+            if (cell.IsWideContinuation || text.Length == 0 || (text.Length == 1 && char.IsWhiteSpace(text[0])))
                 continue;
 
-            var drawWidth = (visibleLen > 0 ? visibleLen : runWidth) * metrics.CharWidth;
-            var drawText = visibleLen == runText.Length ? runText.ToString() : runText.ToString(0, visibleLen);
-            var x = originX + runStart * metrics.CharWidth;
-            if (runBg is not null)
+            var fg = CellColors.ResolveTintedForeground(buffer, row, col, cell, theme);
+            var x = originX + col * metrics.CharWidth;
+            if (IsBlockElement(text))
             {
-                sb.AppendLine(CultureInfo.InvariantCulture,
-                    $"<rect class=\"bg\" x=\"{x:0.##}\" y=\"{rowY:0.##}\" width=\"{runWidth * metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\" fill=\"{runBg}\"/>");
+                AppendBlockElement(sb, x, textY, fg, cell.Bold, text, metrics);
+                continue;
             }
 
-            var weight = runBold ? "bold" : "normal";
-            var styleAttr = runItalic && runUnderline ? " style=\"font-style:italic;text-decoration:underline;\""
-                : runItalic ? " style=\"font-style:italic;\""
-                : runUnderline ? " style=\"text-decoration:underline;\""
-                : "";
-            sb.AppendLine(CultureInfo.InvariantCulture,
-                $"<text x=\"{x:0.##}\" y=\"{textY:0.##}\" fill=\"{runFg}\" font-weight=\"{weight}\" textLength=\"{drawWidth:0.##}\" lengthAdjust=\"spacing\"{styleAttr}>{EscapeXml(drawText)}</text>");
+            if (text.Length != 1)
+            {
+                sb.Append(CultureInfo.InvariantCulture, $"<text x=\"{x:0.##}\" y=\"{textY:0.##}\" fill=\"{fg}\"");
+                AppendFontStyle(sb, cell.Bold, cell.Italic, underline: false);
+                sb.Append('>').Append(EscapeXml(text)).Append("</text>");
+                continue;
+            }
+
+            GlyphGroup? group = null;
+            for (var i = 0; i < used; i++)
+            {
+                var candidate = groups[i];
+                if (candidate.Bold == cell.Bold && candidate.Italic == cell.Italic && string.Equals(candidate.Fg, fg, StringComparison.Ordinal))
+                {
+                    group = candidate;
+                    break;
+                }
+            }
+
+            if (group is null)
+            {
+                if (used == groups.Count)
+                    groups.Add(new GlyphGroup());
+                group = groups[used++];
+                group.Reset(fg, cell.Bold, cell.Italic);
+            }
+            else
+            {
+                group.Xs.Append(' ');
+            }
+
+            group.Xs.Append(x.ToString("0.##", CultureInfo.InvariantCulture));
+            group.Text.Append(EscapeXml(text));
+        }
+
+        for (var i = 0; i < used; i++)
+        {
+            var group = groups[i];
+            sb.Append("<text x=\"").Append(group.Xs).Append(CultureInfo.InvariantCulture, $"\" y=\"{textY:0.##}\" fill=\"{group.Fg}\"");
+            AppendFontStyle(sb, group.Bold, group.Italic, underline: false);
+            sb.Append('>').Append(group.Text).Append("</text>");
+        }
+    }
+
+    /// <summary>Block elements (U+2580–U+259F) are stretched to exactly one cell so they align with box drawing.</summary>
+    private static void AppendBlockElement(StringBuilder sb, double x, double textY, string fg, bool bold, string text, SvgMetrics metrics)
+    {
+        sb.Append(CultureInfo.InvariantCulture, $"<text x=\"{x:0.##}\" y=\"{textY:0.##}\" fill=\"{fg}\"");
+        AppendFontStyle(sb, bold, italic: false, underline: false);
+        sb.Append(CultureInfo.InvariantCulture, $" textLength=\"{metrics.CharWidth:0.##}\" lengthAdjust=\"spacingAndGlyphs\">{EscapeXml(text)}</text>");
+    }
+
+    // Presentation attributes; normal weight, upright style, and no decoration are the defaults.
+    private static void AppendFontStyle(StringBuilder sb, bool bold, bool italic, bool underline)
+    {
+        if (bold)
+            sb.Append(" font-weight=\"bold\"");
+        if (italic)
+            sb.Append(" font-style=\"italic\"");
+        if (underline)
+            sb.Append(" text-decoration=\"underline\"");
+    }
+
+    private sealed class GlyphGroup
+    {
+        internal string Fg { get; private set; } = "";
+        internal bool Bold { get; private set; }
+        internal bool Italic { get; private set; }
+        internal StringBuilder Xs { get; } = new(256);
+        internal StringBuilder Text { get; } = new(64);
+
+        internal void Reset(string fg, bool bold, bool italic)
+        {
+            Fg = fg;
+            Bold = bold;
+            Italic = italic;
+            Xs.Clear();
+            Text.Clear();
         }
     }
 
@@ -1303,11 +1473,12 @@ internal static class SvgFrameRenderer
 
     private static bool IsBlockElement(string text)
     {
-        if (string.IsNullOrEmpty(text))
+        // A cell may hold a base character plus combining marks, so read the first scalar
+        // rather than assuming a second UTF-16 unit is a low surrogate.
+        if (string.IsNullOrEmpty(text) || !Rune.TryGetRuneAt(text, 0, out var first))
             return false;
 
-        var cp = text.Length == 1 ? text[0] : char.ConvertToUtf32(text[0], text[1]);
-        return cp is >= 0x2580 and <= 0x259F and not (0x2591 or 0x2592 or 0x2593);
+        return first.Value is >= 0x2580 and <= 0x259F and not (0x2591 or 0x2592 or 0x2593);
     }
 
     private static SvgMetrics CreateMetrics(int fontSize, int cols, int rows, WindowStyle window)

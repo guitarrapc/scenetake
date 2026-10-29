@@ -19,6 +19,13 @@ failures += Run("MatrixTintWhiteNearGreen", MatrixTintWhiteNearGreen);
 failures += Run("MatrixTintIgnoresVerticalNeighbors", MatrixTintIgnoresVerticalNeighbors);
 failures += Run("CopilotBannerBlockGlyphs", CopilotBannerBlockGlyphs);
 failures += Run("WriteSvgMatchesRenderToString", WriteSvgMatchesRenderToString);
+failures += Run("GlyphListForSparseColoredRow", GlyphListForSparseColoredRow);
+failures += Run("RunFormForProse", RunFormForProse);
+failures += Run("MultiCodeUnitCellsStayOutOfXLists", MultiCodeUnitCellsStayOutOfXLists);
+failures += Run("BackgroundSpanCoversStyleChanges", BackgroundSpanCoversStyleChanges);
+failures += Run("UnderlinedRowUsesRunForm", UnderlinedRowUsesRunForm);
+failures += Run("RowLayersShareKeyframeRules", RowLayersShareKeyframeRules);
+failures += Run("CombiningMarkDoesNotFailRender", CombiningMarkDoesNotFailRender);
 
 return failures == 0 ? 0 : 1;
 
@@ -79,16 +86,150 @@ static string RenderCast(string castPath, int? maxFps = null)
 
 static bool CurlOutputSurvivesFrameSampling()
 {
-    var svg = RenderCast("samples/basic.cast", maxFps: 12);
-    return svg.Contains("% Total", StringComparison.Ordinal)
-        && svg.Contains("HTTP/1.1 301 Moved Permanently", StringComparison.Ordinal)
-        && svg.Contains("Dload  Upload", StringComparison.Ordinal);
+    var rows = DecodeRowLayers(RenderCast("samples/basic.cast", maxFps: 12));
+    return rows.Any(r => r.Text.Contains("% Total", StringComparison.Ordinal))
+        && rows.Any(r => r.Text.Contains("HTTP/1.1 301 Moved Permanently", StringComparison.Ordinal))
+        && rows.Any(r => r.Text.Contains("Dload  Upload", StringComparison.Ordinal));
 }
 
 static bool EchoOutputNoDuplicateCommandLine()
 {
     var svg = RenderCast("samples/basic.cast");
-    return CountVisibleLayersWithText(svg, 5.15, "$ echo &quot;Wait for 2 seconds...&quot;") <= 1;
+    return CountVisibleLayersWithText(svg, 5.15, "$ echo \"Wait for 2 seconds...\"") <= 1;
+}
+
+static bool GlyphListForSparseColoredRow()
+{
+    // Sparse glyphs in alternating colors: one <text> per color with an x per glyph beats one <text> per run.
+    var svg = RenderInline(40, 2, """[0.0, "o", "\u001b[32mA\u001b[0m    \u001b[31mB\u001b[0m    \u001b[32mC\u001b[0m    \u001b[31mD\u001b[0m    \u001b[32mE\u001b[0m"]""");
+    return SvgRenderTestPatterns.GlyphListPattern.IsMatch(svg)
+        && DecodeRowLayers(svg).Any(r => r.Text == "A    B    C    D    E");
+}
+
+static bool RunFormForProse()
+{
+    var svg = RenderInline(40, 2, """[0.0, "o", "hello world, this is plain prose"]""");
+    return !SvgRenderTestPatterns.GlyphListPattern.IsMatch(svg)
+        && svg.Contains("textLength=", StringComparison.Ordinal)
+        && !svg.Contains("font-weight=\"normal\"", StringComparison.Ordinal)
+        && !svg.Contains("lengthAdjust=\"spacing\"", StringComparison.Ordinal)
+        && DecodeRowLayers(svg).Any(r => r.Text == "hello world, this is plain prose");
+}
+
+static bool MultiCodeUnitCellsStayOutOfXLists()
+{
+    // Surrogate pairs and combining marks get their own <text>; browsers count x values for them differently.
+    var svg = RenderInline(40, 2, """[0.0, "o", "\u001b[32mA\u001b[0m   \u001b[32m😀\u001b[0m   \u001b[32mB\u001b[0m   \u001b[32mé\u001b[0m   \u001b[32mC\u001b[0m   \u001b[32mD\u001b[0m"]""");
+    var lists = SvgRenderTestPatterns.GlyphListPattern.Matches(svg).Select(m => m.Groups[2].Value).ToList();
+    return lists.Count > 0
+        && lists.All(text => !text.Contains('\ud83d') && !text.Contains('́'))
+        && svg.Contains(">😀</text>", StringComparison.Ordinal)
+        && svg.Contains(">é</text>", StringComparison.Ordinal);
+}
+
+static bool BackgroundSpanCoversStyleChanges()
+{
+    // One rect for "abcd" even though the foreground changes after "ab" (4 cells × 9.92px).
+    var svg = RenderInline(10, 2, """[0.0, "o", "\u001b[41;37mab\u001b[32mcd\u001b[0m"]""");
+    var rects = SvgRenderTestPatterns.RowRectPattern.Matches(svg);
+    return rects.Count == 1 && rects[0].Groups[1].Value == "39.68"
+        && svg.Contains("g.layer>rect:not([class])", StringComparison.Ordinal);
+}
+
+static bool UnderlinedRowUsesRunForm()
+{
+    // The underline continues under spaces between words, which the glyph-list form omits.
+    var svg = RenderInline(40, 2, """[0.0, "o", "\u001b[4;32mA\u001b[31m    B\u001b[32m    C\u001b[31m    D\u001b[32m    E\u001b[0m"]""");
+    return !SvgRenderTestPatterns.GlyphListPattern.IsMatch(svg)
+        && svg.Contains("text-decoration=\"underline\"", StringComparison.Ordinal);
+}
+
+static bool RowLayersShareKeyframeRules()
+{
+    // A full-screen redraw changes every row at once: those row layers share one animation rule.
+    var svg = RenderInline(10, 3, """
+        [0.0, "o", "aaa\r\nbbb\r\nccc"]
+        [1.0, "o", "\u001b[Hddd\r\neee\r\nfff"]
+        """);
+    return svg.Contains(".layer-0,.layer-1,.layer-2 { animation:", StringComparison.Ordinal)
+        && svg.Contains(".layer-3,.layer-4,.layer-5 { animation:", StringComparison.Ordinal);
+}
+
+static bool CombiningMarkDoesNotFailRender()
+{
+    // "e" + U+0301 shares one cell. 1.4.x threw here, treating the mark as a low surrogate.
+    var svg = RenderInline(20, 2, """[0.0, "o", "café ok"]""");
+    return DecodeRowLayers(svg).Any(r => r.Text.StartsWith("caf", StringComparison.Ordinal) && r.Text.Contains("́ ok", StringComparison.Ordinal));
+}
+
+static string RenderInline(int cols, int rows, string events)
+{
+    var path = Path.Combine(Path.GetTempPath(), $"scenetake-svg-inline-{Guid.NewGuid():N}.cast");
+    try
+    {
+        File.WriteAllText(path, "{\"version\":3,\"term\":{\"cols\":" + cols + ",\"rows\":" + rows + ",\"type\":\"xterm-256color\"}}\n" + events + "\n");
+        return RenderCast(path);
+    }
+    finally
+    {
+        File.Delete(path);
+    }
+}
+
+/// <summary>
+/// Rebuilds each row layer's visible text from either encoding: a run &lt;text&gt; places its
+/// characters one cell apart from its x; a glyph-list &lt;text&gt; gives every character its own x.
+/// Columns are relative to the leftmost glyph in the SVG.
+/// </summary>
+static List<(int Layer, string Text)> DecodeRowLayers(string svg)
+{
+    var fontSize = double.Parse(SvgRenderTestPatterns.FontSizePattern.Match(svg).Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+    var cellWidth = fontSize * 0.62;
+    var layers = new List<(int Layer, List<(double X, string Glyph)> Glyphs)>();
+    var minX = double.MaxValue;
+    foreach (System.Text.RegularExpressions.Match layer in SvgRenderTestPatterns.RowLayerPattern.Matches(svg))
+    {
+        var glyphs = new List<(double X, string Glyph)>();
+        foreach (System.Text.RegularExpressions.Match text in SvgRenderTestPatterns.TextPattern.Matches(layer.Groups[2].Value))
+        {
+            var xs = text.Groups[1].Value.Split(' ').Select(v => double.Parse(v, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+            var content = System.Net.WebUtility.HtmlDecode(text.Groups[2].Value);
+            if (xs.Length > 1)
+            {
+                for (var i = 0; i < content.Length && i < xs.Length; i++)
+                    glyphs.Add((xs[i], content[i].ToString()));
+            }
+            else
+            {
+                var elements = System.Globalization.StringInfo.GetTextElementEnumerator(content);
+                for (var i = 0; elements.MoveNext(); i++)
+                    glyphs.Add((xs[0] + i * cellWidth, elements.GetTextElement()));
+            }
+        }
+
+        foreach (var (x, _) in glyphs)
+            minX = Math.Min(minX, x);
+        layers.Add((int.Parse(layer.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture), glyphs));
+    }
+
+    var decoded = new List<(int Layer, string Text)>();
+    foreach (var (id, glyphs) in layers)
+    {
+        var cells = new SortedDictionary<int, string>();
+        foreach (var (x, glyph) in glyphs)
+            cells[(int)Math.Round((x - minX) / cellWidth)] = glyph;
+
+        var text = new System.Text.StringBuilder();
+        foreach (var (col, glyph) in cells)
+        {
+            text.Append(' ', Math.Max(0, col - text.Length));
+            text.Append(glyph);
+        }
+
+        decoded.Add((id, text.ToString().Trim()));
+    }
+
+    return decoded;
 }
 
 static bool MarkerDelayAdvancesTiming()
@@ -159,7 +300,7 @@ static bool MatrixTintIgnoresVerticalNeighbors()
     {
         File.WriteAllText(path, cast);
         var svg = RenderCast(path);
-        return svg.Contains("Fri, Jul", StringComparison.Ordinal)
+        return DecodeRowLayers(svg).Any(r => r.Text.Contains("Fri, Jul", StringComparison.Ordinal))
             && !svg.Contains(">i, J<", StringComparison.Ordinal)
             && CountVisibleGreenDateFragments(svg) == 0;
     }
@@ -213,18 +354,20 @@ static int CountVisibleLayersWithText(string svg, double timeSeconds, string tex
         .ToDictionary(
             m => m.Groups[1].Value,
             m => ParseCycleTiming(m.Groups[2].Value, loopDuration));
-    var layerKeyframes = SvgRenderTestPatterns.LayerAnimationPattern.Matches(svg)
-        .ToDictionary(
-            m => int.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture),
-            m => m.Groups[2].Value);
+    // Row layers sharing a keyframe share one rule: ".layer-1,.layer-5 { animation:k3 … }".
+    var layerKeyframes = new Dictionary<int, string>();
+    foreach (System.Text.RegularExpressions.Match rule in SvgRenderTestPatterns.LayerAnimationPattern.Matches(svg))
+    {
+        foreach (var selector in rule.Groups[1].Value.Split(','))
+            layerKeyframes[int.Parse(selector[".layer-".Length..], System.Globalization.CultureInfo.InvariantCulture)] = rule.Groups[2].Value;
+    }
 
     var count = 0;
-    foreach (var match in SvgRenderTestPatterns.LayerTextPattern.Matches(svg).Cast<System.Text.RegularExpressions.Match>())
+    foreach (var (id, rowText) in DecodeRowLayers(svg))
     {
-        if (!match.Groups[2].Value.Contains(text, StringComparison.Ordinal))
+        if (!rowText.Contains(text, StringComparison.Ordinal))
             continue;
 
-        var id = int.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
         if (!layerKeyframes.TryGetValue(id, out var keyframeName) || !keyframes.TryGetValue(keyframeName, out var timing))
             continue;
 
@@ -286,7 +429,7 @@ static bool CopilotBannerBlockGlyphs()
         File.WriteAllText(path, cast);
         var svg = RenderCast(path);
         // Block glyphs render as text (same baseline as box drawing), not oversized rects.
-        return svg.Contains("╭─╮╭─╮", StringComparison.Ordinal)
+        return DecodeRowLayers(svg).Any(r => r.Text.Contains("╭─╮╭─╮", StringComparison.Ordinal))
             && svg.Contains("▘", StringComparison.Ordinal)
             && svg.Contains("▝", StringComparison.Ordinal)
             && svg.Contains("▔", StringComparison.Ordinal)
@@ -301,17 +444,35 @@ static bool CopilotBannerBlockGlyphs()
 
 file static class SvgRenderTestPatterns
 {
-    internal static readonly System.Text.RegularExpressions.Regex LayerTextPattern = new(
-        """<g class="layer layer-(\d+)">\s*<text[^>]*>(.*?)</text>""",
+    internal static readonly System.Text.RegularExpressions.Regex RowLayerPattern = new(
+        """<g class="layer layer-(\d+)">(.*?)</g>""",
         System.Text.RegularExpressions.RegexOptions.Singleline | System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    internal static readonly System.Text.RegularExpressions.Regex TextPattern = new(
+        """<text x="([^"]*)"[^>]*>(.*?)</text>""",
+        System.Text.RegularExpressions.RegexOptions.Singleline | System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    // A <text> whose x attribute lists several positions (glyph-list form).
+    internal static readonly System.Text.RegularExpressions.Regex GlyphListPattern = new(
+        """<text x="([0-9.]+(?: [0-9.]+)+)"[^>]*>(.*?)</text>""",
+        System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    // Background rects inside row layers carry no class; group 1 is the width.
+    internal static readonly System.Text.RegularExpressions.Regex RowRectPattern = new(
+        """<rect x="[0-9.]+" y="[0-9.]+" width="([0-9.]+)" height="[0-9.]+" fill="[^"]+"/>""",
+        System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    internal static readonly System.Text.RegularExpressions.Regex FontSizePattern = new(
+        """font-size: ([0-9]+)px""",
+        System.Text.RegularExpressions.RegexOptions.Compiled);
 
     internal static readonly System.Text.RegularExpressions.Regex KeyframePattern = new(
         """^@keyframes (k\d+) \{ (.+) \}$""",
         System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.Compiled);
 
     internal static readonly System.Text.RegularExpressions.Regex LayerAnimationPattern = new(
-        """\.layer-(\d+) \{ animation:(k\d+)""",
-        System.Text.RegularExpressions.RegexOptions.Compiled);
+        """^(\.layer-\d+(?:,\.layer-\d+)*) \{ animation:(k\d+)""",
+        System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.Compiled);
 
     internal static readonly System.Text.RegularExpressions.Regex DurationPattern = new(
         """animation:k\d+ ([0-9.]+)s linear infinite""",
