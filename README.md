@@ -161,7 +161,7 @@ mp4 options apply with `--format mp4` or on the `mp4` subcommand: `--fps` sets t
 
 **SVG or mp4**
 
-SVG is the smallest for typing and short output, and embeds in a README. Full-screen TUIs that redraw every frame (`matrix`, `btop`, …) make SVG and GIF very large; use mp4 for those, and for sharing on X or Slack. For example, `matrix --fps 60` at 200×60 for 7.5 seconds is 26.9MB as SVG and 9.8MB as mp4 (4.8MB with `--max-size 1280x1024`). scenetake warns when an SVG is over 10MB.
+For typing and short output, SVG and mp4 come out at about the same size (either can be smaller), and SVG embeds in a README and stays sharp at any zoom. Full-screen TUIs that redraw every frame (`matrix`, `btop`, …) make SVG and GIF very large; use mp4 for those, and for sharing on X or Slack. For example, `matrix --fps 60` at 200×60 for 7.5 seconds is 26.9MB as SVG and 8.0MB as mp4 (3.9MB with `--max-size 1280x1024`). scenetake warns when an SVG is over 10MB.
 
 mp4 output runs [ffmpeg](https://ffmpeg.org/) with libx264 as a separate program. Install it with `winget install Gyan.FFmpeg` or `scoop install ffmpeg` (Windows), `brew install ffmpeg` (macOS), or `sudo apt install ffmpeg` (Debian/Ubuntu). Set `SCENETAKE_FFMPEG` to use a specific binary. mp4 uses fonts installed on your machine: the `font-family` list first, then CJK and symbol fonts. Pass `--font-file` to pin one. `--window` adds the same title bar as SVG, without the outer margin and shadow.
 

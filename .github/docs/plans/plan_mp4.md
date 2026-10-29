@@ -210,7 +210,7 @@ The downscaled frame is clearly more legible, because unhinted 8px glyphs are th
 
 | Topic | Decision | Why |
 |---|---|---|
-| Preset | `slow` | 2–14% smaller than `medium` for about 15% more time. `veryslow` saves more but takes 3× longer and uses more reference frames, which raises the H.264 level. |
+| Preset | ~~`slow`~~ → `slower` (revised 2026-10-29) | Originally `slow`: 2–14% smaller than `medium` for about 15% more time. Later measurements on terminal frames chose `slower`, psy off, and keyframes at most every 30s instead (spec_mp4.md → Lessons Learned). |
 | Tune | None | Neither tune helped consistently. |
 | Color | BT.709 conversion and tags | Exact theme colors. |
 | `--max-size` | Downscale with lanczos from the normal font size | Legibility. |

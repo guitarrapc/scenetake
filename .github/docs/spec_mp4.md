@@ -8,9 +8,10 @@ Full-screen TUIs (`matrix`, `btop`, banner animations) redraw most cells every f
 
 | Recording | SVG | GIF (agg) | mp4 |
 |---|---|---|---|
-| `matrix --fps 60`, 200×60, 7.5s | 26.9MB (117MB before the row encoding in spec_svg.md) | 19MB | 9.8MB; 4.8MB with `--max-size 1280x1024` |
-| Same, 384×108 (4K frame) | 96.7MB (455MB before) | — | 31.7MB |
-| `samples/basic.cast` (typing) | **108KB** | 414KB | 194KB |
+| `matrix --fps 60`, 200×60, 7.5s | 26.9MB (117MB before the row encoding in spec_svg.md) | 19MB | 8.0MB; 3.9MB with `--max-size 1280x1024` |
+| Same, 384×108 (4K frame) | 96.7MB (455MB before) | — | 26.4MB |
+| `samples/basic.cast` (typing) | 108KB | 414KB | **98KB** |
+| `samples/git.cast` (typing) | **68KB** | — | 226KB |
 
 X (Twitter) accepts H.264 mp4, not SVG. SVG stays the right format for typing demos embedded in a README. mp4 is for heavy output and sharing.
 
@@ -83,8 +84,11 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
 |---|---|---|
 | Codec | libx264, High profile, yuv420p | X requires H.264 High with yuv420p, and it plays in every browser and on phones. |
 | Quality | `--crf`, default `23` | x264's default. Higher values make smaller files. |
-| Preset | `slow` | 2–14% smaller than `medium` for about 15% more time. `veryslow` saves about 20% more but takes 3× as long and raises the H.264 level. |
-| Frame rate | `--fps`, default `30`, max `60` | 30fps keeps terminal motion smooth. For `matrix --fps 60` it is 30% smaller than 60fps. X allows up to 60. |
+| Preset | `slower` | Smaller than `slow` on every recording tested, at equal or higher SSIM. `veryslow` was larger on typing (and 3× slower). |
+| Psychovisual tuning | Off (`-psy 0`) | It spends bits on texture detail; terminal frames are flat color and sharp text. Off was smaller at equal or higher SSIM and looked the same side by side. |
+| Keyframes | At most every 30 seconds | x264's default (every 250 frames, 8.3s at 30fps) was 46% of a typing demo: each keyframe redraws the whole screen while the frames between are tiny. 30 seconds keeps seeking cheap. |
+| Reference frames | 8, capped so the stream stays within level 5.2 | 8 references at 4K would need level 6.0, which many phone and TV decoders lack. 4K gets 5. |
+| Frame rate | `--fps`, default `30`, max `60` | 30fps keeps terminal motion smooth. For `matrix --fps 60` it is 27% smaller than 60fps (8.0MB vs 11.0MB). X allows up to 60. |
 | Color | BT.709 conversion and BT.709 tags | Untagged output (ffmpeg's default BT.601 conversion) shifts theme colors in players that assume BT.709. |
 | Container | mp4 with `+faststart` | Playback and upload processing can start before the whole file arrives. |
 
@@ -151,3 +155,18 @@ CI runs both suites on all six platforms; GitHub runner images ship no ffmpeg, s
   - The cleanup must therefore stop ffmpeg and remove the temporary file itself, from the Ctrl+C handler: once that handler returns, the process ends, so `finally` blocks never run.
   - On Windows with a Scoop shim, the process scenetake waits for is the shim. The real ffmpeg can still hold the file for a moment after the shim exits, so a single delete attempt failed now and then and left a `.partial` (1 in 3 tries). Retrying the delete for up to 3 seconds made all 10 later tries clean.
 - **Testing Ctrl+C.** A non-interactive shell starts background jobs with SIGINT ignored, and programs inherit that. A naive `cmd & kill -INT $!` test therefore never reaches the handler; use job control (`set -m`) or start the process directly. On Windows, Ctrl+C was sent with `AttachConsole` + `GenerateConsoleCtrlEvent` to a child in its own console. That is too fragile for CI, so the automated test is Unix only.
+- **Encoder defaults for terminal frames (2026-10-29).** The first defaults (`slow`, psy on, x264's keyframe every 250 frames) were revised after measuring where the bytes went.
+  - In the typing demo, 3 keyframes were 46% of the file, about 44KB each for a full screen of text, while the frames between were tens of bytes.
+  - The same frames were then encoded with several settings and compared by SSIM against a lossless reference:
+
+    | Recording | Before | `slower`, psy off, keyframe ≤ 30s | SSIM before → after |
+    |---|---|---|---|
+    | basic (typing) | 200.6KB | 98.4KB (−51%) | 0.99708 → 0.99733 |
+    | interactive-pty (TUI) | 636.6KB | 463.9KB (−27%) | 0.99742 → 0.99737 |
+    | pty (small matrix) | 586.9KB | 435.2KB (−26%) | 0.97270 → 0.97467 |
+    | matrix 200×60 | 10.0MB | 8.0MB (−20%) | 0.94244 → 0.94761 |
+    | matrix 384×108 (refs capped to 5) | 32.1MB | 26.4MB (−18%) | 0.94132 → 0.94566 |
+
+  - With the same rare keyframes, `veryslow` was 31% smaller than the old default on typing, against 46% for `slower`, and took 1.5× as long as `slower`.
+  - Skipping duplicate frames (`mpdecimate`, variable frame rate) saved less and lowered SSIM.
+  - `--crf 25` with the new settings is another 8–19% smaller at roughly the old SSIM. That trade is left to the user rather than made the default.

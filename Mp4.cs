@@ -8,7 +8,12 @@ internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int 
     internal const int DefaultFps = 30, MinFps = 1, MaxFps = 60;
     internal const int DefaultCrf = 23, MinCrf = 0, MaxCrf = 51;
     internal const int MinSize = 16, MaxSize = 16384;
-    internal const string Preset = "slow";
+    // x264 settings for terminal frames (measured in spec_mp4.md → Encoding):
+    // "slower" plus psy off plus rare keyframes cut 20–51% at equal or higher SSIM than "slow".
+    internal const string Preset = "slower";
+    internal const int PresetRefs = 8;          // x264 "slower"
+    internal const int KeyframeSeconds = 30;    // longest gap between keyframes, for seeking
+    internal const int Level52DpbMacroblocks = 184_320; // H.264 level 5.2 decoded picture buffer
 
     internal static Mp4Settings Default => new(DefaultFps, DefaultCrf, 0, 0, null);
 
@@ -162,12 +167,22 @@ internal static class Mp4Render
     /// <summary>
     /// ffmpeg arguments: raw RGB24 on stdin; optional lanczos downscale; BT.709 conversion and
     /// tags (untagged BT.601 output shifts theme colors in players); H.264 High via libx264.
+    /// <list type="bullet">
+    /// <item><c>-psy 0</c>: psychovisual tuning spends bits on texture detail; terminal frames are flat
+    /// color and sharp text, and were smaller with it off at equal or higher SSIM.</item>
+    /// <item><c>-g</c>: x264's default keyframe every 250 frames was nearly half of a typing demo; a mostly
+    /// static terminal needs few. At most every <see cref="Mp4Settings.KeyframeSeconds"/> keeps seeking cheap.</item>
+    /// <item><c>-refs</c>: capped for large frames so the stream stays within level 5.2, which hardware
+    /// decoders support widely; 8 references at 4K would need level 6.0.</item>
+    /// </list>
     /// </summary>
     internal static List<string> BuildArguments(int width, int height, Mp4Settings settings, int outputWidth, int outputHeight, string outputPath)
     {
         var scale = outputWidth != width || outputHeight != height
             ? $"scale={outputWidth}:{outputHeight}:flags=lanczos:out_color_matrix=bt709:out_range=tv"
             : "scale=out_color_matrix=bt709:out_range=tv";
+        var macroblocks = ((outputWidth + 15) / 16) * ((outputHeight + 15) / 16);
+        var refs = Math.Clamp(Mp4Settings.Level52DpbMacroblocks / macroblocks, 1, Mp4Settings.PresetRefs);
         return
         [
             "-hide_banner", "-loglevel", "error",
@@ -175,6 +190,8 @@ internal static class Mp4Render
             "-r", settings.Fps.ToString(CultureInfo.InvariantCulture), "-i", "-",
             "-vf", scale + ",format=yuv420p",
             "-c:v", "libx264", "-preset", Mp4Settings.Preset, "-crf", settings.Crf.ToString(CultureInfo.InvariantCulture),
+            "-psy", "0", "-refs", refs.ToString(CultureInfo.InvariantCulture),
+            "-g", (settings.Fps * Mp4Settings.KeyframeSeconds).ToString(CultureInfo.InvariantCulture),
             "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
             "-movflags", "+faststart", "-f", "mp4", "-y", outputPath,
         ];
