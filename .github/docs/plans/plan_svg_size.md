@@ -105,6 +105,13 @@ The scenario path and the `svg` subcommand produce different SVGs from the same 
 - Cause: the scenario path uses an unrounded loop duration (7.701573s), while the cast stores rounded times (7.702s). Keyframe percentages then deduplicate differently.
 - This is not a size problem by itself. Compare like with like in acceptance checks, and decide later whether to unify the two.
 
+**Resolved (2026-10-29).** The scenario path now renders SVG and mp4 from the cast it just wrote, not from the in-memory events. Two things differed:
+
+- Event times: the cast stores millisecond intervals.
+- Markers: the cast reader drops them, so a trailing marker no longer stretches the loop.
+
+The scenario-path output is therefore byte-identical to `scenetake svg|mp4` on the written cast. `tests/scenario_render_test.cs` checks this with default settings, `--max-fps`, and render overrides, plus mp4 when ffmpeg is available. Before the fix, the three SVG cases failed.
+
 ## A2. Compact Row Encoding
 
 Status: **Implemented** (2026-10-29). See [A2 Results](#a2-results). The rest of this section is the original proposal.
@@ -253,4 +260,4 @@ Warning: SVG is 28.1MB; full-screen output is much smaller as mp4 (--format mp4)
 ## Open Questions
 
 1. Is 10MB the right warning threshold?
-2. Should the scenario path and the `svg` subcommand share one loop-duration precision?
+2. ~~Should the scenario path and the `svg` subcommand share one loop-duration precision?~~ Yes. Both now render the written cast (see [Observation to Resolve Separately](#observation-to-resolve-separately)).

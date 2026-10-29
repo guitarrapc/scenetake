@@ -322,16 +322,19 @@ WriteCast(scenario, events, outputPath, shell, deterministicTimestamp, renderSet
 var duration = events.Count > 0 ? events[^1].Time : 0.0;
 Console.Error.WriteLine($"Written: {FormatDisplayPath(outputPath)}  ({events.Count} events, {duration:F1}s)");
 
+// SVG and mp4 are rendered from the cast as written, not from the in-memory events: the cast
+// stores millisecond times and drops markers from the timeline, so rendering it gives the same
+// output as `scenetake svg|mp4 <cast>`. The cast's header already carries the CLI render overrides.
 var exitCode = 0;
 if (outputFormat == OutputFormat.Svg)
 {
-    var width = scenario.Width ?? 120;
-    var height = scenario.Height ?? 24;
     try
     {
-        SvgRender.WriteSvg(events, width, height, renderSettings, svgPath!);
+        var written = CastReader.Read(outputPath);
+        var svgSettings = written.RenderSettings with { MaxFps = renderSettings.MaxFps };
+        SvgRender.WriteSvg(written.Events, written.Width, written.Height, svgSettings, svgPath!, written.LoopDuration);
         Console.Error.WriteLine($"Written: {FormatDisplayPath(svgPath!)}");
-        if (SvgRender.SizeWarning(new FileInfo(svgPath!).Length, renderSettings.MaxFps, fromCast: false) is { } svgSizeWarning)
+        if (SvgRender.SizeWarning(new FileInfo(svgPath!).Length, svgSettings.MaxFps, fromCast: false) is { } svgSizeWarning)
             Console.Error.WriteLine($"Warning: {svgSizeWarning}");
     }
     catch (Exception ex)
@@ -345,12 +348,11 @@ if (outputFormat == OutputFormat.Svg)
 
 if (outputFormat == OutputFormat.Mp4)
 {
-    var width = scenario.Width ?? 120;
-    var height = scenario.Height ?? 24;
     try
     {
         // WriteMp4 encodes to a temporary file and renames it, so a failure leaves no partial .mp4.
-        var result = Mp4Render.WriteMp4(events, width, height, renderSettings, runMp4Options.ToSettings(), mp4Path!, ffmpegPath!);
+        var written = CastReader.Read(outputPath);
+        var result = Mp4Render.WriteMp4(written.Events, written.Width, written.Height, written.RenderSettings, runMp4Options.ToSettings(), mp4Path!, ffmpegPath!, written.LoopDuration);
         PrintMp4Written(mp4Path!, result);
     }
     catch (Exception ex)

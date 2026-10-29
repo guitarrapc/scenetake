@@ -52,6 +52,7 @@ Tests: `tests/terminal_tests.cs`.
 ### Animation and layout (plain terminal)
 
 - Replay follows cast event timestamps. **`--max-fps`** (default **off**) caps sampling when set.
+- **The scenario path renders the cast it just wrote**, with its millisecond times, markers dropped, and the header's render settings, plus `--max-fps` from the CLI. `scenetake --format svg` therefore writes the same SVG as `scenetake svg` on the resulting cast.
 - Output is self-contained animated SVG (CSS only, no JavaScript).
 - Animations **loop indefinitely**; one cycle matches agg GIF timing with `--last-frame-duration 0`: cast playback through the last output event, then hold the final frame for the preceding output-to-output idle gap before restarting at `t = 0`.
 - **Row-diff** animation: only changed rows are emitted as timed layers (deduplicated `@keyframes kN` with compact percentage ranges). Row layers that share a keyframe share one animation rule. Cursor and viewport resize use separate layers. Row encoding: [Row encoding](#row-encoding).
@@ -170,6 +171,7 @@ The cast file is never modified by the `svg` subcommand.
 |-------|----------|
 | `tests/terminal_tests.cs` | VT emulator (CSI, Unicode, alt screen) |
 | `tests/svg_render_test.cs` | Row-diff smoke, marker timing, `--max-fps`, matrix rain tint, streamed file output matches in-memory render, row encoding choice (glyph list vs run, underline, multi-unit cells, background spans, shared keyframe rules), combining marks. Text checks decode either encoding back to row text. |
+| `tests/scenario_render_test.cs` | Scenario path (`--format svg` / `--format mp4`) output is byte-identical to `scenetake svg` / `scenetake mp4` on the written cast (default, `--max-fps`, render overrides). Needs `SCENETAKE_BIN`; mp4 also needs ffmpeg. |
 | `tests/window_chrome_test.cs` | `render.window` / cast tag / CLI resolution; chrome SVG structure |
 
 Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs all three.
@@ -194,6 +196,7 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 - **Choose the encoding per row.** A glyph-list encoding applied to every row made the typing demo 19% larger, because prose is cheaper as runs. Choosing per row made every sample smaller.
 - **Grouped animation rules.** With one animation rule per row layer, the `<style>` block of the 200×60 matrix SVG was 1.19MB. Grouping row layers by keyframe cut it to 0.36MB.
 - **Combining marks.** A cell holding a combining mark (for example a decomposed `é`) crashed rendering in 1.4.x, because the block-element check assumed a second UTF-16 unit was a low surrogate.
+- **Render from the cast, not from memory.** The scenario path used to render the in-memory events, whose times are not rounded to milliseconds and which still include markers. The same recording then gave a different SVG than `scenetake svg` on its cast. For a matrix recording that was 8,402 keyframes against 719, and 118MB against 117MB before the row encoding change. Reading the written cast back makes the cast the single source for every derived output.
 - Frame sampling is optional (`--max-fps`); default off keeps full timing for typing and bulk output (e.g. curl).
 - Trailing blank alternate-screen restore frames should be trimmed when the event stream contains screen-clear sequences.
 - Window chrome should stay **fixed px** like a real desktop window; scaling chrome with `font-size` looked wrong in README embeds.

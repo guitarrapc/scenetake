@@ -32,6 +32,7 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
 
 - Frame `k` shows the screen after every event with time ≤ `k / fps`. States shorter than one frame are not shown.
 - The video length is the SVG loop period, so it includes the final hold.
+- Like the SVG, `--format mp4` renders the cast it just wrote, so it gives the same file as `scenetake mp4` on that cast with the same options.
 - Like the SVG, nothing is shown before the first event, not even the cursor.
 - Like the SVG, a trailing blank alternate-screen restore is dropped, so a TUI recording ends on the app's last screen.
 
