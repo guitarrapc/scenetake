@@ -293,6 +293,90 @@ Visual check: same method as A2, comparing A2 with A4 on 19 SVGs at 5 times each
 
 Tests: `tests/svg_render_test.cs` decodes the new markup, including `<use>`, and adds checks for compact keyframes, row reuse, and the cursor rect. `EchoOutputNoDuplicateCommandLine` used to pass with zero matches: its time no longer fell where the line is on screen. It now requires exactly one visible copy at 8.5s.
 
+## A5. Further Size Reduction (Investigation)
+
+Status: **Investigated, not implemented** (2026-10-29).
+
+### Where the Bytes Go After A4
+
+| Part | basic (typing) | interactive-pty (TUI) | matrix 200×60 |
+|---|---|---|---|
+| Keyframes and their class rules | 32% | 9% | 0.2% |
+| Cursor rects | 22% | 1.5% | 0% |
+| `<use>` for reused rows | 12% | 3% | 0% |
+| `fill` on `<text>` | 4% | 13% | 27% |
+| `x` / `y` on `<text>` | 5% | 19% | 41% |
+| `textLength` + `lengthAdjust` on block elements (█ ▀ ▄ …) | — | 32% | 0% |
+| `<text>` tags | 4% | 11% | 23% |
+| Glyphs themselves | 7% | 5% | 2.5% |
+
+### Method
+
+- **Prototypes.** Each candidate was prototyped by rewriting A4 output. The baseline is A4 output with LF line endings.
+- **Visual check.** Every candidate was compared in headless Edge 156 at 5 pinned times per sample. The SVG was shown through `<img>`, as GitHub does.
+- **Playback cost.** Measured in the same browser over the DevTools protocol, with each SVG playing for 6s through `<img>`:
+  - requestAnimationFrame (rAF) intervals;
+  - main-thread busy time.
+- **Not checked.** Firefox and Safari were not checked.
+
+### Candidates
+
+Size changes are against the A4 output with LF line endings.
+
+| ID | Change | Typing | interactive-pty | pty / matrix 200×60 | Visual (Chromium) | Playback cost |
+|---|---|---|---|---|---|---|
+| S0 | Always write `\n`, not `Environment.NewLine` | −1.7% on Windows | −0.4% | −0.2% / −0.1% | Same | None |
+| S1 | Block elements as `<rect>`, adjacent same-color cells merged | 0% | **−50.5%** | 0% | Intended change, see [S1](#s1-block-elements-as-rects) | Slightly lower |
+| S2 | Row-local coordinates: one CSS `transform` class per row, `<text>` without `y` | −2% to +1% (stream-output +4%) | −8.2% | −15.2% / **−17.5%** | Same, except underline anti-aliasing (1–2 of 255 levels) | None |
+| S2c | S2 plus cell units (`scale(cellWidth)`, integer `x`) | −3% to +1% (stream-output +6%) | −14.8% | −22.9% / **−25.5%** | Anti-aliasing differs on some glyph edges (for example `<`, up to 47 of 255 levels); not visible | matrix 200×60 about 1.5× slower per frame |
+| S3 | Most common text color inherited from the group; other colors as classes | −2.5 to −4.7% | −7.4% | −7.8% / −8.6% | Same | None |
+| S4 | Cursor inside the row layer with the same timing, as `<use href="#c" x y/>` | **−6.5 to −10.4%** | −0.6% | −0.7% | Same | None |
+| S5 | A layer with one element carries the classes itself, with no `<g>` | −0.2 to −2.3% | −0.1% | 0% | Same | None |
+| S6 | Shorter keyframe names (1–2 letters instead of `k123`) | about −4% (estimate) | −1.1% | −0.6% | Same | None |
+| X1 | One cursor element moved by keyframed `translate` | −14 to −24% | −1.4% | −1.5% / 0% | Same | pty main thread +50–70%, frame rate held |
+| X2 | Shared timeline: one animated custom property `--f`, each layer's show/hide as numbers | −13 to −20% | −4.6% | −2.1% / −0.1% | Same | Frame drops on pty and interactive-pty |
+| X3 | Per-cell lifetimes for matrix-like output | — | — | at most −14% | Not built | — |
+
+**Combined.** S0–S5 together, against today's output written on Windows. S4 was measured on its own and added; the rest were measured as one rewrite.
+
+| Sample | Combined change |
+|---|---|
+| Typing samples | −14% to −21% (stream-output −8%, because S2 makes it larger) |
+| interactive-pty | −55% |
+| pty | −24% (−32% with S2c) |
+| matrix 200×60 | −26% (−34% with S2c) |
+
+S6 would add about 4 points on typing. Playback cost was the same as today for basic, pty, and interactive-pty.
+
+### Recommendation
+
+1. **Do first: S0, S1, S3, S4, S5, S6.** Each is local to the encoder and does not add playback cost.
+2. **Then S2.** Choose per layer between row-local and absolute coordinates, whichever is shorter, so that sparse rows such as stream-output do not grow. With row-local content, row reuse no longer needs re-encoding at another line.
+3. **Hold S2c.** It slows heavy matrix SVGs. Its 1.6px font scaled ×9.92 also needs checks in Firefox and Safari.
+4. **Do not adopt X1 or X2 as they are.**
+   - Both are large wins for typing. Both add playback cost on busy recordings, and X2 drops frames there.
+   - X2 with the animation on the root `svg` was cheaper than today for basic (81 vs 105 ms/s of main thread). It still dropped frames on pty (p95 50ms).
+   - Adopting either one would need a rule that limits it to light recordings.
+5. **Do not pursue X3.** Only 14% of matrix 200×60 glyphs (5% for pty) carry over unchanged, glyph and color, into the next layer of their row. Per-cell timing would cost more than it saves.
+
+### S1. Block Elements as Rects
+
+- **What it changes.** Font block glyphs are stretched horizontally with `textLength` to fill the cell width. Vertically they keep the font's own height. This leaves visible seams between cells and rows, for example in the Copilot CLI input box. Exact rects remove the seams.
+- **Consistency with mp4.** The mp4 rasterizer already draws block elements this way. It draws shades (░ ▒ ▓) as 25%, 50%, and 75% alpha, which an SVG rect can do with `fill-opacity`.
+- **Saving.** Half of interactive-pty's size, because one merged rect replaces a run of about 100-byte `<text>` elements.
+
+### Lessons Learned
+
+- **Fill precedence.** A CSS rule such as `text{fill:…}` overrides every `fill="…"` presentation attribute. A default color must be inherited from an ancestor attribute or style, not set by a rule on `text`.
+- **`<` in `<style>`.** A literal `<` in the SVG `<style>`, such as `@property` `syntax: "<integer>"`, is an XML error. Inline in HTML it silently drops the stylesheet. Escape it as `&lt;`.
+- **Inline SVG is not a reliable baseline.**
+  - Inline in an HTML page, the X2 + X1 combination changed text anti-aliasing (up to about 90 of 255 levels). Through `<img>` it was pixel-identical, presumably because inline SVG gets separate compositing.
+  - Visual checks must use `<img>`.
+- **Minimum font size.** Chromium's minimum font size setting enlarges HTML text but not SVG text inside `<img>`, including text drawn at 1.6px and scaled up.
+- **Cost of custom-property animation.** Animating a custom property costs far more main-thread time than animating `opacity`. X2 with the animation on every layer tripled main-thread time on typing (basic: about 110 → 335 ms/s).
+- **Cost of a moving cursor.** Moving one element by keyframes (X1) added main-thread time on busy recordings in every form tried: `translate`, `transform`, and CSS `x`/`y`. Many cursor elements that only switch `opacity` cost nothing extra.
+- **matrix 200×60 is past what a browser can play.** In headless Edge it plays at 1–2 frames per second today, with or without GPU. Size work on it matters for the file limit, not for playback.
+
 ## Docs to Update When Done
 
 - **[spec_svg.md](../spec_svg.md):**

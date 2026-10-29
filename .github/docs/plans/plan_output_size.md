@@ -124,6 +124,7 @@ Guidance once both tracks land:
 | 4 | A3. Size warning — **done 2026-10-29** | Comes after B so the warning can recommend mp4. |
 | 5 | B5. Window chrome in mp4 — **done 2026-10-29** | Not needed for v1. |
 | 6 | A4. Compact animation CSS and row reuse — **done 2026-10-29** | Added after measuring that CSS and scrolled rows were most of a typing SVG. |
+| 7 | A5. Further size reduction — **investigated 2026-10-29, not implemented** | Encoder-only candidates: typing −14 to −21%, TUI −55%, matrix −26% with no added playback cost. See [plan_svg_size.md](plan_svg_size.md#a5-further-size-reduction-investigation). |
 
 Shared touch points:
 
