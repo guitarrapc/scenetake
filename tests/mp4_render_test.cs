@@ -35,6 +35,8 @@ failures += RunFrames("NothingShownBeforeFirstEvent", NothingShownBeforeFirstEve
 failures += RunFrames("FrameShowsEventsUpToItsTime", FrameShowsEventsUpToItsTime);
 failures += RunFrames("TrailingBlankRestoreIsTrimmed", TrailingBlankRestoreIsTrimmed);
 failures += RunFrames("MatrixTintMatchesSvg", MatrixTintMatchesSvg);
+failures += RunFrames("MacosChromeDrawsTrafficLights", MacosChromeDrawsTrafficLights);
+failures += RunFrames("WindowsChromeDrawsButtons", WindowsChromeDrawsButtons);
 
 return failures == 0 ? 0 : 1;
 
@@ -77,9 +79,11 @@ static bool LayoutRoundsSvgMetrics()
     var layout = RasterLayout.Create(16, 200, 60);
     var odd = RasterLayout.Create(16, 3, 1); // 3*10+20 = 50 wide, 20+8 = 28 high
     var tiny = RasterLayout.Create(13, 1, 1); // 8.06 → 8 wide, 16.25 → 16 high; 8+16=24, 16+8=24 (pad clamps)
-    return layout is { CellWidth: 10, CellHeight: 20, Baseline: 13, PadX: 10, PadY: 4, Width: 2020, Height: 1208 }
+    var chrome = RasterLayout.Create(16, 10, 3, WindowStyle.Macos); // 34px title bar + 3*20 + 2*4 = 102
+    return layout is { CellWidth: 10, CellHeight: 20, Baseline: 13, PadX: 10, PadY: 4, Width: 2020, Height: 1208, TitleBarHeight: 0 }
         && odd.Width % 2 == 0 && odd.Height % 2 == 0
-        && tiny is { CellWidth: 8, CellHeight: 16 } && tiny.Width % 2 == 0;
+        && tiny is { CellWidth: 8, CellHeight: 16 } && tiny.Width % 2 == 0
+        && chrome is { TitleBarHeight: 34, Height: 102 } && chrome.RowY(0) == 38 && layout.RowY(0) == 4;
 }
 
 static bool FitWithinKeepsAspectAndEvenSize() =>
@@ -267,12 +271,38 @@ static bool MatrixTintMatchesSvg()
     return CellPixel(frames[^1], layout, 0, 1) == (0x7e, 0x8e, 0x50);
 }
 
-static (List<byte[]> Frames, RasterLayout Layout) Render(string events, int fps)
+static bool MacosChromeDrawsTrafficLights()
+{
+    // Dark theme → MacDark: title bar #323232, separator #1a1a1a. Buttons centered at y=17, x=22/48/74 (SVG geometry).
+    var (frames, layout) = Render("""[0.0,"o","█\u001b[?25l"]""", fps: 10, window: "macos");
+    var last = frames[^1];
+    return layout.TitleBarHeight == 34
+        && Pixel(last, layout, 22, 17) == (0xff, 0x5f, 0x57)
+        && Pixel(last, layout, 48, 17) == (0xfe, 0xbc, 0x2e)
+        && Pixel(last, layout, 74, 17) == (0x28, 0xc8, 0x40)
+        && Pixel(last, layout, layout.Width - 5, 5) == (0x32, 0x32, 0x32)
+        && Pixel(last, layout, layout.Width - 5, 33) == (0x1a, 0x1a, 0x1a)
+        && CellPixel(last, layout, 0, 0) == (0xd0, 0xd0, 0xd0); // terminal content starts below the title bar
+}
+
+static bool WindowsChromeDrawsButtons()
+{
+    // Dark theme → WinDark: title bar #2d2d2d, buttons #8a8a8a, right-aligned 14px from the edge.
+    var (frames, layout) = Render("""[0.0,"o","\u001b[?25l"]""", fps: 10, window: "windows");
+    var last = frames[^1];
+    var lastButtonCenter = layout.Width - 14 - 9;
+    return Pixel(last, layout, lastButtonCenter, 17) == (0x8a, 0x8a, 0x8a)
+        && Pixel(last, layout, 5, 5) == (0x2d, 0x2d, 0x2d)
+        && Pixel(last, layout, layout.Width - 5, 5) == (0x2d, 0x2d, 0x2d);
+}
+
+static (List<byte[]> Frames, RasterLayout Layout) Render(string events, int fps, string? window = null)
 {
     var path = Path.Combine(Path.GetTempPath(), $"scenetake-mp4-{Guid.NewGuid():N}.cast");
     try
     {
-        File.WriteAllText(path, """{"version":3,"term":{"cols":8,"rows":3,"type":"xterm-256color"}}""" + "\n" + events + "\n");
+        var tags = window is null ? "" : $",\"tags\":[\"st:window={window}\"]";
+        File.WriteAllText(path, "{\"version\":3,\"term\":{\"cols\":8,\"rows\":3,\"type\":\"xterm-256color\"}" + tags + "}\n" + events + "\n");
         var recording = CastReader.Read(path);
         var renderer = new Mp4FrameRenderer(recording.Events, recording.Width, recording.Height, recording.RenderSettings,
             Mp4Settings.Default with { Fps = fps }, recording.LoopDuration);

@@ -1,6 +1,6 @@
 # Plan B — mp4 Output
 
-Status: **B0–B4 and B6 implemented** (2026-10-29). B5 (window chrome) is open. The shipped behavior is in [spec_mp4.md](../spec_mp4.md); see [What Was Built](#what-was-built).
+Status: **Implemented** (2026-10-29): B0–B6. The shipped behavior is in [spec_mp4.md](../spec_mp4.md); see [What Was Built](#what-was-built).
 
 Background, measurements, and ordering: [plan_output_size.md](plan_output_size.md).
 
@@ -254,6 +254,16 @@ The downscaled frame is clearly more legible, because unhinted 8px glyphs are th
   ```
 
 ### B5. Window Chrome (After v1)
+
+Status: **Implemented** (2026-10-29), with the "flush title bar" option.
+
+- **What is drawn.** The SVG title bar, separator line, and buttons, using the same palette and fixed-pixel geometry. The chrome constants and the macOS button colors are now shared with the SVG renderer; SVG output stayed byte-identical.
+- **What is left out.** The outer margin, drop shadow, rounded corners, and outer border.
+- **Layout.** The terminal moves down by the 34px bar.
+- **Warning removed.** The "window chrome is not supported yet" warning is gone.
+- **Tests.** Layout height and row offset; the macOS button colors at their centers, title bar, and separator; the Windows button and title bar colors. The macOS and Windows theme samples and a light-theme macOS render were checked visually.
+
+Original proposal:
 
 - Support `macos` and `windows` chrome in mp4: title bar and controls.
 - Video has no transparency, so the outer margin, rounded corners, and shadow need a decision. One option is to drop the margin and shadow and draw the title bar flush with the frame edge.

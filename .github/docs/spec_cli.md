@@ -52,7 +52,7 @@ Subcommands accept `-h` / `--help` for subcommand-specific usage.
 | `--max-size WxH` | scenario (`--format mp4`), `mp4` | Downscale to fit within `W×H` (each side `16`–`16384`), keeping the aspect ratio; never upscales. `1280x1024` fits X video uploads. |
 | `--font-file PATH` | scenario (`--format mp4`), `mp4` | Primary font file (TTF, OTF, TTC) for mp4, before the `font-family` lookup. See [spec_mp4.md](spec_mp4.md). |
 
-`--format mp4` and the `mp4` subcommand also accept `--font-size`, `--font-family`, `--theme`, and `--window` with the same priority as SVG (CLI > cast header > default). Window chrome is not drawn in mp4 yet; a non-`none` window prints a warning.
+`--format mp4` and the `mp4` subcommand also accept `--font-size`, `--font-family`, `--theme`, and `--window` with the same priority as SVG (CLI > cast header > default). `--window` draws the title bar and buttons without the SVG margin and shadow (see [spec_mp4.md](spec_mp4.md) → Window chrome).
 
 **Environment.** `SCENETAKE_FFMPEG` names the ffmpeg binary for mp4 output; otherwise `ffmpeg` on `PATH` is used.
 

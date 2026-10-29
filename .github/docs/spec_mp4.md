@@ -21,8 +21,8 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
 - **Entry points:** `--format mp4` on the scenario path and the `mp4` subcommand for existing casts. CLI details: [spec_cli.md](spec_cli.md).
 - **Output:** H.264 High profile, yuv420p, BT.709, constant frame rate, `+faststart`.
 - **Rendering:** the same VT emulator and cell color rules as [spec_svg.md](spec_svg.md). Glyphs are drawn by StbTrueTypeSharp (Unlicense OR MIT, pure C#, works under Native AOT).
+- **Window chrome:** `--window macos|windows` draws the SVG title bar and buttons ([Window chrome](#window-chrome)).
 - **Not supported yet:**
-  - window chrome (`--window` warns and renders without it);
   - color emoji, ligatures, and audio;
   - codecs other than H.264.
 
@@ -59,6 +59,18 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
 - **mp4 depends on the machine.** The same cast renders with the fonts installed where scenetake runs, whereas an SVG uses the viewer's fonts. Pass `--font-file` to pin the font.
 - **Bold and italic** use real faces when the family has them; otherwise they are synthesized (thickened strokes, slanted rows). Variable fonts always use synthetic bold.
 - **Procedural glyphs:** box drawing (U+2500–U+257F, except the diagonals), block elements (U+2580–U+259F), and braille (U+2800–U+28FF) are drawn as shapes that reach the cell edges.
+
+### Window chrome
+
+`--window macos` and `--window windows` (or `st:window` in the cast header) draw the SVG title bar above the terminal:
+
+- **Same geometry and colors as the SVG:**
+  - a 34px bar with a separator line;
+  - the bar color follows the light or dark terminal background;
+  - macOS has three traffic-light circles on the left, Windows three square buttons on the right;
+  - sizes are fixed pixels and do not scale with `font-size`.
+- **Left out:** the SVG's outer margin, drop shadow, rounded corners, and outer border. Video has no transparency, so the margin would need some made-up background color. The bar instead runs flush with the top edge of the frame, the way terminal recorders usually draw a window bar.
+- **Resizing:** the bar spans the full canvas width and does not follow terminal resize events.
 
 ### Downscaling
 

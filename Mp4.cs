@@ -79,7 +79,7 @@ internal sealed class Mp4FrameRenderer
         _theme = TerminalTheme.FromResolved(render.Theme);
         _fps = settings.Fps;
         var (cols, rows) = TerminalReplay.ResolveCanvasSize(width, height, events);
-        Layout = RasterLayout.Create(render.FontSize, cols, rows);
+        Layout = RasterLayout.Create(render.FontSize, cols, rows, render.Window);
         Glyphs = GlyphSource.Create(render.FontFamily, settings.FontFile, Layout);
         FrameCount = Math.Max(1, (int)Math.Ceiling(loopDuration * settings.Fps - 1e-9));
     }

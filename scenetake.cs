@@ -192,7 +192,6 @@ if (args[0] is "mp4")
             return 1;
         }
 
-        WarnIfWindowChrome(mp4RenderSettings);
         var result = Mp4Render.WriteMp4(recording.Events, recording.Width, recording.Height, mp4RenderSettings, mp4Options.ToSettings(), mp4OutputPath, mp4Ffmpeg, recording.LoopDuration);
         PrintMp4Written(mp4OutputPath, result);
         Console.Error.WriteLine($"Done: {FormatDisplayPath(mp4OutputPath)}");
@@ -291,7 +290,6 @@ if (outputFormat == OutputFormat.Mp4)
     }
 
     ffmpegPath = resolvedFfmpeg;
-    WarnIfWindowChrome(renderSettings);
 }
 
 var deterministicSeed = ComputeDeterministicSeed(yaml);
@@ -2971,12 +2969,6 @@ static void PrintMp4Usage()
     Console.Error.WriteLine("Usage: scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH] <input.cast> [output.mp4]");
     Console.Error.WriteLine("Converts an existing asciinema v2/v3 cast file to H.264 mp4. Requires ffmpeg with libx264 on PATH,");
     Console.Error.WriteLine($"or set {Ffmpeg.PathVariable} to its path. --max-size 1280x1024 fits X (Twitter) uploads.");
-}
-
-static void WarnIfWindowChrome(ResolvedRenderSettings settings)
-{
-    if (settings.Window != WindowStyle.None)
-        Console.Error.WriteLine("Warning: mp4: window chrome is not supported yet; rendering without it");
 }
 
 static void PrintMp4Written(string path, Mp4Result result) =>

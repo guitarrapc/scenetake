@@ -6,12 +6,14 @@ using StbTrueTypeSharp;
 
 /// <summary>
 /// Pixel layout of a raster frame: the SVG cell metrics rounded to whole pixels, plus the
-/// SVG inner padding. Width and height are even because yuv420p video requires it.
+/// SVG inner padding. With window chrome, the SVG title bar sits above the terminal.
+/// Width and height are even because yuv420p video requires it.
 /// </summary>
 internal readonly record struct RasterLayout(
-    int Cols, int Rows, int CellWidth, int CellHeight, int Baseline, int PadX, int PadY, int Width, int Height, int FontSize)
+    int Cols, int Rows, int CellWidth, int CellHeight, int Baseline, int PadX, int PadY, int Width, int Height, int FontSize,
+    WindowStyle Window, int TitleBarHeight)
 {
-    internal static RasterLayout Create(int fontSize, int cols, int rows)
+    internal static RasterLayout Create(int fontSize, int cols, int rows, WindowStyle window = WindowStyle.None)
     {
         var cellWidth = Math.Max(1, Round(fontSize * SvgFrameRenderer.CharWidthFactor));
         var cellHeight = Math.Max(1, Round(fontSize * SvgFrameRenderer.LineHeightFactor));
@@ -19,14 +21,15 @@ internal readonly record struct RasterLayout(
         var (padH, padV) = SvgFrameRenderer.ResolveInnerPadding(fontSize);
         var padX = Round(padH);
         var padY = Round(padV);
+        var titleBar = window == WindowStyle.None ? 0 : Round(SvgFrameRenderer.ChromeTitleBarHeight);
         var width = cols * cellWidth + padX * 2;
-        var height = rows * cellHeight + padY * 2;
-        return new RasterLayout(cols, rows, cellWidth, cellHeight, baseline, padX, padY, width + (width & 1), height + (height & 1), fontSize);
+        var height = titleBar + rows * cellHeight + padY * 2;
+        return new RasterLayout(cols, rows, cellWidth, cellHeight, baseline, padX, padY, width + (width & 1), height + (height & 1), fontSize, window, titleBar);
     }
 
     internal int CellX(int col) => PadX + col * CellWidth;
 
-    internal int RowY(int row) => PadY + row * CellHeight;
+    internal int RowY(int row) => TitleBarHeight + PadY + row * CellHeight;
 
     private static int Round(double value) => (int)Math.Round(value, MidpointRounding.AwayFromZero);
 }
@@ -953,12 +956,84 @@ internal sealed class FrameRasterizer
     /// <summary>RGB24 pixels, row-major, <see cref="RasterLayout.Width"/> × <see cref="RasterLayout.Height"/>.</summary>
     internal byte[] Pixels { get; }
 
-    /// <summary>Fills the frame with the theme background and forgets what was drawn.</summary>
+    /// <summary>Fills the frame with the theme background, draws the window chrome if any, and forgets what was drawn.</summary>
     internal void Clear()
     {
         FillRect(0, 0, _layout.Width, _layout.Height, _background);
+        if (_layout.Window != WindowStyle.None)
+            DrawChrome();
         Array.Clear(_rowValid);
         _cursor = null;
+    }
+
+    /// <summary>
+    /// The SVG title bar and buttons, with the same palette and fixed-pixel geometry. Video has
+    /// no transparency, so the SVG's outer margin, drop shadow, rounded corners, and outer border
+    /// are left out and the title bar runs flush with the top edge of the frame.
+    /// </summary>
+    private void DrawChrome()
+    {
+        var palette = SvgFrameRenderer.ResolveChromePalette(_layout.Window, _theme.Background);
+        var bar = _layout.TitleBarHeight;
+        FillRect(0, 0, _layout.Width, bar - 1, ParseColor(palette.TitleBarBg));
+        FillRect(0, bar - 1, _layout.Width, 1, ParseColor(palette.Border));
+
+        if (_layout.Window == WindowStyle.Macos)
+        {
+            var radius = SvgFrameRenderer.MacButtonDiameter / 2;
+            var cx = SvgFrameRenderer.ChromeSidePadding + radius;
+            var cy = SvgFrameRenderer.ChromeTopPadding + radius;
+            foreach (var color in SvgFrameRenderer.MacButtonColors)
+            {
+                var centerX = cx;
+                FillShape(centerX - radius, cy - radius, centerX + radius, cy + radius, ParseColor(color),
+                    (x, y) => (x - centerX) * (x - centerX) + (y - cy) * (y - cy) <= radius * radius);
+                cx += SvgFrameRenderer.MacButtonDiameter + SvgFrameRenderer.MacButtonGap;
+            }
+
+            return;
+        }
+
+        var size = SvgFrameRenderer.WinButtonSize;
+        var corner = SvgFrameRenderer.WinButtonCornerRadius;
+        var top = SvgFrameRenderer.ChromeTopPadding;
+        var left = _layout.Width - SvgFrameRenderer.ChromeSidePadding - size * 3 - SvgFrameRenderer.WinButtonGap * 2;
+        var buttonColor = ParseColor(palette.WinButton);
+        for (var i = 0; i < 3; i++)
+        {
+            var x0 = left;
+            FillShape(x0, top, x0 + size, top + size, buttonColor, (x, y) =>
+            {
+                // Inside the rounded square: clamp to the inner rectangle, then compare with the corner radius.
+                var dx = Math.Max(Math.Max(x0 + corner - x, x - (x0 + size - corner)), 0);
+                var dy = Math.Max(Math.Max(top + corner - y, y - (top + size - corner)), 0);
+                return dx * dx + dy * dy <= corner * corner;
+            });
+            left += size + SvgFrameRenderer.WinButtonGap;
+        }
+    }
+
+    /// <summary>Fills the pixels of a shape inside the given bounds, anti-aliased by 4×4 supersampling.</summary>
+    private void FillShape(double left, double top, double right, double bottom, (byte R, byte G, byte B) color, Func<double, double, bool> inside)
+    {
+        for (var y = Math.Max(0, (int)Math.Floor(top)); y < Math.Min(_layout.Height, (int)Math.Ceiling(bottom)); y++)
+        {
+            for (var x = Math.Max(0, (int)Math.Floor(left)); x < Math.Min(_layout.Width, (int)Math.Ceiling(right)); x++)
+            {
+                var hits = 0;
+                for (var sy = 0; sy < 4; sy++)
+                {
+                    for (var sx = 0; sx < 4; sx++)
+                    {
+                        if (inside(x + (sx + 0.5) / 4, y + (sy + 0.5) / 4))
+                            hits++;
+                    }
+                }
+
+                if (hits != 0)
+                    BlendPixel((y * _layout.Width + x) * 3, color, hits * 255 / 16);
+            }
+        }
     }
 
     /// <summary>Draws <paramref name="view"/> (canvas-sized), redrawing only rows that changed.</summary>

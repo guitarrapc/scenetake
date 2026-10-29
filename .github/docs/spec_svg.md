@@ -120,6 +120,7 @@ Priority: **CLI > cast header > default `none`**. Unknown values error on scenar
 - **Chrome colors:** derived from terminal `theme.bg` luminance (light vs dark chrome palette). `theme.preset` and resolved header colors drive this; per-key `theme.fg` / `theme.bg` overrides affect **terminal content only**, not chrome palette selection beyond bg luminance.
 - **Resize:** chrome width/height follow viewport `"r"` events; chrome elements share `viewport-*` layer animation timing with the terminal background mask.
 - **Inner terminal padding** (around cell content) is unchanged from plain mode.
+- **mp4** draws the same title bar and controls but leaves out the outer margin, shadow, rounded corners, and border, because video has no transparency. See [spec_mp4.md](spec_mp4.md) → Window chrome.
 
 #### Fixed chrome geometry (px)
 

@@ -477,17 +477,17 @@ internal static class SvgFrameRenderer
     private const string Space = " ";
 
     // Window chrome — fixed px; does not scale with terminal font-size
-    private const double ChromeTitleBarHeight = 34.0;
-    private const double ChromeSidePadding = 14.0;
-    private const double ChromeTopPadding = 9.0;
+    internal const double ChromeTitleBarHeight = 34.0;
+    internal const double ChromeSidePadding = 14.0;
+    internal const double ChromeTopPadding = 9.0;
     private const double ChromeOuterMargin = 12.0;
     private const double ChromeMacCornerRadius = 8.0;
     private const double ChromeWindowsCornerRadius = 4.0;
-    private const double MacButtonDiameter = 16.0;
-    private const double MacButtonGap = 10.0;
-    private const double WinButtonSize = 17.0;
-    private const double WinButtonGap = 5.5;
-    private const double WinButtonCornerRadius = 2.55;
+    internal const double MacButtonDiameter = 16.0;
+    internal const double MacButtonGap = 10.0;
+    internal const double WinButtonSize = 17.0;
+    internal const double WinButtonGap = 5.5;
+    internal const double WinButtonCornerRadius = 2.55;
     private const string WindowShadowFilter =
         "<filter id=\"window-shadow\" x=\"-25%\" y=\"-25%\" width=\"150%\" height=\"150%\"><feDropShadow dx=\"0\" dy=\"2\" stdDeviation=\"4\" flood-opacity=\"0.22\"/></filter>";
 
@@ -496,7 +496,10 @@ internal static class SvgFrameRenderer
     private static readonly ChromePalette WinDark = new("#2d2d2d", "#404040", "#8a8a8a");
     private static readonly ChromePalette WinLight = new("#f3f3f3", "#d0d0d0", "#8a8a8a");
 
-    private readonly record struct ChromePalette(string TitleBarBg, string Border, string WinButton);
+    internal readonly record struct ChromePalette(string TitleBarBg, string Border, string WinButton);
+
+    /// <summary>macOS close, minimize, and zoom buttons, left to right.</summary>
+    internal static readonly string[] MacButtonColors = ["#ff5f57", "#febc2e", "#28c840"];
 
     [ThreadStatic] private static StringBuilder? t_runText;
     [ThreadStatic] private static StringBuilder? t_runForm;
@@ -938,7 +941,7 @@ internal static class SvgFrameRenderer
         return (time / loopDuration * 100.0).ToString("0.######", CultureInfo.InvariantCulture);
     }
 
-    private static ChromePalette ResolveChromePalette(WindowStyle window, string terminalBg)
+    internal static ChromePalette ResolveChromePalette(WindowStyle window, string terminalBg)
     {
         var light = IsLightTerminalBg(terminalBg);
         return window switch
@@ -989,14 +992,13 @@ internal static class SvgFrameRenderer
             var radius = MacButtonDiameter / 2d;
             var cx = x + ChromeSidePadding + radius;
             var cy = y + ChromeTopPadding + radius;
-            sb.AppendLine(CultureInfo.InvariantCulture,
-                $"<circle class=\"{cls}\" cx=\"{cx:0.##}\" cy=\"{cy:0.##}\" r=\"{radius:0.##}\" fill=\"#ff5f57\"/>");
-            cx += MacButtonDiameter + MacButtonGap;
-            sb.AppendLine(CultureInfo.InvariantCulture,
-                $"<circle class=\"{cls}\" cx=\"{cx:0.##}\" cy=\"{cy:0.##}\" r=\"{radius:0.##}\" fill=\"#febc2e\"/>");
-            cx += MacButtonDiameter + MacButtonGap;
-            sb.AppendLine(CultureInfo.InvariantCulture,
-                $"<circle class=\"{cls}\" cx=\"{cx:0.##}\" cy=\"{cy:0.##}\" r=\"{radius:0.##}\" fill=\"#28c840\"/>");
+            foreach (var color in MacButtonColors)
+            {
+                sb.AppendLine(CultureInfo.InvariantCulture,
+                    $"<circle class=\"{cls}\" cx=\"{cx:0.##}\" cy=\"{cy:0.##}\" r=\"{radius:0.##}\" fill=\"{color}\"/>");
+                cx += MacButtonDiameter + MacButtonGap;
+            }
+
             return;
         }
 

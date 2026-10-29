@@ -122,7 +122,7 @@ Guidance once both tracks land:
 | 2 | B0–B4. mp4 output — **done 2026-10-29** | Main fix for the reported use case. |
 | 3 | A2. Compact row encoding — **done 2026-10-29** | Independent of B, and only changes SVG row output. |
 | 4 | A3. Size warning — **done 2026-10-29** | Comes after B so the warning can recommend mp4. |
-| 5 | B5. Window chrome in mp4, and extras | Not needed for v1. |
+| 5 | B5. Window chrome in mp4 — **done 2026-10-29** | Not needed for v1. |
 
 Shared touch points:
 
