@@ -127,28 +127,33 @@ internal static class Mp4Render
         var tempPath = Path.Combine(directory, $".{Path.GetFileName(outputPath)}.{Guid.NewGuid():N}.partial");
         var arguments = BuildArguments(layout.Width, layout.Height, settings, outputWidth, outputHeight, tempPath);
 
-        using var ffmpeg = FfmpegProcess.Start(ffmpegPath, arguments);
+        // On Ctrl+C the process ends right after this handler returns, so it must stop ffmpeg and
+        // remove the partial file itself; catch/finally below never run. It is registered before
+        // ffmpeg starts so there is no window where Ctrl+C leaves an ffmpeg-finalized partial file.
+        FfmpegProcess? ffmpeg = null;
         ConsoleCancelEventHandler onCancel = (_, _) =>
         {
-            ffmpeg.Kill();
+            Volatile.Read(ref ffmpeg)?.Kill();
             TryDelete(tempPath);
         };
         Console.CancelKeyPress += onCancel;
         try
         {
+            Volatile.Write(ref ffmpeg, FfmpegProcess.Start(ffmpegPath, arguments));
             renderer.Render(ffmpeg.Write);
             ffmpeg.Finish();
             File.Move(tempPath, outputPath, overwrite: true);
         }
         catch
         {
-            ffmpeg.Kill();
+            ffmpeg?.Kill();
             TryDelete(tempPath);
             throw;
         }
         finally
         {
             Console.CancelKeyPress -= onCancel;
+            ffmpeg?.Dispose();
         }
 
         return new Mp4Result(outputWidth, outputHeight, settings.Fps, renderer.FrameCount, new FileInfo(outputPath).Length, renderer.Glyphs.Primary);
@@ -191,18 +196,28 @@ internal static class Mp4Render
         return (fitWidth - (fitWidth & 1), fitHeight - (fitHeight & 1));
     }
 
+    /// <summary>
+    /// Deletes the partial output, retrying for a moment. On Windows, Ctrl+C also reaches the real
+    /// ffmpeg (behind a launcher such as a Scoop shim, which is the process we wait for). That
+    /// ffmpeg may still be finalizing and holding the file open after the launcher has exited.
+    /// </summary>
     private static void TryDelete(string path)
     {
-        try
+        var deadline = Environment.TickCount64 + 3_000;
+        while (true)
         {
-            if (File.Exists(path))
-                File.Delete(path);
-        }
-        catch (IOException)
-        {
-        }
-        catch (UnauthorizedAccessException)
-        {
+            try
+            {
+                if (File.Exists(path))
+                    File.Delete(path);
+                return;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                if (Environment.TickCount64 >= deadline)
+                    return;
+                Thread.Sleep(50);
+            }
         }
     }
 }
@@ -392,12 +407,19 @@ internal sealed class FfmpegProcess : IDisposable
             throw Failure($"ffmpeg exited with code {_process.ExitCode}");
     }
 
+    /// <summary>
+    /// Stops ffmpeg (and any launcher such as a Scoop shim) and waits briefly for it to exit, so
+    /// it no longer holds the output file open: on Windows an open file cannot be deleted.
+    /// </summary>
     internal void Kill()
     {
         try
         {
             if (!_process.HasExited)
+            {
                 _process.Kill(entireProcessTree: true);
+                _process.WaitForExit(5_000);
+            }
         }
         catch (InvalidOperationException)
         {

@@ -96,7 +96,7 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
   - macOS: `brew install ffmpeg`;
   - Debian/Ubuntu: `sudo apt install ffmpeg`;
   - Fedora: RPM Fusion's `ffmpeg`, because the default `ffmpeg-free` has no libx264.
-- **Partial files.** scenetake encodes to a hidden temporary file in the output folder and renames it when ffmpeg succeeds. On failure or Ctrl+C, ffmpeg is stopped and the temporary file is deleted, so a partial `.mp4` is never left behind.
+- **Partial files.** scenetake encodes to a hidden temporary file in the output folder and renames it when ffmpeg succeeds. On failure or Ctrl+C, ffmpeg is stopped and the temporary file is deleted, so a partial `.mp4` is never left behind. Ctrl+C ends scenetake about one second later, with the platform's interrupt exit code (130 on Unix, `0xC000013A` on Windows).
 
 ## Failure Behavior
 
@@ -108,6 +108,7 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
 | `pre` | Unchanged ([spec_pre_post.md](spec_pre_post.md)) |
 | Cast write | Fail; mp4 is not attempted |
 | mp4 render or encode | Cast is kept; no `.mp4`; exit non-zero; `post` still runs |
+| Ctrl+C while encoding | Cast is kept; no `.mp4` or temporary file; ffmpeg stopped; `post` does not run |
 | `post` | Unchanged |
 
 ### `mp4` subcommand
@@ -118,6 +119,7 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
 | ffmpeg missing or no libx264 | Error with install hints; exit `1` |
 | Font not found | Error naming `--font-file`; exit `1` |
 | Encode failure | Error with the end of ffmpeg's stderr; no output file; exit `1` |
+| Ctrl+C while encoding | No output or temporary file; ffmpeg stopped |
 
 The cast file is never modified by the `mp4` subcommand.
 
@@ -126,7 +128,7 @@ The cast file is never modified by the `mp4` subcommand.
 | Suite | Coverage | Needs |
 |---|---|---|
 | `tests/mp4_render_test.cs` | Layout, colors, cursor, procedural glyphs, frame timing, trailing trim, matrix tint, option parsing, ffmpeg arguments | An installed font (prints `skip` without one) |
-| `tests/mp4_ffmpeg_test.cs` | Option rules, missing ffmpeg, no libx264, encode failure with no leftover file, scenario path keeps the cast, real encodes checked with `ffprobe` | `SCENETAKE_BIN`; real encodes also need `ffmpeg` and `ffprobe` on `PATH` |
+| `tests/mp4_ffmpeg_test.cs` | Option rules, missing ffmpeg, no libx264, encode failure with no leftover file, scenario path keeps the cast, real encodes checked with `ffprobe`, SIGINT mid-encode leaves no files (Unix only) | `SCENETAKE_BIN`; real encodes also need `ffmpeg` and `ffprobe` on `PATH` |
 
 CI runs both suites on all six platforms; GitHub runner images ship no ffmpeg, so real encodes are skipped there. A separate Linux job installs ffmpeg and runs real encodes with the Native AOT binary.
 
@@ -145,3 +147,7 @@ CI runs both suites on all six platforms; GitHub runner images ship no ffmpeg, s
 - **ffmpeg builds differ.** Fedora 41's `ffmpeg-free` has no libx264, only `libopenh264` and hardware encoders. BtbN's LGPL builds also lack it. Checking up front gives a clear error instead of a failed encode.
 - **Trailing-blank check cost.** Hashing the whole screen after every event accounted for about 6.6s of a 10.5s 4K render. A parse-only pass shows whether the final screen is blank, and only then does the full check run. 4K rendering dropped to 3.9s.
 - **Encoding dominates.** A 4K (3860×2168), 30fps, 7.7s matrix recording takes about 17s end to end, most of it in x264.
+- **Ctrl+C reaches ffmpeg too.** A console Ctrl+C (or a terminal's SIGINT to the process group) also reaches ffmpeg, which then finalizes its output on its own.
+  - The cleanup must therefore stop ffmpeg and remove the temporary file itself, from the Ctrl+C handler: once that handler returns, the process ends, so `finally` blocks never run.
+  - On Windows with a Scoop shim, the process scenetake waits for is the shim. The real ffmpeg can still hold the file for a moment after the shim exits, so a single delete attempt failed now and then and left a `.partial` (1 in 3 tries). Retrying the delete for up to 3 seconds made all 10 later tries clean.
+- **Testing Ctrl+C.** A non-interactive shell starts background jobs with SIGINT ignored, and programs inherit that. A naive `cmd & kill -INT $!` test therefore never reaches the handler; use job control (`set -m`) or start the process directly. On Windows, Ctrl+C was sent with `AttachConsole` + `GenerateConsoleCtrlEvent` to a child in its own console. That is too fragile for CI, so the automated test is Unix only.

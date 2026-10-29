@@ -39,6 +39,13 @@ try
         failures += Run("SubcommandWritesH264", () => SubcommandWritesH264(scenetake, repoRoot, work));
         failures += Run("MaxSizeDownscales", () => MaxSizeDownscales(scenetake, repoRoot, work));
         failures += Run("ScenarioFormatMp4", () => ScenarioFormatMp4(scenetake, repoRoot, work));
+
+        // Windows delivers Ctrl+C per console; sending one to a child needs a separate console,
+        // which is too fragile for CI. The Windows behavior was checked by hand (spec_mp4.md).
+        if (OperatingSystem.IsWindows())
+            Console.Error.WriteLine("skip CtrlCLeavesNoFiles: Unix only (SIGINT)");
+        else
+            failures += Run("CtrlCLeavesNoFiles", () => CtrlCLeavesNoFiles(scenetake, repoRoot, work));
     }
 }
 finally
@@ -165,6 +172,49 @@ static bool ScenarioFormatMp4(string scenetake, string repoRoot, string work)
     }
 
     return File.Exists(stem + ".cast") && Probe(stem + ".mp4")["codec_name"] == "h264";
+}
+
+static bool CtrlCLeavesNoFiles(string scenetake, string repoRoot, string work)
+{
+    // A 60s cast with changing text keeps the encode running long enough to interrupt it.
+    var dir = Directory.CreateDirectory(Path.Combine(work, "ctrlc")).FullName;
+    var cast = Path.Combine(dir, "long.cast");
+    var lines = new List<string> { """{"version":3,"term":{"cols":80,"rows":24}}""" };
+    for (var i = 0; i < 1200; i++)
+        lines.Add($"[0.05, \"o\", \"line {i} {new string((char)('a' + i % 26), 60)}\\r\\n\"]");
+    File.WriteAllLines(cast, lines);
+    var output = Path.Combine(dir, "long.mp4");
+
+    var startInfo = new ProcessStartInfo(scenetake) { WorkingDirectory = repoRoot, RedirectStandardError = true, UseShellExecute = false };
+    foreach (var argument in new[] { "mp4", cast, output })
+        startInfo.ArgumentList.Add(argument);
+    using var process = Process.Start(startInfo)!;
+    var stderr = process.StandardError.ReadToEndAsync();
+
+    var waited = Stopwatch.StartNew();
+    while (!Directory.EnumerateFiles(dir, "*.partial").Any() && !process.HasExited && waited.Elapsed < TimeSpan.FromSeconds(60))
+        Thread.Sleep(50);
+    if (process.HasExited)
+    {
+        Console.Error.WriteLine($"scenetake exited before encoding started: {stderr.Result}");
+        return false;
+    }
+
+    Thread.Sleep(300);
+    using (var kill = Process.Start("kill", ["-INT", process.Id.ToString(System.Globalization.CultureInfo.InvariantCulture)]))
+        kill.WaitForExit();
+
+    if (!process.WaitForExit(30_000))
+    {
+        process.Kill(entireProcessTree: true);
+        Console.Error.WriteLine("scenetake did not stop after SIGINT");
+        return false;
+    }
+
+    var left = Directory.EnumerateFiles(dir).Select(Path.GetFileName).Where(name => name != "long.cast").ToList();
+    if (left.Count != 0)
+        Console.Error.WriteLine($"left behind: {string.Join(", ", left)}");
+    return process.ExitCode != 0 && left.Count == 0;
 }
 
 static string WriteScenario(string work, string name)
