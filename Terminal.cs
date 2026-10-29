@@ -167,6 +167,26 @@ internal sealed class ScreenBuffer
         return true;
     }
 
+    /// <summary>A hash of one row's cells (text, style, width), for finding rows with identical content.</summary>
+    internal ulong RowHash(int row)
+    {
+        const ulong fnvOffset = 1469598103934665603UL;
+        const ulong fnvPrime = 1099511628211UL;
+
+        var hash = fnvOffset;
+        for (var col = 0; col < Width; col++)
+        {
+            ref readonly var cell = ref _cells[row, col];
+            var style = cell.Style;
+            hash = MixString(hash, cell.Text.AsSpan(), fnvPrime);
+            hash = MixString(hash, style.Foreground.AsSpan(), fnvPrime);
+            hash = MixString(hash, style.Background.AsSpan(), fnvPrime);
+            hash = MixByte(hash, PackStyleFlags(style, cell.IsWide, cell.IsWideContinuation), fnvPrime);
+        }
+
+        return hash;
+    }
+
     internal ulong ComputeCanvasSignature(int canvasWidth, int canvasHeight)
     {
         const ulong fnvOffset = 1469598103934665603UL;

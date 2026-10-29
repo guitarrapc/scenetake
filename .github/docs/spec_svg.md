@@ -55,7 +55,12 @@ Tests: `tests/terminal_tests.cs`.
 - **The scenario path renders the cast it just wrote**, with its millisecond times, markers dropped, and the header's render settings, plus `--max-fps` from the CLI. `scenetake --format svg` therefore writes the same SVG as `scenetake svg` on the resulting cast.
 - Output is self-contained animated SVG (CSS only, no JavaScript).
 - Animations **loop indefinitely**; one cycle matches agg GIF timing with `--last-frame-duration 0`: cast playback through the last output event, then hold the final frame for the preceding output-to-output idle gap before restarting at `t = 0`.
-- **Row-diff** animation: only changed rows are emitted as timed layers (deduplicated `@keyframes kN` with compact percentage ranges). Row layers that share a keyframe share one animation rule. Cursor and viewport resize use separate layers. Row encoding: [Row encoding](#row-encoding).
+- **Row-diff** animation: only changed rows are emitted as timed layers. Cursor and viewport resize use separate layers. Row encoding: [Row encoding](#row-encoding).
+- **Layer timing.**
+  - Every animated element has class `l` (hidden, with one shared rule for loop length, step-end timing, and looping) and a keyframe class `kN`.
+  - Each `kN` keyframe lists only its switch points, for example `@keyframes k3{4.969%{opacity:1}5.245%{opacity:0}}`. Offsets have just enough decimals to resolve 1ms of the loop.
+  - With step-end timing, a layer and its replacement switch at the same offset, with no fade.
+  - Keyframes are shared by identical show and hide times, so a full-screen redraw costs one keyframe.
 - Trailing blank frames after alternate-screen restore are trimmed when the event stream indicates a screen clear.
 - Background from `theme.bg`; monospace font at resolved `font-size` and `font-family`.
 - Cell metrics: `CharWidthFactor` 0.62, `LineHeightFactor` 1.25.
@@ -77,19 +82,21 @@ Each row layer is one line. It holds the row's background rects, then its text.
 - **Block elements** (U+2580–U+259F) are stretched to exactly one cell in either form.
 - **Multi-unit cells.** A cell whose text is more than one UTF-16 unit (surrogate pair, combining mark) gets its own `<text>`. SVG gives one `x` per addressable character, and browsers count those differently.
 - **No default attributes** (`font-weight="normal"`, `lengthAdjust="spacing"`) are written.
+- **Scrolled rows are reused.** When a row's content already appeared in an earlier layer on another line (output scrolled), the layer is a `<use href="#rN" y="dy">` of that earlier content instead of a copy. The first copy gets an `id`. Content is compared byte for byte, re-encoded at the earlier line. Rows shorter than a `<use>` are written out.
+- **The cursor** is a single `<rect class="l kN c">` per position, without a wrapper group.
 
 The glyph-list form puts each glyph at its cell's left edge. The run form lets the browser spread glyphs with `textLength`, which can place them up to "cell width − font advance" apart. That is a sub-pixel shift for the default fonts (about 0.3px with Cascadia Mono at 16px), so rows look the same either way.
 
-| Cast (`svg` subcommand) | Before (1.4.2) | After |
-|---|---|---|
-| `samples/basic.cast` (typing) | 130KB | 108KB (−17%) |
-| `samples/interactive-pty.cast` | 1.31MB | 0.96MB (−27%) |
-| `samples/pty.cast` (small matrix) | 2.39MB | 0.61MB (−74%) |
-| `matrix --fps 60`, 200×60, 7.5s | 117MB | 26.9MB (−77%) |
-| Same, `--max-fps 20` | 25.6MB | 5.9MB (−77%) |
-| Same, 384×108 | 455MB | 96.7MB (−79%) |
+| Cast (`svg` subcommand) | 1.4.2 | Row encoding | + timing and reuse |
+|---|---|---|---|
+| `samples/basic.cast` (typing) | 130KB | 108KB | 56KB (−57% overall) |
+| `samples/scenario_format.cast` (typing) | 433KB | 362KB | 183KB (−58%) |
+| `samples/interactive-pty.cast` (TUI) | 1.31MB | 0.96MB | 0.53MB (−60%) |
+| `samples/pty.cast` (small matrix) | 2.39MB | 0.61MB | 0.56MB (−76%) |
+| `matrix --fps 60`, 200×60, 7.5s | 117MB | 26.9MB | 26.4MB (−77%) |
+| Same, `--max-fps 20` | 25.6MB | 5.9MB | 5.8MB (−77%) |
 
-Every sample and fixture got smaller; the smallest gain was −3.5% (`tests/marker-delay.cast`).
+Every sample and fixture got smaller at each step. The timing and reuse step took 41–50% off typing and TUI samples, where CSS was about 40% of the file and scrolled rows 7–36%. It took 2–8% off matrix output, where glyphs dominate.
 
 ### Memory
 
@@ -194,7 +201,7 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 - Row-diff layers keep typing-heavy casts small (~80KB for `basic.cast`); full-screen redraws emit one layer per changed row.
 - **Where the bytes went.** Before the row encoding change, a full-screen matrix SVG spent about 113 bytes per `<text>` for 1.26 characters on average. Because matrix paints its own black background, it also had a background `<rect>` per text run. Those two were 57% and 40% of the file.
 - **Choose the encoding per row.** A glyph-list encoding applied to every row made the typing demo 19% larger, because prose is cheaper as runs. Choosing per row made every sample smaller.
-- **Grouped animation rules.** With one animation rule per row layer, the `<style>` block of the 200×60 matrix SVG was 1.19MB. Grouping row layers by keyframe cut it to 0.36MB.
+- **Grouped animation rules.** With one animation rule per row layer, the `<style>` block of the 200×60 matrix SVG was 1.19MB. Grouping row layers by keyframe cut it to 0.36MB. (Later replaced by one `kN` class per keyframe; see below.)
 - **Combining marks.** A cell holding a combining mark (for example a decomposed `é`) crashed rendering in 1.4.x, because the block-element check assumed a second UTF-16 unit was a low surrogate.
 - **Render from the cast, not from memory.** The scenario path used to render the in-memory events, whose times are not rounded to milliseconds and which still include markers. The same recording then gave a different SVG than `scenetake svg` on its cast. For a matrix recording that was 8,402 keyframes against 719, and 118MB against 117MB before the row encoding change. Reading the written cast back makes the cast the single source for every derived output.
 - Frame sampling is optional (`--max-fps`); default off keeps full timing for typing and bulk output (e.g. curl).
@@ -205,3 +212,5 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 - Snapshotting the whole screen (both main and alternate grids) on every changed event made memory grow with events × screen size: 4.8GB for a 200×60 full-screen TUI, and more than 43GB at 384×108.
   - Replaying the events twice, once to build the timeline and once to draw the selected frames, costs less than keeping snapshots.
   - It also cut render time from 5.8s to 2.6s at 200×60.
+- **Animation CSS dominated typing demos.** After the row encoding change, about 40% of a typing SVG was CSS: one keyframe per layer with 6-decimal ranges and a millisecond fade, plus one `animation:` rule per layer and per cursor move. Step-end keyframes with only switch points, ms-level precision, one shared `.l` rule, and a `kN` class per keyframe halved typing and TUI SVGs.
+- **Scrolling repeats rows.** Output that scrolls rewrites every row it moves. Reusing the first copy with `<use>` removed 7–36% of typing and TUI samples (interactive-pty most). It needs a byte-exact check, because the matrix-rain tint depends on neighbors. It also needs a CSS selector that still matches inside `<use>` content (`rect:not([class])`, not `g.layer>rect`).

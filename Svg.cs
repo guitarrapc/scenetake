@@ -71,7 +71,7 @@ internal static class SvgRender
 /// A rendered SVG: head and tail text around the row layers, which are already encoded
 /// as UTF-8. Keeping row layers encoded holds memory near the output size.
 /// </summary>
-internal sealed class SvgDocument(string head, Utf8ChunkBuffer? rowLayers, string tail)
+internal sealed class SvgDocument(string head, Action<Stream>? writeBody, string tail)
 {
     internal static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
@@ -80,31 +80,61 @@ internal sealed class SvgDocument(string head, Utf8ChunkBuffer? rowLayers, strin
     internal void WriteTo(Stream stream)
     {
         WriteText(stream, head);
-        rowLayers?.WriteTo(stream);
+        writeBody?.Invoke(stream);
         WriteText(stream, tail);
     }
 
-    private static void WriteText(Stream stream, string text)
+    internal static void WriteText(Stream stream, string text)
     {
         if (text.Length != 0)
             stream.Write(Utf8NoBom.GetBytes(text));
     }
 }
 
+/// <summary>A run of encoded bytes inside a <see cref="Utf8ChunkBuffer"/>.</summary>
+internal readonly record struct Utf8Segment(int Chunk, int Offset, int Length);
+
 /// <summary>Append-only UTF-8 text in 1MB chunks, so a large SVG body never needs one contiguous buffer.</summary>
 internal sealed class Utf8ChunkBuffer
 {
     private const int ChunkSize = 1 << 20;
-    private readonly List<(byte[] Bytes, int Length)> _filled = [];
-    private byte[] _current = [];
+    private readonly List<byte[]> _chunks = [];
     private int _used;
     private char[] _chars = new char[4096];
+    private byte[] _scratch = new byte[4096];
 
     /// <summary>
-    /// Appends <paramref name="text"/>. Each append is encoded on its own, so it must not
-    /// end in the middle of a surrogate pair.
+    /// Appends <paramref name="text"/> as one contiguous segment. Each append is encoded on its
+    /// own, so it must not end in the middle of a surrogate pair.
     /// </summary>
-    internal void Append(StringBuilder text)
+    internal Utf8Segment Append(StringBuilder text)
+    {
+        var bytes = Encode(text);
+        var current = _chunks.Count == 0 ? null : _chunks[^1];
+        if (current is null || current.Length - _used < bytes.Length)
+        {
+            current = new byte[Math.Max(ChunkSize, bytes.Length)];
+            _chunks.Add(current);
+            _used = 0;
+        }
+
+        bytes.CopyTo(current.AsSpan(_used));
+        var segment = new Utf8Segment(_chunks.Count - 1, _used, bytes.Length);
+        _used += bytes.Length;
+        return segment;
+    }
+
+    /// <summary>Whether <paramref name="segment"/> holds exactly the UTF-8 encoding of <paramref name="text"/>.</summary>
+    internal bool SegmentEquals(Utf8Segment segment, StringBuilder text) =>
+        _chunks[segment.Chunk].AsSpan(segment.Offset, segment.Length).SequenceEqual(Encode(text));
+
+    internal void Write(Stream stream, Utf8Segment segment)
+    {
+        if (segment.Length != 0)
+            stream.Write(_chunks[segment.Chunk], segment.Offset, segment.Length);
+    }
+
+    private ReadOnlySpan<byte> Encode(StringBuilder text)
     {
         var length = text.Length;
         if (_chars.Length < length)
@@ -113,23 +143,11 @@ internal sealed class Utf8ChunkBuffer
         text.CopyTo(0, _chars, 0, length);
         var chars = _chars.AsSpan(0, length);
         var byteCount = SvgDocument.Utf8NoBom.GetByteCount(chars);
-        if (_current.Length - _used < byteCount)
-        {
-            if (_used > 0)
-                _filled.Add((_current, _used));
-            _current = new byte[Math.Max(ChunkSize, byteCount)];
-            _used = 0;
-        }
+        if (_scratch.Length < byteCount)
+            _scratch = new byte[Math.Max(byteCount, _scratch.Length * 2)];
 
-        _used += SvgDocument.Utf8NoBom.GetBytes(chars, _current.AsSpan(_used));
-    }
-
-    internal void WriteTo(Stream stream)
-    {
-        foreach (var (bytes, length) in _filled)
-            stream.Write(bytes, 0, length);
-        if (_used > 0)
-            stream.Write(_current, 0, _used);
+        var written = SvgDocument.Utf8NoBom.GetBytes(chars, _scratch);
+        return _scratch.AsSpan(0, written);
     }
 }
 
@@ -476,6 +494,9 @@ internal static class SvgFrameRenderer
     private const double InnerPaddingVerticalMax = 8.0;
     private const double LayerFadeSeconds = 0.001;
     private const double CursorBlockOpacity = 0.5;
+
+    // A <use> plus the id it needs costs about this much; shorter rows are cheaper to repeat.
+    private const int MinReusableRowChars = 48;
     private const string Space = " ";
 
     // Window chrome — fixed px; does not scale with terminal font-size
@@ -531,12 +552,37 @@ internal static class SvgFrameRenderer
         var theme = TerminalTheme.FromResolved(render.Theme);
         var metrics = CreateMetrics(render.FontSize, canvasWidth, canvasHeight, render.Window);
 
-        var rowLayers = new Utf8ChunkBuffer();
-        var layers = BuildLayers(events, initialWidth, initialHeight, frames, canvasWidth, canvasHeight, theme, metrics, rowLayers);
+        var rowContent = new Utf8ChunkBuffer();
+        var layers = BuildLayers(events, initialWidth, initialHeight, frames, canvasWidth, canvasHeight, theme, metrics, rowContent);
         loopDuration = ResolveLoopDuration(loopDuration, layers);
 
-        var (head, tail) = BuildLayeredSvg(layers, metrics, render, theme, canvasWidth, canvasHeight, loopDuration);
-        return new SvgDocument(head, rowLayers, tail);
+        var (head, rowKeyframes, tail) = BuildLayeredSvg(layers, metrics, render, theme, canvasWidth, canvasHeight, loopDuration);
+        return new SvgDocument(head, stream => WriteRowLayers(stream, layers.Rows, rowKeyframes, rowContent, metrics), tail);
+    }
+
+    /// <summary>
+    /// Writes each row layer on one line: <c>&lt;g class="l kN"&gt;content&lt;/g&gt;</c>, with an id on
+    /// content that later layers reuse, and <c>&lt;use href="#rN" y="dy" class="l kN"/&gt;</c> for those
+    /// later layers (a row that scrolled to another line, unchanged).
+    /// </summary>
+    private static void WriteRowLayers(Stream stream, List<AnimLayer> rows, string[] keyframes, Utf8ChunkBuffer content, SvgMetrics metrics)
+    {
+        var newline = Environment.NewLine;
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var layer = rows[i];
+            if (layer.ReuseOf is int source)
+            {
+                var dy = (layer.P0 - rows[source].P0) * metrics.LineHeight;
+                SvgDocument.WriteText(stream, string.Create(CultureInfo.InvariantCulture,
+                    $"<use href=\"#r{source}\" y=\"{dy:0.##}\" class=\"l {keyframes[i]}\"/>{newline}"));
+                continue;
+            }
+
+            SvgDocument.WriteText(stream, layer.Reused ? $"<g class=\"l {keyframes[i]}\"><g id=\"r{i}\">" : $"<g class=\"l {keyframes[i]}\">");
+            content.Write(stream, layer.Content);
+            SvgDocument.WriteText(stream, layer.Reused ? "</g></g>" + newline : "</g>" + newline);
+        }
     }
 
     private static double ResolveLoopDuration(double loopDuration, LayerSet layers)
@@ -598,6 +644,8 @@ internal static class SvgFrameRenderer
         AnimLayer? cursorActive = null;
         AnimLayer? viewportActive = null;
         var fragment = new StringBuilder(4096);
+        var verify = new StringBuilder(4096);
+        var firstLayerByRowHash = new Dictionary<ulong, int>();
         var origin = metrics.ContentOrigin;
         var next = 0;
 
@@ -661,12 +709,35 @@ internal static class SvgFrameRenderer
                 }
 
                 fragment.Clear();
-                fragment.Append(CultureInfo.InvariantCulture, $"<g class=\"layer layer-{rows.Count}\">");
                 AppendRow(fragment, buffer, row, origin.X, origin.Y, metrics, theme);
-                fragment.AppendLine("</g>");
-                rowLayers.Append(fragment);
-
                 var layer = new AnimLayer(time, row);
+
+                // Scrolling moves unchanged rows to other lines. Reuse the first layer that showed the
+                // same content: re-encode this row at that layer's line and compare bytes exactly.
+                var reused = false;
+                if (fragment.Length >= MinReusableRowChars)
+                {
+                    var hash = buffer.RowHash(row);
+                    if (firstLayerByRowHash.TryGetValue(hash, out var source))
+                    {
+                        verify.Clear();
+                        AppendRow(verify, buffer, row, origin.X, origin.Y + (rows[source].P0 - row) * metrics.LineHeight, metrics, theme);
+                        if (rowLayers.SegmentEquals(rows[source].Content, verify))
+                        {
+                            layer.ReuseOf = source;
+                            rows[source].Reused = true;
+                            reused = true;
+                        }
+                    }
+                    else
+                    {
+                        firstLayerByRowHash[hash] = rows.Count;
+                    }
+                }
+
+                if (!reused)
+                    layer.Content = rowLayers.Append(fragment);
+
                 rows.Add(layer);
                 activeByRow[row] = layer;
                 buffer.CopyRowTo(row, activeCells[row]);
@@ -711,7 +782,7 @@ internal static class SvgFrameRenderer
     }
 
     /// <summary>Builds the text before and after the row layers, which <see cref="BuildLayers"/> has already encoded.</summary>
-    private static (string Head, string Tail) BuildLayeredSvg(
+    private static (string Head, string[] RowKeyframes, string Tail) BuildLayeredSvg(
         LayerSet layers,
         SvgMetrics metrics,
         ResolvedRenderSettings render,
@@ -738,54 +809,27 @@ internal static class SvgFrameRenderer
         sb.AppendLine(CultureInfo.InvariantCulture,
             $"text {{ font-family: {render.FontFamily}; font-size: {render.FontSize}px; white-space: pre; }}");
         sb.AppendLine("text { dominant-baseline: alphabetic; }");
-        // Row-layer background rects carry no class; this selector gives them crisp edges.
-        sb.AppendLine(".bg,g.layer>rect:not([class]) { shape-rendering: crispEdges; }");
-        sb.AppendLine(".layer { opacity: 0; }");
+        // Row background rects carry no class, also inside reused <use> content; this gives them crisp edges.
+        sb.AppendLine(".bg,rect:not([class]) { shape-rendering: crispEdges; }");
+        // Every animated element: hidden by default, switched exactly at its keyframe offsets, looping.
+        sb.AppendLine(CultureInfo.InvariantCulture, $".l {{ opacity: 0; animation: {loopDurationText}s step-end infinite; }}");
         sb.AppendLine(CultureInfo.InvariantCulture,
-            $".cursor-block {{ fill: {theme.Foreground}; fill-opacity: {cursorOpacityText}; }}");
+            $".c {{ fill: {theme.Foreground}; fill-opacity: {cursorOpacityText}; }}");
 
-        var keyframes = new LoopKeyframeRegistry();
-        var layerRules = new List<(string Selector, string Keyframe)>();
-
-        // Row layers that share a keyframe share one rule: ".layer-1,.layer-5 { animation:… }".
-        // Full-screen redraws make thousands of row layers, so one rule each was a large share of the style.
-        var rowSelectors = new Dictionary<string, StringBuilder>(StringComparer.Ordinal);
+        var keyframes = new LoopKeyframeRegistry(loopDuration);
+        var rowKeyframes = new string[rowLayers.Count];
         for (var i = 0; i < rowLayers.Count; i++)
-        {
-            var keyframe = keyframes.Register(rowLayers[i].Show, rowLayers[i].Hide, loopDuration);
-            if (rowSelectors.TryGetValue(keyframe, out var selectors))
-            {
-                selectors.Append(",.layer-").Append(i.ToString(CultureInfo.InvariantCulture));
-            }
-            else
-            {
-                rowSelectors[keyframe] = new StringBuilder(".layer-").Append(i.ToString(CultureInfo.InvariantCulture));
-                layerRules.Add((keyframe, keyframe)); // placeholder, resolved below in first-use order
-            }
-        }
+            rowKeyframes[i] = keyframes.Register(rowLayers[i].Show, rowLayers[i].Hide);
 
-        for (var i = 0; i < layerRules.Count; i++)
-            layerRules[i] = (rowSelectors[layerRules[i].Keyframe].ToString(), layerRules[i].Keyframe);
-
+        var cursorKeyframes = new string[cursorLayers.Count];
         for (var i = 0; i < cursorLayers.Count; i++)
-        {
-            var keyframe = keyframes.Register(cursorLayers[i].Show, cursorLayers[i].Hide, loopDuration);
-            layerRules.Add(($".cursor-layer-{i}", keyframe));
-        }
+            cursorKeyframes[i] = keyframes.Register(cursorLayers[i].Show, cursorLayers[i].Hide);
 
+        var viewportKeyframes = new string[viewportLayers.Count];
         for (var i = 0; i < viewportLayers.Count; i++)
-        {
-            var viewportSelector = metrics.HasChrome
-                ? $".viewport-mask-{i},.viewport-bg-{i},.viewport-chrome-{i}"
-                : $".viewport-mask-{i},.viewport-bg-{i}";
-            var keyframe = keyframes.Register(viewportLayers[i].Show, viewportLayers[i].Hide, loopDuration);
-            layerRules.Add((viewportSelector, keyframe));
-        }
+            viewportKeyframes[i] = keyframes.Register(viewportLayers[i].Show, viewportLayers[i].Hide);
 
         keyframes.AppendAll(sb);
-        foreach (var (selector, keyframe) in layerRules)
-            AppendLayerCycleStyle(sb, selector, keyframe, loopDurationText);
-
         sb.AppendLine("</style>");
 
         sb.AppendLine("<defs>");
@@ -800,7 +844,7 @@ internal static class SvgFrameRenderer
             var viewportWidth = metrics.ViewportPixelWidth(viewport.P0);
             var viewportHeight = metrics.ViewportPixelHeight(viewport.P1);
             sb.AppendLine(CultureInfo.InvariantCulture,
-                $"<rect class=\"layer viewport-mask-{i}\" x=\"{metrics.TerminalOriginX:0.##}\" y=\"{metrics.TerminalOriginY:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"white\"/>");
+                $"<rect class=\"l {viewportKeyframes[i]} viewport-mask-{i}\" x=\"{metrics.TerminalOriginX:0.##}\" y=\"{metrics.TerminalOriginY:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"white\"/>");
         }
 
         sb.AppendLine("</mask>");
@@ -812,7 +856,7 @@ internal static class SvgFrameRenderer
             for (var i = 0; i < viewportLayers.Count; i++)
             {
                 var viewport = viewportLayers[i];
-                AppendWindowChrome(sb, metrics, chrome, render.Window, viewport.P0, viewport.P1, i);
+                AppendWindowChrome(sb, metrics, chrome, render.Window, viewport.P0, viewport.P1, i, viewportKeyframes[i]);
             }
         }
 
@@ -823,7 +867,7 @@ internal static class SvgFrameRenderer
             var viewportWidth = metrics.ViewportPixelWidth(viewport.P0);
             var viewportHeight = metrics.ViewportPixelHeight(viewport.P1);
             sb.AppendLine(CultureInfo.InvariantCulture,
-                $"<rect class=\"bg layer viewport-bg-{i}\" x=\"{metrics.TerminalOriginX:0.##}\" y=\"{metrics.TerminalOriginY:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"{render.Theme.Bg}\"/>");
+                $"<rect class=\"bg l {viewportKeyframes[i]} viewport-bg-{i}\" x=\"{metrics.TerminalOriginX:0.##}\" y=\"{metrics.TerminalOriginY:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"{render.Theme.Bg}\"/>");
         }
 
         var head = sb.ToString();
@@ -833,41 +877,33 @@ internal static class SvgFrameRenderer
         for (var i = 0; i < cursorLayers.Count; i++)
         {
             var layer = cursorLayers[i];
-            sb.AppendLine(CultureInfo.InvariantCulture, $"<g class=\"layer cursor-layer-{i}\">");
             sb.AppendLine(CultureInfo.InvariantCulture,
-                $"<rect class=\"cursor-block\" x=\"{origin.X + layer.P1 * metrics.CharWidth:0.##}\" y=\"{origin.Y + layer.P0 * metrics.LineHeight:0.##}\" width=\"{metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\"/>");
-            sb.AppendLine("</g>");
+                $"<rect class=\"l {cursorKeyframes[i]} c\" x=\"{origin.X + layer.P1 * metrics.CharWidth:0.##}\" y=\"{origin.Y + layer.P0 * metrics.LineHeight:0.##}\" width=\"{metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\"/>");
         }
 
         sb.AppendLine("</g>");
         sb.AppendLine("</svg>");
-        return (head, sb.ToString());
+        return (head, rowKeyframes, sb.ToString());
     }
 
-    private static void AppendLayerCycleStyle(StringBuilder sb, string selector, string keyframeName, string loopDurationText)
-    {
-        sb.Append(selector);
-        sb.Append(" { animation:");
-        sb.Append(keyframeName);
-        sb.Append(' ');
-        sb.Append(loopDurationText);
-        sb.AppendLine("s linear infinite; }");
-    }
-
-    private sealed class LoopKeyframeRegistry
+    /// <summary>
+    /// Deduplicated keyframes for show/hide windows within the loop. Each animated element has
+    /// class <c>l</c> (hidden, step-end timing, looping) plus <c>kN</c> naming its keyframes, so a
+    /// window costs one short keyframe rule and one class rule however many elements share it.
+    /// </summary>
+    private sealed class LoopKeyframeRegistry(double loopDuration)
     {
         private readonly Dictionary<string, string> _namesByBody = new(StringComparer.Ordinal);
         private readonly List<(string Name, string Body)> _ordered = [];
+        private readonly string _percentFormat = PercentFormat(loopDuration);
 
-        private int _nextId;
-
-        internal string Register(double showTime, double? hideTime, double loopDuration)
+        internal string Register(double showTime, double? hideTime)
         {
-            var body = BuildCompactCycleKeyframesBody(showTime, hideTime, loopDuration);
+            var body = BuildStepKeyframesBody(showTime, hideTime);
             if (_namesByBody.TryGetValue(body, out var existing))
                 return existing;
 
-            var name = $"k{_nextId++}";
+            var name = $"k{_ordered.Count}";
             _namesByBody[body] = name;
             _ordered.Add((name, body));
             return name;
@@ -877,70 +913,34 @@ internal static class SvgFrameRenderer
         {
             foreach (var (name, body) in _ordered)
             {
-                sb.Append("@keyframes ");
-                sb.Append(name);
-                sb.Append(" { ");
-                sb.Append(body);
-                sb.AppendLine(" }");
+                sb.Append("@keyframes ").Append(name).Append('{').Append(body).AppendLine("}");
+                sb.Append('.').Append(name).Append("{animation-name:").Append(name).AppendLine("}");
             }
         }
-    }
 
-    private static string BuildCompactCycleKeyframesBody(double showTime, double? hideTime, double loopDuration)
-    {
-        var sb = new StringBuilder(96);
-        if (showTime <= 0)
+        /// <summary>
+        /// Visible from <paramref name="showTime"/> until <paramref name="hideTime"/>. With step-end timing
+        /// the opacity switches exactly at each offset; the implicit 0% and 100% keyframes take the
+        /// element's hidden opacity. A layer's hide and its replacement's show share one offset, so
+        /// they switch together.
+        /// </summary>
+        private string BuildStepKeyframesBody(double showTime, double? hideTime)
         {
-            if (hideTime is double hide)
-            {
-                AppendOpacityRange(sb, 0, hide, loopDuration, 1);
-                AppendOpacityRange(sb, GapAfter(hide, loopDuration), loopDuration, loopDuration, 0);
-                return sb.ToString();
-            }
-
-            AppendOpacityRange(sb, 0, loopDuration, loopDuration, 1);
-            return sb.ToString();
+            var show = showTime <= 0 ? "0" : Percent(showTime);
+            return hideTime is double hide
+                ? $"{show}%{{opacity:1}}{Percent(hide)}%{{opacity:0}}"
+                : $"{show}%{{opacity:1}}";
         }
 
-        AppendOpacityRange(sb, 0, GapBefore(showTime, loopDuration), loopDuration, 0);
-        if (hideTime is double hideTimeValue)
+        private string Percent(double time) =>
+            loopDuration <= 0 ? "0" : (time / loopDuration * 100.0).ToString(_percentFormat, CultureInfo.InvariantCulture);
+
+        /// <summary>Enough decimal places that one step of the percentage is at most 1ms of the loop.</summary>
+        private static string PercentFormat(double loopDuration)
         {
-            AppendOpacityRange(sb, showTime, hideTimeValue, loopDuration, 1);
-            AppendOpacityRange(sb, GapAfter(hideTimeValue, loopDuration), loopDuration, loopDuration, 0);
-            return sb.ToString();
+            var decimals = loopDuration <= 0 ? 1 : Math.Clamp((int)Math.Ceiling(Math.Log10(loopDuration * 10)), 1, 6);
+            return "0." + new string('#', decimals);
         }
-
-        AppendOpacityRange(sb, showTime, loopDuration, loopDuration, 1);
-        return sb.ToString();
-    }
-
-    private static double GapBefore(double time, double loopDuration) =>
-        Math.Max(0, time - (LayerFadeSeconds * 0.5));
-
-    private static double GapAfter(double time, double loopDuration) =>
-        Math.Min(loopDuration, time + LayerFadeSeconds);
-
-    private static void AppendOpacityRange(
-        StringBuilder sb,
-        double startTime,
-        double endTime,
-        double loopDuration,
-        int opacity)
-    {
-        if (sb.Length > 0)
-            sb.Append(' ');
-
-        sb.Append(CultureInfo.InvariantCulture, $"{FormatCyclePercent(startTime, loopDuration)}%,");
-        sb.Append(CultureInfo.InvariantCulture, $"{FormatCyclePercent(endTime, loopDuration)}%");
-        sb.Append(CultureInfo.InvariantCulture, $"{{opacity:{opacity};}}");
-    }
-
-    private static string FormatCyclePercent(double time, double loopDuration)
-    {
-        if (loopDuration <= 0)
-            return "0";
-
-        return (time / loopDuration * 100.0).ToString("0.######", CultureInfo.InvariantCulture);
     }
 
     internal static ChromePalette ResolveChromePalette(WindowStyle window, string terminalBg)
@@ -969,7 +969,8 @@ internal static class SvgFrameRenderer
         WindowStyle window,
         int cols,
         int rows,
-        int layerIndex)
+        int layerIndex,
+        string? keyframe)
     {
         var x = metrics.OuterMargin;
         var y = metrics.OuterMargin;
@@ -980,7 +981,7 @@ internal static class SvgFrameRenderer
         var rx = metrics.CornerRadius;
         var right = x + width;
         var barBottom = y + barH;
-        var cls = $"layer viewport-chrome-{layerIndex}";
+        var cls = keyframe is null ? $"viewport-chrome-{layerIndex}" : $"l {keyframe} viewport-chrome-{layerIndex}";
 
         sb.AppendLine(CultureInfo.InvariantCulture,
             $"<rect class=\"{cls}\" x=\"{x:0.##}\" y=\"{y:0.##}\" width=\"{width:0.##}\" height=\"{totalHeight:0.##}\" rx=\"{rx:0.##}\" ry=\"{rx:0.##}\" fill=\"none\" stroke=\"{chrome.Border}\" stroke-width=\"1\" filter=\"url(#window-shadow)\"/>");
@@ -1029,7 +1030,7 @@ internal static class SvgFrameRenderer
             sb.AppendLine(WindowShadowFilter);
             sb.AppendLine("</defs>");
             var chrome = ResolveChromePalette(render.Window, render.Theme.Bg);
-            AppendWindowChrome(sb, metrics, chrome, render.Window, width, height, 0);
+            AppendWindowChrome(sb, metrics, chrome, render.Window, width, height, 0, keyframe: null);
             var bgRect = metrics.TerminalBackgroundRect(width, height);
             sb.AppendLine(CultureInfo.InvariantCulture,
                 $"<rect x=\"{bgRect.X:0.##}\" y=\"{bgRect.Y:0.##}\" width=\"{bgRect.Width:0.##}\" height=\"{bgRect.Height:0.##}\" fill=\"{render.Theme.Bg}\"/>");
@@ -1602,6 +1603,14 @@ internal static class SvgFrameRenderer
         internal double? Hide { get; set; }
         internal int P0 { get; } = p0;
         internal int P1 { get; } = p1;
+
+        /// <summary>Row layers: the encoded row, unless <see cref="ReuseOf"/> points at an earlier layer with the same content.</summary>
+        internal Utf8Segment Content { get; set; }
+
+        internal int? ReuseOf { get; set; }
+
+        /// <summary>Whether a later layer reuses this layer's content (it then needs an id).</summary>
+        internal bool Reused { get; set; }
     }
 }
 

@@ -249,6 +249,50 @@ Warning: SVG is 28.1MB; full-screen output is much smaller as mp4 (--format mp4)
 - Until B lands, the message mentions only `--max-fps`.
 - This is a warning only: the file is kept and the exit code does not change.
 
+## A4. Compact Animation CSS and Row Reuse
+
+Status: **Implemented** (2026-10-29). This was added after A1–A3.
+
+After A2, measuring the samples showed where typing and TUI SVGs still spent bytes:
+
+- **CSS was about 40%.** Each layer and each cursor move had its own keyframes, written as 6-decimal ranges with a sub-millisecond fade, plus its own `animation:` rule.
+- **Scrolled rows were 7–36%.** Output that scrolls was rewritten row by row.
+
+What changed:
+
+1. **Keyframes.**
+   - Step-end keyframes with only the switch points, for example `@keyframes k3{4.969%{opacity:1}5.245%{opacity:0}}`.
+   - Offsets use just enough decimals to resolve 1ms of the loop.
+   - Loop length, timing, and repetition are set once on `.l`.
+2. **Classes instead of per-layer rules.**
+   - Each keyframe has one class rule (`.k3{animation-name:k3}`), and elements carry `class="l k3"`.
+   - Row wrappers are written at output time, once keyframe names are known.
+3. **Cursor.** The cursor is a single `<rect class="l kN c">` without a wrapper group.
+4. **Row reuse.** A row whose content already appeared in an earlier layer, on another line, becomes `<use href="#rN" y="dy">`.
+   - Candidates are found by hashing the row's cells, then confirmed by re-encoding the row at the earlier line and comparing bytes.
+   - Rows shorter than a `<use>` are written out.
+
+| Cast | After A2 | After A4 |
+|---|---|---|
+| basic (typing) | 107.9KB | 56.0KB (−48%) |
+| git (typing) | 68.3KB | 36.4KB (−47%) |
+| scenario_format (typing) | 361.8KB | 182.7KB (−50%) |
+| interactive-pty (TUI) | 961.6KB | 525.9KB (−45%) |
+| pty (small matrix) | 611.8KB | 564.0KB (−8%) |
+| matrix 200×60 | 26.9MB | 26.4MB (−2%) |
+| matrix 384×108 | 96.7MB | 95.7MB (−1%) |
+
+Every sample and fixture shrank, between −21% and −50% apart from the matrix casts. The 13 committed sample SVGs went from 2.61MB to 1.64MB in total.
+
+Visual check: same method as A2, comparing A2 with A4 on 19 SVGs at 5 times each.
+
+- 90 of 95 shots were pixel-identical.
+- 3 differed by at most 1–3 levels of 255 (anti-aliasing rounding).
+- 2 fell exactly on a layer switch in the short fixtures (0.4s and 0.8s loops). There, A2's 1ms fade shows both the old and new layer, while A4 switches at that instant.
+- Rows reused with `<use>` rendered identically.
+
+Tests: `tests/svg_render_test.cs` decodes the new markup, including `<use>`, and adds checks for compact keyframes, row reuse, and the cursor rect. `EchoOutputNoDuplicateCommandLine` used to pass with zero matches: its time no longer fell where the line is on screen. It now requires exactly one visible copy at 8.5s.
+
 ## Docs to Update When Done
 
 - **[spec_svg.md](../spec_svg.md):**

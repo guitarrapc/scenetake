@@ -123,6 +123,7 @@ Guidance once both tracks land:
 | 3 | A2. Compact row encoding — **done 2026-10-29** | Independent of B, and only changes SVG row output. |
 | 4 | A3. Size warning — **done 2026-10-29** | Comes after B so the warning can recommend mp4. |
 | 5 | B5. Window chrome in mp4 — **done 2026-10-29** | Not needed for v1. |
+| 6 | A4. Compact animation CSS and row reuse — **done 2026-10-29** | Added after measuring that CSS and scrolled rows were most of a typing SVG. |
 
 Shared touch points:
 
