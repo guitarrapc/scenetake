@@ -15,11 +15,23 @@ Full-screen TUIs (`matrix`, `btop`, banner animations) redraw most cells every f
 
 X (Twitter) accepts H.264 mp4, not SVG. SVG stays the right format for typing demos embedded in a README. mp4 is for heavy output and sharing.
 
+Where recordings get shared (checked 2026-10-29):
+
+| Destination | Limit |
+|---|---|
+| X video (API upload) | H.264 High profile, yuv420p, up to 60fps, up to 1280×1024 |
+| X GIF | 15MB, up to 1280×1080, up to 350 frames, up to 300M total pixels |
+| GitHub attachments | Video (mp4, mov, webm): 10MB on free plans, 100MB on paid plans. Images and GIF: 10MB. |
+
+Sources: [X API: Media best practices](https://docs.x.com/x-api/media/quickstart/best-practices.md), [GitHub Docs: Attaching files](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/attaching-files).
+
 No practical H.264 encoder exists for .NET, and operating-system encoders differ per platform; Linux has none. scenetake therefore draws frames itself and pipes them to an external `ffmpeg`. ffmpeg runs as a separate program and is not linked, so scenetake's license and binaries are unaffected by the ffmpeg build.
 
 ## Scope
 
 - **Entry points:** `--format mp4` on the scenario path and the `mp4` subcommand for existing casts. CLI details: [spec_cli.md](spec_cli.md).
+  - The name `mp4` mirrors `svg`, so format names match subcommand names and leave room for `webm` or `gif` later. `video` was considered.
+- **Samples:** no mp4 files are committed to `samples/`, because every regeneration would add binary churn.
 - **Output:** H.264 High profile, yuv420p, BT.709, constant frame rate, `+faststart`.
 - **Rendering:** the same VT emulator and cell color rules as [spec_svg.md](spec_svg.md). Glyphs are drawn by StbTrueTypeSharp (Unlicense OR MIT, pure C#, works under Native AOT).
 - **Window chrome:** `--window macos|windows` draws the SVG title bar and buttons ([Window chrome](#window-chrome)).
@@ -142,8 +154,27 @@ CI runs both suites on all six platforms; GitHub runner images ship no ffmpeg, s
 - [spec_svg.md](spec_svg.md): the VT emulator, color rules, cell metrics, and timing that mp4 shares.
 - [spec_cast.md](spec_cast.md): `render` metadata in the cast header (font size, font family, theme).
 
+## Alternatives Not Chosen
+
+Sizes are for `matrix --fps 60` at 200×60, 7.5s, 60fps unless noted. CRF values are not comparable across codecs.
+
+| Idea | Why not |
+|---|---|
+| Built-in encoder, no ffmpeg | No practical managed H.264 encoder exists. OS encoders (Media Foundation, VideoToolbox) differ per platform, and Linux has none. |
+| HEVC, AV1, VP9, animated WebP or AVIF | No clear size win at tested settings: H.264 crf 23 was 12.5MB, against HEVC crf 28 9.0MB, AV1 crf 35 14.2MB, VP9 crf 35 20.2MB, AVIF 14.1MB, and WebP q75 at 30fps 16MB. They are slower, and X requires H.264. The pipe can add them later. |
+| yuv444 | Sharper colored text, but larger (13.7MB vs 12.5MB), and many players reject it. Colored text looked nearly identical after yuv420p. |
+| GIF from ffmpeg | Larger than agg (27MB vs 19MB at 30fps) and still limited to 256 colors and 10ms frame delays. X caps GIFs at 15MB and 350 frames. |
+| `-tune animation` or `stillimage` | Neither helped consistently. `animation` was 7% larger on matrix and 4% smaller on typing; `stillimage` was 7% and 10% larger. |
+| A fallback encoder when libx264 is missing | `libopenh264` has no CRF mode, and Fedora's build may be a stub. scenetake errors with an install hint instead. |
+| Named presets (`--preset x`) | `--max-size 1280x1024`, documented in the README, covers X. |
+| Both formats in one run (`--format svg,mp4`) | One format per run. Run the `svg` or `mp4` subcommand on the written cast for the other. |
+| Frame rate following the recording | Fixed default 30fps: 27% smaller than 60fps for matrix and still smooth. `--fps` raises it. |
+| A bundled font | About 0.3–0.6MB per face. `--font-file` pins the font when output must match across machines. |
+
 ## Lessons Learned
 
+- **Native AOT.** StbTrueTypeSharp 1.26.13 publishes under Native AOT with no warnings. It grew the win-x64 binary by about 225KB (4.28MB → 4.51MB).
+- **Per-glyph fallback is needed even for common fonts.** Consolas has no braille, and Consolas Bold has no `━`. Cascadia has box drawing, blocks, and braille, but no CJK.
 - **Color.** ffmpeg's default RGB→YUV conversion is BT.601 and adds no color tags. A player decoding as BT.709 showed the default theme background `#282c34` as (38, 44, 52) instead of (40, 44, 52). Converting and tagging as BT.709 makes it exact.
 - **Variable fonts.** Windows 11's Cascadia Mono and Cascadia Code are variable fonts. stb_truetype draws only their default instance, so bold has to be synthesized.
 - **Box drawing from fonts breaks.** Font box-drawing and block glyphs, including double lines, leave gaps between rows at a 1.25 line height. Drawing them as shapes fixed TUI borders.

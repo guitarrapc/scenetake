@@ -72,7 +72,7 @@ Progress and status go to stderr (`Loading:`, `Written:`, `Done:`). File paths i
 
 **Warnings.** Non-fatal issues print `Warning: …` to stderr and execution continues. Feature-specific warn-and-continue rules: [spec_highlight.md](spec_highlight.md), [spec_svg.md](spec_svg.md), [spec_scenario.md](spec_scenario.md) → Step exit codes.
 
-**Large SVG.** After writing an SVG over 10MB, scenetake prints the warning below. The file is kept and the exit code does not change.
+**Large SVG.** After writing an SVG over 10MB, scenetake prints the warning below. The file is kept and the exit code does not change. 10MB is GitHub's limit for image attachments, and browsers slow down on SVGs that large.
 
 ```
 Warning: SVG is 19.7MB (over 10MB). Heavy output such as full-screen TUIs is much smaller as mp4 (--format mp4) or as SVG with --max-fps 20

@@ -14,7 +14,7 @@ Rich TUI recordings (`copilot --banner`, `sl`, `matrix`, etc.) work on the scena
 
 - SVG output via `--format svg` or the `svg` subcommand. CLI: [spec_cli.md](spec_cli.md). Scenario `render:` keys: [spec_scenario.md](spec_scenario.md).
 - Built-in C# SVG renderer (no bundled external binary).
-- **Row-diff** animated SVG (changed rows only, CSS layer fade) with optional **`--max-fps`** frame sampling (default **off**).
+- **Row-diff** animated SVG (changed rows only, each switched on and off by step-end CSS keyframes) with optional **`--max-fps`** frame sampling (default **off**).
 - VT emulator. (see [VT emulator](#vt-emulator)).
 - Theme presets `dark` (default) and `light`; default `font-size` of `16`; default `font-family` stack tuned for programming.
 - Block cursor (`theme.fg` at 50% opacity, no blink); DECTCEM visibility (`\e[?25h`, `\e[?25l`).
@@ -207,6 +207,11 @@ The cast file is never modified by the `svg` subcommand.
 
 Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs all three.
 
+**Encoding changes are also checked by hand**, because tests read markup, not pixels.
+
+- **Look.** Render every sample and fixture with the old and new code. Screenshot both through `<img>` in headless Chromium, at 5 points of the loop. Pin the time inside the SVG's own `<style>` (`animation-delay: -Ts; animation-play-state: paused`), then compare pixels.
+- **Playback cost.** Play each SVG for a few seconds through `<img>` and read the requestAnimationFrame intervals and the main-thread time over the DevTools protocol.
+
 ## Cross-Document Notes
 
 - [spec_mp4.md](spec_mp4.md) — mp4 output for full-screen TUIs and sharing; reuses this emulator, the cell color rules (including the matrix rain tint), the cell metrics, and the loop timing.
@@ -220,12 +225,24 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 - [agg usage](https://docs.asciinema.org/manual/agg/usage/)
 - [asg](https://github.com/kingsword09/asg)
 
+## Alternatives Not Chosen
+
+| Idea | Why not |
+|---|---|
+| Competing with video for full-screen TUIs | SVG is lossless and symbolic, so its size grows with changed cells × frames. Even compact, 4K 60fps matrix is about 70MB, and X does not accept SVG. Those recordings go to mp4 ([spec_mp4.md](spec_mp4.md)). |
+| `.svgz` | It renders only when the server sends `Content-Encoding: gzip`. File-size limits and viewer memory apply to the decompressed SVG anyway. |
+| `--max-fps` on by default | Full timing matters for typing and bulk output such as curl. The size warning suggests it instead. |
+| One cursor element moved by keyframes | 14–24% smaller typing SVGs. But moving one element with `translate`, `transform`, or CSS `x`/`y` added 50–70% main-thread time on busy recordings in headless Edge. Many cursor elements that only switch `opacity` cost nothing extra. |
+| One shared timeline (an animated custom property `--f`, each layer's show and hide as numbers) | 13–20% smaller typing SVGs. Animated on every layer, it tripled main-thread time (basic: about 110 → 335 ms/s). Animated once on the root, it was cheaper for typing, but it dropped frames on pty and interactive-pty (p95 33–50ms). |
+| Per-cell lifetimes for matrix-like output | Only 14% of matrix 200×60 glyphs (5% for pty) carry over unchanged, glyph and color, into the next layer of their row. Per-cell timing would cost more than it saves. |
+| Cell-unit coordinates (`scale(cellWidth)` per row, integer `x`) | Another 8 points off matrix output. But matrix 200×60 played about 1.5× slower per frame, and text drawn at 1.6px and scaled up is unchecked in Firefox and Safari. Chromium does not apply its minimum font size to SVG inside `<img>`. |
+
 ## Lessons Learned
 
 - Row-diff layers keep typing-heavy casts small (~80KB for `basic.cast`); full-screen redraws emit one layer per changed row.
 - **Where the bytes went.** Before the row encoding change, a full-screen matrix SVG spent about 113 bytes per `<text>` for 1.26 characters on average. Because matrix paints its own black background, it also had a background `<rect>` per text run. Those two were 57% and 40% of the file.
 - **Choose the encoding per row.** A glyph-list encoding applied to every row made the typing demo 19% larger, because prose is cheaper as runs. Choosing per row made every sample smaller.
-- **Grouped animation rules.** With one animation rule per row layer, the `<style>` block of the 200×60 matrix SVG was 1.19MB. Grouping row layers by keyframe cut it to 0.36MB. (Later replaced by one `kN` class per keyframe; see below.)
+- **Grouped animation rules.** With one animation rule per row layer, the `<style>` block of the 200×60 matrix SVG was 1.19MB. Grouping row layers by keyframe cut it to 0.36MB. (Later replaced by one class per keyframe; see below.)
 - **Combining marks.** A cell holding a combining mark (for example a decomposed `é`) crashed rendering in 1.4.x, because the block-element check assumed a second UTF-16 unit was a low surrogate.
 - **Render from the cast, not from memory.** The scenario path used to render the in-memory events, whose times are not rounded to milliseconds and which still include markers. The same recording then gave a different SVG than `scenetake svg` on its cast. For a matrix recording that was 8,402 keyframes against 719, and 118MB against 117MB before the row encoding change. Reading the written cast back makes the cast the single source for every derived output.
 - Frame sampling is optional (`--max-fps`); default off keeps full timing for typing and bulk output (e.g. curl).
@@ -236,7 +253,7 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 - Snapshotting the whole screen (both main and alternate grids) on every changed event made memory grow with events × screen size: 4.8GB for a 200×60 full-screen TUI, and more than 43GB at 384×108.
   - Replaying the events twice, once to build the timeline and once to draw the selected frames, costs less than keeping snapshots.
   - It also cut render time from 5.8s to 2.6s at 200×60.
-- **Animation CSS dominated typing demos.** After the row encoding change, about 40% of a typing SVG was CSS: one keyframe per layer with 6-decimal ranges and a millisecond fade, plus one `animation:` rule per layer and per cursor move. Step-end keyframes with only switch points, ms-level precision, one shared `.l` rule, and a `kN` class per keyframe halved typing and TUI SVGs.
+- **Animation CSS dominated typing demos.** After the row encoding change, about 40% of a typing SVG was CSS: one keyframe per layer with 6-decimal ranges and a millisecond fade, plus one `animation:` rule per layer and per cursor move. Step-end keyframes with only switch points, ms-level precision, one shared `.l` rule, and a class per keyframe halved typing and TUI SVGs.
 - **Scrolling repeats rows.** Output that scrolls rewrites every row it moves. Reusing the first copy with `<use>` removed 7–36% of typing and TUI samples (interactive-pty most). It needs a byte-exact check, because the matrix-rain tint depends on neighbors. It also needs a CSS selector that still matches inside `<use>` content (`rect:not([class])`, not `g.layer>rect`).
 - **A CSS rule on `text` overrides `fill` attributes.** Setting the default color with `text{fill:…}` turned every colored line into the default color. The default has to be inherited from an ancestor instead.
 - **Block elements: rects, done properly.**
@@ -247,7 +264,5 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 - **Check rendering through `<img>`.**
   - Screenshots of an SVG inlined in HTML changed text anti-aliasing with some animation setups, presumably because of separate compositing. Through `<img>`, as GitHub shows it, the same files were pixel-identical.
   - The run/glyph-list choice can flip when attribute lengths change. That shifts glyphs by under a pixel, with no visible change.
-- **Rejected for playback cost.** Measured in headless Edge:
-  - One cursor element moved by keyframed `translate`, `transform`, or CSS `x`/`y` added 50–70% main-thread time on busy recordings.
-  - A shared timeline driven by an animated custom property dropped frames on pty and interactive-pty.
-  - Details: [plan_svg_size.md](plans/plan_svg_size.md#a5-further-size-reduction-investigation).
+- **A literal `<` in `<style>` is an XML error**, for example `@property` `syntax: "<integer>"`. Inlined in HTML, the stylesheet is silently dropped instead. Escape it as `&lt;`.
+- **matrix 200×60 is past what a browser can play.** It plays at 1–2 frames per second in headless Edge, with or without GPU. Shrinking it matters for file-size limits, not for playback.
