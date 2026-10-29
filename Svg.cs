@@ -160,7 +160,9 @@ internal static class RenderSettingsResolver
     internal const int DefaultFontSize = 16;
     internal const int DefaultMaxFps = 0;
     internal const int MinMaxFps = 0, MaxMaxFps = 120;
-    internal const int MaxFontFamilyLength = 256, MaxFontFamilyCount = 10;
+    // The count must fit DefaultFontFamily (11 families), which every cast header records.
+    // At 10, scenetake's own casts failed validation on read and warned on every svg/mp4 conversion.
+    internal const int MaxFontFamilyLength = 256, MaxFontFamilyCount = 16;
     internal const string FontSizeTagPrefix = "st:font-size=";
     internal const string FontFamilyTagPrefix = "st:font-family=";
     internal const string WindowTagPrefix = "st:window=";

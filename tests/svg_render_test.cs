@@ -27,6 +27,9 @@ failures += Run("UnderlinedRowUsesRunForm", UnderlinedRowUsesRunForm);
 failures += Run("RowLayersShareKeyframeRules", RowLayersShareKeyframeRules);
 failures += Run("CombiningMarkDoesNotFailRender", CombiningMarkDoesNotFailRender);
 failures += Run("LargeSvgWarnsWithAlternatives", LargeSvgWarnsWithAlternatives);
+failures += Run("DefaultFontFamilyPassesValidation", DefaultFontFamilyPassesValidation);
+failures += Run("OwnCastReadsWithoutFontFamilyWarning", OwnCastReadsWithoutFontFamilyWarning);
+failures += Run("TooManyFontFamiliesStillWarns", TooManyFontFamiliesStillWarns);
 
 return failures == 0 ? 0 : 1;
 
@@ -179,6 +182,50 @@ static bool LargeSvgWarnsWithAlternatives()
         && fromCast is not null && fromCast.Contains("(scenetake mp4 <cast>)", StringComparison.Ordinal)
         && sampled is not null && sampled.Contains("with a lower --max-fps", StringComparison.Ordinal)
         && !sampled.Contains("--max-fps 20", StringComparison.Ordinal);
+}
+
+static bool DefaultFontFamilyPassesValidation() =>
+    RenderSettingsResolver.TryParseFontFamily(RenderSettingsResolver.DefaultFontFamily, out var parsed, out _)
+    && parsed == RenderSettingsResolver.DefaultFontFamily;
+
+static bool OwnCastReadsWithoutFontFamilyWarning()
+{
+    // Casts written by scenetake record the default stack in st:font-family; reading one must not warn.
+    var (recording, warnings) = ReadCastCapturingWarnings("samples/basic.cast");
+    return !warnings.Contains("font-family", StringComparison.Ordinal)
+        && recording.RenderSettings.FontFamily == RenderSettingsResolver.DefaultFontFamily;
+}
+
+static bool TooManyFontFamiliesStillWarns()
+{
+    var families = string.Join(", ", Enumerable.Range(1, RenderSettingsResolver.MaxFontFamilyCount + 1).Select(i => $"F{i}"));
+    var path = Path.Combine(Path.GetTempPath(), $"scenetake-font-family-{Guid.NewGuid():N}.cast");
+    try
+    {
+        File.WriteAllText(path, "{\"version\":3,\"term\":{\"cols\":10,\"rows\":2},\"tags\":[\"st:font-family=" + families + "\"]}\n[0.0, \"o\", \"x\"]\n");
+        var (recording, warnings) = ReadCastCapturingWarnings(path);
+        return warnings.Contains("invalid font-family", StringComparison.Ordinal)
+            && recording.RenderSettings.FontFamily == RenderSettingsResolver.DefaultFontFamily;
+    }
+    finally
+    {
+        File.Delete(path);
+    }
+}
+
+static (CastRecording Recording, string Warnings) ReadCastCapturingWarnings(string path)
+{
+    var original = Console.Error;
+    using var captured = new StringWriter();
+    Console.SetError(captured);
+    try
+    {
+        return (CastReader.Read(path), captured.ToString());
+    }
+    finally
+    {
+        Console.SetError(original);
+    }
 }
 
 static string RenderInline(int cols, int rows, string events)
