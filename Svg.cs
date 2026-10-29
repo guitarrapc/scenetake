@@ -415,6 +415,9 @@ internal static class RenderSettingsResolver
         return settings;
     }
 
+    internal static string ResolveCastMp4OutputPath(string castPath, string? outputArg) =>
+        ResolveOutputPath(castPath, outputArg, ".mp4");
+
     internal static string ResolveCastSvgOutputPath(string castPath, string? outputArg) =>
         ResolveOutputPath(castPath, outputArg, ".svg");
 
@@ -438,8 +441,10 @@ internal static class RenderSettingsResolver
 
 internal static class SvgFrameRenderer
 {
-    private const double LineHeightFactor = 1.25;
-    private const double CharWidthFactor = 0.62;
+    // Cell metrics in units of font-size. The mp4 rasterizer rounds the same values to whole pixels.
+    internal const double LineHeightFactor = 1.25;
+    internal const double CharWidthFactor = 0.62;
+    internal const double BaselineFactor = 0.8;
     private const double Padding = 8.0;
     private const double InnerPaddingHorizontalMin = 4.0;
     private const double InnerPaddingHorizontalMax = 16.0;
@@ -906,7 +911,7 @@ internal static class SvgFrameRenderer
 
     private static bool IsLightTerminalBg(string bg)
     {
-        if (!TryParseHexColor(bg, out var r, out var g, out var b))
+        if (!CellColors.TryParseHexColor(bg, out var r, out var g, out var b))
             return false;
 
         return (0.299 * r) + (0.587 * g) + (0.114 * b) > 140;
@@ -1019,7 +1024,7 @@ internal static class SvgFrameRenderer
 
             if (cell.Text == Space)
             {
-                var cellBg = ResolveBackground(cell, theme);
+                var cellBg = CellColors.ResolveBackground(cell, theme);
                 if (cellBg is null)
                 {
                     col++;
@@ -1028,8 +1033,8 @@ internal static class SvgFrameRenderer
             }
 
             var runStart = col;
-            var runFg = ResolveTintedForeground(buffer, row, col, cell, theme);
-            var runBg = ResolveBackground(cell, theme);
+            var runFg = CellColors.ResolveTintedForeground(buffer, row, col, cell, theme);
+            var runBg = CellColors.ResolveBackground(cell, theme);
             var runBold = cell.Bold;
             var runItalic = cell.Italic;
             var runUnderline = cell.Underline;
@@ -1065,8 +1070,8 @@ internal static class SvgFrameRenderer
                 if (IsBlockElement(next.Text))
                     break;
 
-                var nextFg = ResolveTintedForeground(buffer, row, col, next, theme);
-                var nextBg = ResolveBackground(next, theme);
+                var nextFg = CellColors.ResolveTintedForeground(buffer, row, col, next, theme);
+                var nextBg = CellColors.ResolveBackground(next, theme);
                 if (nextFg != runFg || nextBg != runBg || next.Bold != runBold
                     || next.Italic != runItalic || next.Underline != runUnderline || next.IsWide)
                 {
@@ -1102,90 +1107,6 @@ internal static class SvgFrameRenderer
             sb.AppendLine(CultureInfo.InvariantCulture,
                 $"<text x=\"{x:0.##}\" y=\"{textY:0.##}\" fill=\"{runFg}\" font-weight=\"{weight}\" textLength=\"{drawWidth:0.##}\" lengthAdjust=\"spacing\"{styleAttr}>{EscapeXml(drawText)}</text>");
         }
-    }
-
-    private static string ResolveForeground(ScreenCell cell, TerminalTheme theme) =>
-        ApplyIntensity(cell.Reversed ? cell.Background : cell.Foreground, cell.Bold, cell.Faint);
-
-    private static string ResolveTintedForeground(
-        ScreenBuffer buffer, int row, int col, ScreenCell cell, TerminalTheme theme)
-    {
-        var fg = ResolveForeground(cell, theme);
-        var white = theme.AnsiPalette[7];
-        if (fg != white && !string.Equals(fg, white, StringComparison.OrdinalIgnoreCase))
-            return fg;
-
-        return IsNearGreen(buffer, row, col, theme) ? theme.AnsiPalette[10] : fg;
-    }
-
-    private static bool IsNearGreen(ScreenBuffer buffer, int row, int col, TerminalTheme theme)
-    {
-        var green = theme.AnsiPalette[2];
-        var brightGreen = theme.AnsiPalette[10];
-
-        bool GreenAt(int r, int c)
-        {
-            var neighbor = buffer.GetCell(r, c);
-            var fg = neighbor.Reversed ? neighbor.Background : neighbor.Foreground;
-            return fg == green || fg == brightGreen
-                || string.Equals(fg, green, StringComparison.OrdinalIgnoreCase)
-                || string.Equals(fg, brightGreen, StringComparison.OrdinalIgnoreCase);
-        }
-
-        var width = buffer.Width;
-        return (col > 0 && GreenAt(row, col - 1))
-            || (col + 1 < width && GreenAt(row, col + 1));
-    }
-
-    private static string? ResolveBackground(ScreenCell cell, TerminalTheme theme)
-    {
-        var bg = cell.Reversed ? cell.Foreground : cell.Background;
-        return string.Equals(bg, theme.Background, StringComparison.OrdinalIgnoreCase) ? null : bg;
-    }
-
-    private static string ApplyIntensity(string color, bool bold, bool faint)
-    {
-        var factor = 1d;
-        if (bold) factor *= 1.2d;
-        if (faint) factor *= 0.75d;
-        if (Math.Abs(factor - 1d) < 0.0001d)
-            return color;
-
-        if (!TryParseHexColor(color, out var r, out var g, out var b))
-            return color;
-
-        return string.Create(
-            CultureInfo.InvariantCulture,
-            $"#{(int)Math.Clamp(Math.Round(r * factor), 0, 255):x2}{(int)Math.Clamp(Math.Round(g * factor), 0, 255):x2}{(int)Math.Clamp(Math.Round(b * factor), 0, 255):x2}");
-    }
-
-    private static bool TryParseHexColor(string color, out int r, out int g, out int b)
-    {
-        r = g = b = 0;
-        if (color.Length != 7 || color[0] != '#'
-            || !TryHexNibble(color[1], out var r0) || !TryHexNibble(color[2], out var r1)
-            || !TryHexNibble(color[3], out var g0) || !TryHexNibble(color[4], out var g1)
-            || !TryHexNibble(color[5], out var b0) || !TryHexNibble(color[6], out var b1))
-        {
-            return false;
-        }
-
-        r = (r0 << 4) | r1;
-        g = (g0 << 4) | g1;
-        b = (b0 << 4) | b1;
-        return true;
-    }
-
-    private static bool TryHexNibble(char c, out int value)
-    {
-        value = c switch
-        {
-            >= '0' and <= '9' => c - '0',
-            >= 'A' and <= 'F' => c - 'A' + 10,
-            >= 'a' and <= 'f' => c - 'a' + 10,
-            _ => -1
-        };
-        return value >= 0;
     }
 
     private static string EscapeXml(string text)
@@ -1420,7 +1341,7 @@ internal static class SvgFrameRenderer
         return new SvgMetrics(
             charWidth,
             lineHeight,
-            fontSize * 0.8,
+            fontSize * BaselineFactor,
             innerPaddingH,
             innerPaddingV,
             contentOriginX,
@@ -1435,7 +1356,7 @@ internal static class SvgFrameRenderer
             cornerRadius);
     }
 
-    private static (double horizontal, double vertical) ResolveInnerPadding(int fontSize)
+    internal static (double horizontal, double vertical) ResolveInnerPadding(int fontSize)
     {
         var horizontal = Math.Clamp(fontSize * 10.0 / 16.0, InnerPaddingHorizontalMin, InnerPaddingHorizontalMax);
         var vertical = Math.Clamp(fontSize * 4.0 / 16.0, InnerPaddingVerticalMin, InnerPaddingVerticalMax);

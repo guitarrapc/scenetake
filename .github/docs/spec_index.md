@@ -13,6 +13,7 @@ scenetake behavior is split into focused specs under `.github/docs/`. Each spec 
 | [spec_highlight.md](spec_highlight.md) | Coloring — `highlight`, `run-highlight`, `stderr-color`, `name` prefix, style strings, `at` ranges |
 | [spec_pre_post.md](spec_pre_post.md) | `pre` / `post` — recording exclusion, fail-fast, exit-code semantics |
 | [spec_svg.md](spec_svg.md) | SVG output — renderer, `svg` subcommand consumption of cast events |
+| [spec_mp4.md](spec_mp4.md) | mp4 output — frame rendering, fonts, ffmpeg encoding, `mp4` subcommand |
 | [spec_pty.md](spec_pty.md) | PTY recording behavior when `pty: true` (keys in [spec_scenario.md](spec_scenario.md)) |
 
 All listed specs are **Implemented**.
@@ -39,6 +40,8 @@ Use this when you know the goal but not the document.
 | Run scenetake from the command line | [spec_cli.md](spec_cli.md) |
 | Install scenetake (NuGet, npm, Scoop, releases) | [spec_install.md](spec_install.md) |
 | Produce `.svg` alongside or from a `.cast` | [spec_cli.md](spec_cli.md) → `--format svg` / `svg` subcommand; rendering in [spec_svg.md](spec_svg.md) |
+| Produce `.mp4` for full-screen TUIs or sharing on X | [spec_cli.md](spec_cli.md) → `--format mp4` / `mp4` subcommand; rendering and ffmpeg in [spec_mp4.md](spec_mp4.md) |
+| Choose between SVG and mp4 | [spec_mp4.md](spec_mp4.md) → Motivation |
 | Understand exit codes or stderr output | [spec_cli.md](spec_cli.md) |
 | Know what happens when `pre`, SVG, or `post` fails | [spec_pre_post.md](spec_pre_post.md) + [spec_svg.md](spec_svg.md) failure tables |
 | Convert an existing cast (resize events, unsupported codes) | [spec_cast.md](spec_cast.md) + [spec_svg.md](spec_svg.md) → `svg` subcommand |
@@ -55,7 +58,8 @@ spec_scenario.md          ← YAML input (start here for file format)
                                     ▼
                                spec_cast.md     .cast artifact (canonical)
                                     ├── consumed by external tools (agg, asciinema play, …)
-                                    └── consumed by spec_svg.md (built-in SVG renderer)
+                                    ├── consumed by spec_svg.md (built-in SVG renderer)
+                                    └── consumed by spec_mp4.md (frame renderer → ffmpeg)
                                     ▲
 spec_cli.md ────────────────────────┘    invokes everything above
 spec_install.md ─── npm / Scoop / GitHub Releases (how binaries reach users)
@@ -69,6 +73,7 @@ spec_install.md ─── npm / Scoop / GitHub Releases (how binaries reach user
 - **CLI surface** lives in [spec_cli.md](spec_cli.md); it references the others for flag effects.
 - **Install channels** live in [spec_install.md](spec_install.md).
 - **SVG rendering** lives in [spec_svg.md](spec_svg.md); it reads cast files defined in [spec_cast.md](spec_cast.md).
+- **mp4 rendering** lives in [spec_mp4.md](spec_mp4.md); it shares the VT emulator, cell colors, and timing with [spec_svg.md](spec_svg.md).
 
 ## Suggested Reading Order
 

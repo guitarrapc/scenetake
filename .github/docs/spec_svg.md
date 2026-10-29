@@ -147,6 +147,7 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 
 ## Cross-Document Notes
 
+- [spec_mp4.md](spec_mp4.md) — mp4 output for full-screen TUIs and sharing; reuses this emulator, the cell color rules (including the matrix rain tint), the cell metrics, and the loop timing.
 - [spec_cast.md](spec_cast.md) — cast header, `st:window` tag, v2 header rules.
 - [spec_scenario.md](spec_scenario.md) — `render.window`.
 - [spec_cli.md](spec_cli.md) — `--window`.

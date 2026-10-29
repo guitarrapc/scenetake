@@ -1,6 +1,6 @@
 # Plan B — mp4 Output
 
-Status: **Proposed** (2026-10-29)
+Status: **B0–B4 and B6 implemented** (2026-10-29). B5 (window chrome) is open. The shipped behavior is in [spec_mp4.md](../spec_mp4.md); see [What Was Built](#what-was-built).
 
 Background, measurements, and ordering: [plan_output_size.md](plan_output_size.md).
 
@@ -157,6 +157,69 @@ The ffmpeg input is `-f rawvideo -pix_fmt rgb24 -s WxH -r FPS -i -`.
 
 Append short findings to this plan and adjust the defaults before B4.
 
+#### B0 Findings (2026-10-29)
+
+**Native AOT.** A probe app using StbTrueTypeSharp 1.26.13 published as Native AOT for win-x64 with no warnings. The other five RIDs are left to CI, which already publishes all six.
+
+**Fonts.**
+
+| OS | Primary monospace | CJK fallback | Symbols, braille, emoji |
+|---|---|---|---|
+| Windows 11 | Cascadia Mono / Cascadia Code are **variable fonts** (single file, `fvar`). Consolas has static Regular, Bold, Italic, and Bold Italic. | BIZ UDGothic and MS Gothic (fixed pitch), Yu Gothic, Meiryo | Segoe UI Symbol has braille and monochrome emoji. Segoe UI Emoji has COLR plus `glyf` base outlines. |
+| Ubuntu 24.04 (Docker, with `fonts-dejavu` and `fonts-noto-cjk`) | DejaVu Sans Mono: static Book, Bold, and Oblique | Noto Sans Mono CJK (CFF outlines, which stb_truetype loads) | DejaVu Sans has braille. |
+| macOS | Not checked locally; CI covers it. | | |
+
+- Cascadia has box drawing, blocks, and braille, but no CJK.
+- Consolas lacks braille, and Consolas Bold lacks `━`. Per-glyph fallback is required either way.
+
+**ffmpeg.**
+
+| Build | libx264 |
+|---|---|
+| Ubuntu 24.04 apt (6.1.1) | Yes |
+| Fedora 41 `ffmpeg-free` (7.1.2) | **No.** Only `libopenh264` and hardware encoders. |
+| Gyan (winget, Scoop), Homebrew | Yes, per their published build configs (not run locally) |
+| BtbN LGPL builds | No, because x264 is GPL |
+
+**Encoder settings.** 30fps, crf 23, yuv420p:
+
+| Preset / tune | matrix 200×60 | basic |
+|---|---|---|
+| `medium` | 8.78MB, 3.9s | 216KB, 0.9s |
+| `slow` | 8.56MB (−2%), 4.6s | 186KB (−14%), 1.0s |
+| `veryslow` | 6.83MB (−22%), 12.1s | 170KB (−21%), 1.7s |
+| `medium -tune animation` | 9.37MB (+7%) | 207KB (−4%) |
+| `medium -tune stillimage` | 9.38MB (+7%) | 237KB (+10%) |
+
+**Color.** The theme background `#282c34` is (40, 44, 52), decoded the way a BT.709 player does.
+
+- Untagged output with ffmpeg's default BT.601 conversion decodes as (38, 44, 52).
+- BT.709 conversion with BT.709 tags decodes as (40, 44, 52), exact.
+- `ffprobe` reports High profile, yuv420p, and BT.709 tags.
+
+**Chroma.** Colored text in the highlight sample looks nearly identical after yuv420p.
+
+**Small text.** The scenario-format sample was compared two ways:
+
+- rendered at 16px and downscaled 50% with lanczos;
+- rendered at 8px directly.
+
+The downscaled frame is clearly more legible, because unhinted 8px glyphs are thin and uneven.
+
+#### Decisions for v1
+
+| Topic | Decision | Why |
+|---|---|---|
+| Preset | `slow` | 2–14% smaller than `medium` for about 15% more time. `veryslow` saves more but takes 3× longer and uses more reference frames, which raises the H.264 level. |
+| Tune | None | Neither tune helped consistently. |
+| Color | BT.709 conversion and tags | Exact theme colors. |
+| `--max-size` | Downscale with lanczos from the normal font size | Legibility. |
+| Missing libx264 | Error with an install hint (Fedora: RPM Fusion `ffmpeg`). No fallback encoder in v1. | `libopenh264` has no CRF mode, and Fedora's may be a stub. |
+| Box drawing | Procedural for light and heavy lines, dashes, half lines, and rounded corners. Double lines (U+2550–U+256C) and diagonals use the font. | Double-line joins need many special cases. |
+| Block elements and braille | Procedural | Edge-to-edge cells; `btop` graphs use braille. |
+| Bold | Static bold face if the family has one; otherwise synthetic. Always synthetic for variable fonts. | stb_truetype renders only a variable font's default instance. |
+| Open questions 1–4, 6 | Subcommand `mp4`; default 30fps; no named presets (README documents `--max-size 1280x1024`); one format per run; no bundled font. | As proposed. Easy to revisit. |
+
 ### B1. Shared Pieces (Refactor, No Behavior Change)
 
 - Move color resolution out of `SvgFrameRenderer` into one shared static class used by both renderers:
@@ -215,6 +278,37 @@ Append short findings to this plan and adjust the defaults before B4.
   - Smoke-test `mp4` on `tests/fixtures/*.cast` with the published AOT binary.
   - Check codec, profile, pixel format, fps, and duration with `ffprobe`.
 - **Samples.** Do not commit mp4 files, because every regeneration would add binary churn.
+
+## What Was Built
+
+Changes from the proposal:
+
+- **Replay.**
+  - `ReplayStepper` (in `Terminal.cs`) applies events up to a time. It uses the same rules as the SVG capture replay, so a sampled frame matches the SVG at the same moment.
+  - `TerminalReplay.FindTrailingBlankCutoff` makes the video end on the same screen as the SVG. It first runs a parse-only pass and does the full check only when the final screen is blank.
+- **Shared colors.** The color rules moved into `CellColors` (`Terminal.cs`). SVG output stayed byte-identical (48 of 48 sample and fixture renders).
+- **Rasterizer.** `Raster.cs` holds the font catalog, the per-glyph fallback chain, synthetic bold and italic, the procedural glyphs, and dirty-row redraw.
+- **Double lines are procedural too.** B0 planned to take double lines from the font, but they showed the same row gaps as single lines.
+- **Encoding.** `Mp4.cs` holds the frame loop, ffmpeg discovery and the libx264 probe, the pipe, and the temporary-file rename.
+- **Preflight.** The scenario path checks ffmpeg and fonts before `pre` runs.
+- **CI.** All six platform jobs run the render tests and the CLI and failure tests; failure tests use a fake ffmpeg. A new Linux job installs ffmpeg and runs real encodes with the Native AOT binary.
+
+### Results
+
+Measured with the Native AOT win-x64 build, and in Docker (Ubuntu 24.04, ffmpeg 6.1.1, DejaVu Sans Mono).
+
+| Check | Result |
+|---|---|
+| matrix 200×60, defaults | 2020×1208, 30fps, 9.4MB, 5.1s (prototype estimate 8.8MB; within ±15%) |
+| Same with `--max-size 1280x1024` | 1280×764, 4.5MB |
+| Same with `--fps 60` | 13.2MB |
+| matrix 384×108 | 3860×2168, 30.2MB, 16.6s |
+| `samples/basic.cast` | 189KB; decoded theme background (40, 44, 52), exact |
+| ffprobe | h264 High, yuv420p, BT.709 tags, constant frame rate |
+| Native AOT binary (win-x64) | +225KB (4.28MB → 4.51MB), no new warnings |
+| Tests | `mp4_render_test` 16 passed; `mp4_ffmpeg_test` 9 passed on Linux (6 on Windows, where real encodes skip without ffmpeg); every existing suite still passes |
+
+Not verified locally: macOS fonts, and the Native AOT build on the five non-Windows platforms. CI covers both.
 
 ## Failure Behavior
 

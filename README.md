@@ -105,6 +105,15 @@ scenetake svg scenario.cast
 # Same styling flags work on the svg subcommand
 scenetake svg scenario.cast --theme light --window windows --max-fps 30
 
+# Convert a cast file to mp4 (H.264, needs ffmpeg) — best for full-screen TUIs and sharing
+scenetake mp4 scenario.cast
+
+# Fit X (Twitter) video upload limits
+scenetake mp4 scenario.cast --max-size 1280x1024
+
+# Generate cast and mp4 in one command
+scenetake --format mp4 scenario.yaml
+
 # Show normal pre/post execution logs while generating a cast file
 scenetake --verbose scenario.yaml
 
@@ -128,19 +137,33 @@ docker rm $id
 # Initialize a new scenario file
 scenetake init [scenario.yaml]
 
-# Run scenario to generate cast (default) or cast + SVG
-scenetake [--verbose] [--format cast|svg]
+# Run scenario to generate cast (default), cast + SVG, or cast + mp4
+scenetake [--verbose] [--format cast|svg|mp4]
   [--font-size N] [--font-family FAMILIES] [--theme dark|light]
   [--window none|macos|windows] [--max-fps N]
+  [--fps N] [--crf N] [--max-size WxH] [--font-file PATH]
   scenario.yaml [output]
 
 # Convert an existing cast file to SVG
 scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light]
   [--window none|macos|windows] [--max-fps N]
   <input.cast> [output.svg]
+
+# Convert an existing cast file to mp4
+scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light]
+  [--fps N] [--crf N] [--max-size WxH]
+  <input.cast> [output.mp4]
 ```
 
 `--max-fps` caps SVG animation frame rate (`0` = off, use full cast timing). It applies when `--format svg` is set or on the `svg` subcommand.
+
+mp4 options apply with `--format mp4` or on the `mp4` subcommand: `--fps` sets the frame rate (default `30`, max `60`), `--crf` sets quality (default `23`; higher is smaller), `--max-size` downscales to fit (for example `1280x1024` for X), and `--font-file` picks the font file.
+
+**SVG or mp4**
+
+SVG is the smallest for typing and short output, and embeds in a README. Full-screen TUIs that redraw every frame (`matrix`, `btop`, …) make SVG and GIF very large; use mp4 for those, and for sharing on X or Slack. For example, `matrix --fps 60` at 200×60 for 7.5 seconds is 117MB as SVG and 9.4MB as mp4 (4.5MB with `--max-size 1280x1024`).
+
+mp4 output runs [ffmpeg](https://ffmpeg.org/) with libx264 as a separate program. Install it with `winget install Gyan.FFmpeg` or `scoop install ffmpeg` (Windows), `brew install ffmpeg` (macOS), or `sudo apt install ffmpeg` (Debian/Ubuntu). Set `SCENETAKE_FFMPEG` to use a specific binary. mp4 uses fonts installed on your machine: the `font-family` list first, then CJK and symbol fonts. Pass `--font-file` to pin one. Window chrome (`--window`) is not drawn in mp4 yet.
 
 **Notes**
 

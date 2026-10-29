@@ -7,8 +7,11 @@
 #:package MiniPty@1.4.0
 #:package MiniPty.Capture@1.4.0
 #:package MiniPty.Console@1.4.0
+#:package StbTrueTypeSharp@1.26.13
 #:include Terminal.cs
 #:include Svg.cs
+#:include Raster.cs
+#:include Mp4.cs
 #:include CastReader.cs
 #:include JsonEscape.cs
 #:include PtyLeadingInitFilter.cs
@@ -140,6 +143,76 @@ if (args[0] is "svg")
     }
 }
 
+if (args[0] is "mp4")
+{
+    if (args.Length == 2 && args[1] is "-h" or "--help")
+    {
+        PrintMp4Usage();
+        return 0;
+    }
+
+    if (!TryParseMp4Args(args, out var mp4CastArg, out var mp4OutputArg, out var mp4FontSize, out var mp4FontFamily, out var mp4ThemePreset, out var mp4Window, out var mp4Options, out var mp4Error))
+    {
+        Console.Error.WriteLine($"Error: {mp4Error}");
+        PrintMp4Usage();
+        return 1;
+    }
+
+    var mp4CastPath = Path.GetFullPath(mp4CastArg);
+    if (!File.Exists(mp4CastPath))
+    {
+        Console.Error.WriteLine($"Error: {FormatDisplayPath(mp4CastPath)} not found");
+        return 1;
+    }
+
+    if (!Ffmpeg.TryResolve(out var mp4Ffmpeg, out var mp4FfmpegError))
+    {
+        Console.Error.WriteLine($"Error: {mp4FfmpegError}");
+        return 1;
+    }
+
+    var mp4OutputPath = RenderSettingsResolver.ResolveCastMp4OutputPath(mp4CastPath, mp4OutputArg);
+    Console.Error.WriteLine($"Loading: {FormatDisplayPath(mp4CastPath)}");
+    try
+    {
+        var recording = CastReader.Read(mp4CastPath);
+        var mp4RenderSettings = RenderSettingsResolver.ApplySvgOverrides(
+            recording.RenderSettings,
+            mp4FontSize,
+            mp4FontFamily,
+            mp4ThemePreset,
+            mp4Window,
+            maxFpsOverride: null,
+            out var mp4OverrideError);
+        if (mp4OverrideError.Length != 0)
+        {
+            Console.Error.WriteLine($"Error: {mp4OverrideError}");
+            return 1;
+        }
+
+        WarnIfWindowChrome(mp4RenderSettings);
+        var result = Mp4Render.WriteMp4(recording.Events, recording.Width, recording.Height, mp4RenderSettings, mp4Options.ToSettings(), mp4OutputPath, mp4Ffmpeg, recording.LoopDuration);
+        PrintMp4Written(mp4OutputPath, result);
+        Console.Error.WriteLine($"Done: {FormatDisplayPath(mp4OutputPath)}");
+        return 0;
+    }
+    catch (CastReadException ex)
+    {
+        Console.Error.WriteLine($"Error: {ex.Message}");
+        return 1;
+    }
+    catch (FontNotFoundException ex)
+    {
+        Console.Error.WriteLine($"Error: {ex.Message}");
+        return 1;
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"Error: mp4 render failed: {ex.Message}");
+        return 1;
+    }
+}
+
 if (args[0] is "--version")
 {
     PrintVersion();
@@ -152,7 +225,7 @@ if (args[0] is "-h" or "--help")
     return 0;
 }
 
-if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runError))
+if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runError))
 {
     Console.Error.WriteLine($"Error: {runError}");
     PrintUsage();
@@ -169,6 +242,7 @@ if (!File.Exists(scenarioPath))
 var outputStem = RenderSettingsResolver.ResolveOutputStem(scenarioPath, outputArg);
 var outputPath = outputStem + ".cast";
 var svgPath = outputFormat == OutputFormat.Svg ? outputStem + ".svg" : null;
+var mp4Path = outputFormat == OutputFormat.Mp4 ? outputStem + ".mp4" : null;
 
 Console.Error.WriteLine($"Loading: {FormatDisplayPath(scenarioPath)}");
 var yaml = File.ReadAllText(scenarioPath, Encoding.UTF8);
@@ -193,6 +267,31 @@ if (runWindow is WindowStyle runWindowValue)
     renderSettings = renderSettings with { Window = runWindowValue };
 if (runMaxFps is int runMaxFpsValue)
     renderSettings = renderSettings with { MaxFps = runMaxFpsValue };
+
+// mp4 needs ffmpeg and a font. Check both before running anything, so a long recording does not fail at the end.
+string? ffmpegPath = null;
+if (outputFormat == OutputFormat.Mp4)
+{
+    if (!Ffmpeg.TryResolve(out var resolvedFfmpeg, out var ffmpegError))
+    {
+        Console.Error.WriteLine($"Error: {ffmpegError}");
+        return 1;
+    }
+
+    try
+    {
+        GlyphSource.Create(renderSettings.FontFamily, runMp4Options.FontFile, RasterLayout.Create(renderSettings.FontSize, 1, 1));
+    }
+    catch (FontNotFoundException ex)
+    {
+        Console.Error.WriteLine($"Error: {ex.Message}");
+        return 1;
+    }
+
+    ffmpegPath = resolvedFfmpeg;
+    WarnIfWindowChrome(renderSettings);
+}
+
 var deterministicSeed = ComputeDeterministicSeed(yaml);
 var deterministicTimestamp = ComputeDeterministicTimestamp(deterministicSeed);
 
@@ -242,6 +341,23 @@ if (outputFormat == OutputFormat.Svg)
     }
 }
 
+if (outputFormat == OutputFormat.Mp4)
+{
+    var width = scenario.Width ?? 120;
+    var height = scenario.Height ?? 24;
+    try
+    {
+        // WriteMp4 encodes to a temporary file and renames it, so a failure leaves no partial .mp4.
+        var result = Mp4Render.WriteMp4(events, width, height, renderSettings, runMp4Options.ToSettings(), mp4Path!, ffmpegPath!);
+        PrintMp4Written(mp4Path!, result);
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"Error: mp4 render failed: {ex.Message}");
+        exitCode = 1;
+    }
+}
+
 var postExitCode = await RunScenarioCommandsAsync(scenario.Post, "post", scenario.Cwd, shell, verbose);
 if (postExitCode != 0)
     return postExitCode;
@@ -251,6 +367,8 @@ if (exitCode != 0)
 
 if (outputFormat == OutputFormat.Svg)
     Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(svgPath!)}");
+else if (outputFormat == OutputFormat.Mp4)
+    Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(mp4Path!)}");
 else
     Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}");
 return 0;
@@ -381,6 +499,7 @@ static bool TryParseRunArgs(
     out string? themePresetOverride,
     out WindowStyle? windowOverride,
     out int? maxFpsOverride,
+    out Mp4Options mp4Options,
     out string error)
 {
     scenarioPath = "";
@@ -392,6 +511,7 @@ static bool TryParseRunArgs(
     themePresetOverride = null;
     windowOverride = null;
     maxFpsOverride = null;
+    mp4Options = new Mp4Options();
     error = "";
 
     for (var i = 0; i < args.Length; i++)
@@ -432,6 +552,13 @@ static bool TryParseRunArgs(
         }
 
         if (TryConsumeMaxFpsArg(args, ref i, ref maxFpsOverride, out error))
+        {
+            if (error.Length != 0)
+                return false;
+            continue;
+        }
+
+        if (TryConsumeMp4Arg(args, ref i, mp4Options, out error))
         {
             if (error.Length != 0)
                 return false;
@@ -479,6 +606,18 @@ static bool TryParseRunArgs(
         }
 
         error = $"unexpected argument: {arg}";
+        return false;
+    }
+
+    if (outputFormat != OutputFormat.Mp4 && mp4Options.FirstOption is string mp4Option)
+    {
+        error = $"{mp4Option} requires --format mp4";
+        return false;
+    }
+
+    if (outputFormat == OutputFormat.Mp4 && maxFpsOverride.HasValue)
+    {
+        error = "--max-fps applies to SVG; use --fps for mp4";
         return false;
     }
 
@@ -718,6 +857,9 @@ static bool TryParseOutputFormat(string value, out OutputFormat format, out stri
             return true;
         case "svg":
             format = OutputFormat.Svg;
+            return true;
+        case "mp4":
+            format = OutputFormat.Mp4;
             return true;
         default:
             error = $"unknown format: {value}";
@@ -2813,10 +2955,170 @@ static string CreateInitialScenarioYaml()
 
 static void PrintUsage()
 {
-    Console.Error.WriteLine("Usage: scenetake [--verbose] [--format cast|svg] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <scenario.yaml> [output]");
+    Console.Error.WriteLine("Usage: scenetake [--verbose] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH] [--font-file PATH] <scenario.yaml> [output]");
     Console.Error.WriteLine("       scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
+    Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH] <input.cast> [output.mp4]");
     Console.Error.WriteLine("       scenetake init [scenario.yaml]");
     Console.Error.WriteLine("       scenetake --help");
+}
+
+static void PrintMp4Usage()
+{
+    Console.Error.WriteLine("Usage: scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH] <input.cast> [output.mp4]");
+    Console.Error.WriteLine("Converts an existing asciinema v2/v3 cast file to H.264 mp4. Requires ffmpeg with libx264 on PATH,");
+    Console.Error.WriteLine($"or set {Ffmpeg.PathVariable} to its path. --max-size 1280x1024 fits X (Twitter) uploads.");
+}
+
+static void WarnIfWindowChrome(ResolvedRenderSettings settings)
+{
+    if (settings.Window != WindowStyle.None)
+        Console.Error.WriteLine("Warning: mp4: window chrome is not supported yet; rendering without it");
+}
+
+static void PrintMp4Written(string path, Mp4Result result) =>
+    Console.Error.WriteLine(
+        $"Written: {FormatDisplayPath(path)}  ({result.Width}x{result.Height}, {result.Fps}fps, {result.Frames} frames, {FormatBytes(result.Bytes)}, font: {result.Font.Family})");
+
+static string FormatBytes(long bytes) =>
+    bytes >= 1024 * 1024
+        ? string.Create(CultureInfo.InvariantCulture, $"{bytes / (1024.0 * 1024.0):0.0}MB")
+        : string.Create(CultureInfo.InvariantCulture, $"{bytes / 1024.0:0.0}KB");
+
+/// <summary>Matches <paramref name="name"/> as <c>--name value</c> or <c>--name=value</c>. Returns true when it matched; error is set for a missing value.</summary>
+static bool TryTakeOptionValue(string[] args, ref int i, string name, out string value, out string error)
+{
+    value = "";
+    error = "";
+    var arg = args[i];
+    if (arg == name)
+    {
+        if (i + 1 >= args.Length)
+            error = $"{name} requires a value";
+        else
+            value = args[++i];
+        return true;
+    }
+
+    if (arg.StartsWith(name + "=", StringComparison.Ordinal))
+    {
+        value = arg[(name.Length + 1)..];
+        if (value.Length == 0)
+            error = $"{name} requires a value";
+        return true;
+    }
+
+    return false;
+}
+
+static bool TryConsumeMp4Arg(string[] args, ref int i, Mp4Options options, out string error)
+{
+    var arg = args[i];
+    if (TryTakeOptionValue(args, ref i, "--fps", out var value, out error))
+    {
+        if (error.Length == 0 && options.Fps.HasValue)
+            error = "duplicate option: --fps";
+        else if (error.Length == 0 && Mp4Settings.TryParseFps(value, out var fps, out error))
+            options.Fps = fps;
+    }
+    else if (TryTakeOptionValue(args, ref i, "--crf", out value, out error))
+    {
+        if (error.Length == 0 && options.Crf.HasValue)
+            error = "duplicate option: --crf";
+        else if (error.Length == 0 && Mp4Settings.TryParseCrf(value, out var crf, out error))
+            options.Crf = crf;
+    }
+    else if (TryTakeOptionValue(args, ref i, "--max-size", out value, out error))
+    {
+        if (error.Length == 0 && options.MaxSize.HasValue)
+            error = "duplicate option: --max-size";
+        else if (error.Length == 0 && Mp4Settings.TryParseMaxSize(value, out var maxWidth, out var maxHeight, out error))
+            options.MaxSize = (maxWidth, maxHeight);
+    }
+    else if (TryTakeOptionValue(args, ref i, "--font-file", out value, out error))
+    {
+        if (error.Length == 0 && options.FontFile is not null)
+            error = "duplicate option: --font-file";
+        else if (error.Length == 0)
+            options.FontFile = Path.GetFullPath(value);
+    }
+    else
+    {
+        return false;
+    }
+
+    options.FirstOption ??= arg.Split('=')[0];
+    return true;
+}
+
+static bool IsMaxFpsArg(string arg) => arg == "--max-fps" || arg.StartsWith("--max-fps=", StringComparison.Ordinal);
+
+static bool TryParseMp4Args(
+    string[] args,
+    out string castPath,
+    out string? outputPath,
+    out int? fontSizeOverride,
+    out string? fontFamilyOverride,
+    out string? themePresetOverride,
+    out WindowStyle? windowOverride,
+    out Mp4Options mp4Options,
+    out string error)
+{
+    castPath = "";
+    outputPath = null;
+    fontSizeOverride = null;
+    fontFamilyOverride = null;
+    themePresetOverride = null;
+    windowOverride = null;
+    mp4Options = new Mp4Options();
+    error = "";
+
+    for (var i = 1; i < args.Length; i++)
+    {
+        var arg = args[i];
+        if (TryConsumeFontSizeArg(args, ref i, ref fontSizeOverride, out error)
+            || TryConsumeFontFamilyArg(args, ref i, ref fontFamilyOverride, out error)
+            || TryConsumeThemeArg(args, ref i, ref themePresetOverride, out error)
+            || TryConsumeWindowArg(args, ref i, ref windowOverride, out error)
+            || TryConsumeMp4Arg(args, ref i, mp4Options, out error))
+        {
+            if (error.Length != 0)
+                return false;
+            continue;
+        }
+
+        if (IsMaxFpsArg(arg))
+        {
+            error = "--max-fps applies to SVG; use --fps for mp4";
+            return false;
+        }
+
+        if (arg.StartsWith('-'))
+        {
+            error = $"unknown option: {arg}";
+            return false;
+        }
+
+        if (castPath.Length == 0)
+        {
+            castPath = arg;
+            continue;
+        }
+
+        if (outputPath is null)
+        {
+            outputPath = arg;
+            continue;
+        }
+
+        error = $"unexpected argument: {arg}";
+        return false;
+    }
+
+    if (castPath.Length != 0)
+        return true;
+
+    error = "cast path is required";
+    return false;
 }
 
 static void PrintInitUsage()
@@ -2846,6 +3148,26 @@ enum OutputFormat
 {
     Cast,
     Svg,
+    Mp4,
+}
+
+/// <summary>mp4 options from the command line; unset values take the <see cref="Mp4Settings"/> defaults.</summary>
+sealed class Mp4Options
+{
+    internal int? Fps { get; set; }
+    internal int? Crf { get; set; }
+    internal (int Width, int Height)? MaxSize { get; set; }
+    internal string? FontFile { get; set; }
+
+    /// <summary>The first mp4 option given, for errors when mp4 output is not selected.</summary>
+    internal string? FirstOption { get; set; }
+
+    internal Mp4Settings ToSettings() => new(
+        Fps ?? Mp4Settings.DefaultFps,
+        Crf ?? Mp4Settings.DefaultCrf,
+        MaxSize?.Width ?? 0,
+        MaxSize?.Height ?? 0,
+        FontFile);
 }
 
 internal static class PtyCastTiming

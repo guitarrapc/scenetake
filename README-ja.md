@@ -105,6 +105,15 @@ scenetake svg scenario.cast
 # svg サブコマンドでも同じスタイルフラグが使える
 scenetake svg scenario.cast --theme light --window windows --max-fps 30
 
+# cast ファイルを mp4（H.264、ffmpeg が必要）に変換。全画面 TUI や共有に向く
+scenetake mp4 scenario.cast
+
+# X (Twitter) の動画アップロード制限に収める
+scenetake mp4 scenario.cast --max-size 1280x1024
+
+# cast と mp4 を一度に生成
+scenetake --format mp4 scenario.yaml
+
 # cast 生成時に正常な pre/post 実行ログも表示
 scenetake --verbose scenario.yaml
 
@@ -128,19 +137,46 @@ docker rm $id
 # 新しいシナリオファイルを初期化
 scenetake init [scenario.yaml]
 
-# シナリオを実行して cast（既定）または cast + SVG を生成
-scenetake [--verbose] [--format cast|svg]
+# シナリオを実行して cast（既定）、cast + SVG、または cast + mp4 を生成
+scenetake [--verbose] [--format cast|svg|mp4]
   [--font-size N] [--font-family FAMILIES] [--theme dark|light]
   [--window none|macos|windows] [--max-fps N]
+  [--fps N] [--crf N] [--max-size WxH] [--font-file PATH]
   scenario.yaml [output]
 
 # 既存の cast ファイルを SVG に変換
 scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light]
   [--window none|macos|windows] [--max-fps N]
   <input.cast> [output.svg]
+
+# 既存の cast ファイルを mp4 に変換
+scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light]
+  [--fps N] [--crf N] [--max-size WxH]
+  <input.cast> [output.mp4]
 ```
 
 `--max-fps` は SVG アニメーションのフレームレート上限です（`0` = オフ、cast のタイミングをそのまま使用）。`--format svg` 時と `svg` サブコマンドで有効です。
+
+mp4 用のオプションは `--format mp4` 時と `mp4` サブコマンドで有効です。
+
+- `--fps`: フレームレート（既定 `30`、最大 `60`）
+- `--crf`: 画質（既定 `23`。大きいほど小さいファイル）
+- `--max-size`: この範囲に収まるよう縮小（X 向けなら `1280x1024`）
+- `--font-file`: 使うフォントファイル
+
+**SVG と mp4 の使い分け**
+
+タイピング中心や短い出力なら SVG が最も小さく、README に埋め込めます。毎フレーム画面全体を描き直す全画面 TUI（`matrix`、`btop` など）は、SVG や GIF だと非常に大きくなります。こうした録画や、X・Slack での共有には mp4 を使ってください。たとえば `matrix --fps 60` を 200×60 で 7.5 秒録ると、SVG は 117MB、mp4 は 9.4MB（`--max-size 1280x1024` なら 4.5MB）です。
+
+mp4 出力は、libx264 入りの [ffmpeg](https://ffmpeg.org/) を別プログラムとして呼び出します。インストール方法は次のとおりです。
+
+- Windows: `winget install Gyan.FFmpeg` または `scoop install ffmpeg`
+- macOS: `brew install ffmpeg`
+- Debian/Ubuntu: `sudo apt install ffmpeg`
+
+特定の ffmpeg を使うときは `SCENETAKE_FFMPEG` にそのパスを指定します。
+
+mp4 は手元にインストールされたフォントで描画します。`font-family` の一覧を順に探し、見つからない文字は日本語などの CJK フォントや記号フォントで補います。フォントを固定したいときは `--font-file` を指定してください。ウィンドウ枠（`--window`）は、mp4 ではまだ描画しません。
 
 **Notes**
 
