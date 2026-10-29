@@ -18,8 +18,35 @@ failures += Run("MaxFpsDoesNotChangeLoopDuration", MaxFpsDoesNotChangeLoopDurati
 failures += Run("MatrixTintWhiteNearGreen", MatrixTintWhiteNearGreen);
 failures += Run("MatrixTintIgnoresVerticalNeighbors", MatrixTintIgnoresVerticalNeighbors);
 failures += Run("CopilotBannerBlockGlyphs", CopilotBannerBlockGlyphs);
+failures += Run("WriteSvgMatchesRenderToString", WriteSvgMatchesRenderToString);
 
 return failures == 0 ? 0 : 1;
+
+// WriteSvg streams pre-encoded row layers to disk; it must produce exactly the bytes of the
+// in-memory render, including resize shrink (canvas-sized copies) and --max-fps sampling.
+static bool WriteSvgMatchesRenderToString()
+{
+    foreach (var (castPath, maxFps) in new[] { ("samples/resize.cast", 0), ("samples/pty.cast", 0), ("samples/pty.cast", 20) })
+    {
+        var recording = CastReader.Read(castPath);
+        var render = recording.RenderSettings with { MaxFps = maxFps };
+        var path = Path.Combine(Path.GetTempPath(), $"scenetake-write-svg-{Guid.NewGuid():N}.svg");
+        try
+        {
+            SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, render, path, recording.LoopDuration);
+            var expected = new System.Text.UTF8Encoding(false).GetBytes(
+                SvgRender.RenderToString(recording.Events, recording.Width, recording.Height, render, recording.LoopDuration));
+            if (!File.ReadAllBytes(path).AsSpan().SequenceEqual(expected))
+                return false;
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    return true;
+}
 
 static int Run(string name, Func<bool> test)
 {
@@ -44,13 +71,10 @@ static int Run(string name, Func<bool> test)
 static string RenderCast(string castPath, int? maxFps = null)
 {
     var recording = CastReader.Read(castPath);
-    var theme = TerminalTheme.FromResolved(recording.RenderSettings.Theme);
-    var (cw, ch) = TerminalReplay.ResolveCanvasSize(recording.Width, recording.Height, recording.Events);
-    var frames = TerminalReplay.BuildFrames(recording.Events, recording.Width, recording.Height, cw, ch, theme);
     var render = maxFps is int fps
         ? recording.RenderSettings with { MaxFps = fps }
         : recording.RenderSettings;
-    return SvgFrameRenderer.Render(frames, render, cw, ch, recording.LoopDuration);
+    return SvgRender.RenderToString(recording.Events, recording.Width, recording.Height, render, recording.LoopDuration);
 }
 
 static bool CurlOutputSurvivesFrameSampling()

@@ -126,10 +126,7 @@ static string RenderMinimal(string windowTagValue)
             "[0.05,\"x\",\"0\"]\n");
 
         var recording = CastReader.Read(castPath);
-        var theme = TerminalTheme.FromResolved(recording.RenderSettings.Theme);
-        var (cw, ch) = TerminalReplay.ResolveCanvasSize(recording.Width, recording.Height, recording.Events);
-        var frames = TerminalReplay.BuildFrames(recording.Events, recording.Width, recording.Height, cw, ch, theme);
-        return SvgFrameRenderer.Render(frames, recording.RenderSettings, cw, ch, recording.LoopDuration);
+        return SvgRender.RenderToString(recording.Events, recording.Width, recording.Height, recording.RenderSettings, recording.LoopDuration);
     }
     finally
     {

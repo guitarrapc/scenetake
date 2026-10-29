@@ -17,7 +17,9 @@ Background, measurements, and ordering: [plan_output_size.md](plan_output_size.m
 
 ## A1. Streaming Replay (Memory)
 
-### Today
+Status: **Implemented** (2026-10-29). See [What Was Built](#what-was-built) and [Results](#results). The rest of this section is the original proposal.
+
+### Before
 
 | Step | What it holds |
 |---|---|
@@ -58,6 +60,42 @@ Result: matrix 200×60 peaks at 4.3GB, and 384×108 exceeded 43GB.
 - matrix 200×60 at 60fps (`svg` subcommand): peak working set at most 1GB, down from 4.3GB.
 - matrix 384×108 completes. Record size, time, and peak memory in the PR.
 - Sample render time stays within ±10% of today.
+
+### What Was Built
+
+It differs from the proposal in one way. Instead of lookahead stages over one stream, the replay runs twice.
+
+1. **Timeline pass.** `TerminalReplay.BuildFrames` replays the events and records only metadata for each changed state: time, capture ordinal, viewport size, signature, and whether the screen is blank. The existing trailing-blank trim and `--max-fps` stages run on that list unchanged.
+2. **Draw pass.** `SvgFrameRenderer.BuildLayers` replays the events again through the same `TerminalReplay.EnumerateCaptures` and stops at each selected ordinal.
+   - It compares rows against one copy of each row's active layer and one copy of the previous frame.
+   - It encodes each new row layer, including its `<g>` wrapper, straight into UTF-8 chunks.
+
+Why two passes:
+
+- The selection logic stays exactly as it was, which made byte-identical output easy to guarantee.
+- Replaying is cheaper than the clones it replaces.
+
+The head and `<style>` are built after the draw pass and written ahead of the encoded rows. The file is opened only after rendering succeeds.
+
+### Results
+
+Rendered with a harness that calls `SvgRender.WriteSvg` the way the `svg` subcommand and the scenario path do. Windows 11, .NET 10, Release build.
+
+| Check | Before | After |
+|---|---|---|
+| Byte-identical: 16 sample/fixture casts × (`svg`, `--max-fps 20`, scenario path) | — | 48 of 48 identical |
+| Byte-identical: matrix 200×60 × 3 modes | — | 3 of 3 identical |
+| matrix 200×60, 117MB SVG: peak / time | 4.8GB / 5.8s | 234MB / 2.6s |
+| matrix 200×60 `--max-fps 20`, 25.6MB SVG: peak / time | 4.4GB / 3.9s | 139MB / 2.0s |
+| matrix 384×108: SVG / peak / time | Aborted above 43GB | 455MB / 673MB / 22s |
+| matrix 384×108 `--max-fps 20`: SVG / peak / time | — | 85MB / 314MB / 16s |
+| All 16 small casts in one process: peak | 298MB | 64MB |
+
+Tests:
+
+- All unit suites pass.
+- `stream_output_test`, `pty_test`, and `interactive_pty_test` pass against a Native AOT win-x64 build.
+- New test: `WriteSvgMatchesRenderToString` checks that the streamed file equals the in-memory render, including resize shrink, `--max-fps`, and output larger than one chunk.
 
 ### Observation to Resolve Separately
 

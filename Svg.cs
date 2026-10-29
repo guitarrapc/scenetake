@@ -11,12 +11,103 @@ internal static class SvgRender
         string outputPath,
         double? loopDurationOverride = null)
     {
+        // Render fully before opening the file, so a render failure leaves no file behind.
+        var svg = Render(events, width, height, render, loopDurationOverride);
+        using var stream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 1 << 16);
+        svg.WriteTo(stream);
+    }
+
+    /// <summary>Renders the SVG as a string. <see cref="WriteSvg"/> streams to disk instead.</summary>
+    internal static string RenderToString(
+        IReadOnlyList<CastEvent> events,
+        int width,
+        int height,
+        ResolvedRenderSettings render,
+        double? loopDurationOverride = null)
+    {
+        using var stream = new MemoryStream();
+        Render(events, width, height, render, loopDurationOverride).WriteTo(stream);
+        return SvgDocument.Utf8NoBom.GetString(stream.GetBuffer(), 0, (int)stream.Length);
+    }
+
+    private static SvgDocument Render(
+        IReadOnlyList<CastEvent> events,
+        int width,
+        int height,
+        ResolvedRenderSettings render,
+        double? loopDurationOverride)
+    {
         var (canvasWidth, canvasHeight) = TerminalReplay.ResolveCanvasSize(width, height, events);
         var theme = TerminalTheme.FromResolved(render.Theme);
         var frames = TerminalReplay.BuildFrames(events, width, height, canvasWidth, canvasHeight, theme);
         var loopDuration = loopDurationOverride ?? TerminalReplay.ComputeLoopDuration(events);
-        var svg = SvgFrameRenderer.Render(frames, render, canvasWidth, canvasHeight, loopDuration);
-        File.WriteAllText(outputPath, svg, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        return SvgFrameRenderer.Render(events, width, height, frames, render, canvasWidth, canvasHeight, loopDuration);
+    }
+}
+
+/// <summary>
+/// A rendered SVG: head and tail text around the row layers, which are already encoded
+/// as UTF-8. Keeping row layers encoded holds memory near the output size.
+/// </summary>
+internal sealed class SvgDocument(string head, Utf8ChunkBuffer? rowLayers, string tail)
+{
+    internal static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
+
+    internal static SvgDocument FromText(string text) => new(text, null, "");
+
+    internal void WriteTo(Stream stream)
+    {
+        WriteText(stream, head);
+        rowLayers?.WriteTo(stream);
+        WriteText(stream, tail);
+    }
+
+    private static void WriteText(Stream stream, string text)
+    {
+        if (text.Length != 0)
+            stream.Write(Utf8NoBom.GetBytes(text));
+    }
+}
+
+/// <summary>Append-only UTF-8 text in 1MB chunks, so a large SVG body never needs one contiguous buffer.</summary>
+internal sealed class Utf8ChunkBuffer
+{
+    private const int ChunkSize = 1 << 20;
+    private readonly List<(byte[] Bytes, int Length)> _filled = [];
+    private byte[] _current = [];
+    private int _used;
+    private char[] _chars = new char[4096];
+
+    /// <summary>
+    /// Appends <paramref name="text"/>. Each append is encoded on its own, so it must not
+    /// end in the middle of a surrogate pair.
+    /// </summary>
+    internal void Append(StringBuilder text)
+    {
+        var length = text.Length;
+        if (_chars.Length < length)
+            _chars = new char[Math.Max(length, _chars.Length * 2)];
+
+        text.CopyTo(0, _chars, 0, length);
+        var chars = _chars.AsSpan(0, length);
+        var byteCount = SvgDocument.Utf8NoBom.GetByteCount(chars);
+        if (_current.Length - _used < byteCount)
+        {
+            if (_used > 0)
+                _filled.Add((_current, _used));
+            _current = new byte[Math.Max(ChunkSize, byteCount)];
+            _used = 0;
+        }
+
+        _used += SvgDocument.Utf8NoBom.GetBytes(chars, _current.AsSpan(_used));
+    }
+
+    internal void WriteTo(Stream stream)
+    {
+        foreach (var (bytes, length) in _filled)
+            stream.Write(bytes, 0, length);
+        if (_used > 0)
+            stream.Write(_current, 0, _used);
     }
 }
 
@@ -383,7 +474,15 @@ internal static class SvgFrameRenderer
     [ThreadStatic] private static StringBuilder? t_runText;
     [ThreadStatic] private static StringBuilder? t_escape;
 
-    internal static string Render(
+    /// <summary>
+    /// Renders <paramref name="frames"/> (from <see cref="TerminalReplay.BuildFrames"/> with the
+    /// same events and sizes). Frames carry no screen contents, so this replays
+    /// <paramref name="events"/> once more and encodes each changed row as it goes.
+    /// </summary>
+    internal static SvgDocument Render(
+        IReadOnlyList<CastEvent> events,
+        int initialWidth,
+        int initialHeight,
         IReadOnlyList<ReplayFrame> frames,
         ResolvedRenderSettings render,
         int canvasWidth,
@@ -391,16 +490,18 @@ internal static class SvgFrameRenderer
         double loopDuration)
     {
         if (frames.Count == 0)
-            return BuildEmptySvg(render, canvasWidth, canvasHeight);
+            return SvgDocument.FromText(BuildEmptySvg(render, canvasWidth, canvasHeight));
 
         frames = OptimizeFrames(frames, render.MaxFps);
         var theme = TerminalTheme.FromResolved(render.Theme);
         var metrics = CreateMetrics(render.FontSize, canvasWidth, canvasHeight, render.Window);
 
-        var layers = BuildLayers(frames, canvasWidth, canvasHeight);
+        var rowLayers = new Utf8ChunkBuffer();
+        var layers = BuildLayers(events, initialWidth, initialHeight, frames, canvasWidth, canvasHeight, theme, metrics, rowLayers);
         loopDuration = ResolveLoopDuration(loopDuration, layers);
 
-        return BuildLayeredSvg(layers, metrics, render, theme, canvasWidth, canvasHeight, loopDuration);
+        var (head, tail) = BuildLayeredSvg(layers, metrics, render, theme, canvasWidth, canvasHeight, loopDuration);
+        return new SvgDocument(head, rowLayers, tail);
     }
 
     private static double ResolveLoopDuration(double loopDuration, LayerSet layers)
@@ -429,23 +530,50 @@ internal static class SvgFrameRenderer
             yield return layer;
     }
 
+    /// <summary>
+    /// Replays <paramref name="events"/> and builds row, cursor, and viewport layers for the
+    /// selected <paramref name="frames"/>. Each new row layer is encoded into
+    /// <paramref name="rowLayers"/> immediately. Comparisons use a copy of each row's active
+    /// layer and of the previous frame, so memory is two screens rather than one per frame.
+    /// </summary>
     private static LayerSet BuildLayers(
+        IReadOnlyList<CastEvent> events,
+        int initialWidth,
+        int initialHeight,
         IReadOnlyList<ReplayFrame> frames,
         int canvasWidth,
-        int canvasHeight)
+        int canvasHeight,
+        TerminalTheme theme,
+        SvgMetrics metrics,
+        Utf8ChunkBuffer rowLayers)
     {
         var rows = new List<AnimLayer>();
         var cursors = new List<AnimLayer>();
         var viewports = new List<AnimLayer>();
         var activeByRow = new AnimLayer?[canvasHeight];
-        ScreenBuffer? previous = null;
+        var activeCells = new ScreenCell[canvasHeight][];
+        var previousCells = new ScreenCell[canvasHeight][];
+        for (var row = 0; row < canvasHeight; row++)
+        {
+            activeCells[row] = new ScreenCell[canvasWidth];
+            previousCells[row] = new ScreenCell[canvasWidth];
+        }
+
+        var hasPrevious = false;
         AnimLayer? cursorActive = null;
         AnimLayer? viewportActive = null;
+        var fragment = new StringBuilder(4096);
+        var origin = metrics.ContentOrigin;
+        var next = 0;
 
-        foreach (var frame in frames)
+        foreach (var capture in TerminalReplay.EnumerateCaptures(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme))
         {
+            if (capture.Ordinal != frames[next].Ordinal)
+                continue;
+
+            var frame = frames[next++];
             var time = frame.Time;
-            var buffer = frame.Buffer;
+            var buffer = capture.View;
 
             if (viewportActive is null || viewportActive.P0 != frame.ViewportWidth || viewportActive.P1 != frame.ViewportHeight)
             {
@@ -471,21 +599,25 @@ internal static class SvgFrameRenderer
                 cursors.Add(cursorActive);
             }
 
+            // Depends only on the previous and current frame, so compute it at most once per frame.
+            bool? likelyFullClear = null;
             for (var row = 0; row < canvasHeight; row++)
             {
-                if (activeByRow[row] is { Buffer: ScreenBuffer activeBuf } && activeBuf.RowEquals(buffer, row))
+                var active = activeByRow[row];
+                if (active is not null && buffer.RowEquals(row, activeCells[row]))
                     continue;
 
-                if (activeByRow[row] is null && previous is not null && previous.RowEquals(buffer, row))
+                if (active is null && hasPrevious && buffer.RowEquals(row, previousCells[row]))
                     continue;
 
                 if (buffer.IsRowBlank(row))
                 {
-                    if (activeByRow[row] is not { Buffer: ScreenBuffer prior } || prior.IsRowBlank(row))
+                    if (active is null || ScreenBuffer.IsRowBlank(activeCells[row], buffer.DefaultStyle))
                         continue;
 
                     RetireRowLayer(activeByRow, row, time);
-                    if (!IsLikelyFullClear(previous, buffer))
+                    likelyFullClear ??= hasPrevious && IsLikelyFullClear(previousCells, buffer);
+                    if (!likelyFullClear.Value)
                         continue;
                 }
                 else
@@ -493,13 +625,28 @@ internal static class SvgFrameRenderer
                     HideRowLayer(activeByRow, row, time);
                 }
 
-                var layer = new AnimLayer(time, row, buffer: buffer);
+                fragment.Clear();
+                fragment.AppendLine(CultureInfo.InvariantCulture, $"<g class=\"layer layer-{rows.Count}\">");
+                AppendRow(fragment, buffer, row, origin.X, origin.Y, metrics, theme);
+                fragment.AppendLine("</g>");
+                rowLayers.Append(fragment);
+
+                var layer = new AnimLayer(time, row);
                 rows.Add(layer);
                 activeByRow[row] = layer;
+                buffer.CopyRowTo(row, activeCells[row]);
             }
 
-            previous = buffer;
+            for (var row = 0; row < canvasHeight; row++)
+                buffer.CopyRowTo(row, previousCells[row]);
+            hasPrevious = true;
+
+            if (next == frames.Count)
+                break;
         }
+
+        if (next != frames.Count)
+            throw new InvalidOperationException($"SVG replay reached {next} of {frames.Count} frames.");
 
         return new LayerSet(rows, cursors, viewports);
     }
@@ -516,22 +663,20 @@ internal static class SvgFrameRenderer
         activeByRow[row] = null;
     }
 
-    private static bool IsLikelyFullClear(ScreenBuffer? previous, ScreenBuffer current)
+    private static bool IsLikelyFullClear(ScreenCell[][] previous, ScreenBuffer current)
     {
-        if (previous is null)
-            return false;
-
         var changedToBlank = 0;
         for (var row = 0; row < current.Height; row++)
         {
-            if (!previous.RowEquals(current, row) && current.IsRowBlank(row))
+            if (!current.RowEquals(row, previous[row]) && current.IsRowBlank(row))
                 changedToBlank++;
         }
 
         return changedToBlank >= Math.Max(1, current.Height / 2);
     }
 
-    private static string BuildLayeredSvg(
+    /// <summary>Builds the text before and after the row layers, which <see cref="BuildLayers"/> has already encoded.</summary>
+    private static (string Head, string Tail) BuildLayeredSvg(
         LayerSet layers,
         SvgMetrics metrics,
         ResolvedRenderSettings render,
@@ -631,15 +776,10 @@ internal static class SvgFrameRenderer
                 $"<rect class=\"bg layer viewport-bg-{i}\" x=\"{metrics.TerminalOriginX:0.##}\" y=\"{metrics.TerminalOriginY:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"{render.Theme.Bg}\"/>");
         }
 
-        var origin = metrics.ContentOrigin;
-        for (var i = 0; i < rowLayers.Count; i++)
-        {
-            var layer = rowLayers[i];
-            sb.AppendLine(CultureInfo.InvariantCulture, $"<g class=\"layer layer-{i}\">");
-            AppendRow(sb, layer.Buffer!, layer.P0, origin.X, origin.Y, metrics, theme);
-            sb.AppendLine("</g>");
-        }
+        var head = sb.ToString();
+        sb.Clear();
 
+        var origin = metrics.ContentOrigin;
         for (var i = 0; i < cursorLayers.Count; i++)
         {
             var layer = cursorLayers[i];
@@ -651,7 +791,7 @@ internal static class SvgFrameRenderer
 
         sb.AppendLine("</g>");
         sb.AppendLine("</svg>");
-        return sb.ToString();
+        return (head, sb.ToString());
     }
 
     private static void AppendLayerCycleStyle(StringBuilder sb, string selector, string keyframeName, string loopDurationText)
@@ -1106,7 +1246,7 @@ internal static class SvgFrameRenderer
             if (Math.Abs(quantizedTime - frames[i].Time) < 1e-9)
                 normalized.Add(frames[i]);
             else
-                normalized.Add(new ReplayFrame(quantizedTime, frames[i].Buffer, frames[i].ViewportWidth, frames[i].ViewportHeight, frames[i].Signature));
+                normalized.Add(frames[i].WithTime(quantizedTime));
             lastTime = quantizedTime;
         }
 
@@ -1235,7 +1375,7 @@ internal static class SvgFrameRenderer
     private static ReplayFrame CloneAtTime(ReplayFrame frame, double time) =>
         Math.Abs(time - frame.Time) < 1e-9
             ? frame
-            : new ReplayFrame(time, frame.Buffer, frame.ViewportWidth, frame.ViewportHeight, frame.Signature);
+            : frame.WithTime(time);
 
     private static bool HaveSameTime(double left, double right) =>
         Math.Abs(left - right) <= 1e-9;
@@ -1338,13 +1478,12 @@ internal static class SvgFrameRenderer
         internal List<AnimLayer> Viewports { get; } = viewports;
     }
 
-    private sealed class AnimLayer(double show, int p0, int p1 = 0, ScreenBuffer? buffer = null)
+    private sealed class AnimLayer(double show, int p0, int p1 = 0)
     {
         internal double Show { get; } = show;
         internal double? Hide { get; set; }
         internal int P0 { get; } = p0;
         internal int P1 { get; } = p1;
-        internal ScreenBuffer? Buffer { get; } = buffer;
     }
 }
 

@@ -64,6 +64,16 @@ Tests: `tests/terminal_tests.cs`.
 - Block cursor at the emulator position when visible; hidden by `\e[?25l`.
 - **Matrix rain tint:** ANSI bright white (`palette` index 7) horizontally adjacent to green (`2` or `10`) on the same row renders as bright green (`10`). Helps `cmatrix`-style casts where white highlights sit in green columns. Vertical neighbors are ignored so output on the line below a `run-highlight` command is not tinted.
 
+### Memory
+
+- Rendering memory stays near the output size, not events × screen size. The replay timeline holds no screen contents, and each row layer is encoded as soon as it is created.
+- Measured with a full-screen `matrix --fps 60` recording on Windows 11:
+
+  | Terminal | SVG | Peak memory |
+  |---|---|---|
+  | 200×60 | 117MB | 234MB (was 4.8GB) |
+  | 384×108 | 455MB | 673MB (did not finish before: over 43GB) |
+
 ### Window chrome
 
 Optional OS-style frame for README embeds. Configured via `render.window` in scenario YAML, `st:window` in v3 cast `tags`, or `--window` on CLI. Default: **`none`** (plain terminal above).
@@ -130,7 +140,7 @@ The cast file is never modified by the `svg` subcommand.
 | Suite | Coverage |
 |-------|----------|
 | `tests/terminal_tests.cs` | VT emulator (CSI, Unicode, alt screen) |
-| `tests/svg_render_test.cs` | Row-diff smoke, marker timing, `--max-fps`, matrix rain tint |
+| `tests/svg_render_test.cs` | Row-diff smoke, marker timing, `--max-fps`, matrix rain tint, streamed file output matches in-memory render |
 | `tests/window_chrome_test.cs` | `render.window` / cast tag / CLI resolution; chrome SVG structure |
 
 Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs all three.
@@ -155,3 +165,6 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 - Window chrome should stay **fixed px** like a real desktop window; scaling chrome with `font-size` looked wrong in README embeds.
 - Title bar corners must be rounded on the **top only**; a fully rounded title-bar rect leaves visible gaps where it meets the terminal viewport.
 - Chrome control layout (button size, padding, title bar height) needed visual iteration; fixed constants are preferable to formula-based scaling.
+- Snapshotting the whole screen (both main and alternate grids) on every changed event made memory grow with events × screen size: 4.8GB for a 200×60 full-screen TUI, and more than 43GB at 384×108.
+  - Replaying the events twice, once to build the timeline and once to draw the selected frames, costs less than keeping snapshots.
+  - It also cut render time from 5.8s to 2.6s at 200×60.

@@ -31,7 +31,7 @@ The numbers below were measured on 2026-10-29 with scenetake 1.4.2 on Windows 11
 | Output | Size | Notes |
 |---|---|---|
 | cast | 15.6MB | |
-| SVG, today | 117MB (scenario path: 118MB) | 6.8MB gzipped; peak RAM 4.3GB |
+| SVG, today | 117MB (scenario path: 118MB) | 6.8MB gzipped; peak RAM 4.3–4.8GB before A1, 234MB after |
 | SVG, `--max-fps 20` | 25.6MB | |
 | SVG, compact prototype | 28MB | 3.4MB gzipped |
 | SVG, compact prototype + `--max-fps 20` | 6.2MB | |
@@ -53,7 +53,7 @@ The numbers below were measured on 2026-10-29 with scenetake 1.4.2 on Windows 11
 | Output | Size |
 |---|---|
 | cast | 53MB |
-| SVG, today | Aborted at more than 43GB RAM (estimated over 400MB output) |
+| SVG | Before A1: aborted at more than 43GB RAM. After A1: 455MB, with a 673MB peak. |
 | GIF, ffmpeg | Out of memory in the 8GB VM |
 | H.264 crf 23 / crf 28 slow / crf 23 30fps | 43MB / 23.5MB / 29MB |
 | HEVC crf 28 / AV1 crf 35 | 30.3MB / 49.3MB |
@@ -118,7 +118,7 @@ Guidance once both tracks land:
 
 | Order | Work | Reason |
 |---|---|---|
-| 1 | A1. Streaming replay (memory) | Small change with byte-identical output that removes the out-of-memory failure. It also gives B a replay stepper. |
+| 1 | A1. Streaming replay (memory) — **done 2026-10-29** | Small change with byte-identical output that removes the out-of-memory failure. It also gives B a replay stepper (`TerminalReplay.EnumerateCaptures`). |
 | 2 | B0–B4. mp4 output | Main fix for the reported use case. |
 | 3 | A2. Compact row encoding | Independent of B, and only changes SVG row output. |
 | 4 | A3. Size warning | Comes after B so the warning can recommend mp4. |

@@ -119,6 +119,39 @@ internal sealed class ScreenBuffer
         return true;
     }
 
+    /// <summary>Same comparison as <see cref="RowEquals(ScreenBuffer, int)"/>, against a row copied with <see cref="CopyRowTo"/>.</summary>
+    internal bool RowEquals(int row, ReadOnlySpan<ScreenCell> other)
+    {
+        if (Width != other.Length)
+            return false;
+
+        var w = Width;
+        for (var col = 0; col < w; col++)
+        {
+            ref readonly var a = ref _cells[row, col];
+            ref readonly var b = ref other[col];
+            if (a.Text != b.Text || a.Style != b.Style || a.IsWide != b.IsWide || a.IsWideContinuation != b.IsWideContinuation)
+                return false;
+        }
+
+        return true;
+    }
+
+    internal void CopyRowTo(int row, ScreenCell[] destination) =>
+        System.Runtime.InteropServices.MemoryMarshal.CreateReadOnlySpan(ref _cells[row, 0], Width).CopyTo(destination);
+
+    /// <summary>Same test as <see cref="IsRowBlank(int)"/>, for a row copied with <see cref="CopyRowTo"/>.</summary>
+    internal static bool IsRowBlank(ReadOnlySpan<ScreenCell> cells, CellStyle defaultStyle)
+    {
+        foreach (ref readonly var cell in cells)
+        {
+            if (cell.Text != Space || cell.Style != defaultStyle || cell.IsWide || cell.IsWideContinuation)
+                return false;
+        }
+
+        return true;
+    }
+
     internal bool IsRowBlank(int row)
     {
         if ((uint)row >= (uint)Height)
@@ -1495,23 +1528,30 @@ internal static class CastEventLayout
     }
 }
 
-internal sealed class ReplayFrame
+/// <summary>
+/// One changed screen state on the replay timeline. Holds no screen contents:
+/// <see cref="Ordinal"/> identifies the capture in <see cref="TerminalReplay.EnumerateCaptures"/>,
+/// so a renderer replays the events again to see the screen.
+/// </summary>
+internal sealed class ReplayFrame(double time, int ordinal, int viewportWidth, int viewportHeight, ulong signature, bool isBlank)
 {
-    internal ReplayFrame(double time, ScreenBuffer buffer, int viewportWidth, int viewportHeight, ulong? signature = null)
-    {
-        Time = time;
-        Buffer = buffer;
-        ViewportWidth = viewportWidth;
-        ViewportHeight = viewportHeight;
-        Signature = signature ?? buffer.ComputeCanvasSignature(buffer.Width, buffer.Height);
-    }
+    internal double Time { get; } = time;
+    internal int Ordinal { get; } = ordinal;
+    internal int ViewportWidth { get; } = viewportWidth;
+    internal int ViewportHeight { get; } = viewportHeight;
+    internal ulong Signature { get; } = signature;
+    internal bool IsBlank { get; } = isBlank;
 
-    internal double Time { get; }
-    internal ScreenBuffer Buffer { get; }
-    internal int ViewportWidth { get; }
-    internal int ViewportHeight { get; }
-    internal ulong Signature { get; }
+    internal ReplayFrame WithTime(double time) =>
+        new(time, Ordinal, ViewportWidth, ViewportHeight, Signature, IsBlank);
 }
+
+/// <summary>
+/// A changed screen state during replay. <see cref="View"/> is canvas-sized and is only
+/// valid until the enumeration advances: it may be the live emulator buffer.
+/// </summary>
+internal readonly record struct ReplayCapture(
+    int Ordinal, double Time, ScreenBuffer View, int ViewportWidth, int ViewportHeight, ulong Signature);
 
 internal static class TerminalReplay
 {
@@ -1539,7 +1579,36 @@ internal static class TerminalReplay
         return lastTime + CastExitIntervalSeconds;
     }
 
+    /// <summary>
+    /// Builds the replay timeline: one frame per changed screen state, after trimming a
+    /// trailing blank alternate-screen restore. Frames hold no screen contents, so memory
+    /// stays proportional to the number of changes, not changes × screen size.
+    /// </summary>
     internal static List<ReplayFrame> BuildFrames(
+        IReadOnlyList<CastEvent> events,
+        int initialWidth,
+        int initialHeight,
+        int canvasWidth,
+        int canvasHeight,
+        TerminalTheme theme)
+    {
+        var frames = new List<ReplayFrame>();
+        foreach (var capture in EnumerateCaptures(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme))
+        {
+            frames.Add(new ReplayFrame(
+                capture.Time, capture.Ordinal, capture.ViewportWidth, capture.ViewportHeight, capture.Signature, IsBlankBuffer(capture.View)));
+        }
+
+        return TrimTrailingBlankRestore(frames, events);
+    }
+
+    /// <summary>
+    /// Replays <paramref name="events"/> and yields each changed screen state in order.
+    /// Ordinals are stable across calls with the same arguments, which lets a renderer
+    /// select frames from <see cref="BuildFrames"/> and replay again to draw them.
+    /// When nothing changes, yields the final state once at time 0.
+    /// </summary>
+    internal static IEnumerable<ReplayCapture> EnumerateCaptures(
         IReadOnlyList<CastEvent> events,
         int initialWidth,
         int initialHeight,
@@ -1549,21 +1618,15 @@ internal static class TerminalReplay
     {
         var buffer = new ScreenBuffer(initialWidth, initialHeight, theme);
         var parser = new AnsiParser(buffer, theme);
-        var frames = new List<ReplayFrame>();
         ulong? lastSignature = null;
-
-        void CaptureIfChanged(double time)
-        {
-            var signature = buffer.ComputeCanvasSignature(canvasWidth, canvasHeight);
-            if (lastSignature is ulong previous && previous == signature)
-                return;
-
-            frames.Add(new ReplayFrame(time, SnapshotForCanvas(buffer, canvasWidth, canvasHeight), buffer.Width, buffer.Height, signature));
-            lastSignature = signature;
-        }
+        var ordinal = 0;
 
         if (!IsBlankBuffer(buffer))
-            CaptureIfChanged(0);
+        {
+            var signature = buffer.ComputeCanvasSignature(canvasWidth, canvasHeight);
+            lastSignature = signature;
+            yield return new ReplayCapture(ordinal++, 0, ViewForCanvas(buffer, canvasWidth, canvasHeight), buffer.Width, buffer.Height, signature);
+        }
 
         foreach (var ev in events)
         {
@@ -1571,30 +1634,35 @@ internal static class TerminalReplay
                 continue;
 
             if (ev.Kind == CastEventKind.Resize)
-            {
                 buffer.Resize(ev.ResizeWidth, ev.ResizeHeight);
-                CaptureIfChanged(ev.Time);
-                continue;
-            }
-
-            if (ev.HasUtf8Output)
+            else if (ev.HasUtf8Output)
                 parser.ProcessUtf8(ev.Utf8Output.Span);
             else
                 parser.Process(ev.Data);
-            CaptureIfChanged(ev.Time);
+
+            var signature = buffer.ComputeCanvasSignature(canvasWidth, canvasHeight);
+            if (lastSignature is ulong previous && previous == signature)
+                continue;
+
+            lastSignature = signature;
+            yield return new ReplayCapture(ordinal++, ev.Time, ViewForCanvas(buffer, canvasWidth, canvasHeight), buffer.Width, buffer.Height, signature);
         }
 
-        if (frames.Count == 0)
-            frames.Add(new ReplayFrame(0, SnapshotForCanvas(buffer, canvasWidth, canvasHeight), buffer.Width, buffer.Height));
-
-        return TrimTrailingBlankRestore(frames, events);
+        if (ordinal == 0)
+        {
+            var view = ViewForCanvas(buffer, canvasWidth, canvasHeight);
+            yield return new ReplayCapture(0, 0, view, buffer.Width, buffer.Height, view.ComputeCanvasSignature(view.Width, view.Height));
+        }
     }
 
-    private static ScreenBuffer SnapshotForCanvas(ScreenBuffer source, int canvasWidth, int canvasHeight)
+    /// <summary>The live buffer when it already fills the canvas; otherwise a resized copy.</summary>
+    private static ScreenBuffer ViewForCanvas(ScreenBuffer source, int canvasWidth, int canvasHeight)
     {
+        if (source.Width == canvasWidth && source.Height == canvasHeight)
+            return source;
+
         var copy = source.Clone();
-        if (copy.Width != canvasWidth || copy.Height != canvasHeight)
-            copy.Resize(canvasWidth, canvasHeight);
+        copy.Resize(canvasWidth, canvasHeight);
         return copy;
     }
 
@@ -1627,7 +1695,7 @@ internal static class TerminalReplay
         var lastNonBlank = -1;
         for (var i = frames.Count - 1; i >= 0; i--)
         {
-            if (!IsBlankBuffer(frames[i].Buffer))
+            if (!frames[i].IsBlank)
             {
                 lastNonBlank = i;
                 break;
