@@ -295,7 +295,7 @@ Tests: `tests/svg_render_test.cs` decodes the new markup, including `<use>`, and
 
 ## A5. Further Size Reduction (Investigation)
 
-Status: **Investigated, not implemented** (2026-10-29).
+Status: **S0–S6 implemented** (2026-10-29). See [What Was Built](#what-was-built-s0s6). X1–X3 and S2c were not built. The rest of this section is the investigation.
 
 ### Where the Bytes Go After A4
 
@@ -376,6 +376,48 @@ S6 would add about 4 points on typing. Playback cost was the same as today for b
 - **Cost of custom-property animation.** Animating a custom property costs far more main-thread time than animating `opacity`. X2 with the animation on every layer tripled main-thread time on typing (basic: about 110 → 335 ms/s).
 - **Cost of a moving cursor.** Moving one element by keyframes (X1) added main-thread time on busy recordings in every form tried: `translate`, `transform`, and CSS `x`/`y`. Many cursor elements that only switch `opacity` cost nothing extra.
 - **matrix 200×60 is past what a browser can play.** In headless Edge it plays at 1–2 frames per second today, with or without GPU. Size work on it matters for the file limit, not for playback.
+
+### What Was Built (S0–S6)
+
+All of S0–S6 went in, with S2 chosen per layer.
+
+- **S2 (row-local).** Every changed row is encoded both ways and the shorter is kept.
+  - A row gets its class only once its layers' would-be savings pay for the CSS rule.
+  - Charging the rule to each layer on its own kept typing rows absolute, because one layer saves about 10 bytes.
+- **S3 (colors).** The default color is the theme's foreground, known before encoding starts. Every other color becomes a class on first use; encoding streams, so how often a color recurs is not known in advance.
+- **S4 (cursor).** The cursor joins a row layer only on its own row, so that layer's content cannot cover it. Positions without such a layer keep their own keyframe.
+- **S5 (no wrapper).** Only single-`<text>` layers lose their `<g>`. A rect given a class would lose the crisp-edge rule (`rect:not([class])`).
+- **S6 (short names).** Rows, colors, and keyframes share one pool of 1–2 character names. Keyframes are named last, most used first.
+- **S1 (block rects).** Shades (░ ▒ ▓) became translucent rects too, matching mp4.
+
+| Output | A4 (LF) | S0–S6 |
+|---|---|---|
+| basic (typing) | 55.0KB | 45.7KB (−16.9%) |
+| git (typing) | 35.9KB | 31.1KB (−13.4%) |
+| scenario_format (typing) | 179.6KB | 146.6KB (−18.3%) |
+| theme (typing, light) | 17.0KB | 13.6KB (−19.9%) |
+| interactive-pty (TUI) | 523.7KB | 232.3KB (−55.6%) |
+| pty (small matrix) | 562.6KB | 432.0KB (−23.2%) |
+| matrix 200×60 | 26.4MB | 19.7MB (−25.3%) |
+| matrix 200×60, `--max-fps 20` | 5.8MB | 4.3MB (−25.2%) |
+| matrix 384×108 | 95.7MB | 70.7MB (−26.1%) |
+
+- **Samples.** The 13 committed sample SVGs went from 1.63MB to 1.11MB. Every fixture shrank too.
+- **Render time.** matrix 200×60 went from 3.0s to 4.0s, and 384×108 from 25s to 26s.
+
+**Visual check.** Each of the 16 samples and fixtures was compared with A4 through `<img>` in headless Edge, at 5 times each:
+
+| Result | Shots | Cause |
+|---|---|---|
+| Pixel-identical | 68 of 80 | — |
+| At most 2 of 255 levels | 8 | Underline anti-aliasing and single pixels |
+| Intended change | 3 | interactive-pty block elements |
+| Glyphs moved by under a pixel | 1 | An interactive-pty row switched from glyph-list to run form, because shorter color markup changed which form is shorter |
+
+**Playback cost.** Measured the same way as the candidates:
+
+- basic, pty, and interactive-pty held 60fps, with the same main-thread time as A4.
+- matrix 200×60 stayed within run-to-run noise. It plays at 1–1.5 frames per second either way.
 
 ## Docs to Update When Done
 

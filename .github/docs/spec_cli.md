@@ -75,7 +75,7 @@ Progress and status go to stderr (`Loading:`, `Written:`, `Done:`). File paths i
 **Large SVG.** After writing an SVG over 10MB, scenetake prints the warning below. The file is kept and the exit code does not change.
 
 ```
-Warning: SVG is 26.9MB (over 10MB). Heavy output such as full-screen TUIs is much smaller as mp4 (--format mp4) or as SVG with --max-fps 20
+Warning: SVG is 19.7MB (over 10MB). Heavy output such as full-screen TUIs is much smaller as mp4 (--format mp4) or as SVG with --max-fps 20
 ```
 
 - The `svg` subcommand suggests `scenetake mp4 <cast>` instead of `--format mp4`.

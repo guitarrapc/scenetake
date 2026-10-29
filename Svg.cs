@@ -91,6 +91,21 @@ internal sealed class SvgDocument(string head, Action<Stream>? writeBody, string
     }
 }
 
+/// <summary>
+/// Line writes for SVG text. SVG output always ends lines with <c>\n</c>, so the file is the
+/// same on every OS and Windows output carries no extra byte per line.
+/// </summary>
+internal static class SvgLineExtensions
+{
+    internal static StringBuilder AppendLf(this StringBuilder sb, string value) => sb.Append(value).Append('\n');
+
+    internal static StringBuilder AppendLf(
+        this StringBuilder sb,
+        IFormatProvider? provider,
+        [System.Runtime.CompilerServices.InterpolatedStringHandlerArgument(nameof(sb), nameof(provider))] ref StringBuilder.AppendInterpolatedStringHandler handler) =>
+        sb.Append('\n');
+}
+
 /// <summary>A run of encoded bytes inside a <see cref="Utf8ChunkBuffer"/>.</summary>
 internal readonly record struct Utf8Segment(int Chunk, int Offset, int Length);
 
@@ -132,6 +147,31 @@ internal sealed class Utf8ChunkBuffer
     {
         if (segment.Length != 0)
             stream.Write(_chunks[segment.Chunk], segment.Offset, segment.Length);
+    }
+
+    /// <summary>
+    /// Writes a segment that holds one element (<c>&lt;text</c> or <c>&lt;rect</c>) with
+    /// <paramref name="classes"/> added in front of its own class list, if it has one.
+    /// </summary>
+    internal void WriteWithClasses(Stream stream, Utf8Segment segment, string classes)
+    {
+        const int TagLength = 5; // "<text" or "<rect"
+        var element = _chunks[segment.Chunk].AsSpan(segment.Offset, segment.Length);
+        var rest = element[TagLength..];
+        var classAttribute = " class=\""u8;
+        stream.Write(element[..TagLength]);
+        stream.Write(classAttribute);
+        stream.Write(Encoding.ASCII.GetBytes(classes));
+        if (rest.StartsWith(classAttribute))
+        {
+            stream.WriteByte((byte)' ');
+            stream.Write(rest[classAttribute.Length..]);
+        }
+        else
+        {
+            stream.WriteByte((byte)'"');
+            stream.Write(rest);
+        }
     }
 
     private ReadOnlySpan<byte> Encode(StringBuilder text)
@@ -528,6 +568,7 @@ internal static class SvgFrameRenderer
     [ThreadStatic] private static StringBuilder? t_runForm;
     [ThreadStatic] private static StringBuilder? t_listForm;
     [ThreadStatic] private static List<GlyphGroup>? t_glyphGroups;
+    [ThreadStatic] private static List<BlockPart>? t_blockParts;
     [ThreadStatic] private static StringBuilder? t_escape;
 
     /// <summary>
@@ -552,38 +593,72 @@ internal static class SvgFrameRenderer
         var theme = TerminalTheme.FromResolved(render.Theme);
         var metrics = CreateMetrics(render.FontSize, canvasWidth, canvasHeight, render.Window);
 
-        var rowContent = new Utf8ChunkBuffer();
-        var layers = BuildLayers(events, initialWidth, initialHeight, frames, canvasWidth, canvasHeight, theme, metrics, rowContent);
+        var context = new EncodeContext(metrics, theme, canvasHeight);
+        var layers = BuildLayers(events, initialWidth, initialHeight, frames, canvasWidth, canvasHeight, context);
         loopDuration = ResolveLoopDuration(loopDuration, layers);
 
-        var (head, rowKeyframes, tail) = BuildLayeredSvg(layers, metrics, render, theme, canvasWidth, canvasHeight, loopDuration);
-        return new SvgDocument(head, stream => WriteRowLayers(stream, layers.Rows, rowKeyframes, rowContent, metrics), tail);
+        var (head, rowKeyframes, tail) = BuildLayeredSvg(layers, context, render, canvasWidth, canvasHeight, loopDuration);
+        return new SvgDocument(head, stream => WriteRowLayers(stream, layers, rowKeyframes, context), tail);
     }
 
     /// <summary>
-    /// Writes each row layer on one line: <c>&lt;g class="l kN"&gt;content&lt;/g&gt;</c>, with an id on
-    /// content that later layers reuse, and <c>&lt;use href="#rN" y="dy" class="l kN"/&gt;</c> for those
-    /// later layers (a row that scrolled to another line, unchanged).
+    /// Writes each row layer on one line:
+    /// <list type="bullet">
+    /// <item><c>&lt;g class="l K R"&gt;content&lt;/g&gt;</c>, where <c>K</c> names the timing and <c>R</c>, present
+    /// for row-local content, moves it to its row. Content that later layers reuse gets an inner
+    /// <c>&lt;g id="rN"&gt;</c>, and a cursor with the same timing on the same row goes last.</item>
+    /// <item>A layer of one <c>&lt;text&gt;</c> carries the classes itself, without the group.</item>
+    /// <item><c>&lt;use href="#rN" class="l K R"/&gt;</c> (or with <c>y="dy"</c> for absolute content) repeats earlier content.</item>
+    /// </list>
+    /// Empty layers (a row that went blank) draw nothing and are left out.
     /// </summary>
-    private static void WriteRowLayers(Stream stream, List<AnimLayer> rows, string[] keyframes, Utf8ChunkBuffer content, SvgMetrics metrics)
+    private static void WriteRowLayers(Stream stream, LayerSet layers, string?[] keyframes, EncodeContext context)
     {
-        var newline = Environment.NewLine;
+        var rows = layers.Rows;
+        var metrics = context.Metrics;
+        var origin = metrics.ContentOrigin;
         for (var i = 0; i < rows.Count; i++)
         {
             var layer = rows[i];
+            if (keyframes[i] is not { } keyframe)
+                continue;
+
+            var classes = layer.RowLocal ? $"l {keyframe} {context.RowClasses[layer.P0]}" : $"l {keyframe}";
             if (layer.ReuseOf is int source)
             {
-                var dy = (layer.P0 - rows[source].P0) * metrics.LineHeight;
-                SvgDocument.WriteText(stream, string.Create(CultureInfo.InvariantCulture,
-                    $"<use href=\"#r{source}\" y=\"{dy:0.##}\" class=\"l {keyframes[i]}\"/>{newline}"));
+                SvgDocument.WriteText(stream, layer.RowLocal
+                    ? $"<use href=\"#r{source}\" class=\"{classes}\"/>\n"
+                    : string.Create(CultureInfo.InvariantCulture,
+                        $"<use href=\"#r{source}\" y=\"{(layer.P0 - rows[source].P0) * metrics.LineHeight:0.##}\" class=\"{classes}\"/>\n"));
                 continue;
             }
 
-            SvgDocument.WriteText(stream, layer.Reused ? $"<g class=\"l {keyframes[i]}\"><g id=\"r{i}\">" : $"<g class=\"l {keyframes[i]}\">");
-            content.Write(stream, layer.Content);
-            SvgDocument.WriteText(stream, layer.Reused ? "</g></g>" + newline : "</g>" + newline);
+            if (layer.SingleText && !layer.Reused && layer.Cursor < 0)
+            {
+                context.Content.WriteWithClasses(stream, layer.Content, classes);
+                stream.WriteByte((byte)'\n');
+                continue;
+            }
+
+            SvgDocument.WriteText(stream, layer.Reused ? $"<g class=\"{classes}\"><g id=\"r{i}\">" : $"<g class=\"{classes}\">");
+            context.Content.Write(stream, layer.Content);
+            if (layer.Reused)
+                SvgDocument.WriteText(stream, "</g>");
+            if (layer.Cursor >= 0)
+            {
+                var cursor = layers.Cursors[layer.Cursor];
+                var y = layer.RowLocal ? -metrics.BaselineOffset : origin.Y + cursor.P0 * metrics.LineHeight;
+                SvgDocument.WriteText(stream, string.Create(CultureInfo.InvariantCulture,
+                    $"<use href=\"#c\" x=\"{origin.X + cursor.P1 * metrics.CharWidth:0.##}\" y=\"{y:0.##}\"/>"));
+            }
+
+            SvgDocument.WriteText(stream, "</g>\n");
         }
     }
+
+    /// <summary>Whether a row layer draws anything: blank rows produce empty layers, which are left out.</summary>
+    private static bool IsWritten(AnimLayer layer) =>
+        layer.ElementCount > 0 || layer.ReuseOf is not null || layer.Cursor >= 0;
 
     private static double ResolveLoopDuration(double loopDuration, LayerSet layers)
     {
@@ -613,9 +688,9 @@ internal static class SvgFrameRenderer
 
     /// <summary>
     /// Replays <paramref name="events"/> and builds row, cursor, and viewport layers for the
-    /// selected <paramref name="frames"/>. Each new row layer is encoded into
-    /// <paramref name="rowLayers"/> immediately. Comparisons use a copy of each row's active
-    /// layer and of the previous frame, so memory is two screens rather than one per frame.
+    /// selected <paramref name="frames"/>. Each new row layer is encoded into the context's
+    /// content buffer immediately. Comparisons use a copy of each row's active layer and of the
+    /// previous frame, so memory is two screens rather than one per frame.
     /// </summary>
     private static LayerSet BuildLayers(
         IReadOnlyList<CastEvent> events,
@@ -624,10 +699,11 @@ internal static class SvgFrameRenderer
         IReadOnlyList<ReplayFrame> frames,
         int canvasWidth,
         int canvasHeight,
-        TerminalTheme theme,
-        SvgMetrics metrics,
-        Utf8ChunkBuffer rowLayers)
+        EncodeContext context)
     {
+        var theme = context.Theme;
+        var metrics = context.Metrics;
+        var rowLayers = context.Content;
         var rows = new List<AnimLayer>();
         var cursors = new List<AnimLayer>();
         var viewports = new List<AnimLayer>();
@@ -643,7 +719,8 @@ internal static class SvgFrameRenderer
         var hasPrevious = false;
         AnimLayer? cursorActive = null;
         AnimLayer? viewportActive = null;
-        var fragment = new StringBuilder(4096);
+        var local = new StringBuilder(4096);
+        var absolute = new StringBuilder(4096);
         var verify = new StringBuilder(4096);
         var firstLayerByRowHash = new Dictionary<ulong, int>();
         var origin = metrics.ContentOrigin;
@@ -708,24 +785,60 @@ internal static class SvgFrameRenderer
                     HideRowLayer(activeByRow, row, time);
                 }
 
-                fragment.Clear();
-                AppendRow(fragment, buffer, row, origin.X, origin.Y, metrics, theme);
-                var layer = new AnimLayer(time, row);
+                // Row-local content (baseline at y=0, moved by the row's class) drops y from every
+                // <text>, but the layer then needs the row class, and the row its CSS rule once.
+                // Keep whichever form is shorter.
+                local.Clear();
+                var localShape = AppendRow(local, buffer, row, origin.X, -metrics.BaselineOffset, rowLocal: true, context);
+                absolute.Clear();
+                var absoluteShape = AppendRow(absolute, buffer, row, origin.X, origin.Y + row * metrics.LineHeight, rowLocal: false, context);
+                bool rowLocal;
+                if (context.RowClasses[row] is { } rowClass)
+                {
+                    rowLocal = local.Length + 1 + rowClass.Length < absolute.Length;
+                }
+                else
+                {
+                    // Until the row has a class, add up what row-local content would have saved; once that
+                    // pays for the row's CSS rule, the row gets its class.
+                    var nameLength = context.Names.PeekLength();
+                    var saving = absolute.Length - (local.Length + 1 + nameLength);
+                    if (saving > 0)
+                        context.RowSavings[row] += saving;
+                    rowLocal = context.RowSavings[row] > RowRule(new string('r', nameLength), RowBaseline(metrics, row)).Length + 1;
+                }
+
+                var fragment = rowLocal ? local : absolute;
+                var shape = rowLocal ? localShape : absoluteShape;
+                var layer = new AnimLayer(time, row) { ElementCount = shape.Elements, SingleText = shape.SingleText };
 
                 // Scrolling moves unchanged rows to other lines. Reuse the first layer that showed the
-                // same content: re-encode this row at that layer's line and compare bytes exactly.
+                // same content, after comparing bytes exactly: row-local content as it is, absolute
+                // content re-encoded at that layer's line.
                 var reused = false;
                 if (fragment.Length >= MinReusableRowChars)
                 {
                     var hash = buffer.RowHash(row);
                     if (firstLayerByRowHash.TryGetValue(hash, out var source))
                     {
-                        verify.Clear();
-                        AppendRow(verify, buffer, row, origin.X, origin.Y + (rows[source].P0 - row) * metrics.LineHeight, metrics, theme);
-                        if (rowLayers.SegmentEquals(rows[source].Content, verify))
+                        var sourceLayer = rows[source];
+                        bool same;
+                        if (sourceLayer.RowLocal)
+                        {
+                            same = rowLayers.SegmentEquals(sourceLayer.Content, local);
+                        }
+                        else
+                        {
+                            verify.Clear();
+                            AppendRow(verify, buffer, row, origin.X, origin.Y + sourceLayer.P0 * metrics.LineHeight, rowLocal: false, context);
+                            same = rowLayers.SegmentEquals(sourceLayer.Content, verify);
+                        }
+
+                        if (same)
                         {
                             layer.ReuseOf = source;
-                            rows[source].Reused = true;
+                            layer.RowLocal = sourceLayer.RowLocal;
+                            sourceLayer.Reused = true;
                             reused = true;
                         }
                     }
@@ -736,7 +849,13 @@ internal static class SvgFrameRenderer
                 }
 
                 if (!reused)
+                {
                     layer.Content = rowLayers.Append(fragment);
+                    layer.RowLocal = rowLocal;
+                }
+
+                if (layer.RowLocal)
+                    context.RowClasses[row] ??= context.Names.Next();
 
                 rows.Add(layer);
                 activeByRow[row] = layer;
@@ -781,16 +900,20 @@ internal static class SvgFrameRenderer
         return changedToBlank >= Math.Max(1, current.Height / 2);
     }
 
-    /// <summary>Builds the text before and after the row layers, which <see cref="BuildLayers"/> has already encoded.</summary>
-    private static (string Head, string[] RowKeyframes, string Tail) BuildLayeredSvg(
+    /// <summary>
+    /// Builds the text before and after the row layers, which <see cref="BuildLayers"/> has already
+    /// encoded. Returns each row layer's keyframe class, or null for a layer that is left out.
+    /// </summary>
+    private static (string Head, string?[] RowKeyframes, string Tail) BuildLayeredSvg(
         LayerSet layers,
-        SvgMetrics metrics,
+        EncodeContext context,
         ResolvedRenderSettings render,
-        TerminalTheme theme,
         int canvasWidth,
         int canvasHeight,
         double loopDuration)
     {
+        var metrics = context.Metrics;
+        var theme = context.Theme;
         var rowLayers = layers.Rows;
         var cursorLayers = layers.Cursors;
         var viewportLayers = layers.Viewports;
@@ -800,55 +923,101 @@ internal static class SvgFrameRenderer
         if (viewportLayers.Count == 0)
             viewportLayers = [new AnimLayer(0, canvasWidth, canvasHeight)];
 
+        var keyframes = new LoopKeyframeRegistry(loopDuration);
+        var rowKeyframeIds = new int[rowLayers.Count];
+        for (var i = 0; i < rowLayers.Count; i++)
+            rowKeyframeIds[i] = keyframes.Register(rowLayers[i].Show, rowLayers[i].Hide);
+
+        var cursorKeyframeIds = new int[cursorLayers.Count];
+        for (var i = 0; i < cursorLayers.Count; i++)
+            cursorKeyframeIds[i] = keyframes.Register(cursorLayers[i].Show, cursorLayers[i].Hide);
+
+        var viewportKeyframeIds = new int[viewportLayers.Count];
+        for (var i = 0; i < viewportLayers.Count; i++)
+            viewportKeyframeIds[i] = keyframes.Register(viewportLayers[i].Show, viewportLayers[i].Hide);
+
+        // A cursor shown and hidden together with a row layer on its own row goes inside that layer,
+        // after the row's content, so it needs no timing of its own. Other cursors stand alone.
+        var layerByTiming = new Dictionary<(int Keyframe, int Row), int>();
+        for (var i = 0; i < rowLayers.Count; i++)
+        {
+            if (rowLayers[i].ReuseOf is null)
+                layerByTiming.TryAdd((rowKeyframeIds[i], rowLayers[i].P0), i);
+        }
+
+        var standaloneCursors = new List<int>();
+        for (var i = 0; i < cursorLayers.Count; i++)
+        {
+            if (layerByTiming.TryGetValue((cursorKeyframeIds[i], cursorLayers[i].P0), out var rowIndex) && rowLayers[rowIndex].Cursor < 0)
+                rowLayers[rowIndex].Cursor = i;
+            else
+                standaloneCursors.Add(i);
+        }
+
+        // Count each keyframe's references, so the most used get the shortest names and unused ones are dropped.
+        for (var i = 0; i < rowLayers.Count; i++)
+        {
+            if (IsWritten(rowLayers[i]))
+                keyframes.Use(rowKeyframeIds[i]);
+        }
+
+        foreach (var i in standaloneCursors)
+            keyframes.Use(cursorKeyframeIds[i]);
+
+        var viewportElements = 2 + (metrics.HasChrome ? 6 : 0); // mask, background, and the chrome's parts
+        for (var i = 0; i < viewportLayers.Count; i++)
+            keyframes.Use(viewportKeyframeIds[i], viewportElements);
+
+        keyframes.AssignNames(context.Names);
+
         var sb = new StringBuilder(64 * 1024);
-        sb.AppendLine(CultureInfo.InvariantCulture, $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLf(CultureInfo.InvariantCulture, $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        sb.AppendLf(CultureInfo.InvariantCulture,
             $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" viewBox=\"0 0 {metrics.SvgWidth:0.##} {metrics.SvgHeight:0.##}\" preserveAspectRatio=\"xMidYMid meet\" role=\"img\" aria-label=\"scenetake output\">");
 
-        sb.AppendLine("<style>");
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLf("<style>");
+        sb.AppendLf(CultureInfo.InvariantCulture,
             $"text {{ font-family: {render.FontFamily}; font-size: {render.FontSize}px; white-space: pre; }}");
-        sb.AppendLine("text { dominant-baseline: alphabetic; }");
-        // Row background rects carry no class, also inside reused <use> content; this gives them crisp edges.
-        sb.AppendLine(".bg,rect:not([class]) { shape-rendering: crispEdges; }");
+        sb.AppendLf("text { dominant-baseline: alphabetic; }");
+        // Background and block rects in rows carry no class, also inside reused <use> content; this gives them crisp edges.
+        sb.AppendLf(".bg,rect:not([class]) { shape-rendering: crispEdges; }");
         // Every animated element: hidden by default, switched exactly at its keyframe offsets, looping.
-        sb.AppendLine(CultureInfo.InvariantCulture, $".l {{ opacity: 0; animation: {loopDurationText}s step-end infinite; }}");
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLf(CultureInfo.InvariantCulture, $".l {{ opacity: 0; animation: {loopDurationText}s step-end infinite; }}");
+        sb.AppendLf(CultureInfo.InvariantCulture,
             $".c {{ fill: {theme.Foreground}; fill-opacity: {cursorOpacityText}; }}");
+        for (var row = 0; row < context.RowClasses.Length; row++)
+        {
+            if (context.RowClasses[row] is { } rowClass)
+                sb.AppendLf(RowRule(rowClass, RowBaseline(metrics, row)));
+        }
 
-        var keyframes = new LoopKeyframeRegistry(loopDuration);
-        var rowKeyframes = new string[rowLayers.Count];
-        for (var i = 0; i < rowLayers.Count; i++)
-            rowKeyframes[i] = keyframes.Register(rowLayers[i].Show, rowLayers[i].Hide);
-
-        var cursorKeyframes = new string[cursorLayers.Count];
-        for (var i = 0; i < cursorLayers.Count; i++)
-            cursorKeyframes[i] = keyframes.Register(cursorLayers[i].Show, cursorLayers[i].Hide);
-
-        var viewportKeyframes = new string[viewportLayers.Count];
-        for (var i = 0; i < viewportLayers.Count; i++)
-            viewportKeyframes[i] = keyframes.Register(viewportLayers[i].Show, viewportLayers[i].Hide);
-
+        context.Fills.AppendRules(sb);
         keyframes.AppendAll(sb);
-        sb.AppendLine("</style>");
+        sb.AppendLf("</style>");
 
-        sb.AppendLine("<defs>");
+        sb.AppendLf("<defs>");
         if (metrics.HasChrome)
-            sb.AppendLine(WindowShadowFilter);
+            sb.AppendLf(WindowShadowFilter);
 
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        if (cursorLayers.Count > 0)
+        {
+            sb.AppendLf(CultureInfo.InvariantCulture,
+                $"<rect id=\"c\" class=\"c\" width=\"{metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\"/>");
+        }
+
+        sb.AppendLf(CultureInfo.InvariantCulture,
             $"<mask id=\"viewport-mask\" x=\"0\" y=\"0\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" maskUnits=\"userSpaceOnUse\">");
         for (var i = 0; i < viewportLayers.Count; i++)
         {
             var viewport = viewportLayers[i];
             var viewportWidth = metrics.ViewportPixelWidth(viewport.P0);
             var viewportHeight = metrics.ViewportPixelHeight(viewport.P1);
-            sb.AppendLine(CultureInfo.InvariantCulture,
-                $"<rect class=\"l {viewportKeyframes[i]} viewport-mask-{i}\" x=\"{metrics.TerminalOriginX:0.##}\" y=\"{metrics.TerminalOriginY:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"white\"/>");
+            sb.AppendLf(CultureInfo.InvariantCulture,
+                $"<rect class=\"l {keyframes.Name(viewportKeyframeIds[i])} viewport-mask-{i}\" x=\"{metrics.TerminalOriginX:0.##}\" y=\"{metrics.TerminalOriginY:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"white\"/>");
         }
 
-        sb.AppendLine("</mask>");
-        sb.AppendLine("</defs>");
+        sb.AppendLf("</mask>");
+        sb.AppendLf("</defs>");
 
         if (metrics.HasChrome)
         {
@@ -856,65 +1025,101 @@ internal static class SvgFrameRenderer
             for (var i = 0; i < viewportLayers.Count; i++)
             {
                 var viewport = viewportLayers[i];
-                AppendWindowChrome(sb, metrics, chrome, render.Window, viewport.P0, viewport.P1, i, viewportKeyframes[i]);
+                AppendWindowChrome(sb, metrics, chrome, render.Window, viewport.P0, viewport.P1, i, keyframes.Name(viewportKeyframeIds[i]));
             }
         }
 
-        sb.AppendLine("<g mask=\"url(#viewport-mask)\">");
+        // Text in the theme's foreground color has no fill of its own and inherits this one.
+        sb.AppendLf(CultureInfo.InvariantCulture, $"<g mask=\"url(#viewport-mask)\" fill=\"{theme.Foreground}\">");
         for (var i = 0; i < viewportLayers.Count; i++)
         {
             var viewport = viewportLayers[i];
             var viewportWidth = metrics.ViewportPixelWidth(viewport.P0);
             var viewportHeight = metrics.ViewportPixelHeight(viewport.P1);
-            sb.AppendLine(CultureInfo.InvariantCulture,
-                $"<rect class=\"bg l {viewportKeyframes[i]} viewport-bg-{i}\" x=\"{metrics.TerminalOriginX:0.##}\" y=\"{metrics.TerminalOriginY:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"{render.Theme.Bg}\"/>");
+            sb.AppendLf(CultureInfo.InvariantCulture,
+                $"<rect class=\"bg l {keyframes.Name(viewportKeyframeIds[i])} viewport-bg-{i}\" x=\"{metrics.TerminalOriginX:0.##}\" y=\"{metrics.TerminalOriginY:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"{render.Theme.Bg}\"/>");
         }
 
         var head = sb.ToString();
         sb.Clear();
 
         var origin = metrics.ContentOrigin;
-        for (var i = 0; i < cursorLayers.Count; i++)
+        foreach (var i in standaloneCursors)
         {
             var layer = cursorLayers[i];
-            sb.AppendLine(CultureInfo.InvariantCulture,
-                $"<rect class=\"l {cursorKeyframes[i]} c\" x=\"{origin.X + layer.P1 * metrics.CharWidth:0.##}\" y=\"{origin.Y + layer.P0 * metrics.LineHeight:0.##}\" width=\"{metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\"/>");
+            sb.AppendLf(CultureInfo.InvariantCulture,
+                $"<use href=\"#c\" x=\"{origin.X + layer.P1 * metrics.CharWidth:0.##}\" y=\"{origin.Y + layer.P0 * metrics.LineHeight:0.##}\" class=\"l {keyframes.Name(cursorKeyframeIds[i])}\"/>");
         }
 
-        sb.AppendLine("</g>");
-        sb.AppendLine("</svg>");
+        sb.AppendLf("</g>");
+        sb.AppendLf("</svg>");
+
+        var rowKeyframes = new string?[rowLayers.Count];
+        for (var i = 0; i < rowLayers.Count; i++)
+        {
+            if (IsWritten(rowLayers[i]))
+                rowKeyframes[i] = keyframes.Name(rowKeyframeIds[i]);
+        }
+
         return (head, rowKeyframes, sb.ToString());
     }
 
+    /// <summary>The y of a row's baseline: row-local content is drawn with its baseline at y=0 and moved here.</summary>
+    private static double RowBaseline(SvgMetrics metrics, int row) =>
+        metrics.ContentOrigin.Y + row * metrics.LineHeight + metrics.BaselineOffset;
+
+    private static string RowRule(string rowClass, double baseline) =>
+        string.Create(CultureInfo.InvariantCulture, $".{rowClass}{{transform:translate(0,{baseline:0.##}px)}}");
+
     /// <summary>
     /// Deduplicated keyframes for show/hide windows within the loop. Each animated element has
-    /// class <c>l</c> (hidden, step-end timing, looping) plus <c>kN</c> naming its keyframes, so a
+    /// class <c>l</c> (hidden, step-end timing, looping) plus a short class naming its keyframes, so a
     /// window costs one short keyframe rule and one class rule however many elements share it.
+    /// Names are given after all elements are counted: the most used get the shortest names, and
+    /// keyframes nothing refers to are not written.
     /// </summary>
     private sealed class LoopKeyframeRegistry(double loopDuration)
     {
-        private readonly Dictionary<string, string> _namesByBody = new(StringComparer.Ordinal);
-        private readonly List<(string Name, string Body)> _ordered = [];
+        private readonly Dictionary<string, int> _idsByBody = new(StringComparer.Ordinal);
+        private readonly List<string> _bodies = [];
+        private readonly List<int> _uses = [];
         private readonly string _percentFormat = PercentFormat(loopDuration);
+        private string?[] _names = [];
 
-        internal string Register(double showTime, double? hideTime)
+        internal int Register(double showTime, double? hideTime)
         {
             var body = BuildStepKeyframesBody(showTime, hideTime);
-            if (_namesByBody.TryGetValue(body, out var existing))
+            if (_idsByBody.TryGetValue(body, out var existing))
                 return existing;
 
-            var name = $"k{_ordered.Count}";
-            _namesByBody[body] = name;
-            _ordered.Add((name, body));
-            return name;
+            var id = _bodies.Count;
+            _idsByBody[body] = id;
+            _bodies.Add(body);
+            _uses.Add(0);
+            return id;
         }
+
+        internal void Use(int id, int count = 1) => _uses[id] += count;
+
+        internal void AssignNames(ClassNamePool pool)
+        {
+            _names = new string?[_bodies.Count];
+            var order = Enumerable.Range(0, _bodies.Count).Where(id => _uses[id] > 0).OrderByDescending(id => _uses[id]).ThenBy(id => id);
+            foreach (var id in order)
+                _names[id] = pool.Next();
+        }
+
+        internal string Name(int id) => _names[id] ?? throw new InvalidOperationException($"Keyframe {id} has no name; it was not counted as used.");
 
         internal void AppendAll(StringBuilder sb)
         {
-            foreach (var (name, body) in _ordered)
+            for (var id = 0; id < _bodies.Count; id++)
             {
-                sb.Append("@keyframes ").Append(name).Append('{').Append(body).AppendLine("}");
-                sb.Append('.').Append(name).Append("{animation-name:").Append(name).AppendLine("}");
+                if (_names[id] is not { } name)
+                    continue;
+
+                sb.Append("@keyframes ").Append(name).Append('{').Append(_bodies[id]).AppendLf("}");
+                sb.Append('.').Append(name).Append("{animation-name:").Append(name).AppendLf("}");
             }
         }
 
@@ -941,6 +1146,123 @@ internal static class SvgFrameRenderer
             var decimals = loopDuration <= 0 ? 1 : Math.Clamp((int)Math.Ceiling(Math.Log10(loopDuration * 10)), 1, 6);
             return "0." + new string('#', decimals);
         }
+    }
+
+    /// <summary>
+    /// Short class names, shared by rows, colors, and keyframes so they never collide: a–z and A–Z,
+    /// then a letter followed by letters or digits. Skips <c>l</c>, <c>c</c>, and <c>bg</c>, which
+    /// the SVG uses itself, and words CSS reserves for <c>animation-name</c>.
+    /// </summary>
+    private sealed class ClassNamePool
+    {
+        private const string FirstChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        private const string NextChars = FirstChars + "0123456789";
+        private long _next;
+
+        internal string Next()
+        {
+            var name = NameAt(_next++);
+            while (IsReserved(name))
+                name = NameAt(_next++);
+            return name;
+        }
+
+        internal int PeekLength()
+        {
+            var index = _next;
+            var name = NameAt(index);
+            while (IsReserved(name))
+                name = NameAt(++index);
+            return name.Length;
+        }
+
+        private static bool IsReserved(string name) =>
+            name is "l" or "c" or "bg"
+            || (name.Length >= 4 && (name.Equals("none", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("unset", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("revert", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("initial", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("inherit", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("default", StringComparison.OrdinalIgnoreCase)));
+
+        private static string NameAt(long index)
+        {
+            var length = 1;
+            long count = FirstChars.Length;
+            while (index >= count)
+            {
+                index -= count;
+                length++;
+                count *= NextChars.Length;
+            }
+
+            var chars = new char[length];
+            for (var i = length - 1; i > 0; i--)
+            {
+                chars[i] = NextChars[(int)(index % NextChars.Length)];
+                index /= NextChars.Length;
+            }
+
+            chars[0] = FirstChars[(int)index];
+            return new string(chars);
+        }
+    }
+
+    /// <summary>
+    /// Text colors as classes. The theme's foreground is inherited from the enclosing group and
+    /// needs nothing; any other color gets a short class on first use, and one CSS rule.
+    /// A CSS rule on <c>text</c> itself would not do: it overrides every <c>fill</c> attribute.
+    /// </summary>
+    private sealed class FillClasses(string defaultFill, ClassNamePool names)
+    {
+        private readonly Dictionary<string, string> _classes = new(StringComparer.Ordinal);
+        private readonly List<(string Fill, string Name)> _ordered = [];
+
+        internal string? ClassFor(string fill)
+        {
+            if (string.Equals(fill, defaultFill, StringComparison.Ordinal))
+                return null;
+
+            if (!_classes.TryGetValue(fill, out var name))
+            {
+                name = names.Next();
+                _classes[fill] = name;
+                _ordered.Add((fill, name));
+            }
+
+            return name;
+        }
+
+        internal void AppendRules(StringBuilder sb)
+        {
+            foreach (var (fill, name) in _ordered)
+                sb.Append('.').Append(name).Append("{fill:").Append(fill).AppendLf("}");
+        }
+    }
+
+    /// <summary>State shared by row encoding and the text around it.</summary>
+    private sealed class EncodeContext
+    {
+        internal EncodeContext(SvgMetrics metrics, TerminalTheme theme, int canvasHeight)
+        {
+            Metrics = metrics;
+            Theme = theme;
+            RowClasses = new string?[canvasHeight];
+            RowSavings = new int[canvasHeight];
+            Fills = new FillClasses(theme.Foreground, Names);
+        }
+
+        internal SvgMetrics Metrics { get; }
+        internal TerminalTheme Theme { get; }
+        internal ClassNamePool Names { get; } = new();
+        internal FillClasses Fills { get; }
+        internal Utf8ChunkBuffer Content { get; } = new();
+
+        /// <summary>Per canvas row, the class that moves row-local content to that row; null until a layer needs it.</summary>
+        internal string?[] RowClasses { get; }
+
+        /// <summary>Per canvas row without a class yet, the characters row-local content would have saved so far.</summary>
+        internal int[] RowSavings { get; }
     }
 
     internal static ChromePalette ResolveChromePalette(WindowStyle window, string terminalBg)
@@ -983,11 +1305,11 @@ internal static class SvgFrameRenderer
         var barBottom = y + barH;
         var cls = keyframe is null ? $"viewport-chrome-{layerIndex}" : $"l {keyframe} viewport-chrome-{layerIndex}";
 
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLf(CultureInfo.InvariantCulture,
             $"<rect class=\"{cls}\" x=\"{x:0.##}\" y=\"{y:0.##}\" width=\"{width:0.##}\" height=\"{totalHeight:0.##}\" rx=\"{rx:0.##}\" ry=\"{rx:0.##}\" fill=\"none\" stroke=\"{chrome.Border}\" stroke-width=\"1\" filter=\"url(#window-shadow)\"/>");
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLf(CultureInfo.InvariantCulture,
             $"<path class=\"{cls}\" d=\"M {x + rx:0.##},{y:0.##} H {right - rx:0.##} Q {right:0.##},{y:0.##} {right:0.##},{y + rx:0.##} V {barBottom:0.##} H {x:0.##} V {y + rx:0.##} Q {x:0.##},{y:0.##} {x + rx:0.##},{y:0.##} Z\" fill=\"{chrome.TitleBarBg}\"/>");
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLf(CultureInfo.InvariantCulture,
             $"<line class=\"{cls}\" x1=\"{x:0.##}\" y1=\"{barBottom:0.##}\" x2=\"{right:0.##}\" y2=\"{barBottom:0.##}\" stroke=\"{chrome.Border}\" stroke-width=\"1\"/>");
 
         if (window == WindowStyle.Macos)
@@ -997,7 +1319,7 @@ internal static class SvgFrameRenderer
             var cy = y + ChromeTopPadding + radius;
             foreach (var color in MacButtonColors)
             {
-                sb.AppendLine(CultureInfo.InvariantCulture,
+                sb.AppendLf(CultureInfo.InvariantCulture,
                     $"<circle class=\"{cls}\" cx=\"{cx:0.##}\" cy=\"{cy:0.##}\" r=\"{radius:0.##}\" fill=\"{color}\"/>");
                 cx += MacButtonDiameter + MacButtonGap;
             }
@@ -1011,7 +1333,7 @@ internal static class SvgFrameRenderer
         var left = right - ChromeSidePadding - (size * 3) - (gap * 2);
         for (var i = 0; i < 3; i++)
         {
-            sb.AppendLine(CultureInfo.InvariantCulture,
+            sb.AppendLf(CultureInfo.InvariantCulture,
                 $"<rect class=\"{cls}\" x=\"{left:0.##}\" y=\"{top:0.##}\" width=\"{size:0.##}\" height=\"{size:0.##}\" rx=\"{WinButtonCornerRadius:0.##}\" ry=\"{WinButtonCornerRadius:0.##}\" fill=\"{chrome.WinButton}\"/>");
             left += size + gap;
         }
@@ -1021,67 +1343,87 @@ internal static class SvgFrameRenderer
     {
         var metrics = CreateMetrics(render.FontSize, width, height, render.Window);
         var sb = new StringBuilder();
-        sb.AppendLine(CultureInfo.InvariantCulture, $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-        sb.AppendLine(CultureInfo.InvariantCulture,
+        sb.AppendLf(CultureInfo.InvariantCulture, $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        sb.AppendLf(CultureInfo.InvariantCulture,
             $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" viewBox=\"0 0 {metrics.SvgWidth:0.##} {metrics.SvgHeight:0.##}\">");
         if (metrics.HasChrome)
         {
-            sb.AppendLine("<defs>");
-            sb.AppendLine(WindowShadowFilter);
-            sb.AppendLine("</defs>");
+            sb.AppendLf("<defs>");
+            sb.AppendLf(WindowShadowFilter);
+            sb.AppendLf("</defs>");
             var chrome = ResolveChromePalette(render.Window, render.Theme.Bg);
             AppendWindowChrome(sb, metrics, chrome, render.Window, width, height, 0, keyframe: null);
             var bgRect = metrics.TerminalBackgroundRect(width, height);
-            sb.AppendLine(CultureInfo.InvariantCulture,
+            sb.AppendLf(CultureInfo.InvariantCulture,
                 $"<rect x=\"{bgRect.X:0.##}\" y=\"{bgRect.Y:0.##}\" width=\"{bgRect.Width:0.##}\" height=\"{bgRect.Height:0.##}\" fill=\"{render.Theme.Bg}\"/>");
         }
         else
         {
             var bgRect = metrics.BackgroundRect();
-            sb.AppendLine(CultureInfo.InvariantCulture,
+            sb.AppendLf(CultureInfo.InvariantCulture,
                 $"<rect x=\"{bgRect.X:0.##}\" y=\"{bgRect.Y:0.##}\" width=\"{bgRect.Width:0.##}\" height=\"{bgRect.Height:0.##}\" fill=\"{render.Theme.Bg}\"/>");
         }
 
-        sb.AppendLine("</svg>");
+        sb.AppendLf("</svg>");
         return sb.ToString();
     }
 
+    /// <summary>The number of elements in an encoded row, and whether its only element is a &lt;text&gt;.</summary>
+    private readonly record struct RowShape(int Elements, bool SingleText);
+
     /// <summary>
-    /// Appends one row on a single line: background spans first, then the row's text in
-    /// whichever encoding is shorter for it.
+    /// Appends one row on a single line: background spans first, then block elements as rects,
+    /// then the row's text in whichever encoding is shorter for it.
     /// <list type="bullet">
     /// <item>Run form: one &lt;text&gt; per style run, spread with <c>textLength</c>. Small for prose.</item>
     /// <item>Glyph-list form: one &lt;text&gt; per style with an <c>x</c> per glyph and no spaces.
     /// Small for sparse colored output such as matrix rain.</item>
     /// </list>
     /// Rows with underlined cells always use the run form, because the underline runs under the spaces.
+    /// <paramref name="rowTop"/> is the row's top edge. Row-local content has its baseline at y=0,
+    /// so its &lt;text&gt; elements carry no <c>y</c>.
     /// </summary>
-    private static void AppendRow(
+    private static RowShape AppendRow(
         StringBuilder sb,
         ScreenBuffer buffer,
         int row,
         double originX,
-        double originY,
-        SvgMetrics metrics,
-        TerminalTheme theme)
+        double rowTop,
+        bool rowLocal,
+        EncodeContext context)
     {
-        var rowY = originY + row * metrics.LineHeight;
-        var textY = rowY + metrics.BaselineOffset;
-        var hasUnderline = AppendBackgroundSpans(sb, buffer, row, originX, rowY, metrics, theme);
+        var metrics = context.Metrics;
+        var theme = context.Theme;
+        var textYAttribute = rowLocal ? "" : string.Create(CultureInfo.InvariantCulture, $" y=\"{rowTop + metrics.BaselineOffset:0.##}\"");
+        var hasUnderline = AppendBackgroundSpans(sb, buffer, row, originX, rowTop, metrics, theme, out var backgroundRects);
+        var blockRects = AppendBlockRects(sb, buffer, row, originX, rowTop, metrics, theme);
 
         var runForm = t_runForm ??= new StringBuilder(1024);
         runForm.Clear();
-        AppendRunText(runForm, buffer, row, originX, textY, metrics, theme);
+        var runTexts = AppendRunText(runForm, buffer, row, originX, textYAttribute, context);
+        var texts = runTexts;
         if (hasUnderline)
         {
             sb.Append(runForm);
-            return;
+        }
+        else
+        {
+            var listForm = t_listForm ??= new StringBuilder(1024);
+            listForm.Clear();
+            var listTexts = AppendGlyphListText(listForm, buffer, row, originX, textYAttribute, context);
+            if (listForm.Length < runForm.Length)
+            {
+                sb.Append(listForm);
+                texts = listTexts;
+            }
+            else
+            {
+                sb.Append(runForm);
+            }
         }
 
-        var listForm = t_listForm ??= new StringBuilder(1024);
-        listForm.Clear();
-        AppendGlyphListText(listForm, buffer, row, originX, textY, metrics, theme);
-        sb.Append(listForm.Length < runForm.Length ? listForm : runForm);
+        var elements = backgroundRects + blockRects + texts;
+        return new RowShape(elements, elements == 1 && texts == 1);
     }
 
     /// <summary>
@@ -1090,8 +1432,9 @@ internal static class SvgFrameRenderer
     /// any cell in the row is underlined.
     /// </summary>
     private static bool AppendBackgroundSpans(
-        StringBuilder sb, ScreenBuffer buffer, int row, double originX, double rowY, SvgMetrics metrics, TerminalTheme theme)
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, double rowTop, SvgMetrics metrics, TerminalTheme theme, out int rects)
     {
+        rects = 0;
         var hasUnderline = false;
         string? spanBg = null;
         string? previousBg = null;
@@ -1111,7 +1454,8 @@ internal static class SvgFrameRenderer
                 if (spanBg is not null)
                 {
                     sb.Append(CultureInfo.InvariantCulture,
-                        $"<rect x=\"{originX + spanStart * metrics.CharWidth:0.##}\" y=\"{rowY:0.##}\" width=\"{(col - spanStart) * metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\" fill=\"{spanBg}\"/>");
+                        $"<rect x=\"{originX + spanStart * metrics.CharWidth:0.##}\" y=\"{rowTop:0.##}\" width=\"{(col - spanStart) * metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\" fill=\"{spanBg}\"/>");
+                    rects++;
                 }
 
                 spanBg = bg;
@@ -1124,15 +1468,118 @@ internal static class SvgFrameRenderer
         return hasUnderline;
     }
 
-    /// <summary>Run form: the original encoding (runs break on any color or style change), without background rects.</summary>
-    private static void AppendRunText(
-        StringBuilder sb, ScreenBuffer buffer, int row, double originX, double textY, SvgMetrics metrics, TerminalTheme theme)
+    /// <summary>
+    /// Block elements (U+2580–U+259F) as rects covering their exact part of the cell, as the mp4
+    /// rasterizer draws them: halves, eighths, quadrants, and shades as 25%, 50%, and 75% opacity.
+    /// Font block glyphs keep the font's own height, which leaves seams between rows at a 1.25 line
+    /// height. Parts of one color and height that touch along the row merge into one rect.
+    /// </summary>
+    private static int AppendBlockRects(
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, double rowTop, SvgMetrics metrics, TerminalTheme theme)
     {
+        var parts = t_blockParts ??= [];
+        parts.Clear();
+        for (var col = 0; col < buffer.Width; col++)
+        {
+            var cell = buffer.GetCell(row, col);
+            if (cell.IsWideContinuation || !TryGetBlockCodepoint(cell.Text, out var codepoint))
+                continue;
+
+            var fill = CellColors.ResolveTintedForeground(buffer, row, col, cell, theme);
+            AddBlockParts(parts, codepoint, col * 8, cell.IsWide ? 2 : 1, fill);
+        }
+
+        if (parts.Count == 0)
+            return 0;
+
+        parts.Sort(BlockPart.Compare);
+        var rects = 0;
+        var current = parts[0];
+        for (var i = 1; i <= parts.Count; i++)
+        {
+            if (i < parts.Count && parts[i].Continues(current))
+            {
+                current = current with { Width = current.Width + parts[i].Width };
+                continue;
+            }
+
+            sb.Append(CultureInfo.InvariantCulture,
+                $"<rect x=\"{originX + current.X * metrics.CharWidth / 8:0.##}\" y=\"{rowTop + current.Y * metrics.LineHeight / 8:0.##}\" width=\"{current.Width * metrics.CharWidth / 8:0.##}\" height=\"{current.Height * metrics.LineHeight / 8:0.##}\" fill=\"{current.Fill}\"");
+            if (current.Alpha < BlockPart.Opaque)
+                sb.Append(" fill-opacity=\"").Append(current.Alpha switch { 1 => "0.25", 2 => "0.5", _ => "0.75" }).Append('"');
+            sb.Append("/>");
+            rects++;
+            if (i < parts.Count)
+                current = parts[i];
+        }
+
+        return rects;
+    }
+
+    /// <summary>Adds the parts of one block element at cell <paramref name="x"/> (in eighths of a cell), <paramref name="span"/> cells wide.</summary>
+    private static void AddBlockParts(List<BlockPart> parts, int codepoint, int x, int span, string fill)
+    {
+        void Add(int left, int top, int width, int height, int alpha = BlockPart.Opaque) =>
+            parts.Add(new BlockPart(x + left * span, top, width * span, height, fill, alpha));
+
+        switch (codepoint)
+        {
+            case 0x2580: Add(0, 0, 8, 4); break;
+            case >= 0x2581 and <= 0x2588: Add(0, 8 - (codepoint - 0x2580), 8, codepoint - 0x2580); break;
+            case >= 0x2589 and <= 0x258F: Add(0, 0, 0x2590 - codepoint, 8); break;
+            case 0x2590: Add(4, 0, 4, 8); break;
+            case 0x2591: Add(0, 0, 8, 8, alpha: 1); break;
+            case 0x2592: Add(0, 0, 8, 8, alpha: 2); break;
+            case 0x2593: Add(0, 0, 8, 8, alpha: 3); break;
+            case 0x2594: Add(0, 0, 8, 1); break;
+            case 0x2595: Add(7, 0, 1, 8); break;
+            default:
+                // Quadrants U+2596–U+259F: bits 1 upper-left, 2 upper-right, 4 lower-left, 8 lower-right.
+                ReadOnlySpan<byte> quadrants = [4, 8, 1, 1 | 4 | 8, 1 | 8, 1 | 2 | 4, 1 | 2 | 8, 2, 2 | 4, 2 | 4 | 8];
+                var bits = quadrants[codepoint - 0x2596];
+                if ((bits & 1) != 0) Add(0, 0, 4, 4);
+                if ((bits & 2) != 0) Add(4, 0, 4, 4);
+                if ((bits & 4) != 0) Add(0, 4, 4, 4);
+                if ((bits & 8) != 0) Add(4, 4, 4, 4);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Part of a block element: <see cref="X"/> and <see cref="Width"/> in eighths of a cell,
+    /// <see cref="Y"/> and <see cref="Height"/> in eighths of a line, <see cref="Alpha"/> in quarters.
+    /// </summary>
+    private readonly record struct BlockPart(int X, int Y, int Width, int Height, string Fill, int Alpha)
+    {
+        internal const int Opaque = 4;
+
+        internal bool Continues(BlockPart left) =>
+            X == left.X + left.Width && Y == left.Y && Height == left.Height && Alpha == left.Alpha
+            && string.Equals(Fill, left.Fill, StringComparison.Ordinal);
+
+        internal static int Compare(BlockPart a, BlockPart b)
+        {
+            var result = string.CompareOrdinal(a.Fill, b.Fill);
+            if (result == 0) result = a.Alpha.CompareTo(b.Alpha);
+            if (result == 0) result = a.Y.CompareTo(b.Y);
+            if (result == 0) result = a.Height.CompareTo(b.Height);
+            if (result == 0) result = a.X.CompareTo(b.X);
+            return result;
+        }
+    }
+
+    /// <summary>Run form: the original encoding (runs break on any color or style change), without background rects. Returns the number of &lt;text&gt; elements.</summary>
+    private static int AppendRunText(
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, string textYAttribute, EncodeContext context)
+    {
+        var metrics = context.Metrics;
+        var theme = context.Theme;
+        var texts = 0;
         var col = 0;
         while (col < buffer.Width)
         {
             var cell = buffer.GetCell(row, col);
-            if (cell.IsWideContinuation)
+            if (cell.IsWideContinuation || IsBlockCell(cell.Text))
             {
                 col++;
                 continue;
@@ -1151,13 +1598,6 @@ internal static class SvgFrameRenderer
             var runItalic = cell.Italic;
             var runUnderline = cell.Underline;
 
-            if (IsBlockElement(cell.Text))
-            {
-                AppendBlockElement(sb, originX + runStart * metrics.CharWidth, textY, runFg, runBold, cell.Text, metrics);
-                col = runStart + (cell.IsWide ? 2 : 1);
-                continue;
-            }
-
             var runText = (t_runText ??= new StringBuilder(64));
             runText.Clear();
             runText.Append(cell.Text);
@@ -1169,7 +1609,7 @@ internal static class SvgFrameRenderer
                 if (next.IsWideContinuation)
                     break;
 
-                if (IsBlockElement(next.Text))
+                if (IsBlockCell(next.Text))
                     break;
 
                 var nextFg = CellColors.ResolveTintedForeground(buffer, row, col, next, theme);
@@ -1192,44 +1632,46 @@ internal static class SvgFrameRenderer
                 continue; // only spaces: the background span already covers them
 
             var drawText = visibleLen == runText.Length ? runText.ToString() : runText.ToString(0, visibleLen);
-            sb.Append(CultureInfo.InvariantCulture,
-                $"<text x=\"{originX + runStart * metrics.CharWidth:0.##}\" y=\"{textY:0.##}\" fill=\"{runFg}\"");
+            AppendTextStart(sb, runFg, context.Fills);
+            sb.Append(CultureInfo.InvariantCulture, $" x=\"{originX + runStart * metrics.CharWidth:0.##}\"").Append(textYAttribute);
             AppendFontStyle(sb, runBold, runItalic, runUnderline);
             sb.Append(CultureInfo.InvariantCulture, $" textLength=\"{visibleLen * metrics.CharWidth:0.##}\">{EscapeXml(drawText)}</text>");
+            texts++;
         }
+
+        return texts;
     }
 
     /// <summary>
     /// Glyph-list form: one &lt;text&gt; per (fg, bold, italic) with an x per glyph, spaces omitted.
-    /// Block elements keep their stretched single-glyph encoding, and cells of more than one
-    /// UTF-16 unit (surrogate pairs, combining marks) get their own &lt;text&gt;: SVG assigns x
-    /// values per addressable character, which browsers count differently for those.
+    /// Cells of more than one UTF-16 unit (surrogate pairs, combining marks) get their own
+    /// &lt;text&gt;: SVG assigns x values per addressable character, which browsers count
+    /// differently for those. Returns the number of &lt;text&gt; elements.
     /// </summary>
-    private static void AppendGlyphListText(
-        StringBuilder sb, ScreenBuffer buffer, int row, double originX, double textY, SvgMetrics metrics, TerminalTheme theme)
+    private static int AppendGlyphListText(
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, string textYAttribute, EncodeContext context)
     {
+        var metrics = context.Metrics;
+        var theme = context.Theme;
+        var texts = 0;
         var groups = t_glyphGroups ??= [];
         var used = 0;
         for (var col = 0; col < buffer.Width; col++)
         {
             var cell = buffer.GetCell(row, col);
             var text = cell.Text;
-            if (cell.IsWideContinuation || text.Length == 0 || (text.Length == 1 && char.IsWhiteSpace(text[0])))
+            if (cell.IsWideContinuation || text.Length == 0 || (text.Length == 1 && char.IsWhiteSpace(text[0])) || IsBlockCell(text))
                 continue;
 
             var fg = CellColors.ResolveTintedForeground(buffer, row, col, cell, theme);
             var x = originX + col * metrics.CharWidth;
-            if (IsBlockElement(text))
-            {
-                AppendBlockElement(sb, x, textY, fg, cell.Bold, text, metrics);
-                continue;
-            }
-
             if (text.Length != 1)
             {
-                sb.Append(CultureInfo.InvariantCulture, $"<text x=\"{x:0.##}\" y=\"{textY:0.##}\" fill=\"{fg}\"");
+                AppendTextStart(sb, fg, context.Fills);
+                sb.Append(CultureInfo.InvariantCulture, $" x=\"{x:0.##}\"").Append(textYAttribute);
                 AppendFontStyle(sb, cell.Bold, cell.Italic, underline: false);
                 sb.Append('>').Append(EscapeXml(text)).Append("</text>");
+                texts++;
                 continue;
             }
 
@@ -1263,18 +1705,25 @@ internal static class SvgFrameRenderer
         for (var i = 0; i < used; i++)
         {
             var group = groups[i];
-            sb.Append("<text x=\"").Append(group.Xs).Append(CultureInfo.InvariantCulture, $"\" y=\"{textY:0.##}\" fill=\"{group.Fg}\"");
+            AppendTextStart(sb, group.Fg, context.Fills);
+            sb.Append(" x=\"").Append(group.Xs).Append('"').Append(textYAttribute);
             AppendFontStyle(sb, group.Bold, group.Italic, underline: false);
             sb.Append('>').Append(group.Text).Append("</text>");
+            texts++;
         }
+
+        return texts;
     }
 
-    /// <summary>Block elements (U+2580–U+259F) are stretched to exactly one cell so they align with box drawing.</summary>
-    private static void AppendBlockElement(StringBuilder sb, double x, double textY, string fg, bool bold, string text, SvgMetrics metrics)
+    /// <summary>
+    /// Opens a &lt;text&gt; with its color: nothing for the theme's foreground (inherited), a class
+    /// for any other. The class comes first, so a layer of one &lt;text&gt; can add its own classes to it.
+    /// </summary>
+    private static void AppendTextStart(StringBuilder sb, string fill, FillClasses fills)
     {
-        sb.Append(CultureInfo.InvariantCulture, $"<text x=\"{x:0.##}\" y=\"{textY:0.##}\" fill=\"{fg}\"");
-        AppendFontStyle(sb, bold, italic: false, underline: false);
-        sb.Append(CultureInfo.InvariantCulture, $" textLength=\"{metrics.CharWidth:0.##}\" lengthAdjust=\"spacingAndGlyphs\">{EscapeXml(text)}</text>");
+        sb.Append("<text");
+        if (fills.ClassFor(fill) is { } fillClass)
+            sb.Append(" class=\"").Append(fillClass).Append('"');
     }
 
     // Presentation attributes; normal weight, upright style, and no decoration are the defaults.
@@ -1498,14 +1947,19 @@ internal static class SvgFrameRenderer
     private static bool HaveSameTime(double left, double right) =>
         Math.Abs(left - right) <= 1e-9;
 
-    private static bool IsBlockElement(string text)
+    /// <summary>Whether the cell holds a block element (U+2580–U+259F, shades included), which is drawn as rects.</summary>
+    private static bool IsBlockCell(string text) => TryGetBlockCodepoint(text, out _);
+
+    private static bool TryGetBlockCodepoint(string text, out int codepoint)
     {
         // A cell may hold a base character plus combining marks, so read the first scalar
         // rather than assuming a second UTF-16 unit is a low surrogate.
-        if (string.IsNullOrEmpty(text) || !Rune.TryGetRuneAt(text, 0, out var first))
+        codepoint = 0;
+        if (string.IsNullOrEmpty(text) || !Rune.TryGetRuneAt(text, 0, out var first) || first.Value is < 0x2580 or > 0x259F)
             return false;
 
-        return first.Value is >= 0x2580 and <= 0x259F and not (0x2591 or 0x2592 or 0x2593);
+        codepoint = first.Value;
+        return true;
     }
 
     private static SvgMetrics CreateMetrics(int fontSize, int cols, int rows, WindowStyle window)
@@ -1611,6 +2065,18 @@ internal static class SvgFrameRenderer
 
         /// <summary>Whether a later layer reuses this layer's content (it then needs an id).</summary>
         internal bool Reused { get; set; }
+
+        /// <summary>Row layers: content drawn with its baseline at y=0, moved to its row by the row's class.</summary>
+        internal bool RowLocal { get; set; }
+
+        /// <summary>Row layers: the number of elements in <see cref="Content"/>; 0 for a row that went blank.</summary>
+        internal int ElementCount { get; set; }
+
+        /// <summary>Row layers: <see cref="Content"/> is a single &lt;text&gt;, which can carry the layer's classes itself.</summary>
+        internal bool SingleText { get; set; }
+
+        /// <summary>Row layers: the cursor layer drawn inside this one (same row and timing), or -1.</summary>
+        internal int Cursor { get; set; } = -1;
     }
 }
 

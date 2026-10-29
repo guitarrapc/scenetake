@@ -6,265 +6,252 @@ text { dominant-baseline: alphabetic; }
 .bg,rect:not([class]) { shape-rendering: crispEdges; }
 .l { opacity: 0; animation: 8.423s step-end infinite; }
 .c { fill: #d0d0d0; fill-opacity: 0.5; }
-@keyframes k0{8.31%{opacity:1}83.38%{opacity:0}}
-.k0{animation-name:k0}
-@keyframes k1{8.9%{opacity:1}9.5%{opacity:0}}
-.k1{animation-name:k1}
-@keyframes k2{9.5%{opacity:1}10.15%{opacity:0}}
-.k2{animation-name:k2}
-@keyframes k3{10.15%{opacity:1}10.76%{opacity:0}}
-.k3{animation-name:k3}
-@keyframes k4{10.76%{opacity:1}11.23%{opacity:0}}
-.k4{animation-name:k4}
-@keyframes k5{11.23%{opacity:1}12.41%{opacity:0}}
-.k5{animation-name:k5}
-@keyframes k6{12.41%{opacity:1}13.05%{opacity:0}}
-.k6{animation-name:k6}
-@keyframes k7{13.05%{opacity:1}14.1%{opacity:0}}
-.k7{animation-name:k7}
-@keyframes k8{14.1%{opacity:1}15.11%{opacity:0}}
-.k8{animation-name:k8}
-@keyframes k9{15.11%{opacity:1}15.59%{opacity:0}}
-.k9{animation-name:k9}
-@keyframes k10{15.59%{opacity:1}16.1%{opacity:0}}
-.k10{animation-name:k10}
-@keyframes k11{16.1%{opacity:1}16.75%{opacity:0}}
-.k11{animation-name:k11}
-@keyframes k12{16.75%{opacity:1}17.35%{opacity:0}}
-.k12{animation-name:k12}
-@keyframes k13{17.35%{opacity:1}17.94%{opacity:0}}
-.k13{animation-name:k13}
-@keyframes k14{17.94%{opacity:1}18.63%{opacity:0}}
-.k14{animation-name:k14}
-@keyframes k15{18.63%{opacity:1}19.39%{opacity:0}}
-.k15{animation-name:k15}
-@keyframes k16{19.39%{opacity:1}19.93%{opacity:0}}
-.k16{animation-name:k16}
-@keyframes k17{19.93%{opacity:1}83.38%{opacity:0}}
-.k17{animation-name:k17}
-@keyframes k18{24.52%{opacity:1}83.38%{opacity:0}}
-.k18{animation-name:k18}
-@keyframes k19{24.52%{opacity:1}}
-.k19{animation-name:k19}
-@keyframes k20{32.83%{opacity:1}83.38%{opacity:0}}
-.k20{animation-name:k20}
-@keyframes k21{33.42%{opacity:1}34.01%{opacity:0}}
-.k21{animation-name:k21}
-@keyframes k22{34.01%{opacity:1}34.55%{opacity:0}}
-.k22{animation-name:k22}
-@keyframes k23{34.55%{opacity:1}35.27%{opacity:0}}
-.k23{animation-name:k23}
-@keyframes k24{35.27%{opacity:1}35.84%{opacity:0}}
-.k24{animation-name:k24}
-@keyframes k25{35.84%{opacity:1}37.27%{opacity:0}}
-.k25{animation-name:k25}
-@keyframes k26{37.27%{opacity:1}37.85%{opacity:0}}
-.k26{animation-name:k26}
-@keyframes k27{37.85%{opacity:1}39.08%{opacity:0}}
-.k27{animation-name:k27}
-@keyframes k28{39.08%{opacity:1}40.15%{opacity:0}}
-.k28{animation-name:k28}
-@keyframes k29{40.15%{opacity:1}40.88%{opacity:0}}
-.k29{animation-name:k29}
-@keyframes k30{40.88%{opacity:1}41.45%{opacity:0}}
-.k30{animation-name:k30}
-@keyframes k31{41.45%{opacity:1}41.98%{opacity:0}}
-.k31{animation-name:k31}
-@keyframes k32{41.98%{opacity:1}42.49%{opacity:0}}
-.k32{animation-name:k32}
-@keyframes k33{42.49%{opacity:1}43.25%{opacity:0}}
-.k33{animation-name:k33}
-@keyframes k34{43.25%{opacity:1}43.84%{opacity:0}}
-.k34{animation-name:k34}
-@keyframes k35{43.84%{opacity:1}44.38%{opacity:0}}
-.k35{animation-name:k35}
-@keyframes k36{44.38%{opacity:1}44.89%{opacity:0}}
-.k36{animation-name:k36}
-@keyframes k37{44.89%{opacity:1}83.38%{opacity:0}}
-.k37{animation-name:k37}
-@keyframes k38{47.74%{opacity:1}83.38%{opacity:0}}
-.k38{animation-name:k38}
-@keyframes k39{47.74%{opacity:1}}
-.k39{animation-name:k39}
-@keyframes k40{59.62%{opacity:1}83.38%{opacity:0}}
-.k40{animation-name:k40}
-@keyframes k41{71.51%{opacity:1}83.38%{opacity:0}}
-.k41{animation-name:k41}
-@keyframes k42{83.38%{opacity:1}}
-.k42{animation-name:k42}
-@keyframes k43{91.69%{opacity:1}}
-.k43{animation-name:k43}
-@keyframes k44{8.31%{opacity:1}8.9%{opacity:0}}
-.k44{animation-name:k44}
-@keyframes k45{11.23%{opacity:1}11.91%{opacity:0}}
-.k45{animation-name:k45}
-@keyframes k46{11.91%{opacity:1}12.41%{opacity:0}}
-.k46{animation-name:k46}
-@keyframes k47{13.05%{opacity:1}13.59%{opacity:0}}
-.k47{animation-name:k47}
-@keyframes k48{13.59%{opacity:1}14.1%{opacity:0}}
-.k48{animation-name:k48}
-@keyframes k49{14.1%{opacity:1}14.64%{opacity:0}}
-.k49{animation-name:k49}
-@keyframes k50{14.64%{opacity:1}15.11%{opacity:0}}
-.k50{animation-name:k50}
-@keyframes k51{19.93%{opacity:1}20.36%{opacity:0}}
-.k51{animation-name:k51}
-@keyframes k52{20.36%{opacity:1}24.52%{opacity:0}}
-.k52{animation-name:k52}
-@keyframes k53{24.52%{opacity:1}32.83%{opacity:0}}
-.k53{animation-name:k53}
-@keyframes k54{32.83%{opacity:1}33.42%{opacity:0}}
-.k54{animation-name:k54}
-@keyframes k55{35.84%{opacity:1}36.51%{opacity:0}}
-.k55{animation-name:k55}
-@keyframes k56{36.51%{opacity:1}37.27%{opacity:0}}
-.k56{animation-name:k56}
-@keyframes k57{37.85%{opacity:1}38.39%{opacity:0}}
-.k57{animation-name:k57}
-@keyframes k58{38.39%{opacity:1}39.08%{opacity:0}}
-.k58{animation-name:k58}
-@keyframes k59{39.08%{opacity:1}39.67%{opacity:0}}
-.k59{animation-name:k59}
-@keyframes k60{39.67%{opacity:1}40.15%{opacity:0}}
-.k60{animation-name:k60}
-@keyframes k61{44.89%{opacity:1}45.36%{opacity:0}}
-.k61{animation-name:k61}
-@keyframes k62{45.36%{opacity:1}47.74%{opacity:0}}
-.k62{animation-name:k62}
-@keyframes k63{47.74%{opacity:1}59.62%{opacity:0}}
-.k63{animation-name:k63}
-@keyframes k64{59.62%{opacity:1}71.51%{opacity:0}}
-.k64{animation-name:k64}
-@keyframes k65{83.38%{opacity:1}91.69%{opacity:0}}
-.k65{animation-name:k65}
-@keyframes k66{0%{opacity:1}}
-.k66{animation-name:k66}
+.b{transform:translate(0,44.8px)}
+.e{transform:translate(0,244.8px)}
+.d{transform:translate(0,304.8px)}
+.a{fill:#7dd6cf}
+@keyframes t{8.31%{opacity:1}83.38%{opacity:0}}
+.t{animation-name:t}
+@keyframes u{8.9%{opacity:1}9.5%{opacity:0}}
+.u{animation-name:u}
+@keyframes v{9.5%{opacity:1}10.15%{opacity:0}}
+.v{animation-name:v}
+@keyframes w{10.15%{opacity:1}10.76%{opacity:0}}
+.w{animation-name:w}
+@keyframes x{10.76%{opacity:1}11.23%{opacity:0}}
+.x{animation-name:x}
+@keyframes y{11.23%{opacity:1}12.41%{opacity:0}}
+.y{animation-name:y}
+@keyframes z{12.41%{opacity:1}13.05%{opacity:0}}
+.z{animation-name:z}
+@keyframes A{13.05%{opacity:1}14.1%{opacity:0}}
+.A{animation-name:A}
+@keyframes B{14.1%{opacity:1}15.11%{opacity:0}}
+.B{animation-name:B}
+@keyframes C{15.11%{opacity:1}15.59%{opacity:0}}
+.C{animation-name:C}
+@keyframes D{15.59%{opacity:1}16.1%{opacity:0}}
+.D{animation-name:D}
+@keyframes E{16.1%{opacity:1}16.75%{opacity:0}}
+.E{animation-name:E}
+@keyframes F{16.75%{opacity:1}17.35%{opacity:0}}
+.F{animation-name:F}
+@keyframes G{17.35%{opacity:1}17.94%{opacity:0}}
+.G{animation-name:G}
+@keyframes H{17.94%{opacity:1}18.63%{opacity:0}}
+.H{animation-name:H}
+@keyframes I{18.63%{opacity:1}19.39%{opacity:0}}
+.I{animation-name:I}
+@keyframes J{19.39%{opacity:1}19.93%{opacity:0}}
+.J{animation-name:J}
+@keyframes K{19.93%{opacity:1}83.38%{opacity:0}}
+.K{animation-name:K}
+@keyframes g{24.52%{opacity:1}83.38%{opacity:0}}
+.g{animation-name:g}
+@keyframes L{24.52%{opacity:1}}
+.L{animation-name:L}
+@keyframes M{32.83%{opacity:1}83.38%{opacity:0}}
+.M{animation-name:M}
+@keyframes N{33.42%{opacity:1}34.01%{opacity:0}}
+.N{animation-name:N}
+@keyframes O{34.01%{opacity:1}34.55%{opacity:0}}
+.O{animation-name:O}
+@keyframes P{34.55%{opacity:1}35.27%{opacity:0}}
+.P{animation-name:P}
+@keyframes h{35.27%{opacity:1}35.84%{opacity:0}}
+.h{animation-name:h}
+@keyframes Q{35.84%{opacity:1}37.27%{opacity:0}}
+.Q{animation-name:Q}
+@keyframes R{37.27%{opacity:1}37.85%{opacity:0}}
+.R{animation-name:R}
+@keyframes S{37.85%{opacity:1}39.08%{opacity:0}}
+.S{animation-name:S}
+@keyframes T{39.08%{opacity:1}40.15%{opacity:0}}
+.T{animation-name:T}
+@keyframes i{40.15%{opacity:1}40.88%{opacity:0}}
+.i{animation-name:i}
+@keyframes j{40.88%{opacity:1}41.45%{opacity:0}}
+.j{animation-name:j}
+@keyframes k{41.45%{opacity:1}41.98%{opacity:0}}
+.k{animation-name:k}
+@keyframes m{41.98%{opacity:1}42.49%{opacity:0}}
+.m{animation-name:m}
+@keyframes n{42.49%{opacity:1}43.25%{opacity:0}}
+.n{animation-name:n}
+@keyframes o{43.25%{opacity:1}43.84%{opacity:0}}
+.o{animation-name:o}
+@keyframes p{43.84%{opacity:1}44.38%{opacity:0}}
+.p{animation-name:p}
+@keyframes q{44.38%{opacity:1}44.89%{opacity:0}}
+.q{animation-name:q}
+@keyframes U{44.89%{opacity:1}83.38%{opacity:0}}
+.U{animation-name:U}
+@keyframes V{47.74%{opacity:1}83.38%{opacity:0}}
+.V{animation-name:V}
+@keyframes W{47.74%{opacity:1}}
+.W{animation-name:W}
+@keyframes X{59.62%{opacity:1}83.38%{opacity:0}}
+.X{animation-name:X}
+@keyframes r{71.51%{opacity:1}83.38%{opacity:0}}
+.r{animation-name:r}
+@keyframes f{83.38%{opacity:1}}
+.f{animation-name:f}
+@keyframes Y{91.69%{opacity:1}}
+.Y{animation-name:Y}
+@keyframes Z{8.31%{opacity:1}8.9%{opacity:0}}
+.Z{animation-name:Z}
+@keyframes aa{11.23%{opacity:1}11.91%{opacity:0}}
+.aa{animation-name:aa}
+@keyframes ab{11.91%{opacity:1}12.41%{opacity:0}}
+.ab{animation-name:ab}
+@keyframes ac{13.05%{opacity:1}13.59%{opacity:0}}
+.ac{animation-name:ac}
+@keyframes ad{13.59%{opacity:1}14.1%{opacity:0}}
+.ad{animation-name:ad}
+@keyframes ae{14.1%{opacity:1}14.64%{opacity:0}}
+.ae{animation-name:ae}
+@keyframes af{14.64%{opacity:1}15.11%{opacity:0}}
+.af{animation-name:af}
+@keyframes ag{19.93%{opacity:1}20.36%{opacity:0}}
+.ag{animation-name:ag}
+@keyframes ah{20.36%{opacity:1}24.52%{opacity:0}}
+.ah{animation-name:ah}
+@keyframes ai{24.52%{opacity:1}32.83%{opacity:0}}
+.ai{animation-name:ai}
+@keyframes aj{32.83%{opacity:1}33.42%{opacity:0}}
+.aj{animation-name:aj}
+@keyframes ak{35.84%{opacity:1}36.51%{opacity:0}}
+.ak{animation-name:ak}
+@keyframes al{36.51%{opacity:1}37.27%{opacity:0}}
+.al{animation-name:al}
+@keyframes am{37.85%{opacity:1}38.39%{opacity:0}}
+.am{animation-name:am}
+@keyframes an{38.39%{opacity:1}39.08%{opacity:0}}
+.an{animation-name:an}
+@keyframes ao{39.08%{opacity:1}39.67%{opacity:0}}
+.ao{animation-name:ao}
+@keyframes ap{39.67%{opacity:1}40.15%{opacity:0}}
+.ap{animation-name:ap}
+@keyframes aq{44.89%{opacity:1}45.36%{opacity:0}}
+.aq{animation-name:aq}
+@keyframes ar{45.36%{opacity:1}47.74%{opacity:0}}
+.ar{animation-name:ar}
+@keyframes as{47.74%{opacity:1}59.62%{opacity:0}}
+.as{animation-name:as}
+@keyframes at{59.62%{opacity:1}71.51%{opacity:0}}
+.at{animation-name:at}
+@keyframes au{83.38%{opacity:1}91.69%{opacity:0}}
+.au{animation-name:au}
+@keyframes s{0%{opacity:1}}
+.s{animation-name:s}
 </style>
 <defs>
+<rect id="c" class="c" width="9.92" height="20"/>
 <mask id="viewport-mask" x="0" y="0" width="829.6" height="504" maskUnits="userSpaceOnUse">
-<rect class="l k66 viewport-mask-0" x="8" y="8" width="813.6" height="488" fill="white"/>
+<rect class="l s viewport-mask-0" x="8" y="8" width="813.6" height="488" fill="white"/>
 </mask>
 </defs>
-<g mask="url(#viewport-mask)">
-<rect class="bg l k66 viewport-bg-0" x="8" y="8" width="813.6" height="488" fill="#282c34"/>
-<g class="l k0"><text x="18" y="24.8" fill="#7dd6cf" textLength="307.52"># instant emit (ping, one blob)</text></g>
-<g class="l k1"><text x="18" y="44.8" fill="#d0d0d0">$</text></g>
-<g class="l k2"><g id="r2"><text x="18 37.84" y="44.8" fill="#d0d0d0">$p</text></g></g>
-<g class="l k3"><g id="r3"><text x="18 37.84 47.76" y="44.8" fill="#d0d0d0">$pi</text></g></g>
-<g class="l k4"><g id="r4"><text x="18 37.84 47.76 57.68" y="44.8" fill="#d0d0d0">$pin</text></g></g>
-<g class="l k5"><g id="r5"><text x="18" y="44.8" fill="#d0d0d0" textLength="59.52">$ ping</text></g></g>
-<g class="l k6"><g id="r6"><text x="18" y="44.8" fill="#d0d0d0" textLength="79.36">$ ping -</text></g></g>
-<g class="l k7"><g id="r7"><text x="18" y="44.8" fill="#d0d0d0" textLength="89.28">$ ping -n</text></g></g>
-<g class="l k8"><g id="r8"><text x="18" y="44.8" fill="#d0d0d0" textLength="109.12">$ ping -n 4</text></g></g>
-<g class="l k9"><g id="r9"><text x="18" y="44.8" fill="#d0d0d0" textLength="128.96">$ ping -n 4 1</text></g></g>
-<g class="l k10"><g id="r10"><text x="18" y="44.8" fill="#d0d0d0" textLength="138.88">$ ping -n 4 12</text></g></g>
-<g class="l k11"><g id="r11"><text x="18" y="44.8" fill="#d0d0d0" textLength="148.8">$ ping -n 4 127</text></g></g>
-<g class="l k12"><g id="r12"><text x="18" y="44.8" fill="#d0d0d0" textLength="158.72">$ ping -n 4 127.</text></g></g>
-<g class="l k13"><g id="r13"><text x="18" y="44.8" fill="#d0d0d0" textLength="168.64">$ ping -n 4 127.0</text></g></g>
-<g class="l k14"><g id="r14"><text x="18" y="44.8" fill="#d0d0d0" textLength="178.56">$ ping -n 4 127.0.</text></g></g>
-<g class="l k15"><g id="r15"><text x="18" y="44.8" fill="#d0d0d0" textLength="188.48">$ ping -n 4 127.0.0</text></g></g>
-<g class="l k16"><g id="r16"><text x="18" y="44.8" fill="#d0d0d0" textLength="198.4">$ ping -n 4 127.0.0.</text></g></g>
-<g class="l k17"><g id="r17"><text x="18" y="44.8" fill="#d0d0d0" textLength="208.32">$ ping -n 4 127.0.0.1</text></g></g>
-<g class="l k18"><g id="r18"><text x="18" y="84.8" fill="#d0d0d0" textLength="396.8">Pinging 127.0.0.1 with 32 bytes of data:</text></g></g>
-<g class="l k19"><g id="r19"><text x="18" y="104.8" fill="#d0d0d0" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g></g>
-<use href="#r19" y="20" class="l k18"/>
-<use href="#r19" y="40" class="l k18"/>
-<use href="#r19" y="60" class="l k18"/>
-<g class="l k18"><g id="r23"><text x="18" y="204.8" fill="#d0d0d0" textLength="297.6">Ping statistics for 127.0.0.1:</text></g></g>
-<g class="l k18"><g id="r24"><text x="57.68" y="224.8" fill="#d0d0d0" textLength="515.84">Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),</text></g></g>
-<g class="l k18"><g id="r25"><text x="18" y="244.8" fill="#d0d0d0" textLength="456.32">Approximate round trip times in milli-seconds:</text></g></g>
-<g class="l k18"><g id="r26"><text x="57.68" y="264.8" fill="#d0d0d0" textLength="426.56">Minimum = 0ms, Maximum = 0ms, Average = 0ms</text></g></g>
-<g class="l k20"><g id="r27"><text x="18" y="284.8" fill="#7dd6cf" textLength="396.8"># stream-output (ping, staggered replay)</text></g></g>
-<g class="l k21"><text x="18" y="304.8" fill="#d0d0d0">$</text></g>
-<use href="#r2" y="260" class="l k22"/>
-<use href="#r3" y="260" class="l k23"/>
-<use href="#r4" y="260" class="l k24"/>
-<use href="#r5" y="260" class="l k25"/>
-<use href="#r6" y="260" class="l k26"/>
-<use href="#r7" y="260" class="l k27"/>
-<use href="#r8" y="260" class="l k28"/>
-<use href="#r9" y="260" class="l k29"/>
-<use href="#r10" y="260" class="l k30"/>
-<use href="#r11" y="260" class="l k31"/>
-<use href="#r12" y="260" class="l k32"/>
-<use href="#r13" y="260" class="l k33"/>
-<use href="#r14" y="260" class="l k34"/>
-<use href="#r15" y="260" class="l k35"/>
-<use href="#r16" y="260" class="l k36"/>
-<use href="#r17" y="260" class="l k37"/>
-<use href="#r18" y="260" class="l k38"/>
-<use href="#r19" y="260" class="l k39"/>
-<use href="#r19" y="280" class="l k40"/>
-<use href="#r19" y="300" class="l k41"/>
-<use href="#r18" y="-60" class="l k42"/>
-<use href="#r19" y="-60" class="l k42"/>
-<use href="#r19" y="-40" class="l k42"/>
-<use href="#r19" y="-20" class="l k42"/>
-<use href="#r23" y="-60" class="l k42"/>
-<use href="#r24" y="-60" class="l k42"/>
-<use href="#r25" y="-60" class="l k42"/>
-<use href="#r26" y="-60" class="l k42"/>
-<use href="#r27" y="-60" class="l k42"/>
-<use href="#r17" y="200" class="l k42"/>
-<use href="#r18" y="200" class="l k42"/>
-<use href="#r19" y="200" class="l k42"/>
-<use href="#r19" y="220" class="l k42"/>
-<use href="#r19" y="240" class="l k42"/>
-<use href="#r23" y="200" class="l k42"/>
-<use href="#r24" y="200" class="l k42"/>
-<use href="#r25" y="200" class="l k42"/>
-<use href="#r26" y="200" class="l k42"/>
-<g class="l k43"><text x="18" y="484.8" fill="#d0d0d0">$</text></g>
-<rect class="l k44 c" x="18" y="32" width="9.92" height="20"/>
-<rect class="l k1 c" x="37.84" y="32" width="9.92" height="20"/>
-<rect class="l k2 c" x="47.76" y="32" width="9.92" height="20"/>
-<rect class="l k3 c" x="57.68" y="32" width="9.92" height="20"/>
-<rect class="l k4 c" x="67.6" y="32" width="9.92" height="20"/>
-<rect class="l k45 c" x="77.52" y="32" width="9.92" height="20"/>
-<rect class="l k46 c" x="87.44" y="32" width="9.92" height="20"/>
-<rect class="l k6 c" x="97.36" y="32" width="9.92" height="20"/>
-<rect class="l k47 c" x="107.28" y="32" width="9.92" height="20"/>
-<rect class="l k48 c" x="117.2" y="32" width="9.92" height="20"/>
-<rect class="l k49 c" x="127.12" y="32" width="9.92" height="20"/>
-<rect class="l k50 c" x="137.04" y="32" width="9.92" height="20"/>
-<rect class="l k9 c" x="146.96" y="32" width="9.92" height="20"/>
-<rect class="l k10 c" x="156.88" y="32" width="9.92" height="20"/>
-<rect class="l k11 c" x="166.8" y="32" width="9.92" height="20"/>
-<rect class="l k12 c" x="176.72" y="32" width="9.92" height="20"/>
-<rect class="l k13 c" x="186.64" y="32" width="9.92" height="20"/>
-<rect class="l k14 c" x="196.56" y="32" width="9.92" height="20"/>
-<rect class="l k15 c" x="206.48" y="32" width="9.92" height="20"/>
-<rect class="l k16 c" x="216.4" y="32" width="9.92" height="20"/>
-<rect class="l k51 c" x="226.32" y="32" width="9.92" height="20"/>
-<rect class="l k52 c" x="18" y="52" width="9.92" height="20"/>
-<rect class="l k53 c" x="18" y="272" width="9.92" height="20"/>
-<rect class="l k54 c" x="18" y="292" width="9.92" height="20"/>
-<rect class="l k21 c" x="37.84" y="292" width="9.92" height="20"/>
-<rect class="l k22 c" x="47.76" y="292" width="9.92" height="20"/>
-<rect class="l k23 c" x="57.68" y="292" width="9.92" height="20"/>
-<rect class="l k24 c" x="67.6" y="292" width="9.92" height="20"/>
-<rect class="l k55 c" x="77.52" y="292" width="9.92" height="20"/>
-<rect class="l k56 c" x="87.44" y="292" width="9.92" height="20"/>
-<rect class="l k26 c" x="97.36" y="292" width="9.92" height="20"/>
-<rect class="l k57 c" x="107.28" y="292" width="9.92" height="20"/>
-<rect class="l k58 c" x="117.2" y="292" width="9.92" height="20"/>
-<rect class="l k59 c" x="127.12" y="292" width="9.92" height="20"/>
-<rect class="l k60 c" x="137.04" y="292" width="9.92" height="20"/>
-<rect class="l k29 c" x="146.96" y="292" width="9.92" height="20"/>
-<rect class="l k30 c" x="156.88" y="292" width="9.92" height="20"/>
-<rect class="l k31 c" x="166.8" y="292" width="9.92" height="20"/>
-<rect class="l k32 c" x="176.72" y="292" width="9.92" height="20"/>
-<rect class="l k33 c" x="186.64" y="292" width="9.92" height="20"/>
-<rect class="l k34 c" x="196.56" y="292" width="9.92" height="20"/>
-<rect class="l k35 c" x="206.48" y="292" width="9.92" height="20"/>
-<rect class="l k36 c" x="216.4" y="292" width="9.92" height="20"/>
-<rect class="l k61 c" x="226.32" y="292" width="9.92" height="20"/>
-<rect class="l k62 c" x="18" y="312" width="9.92" height="20"/>
-<rect class="l k63 c" x="18" y="372" width="9.92" height="20"/>
-<rect class="l k64 c" x="18" y="392" width="9.92" height="20"/>
-<rect class="l k41 c" x="18" y="412" width="9.92" height="20"/>
-<rect class="l k65 c" x="18" y="472" width="9.92" height="20"/>
-<rect class="l k43 c" x="37.84" y="472" width="9.92" height="20"/>
+<g mask="url(#viewport-mask)" fill="#d0d0d0">
+<rect class="bg l s viewport-bg-0" x="8" y="8" width="813.6" height="488" fill="#282c34"/>
+<text class="l t a" x="18" y="24.8" textLength="307.52"># instant emit (ping, one blob)</text>
+<g class="l u"><text x="18" y="44.8">$</text><use href="#c" x="37.84" y="32"/></g>
+<g class="l v"><text x="18 37.84" y="44.8">$p</text><use href="#c" x="47.76" y="32"/></g>
+<g class="l w"><text x="18 37.84 47.76" y="44.8">$pi</text><use href="#c" x="57.68" y="32"/></g>
+<g class="l x"><g id="r4"><text x="18 37.84 47.76 57.68" y="44.8">$pin</text></g><use href="#c" x="67.6" y="32"/></g>
+<text class="l y b" x="18" textLength="59.52">$ ping</text>
+<g class="l z b"><text x="18" textLength="79.36">$ ping -</text><use href="#c" x="97.36" y="-12.8"/></g>
+<g class="l A b"><g id="r7"><text x="18" textLength="89.28">$ ping -n</text></g></g>
+<g class="l B b"><g id="r8"><text x="18" textLength="109.12">$ ping -n 4</text></g></g>
+<g class="l C b"><g id="r9"><text x="18" textLength="128.96">$ ping -n 4 1</text></g><use href="#c" x="146.96" y="-12.8"/></g>
+<g class="l D b"><g id="r10"><text x="18" textLength="138.88">$ ping -n 4 12</text></g><use href="#c" x="156.88" y="-12.8"/></g>
+<g class="l E b"><g id="r11"><text x="18" textLength="148.8">$ ping -n 4 127</text></g><use href="#c" x="166.8" y="-12.8"/></g>
+<g class="l F b"><g id="r12"><text x="18" textLength="158.72">$ ping -n 4 127.</text></g><use href="#c" x="176.72" y="-12.8"/></g>
+<g class="l G b"><g id="r13"><text x="18" textLength="168.64">$ ping -n 4 127.0</text></g><use href="#c" x="186.64" y="-12.8"/></g>
+<g class="l H b"><g id="r14"><text x="18" textLength="178.56">$ ping -n 4 127.0.</text></g><use href="#c" x="196.56" y="-12.8"/></g>
+<g class="l I b"><g id="r15"><text x="18" textLength="188.48">$ ping -n 4 127.0.0</text></g><use href="#c" x="206.48" y="-12.8"/></g>
+<g class="l J b"><g id="r16"><text x="18" textLength="198.4">$ ping -n 4 127.0.0.</text></g><use href="#c" x="216.4" y="-12.8"/></g>
+<g class="l K b"><g id="r17"><text x="18" textLength="208.32">$ ping -n 4 127.0.0.1</text></g></g>
+<g class="l g"><g id="r18"><text x="18" y="84.8" textLength="396.8">Pinging 127.0.0.1 with 32 bytes of data:</text></g></g>
+<g class="l L"><g id="r19"><text x="18" y="104.8" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g></g>
+<use href="#r19" y="20" class="l g"/>
+<use href="#r19" y="40" class="l g"/>
+<use href="#r19" y="60" class="l g"/>
+<g class="l g"><g id="r23"><text x="18" y="204.8" textLength="297.6">Ping statistics for 127.0.0.1:</text></g></g>
+<g class="l g"><g id="r24"><text x="57.68" y="224.8" textLength="515.84">Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),</text></g></g>
+<g class="l g"><g id="r25"><text x="18" y="244.8" textLength="456.32">Approximate round trip times in milli-seconds:</text></g></g>
+<g class="l g"><g id="r26"><text x="57.68" y="264.8" textLength="426.56">Minimum = 0ms, Maximum = 0ms, Average = 0ms</text></g></g>
+<g class="l M"><g id="r27"><text class="a" x="18" y="284.8" textLength="396.8"># stream-output (ping, staggered replay)</text></g></g>
+<g class="l N"><text x="18" y="304.8">$</text><use href="#c" x="37.84" y="292"/></g>
+<g class="l O"><text x="18 37.84" y="304.8">$p</text><use href="#c" x="47.76" y="292"/></g>
+<g class="l P"><text x="18 37.84 47.76" y="304.8">$pi</text><use href="#c" x="57.68" y="292"/></g>
+<use href="#r4" y="260" class="l h"/>
+<text class="l Q d" x="18" textLength="59.52">$ ping</text>
+<g class="l R d"><text x="18" textLength="79.36">$ ping -</text><use href="#c" x="97.36" y="-12.8"/></g>
+<use href="#r7" class="l S d"/>
+<use href="#r8" class="l T d"/>
+<use href="#r9" class="l i d"/>
+<use href="#r10" class="l j d"/>
+<use href="#r11" class="l k d"/>
+<use href="#r12" class="l m d"/>
+<use href="#r13" class="l n d"/>
+<use href="#r14" class="l o d"/>
+<use href="#r15" class="l p d"/>
+<use href="#r16" class="l q d"/>
+<use href="#r17" class="l U d"/>
+<use href="#r18" y="260" class="l V"/>
+<use href="#r19" y="260" class="l W"/>
+<use href="#r19" y="280" class="l X"/>
+<use href="#r19" y="300" class="l r"/>
+<use href="#r18" y="-60" class="l f"/>
+<use href="#r19" y="-60" class="l f"/>
+<use href="#r19" y="-40" class="l f"/>
+<use href="#r19" y="-20" class="l f"/>
+<use href="#r23" y="-60" class="l f"/>
+<use href="#r24" y="-60" class="l f"/>
+<use href="#r25" y="-60" class="l f"/>
+<use href="#r26" y="-60" class="l f"/>
+<use href="#r27" y="-60" class="l f"/>
+<use href="#r17" class="l f e"/>
+<use href="#r18" y="200" class="l f"/>
+<use href="#r19" y="200" class="l f"/>
+<use href="#r19" y="220" class="l f"/>
+<use href="#r19" y="240" class="l f"/>
+<use href="#r23" y="200" class="l f"/>
+<use href="#r24" y="200" class="l f"/>
+<use href="#r25" y="200" class="l f"/>
+<use href="#r26" y="200" class="l f"/>
+<g class="l Y"><text x="18" y="484.8">$</text><use href="#c" x="37.84" y="472"/></g>
+<use href="#c" x="18" y="32" class="l Z"/>
+<use href="#c" x="77.52" y="32" class="l aa"/>
+<use href="#c" x="87.44" y="32" class="l ab"/>
+<use href="#c" x="107.28" y="32" class="l ac"/>
+<use href="#c" x="117.2" y="32" class="l ad"/>
+<use href="#c" x="127.12" y="32" class="l ae"/>
+<use href="#c" x="137.04" y="32" class="l af"/>
+<use href="#c" x="226.32" y="32" class="l ag"/>
+<use href="#c" x="18" y="52" class="l ah"/>
+<use href="#c" x="18" y="272" class="l ai"/>
+<use href="#c" x="18" y="292" class="l aj"/>
+<use href="#c" x="67.6" y="292" class="l h"/>
+<use href="#c" x="77.52" y="292" class="l ak"/>
+<use href="#c" x="87.44" y="292" class="l al"/>
+<use href="#c" x="107.28" y="292" class="l am"/>
+<use href="#c" x="117.2" y="292" class="l an"/>
+<use href="#c" x="127.12" y="292" class="l ao"/>
+<use href="#c" x="137.04" y="292" class="l ap"/>
+<use href="#c" x="146.96" y="292" class="l i"/>
+<use href="#c" x="156.88" y="292" class="l j"/>
+<use href="#c" x="166.8" y="292" class="l k"/>
+<use href="#c" x="176.72" y="292" class="l m"/>
+<use href="#c" x="186.64" y="292" class="l n"/>
+<use href="#c" x="196.56" y="292" class="l o"/>
+<use href="#c" x="206.48" y="292" class="l p"/>
+<use href="#c" x="216.4" y="292" class="l q"/>
+<use href="#c" x="226.32" y="292" class="l aq"/>
+<use href="#c" x="18" y="312" class="l ar"/>
+<use href="#c" x="18" y="372" class="l as"/>
+<use href="#c" x="18" y="392" class="l at"/>
+<use href="#c" x="18" y="412" class="l r"/>
+<use href="#c" x="18" y="472" class="l au"/>
 </g>
 </svg>

@@ -45,7 +45,7 @@ Cast file format (header, versions, written event codes): [spec_cast.md](spec_ca
 | SGR: bold, faint, italic, underline, reverse, 16/256/true color | Yes — `;` and `:` forms |
 | Unicode wide chars, surrogate pairs, combining marks, VS | Yes |
 | OSC / DCS / charset designations | Skipped (not rendered) |
-| Block elements U+2580–U+259F | Yes — monospace font glyphs (aligned with box drawing on the same baseline) |
+| Block elements U+2580–U+259F | Yes — rects covering their exact part of the cell, as in mp4 (see [Row encoding](#row-encoding)) |
 
 Tests: `tests/terminal_tests.cs`.
 
@@ -57,10 +57,11 @@ Tests: `tests/terminal_tests.cs`.
 - Animations **loop indefinitely**; one cycle matches agg GIF timing with `--last-frame-duration 0`: cast playback through the last output event, then hold the final frame for the preceding output-to-output idle gap before restarting at `t = 0`.
 - **Row-diff** animation: only changed rows are emitted as timed layers. Cursor and viewport resize use separate layers. Row encoding: [Row encoding](#row-encoding).
 - **Layer timing.**
-  - Every animated element has class `l` (hidden, with one shared rule for loop length, step-end timing, and looping) and a keyframe class `kN`.
-  - Each `kN` keyframe lists only its switch points, for example `@keyframes k3{4.969%{opacity:1}5.245%{opacity:0}}`. Offsets have just enough decimals to resolve 1ms of the loop.
+  - Every animated element has class `l` (hidden, with one shared rule for loop length, step-end timing, and looping) and a keyframe class.
+  - Each keyframe lists only its switch points, for example `@keyframes x{4.969%{opacity:1}5.245%{opacity:0}}`. Offsets have just enough decimals to resolve 1ms of the loop.
   - With step-end timing, a layer and its replacement switch at the same offset, with no fade.
   - Keyframes are shared by identical show and hide times, so a full-screen redraw costs one keyframe.
+  - **Class names are one or two characters.** Rows, colors, and keyframes draw from one pool, so names never collide. Rows and colors take names as they first appear. Keyframes are named last, most used first. Keyframes nothing refers to are not written.
 - Trailing blank frames after alternate-screen restore are trimmed when the event stream indicates a screen clear.
 - Background from `theme.bg`; monospace font at resolved `font-size` and `font-family`.
 - Cell metrics: `CharWidthFactor` 0.62, `LineHeightFactor` 1.25.
@@ -72,31 +73,54 @@ Tests: `tests/terminal_tests.cs`.
 
 ### Row encoding
 
-Each row layer is one line. It holds the row's background rects, then its text.
+Each row layer is one line. It holds the row's background rects, then its block elements, then its text. Lines end with `\n` on every OS.
 
 - **Background.** One `<rect>` covers each run of cells with the same non-theme background, whatever the foreground or style. A single CSS rule gives these rects crisp edges.
+- **Block elements** (U+2580–U+259F) are rects covering their exact part of the cell, as the mp4 rasterizer draws them:
+  - halves, eighths, and quadrants;
+  - shades (░ ▒ ▓) as 25%, 50%, and 75% `fill-opacity`;
+  - parts of one color and height that touch along the row merge into one rect.
 - **Text.** Each row uses whichever of two encodings is shorter:
   - **Run form:** one `<text>` per run of identical style, spread to the run's cells with `textLength`. This is small for prose and typing.
   - **Glyph-list form:** one `<text>` per foreground and weight/slant, with an `x` for each glyph and spaces left out. This is small for sparse colored output such as matrix rain, gauges, and TUI chrome.
 - **Rows with underlined cells** always use the run form, because the underline also runs under spaces between words.
-- **Block elements** (U+2580–U+259F) are stretched to exactly one cell in either form.
+- **Colors.** Text in the theme's foreground has no fill of its own; it inherits one from the group around all rows. Any other text color is a class with one CSS rule. Rects keep `fill` attributes, so that the crisp-edge rule still matches them.
+- **Row-local coordinates.** A row layer may draw its content with the baseline at y=0, so its `<text>` elements carry no `y`. A per-row class (`transform: translate(0, Ypx)`) then moves the layer to its row.
+  - Each layer keeps whichever form is shorter.
+  - A row gets its class once the bytes its layers would have saved pay for its CSS rule.
+- **A layer of one `<text>`** carries the layer's classes on the `<text>` itself, without a `<g>`.
+- **Empty layers** (a row that went blank) draw nothing and are left out.
 - **Multi-unit cells.** A cell whose text is more than one UTF-16 unit (surrogate pair, combining mark) gets its own `<text>`. SVG gives one `x` per addressable character, and browsers count those differently.
 - **No default attributes** (`font-weight="normal"`, `lengthAdjust="spacing"`) are written.
-- **Scrolled rows are reused.** When a row's content already appeared in an earlier layer on another line (output scrolled), the layer is a `<use href="#rN" y="dy">` of that earlier content instead of a copy. The first copy gets an `id`. Content is compared byte for byte, re-encoded at the earlier line. Rows shorter than a `<use>` are written out.
-- **The cursor** is a single `<rect class="l kN c">` per position, without a wrapper group.
+- **Scrolled rows are reused.** When a row's content already appeared in an earlier layer on another line (output scrolled), the layer is a `<use>` of that earlier content instead of a copy.
+  - The first copy gets an `id`.
+  - Row-local content is compared byte for byte as it is, and the `<use>` takes the new row's class.
+  - Absolute content is re-encoded at the earlier line, compared, and shifted with `y="dy"`.
+  - Rows shorter than a `<use>` are written out.
+- **The cursor** is one `<rect id="c">` in `<defs>`, and each position is a `<use href="#c" x y>` of it.
+  - A position shown and hidden together with a row layer on its own row goes last inside that layer, with no timing of its own.
+  - Other positions carry their own keyframe class.
 
 The glyph-list form puts each glyph at its cell's left edge. The run form lets the browser spread glyphs with `textLength`, which can place them up to "cell width − font advance" apart. That is a sub-pixel shift for the default fonts (about 0.3px with Cascadia Mono at 16px), so rows look the same either way.
 
-| Cast (`svg` subcommand) | 1.4.2 | Row encoding | + timing and reuse |
-|---|---|---|---|
-| `samples/basic.cast` (typing) | 130KB | 108KB | 56KB (−57% overall) |
-| `samples/scenario_format.cast` (typing) | 433KB | 362KB | 183KB (−58%) |
-| `samples/interactive-pty.cast` (TUI) | 1.31MB | 0.96MB | 0.53MB (−60%) |
-| `samples/pty.cast` (small matrix) | 2.39MB | 0.61MB | 0.56MB (−76%) |
-| `matrix --fps 60`, 200×60, 7.5s | 117MB | 26.9MB | 26.4MB (−77%) |
-| Same, `--max-fps 20` | 25.6MB | 5.9MB | 5.8MB (−77%) |
+| Cast (`svg` subcommand) | 1.4.2 | Row encoding | + timing and reuse | + classes, block rects, row-local |
+|---|---|---|---|---|
+| `samples/basic.cast` (typing) | 130KB | 108KB | 56KB | 46KB (−65% overall) |
+| `samples/scenario_format.cast` (typing) | 433KB | 362KB | 183KB | 147KB (−66%) |
+| `samples/interactive-pty.cast` (TUI) | 1.31MB | 0.96MB | 0.53MB | 0.23MB (−82%) |
+| `samples/pty.cast` (small matrix) | 2.39MB | 0.61MB | 0.56MB | 0.43MB (−82%) |
+| `matrix --fps 60`, 200×60, 7.5s | 117MB | 26.9MB | 26.4MB | 19.7MB (−83%) |
+| Same, `--max-fps 20` | 25.6MB | 5.9MB | 5.8MB | 4.3MB (−83%) |
 
-Every sample and fixture got smaller at each step. The timing and reuse step took 41–50% off typing and TUI samples, where CSS was about 40% of the file and scrolled rows 7–36%. It took 2–8% off matrix output, where glyphs dominate.
+Every sample and fixture got smaller at each step.
+
+- **Timing and reuse** took 41–50% off typing and TUI samples, where CSS was about 40% of the file and scrolled rows 7–36%. It took 2–8% off matrix output, where glyphs dominate.
+- **Classes, block rects, and row-local coordinates** took another:
+  - 13–20% off typing samples;
+  - 56% off interactive-pty, half of which was block elements as stretched glyphs;
+  - 23–26% off matrix output, from fill classes and row-local `y`.
+
+Sizes are of LF files.
 
 ### Memory
 
@@ -177,7 +201,7 @@ The cast file is never modified by the `svg` subcommand.
 | Suite | Coverage |
 |-------|----------|
 | `tests/terminal_tests.cs` | VT emulator (CSI, Unicode, alt screen) |
-| `tests/svg_render_test.cs` | Row-diff smoke, marker timing, `--max-fps`, matrix rain tint, streamed file output matches in-memory render, row encoding choice (glyph list vs run, underline, multi-unit cells, background spans, shared keyframe rules), combining marks. Text checks decode either encoding back to row text. |
+| `tests/svg_render_test.cs` | Row-diff smoke, marker timing, `--max-fps`, matrix rain tint, streamed file output matches in-memory render, row encoding choice (glyph list vs run, underline, multi-unit cells, background spans, shared keyframe rules), combining marks, block and shade rects, LF line endings, inherited foreground and fill classes, single-text layers, row-local content, short keyframe names, cursor inside row layers. Text checks decode every layer form back to row text and color. |
 | `tests/scenario_render_test.cs` | Scenario path (`--format svg` / `--format mp4`) output is byte-identical to `scenetake svg` / `scenetake mp4` on the written cast (default, `--max-fps`, render overrides). Needs `SCENETAKE_BIN`; mp4 also needs ffmpeg. |
 | `tests/window_chrome_test.cs` | `render.window` / cast tag / CLI resolution; chrome SVG structure |
 
@@ -214,3 +238,16 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
   - It also cut render time from 5.8s to 2.6s at 200×60.
 - **Animation CSS dominated typing demos.** After the row encoding change, about 40% of a typing SVG was CSS: one keyframe per layer with 6-decimal ranges and a millisecond fade, plus one `animation:` rule per layer and per cursor move. Step-end keyframes with only switch points, ms-level precision, one shared `.l` rule, and a `kN` class per keyframe halved typing and TUI SVGs.
 - **Scrolling repeats rows.** Output that scrolls rewrites every row it moves. Reusing the first copy with `<use>` removed 7–36% of typing and TUI samples (interactive-pty most). It needs a byte-exact check, because the matrix-rain tint depends on neighbors. It also needs a CSS selector that still matches inside `<use>` content (`rect:not([class])`, not `g.layer>rect`).
+- **A CSS rule on `text` overrides `fill` attributes.** Setting the default color with `text{fill:…}` turned every colored line into the default color. The default has to be inherited from an ancestor instead.
+- **Block elements: rects, done properly.**
+  - Before #38, blocks were already rects, but only the halves and the full block had their own shape. Every other block glyph, including ▘ and ▔, filled the whole cell. #38 switched to font glyphs stretched with `textLength` and `lengthAdjust`.
+  - Font glyphs keep the font's height, so input boxes in TUIs showed seams between rows and cells. They also cost about 100 bytes per cell, half of interactive-pty.
+  - Rects sized per glyph, as mp4 draws them, fix both.
+- **Choosing row-local coordinates layer by layer did not work at first.** Charging the row's CSS rule to each layer meant typing layers, which save about 10 bytes each, never paid for it. Adding up the savings per row until they pay for the rule fixed it.
+- **Check rendering through `<img>`.**
+  - Screenshots of an SVG inlined in HTML changed text anti-aliasing with some animation setups, presumably because of separate compositing. Through `<img>`, as GitHub shows it, the same files were pixel-identical.
+  - The run/glyph-list choice can flip when attribute lengths change. That shifts glyphs by under a pixel, with no visible change.
+- **Rejected for playback cost.** Measured in headless Edge:
+  - One cursor element moved by keyframed `translate`, `transform`, or CSS `x`/`y` added 50–70% main-thread time on busy recordings.
+  - A shared timeline driven by an animated custom property dropped frames on pty and interactive-pty.
+  - Details: [plan_svg_size.md](plans/plan_svg_size.md#a5-further-size-reduction-investigation).

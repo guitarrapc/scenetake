@@ -6,947 +6,818 @@ text { dominant-baseline: alphabetic; }
 .bg,rect:not([class]) { shape-rendering: crispEdges; }
 .l { opacity: 0; animation: 15.135s step-end infinite; }
 .c { fill: #d0d0d0; fill-opacity: 0.5; }
-@keyframes k0{6.607%{opacity:1}6.938%{opacity:0}}
-.k0{animation-name:k0}
-@keyframes k1{6.938%{opacity:1}7.076%{opacity:0}}
-.k1{animation-name:k1}
-@keyframes k2{7.076%{opacity:1}7.261%{opacity:0}}
-.k2{animation-name:k2}
-@keyframes k3{7.261%{opacity:1}7.446%{opacity:0}}
-.k3{animation-name:k3}
-@keyframes k4{7.446%{opacity:1}7.585%{opacity:0}}
-.k4{animation-name:k4}
-@keyframes k5{7.585%{opacity:1}7.783%{opacity:0}}
-.k5{animation-name:k5}
-@keyframes k6{7.783%{opacity:1}7.922%{opacity:0}}
-.k6{animation-name:k6}
-@keyframes k7{7.922%{opacity:1}8.001%{opacity:0}}
-.k7{animation-name:k7}
-@keyframes k8{8.001%{opacity:1}8.12%{opacity:0}}
-.k8{animation-name:k8}
-@keyframes k9{8.12%{opacity:1}8.332%{opacity:0}}
-.k9{animation-name:k9}
-@keyframes k10{8.332%{opacity:1}8.424%{opacity:0}}
-.k10{animation-name:k10}
-@keyframes k11{8.424%{opacity:1}8.57%{opacity:0}}
-.k11{animation-name:k11}
-@keyframes k12{8.57%{opacity:1}8.675%{opacity:0}}
-.k12{animation-name:k12}
-@keyframes k13{8.675%{opacity:1}25.425%{opacity:0}}
-.k13{animation-name:k13}
-@keyframes k14{10.155%{opacity:1}25.425%{opacity:0}}
-.k14{animation-name:k14}
-@keyframes k15{21.388%{opacity:1}21.718%{opacity:0}}
-.k15{animation-name:k15}
-@keyframes k16{21.718%{opacity:1}21.883%{opacity:0}}
-.k16{animation-name:k16}
-@keyframes k17{21.883%{opacity:1}21.962%{opacity:0}}
-.k17{animation-name:k17}
-@keyframes k18{21.962%{opacity:1}22.279%{opacity:0}}
-.k18{animation-name:k18}
-@keyframes k19{22.279%{opacity:1}22.412%{opacity:0}}
-.k19{animation-name:k19}
-@keyframes k20{22.412%{opacity:1}22.603%{opacity:0}}
-.k20{animation-name:k20}
-@keyframes k21{22.603%{opacity:1}22.696%{opacity:0}}
-.k21{animation-name:k21}
-@keyframes k22{22.696%{opacity:1}22.848%{opacity:0}}
-.k22{animation-name:k22}
-@keyframes k23{22.848%{opacity:1}23.006%{opacity:0}}
-.k23{animation-name:k23}
-@keyframes k24{23.006%{opacity:1}23.145%{opacity:0}}
-.k24{animation-name:k24}
-@keyframes k25{23.145%{opacity:1}23.29%{opacity:0}}
-.k25{animation-name:k25}
-@keyframes k26{23.29%{opacity:1}23.429%{opacity:0}}
-.k26{animation-name:k26}
-@keyframes k27{23.429%{opacity:1}23.548%{opacity:0}}
-.k27{animation-name:k27}
-@keyframes k28{23.548%{opacity:1}23.687%{opacity:0}}
-.k28{animation-name:k28}
-@keyframes k29{23.687%{opacity:1}23.839%{opacity:0}}
-.k29{animation-name:k29}
-@keyframes k30{23.839%{opacity:1}23.944%{opacity:0}}
-.k30{animation-name:k30}
-@keyframes k31{23.944%{opacity:1}25.425%{opacity:0}}
-.k31{animation-name:k31}
-@keyframes k32{25.425%{opacity:1}41.705%{opacity:0}}
-.k32{animation-name:k32}
-@keyframes k33{36.657%{opacity:1}36.987%{opacity:0}}
-.k33{animation-name:k33}
-@keyframes k34{36.987%{opacity:1}37.086%{opacity:0}}
-.k34{animation-name:k34}
-@keyframes k35{37.086%{opacity:1}37.218%{opacity:0}}
-.k35{animation-name:k35}
-@keyframes k36{37.218%{opacity:1}37.331%{opacity:0}}
-.k36{animation-name:k36}
-@keyframes k37{37.331%{opacity:1}37.436%{opacity:0}}
-.k37{animation-name:k37}
-@keyframes k38{37.436%{opacity:1}37.522%{opacity:0}}
-.k38{animation-name:k38}
-@keyframes k39{37.522%{opacity:1}37.681%{opacity:0}}
-.k39{animation-name:k39}
-@keyframes k40{37.681%{opacity:1}37.853%{opacity:0}}
-.k40{animation-name:k40}
-@keyframes k41{37.853%{opacity:1}37.978%{opacity:0}}
-.k41{animation-name:k41}
-@keyframes k42{37.978%{opacity:1}38.143%{opacity:0}}
-.k42{animation-name:k42}
-@keyframes k43{38.143%{opacity:1}38.322%{opacity:0}}
-.k43{animation-name:k43}
-@keyframes k44{38.322%{opacity:1}38.487%{opacity:0}}
-.k44{animation-name:k44}
-@keyframes k45{38.487%{opacity:1}38.56%{opacity:0}}
-.k45{animation-name:k45}
-@keyframes k46{38.56%{opacity:1}38.679%{opacity:0}}
-.k46{animation-name:k46}
-@keyframes k47{38.679%{opacity:1}38.764%{opacity:0}}
-.k47{animation-name:k47}
-@keyframes k48{38.764%{opacity:1}38.943%{opacity:0}}
-.k48{animation-name:k48}
-@keyframes k49{38.943%{opacity:1}39.055%{opacity:0}}
-.k49{animation-name:k49}
-@keyframes k50{39.055%{opacity:1}39.253%{opacity:0}}
-.k50{animation-name:k50}
-@keyframes k51{39.253%{opacity:1}39.359%{opacity:0}}
-.k51{animation-name:k51}
-@keyframes k52{39.359%{opacity:1}39.524%{opacity:0}}
-.k52{animation-name:k52}
-@keyframes k53{39.524%{opacity:1}39.637%{opacity:0}}
-.k53{animation-name:k53}
-@keyframes k54{39.637%{opacity:1}39.756%{opacity:0}}
-.k54{animation-name:k54}
-@keyframes k55{39.756%{opacity:1}39.993%{opacity:0}}
-.k55{animation-name:k55}
-@keyframes k56{39.993%{opacity:1}40.178%{opacity:0}}
-.k56{animation-name:k56}
-@keyframes k57{40.178%{opacity:1}40.278%{opacity:0}}
-.k57{animation-name:k57}
-@keyframes k58{40.278%{opacity:1}40.383%{opacity:0}}
-.k58{animation-name:k58}
-@keyframes k59{40.383%{opacity:1}40.575%{opacity:0}}
-.k59{animation-name:k59}
-@keyframes k60{40.575%{opacity:1}40.7%{opacity:0}}
-.k60{animation-name:k60}
-@keyframes k61{40.7%{opacity:1}40.786%{opacity:0}}
-.k61{animation-name:k61}
-@keyframes k62{40.786%{opacity:1}40.925%{opacity:0}}
-.k62{animation-name:k62}
-@keyframes k63{40.925%{opacity:1}41.269%{opacity:0}}
-.k63{animation-name:k63}
-@keyframes k64{41.269%{opacity:1}41.434%{opacity:0}}
-.k64{animation-name:k64}
-@keyframes k65{41.434%{opacity:1}41.625%{opacity:0}}
-.k65{animation-name:k65}
-@keyframes k66{41.625%{opacity:1}41.705%{opacity:0}}
-.k66{animation-name:k66}
-@keyframes k67{41.705%{opacity:1}43.026%{opacity:0}}
-.k67{animation-name:k67}
-@keyframes k68{43.026%{opacity:1}64.903%{opacity:0}}
-.k68{animation-name:k68}
-@keyframes k69{54.258%{opacity:1}54.589%{opacity:0}}
-.k69{animation-name:k69}
-@keyframes k70{54.589%{opacity:1}54.78%{opacity:0}}
-.k70{animation-name:k70}
-@keyframes k71{54.78%{opacity:1}54.899%{opacity:0}}
-.k71{animation-name:k71}
-@keyframes k72{54.899%{opacity:1}55.045%{opacity:0}}
-.k72{animation-name:k72}
-@keyframes k73{55.045%{opacity:1}55.164%{opacity:0}}
-.k73{animation-name:k73}
-@keyframes k74{55.164%{opacity:1}55.342%{opacity:0}}
-.k74{animation-name:k74}
-@keyframes k75{55.342%{opacity:1}55.448%{opacity:0}}
-.k75{animation-name:k75}
-@keyframes k76{55.448%{opacity:1}55.56%{opacity:0}}
-.k76{animation-name:k76}
-@keyframes k77{55.56%{opacity:1}55.738%{opacity:0}}
-.k77{animation-name:k77}
-@keyframes k78{55.738%{opacity:1}55.851%{opacity:0}}
-.k78{animation-name:k78}
-@keyframes k79{55.851%{opacity:1}56.036%{opacity:0}}
-.k79{animation-name:k79}
-@keyframes k80{56.036%{opacity:1}56.181%{opacity:0}}
-.k80{animation-name:k80}
-@keyframes k81{56.181%{opacity:1}56.274%{opacity:0}}
-.k81{animation-name:k81}
-@keyframes k82{56.274%{opacity:1}56.399%{opacity:0}}
-.k82{animation-name:k82}
-@keyframes k83{56.399%{opacity:1}56.558%{opacity:0}}
-.k83{animation-name:k83}
-@keyframes k84{56.558%{opacity:1}56.63%{opacity:0}}
-.k84{animation-name:k84}
-@keyframes k85{56.63%{opacity:1}56.769%{opacity:0}}
-.k85{animation-name:k85}
-@keyframes k86{56.769%{opacity:1}56.875%{opacity:0}}
-.k86{animation-name:k86}
-@keyframes k87{56.875%{opacity:1}57.132%{opacity:0}}
-.k87{animation-name:k87}
-@keyframes k88{57.132%{opacity:1}57.317%{opacity:0}}
-.k88{animation-name:k88}
-@keyframes k89{57.317%{opacity:1}57.41%{opacity:0}}
-.k89{animation-name:k89}
-@keyframes k90{57.41%{opacity:1}57.582%{opacity:0}}
-.k90{animation-name:k90}
-@keyframes k91{57.582%{opacity:1}57.701%{opacity:0}}
-.k91{animation-name:k91}
-@keyframes k92{57.701%{opacity:1}57.886%{opacity:0}}
-.k92{animation-name:k92}
-@keyframes k93{57.886%{opacity:1}58.183%{opacity:0}}
-.k93{animation-name:k93}
-@keyframes k94{58.183%{opacity:1}58.249%{opacity:0}}
-.k94{animation-name:k94}
-@keyframes k95{58.249%{opacity:1}58.447%{opacity:0}}
-.k95{animation-name:k95}
-@keyframes k96{58.447%{opacity:1}58.659%{opacity:0}}
-.k96{animation-name:k96}
-@keyframes k97{58.659%{opacity:1}58.85%{opacity:0}}
-.k97{animation-name:k97}
-@keyframes k98{58.85%{opacity:1}58.956%{opacity:0}}
-.k98{animation-name:k98}
-@keyframes k99{58.956%{opacity:1}59.082%{opacity:0}}
-.k99{animation-name:k99}
-@keyframes k100{59.082%{opacity:1}59.339%{opacity:0}}
-.k100{animation-name:k100}
-@keyframes k101{59.339%{opacity:1}59.531%{opacity:0}}
-.k101{animation-name:k101}
-@keyframes k102{59.531%{opacity:1}59.835%{opacity:0}}
-.k102{animation-name:k102}
-@keyframes k103{59.835%{opacity:1}60.02%{opacity:0}}
-.k103{animation-name:k103}
-@keyframes k104{60.02%{opacity:1}60.093%{opacity:0}}
-.k104{animation-name:k104}
-@keyframes k105{60.093%{opacity:1}60.159%{opacity:0}}
-.k105{animation-name:k105}
-@keyframes k106{60.159%{opacity:1}60.291%{opacity:0}}
-.k106{animation-name:k106}
-@keyframes k107{60.291%{opacity:1}60.377%{opacity:0}}
-.k107{animation-name:k107}
-@keyframes k108{60.377%{opacity:1}60.575%{opacity:0}}
-.k108{animation-name:k108}
-@keyframes k109{60.575%{opacity:1}60.72%{opacity:0}}
-.k109{animation-name:k109}
-@keyframes k110{60.72%{opacity:1}60.806%{opacity:0}}
-.k110{animation-name:k110}
-@keyframes k111{60.806%{opacity:1}60.938%{opacity:0}}
-.k111{animation-name:k111}
-@keyframes k112{60.938%{opacity:1}61.103%{opacity:0}}
-.k112{animation-name:k112}
-@keyframes k113{61.103%{opacity:1}61.183%{opacity:0}}
-.k113{animation-name:k113}
-@keyframes k114{61.183%{opacity:1}61.381%{opacity:0}}
-.k114{animation-name:k114}
-@keyframes k115{61.381%{opacity:1}61.506%{opacity:0}}
-.k115{animation-name:k115}
-@keyframes k116{61.506%{opacity:1}61.599%{opacity:0}}
-.k116{animation-name:k116}
-@keyframes k117{61.599%{opacity:1}61.724%{opacity:0}}
-.k117{animation-name:k117}
-@keyframes k118{61.724%{opacity:1}61.982%{opacity:0}}
-.k118{animation-name:k118}
-@keyframes k119{61.982%{opacity:1}62.068%{opacity:0}}
-.k119{animation-name:k119}
-@keyframes k120{62.068%{opacity:1}62.134%{opacity:0}}
-.k120{animation-name:k120}
-@keyframes k121{62.134%{opacity:1}62.293%{opacity:0}}
-.k121{animation-name:k121}
-@keyframes k122{62.293%{opacity:1}62.365%{opacity:0}}
-.k122{animation-name:k122}
-@keyframes k123{62.365%{opacity:1}62.557%{opacity:0}}
-.k123{animation-name:k123}
-@keyframes k124{62.557%{opacity:1}62.663%{opacity:0}}
-.k124{animation-name:k124}
-@keyframes k125{62.663%{opacity:1}62.775%{opacity:0}}
-.k125{animation-name:k125}
-@keyframes k126{62.775%{opacity:1}62.874%{opacity:0}}
-.k126{animation-name:k126}
-@keyframes k127{62.874%{opacity:1}62.986%{opacity:0}}
-.k127{animation-name:k127}
-@keyframes k128{62.986%{opacity:1}63.178%{opacity:0}}
-.k128{animation-name:k128}
-@keyframes k129{63.178%{opacity:1}63.29%{opacity:0}}
-.k129{animation-name:k129}
-@keyframes k130{63.29%{opacity:1}63.449%{opacity:0}}
-.k130{animation-name:k130}
-@keyframes k131{63.449%{opacity:1}63.568%{opacity:0}}
-.k131{animation-name:k131}
-@keyframes k132{63.568%{opacity:1}63.74%{opacity:0}}
-.k132{animation-name:k132}
-@keyframes k133{63.74%{opacity:1}63.819%{opacity:0}}
-.k133{animation-name:k133}
-@keyframes k134{63.819%{opacity:1}63.905%{opacity:0}}
-.k134{animation-name:k134}
-@keyframes k135{63.905%{opacity:1}64.024%{opacity:0}}
-.k135{animation-name:k135}
-@keyframes k136{64.024%{opacity:1}64.189%{opacity:0}}
-.k136{animation-name:k136}
-@keyframes k137{64.189%{opacity:1}64.288%{opacity:0}}
-.k137{animation-name:k137}
-@keyframes k138{64.288%{opacity:1}64.473%{opacity:0}}
-.k138{animation-name:k138}
-@keyframes k139{64.473%{opacity:1}64.784%{opacity:0}}
-.k139{animation-name:k139}
-@keyframes k140{64.784%{opacity:1}64.903%{opacity:0}}
-.k140{animation-name:k140}
-@keyframes k141{64.903%{opacity:1}69.937%{opacity:0}}
-.k141{animation-name:k141}
-@keyframes k142{64.903%{opacity:1}65.002%{opacity:0}}
-.k142{animation-name:k142}
-@keyframes k143{65.002%{opacity:1}65.101%{opacity:0}}
-.k143{animation-name:k143}
-@keyframes k144{65.101%{opacity:1}65.22%{opacity:0}}
-.k144{animation-name:k144}
-@keyframes k145{65.22%{opacity:1}65.319%{opacity:0}}
-.k145{animation-name:k145}
-@keyframes k146{65.319%{opacity:1}65.504%{opacity:0}}
-.k146{animation-name:k146}
-@keyframes k147{65.504%{opacity:1}65.649%{opacity:0}}
-.k147{animation-name:k147}
-@keyframes k148{65.649%{opacity:1}65.788%{opacity:0}}
-.k148{animation-name:k148}
-@keyframes k149{65.788%{opacity:1}65.953%{opacity:0}}
-.k149{animation-name:k149}
-@keyframes k150{65.953%{opacity:1}66.131%{opacity:0}}
-.k150{animation-name:k150}
-@keyframes k151{66.131%{opacity:1}66.25%{opacity:0}}
-.k151{animation-name:k151}
-@keyframes k152{66.25%{opacity:1}66.33%{opacity:0}}
-.k152{animation-name:k152}
-@keyframes k153{66.33%{opacity:1}66.501%{opacity:0}}
-.k153{animation-name:k153}
-@keyframes k154{66.501%{opacity:1}66.693%{opacity:0}}
-.k154{animation-name:k154}
-@keyframes k155{66.693%{opacity:1}66.845%{opacity:0}}
-.k155{animation-name:k155}
-@keyframes k156{66.845%{opacity:1}67.03%{opacity:0}}
-.k156{animation-name:k156}
-@keyframes k157{67.03%{opacity:1}67.222%{opacity:0}}
-.k157{animation-name:k157}
-@keyframes k158{67.222%{opacity:1}67.387%{opacity:0}}
-.k158{animation-name:k158}
-@keyframes k159{67.387%{opacity:1}67.638%{opacity:0}}
-.k159{animation-name:k159}
-@keyframes k160{67.638%{opacity:1}67.81%{opacity:0}}
-.k160{animation-name:k160}
-@keyframes k161{67.81%{opacity:1}67.876%{opacity:0}}
-.k161{animation-name:k161}
-@keyframes k162{67.876%{opacity:1}67.988%{opacity:0}}
-.k162{animation-name:k162}
-@keyframes k163{67.988%{opacity:1}68.114%{opacity:0}}
-.k163{animation-name:k163}
-@keyframes k164{68.114%{opacity:1}68.186%{opacity:0}}
-.k164{animation-name:k164}
-@keyframes k165{68.186%{opacity:1}68.385%{opacity:0}}
-.k165{animation-name:k165}
-@keyframes k166{68.385%{opacity:1}68.583%{opacity:0}}
-.k166{animation-name:k166}
-@keyframes k167{68.583%{opacity:1}68.748%{opacity:0}}
-.k167{animation-name:k167}
-@keyframes k168{68.748%{opacity:1}68.827%{opacity:0}}
-.k168{animation-name:k168}
-@keyframes k169{68.827%{opacity:1}68.953%{opacity:0}}
-.k169{animation-name:k169}
-@keyframes k170{68.953%{opacity:1}69.045%{opacity:0}}
-.k170{animation-name:k170}
-@keyframes k171{69.045%{opacity:1}69.131%{opacity:0}}
-.k171{animation-name:k171}
-@keyframes k172{69.131%{opacity:1}69.23%{opacity:0}}
-.k172{animation-name:k172}
-@keyframes k173{69.23%{opacity:1}69.349%{opacity:0}}
-.k173{animation-name:k173}
-@keyframes k174{69.349%{opacity:1}69.501%{opacity:0}}
-.k174{animation-name:k174}
-@keyframes k175{69.501%{opacity:1}69.627%{opacity:0}}
-.k175{animation-name:k175}
-@keyframes k176{69.627%{opacity:1}69.798%{opacity:0}}
-.k176{animation-name:k176}
-@keyframes k177{69.798%{opacity:1}69.937%{opacity:0}}
-.k177{animation-name:k177}
-@keyframes k178{69.937%{opacity:1}77.536%{opacity:0}}
-.k178{animation-name:k178}
-@keyframes k179{77.536%{opacity:1}}
-.k179{animation-name:k179}
-@keyframes k180{88.768%{opacity:1}}
-.k180{animation-name:k180}
-@keyframes k181{8.12%{opacity:1}8.206%{opacity:0}}
-.k181{animation-name:k181}
-@keyframes k182{8.206%{opacity:1}8.332%{opacity:0}}
-.k182{animation-name:k182}
-@keyframes k183{8.675%{opacity:1}8.834%{opacity:0}}
-.k183{animation-name:k183}
-@keyframes k184{8.834%{opacity:1}10.155%{opacity:0}}
-.k184{animation-name:k184}
-@keyframes k185{10.155%{opacity:1}21.388%{opacity:0}}
-.k185{animation-name:k185}
-@keyframes k186{21.962%{opacity:1}22.114%{opacity:0}}
-.k186{animation-name:k186}
-@keyframes k187{22.114%{opacity:1}22.279%{opacity:0}}
-.k187{animation-name:k187}
-@keyframes k188{23.944%{opacity:1}24.103%{opacity:0}}
-.k188{animation-name:k188}
-@keyframes k189{24.103%{opacity:1}25.425%{opacity:0}}
-.k189{animation-name:k189}
-@keyframes k190{25.425%{opacity:1}36.657%{opacity:0}}
-.k190{animation-name:k190}
-@keyframes k191{37.978%{opacity:1}38.064%{opacity:0}}
-.k191{animation-name:k191}
-@keyframes k192{38.064%{opacity:1}38.143%{opacity:0}}
-.k192{animation-name:k192}
-@keyframes k193{39.756%{opacity:1}39.861%{opacity:0}}
-.k193{animation-name:k193}
-@keyframes k194{39.861%{opacity:1}39.993%{opacity:0}}
-.k194{animation-name:k194}
-@keyframes k195{40.925%{opacity:1}41.09%{opacity:0}}
-.k195{animation-name:k195}
-@keyframes k196{41.09%{opacity:1}41.269%{opacity:0}}
-.k196{animation-name:k196}
-@keyframes k197{41.705%{opacity:1}54.258%{opacity:0}}
-.k197{animation-name:k197}
-@keyframes k198{56.875%{opacity:1}57.027%{opacity:0}}
-.k198{animation-name:k198}
-@keyframes k199{57.027%{opacity:1}57.132%{opacity:0}}
-.k199{animation-name:k199}
-@keyframes k200{57.886%{opacity:1}58.005%{opacity:0}}
-.k200{animation-name:k200}
-@keyframes k201{58.005%{opacity:1}58.183%{opacity:0}}
-.k201{animation-name:k201}
-@keyframes k202{58.447%{opacity:1}58.593%{opacity:0}}
-.k202{animation-name:k202}
-@keyframes k203{58.593%{opacity:1}58.659%{opacity:0}}
-.k203{animation-name:k203}
-@keyframes k204{59.082%{opacity:1}59.154%{opacity:0}}
-.k204{animation-name:k204}
-@keyframes k205{59.154%{opacity:1}59.339%{opacity:0}}
-.k205{animation-name:k205}
-@keyframes k206{59.531%{opacity:1}59.65%{opacity:0}}
-.k206{animation-name:k206}
-@keyframes k207{59.65%{opacity:1}59.835%{opacity:0}}
-.k207{animation-name:k207}
-@keyframes k208{61.724%{opacity:1}61.797%{opacity:0}}
-.k208{animation-name:k208}
-@keyframes k209{61.797%{opacity:1}61.982%{opacity:0}}
-.k209{animation-name:k209}
-@keyframes k210{64.473%{opacity:1}64.625%{opacity:0}}
-.k210{animation-name:k210}
-@keyframes k211{64.625%{opacity:1}64.903%{opacity:0}}
-.k211{animation-name:k211}
-@keyframes k212{67.387%{opacity:1}67.539%{opacity:0}}
-.k212{animation-name:k212}
-@keyframes k213{67.539%{opacity:1}67.638%{opacity:0}}
-.k213{animation-name:k213}
-@keyframes k214{69.937%{opacity:1}88.768%{opacity:0}}
-.k214{animation-name:k214}
-@keyframes k215{0%{opacity:1}}
-.k215{animation-name:k215}
+.a{transform:translate(0,62.8px)}
+.f{transform:translate(0,82.8px)}
+.d{transform:translate(0,102.8px)}
+.o{transform:translate(0,122.8px)}
+.p{transform:translate(0,142.8px)}
+.q{transform:translate(0,162.8px)}
+.r{transform:translate(0,182.8px)}
+.s{transform:translate(0,202.8px)}
+.k{transform:translate(0,222.8px)}
+.t{transform:translate(0,242.8px)}
+.m{transform:translate(0,262.8px)}
+.i{transform:translate(0,282.8px)}
+.h{transform:translate(0,302.8px)}
+.u{transform:translate(0,322.8px)}
+.v{transform:translate(0,342.8px)}
+.w{transform:translate(0,362.8px)}
+.x{transform:translate(0,382.8px)}
+.y{transform:translate(0,402.8px)}
+.z{transform:translate(0,422.8px)}
+.A{transform:translate(0,442.8px)}
+.n{transform:translate(0,462.8px)}
+.j{transform:translate(0,482.8px)}
+.g{transform:translate(0,502.8px)}
+.e{transform:translate(0,522.8px)}
+.b{fill:#ac4142}
+@keyframes L{6.607%{opacity:1}6.938%{opacity:0}}
+.L{animation-name:L}
+@keyframes M{6.938%{opacity:1}7.076%{opacity:0}}
+.M{animation-name:M}
+@keyframes N{7.076%{opacity:1}7.261%{opacity:0}}
+.N{animation-name:N}
+@keyframes O{7.261%{opacity:1}7.446%{opacity:0}}
+.O{animation-name:O}
+@keyframes P{7.446%{opacity:1}7.585%{opacity:0}}
+.P{animation-name:P}
+@keyframes Q{7.585%{opacity:1}7.783%{opacity:0}}
+.Q{animation-name:Q}
+@keyframes R{7.783%{opacity:1}7.922%{opacity:0}}
+.R{animation-name:R}
+@keyframes S{7.922%{opacity:1}8.001%{opacity:0}}
+.S{animation-name:S}
+@keyframes T{8.001%{opacity:1}8.12%{opacity:0}}
+.T{animation-name:T}
+@keyframes U{8.12%{opacity:1}8.332%{opacity:0}}
+.U{animation-name:U}
+@keyframes V{8.332%{opacity:1}8.424%{opacity:0}}
+.V{animation-name:V}
+@keyframes W{8.424%{opacity:1}8.57%{opacity:0}}
+.W{animation-name:W}
+@keyframes X{8.57%{opacity:1}8.675%{opacity:0}}
+.X{animation-name:X}
+@keyframes Y{8.675%{opacity:1}25.425%{opacity:0}}
+.Y{animation-name:Y}
+@keyframes Z{10.155%{opacity:1}25.425%{opacity:0}}
+.Z{animation-name:Z}
+@keyframes aa{21.388%{opacity:1}21.718%{opacity:0}}
+.aa{animation-name:aa}
+@keyframes ab{21.718%{opacity:1}21.883%{opacity:0}}
+.ab{animation-name:ab}
+@keyframes ac{21.883%{opacity:1}21.962%{opacity:0}}
+.ac{animation-name:ac}
+@keyframes ad{21.962%{opacity:1}22.279%{opacity:0}}
+.ad{animation-name:ad}
+@keyframes ae{22.279%{opacity:1}22.412%{opacity:0}}
+.ae{animation-name:ae}
+@keyframes af{22.412%{opacity:1}22.603%{opacity:0}}
+.af{animation-name:af}
+@keyframes ag{22.603%{opacity:1}22.696%{opacity:0}}
+.ag{animation-name:ag}
+@keyframes ah{22.696%{opacity:1}22.848%{opacity:0}}
+.ah{animation-name:ah}
+@keyframes ai{22.848%{opacity:1}23.006%{opacity:0}}
+.ai{animation-name:ai}
+@keyframes aj{23.006%{opacity:1}23.145%{opacity:0}}
+.aj{animation-name:aj}
+@keyframes ak{23.145%{opacity:1}23.29%{opacity:0}}
+.ak{animation-name:ak}
+@keyframes al{23.29%{opacity:1}23.429%{opacity:0}}
+.al{animation-name:al}
+@keyframes am{23.429%{opacity:1}23.548%{opacity:0}}
+.am{animation-name:am}
+@keyframes an{23.548%{opacity:1}23.687%{opacity:0}}
+.an{animation-name:an}
+@keyframes ao{23.687%{opacity:1}23.839%{opacity:0}}
+.ao{animation-name:ao}
+@keyframes ap{23.839%{opacity:1}23.944%{opacity:0}}
+.ap{animation-name:ap}
+@keyframes aq{23.944%{opacity:1}25.425%{opacity:0}}
+.aq{animation-name:aq}
+@keyframes C{25.425%{opacity:1}41.705%{opacity:0}}
+.C{animation-name:C}
+@keyframes ar{36.657%{opacity:1}36.987%{opacity:0}}
+.ar{animation-name:ar}
+@keyframes as{36.987%{opacity:1}37.086%{opacity:0}}
+.as{animation-name:as}
+@keyframes at{37.086%{opacity:1}37.218%{opacity:0}}
+.at{animation-name:at}
+@keyframes I{37.218%{opacity:1}37.331%{opacity:0}}
+.I{animation-name:I}
+@keyframes au{37.331%{opacity:1}37.436%{opacity:0}}
+.au{animation-name:au}
+@keyframes av{37.436%{opacity:1}37.522%{opacity:0}}
+.av{animation-name:av}
+@keyframes aw{37.522%{opacity:1}37.681%{opacity:0}}
+.aw{animation-name:aw}
+@keyframes J{37.681%{opacity:1}37.853%{opacity:0}}
+.J{animation-name:J}
+@keyframes K{37.853%{opacity:1}37.978%{opacity:0}}
+.K{animation-name:K}
+@keyframes ax{37.978%{opacity:1}38.143%{opacity:0}}
+.ax{animation-name:ax}
+@keyframes ay{38.143%{opacity:1}38.322%{opacity:0}}
+.ay{animation-name:ay}
+@keyframes az{38.322%{opacity:1}38.487%{opacity:0}}
+.az{animation-name:az}
+@keyframes aA{38.487%{opacity:1}38.56%{opacity:0}}
+.aA{animation-name:aA}
+@keyframes aB{38.56%{opacity:1}38.679%{opacity:0}}
+.aB{animation-name:aB}
+@keyframes aC{38.679%{opacity:1}38.764%{opacity:0}}
+.aC{animation-name:aC}
+@keyframes aD{38.764%{opacity:1}38.943%{opacity:0}}
+.aD{animation-name:aD}
+@keyframes aE{38.943%{opacity:1}39.055%{opacity:0}}
+.aE{animation-name:aE}
+@keyframes aF{39.055%{opacity:1}39.253%{opacity:0}}
+.aF{animation-name:aF}
+@keyframes aG{39.253%{opacity:1}39.359%{opacity:0}}
+.aG{animation-name:aG}
+@keyframes aH{39.359%{opacity:1}39.524%{opacity:0}}
+.aH{animation-name:aH}
+@keyframes aI{39.524%{opacity:1}39.637%{opacity:0}}
+.aI{animation-name:aI}
+@keyframes aJ{39.637%{opacity:1}39.756%{opacity:0}}
+.aJ{animation-name:aJ}
+@keyframes aK{39.756%{opacity:1}39.993%{opacity:0}}
+.aK{animation-name:aK}
+@keyframes aL{39.993%{opacity:1}40.178%{opacity:0}}
+.aL{animation-name:aL}
+@keyframes aM{40.178%{opacity:1}40.278%{opacity:0}}
+.aM{animation-name:aM}
+@keyframes aN{40.278%{opacity:1}40.383%{opacity:0}}
+.aN{animation-name:aN}
+@keyframes aO{40.383%{opacity:1}40.575%{opacity:0}}
+.aO{animation-name:aO}
+@keyframes aP{40.575%{opacity:1}40.7%{opacity:0}}
+.aP{animation-name:aP}
+@keyframes aQ{40.7%{opacity:1}40.786%{opacity:0}}
+.aQ{animation-name:aQ}
+@keyframes aR{40.786%{opacity:1}40.925%{opacity:0}}
+.aR{animation-name:aR}
+@keyframes aS{40.925%{opacity:1}41.269%{opacity:0}}
+.aS{animation-name:aS}
+@keyframes aT{41.269%{opacity:1}41.434%{opacity:0}}
+.aT{animation-name:aT}
+@keyframes aU{41.434%{opacity:1}41.625%{opacity:0}}
+.aU{animation-name:aU}
+@keyframes aV{41.625%{opacity:1}41.705%{opacity:0}}
+.aV{animation-name:aV}
+@keyframes D{41.705%{opacity:1}43.026%{opacity:0}}
+.D{animation-name:D}
+@keyframes E{43.026%{opacity:1}64.903%{opacity:0}}
+.E{animation-name:E}
+@keyframes aW{54.258%{opacity:1}54.589%{opacity:0}}
+.aW{animation-name:aW}
+@keyframes aX{54.589%{opacity:1}54.78%{opacity:0}}
+.aX{animation-name:aX}
+@keyframes aY{54.78%{opacity:1}54.899%{opacity:0}}
+.aY{animation-name:aY}
+@keyframes aZ{54.899%{opacity:1}55.045%{opacity:0}}
+.aZ{animation-name:aZ}
+@keyframes a0{55.045%{opacity:1}55.164%{opacity:0}}
+.a0{animation-name:a0}
+@keyframes a1{55.164%{opacity:1}55.342%{opacity:0}}
+.a1{animation-name:a1}
+@keyframes a2{55.342%{opacity:1}55.448%{opacity:0}}
+.a2{animation-name:a2}
+@keyframes a3{55.448%{opacity:1}55.56%{opacity:0}}
+.a3{animation-name:a3}
+@keyframes a4{55.56%{opacity:1}55.738%{opacity:0}}
+.a4{animation-name:a4}
+@keyframes a5{55.738%{opacity:1}55.851%{opacity:0}}
+.a5{animation-name:a5}
+@keyframes a6{55.851%{opacity:1}56.036%{opacity:0}}
+.a6{animation-name:a6}
+@keyframes a7{56.036%{opacity:1}56.181%{opacity:0}}
+.a7{animation-name:a7}
+@keyframes a8{56.181%{opacity:1}56.274%{opacity:0}}
+.a8{animation-name:a8}
+@keyframes a9{56.274%{opacity:1}56.399%{opacity:0}}
+.a9{animation-name:a9}
+@keyframes ba{56.399%{opacity:1}56.558%{opacity:0}}
+.ba{animation-name:ba}
+@keyframes bb{56.558%{opacity:1}56.63%{opacity:0}}
+.bb{animation-name:bb}
+@keyframes bc{56.63%{opacity:1}56.769%{opacity:0}}
+.bc{animation-name:bc}
+@keyframes bd{56.769%{opacity:1}56.875%{opacity:0}}
+.bd{animation-name:bd}
+@keyframes be{56.875%{opacity:1}57.132%{opacity:0}}
+.be{animation-name:be}
+@keyframes bf{57.132%{opacity:1}57.317%{opacity:0}}
+.bf{animation-name:bf}
+@keyframes bh{57.317%{opacity:1}57.41%{opacity:0}}
+.bh{animation-name:bh}
+@keyframes bi{57.41%{opacity:1}57.582%{opacity:0}}
+.bi{animation-name:bi}
+@keyframes bj{57.582%{opacity:1}57.701%{opacity:0}}
+.bj{animation-name:bj}
+@keyframes bk{57.701%{opacity:1}57.886%{opacity:0}}
+.bk{animation-name:bk}
+@keyframes bl{57.886%{opacity:1}58.183%{opacity:0}}
+.bl{animation-name:bl}
+@keyframes bm{58.183%{opacity:1}58.249%{opacity:0}}
+.bm{animation-name:bm}
+@keyframes bn{58.249%{opacity:1}58.447%{opacity:0}}
+.bn{animation-name:bn}
+@keyframes bo{58.447%{opacity:1}58.659%{opacity:0}}
+.bo{animation-name:bo}
+@keyframes bp{58.659%{opacity:1}58.85%{opacity:0}}
+.bp{animation-name:bp}
+@keyframes bq{58.85%{opacity:1}58.956%{opacity:0}}
+.bq{animation-name:bq}
+@keyframes br{58.956%{opacity:1}59.082%{opacity:0}}
+.br{animation-name:br}
+@keyframes bs{59.082%{opacity:1}59.339%{opacity:0}}
+.bs{animation-name:bs}
+@keyframes bt{59.339%{opacity:1}59.531%{opacity:0}}
+.bt{animation-name:bt}
+@keyframes bu{59.531%{opacity:1}59.835%{opacity:0}}
+.bu{animation-name:bu}
+@keyframes bv{59.835%{opacity:1}60.02%{opacity:0}}
+.bv{animation-name:bv}
+@keyframes bw{60.02%{opacity:1}60.093%{opacity:0}}
+.bw{animation-name:bw}
+@keyframes bx{60.093%{opacity:1}60.159%{opacity:0}}
+.bx{animation-name:bx}
+@keyframes by{60.159%{opacity:1}60.291%{opacity:0}}
+.by{animation-name:by}
+@keyframes bz{60.291%{opacity:1}60.377%{opacity:0}}
+.bz{animation-name:bz}
+@keyframes bA{60.377%{opacity:1}60.575%{opacity:0}}
+.bA{animation-name:bA}
+@keyframes bB{60.575%{opacity:1}60.72%{opacity:0}}
+.bB{animation-name:bB}
+@keyframes bC{60.72%{opacity:1}60.806%{opacity:0}}
+.bC{animation-name:bC}
+@keyframes bD{60.806%{opacity:1}60.938%{opacity:0}}
+.bD{animation-name:bD}
+@keyframes bE{60.938%{opacity:1}61.103%{opacity:0}}
+.bE{animation-name:bE}
+@keyframes bF{61.103%{opacity:1}61.183%{opacity:0}}
+.bF{animation-name:bF}
+@keyframes bG{61.183%{opacity:1}61.381%{opacity:0}}
+.bG{animation-name:bG}
+@keyframes bH{61.381%{opacity:1}61.506%{opacity:0}}
+.bH{animation-name:bH}
+@keyframes bI{61.506%{opacity:1}61.599%{opacity:0}}
+.bI{animation-name:bI}
+@keyframes bJ{61.599%{opacity:1}61.724%{opacity:0}}
+.bJ{animation-name:bJ}
+@keyframes bK{61.724%{opacity:1}61.982%{opacity:0}}
+.bK{animation-name:bK}
+@keyframes bL{61.982%{opacity:1}62.068%{opacity:0}}
+.bL{animation-name:bL}
+@keyframes bM{62.068%{opacity:1}62.134%{opacity:0}}
+.bM{animation-name:bM}
+@keyframes bN{62.134%{opacity:1}62.293%{opacity:0}}
+.bN{animation-name:bN}
+@keyframes bO{62.293%{opacity:1}62.365%{opacity:0}}
+.bO{animation-name:bO}
+@keyframes bP{62.365%{opacity:1}62.557%{opacity:0}}
+.bP{animation-name:bP}
+@keyframes bQ{62.557%{opacity:1}62.663%{opacity:0}}
+.bQ{animation-name:bQ}
+@keyframes bR{62.663%{opacity:1}62.775%{opacity:0}}
+.bR{animation-name:bR}
+@keyframes bS{62.775%{opacity:1}62.874%{opacity:0}}
+.bS{animation-name:bS}
+@keyframes bT{62.874%{opacity:1}62.986%{opacity:0}}
+.bT{animation-name:bT}
+@keyframes bU{62.986%{opacity:1}63.178%{opacity:0}}
+.bU{animation-name:bU}
+@keyframes bV{63.178%{opacity:1}63.29%{opacity:0}}
+.bV{animation-name:bV}
+@keyframes bW{63.29%{opacity:1}63.449%{opacity:0}}
+.bW{animation-name:bW}
+@keyframes bX{63.449%{opacity:1}63.568%{opacity:0}}
+.bX{animation-name:bX}
+@keyframes bY{63.568%{opacity:1}63.74%{opacity:0}}
+.bY{animation-name:bY}
+@keyframes bZ{63.74%{opacity:1}63.819%{opacity:0}}
+.bZ{animation-name:bZ}
+@keyframes b0{63.819%{opacity:1}63.905%{opacity:0}}
+.b0{animation-name:b0}
+@keyframes b1{63.905%{opacity:1}64.024%{opacity:0}}
+.b1{animation-name:b1}
+@keyframes b2{64.024%{opacity:1}64.189%{opacity:0}}
+.b2{animation-name:b2}
+@keyframes b3{64.189%{opacity:1}64.288%{opacity:0}}
+.b3{animation-name:b3}
+@keyframes b4{64.288%{opacity:1}64.473%{opacity:0}}
+.b4{animation-name:b4}
+@keyframes b5{64.473%{opacity:1}64.784%{opacity:0}}
+.b5{animation-name:b5}
+@keyframes b6{64.784%{opacity:1}64.903%{opacity:0}}
+.b6{animation-name:b6}
+@keyframes F{64.903%{opacity:1}69.937%{opacity:0}}
+.F{animation-name:F}
+@keyframes b7{64.903%{opacity:1}65.002%{opacity:0}}
+.b7{animation-name:b7}
+@keyframes b8{65.002%{opacity:1}65.101%{opacity:0}}
+.b8{animation-name:b8}
+@keyframes b9{65.101%{opacity:1}65.22%{opacity:0}}
+.b9{animation-name:b9}
+@keyframes ca{65.22%{opacity:1}65.319%{opacity:0}}
+.ca{animation-name:ca}
+@keyframes cb{65.319%{opacity:1}65.504%{opacity:0}}
+.cb{animation-name:cb}
+@keyframes cc{65.504%{opacity:1}65.649%{opacity:0}}
+.cc{animation-name:cc}
+@keyframes cd{65.649%{opacity:1}65.788%{opacity:0}}
+.cd{animation-name:cd}
+@keyframes ce{65.788%{opacity:1}65.953%{opacity:0}}
+.ce{animation-name:ce}
+@keyframes cf{65.953%{opacity:1}66.131%{opacity:0}}
+.cf{animation-name:cf}
+@keyframes cg{66.131%{opacity:1}66.25%{opacity:0}}
+.cg{animation-name:cg}
+@keyframes ch{66.25%{opacity:1}66.33%{opacity:0}}
+.ch{animation-name:ch}
+@keyframes ci{66.33%{opacity:1}66.501%{opacity:0}}
+.ci{animation-name:ci}
+@keyframes cj{66.501%{opacity:1}66.693%{opacity:0}}
+.cj{animation-name:cj}
+@keyframes ck{66.693%{opacity:1}66.845%{opacity:0}}
+.ck{animation-name:ck}
+@keyframes cl{66.845%{opacity:1}67.03%{opacity:0}}
+.cl{animation-name:cl}
+@keyframes cm{67.03%{opacity:1}67.222%{opacity:0}}
+.cm{animation-name:cm}
+@keyframes cn{67.222%{opacity:1}67.387%{opacity:0}}
+.cn{animation-name:cn}
+@keyframes co{67.387%{opacity:1}67.638%{opacity:0}}
+.co{animation-name:co}
+@keyframes cp{67.638%{opacity:1}67.81%{opacity:0}}
+.cp{animation-name:cp}
+@keyframes cq{67.81%{opacity:1}67.876%{opacity:0}}
+.cq{animation-name:cq}
+@keyframes cr{67.876%{opacity:1}67.988%{opacity:0}}
+.cr{animation-name:cr}
+@keyframes cs{67.988%{opacity:1}68.114%{opacity:0}}
+.cs{animation-name:cs}
+@keyframes ct{68.114%{opacity:1}68.186%{opacity:0}}
+.ct{animation-name:ct}
+@keyframes cu{68.186%{opacity:1}68.385%{opacity:0}}
+.cu{animation-name:cu}
+@keyframes cv{68.385%{opacity:1}68.583%{opacity:0}}
+.cv{animation-name:cv}
+@keyframes cw{68.583%{opacity:1}68.748%{opacity:0}}
+.cw{animation-name:cw}
+@keyframes cx{68.748%{opacity:1}68.827%{opacity:0}}
+.cx{animation-name:cx}
+@keyframes cy{68.827%{opacity:1}68.953%{opacity:0}}
+.cy{animation-name:cy}
+@keyframes cz{68.953%{opacity:1}69.045%{opacity:0}}
+.cz{animation-name:cz}
+@keyframes cA{69.045%{opacity:1}69.131%{opacity:0}}
+.cA{animation-name:cA}
+@keyframes cB{69.131%{opacity:1}69.23%{opacity:0}}
+.cB{animation-name:cB}
+@keyframes cC{69.23%{opacity:1}69.349%{opacity:0}}
+.cC{animation-name:cC}
+@keyframes cD{69.349%{opacity:1}69.501%{opacity:0}}
+.cD{animation-name:cD}
+@keyframes cE{69.501%{opacity:1}69.627%{opacity:0}}
+.cE{animation-name:cE}
+@keyframes cF{69.627%{opacity:1}69.798%{opacity:0}}
+.cF{animation-name:cF}
+@keyframes cG{69.798%{opacity:1}69.937%{opacity:0}}
+.cG{animation-name:cG}
+@keyframes G{69.937%{opacity:1}77.536%{opacity:0}}
+.G{animation-name:G}
+@keyframes B{77.536%{opacity:1}}
+.B{animation-name:B}
+@keyframes cH{88.768%{opacity:1}}
+.cH{animation-name:cH}
+@keyframes cI{8.12%{opacity:1}8.206%{opacity:0}}
+.cI{animation-name:cI}
+@keyframes cJ{8.206%{opacity:1}8.332%{opacity:0}}
+.cJ{animation-name:cJ}
+@keyframes cK{8.675%{opacity:1}8.834%{opacity:0}}
+.cK{animation-name:cK}
+@keyframes cL{8.834%{opacity:1}10.155%{opacity:0}}
+.cL{animation-name:cL}
+@keyframes cM{10.155%{opacity:1}21.388%{opacity:0}}
+.cM{animation-name:cM}
+@keyframes cN{21.962%{opacity:1}22.114%{opacity:0}}
+.cN{animation-name:cN}
+@keyframes cO{22.114%{opacity:1}22.279%{opacity:0}}
+.cO{animation-name:cO}
+@keyframes cP{23.944%{opacity:1}24.103%{opacity:0}}
+.cP{animation-name:cP}
+@keyframes cQ{24.103%{opacity:1}25.425%{opacity:0}}
+.cQ{animation-name:cQ}
+@keyframes cR{25.425%{opacity:1}36.657%{opacity:0}}
+.cR{animation-name:cR}
+@keyframes cS{37.978%{opacity:1}38.064%{opacity:0}}
+.cS{animation-name:cS}
+@keyframes cT{38.064%{opacity:1}38.143%{opacity:0}}
+.cT{animation-name:cT}
+@keyframes cU{39.756%{opacity:1}39.861%{opacity:0}}
+.cU{animation-name:cU}
+@keyframes cV{39.861%{opacity:1}39.993%{opacity:0}}
+.cV{animation-name:cV}
+@keyframes cW{40.925%{opacity:1}41.09%{opacity:0}}
+.cW{animation-name:cW}
+@keyframes cX{41.09%{opacity:1}41.269%{opacity:0}}
+.cX{animation-name:cX}
+@keyframes cY{41.705%{opacity:1}54.258%{opacity:0}}
+.cY{animation-name:cY}
+@keyframes cZ{56.875%{opacity:1}57.027%{opacity:0}}
+.cZ{animation-name:cZ}
+@keyframes c0{57.027%{opacity:1}57.132%{opacity:0}}
+.c0{animation-name:c0}
+@keyframes c1{57.886%{opacity:1}58.005%{opacity:0}}
+.c1{animation-name:c1}
+@keyframes c2{58.005%{opacity:1}58.183%{opacity:0}}
+.c2{animation-name:c2}
+@keyframes c3{58.447%{opacity:1}58.593%{opacity:0}}
+.c3{animation-name:c3}
+@keyframes c4{58.593%{opacity:1}58.659%{opacity:0}}
+.c4{animation-name:c4}
+@keyframes c5{59.082%{opacity:1}59.154%{opacity:0}}
+.c5{animation-name:c5}
+@keyframes c6{59.154%{opacity:1}59.339%{opacity:0}}
+.c6{animation-name:c6}
+@keyframes c7{59.531%{opacity:1}59.65%{opacity:0}}
+.c7{animation-name:c7}
+@keyframes c8{59.65%{opacity:1}59.835%{opacity:0}}
+.c8{animation-name:c8}
+@keyframes c9{61.724%{opacity:1}61.797%{opacity:0}}
+.c9{animation-name:c9}
+@keyframes da{61.797%{opacity:1}61.982%{opacity:0}}
+.da{animation-name:da}
+@keyframes db{64.473%{opacity:1}64.625%{opacity:0}}
+.db{animation-name:db}
+@keyframes dc{64.625%{opacity:1}64.903%{opacity:0}}
+.dc{animation-name:dc}
+@keyframes dd{67.387%{opacity:1}67.539%{opacity:0}}
+.dd{animation-name:dd}
+@keyframes de{67.539%{opacity:1}67.638%{opacity:0}}
+.de{animation-name:de}
+@keyframes df{69.937%{opacity:1}88.768%{opacity:0}}
+.df{animation-name:df}
+@keyframes H{0%{opacity:1}}
+.H{animation-name:H}
 </style>
 <defs>
 <filter id="window-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.22"/></filter>
+<rect id="c" class="c" width="9.92" height="20"/>
 <mask id="viewport-mask" x="0" y="0" width="837.6" height="546" maskUnits="userSpaceOnUse">
-<rect class="l k215 viewport-mask-0" x="12" y="46" width="813.6" height="488" fill="white"/>
+<rect class="l H viewport-mask-0" x="12" y="46" width="813.6" height="488" fill="white"/>
 </mask>
 </defs>
-<rect class="l k215 viewport-chrome-0" x="12" y="12" width="813.6" height="522" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
-<path class="l k215 viewport-chrome-0" d="M 20,12 H 817.6 Q 825.6,12 825.6,20 V 46 H 12 V 20 Q 12,12 20,12 Z" fill="#323232"/>
-<line class="l k215 viewport-chrome-0" x1="12" y1="46" x2="825.6" y2="46" stroke="#1a1a1a" stroke-width="1"/>
-<circle class="l k215 viewport-chrome-0" cx="34" cy="29" r="8" fill="#ff5f57"/>
-<circle class="l k215 viewport-chrome-0" cx="60" cy="29" r="8" fill="#febc2e"/>
-<circle class="l k215 viewport-chrome-0" cx="86" cy="29" r="8" fill="#28c840"/>
-<g mask="url(#viewport-mask)">
-<rect class="bg l k215 viewport-bg-0" x="12" y="46" width="813.6" height="488" fill="#282c34"/>
-<g class="l k0"><text x="22" y="62.8" fill="#d0d0d0">$</text></g>
-<g class="l k1"><g id="r1"><text x="22 41.84" y="62.8" fill="#d0d0d0">$s</text></g></g>
-<g class="l k2"><g id="r2"><text x="22 41.84 51.76" y="62.8" fill="#d0d0d0">$sc</text></g></g>
-<g class="l k3"><g id="r3"><text x="22 41.84 51.76 61.68" y="62.8" fill="#d0d0d0">$sce</text></g></g>
-<g class="l k4"><g id="r4"><text x="22" y="62.8" fill="#d0d0d0" textLength="59.52">$ scen</text></g></g>
-<g class="l k5"><g id="r5"><text x="22" y="62.8" fill="#d0d0d0" textLength="69.44">$ scene</text></g></g>
-<g class="l k6"><g id="r6"><text x="22" y="62.8" fill="#d0d0d0" textLength="79.36">$ scenet</text></g></g>
-<g class="l k7"><g id="r7"><text x="22" y="62.8" fill="#d0d0d0" textLength="89.28">$ sceneta</text></g></g>
-<g class="l k8"><g id="r8"><text x="22" y="62.8" fill="#d0d0d0" textLength="99.2">$ scenetak</text></g></g>
-<g class="l k9"><g id="r9"><text x="22" y="62.8" fill="#d0d0d0" textLength="109.12">$ scenetake</text></g></g>
-<g class="l k10"><text x="22" y="62.8" fill="#d0d0d0" textLength="128.96">$ scenetake i</text></g>
-<g class="l k11"><text x="22" y="62.8" fill="#d0d0d0" textLength="138.88">$ scenetake in</text></g>
-<g class="l k12"><text x="22" y="62.8" fill="#d0d0d0" textLength="148.8">$ scenetake ini</text></g>
-<g class="l k13"><text x="22" y="62.8" fill="#d0d0d0" textLength="158.72">$ scenetake init</text></g>
-<g class="l k14"><text x="22" y="82.8" fill="#ac4142" textLength="218.24">Created: scenario.yaml</text></g>
-<g class="l k15"><text x="22" y="102.8" fill="#d0d0d0">$</text></g>
-<g class="l k16"><text x="22 41.84" y="102.8" fill="#d0d0d0">$c</text></g>
-<g class="l k17"><text x="22 41.84 51.76" y="102.8" fill="#d0d0d0">$ca</text></g>
-<g class="l k18"><text x="22 41.84 51.76 61.68" y="102.8" fill="#d0d0d0">$cat</text></g>
-<g class="l k19"><text x="22" y="102.8" fill="#d0d0d0" textLength="69.44">$ cat s</text></g>
-<g class="l k20"><text x="22" y="102.8" fill="#d0d0d0" textLength="79.36">$ cat sc</text></g>
-<g class="l k21"><text x="22" y="102.8" fill="#d0d0d0" textLength="89.28">$ cat sce</text></g>
-<g class="l k22"><text x="22" y="102.8" fill="#d0d0d0" textLength="99.2">$ cat scen</text></g>
-<g class="l k23"><text x="22" y="102.8" fill="#d0d0d0" textLength="109.12">$ cat scena</text></g>
-<g class="l k24"><text x="22" y="102.8" fill="#d0d0d0" textLength="119.04">$ cat scenar</text></g>
-<g class="l k25"><text x="22" y="102.8" fill="#d0d0d0" textLength="128.96">$ cat scenari</text></g>
-<g class="l k26"><text x="22" y="102.8" fill="#d0d0d0" textLength="138.88">$ cat scenario</text></g>
-<g class="l k27"><text x="22" y="102.8" fill="#d0d0d0" textLength="148.8">$ cat scenario.</text></g>
-<g class="l k28"><text x="22" y="102.8" fill="#d0d0d0" textLength="158.72">$ cat scenario.y</text></g>
-<g class="l k29"><text x="22" y="102.8" fill="#d0d0d0" textLength="168.64">$ cat scenario.ya</text></g>
-<g class="l k30"><text x="22" y="102.8" fill="#d0d0d0" textLength="178.56">$ cat scenario.yam</text></g>
-<g class="l k31"><text x="22" y="102.8" fill="#d0d0d0" textLength="188.48">$ cat scenario.yaml</text></g>
-<g class="l k32"><text x="41.84" y="62.8" fill="#d0d0d0" textLength="555.52">- name: &quot;[cyan]Styled command typing + output highlight&quot;</text></g>
-<g class="l k32"><g id="r33"><text x="61.68" y="82.8" fill="#d0d0d0" textLength="644.8">run: printf 'line1 alpha\nline2 beta gamma\nline3\nline4 delta\n'</text></g></g>
-<g class="l k32"><g id="r34"><text x="61.68" y="102.8" fill="#d0d0d0" textLength="357.12">run-highlight: &quot;bold fg:bright-cyan&quot;</text></g></g>
-<g class="l k32"><g id="r35"><text x="61.68" y="122.8" fill="#d0d0d0" textLength="99.2">highlight:</text></g></g>
-<g class="l k32"><g id="r36"><text x="81.52" y="142.8" fill="#d0d0d0" textLength="89.28">- at: &quot;1&quot;</text></g></g>
-<g class="l k32"><g id="r37"><text x="101.36" y="162.8" fill="#d0d0d0" textLength="238.08">color: &quot;fg:bright-green&quot;</text></g></g>
-<g class="l k32"><g id="r38"><text x="81.52" y="182.8" fill="#d0d0d0" textLength="138.88">- at: &quot;2:7-10&quot;</text></g></g>
-<g class="l k32"><g id="r39"><text x="101.36" y="202.8" fill="#d0d0d0" textLength="277.76">color: &quot;underline fg:yellow&quot;</text></g></g>
-<g class="l k32"><g id="r40"><text x="81.52" y="222.8" fill="#d0d0d0" textLength="128.96">- at: &quot;2:12-&quot;</text></g></g>
-<g class="l k32"><g id="r41"><text x="101.36" y="242.8" fill="#d0d0d0" textLength="238.08">color: &quot;bold fg:magenta&quot;</text></g></g>
-<g class="l k32"><g id="r42"><text x="81.52" y="262.8" fill="#d0d0d0" textLength="89.28">- at: &quot;3&quot;</text></g></g>
-<g class="l k32"><g id="r43"><text x="101.36" y="282.8" fill="#d0d0d0" textLength="238.08">color: &quot;fg:white bg:212&quot;</text></g></g>
-<g class="l k32"><g id="r44"><text x="81.52" y="302.8" fill="#d0d0d0" textLength="89.28">- at: &quot;4&quot;</text></g></g>
-<g class="l k32"><g id="r45"><text x="101.36" y="322.8" fill="#d0d0d0" textLength="238.08">color: &quot;fg:black bg:114&quot;</text></g></g>
-<g class="l k32"><g id="r46"><text x="41.84" y="362.8" fill="#d0d0d0" textLength="456.32">- name: &quot;[bright-yellow]stderr color override&quot;</text></g></g>
-<g class="l k32"><g id="r47"><text x="61.68" y="382.8" fill="#d0d0d0" textLength="297.6">run: echo &quot;stderr sample&quot; 1&gt;&amp;2</text></g></g>
-<g class="l k32"><g id="r48"><text x="61.68" y="402.8" fill="#d0d0d0" textLength="267.84">stderr-color: &quot;bold fg:red&quot;</text></g></g>
-<g class="l k32"><g id="r49"><text x="22" y="442.8" fill="#d0d0d0" textLength="793.6"># Optional teardown commands. They run after the cast file is written, but are n</text></g></g>
-<g class="l k32"><g id="r50"><text x="22" y="462.8" fill="#d0d0d0" textLength="238.08">ot recorded in the cast.</text></g></g>
-<g class="l k32"><g id="r51"><text x="22" y="482.8" fill="#d0d0d0" textLength="69.44"># post:</text></g></g>
-<g class="l k32"><g id="r52"><text x="22" y="502.8" fill="#d0d0d0" textLength="277.76">#   - echo &quot;run after steps&quot;</text></g></g>
-<g class="l k33"><text x="22" y="522.8" fill="#d0d0d0">$</text></g>
-<use href="#r1" y="460" class="l k34"/>
-<use href="#r2" y="460" class="l k35"/>
-<use href="#r3" y="460" class="l k36"/>
-<use href="#r4" y="460" class="l k37"/>
-<use href="#r5" y="460" class="l k38"/>
-<use href="#r6" y="460" class="l k39"/>
-<use href="#r7" y="460" class="l k40"/>
-<use href="#r8" y="460" class="l k41"/>
-<use href="#r9" y="460" class="l k42"/>
-<g class="l k43"><text x="22" y="522.8" fill="#d0d0d0" textLength="128.96">$ scenetake s</text></g>
-<g class="l k44"><text x="22" y="522.8" fill="#d0d0d0" textLength="138.88">$ scenetake sc</text></g>
-<g class="l k45"><text x="22" y="522.8" fill="#d0d0d0" textLength="148.8">$ scenetake sce</text></g>
-<g class="l k46"><text x="22" y="522.8" fill="#d0d0d0" textLength="158.72">$ scenetake scen</text></g>
-<g class="l k47"><text x="22" y="522.8" fill="#d0d0d0" textLength="168.64">$ scenetake scena</text></g>
-<g class="l k48"><text x="22" y="522.8" fill="#d0d0d0" textLength="178.56">$ scenetake scenar</text></g>
-<g class="l k49"><text x="22" y="522.8" fill="#d0d0d0" textLength="188.48">$ scenetake scenari</text></g>
-<g class="l k50"><text x="22" y="522.8" fill="#d0d0d0" textLength="198.4">$ scenetake scenario</text></g>
-<g class="l k51"><text x="22" y="522.8" fill="#d0d0d0" textLength="208.32">$ scenetake scenario.</text></g>
-<g class="l k52"><text x="22" y="522.8" fill="#d0d0d0" textLength="218.24">$ scenetake scenario.y</text></g>
-<g class="l k53"><text x="22" y="522.8" fill="#d0d0d0" textLength="228.16">$ scenetake scenario.ya</text></g>
-<g class="l k54"><text x="22" y="522.8" fill="#d0d0d0" textLength="238.08">$ scenetake scenario.yam</text></g>
-<g class="l k55"><text x="22" y="522.8" fill="#d0d0d0" textLength="248">$ scenetake scenario.yaml</text></g>
-<g class="l k56"><text x="22" y="522.8" fill="#d0d0d0" textLength="267.84">$ scenetake scenario.yaml -</text></g>
-<g class="l k57"><text x="22" y="522.8" fill="#d0d0d0" textLength="277.76">$ scenetake scenario.yaml --</text></g>
-<g class="l k58"><text x="22" y="522.8" fill="#d0d0d0" textLength="287.68">$ scenetake scenario.yaml --f</text></g>
-<g class="l k59"><text x="22" y="522.8" fill="#d0d0d0" textLength="297.6">$ scenetake scenario.yaml --fo</text></g>
-<g class="l k60"><text x="22" y="522.8" fill="#d0d0d0" textLength="307.52">$ scenetake scenario.yaml --for</text></g>
-<g class="l k61"><text x="22" y="522.8" fill="#d0d0d0" textLength="317.44">$ scenetake scenario.yaml --form</text></g>
-<g class="l k62"><text x="22" y="522.8" fill="#d0d0d0" textLength="327.36">$ scenetake scenario.yaml --forma</text></g>
-<g class="l k63"><text x="22" y="522.8" fill="#d0d0d0" textLength="337.28">$ scenetake scenario.yaml --format</text></g>
-<g class="l k64"><text x="22" y="522.8" fill="#d0d0d0" textLength="357.12">$ scenetake scenario.yaml --format s</text></g>
-<g class="l k65"><text x="22" y="522.8" fill="#d0d0d0" textLength="367.04">$ scenetake scenario.yaml --format sv</text></g>
-<g class="l k66"><g id="r86"><text x="22" y="522.8" fill="#d0d0d0" textLength="376.96">$ scenetake scenario.yaml --format svg</text></g></g>
-<use href="#r33" y="-20" class="l k67"/>
-<use href="#r34" y="-20" class="l k67"/>
-<use href="#r35" y="-20" class="l k67"/>
-<use href="#r36" y="-20" class="l k67"/>
-<use href="#r37" y="-20" class="l k67"/>
-<use href="#r38" y="-20" class="l k67"/>
-<use href="#r39" y="-20" class="l k67"/>
-<use href="#r40" y="-20" class="l k67"/>
-<use href="#r41" y="-20" class="l k67"/>
-<use href="#r42" y="-20" class="l k67"/>
-<use href="#r43" y="-20" class="l k67"/>
-<use href="#r44" y="-20" class="l k67"/>
-<use href="#r45" y="-20" class="l k67"/>
-<use href="#r46" y="-20" class="l k67"/>
-<use href="#r47" y="-20" class="l k67"/>
-<use href="#r48" y="-20" class="l k67"/>
-<use href="#r49" y="-20" class="l k67"/>
-<use href="#r50" y="-20" class="l k67"/>
-<use href="#r51" y="-20" class="l k67"/>
-<use href="#r52" y="-20" class="l k67"/>
-<use href="#r86" y="-20" class="l k67"/>
-<use href="#r43" y="-220" class="l k68"/>
-<use href="#r44" y="-220" class="l k68"/>
-<use href="#r45" y="-220" class="l k68"/>
-<use href="#r46" y="-220" class="l k68"/>
-<use href="#r47" y="-220" class="l k68"/>
-<use href="#r48" y="-220" class="l k68"/>
-<use href="#r49" y="-220" class="l k68"/>
-<use href="#r50" y="-220" class="l k68"/>
-<use href="#r51" y="-220" class="l k68"/>
-<use href="#r52" y="-220" class="l k68"/>
-<use href="#r86" y="-220" class="l k68"/>
-<g class="l k68"><g id="r119"><text x="22" y="322.8" fill="#ac4142" textLength="218.24">Loading: scenario.yaml</text></g></g>
-<g class="l k68"><g id="r120"><text x="22" y="342.8" fill="#ac4142" textLength="168.64">Using shell: pwsh</text></g></g>
-<g class="l k68"><g id="r121"><text x="22" y="362.8" fill="#ac4142" textLength="178.56">Generating cast...</text></g></g>
-<g class="l k68"><g id="r122"><text x="41.84" y="382.8" fill="#ac4142" textLength="287.68">running: echo &quot;Hello, World!&quot;</text></g></g>
-<g class="l k68"><g id="r123"><text x="41.84" y="402.8" fill="#ac4142" textLength="119.04">running: pwd</text></g></g>
-<g class="l k68"><g id="r124"><text x="41.84" y="422.8" fill="#ac4142" textLength="684.48">running: printf 'line1 alpha\nline2 beta gamma\nline3\nline4 delta\n'</text></g></g>
-<g class="l k68"><g id="r125"><text x="41.84" y="442.8" fill="#ac4142" textLength="337.28">running: echo &quot;stderr sample&quot; 1&gt;&amp;2</text></g></g>
-<g class="l k68"><g id="r126"><text x="22" y="462.8" fill="#ac4142" textLength="426.56">Written: scenario.cast  (127 events, 11.1s)</text></g></g>
-<g class="l k68"><g id="r127"><text x="22" y="482.8" fill="#ac4142" textLength="208.32">Written: scenario.svg</text></g></g>
-<g class="l k68"><g id="r128"><text x="22" y="502.8" fill="#ac4142" textLength="327.36">Done: scenario.cast, scenario.svg</text></g></g>
-<g class="l k69"><text x="22" y="522.8" fill="#d0d0d0">$</text></g>
-<g class="l k70"><text x="22 41.84" y="522.8" fill="#d0d0d0">$M</text></g>
-<g class="l k71"><text x="22 41.84 51.76" y="522.8" fill="#d0d0d0">$MS</text></g>
-<g class="l k72"><text x="22 41.84 51.76 61.68" y="522.8" fill="#d0d0d0">$MSY</text></g>
-<g class="l k73"><text x="22" y="522.8" fill="#d0d0d0" textLength="59.52">$ MSYS</text></g>
-<g class="l k74"><text x="22" y="522.8" fill="#d0d0d0" textLength="69.44">$ MSYS_</text></g>
-<g class="l k75"><text x="22" y="522.8" fill="#d0d0d0" textLength="79.36">$ MSYS_N</text></g>
-<g class="l k76"><text x="22" y="522.8" fill="#d0d0d0" textLength="89.28">$ MSYS_NO</text></g>
-<g class="l k77"><text x="22" y="522.8" fill="#d0d0d0" textLength="99.2">$ MSYS_NO_</text></g>
-<g class="l k78"><text x="22" y="522.8" fill="#d0d0d0" textLength="109.12">$ MSYS_NO_P</text></g>
-<g class="l k79"><text x="22" y="522.8" fill="#d0d0d0" textLength="119.04">$ MSYS_NO_PA</text></g>
-<g class="l k80"><text x="22" y="522.8" fill="#d0d0d0" textLength="128.96">$ MSYS_NO_PAT</text></g>
-<g class="l k81"><text x="22" y="522.8" fill="#d0d0d0" textLength="138.88">$ MSYS_NO_PATH</text></g>
-<g class="l k82"><text x="22" y="522.8" fill="#d0d0d0" textLength="148.8">$ MSYS_NO_PATHC</text></g>
-<g class="l k83"><text x="22" y="522.8" fill="#d0d0d0" textLength="158.72">$ MSYS_NO_PATHCO</text></g>
-<g class="l k84"><text x="22" y="522.8" fill="#d0d0d0" textLength="168.64">$ MSYS_NO_PATHCON</text></g>
-<g class="l k85"><text x="22" y="522.8" fill="#d0d0d0" textLength="178.56">$ MSYS_NO_PATHCONV</text></g>
-<g class="l k86"><text x="22" y="522.8" fill="#d0d0d0" textLength="188.48">$ MSYS_NO_PATHCONV=</text></g>
-<g class="l k87"><text x="22" y="522.8" fill="#d0d0d0" textLength="198.4">$ MSYS_NO_PATHCONV=1</text></g>
-<g class="l k88"><text x="22" y="522.8" fill="#d0d0d0" textLength="218.24">$ MSYS_NO_PATHCONV=1 d</text></g>
-<g class="l k89"><text x="22" y="522.8" fill="#d0d0d0" textLength="228.16">$ MSYS_NO_PATHCONV=1 do</text></g>
-<g class="l k90"><text x="22" y="522.8" fill="#d0d0d0" textLength="238.08">$ MSYS_NO_PATHCONV=1 doc</text></g>
-<g class="l k91"><text x="22" y="522.8" fill="#d0d0d0" textLength="248">$ MSYS_NO_PATHCONV=1 dock</text></g>
-<g class="l k92"><text x="22" y="522.8" fill="#d0d0d0" textLength="257.92">$ MSYS_NO_PATHCONV=1 docke</text></g>
-<g class="l k93"><text x="22" y="522.8" fill="#d0d0d0" textLength="267.84">$ MSYS_NO_PATHCONV=1 docker</text></g>
-<g class="l k94"><text x="22" y="522.8" fill="#d0d0d0" textLength="287.68">$ MSYS_NO_PATHCONV=1 docker r</text></g>
-<g class="l k95"><text x="22" y="522.8" fill="#d0d0d0" textLength="297.6">$ MSYS_NO_PATHCONV=1 docker ru</text></g>
-<g class="l k96"><text x="22" y="522.8" fill="#d0d0d0" textLength="307.52">$ MSYS_NO_PATHCONV=1 docker run</text></g>
-<g class="l k97"><text x="22" y="522.8" fill="#d0d0d0" textLength="327.36">$ MSYS_NO_PATHCONV=1 docker run -</text></g>
-<g class="l k98"><text x="22" y="522.8" fill="#d0d0d0" textLength="337.28">$ MSYS_NO_PATHCONV=1 docker run --</text></g>
-<g class="l k99"><text x="22" y="522.8" fill="#d0d0d0" textLength="347.2">$ MSYS_NO_PATHCONV=1 docker run --r</text></g>
-<g class="l k100"><text x="22" y="522.8" fill="#d0d0d0" textLength="357.12">$ MSYS_NO_PATHCONV=1 docker run --rm</text></g>
-<g class="l k101"><text x="22" y="522.8" fill="#d0d0d0" textLength="376.96">$ MSYS_NO_PATHCONV=1 docker run --rm -</text></g>
-<g class="l k102"><text x="22" y="522.8" fill="#d0d0d0" textLength="386.88">$ MSYS_NO_PATHCONV=1 docker run --rm -v</text></g>
-<g class="l k103"><text x="22" y="522.8" fill="#d0d0d0" textLength="406.72">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;</text></g>
-<g class="l k104"><text x="22" y="522.8" fill="#d0d0d0" textLength="416.64">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;/</text></g>
-<g class="l k105"><text x="22" y="522.8" fill="#d0d0d0" textLength="426.56">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//</text></g>
-<g class="l k106"><text x="22" y="522.8" fill="#d0d0d0" textLength="436.48">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//$</text></g>
-<g class="l k107"><text x="22" y="522.8" fill="#d0d0d0" textLength="446.4">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${</text></g>
-<g class="l k108"><text x="22" y="522.8" fill="#d0d0d0" textLength="456.32">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${P</text></g>
-<g class="l k109"><text x="22" y="522.8" fill="#d0d0d0" textLength="466.24">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PW</text></g>
-<g class="l k110"><text x="22" y="522.8" fill="#d0d0d0" textLength="476.16">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD</text></g>
-<g class="l k111"><text x="22" y="522.8" fill="#d0d0d0" textLength="486.08">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}</text></g>
-<g class="l k112"><text x="22" y="522.8" fill="#d0d0d0" textLength="496">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:</text></g>
-<g class="l k113"><text x="22" y="522.8" fill="#d0d0d0" textLength="505.92">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/</text></g>
-<g class="l k114"><text x="22" y="522.8" fill="#d0d0d0" textLength="515.84">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/d</text></g>
-<g class="l k115"><text x="22" y="522.8" fill="#d0d0d0" textLength="525.76">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/da</text></g>
-<g class="l k116"><text x="22" y="522.8" fill="#d0d0d0" textLength="535.68">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/dat</text></g>
-<g class="l k117"><text x="22" y="522.8" fill="#d0d0d0" textLength="545.6">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data</text></g>
-<g class="l k118"><text x="22" y="522.8" fill="#d0d0d0" textLength="555.52">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot;</text></g>
-<g class="l k119"><text x="22" y="522.8" fill="#d0d0d0" textLength="575.36">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; g</text></g>
-<g class="l k120"><text x="22" y="522.8" fill="#d0d0d0" textLength="585.28">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; gh</text></g>
-<g class="l k121"><text x="22" y="522.8" fill="#d0d0d0" textLength="595.2">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghc</text></g>
-<g class="l k122"><text x="22" y="522.8" fill="#d0d0d0" textLength="605.12">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr</text></g>
-<g class="l k123"><text x="22" y="522.8" fill="#d0d0d0" textLength="615.04">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.</text></g>
-<g class="l k124"><text x="22" y="522.8" fill="#d0d0d0" textLength="624.96">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.i</text></g>
-<g class="l k125"><text x="22" y="522.8" fill="#d0d0d0" textLength="634.88">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io</text></g>
-<g class="l k126"><text x="22" y="522.8" fill="#d0d0d0" textLength="644.8">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/</text></g>
-<g class="l k127"><text x="22" y="522.8" fill="#d0d0d0" textLength="654.72">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/a</text></g>
-<g class="l k128"><text x="22" y="522.8" fill="#d0d0d0" textLength="664.64">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/as</text></g>
-<g class="l k129"><text x="22" y="522.8" fill="#d0d0d0" textLength="674.56">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asc</text></g>
-<g class="l k130"><text x="22" y="522.8" fill="#d0d0d0" textLength="684.48">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asci</text></g>
-<g class="l k131"><text x="22" y="522.8" fill="#d0d0d0" textLength="694.4">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/ascii</text></g>
-<g class="l k132"><text x="22" y="522.8" fill="#d0d0d0" textLength="704.32">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciin</text></g>
-<g class="l k133"><text x="22" y="522.8" fill="#d0d0d0" textLength="714.24">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciine</text></g>
-<g class="l k134"><text x="22" y="522.8" fill="#d0d0d0" textLength="724.16">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinem</text></g>
-<g class="l k135"><text x="22" y="522.8" fill="#d0d0d0" textLength="734.08">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema</text></g>
-<g class="l k136"><text x="22" y="522.8" fill="#d0d0d0" textLength="744">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/</text></g>
-<g class="l k137"><text x="22" y="522.8" fill="#d0d0d0" textLength="753.92">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/a</text></g>
-<g class="l k138"><text x="22" y="522.8" fill="#d0d0d0" textLength="763.84">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/ag</text></g>
-<g class="l k139"><text x="22" y="522.8" fill="#d0d0d0" textLength="773.76">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/agg</text></g>
-<g class="l k140"><g id="r200"><text x="22" y="522.8" fill="#d0d0d0" textLength="793.6">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/agg /</text></g></g>
-<use href="#r44" y="-240" class="l k141"/>
-<use href="#r45" y="-240" class="l k141"/>
-<use href="#r46" y="-240" class="l k141"/>
-<use href="#r47" y="-240" class="l k141"/>
-<use href="#r48" y="-240" class="l k141"/>
-<use href="#r49" y="-240" class="l k141"/>
-<use href="#r50" y="-240" class="l k141"/>
-<use href="#r51" y="-240" class="l k141"/>
-<use href="#r52" y="-240" class="l k141"/>
-<use href="#r86" y="-240" class="l k141"/>
-<use href="#r119" y="-20" class="l k141"/>
-<use href="#r120" y="-20" class="l k141"/>
-<use href="#r121" y="-20" class="l k141"/>
-<use href="#r122" y="-20" class="l k141"/>
-<use href="#r123" y="-20" class="l k141"/>
-<use href="#r124" y="-20" class="l k141"/>
-<use href="#r125" y="-20" class="l k141"/>
-<use href="#r126" y="-20" class="l k141"/>
-<use href="#r127" y="-20" class="l k141"/>
-<use href="#r128" y="-20" class="l k141"/>
-<use href="#r200" y="-20" class="l k141"/>
-<g class="l k142"><text x="22" y="522.8" fill="#d0d0d0">d</text></g>
-<g class="l k143"><text x="22 31.92" y="522.8" fill="#d0d0d0">da</text></g>
-<g class="l k144"><text x="22 31.92 41.84" y="522.8" fill="#d0d0d0">dat</text></g>
-<g class="l k145"><text x="22 31.92 41.84 51.76" y="522.8" fill="#d0d0d0">data</text></g>
-<g class="l k146"><text x="22" y="522.8" fill="#d0d0d0" textLength="49.6">data/</text></g>
-<g class="l k147"><text x="22" y="522.8" fill="#d0d0d0" textLength="59.52">data/s</text></g>
-<g class="l k148"><text x="22" y="522.8" fill="#d0d0d0" textLength="69.44">data/sc</text></g>
-<g class="l k149"><text x="22" y="522.8" fill="#d0d0d0" textLength="79.36">data/sce</text></g>
-<g class="l k150"><text x="22" y="522.8" fill="#d0d0d0" textLength="89.28">data/scen</text></g>
-<g class="l k151"><text x="22" y="522.8" fill="#d0d0d0" textLength="99.2">data/scena</text></g>
-<g class="l k152"><text x="22" y="522.8" fill="#d0d0d0" textLength="109.12">data/scenar</text></g>
-<g class="l k153"><text x="22" y="522.8" fill="#d0d0d0" textLength="119.04">data/scenari</text></g>
-<g class="l k154"><text x="22" y="522.8" fill="#d0d0d0" textLength="128.96">data/scenario</text></g>
-<g class="l k155"><text x="22" y="522.8" fill="#d0d0d0" textLength="138.88">data/scenario.</text></g>
-<g class="l k156"><text x="22" y="522.8" fill="#d0d0d0" textLength="148.8">data/scenario.c</text></g>
-<g class="l k157"><text x="22" y="522.8" fill="#d0d0d0" textLength="158.72">data/scenario.ca</text></g>
-<g class="l k158"><text x="22" y="522.8" fill="#d0d0d0" textLength="168.64">data/scenario.cas</text></g>
-<g class="l k159"><text x="22" y="522.8" fill="#d0d0d0" textLength="178.56">data/scenario.cast</text></g>
-<g class="l k160"><text x="22" y="522.8" fill="#d0d0d0" textLength="198.4">data/scenario.cast /</text></g>
-<g class="l k161"><text x="22" y="522.8" fill="#d0d0d0" textLength="208.32">data/scenario.cast /d</text></g>
-<g class="l k162"><text x="22" y="522.8" fill="#d0d0d0" textLength="218.24">data/scenario.cast /da</text></g>
-<g class="l k163"><text x="22" y="522.8" fill="#d0d0d0" textLength="228.16">data/scenario.cast /dat</text></g>
-<g class="l k164"><text x="22" y="522.8" fill="#d0d0d0" textLength="238.08">data/scenario.cast /data</text></g>
-<g class="l k165"><text x="22" y="522.8" fill="#d0d0d0" textLength="248">data/scenario.cast /data/</text></g>
-<g class="l k166"><text x="22" y="522.8" fill="#d0d0d0" textLength="257.92">data/scenario.cast /data/s</text></g>
-<g class="l k167"><text x="22" y="522.8" fill="#d0d0d0" textLength="267.84">data/scenario.cast /data/sc</text></g>
-<g class="l k168"><text x="22" y="522.8" fill="#d0d0d0" textLength="277.76">data/scenario.cast /data/sce</text></g>
-<g class="l k169"><text x="22" y="522.8" fill="#d0d0d0" textLength="287.68">data/scenario.cast /data/scen</text></g>
-<g class="l k170"><text x="22" y="522.8" fill="#d0d0d0" textLength="297.6">data/scenario.cast /data/scena</text></g>
-<g class="l k171"><text x="22" y="522.8" fill="#d0d0d0" textLength="307.52">data/scenario.cast /data/scenar</text></g>
-<g class="l k172"><text x="22" y="522.8" fill="#d0d0d0" textLength="317.44">data/scenario.cast /data/scenari</text></g>
-<g class="l k173"><text x="22" y="522.8" fill="#d0d0d0" textLength="327.36">data/scenario.cast /data/scenario</text></g>
-<g class="l k174"><text x="22" y="522.8" fill="#d0d0d0" textLength="337.28">data/scenario.cast /data/scenario.</text></g>
-<g class="l k175"><text x="22" y="522.8" fill="#d0d0d0" textLength="347.2">data/scenario.cast /data/scenario.g</text></g>
-<g class="l k176"><text x="22" y="522.8" fill="#d0d0d0" textLength="357.12">data/scenario.cast /data/scenario.gi</text></g>
-<g class="l k177"><g id="r257"><text x="22" y="522.8" fill="#d0d0d0" textLength="367.04">data/scenario.cast /data/scenario.gif</text></g></g>
-<use href="#r45" y="-260" class="l k178"/>
-<use href="#r46" y="-260" class="l k178"/>
-<use href="#r47" y="-260" class="l k178"/>
-<use href="#r48" y="-260" class="l k178"/>
-<use href="#r49" y="-260" class="l k178"/>
-<use href="#r50" y="-260" class="l k178"/>
-<use href="#r51" y="-260" class="l k178"/>
-<use href="#r52" y="-260" class="l k178"/>
-<use href="#r86" y="-260" class="l k178"/>
-<use href="#r119" y="-40" class="l k178"/>
-<use href="#r120" y="-40" class="l k178"/>
-<use href="#r121" y="-40" class="l k178"/>
-<use href="#r122" y="-40" class="l k178"/>
-<use href="#r123" y="-40" class="l k178"/>
-<use href="#r124" y="-40" class="l k178"/>
-<use href="#r125" y="-40" class="l k178"/>
-<use href="#r126" y="-40" class="l k178"/>
-<use href="#r127" y="-40" class="l k178"/>
-<use href="#r128" y="-40" class="l k178"/>
-<use href="#r200" y="-40" class="l k178"/>
-<use href="#r257" y="-20" class="l k178"/>
-<g class="l k179"><text x="22" y="62.8" fill="#d0d0d0" textLength="783.68">103 / 124 [=======================================&gt;--------] 83.06 % 61.89/s 0s</text></g>
-<g class="l k179"><text x="22" y="82.8" fill="#d0d0d0" textLength="783.68">104 / 124 [========================================&gt;-------] 83.87 % 61.92/s 0s</text></g>
-<g class="l k179"><text x="22" y="102.8" fill="#d0d0d0" textLength="783.68">105 / 124 [========================================&gt;-------] 84.68 % 61.97/s 0s</text></g>
-<g class="l k179"><text x="22" y="122.8" fill="#d0d0d0" textLength="783.68">106 / 124 [=========================================&gt;------] 85.48 % 62.01/s 0s</text></g>
-<g class="l k179"><text x="22" y="142.8" fill="#d0d0d0" textLength="783.68">107 / 124 [=========================================&gt;------] 86.29 % 62.05/s 0s</text></g>
-<g class="l k179"><text x="22" y="162.8" fill="#d0d0d0" textLength="783.68">108 / 124 [=========================================&gt;------] 87.10 % 62.06/s 0s</text></g>
-<g class="l k179"><text x="22" y="182.8" fill="#d0d0d0" textLength="783.68">109 / 124 [==========================================&gt;-----] 87.90 % 62.10/s 0s</text></g>
-<g class="l k179"><text x="22" y="202.8" fill="#d0d0d0" textLength="783.68">110 / 124 [==========================================&gt;-----] 88.71 % 62.13/s 0s</text></g>
-<g class="l k179"><text x="22" y="222.8" fill="#d0d0d0" textLength="783.68">111 / 124 [==========================================&gt;-----] 89.52 % 62.13/s 0s</text></g>
-<g class="l k179"><text x="22" y="242.8" fill="#d0d0d0" textLength="783.68">112 / 124 [===========================================&gt;----] 90.32 % 62.14/s 0s</text></g>
-<g class="l k179"><text x="22" y="262.8" fill="#d0d0d0" textLength="783.68">113 / 124 [===========================================&gt;----] 91.13 % 62.20/s 0s</text></g>
-<g class="l k179"><text x="22" y="282.8" fill="#d0d0d0" textLength="783.68">114 / 124 [============================================&gt;---] 91.94 % 62.24/s 0s</text></g>
-<g class="l k179"><text x="22" y="302.8" fill="#d0d0d0" textLength="783.68">115 / 124 [============================================&gt;---] 92.74 % 62.20/s 0s</text></g>
-<g class="l k179"><text x="22" y="322.8" fill="#d0d0d0" textLength="783.68">116 / 124 [============================================&gt;---] 93.55 % 62.37/s 0s</text></g>
-<g class="l k179"><text x="22" y="342.8" fill="#d0d0d0" textLength="783.68">117 / 124 [=============================================&gt;--] 94.35 % 62.77/s 0s</text></g>
-<g class="l k179"><text x="22" y="362.8" fill="#d0d0d0" textLength="783.68">118 / 124 [=============================================&gt;--] 95.16 % 63.14/s 0s</text></g>
-<g class="l k179"><text x="22" y="382.8" fill="#d0d0d0" textLength="783.68">119 / 124 [==============================================&gt;-] 95.97 % 63.52/s 0s</text></g>
-<g class="l k179"><text x="22" y="402.8" fill="#d0d0d0" textLength="783.68">120 / 124 [==============================================&gt;-] 96.77 % 63.90/s 0s</text></g>
-<g class="l k179"><text x="22" y="422.8" fill="#d0d0d0" textLength="783.68">121 / 124 [==============================================&gt;-] 97.58 % 64.27/s 0s</text></g>
-<g class="l k179"><text x="22" y="442.8" fill="#d0d0d0" textLength="783.68">122 / 124 [================================================] 98.39 % 64.63/s 0s</text></g>
-<g class="l k179"><text x="22" y="462.8" fill="#d0d0d0" textLength="783.68">123 / 124 [================================================] 99.19 % 64.87/s 0s</text></g>
-<g class="l k179"><text x="22" y="482.8" fill="#d0d0d0" textLength="783.68">124 / 124 [==================================================] 100.00 % 65.12/s</text></g>
-<g class="l k179"><text x="22" y="502.8" fill="#ac4142" textLength="605.12">[WARN  fontdb] Fallback to loading from known font dir paths.</text></g>
-<g class="l k180"><text x="22" y="522.8" fill="#d0d0d0">$</text></g>
-<rect class="l k0 c" x="41.84" y="50" width="9.92" height="20"/>
-<rect class="l k1 c" x="51.76" y="50" width="9.92" height="20"/>
-<rect class="l k2 c" x="61.68" y="50" width="9.92" height="20"/>
-<rect class="l k3 c" x="71.6" y="50" width="9.92" height="20"/>
-<rect class="l k4 c" x="81.52" y="50" width="9.92" height="20"/>
-<rect class="l k5 c" x="91.44" y="50" width="9.92" height="20"/>
-<rect class="l k6 c" x="101.36" y="50" width="9.92" height="20"/>
-<rect class="l k7 c" x="111.28" y="50" width="9.92" height="20"/>
-<rect class="l k8 c" x="121.2" y="50" width="9.92" height="20"/>
-<rect class="l k181 c" x="131.12" y="50" width="9.92" height="20"/>
-<rect class="l k182 c" x="141.04" y="50" width="9.92" height="20"/>
-<rect class="l k10 c" x="150.96" y="50" width="9.92" height="20"/>
-<rect class="l k11 c" x="160.88" y="50" width="9.92" height="20"/>
-<rect class="l k12 c" x="170.8" y="50" width="9.92" height="20"/>
-<rect class="l k183 c" x="180.72" y="50" width="9.92" height="20"/>
-<rect class="l k184 c" x="22" y="70" width="9.92" height="20"/>
-<rect class="l k185 c" x="22" y="90" width="9.92" height="20"/>
-<rect class="l k15 c" x="41.84" y="90" width="9.92" height="20"/>
-<rect class="l k16 c" x="51.76" y="90" width="9.92" height="20"/>
-<rect class="l k17 c" x="61.68" y="90" width="9.92" height="20"/>
-<rect class="l k186 c" x="71.6" y="90" width="9.92" height="20"/>
-<rect class="l k187 c" x="81.52" y="90" width="9.92" height="20"/>
-<rect class="l k19 c" x="91.44" y="90" width="9.92" height="20"/>
-<rect class="l k20 c" x="101.36" y="90" width="9.92" height="20"/>
-<rect class="l k21 c" x="111.28" y="90" width="9.92" height="20"/>
-<rect class="l k22 c" x="121.2" y="90" width="9.92" height="20"/>
-<rect class="l k23 c" x="131.12" y="90" width="9.92" height="20"/>
-<rect class="l k24 c" x="141.04" y="90" width="9.92" height="20"/>
-<rect class="l k25 c" x="150.96" y="90" width="9.92" height="20"/>
-<rect class="l k26 c" x="160.88" y="90" width="9.92" height="20"/>
-<rect class="l k27 c" x="170.8" y="90" width="9.92" height="20"/>
-<rect class="l k28 c" x="180.72" y="90" width="9.92" height="20"/>
-<rect class="l k29 c" x="190.64" y="90" width="9.92" height="20"/>
-<rect class="l k30 c" x="200.56" y="90" width="9.92" height="20"/>
-<rect class="l k188 c" x="210.48" y="90" width="9.92" height="20"/>
-<rect class="l k189 c" x="22" y="110" width="9.92" height="20"/>
-<rect class="l k190 c" x="22" y="510" width="9.92" height="20"/>
-<rect class="l k33 c" x="41.84" y="510" width="9.92" height="20"/>
-<rect class="l k34 c" x="51.76" y="510" width="9.92" height="20"/>
-<rect class="l k35 c" x="61.68" y="510" width="9.92" height="20"/>
-<rect class="l k36 c" x="71.6" y="510" width="9.92" height="20"/>
-<rect class="l k37 c" x="81.52" y="510" width="9.92" height="20"/>
-<rect class="l k38 c" x="91.44" y="510" width="9.92" height="20"/>
-<rect class="l k39 c" x="101.36" y="510" width="9.92" height="20"/>
-<rect class="l k40 c" x="111.28" y="510" width="9.92" height="20"/>
-<rect class="l k41 c" x="121.2" y="510" width="9.92" height="20"/>
-<rect class="l k191 c" x="131.12" y="510" width="9.92" height="20"/>
-<rect class="l k192 c" x="141.04" y="510" width="9.92" height="20"/>
-<rect class="l k43 c" x="150.96" y="510" width="9.92" height="20"/>
-<rect class="l k44 c" x="160.88" y="510" width="9.92" height="20"/>
-<rect class="l k45 c" x="170.8" y="510" width="9.92" height="20"/>
-<rect class="l k46 c" x="180.72" y="510" width="9.92" height="20"/>
-<rect class="l k47 c" x="190.64" y="510" width="9.92" height="20"/>
-<rect class="l k48 c" x="200.56" y="510" width="9.92" height="20"/>
-<rect class="l k49 c" x="210.48" y="510" width="9.92" height="20"/>
-<rect class="l k50 c" x="220.4" y="510" width="9.92" height="20"/>
-<rect class="l k51 c" x="230.32" y="510" width="9.92" height="20"/>
-<rect class="l k52 c" x="240.24" y="510" width="9.92" height="20"/>
-<rect class="l k53 c" x="250.16" y="510" width="9.92" height="20"/>
-<rect class="l k54 c" x="260.08" y="510" width="9.92" height="20"/>
-<rect class="l k193 c" x="270" y="510" width="9.92" height="20"/>
-<rect class="l k194 c" x="279.92" y="510" width="9.92" height="20"/>
-<rect class="l k56 c" x="289.84" y="510" width="9.92" height="20"/>
-<rect class="l k57 c" x="299.76" y="510" width="9.92" height="20"/>
-<rect class="l k58 c" x="309.68" y="510" width="9.92" height="20"/>
-<rect class="l k59 c" x="319.6" y="510" width="9.92" height="20"/>
-<rect class="l k60 c" x="329.52" y="510" width="9.92" height="20"/>
-<rect class="l k61 c" x="339.44" y="510" width="9.92" height="20"/>
-<rect class="l k62 c" x="349.36" y="510" width="9.92" height="20"/>
-<rect class="l k195 c" x="359.28" y="510" width="9.92" height="20"/>
-<rect class="l k196 c" x="369.2" y="510" width="9.92" height="20"/>
-<rect class="l k64 c" x="379.12" y="510" width="9.92" height="20"/>
-<rect class="l k65 c" x="389.04" y="510" width="9.92" height="20"/>
-<rect class="l k66 c" x="398.96" y="510" width="9.92" height="20"/>
-<rect class="l k197 c" x="22" y="510" width="9.92" height="20"/>
-<rect class="l k69 c" x="41.84" y="510" width="9.92" height="20"/>
-<rect class="l k70 c" x="51.76" y="510" width="9.92" height="20"/>
-<rect class="l k71 c" x="61.68" y="510" width="9.92" height="20"/>
-<rect class="l k72 c" x="71.6" y="510" width="9.92" height="20"/>
-<rect class="l k73 c" x="81.52" y="510" width="9.92" height="20"/>
-<rect class="l k74 c" x="91.44" y="510" width="9.92" height="20"/>
-<rect class="l k75 c" x="101.36" y="510" width="9.92" height="20"/>
-<rect class="l k76 c" x="111.28" y="510" width="9.92" height="20"/>
-<rect class="l k77 c" x="121.2" y="510" width="9.92" height="20"/>
-<rect class="l k78 c" x="131.12" y="510" width="9.92" height="20"/>
-<rect class="l k79 c" x="141.04" y="510" width="9.92" height="20"/>
-<rect class="l k80 c" x="150.96" y="510" width="9.92" height="20"/>
-<rect class="l k81 c" x="160.88" y="510" width="9.92" height="20"/>
-<rect class="l k82 c" x="170.8" y="510" width="9.92" height="20"/>
-<rect class="l k83 c" x="180.72" y="510" width="9.92" height="20"/>
-<rect class="l k84 c" x="190.64" y="510" width="9.92" height="20"/>
-<rect class="l k85 c" x="200.56" y="510" width="9.92" height="20"/>
-<rect class="l k86 c" x="210.48" y="510" width="9.92" height="20"/>
-<rect class="l k198 c" x="220.4" y="510" width="9.92" height="20"/>
-<rect class="l k199 c" x="230.32" y="510" width="9.92" height="20"/>
-<rect class="l k88 c" x="240.24" y="510" width="9.92" height="20"/>
-<rect class="l k89 c" x="250.16" y="510" width="9.92" height="20"/>
-<rect class="l k90 c" x="260.08" y="510" width="9.92" height="20"/>
-<rect class="l k91 c" x="270" y="510" width="9.92" height="20"/>
-<rect class="l k92 c" x="279.92" y="510" width="9.92" height="20"/>
-<rect class="l k200 c" x="289.84" y="510" width="9.92" height="20"/>
-<rect class="l k201 c" x="299.76" y="510" width="9.92" height="20"/>
-<rect class="l k94 c" x="309.68" y="510" width="9.92" height="20"/>
-<rect class="l k95 c" x="319.6" y="510" width="9.92" height="20"/>
-<rect class="l k202 c" x="329.52" y="510" width="9.92" height="20"/>
-<rect class="l k203 c" x="339.44" y="510" width="9.92" height="20"/>
-<rect class="l k97 c" x="349.36" y="510" width="9.92" height="20"/>
-<rect class="l k98 c" x="359.28" y="510" width="9.92" height="20"/>
-<rect class="l k99 c" x="369.2" y="510" width="9.92" height="20"/>
-<rect class="l k204 c" x="379.12" y="510" width="9.92" height="20"/>
-<rect class="l k205 c" x="389.04" y="510" width="9.92" height="20"/>
-<rect class="l k101 c" x="398.96" y="510" width="9.92" height="20"/>
-<rect class="l k206 c" x="408.88" y="510" width="9.92" height="20"/>
-<rect class="l k207 c" x="418.8" y="510" width="9.92" height="20"/>
-<rect class="l k103 c" x="428.72" y="510" width="9.92" height="20"/>
-<rect class="l k104 c" x="438.64" y="510" width="9.92" height="20"/>
-<rect class="l k105 c" x="448.56" y="510" width="9.92" height="20"/>
-<rect class="l k106 c" x="458.48" y="510" width="9.92" height="20"/>
-<rect class="l k107 c" x="468.4" y="510" width="9.92" height="20"/>
-<rect class="l k108 c" x="478.32" y="510" width="9.92" height="20"/>
-<rect class="l k109 c" x="488.24" y="510" width="9.92" height="20"/>
-<rect class="l k110 c" x="498.16" y="510" width="9.92" height="20"/>
-<rect class="l k111 c" x="508.08" y="510" width="9.92" height="20"/>
-<rect class="l k112 c" x="518" y="510" width="9.92" height="20"/>
-<rect class="l k113 c" x="527.92" y="510" width="9.92" height="20"/>
-<rect class="l k114 c" x="537.84" y="510" width="9.92" height="20"/>
-<rect class="l k115 c" x="547.76" y="510" width="9.92" height="20"/>
-<rect class="l k116 c" x="557.68" y="510" width="9.92" height="20"/>
-<rect class="l k117 c" x="567.6" y="510" width="9.92" height="20"/>
-<rect class="l k208 c" x="577.52" y="510" width="9.92" height="20"/>
-<rect class="l k209 c" x="587.44" y="510" width="9.92" height="20"/>
-<rect class="l k119 c" x="597.36" y="510" width="9.92" height="20"/>
-<rect class="l k120 c" x="607.28" y="510" width="9.92" height="20"/>
-<rect class="l k121 c" x="617.2" y="510" width="9.92" height="20"/>
-<rect class="l k122 c" x="627.12" y="510" width="9.92" height="20"/>
-<rect class="l k123 c" x="637.04" y="510" width="9.92" height="20"/>
-<rect class="l k124 c" x="646.96" y="510" width="9.92" height="20"/>
-<rect class="l k125 c" x="656.88" y="510" width="9.92" height="20"/>
-<rect class="l k126 c" x="666.8" y="510" width="9.92" height="20"/>
-<rect class="l k127 c" x="676.72" y="510" width="9.92" height="20"/>
-<rect class="l k128 c" x="686.64" y="510" width="9.92" height="20"/>
-<rect class="l k129 c" x="696.56" y="510" width="9.92" height="20"/>
-<rect class="l k130 c" x="706.48" y="510" width="9.92" height="20"/>
-<rect class="l k131 c" x="716.4" y="510" width="9.92" height="20"/>
-<rect class="l k132 c" x="726.32" y="510" width="9.92" height="20"/>
-<rect class="l k133 c" x="736.24" y="510" width="9.92" height="20"/>
-<rect class="l k134 c" x="746.16" y="510" width="9.92" height="20"/>
-<rect class="l k135 c" x="756.08" y="510" width="9.92" height="20"/>
-<rect class="l k136 c" x="766" y="510" width="9.92" height="20"/>
-<rect class="l k137 c" x="775.92" y="510" width="9.92" height="20"/>
-<rect class="l k138 c" x="785.84" y="510" width="9.92" height="20"/>
-<rect class="l k210 c" x="795.76" y="510" width="9.92" height="20"/>
-<rect class="l k211 c" x="805.68" y="510" width="9.92" height="20"/>
-<rect class="l k142 c" x="31.92" y="510" width="9.92" height="20"/>
-<rect class="l k143 c" x="41.84" y="510" width="9.92" height="20"/>
-<rect class="l k144 c" x="51.76" y="510" width="9.92" height="20"/>
-<rect class="l k145 c" x="61.68" y="510" width="9.92" height="20"/>
-<rect class="l k146 c" x="71.6" y="510" width="9.92" height="20"/>
-<rect class="l k147 c" x="81.52" y="510" width="9.92" height="20"/>
-<rect class="l k148 c" x="91.44" y="510" width="9.92" height="20"/>
-<rect class="l k149 c" x="101.36" y="510" width="9.92" height="20"/>
-<rect class="l k150 c" x="111.28" y="510" width="9.92" height="20"/>
-<rect class="l k151 c" x="121.2" y="510" width="9.92" height="20"/>
-<rect class="l k152 c" x="131.12" y="510" width="9.92" height="20"/>
-<rect class="l k153 c" x="141.04" y="510" width="9.92" height="20"/>
-<rect class="l k154 c" x="150.96" y="510" width="9.92" height="20"/>
-<rect class="l k155 c" x="160.88" y="510" width="9.92" height="20"/>
-<rect class="l k156 c" x="170.8" y="510" width="9.92" height="20"/>
-<rect class="l k157 c" x="180.72" y="510" width="9.92" height="20"/>
-<rect class="l k158 c" x="190.64" y="510" width="9.92" height="20"/>
-<rect class="l k212 c" x="200.56" y="510" width="9.92" height="20"/>
-<rect class="l k213 c" x="210.48" y="510" width="9.92" height="20"/>
-<rect class="l k160 c" x="220.4" y="510" width="9.92" height="20"/>
-<rect class="l k161 c" x="230.32" y="510" width="9.92" height="20"/>
-<rect class="l k162 c" x="240.24" y="510" width="9.92" height="20"/>
-<rect class="l k163 c" x="250.16" y="510" width="9.92" height="20"/>
-<rect class="l k164 c" x="260.08" y="510" width="9.92" height="20"/>
-<rect class="l k165 c" x="270" y="510" width="9.92" height="20"/>
-<rect class="l k166 c" x="279.92" y="510" width="9.92" height="20"/>
-<rect class="l k167 c" x="289.84" y="510" width="9.92" height="20"/>
-<rect class="l k168 c" x="299.76" y="510" width="9.92" height="20"/>
-<rect class="l k169 c" x="309.68" y="510" width="9.92" height="20"/>
-<rect class="l k170 c" x="319.6" y="510" width="9.92" height="20"/>
-<rect class="l k171 c" x="329.52" y="510" width="9.92" height="20"/>
-<rect class="l k172 c" x="339.44" y="510" width="9.92" height="20"/>
-<rect class="l k173 c" x="349.36" y="510" width="9.92" height="20"/>
-<rect class="l k174 c" x="359.28" y="510" width="9.92" height="20"/>
-<rect class="l k175 c" x="369.2" y="510" width="9.92" height="20"/>
-<rect class="l k176 c" x="379.12" y="510" width="9.92" height="20"/>
-<rect class="l k177 c" x="389.04" y="510" width="9.92" height="20"/>
-<rect class="l k214 c" x="22" y="510" width="9.92" height="20"/>
-<rect class="l k180 c" x="41.84" y="510" width="9.92" height="20"/>
+<rect class="l H viewport-chrome-0" x="12" y="12" width="813.6" height="522" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
+<path class="l H viewport-chrome-0" d="M 20,12 H 817.6 Q 825.6,12 825.6,20 V 46 H 12 V 20 Q 12,12 20,12 Z" fill="#323232"/>
+<line class="l H viewport-chrome-0" x1="12" y1="46" x2="825.6" y2="46" stroke="#1a1a1a" stroke-width="1"/>
+<circle class="l H viewport-chrome-0" cx="34" cy="29" r="8" fill="#ff5f57"/>
+<circle class="l H viewport-chrome-0" cx="60" cy="29" r="8" fill="#febc2e"/>
+<circle class="l H viewport-chrome-0" cx="86" cy="29" r="8" fill="#28c840"/>
+<g mask="url(#viewport-mask)" fill="#d0d0d0">
+<rect class="bg l H viewport-bg-0" x="12" y="46" width="813.6" height="488" fill="#282c34"/>
+<g class="l L"><text x="22" y="62.8">$</text><use href="#c" x="41.84" y="50"/></g>
+<g class="l M"><text x="22 41.84" y="62.8">$s</text><use href="#c" x="51.76" y="50"/></g>
+<g class="l N"><text x="22 41.84 51.76" y="62.8">$sc</text><use href="#c" x="61.68" y="50"/></g>
+<g class="l O"><g id="r3"><text x="22 41.84 51.76 61.68" y="62.8">$sce</text></g><use href="#c" x="71.6" y="50"/></g>
+<g class="l P a"><text x="22" textLength="59.52">$ scen</text><use href="#c" x="81.52" y="-12.8"/></g>
+<g class="l Q a"><text x="22" textLength="69.44">$ scene</text><use href="#c" x="91.44" y="-12.8"/></g>
+<g class="l R a"><text x="22" textLength="79.36">$ scenet</text><use href="#c" x="101.36" y="-12.8"/></g>
+<g class="l S a"><g id="r7"><text x="22" textLength="89.28">$ sceneta</text></g><use href="#c" x="111.28" y="-12.8"/></g>
+<g class="l T a"><g id="r8"><text x="22" textLength="99.2">$ scenetak</text></g><use href="#c" x="121.2" y="-12.8"/></g>
+<g class="l U a"><g id="r9"><text x="22" textLength="109.12">$ scenetake</text></g></g>
+<g class="l V a"><text x="22" textLength="128.96">$ scenetake i</text><use href="#c" x="150.96" y="-12.8"/></g>
+<g class="l W a"><text x="22" textLength="138.88">$ scenetake in</text><use href="#c" x="160.88" y="-12.8"/></g>
+<g class="l X a"><text x="22" textLength="148.8">$ scenetake ini</text><use href="#c" x="170.8" y="-12.8"/></g>
+<text class="l Y a" x="22" textLength="158.72">$ scenetake init</text>
+<text class="l Z b" x="22" y="82.8" textLength="218.24">Created: scenario.yaml</text>
+<g class="l aa"><text x="22" y="102.8">$</text><use href="#c" x="41.84" y="90"/></g>
+<g class="l ab"><text x="22 41.84" y="102.8">$c</text><use href="#c" x="51.76" y="90"/></g>
+<g class="l ac"><text x="22 41.84 51.76" y="102.8">$ca</text><use href="#c" x="61.68" y="90"/></g>
+<text class="l ad" x="22 41.84 51.76 61.68" y="102.8">$cat</text>
+<g class="l ae d"><text x="22" textLength="69.44">$ cat s</text><use href="#c" x="91.44" y="-12.8"/></g>
+<g class="l af d"><text x="22" textLength="79.36">$ cat sc</text><use href="#c" x="101.36" y="-12.8"/></g>
+<g class="l ag d"><text x="22" textLength="89.28">$ cat sce</text><use href="#c" x="111.28" y="-12.8"/></g>
+<g class="l ah d"><text x="22" textLength="99.2">$ cat scen</text><use href="#c" x="121.2" y="-12.8"/></g>
+<g class="l ai d"><text x="22" textLength="109.12">$ cat scena</text><use href="#c" x="131.12" y="-12.8"/></g>
+<g class="l aj d"><text x="22" textLength="119.04">$ cat scenar</text><use href="#c" x="141.04" y="-12.8"/></g>
+<g class="l ak d"><text x="22" textLength="128.96">$ cat scenari</text><use href="#c" x="150.96" y="-12.8"/></g>
+<g class="l al d"><text x="22" textLength="138.88">$ cat scenario</text><use href="#c" x="160.88" y="-12.8"/></g>
+<g class="l am d"><text x="22" textLength="148.8">$ cat scenario.</text><use href="#c" x="170.8" y="-12.8"/></g>
+<g class="l an d"><text x="22" textLength="158.72">$ cat scenario.y</text><use href="#c" x="180.72" y="-12.8"/></g>
+<g class="l ao d"><text x="22" textLength="168.64">$ cat scenario.ya</text><use href="#c" x="190.64" y="-12.8"/></g>
+<g class="l ap d"><text x="22" textLength="178.56">$ cat scenario.yam</text><use href="#c" x="200.56" y="-12.8"/></g>
+<text class="l aq d" x="22" textLength="188.48">$ cat scenario.yaml</text>
+<text class="l C a" x="41.84" textLength="555.52">- name: &quot;[cyan]Styled command typing + output highlight&quot;</text>
+<g class="l C"><g id="r33"><text x="61.68" y="82.8" textLength="644.8">run: printf 'line1 alpha\nline2 beta gamma\nline3\nline4 delta\n'</text></g></g>
+<g class="l C d"><g id="r34"><text x="61.68" textLength="357.12">run-highlight: &quot;bold fg:bright-cyan&quot;</text></g></g>
+<g class="l C"><g id="r35"><text x="61.68" y="122.8" textLength="99.2">highlight:</text></g></g>
+<g class="l C"><g id="r36"><text x="81.52" y="142.8" textLength="89.28">- at: &quot;1&quot;</text></g></g>
+<g class="l C"><g id="r37"><text x="101.36" y="162.8" textLength="238.08">color: &quot;fg:bright-green&quot;</text></g></g>
+<g class="l C"><g id="r38"><text x="81.52" y="182.8" textLength="138.88">- at: &quot;2:7-10&quot;</text></g></g>
+<g class="l C"><g id="r39"><text x="101.36" y="202.8" textLength="277.76">color: &quot;underline fg:yellow&quot;</text></g></g>
+<g class="l C"><g id="r40"><text x="81.52" y="222.8" textLength="128.96">- at: &quot;2:12-&quot;</text></g></g>
+<g class="l C"><g id="r41"><text x="101.36" y="242.8" textLength="238.08">color: &quot;bold fg:magenta&quot;</text></g></g>
+<g class="l C"><g id="r42"><text x="81.52" y="262.8" textLength="89.28">- at: &quot;3&quot;</text></g></g>
+<g class="l C"><g id="r43"><text x="101.36" y="282.8" textLength="238.08">color: &quot;fg:white bg:212&quot;</text></g></g>
+<g class="l C"><g id="r44"><text x="81.52" y="302.8" textLength="89.28">- at: &quot;4&quot;</text></g></g>
+<g class="l C"><g id="r45"><text x="101.36" y="322.8" textLength="238.08">color: &quot;fg:black bg:114&quot;</text></g></g>
+<g class="l C"><g id="r46"><text x="41.84" y="362.8" textLength="456.32">- name: &quot;[bright-yellow]stderr color override&quot;</text></g></g>
+<g class="l C"><g id="r47"><text x="61.68" y="382.8" textLength="297.6">run: echo &quot;stderr sample&quot; 1&gt;&amp;2</text></g></g>
+<g class="l C"><g id="r48"><text x="61.68" y="402.8" textLength="267.84">stderr-color: &quot;bold fg:red&quot;</text></g></g>
+<g class="l C"><g id="r49"><text x="22" y="442.8" textLength="793.6"># Optional teardown commands. They run after the cast file is written, but are n</text></g></g>
+<g class="l C"><g id="r50"><text x="22" y="462.8" textLength="238.08">ot recorded in the cast.</text></g></g>
+<g class="l C"><g id="r51"><text x="22" y="482.8" textLength="69.44"># post:</text></g></g>
+<g class="l C"><g id="r52"><text x="22" y="502.8" textLength="277.76">#   - echo &quot;run after steps&quot;</text></g></g>
+<g class="l ar"><text x="22" y="522.8">$</text><use href="#c" x="41.84" y="510"/></g>
+<g class="l as"><text x="22 41.84" y="522.8">$s</text><use href="#c" x="51.76" y="510"/></g>
+<g class="l at"><text x="22 41.84 51.76" y="522.8">$sc</text><use href="#c" x="61.68" y="510"/></g>
+<use href="#r3" y="460" class="l I"/>
+<g class="l au e"><text x="22" textLength="59.52">$ scen</text><use href="#c" x="81.52" y="-12.8"/></g>
+<g class="l av e"><text x="22" textLength="69.44">$ scene</text><use href="#c" x="91.44" y="-12.8"/></g>
+<g class="l aw e"><text x="22" textLength="79.36">$ scenet</text><use href="#c" x="101.36" y="-12.8"/></g>
+<use href="#r7" class="l J e"/>
+<use href="#r8" class="l K e"/>
+<use href="#r9" class="l ax e"/>
+<g class="l ay e"><text x="22" textLength="128.96">$ scenetake s</text><use href="#c" x="150.96" y="-12.8"/></g>
+<g class="l az e"><text x="22" textLength="138.88">$ scenetake sc</text><use href="#c" x="160.88" y="-12.8"/></g>
+<g class="l aA e"><text x="22" textLength="148.8">$ scenetake sce</text><use href="#c" x="170.8" y="-12.8"/></g>
+<g class="l aB e"><text x="22" textLength="158.72">$ scenetake scen</text><use href="#c" x="180.72" y="-12.8"/></g>
+<g class="l aC e"><text x="22" textLength="168.64">$ scenetake scena</text><use href="#c" x="190.64" y="-12.8"/></g>
+<g class="l aD e"><text x="22" textLength="178.56">$ scenetake scenar</text><use href="#c" x="200.56" y="-12.8"/></g>
+<g class="l aE e"><text x="22" textLength="188.48">$ scenetake scenari</text><use href="#c" x="210.48" y="-12.8"/></g>
+<g class="l aF e"><text x="22" textLength="198.4">$ scenetake scenario</text><use href="#c" x="220.4" y="-12.8"/></g>
+<g class="l aG e"><text x="22" textLength="208.32">$ scenetake scenario.</text><use href="#c" x="230.32" y="-12.8"/></g>
+<g class="l aH e"><text x="22" textLength="218.24">$ scenetake scenario.y</text><use href="#c" x="240.24" y="-12.8"/></g>
+<g class="l aI e"><text x="22" textLength="228.16">$ scenetake scenario.ya</text><use href="#c" x="250.16" y="-12.8"/></g>
+<g class="l aJ e"><text x="22" textLength="238.08">$ scenetake scenario.yam</text><use href="#c" x="260.08" y="-12.8"/></g>
+<text class="l aK e" x="22" textLength="248">$ scenetake scenario.yaml</text>
+<g class="l aL e"><text x="22" textLength="267.84">$ scenetake scenario.yaml -</text><use href="#c" x="289.84" y="-12.8"/></g>
+<g class="l aM e"><text x="22" textLength="277.76">$ scenetake scenario.yaml --</text><use href="#c" x="299.76" y="-12.8"/></g>
+<g class="l aN e"><text x="22" textLength="287.68">$ scenetake scenario.yaml --f</text><use href="#c" x="309.68" y="-12.8"/></g>
+<g class="l aO e"><text x="22" textLength="297.6">$ scenetake scenario.yaml --fo</text><use href="#c" x="319.6" y="-12.8"/></g>
+<g class="l aP e"><text x="22" textLength="307.52">$ scenetake scenario.yaml --for</text><use href="#c" x="329.52" y="-12.8"/></g>
+<g class="l aQ e"><text x="22" textLength="317.44">$ scenetake scenario.yaml --form</text><use href="#c" x="339.44" y="-12.8"/></g>
+<g class="l aR e"><text x="22" textLength="327.36">$ scenetake scenario.yaml --forma</text><use href="#c" x="349.36" y="-12.8"/></g>
+<text class="l aS e" x="22" textLength="337.28">$ scenetake scenario.yaml --format</text>
+<g class="l aT e"><text x="22" textLength="357.12">$ scenetake scenario.yaml --format s</text><use href="#c" x="379.12" y="-12.8"/></g>
+<g class="l aU e"><text x="22" textLength="367.04">$ scenetake scenario.yaml --format sv</text><use href="#c" x="389.04" y="-12.8"/></g>
+<g class="l aV e"><g id="r86"><text x="22" textLength="376.96">$ scenetake scenario.yaml --format svg</text></g><use href="#c" x="398.96" y="-12.8"/></g>
+<use href="#r33" y="-20" class="l D"/>
+<use href="#r34" class="l D f"/>
+<use href="#r35" y="-20" class="l D"/>
+<use href="#r36" y="-20" class="l D"/>
+<use href="#r37" y="-20" class="l D"/>
+<use href="#r38" y="-20" class="l D"/>
+<use href="#r39" y="-20" class="l D"/>
+<use href="#r40" y="-20" class="l D"/>
+<use href="#r41" y="-20" class="l D"/>
+<use href="#r42" y="-20" class="l D"/>
+<use href="#r43" y="-20" class="l D"/>
+<use href="#r44" y="-20" class="l D"/>
+<use href="#r45" y="-20" class="l D"/>
+<use href="#r46" y="-20" class="l D"/>
+<use href="#r47" y="-20" class="l D"/>
+<use href="#r48" y="-20" class="l D"/>
+<use href="#r49" y="-20" class="l D"/>
+<use href="#r50" y="-20" class="l D"/>
+<use href="#r51" y="-20" class="l D"/>
+<use href="#r52" y="-20" class="l D"/>
+<use href="#r86" class="l D g"/>
+<use href="#r43" y="-220" class="l E"/>
+<use href="#r44" y="-220" class="l E"/>
+<use href="#r45" y="-220" class="l E"/>
+<use href="#r46" y="-220" class="l E"/>
+<use href="#r47" y="-220" class="l E"/>
+<use href="#r48" y="-220" class="l E"/>
+<use href="#r49" y="-220" class="l E"/>
+<use href="#r50" y="-220" class="l E"/>
+<use href="#r51" y="-220" class="l E"/>
+<use href="#r52" y="-220" class="l E"/>
+<use href="#r86" class="l E h"/>
+<g class="l E"><g id="r119"><text class="b" x="22" y="322.8" textLength="218.24">Loading: scenario.yaml</text></g></g>
+<g class="l E"><g id="r120"><text class="b" x="22" y="342.8" textLength="168.64">Using shell: pwsh</text></g></g>
+<g class="l E"><g id="r121"><text class="b" x="22" y="362.8" textLength="178.56">Generating cast...</text></g></g>
+<g class="l E"><g id="r122"><text class="b" x="41.84" y="382.8" textLength="287.68">running: echo &quot;Hello, World!&quot;</text></g></g>
+<g class="l E"><g id="r123"><text class="b" x="41.84" y="402.8" textLength="119.04">running: pwd</text></g></g>
+<g class="l E"><g id="r124"><text class="b" x="41.84" y="422.8" textLength="684.48">running: printf 'line1 alpha\nline2 beta gamma\nline3\nline4 delta\n'</text></g></g>
+<g class="l E"><g id="r125"><text class="b" x="41.84" y="442.8" textLength="337.28">running: echo &quot;stderr sample&quot; 1&gt;&amp;2</text></g></g>
+<g class="l E"><g id="r126"><text class="b" x="22" y="462.8" textLength="426.56">Written: scenario.cast  (127 events, 11.1s)</text></g></g>
+<g class="l E"><g id="r127"><text class="b" x="22" y="482.8" textLength="208.32">Written: scenario.svg</text></g></g>
+<g class="l E g"><g id="r128"><text class="b" x="22" textLength="327.36">Done: scenario.cast, scenario.svg</text></g></g>
+<g class="l aW e"><text x="22">$</text><use href="#c" x="41.84" y="-12.8"/></g>
+<g class="l aX e"><text x="22 41.84">$M</text><use href="#c" x="51.76" y="-12.8"/></g>
+<g class="l aY e"><text x="22 41.84 51.76">$MS</text><use href="#c" x="61.68" y="-12.8"/></g>
+<g class="l aZ e"><text x="22 41.84 51.76 61.68">$MSY</text><use href="#c" x="71.6" y="-12.8"/></g>
+<g class="l a0 e"><text x="22" textLength="59.52">$ MSYS</text><use href="#c" x="81.52" y="-12.8"/></g>
+<g class="l a1 e"><text x="22" textLength="69.44">$ MSYS_</text><use href="#c" x="91.44" y="-12.8"/></g>
+<g class="l a2 e"><text x="22" textLength="79.36">$ MSYS_N</text><use href="#c" x="101.36" y="-12.8"/></g>
+<g class="l a3 e"><text x="22" textLength="89.28">$ MSYS_NO</text><use href="#c" x="111.28" y="-12.8"/></g>
+<g class="l a4 e"><text x="22" textLength="99.2">$ MSYS_NO_</text><use href="#c" x="121.2" y="-12.8"/></g>
+<g class="l a5 e"><text x="22" textLength="109.12">$ MSYS_NO_P</text><use href="#c" x="131.12" y="-12.8"/></g>
+<g class="l a6 e"><text x="22" textLength="119.04">$ MSYS_NO_PA</text><use href="#c" x="141.04" y="-12.8"/></g>
+<g class="l a7 e"><text x="22" textLength="128.96">$ MSYS_NO_PAT</text><use href="#c" x="150.96" y="-12.8"/></g>
+<g class="l a8 e"><text x="22" textLength="138.88">$ MSYS_NO_PATH</text><use href="#c" x="160.88" y="-12.8"/></g>
+<g class="l a9 e"><text x="22" textLength="148.8">$ MSYS_NO_PATHC</text><use href="#c" x="170.8" y="-12.8"/></g>
+<g class="l ba e"><text x="22" textLength="158.72">$ MSYS_NO_PATHCO</text><use href="#c" x="180.72" y="-12.8"/></g>
+<g class="l bb e"><text x="22" textLength="168.64">$ MSYS_NO_PATHCON</text><use href="#c" x="190.64" y="-12.8"/></g>
+<g class="l bc e"><text x="22" textLength="178.56">$ MSYS_NO_PATHCONV</text><use href="#c" x="200.56" y="-12.8"/></g>
+<g class="l bd e"><text x="22" textLength="188.48">$ MSYS_NO_PATHCONV=</text><use href="#c" x="210.48" y="-12.8"/></g>
+<text class="l be e" x="22" textLength="198.4">$ MSYS_NO_PATHCONV=1</text>
+<g class="l bf e"><text x="22" textLength="218.24">$ MSYS_NO_PATHCONV=1 d</text><use href="#c" x="240.24" y="-12.8"/></g>
+<g class="l bh e"><text x="22" textLength="228.16">$ MSYS_NO_PATHCONV=1 do</text><use href="#c" x="250.16" y="-12.8"/></g>
+<g class="l bi e"><text x="22" textLength="238.08">$ MSYS_NO_PATHCONV=1 doc</text><use href="#c" x="260.08" y="-12.8"/></g>
+<g class="l bj e"><text x="22" textLength="248">$ MSYS_NO_PATHCONV=1 dock</text><use href="#c" x="270" y="-12.8"/></g>
+<g class="l bk e"><text x="22" textLength="257.92">$ MSYS_NO_PATHCONV=1 docke</text><use href="#c" x="279.92" y="-12.8"/></g>
+<text class="l bl e" x="22" textLength="267.84">$ MSYS_NO_PATHCONV=1 docker</text>
+<g class="l bm e"><text x="22" textLength="287.68">$ MSYS_NO_PATHCONV=1 docker r</text><use href="#c" x="309.68" y="-12.8"/></g>
+<g class="l bn e"><text x="22" textLength="297.6">$ MSYS_NO_PATHCONV=1 docker ru</text><use href="#c" x="319.6" y="-12.8"/></g>
+<text class="l bo e" x="22" textLength="307.52">$ MSYS_NO_PATHCONV=1 docker run</text>
+<g class="l bp e"><text x="22" textLength="327.36">$ MSYS_NO_PATHCONV=1 docker run -</text><use href="#c" x="349.36" y="-12.8"/></g>
+<g class="l bq e"><text x="22" textLength="337.28">$ MSYS_NO_PATHCONV=1 docker run --</text><use href="#c" x="359.28" y="-12.8"/></g>
+<g class="l br e"><text x="22" textLength="347.2">$ MSYS_NO_PATHCONV=1 docker run --r</text><use href="#c" x="369.2" y="-12.8"/></g>
+<text class="l bs e" x="22" textLength="357.12">$ MSYS_NO_PATHCONV=1 docker run --rm</text>
+<g class="l bt e"><text x="22" textLength="376.96">$ MSYS_NO_PATHCONV=1 docker run --rm -</text><use href="#c" x="398.96" y="-12.8"/></g>
+<text class="l bu e" x="22" textLength="386.88">$ MSYS_NO_PATHCONV=1 docker run --rm -v</text>
+<g class="l bv e"><text x="22" textLength="406.72">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;</text><use href="#c" x="428.72" y="-12.8"/></g>
+<g class="l bw e"><text x="22" textLength="416.64">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;/</text><use href="#c" x="438.64" y="-12.8"/></g>
+<g class="l bx e"><text x="22" textLength="426.56">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//</text><use href="#c" x="448.56" y="-12.8"/></g>
+<g class="l by e"><text x="22" textLength="436.48">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//$</text><use href="#c" x="458.48" y="-12.8"/></g>
+<g class="l bz e"><text x="22" textLength="446.4">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${</text><use href="#c" x="468.4" y="-12.8"/></g>
+<g class="l bA e"><text x="22" textLength="456.32">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${P</text><use href="#c" x="478.32" y="-12.8"/></g>
+<g class="l bB e"><text x="22" textLength="466.24">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PW</text><use href="#c" x="488.24" y="-12.8"/></g>
+<g class="l bC e"><text x="22" textLength="476.16">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD</text><use href="#c" x="498.16" y="-12.8"/></g>
+<g class="l bD e"><text x="22" textLength="486.08">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}</text><use href="#c" x="508.08" y="-12.8"/></g>
+<g class="l bE e"><text x="22" textLength="496">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:</text><use href="#c" x="518" y="-12.8"/></g>
+<g class="l bF e"><text x="22" textLength="505.92">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/</text><use href="#c" x="527.92" y="-12.8"/></g>
+<g class="l bG e"><text x="22" textLength="515.84">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/d</text><use href="#c" x="537.84" y="-12.8"/></g>
+<g class="l bH e"><text x="22" textLength="525.76">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/da</text><use href="#c" x="547.76" y="-12.8"/></g>
+<g class="l bI e"><text x="22" textLength="535.68">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/dat</text><use href="#c" x="557.68" y="-12.8"/></g>
+<g class="l bJ e"><text x="22" textLength="545.6">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data</text><use href="#c" x="567.6" y="-12.8"/></g>
+<text class="l bK e" x="22" textLength="555.52">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot;</text>
+<g class="l bL e"><text x="22" textLength="575.36">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; g</text><use href="#c" x="597.36" y="-12.8"/></g>
+<g class="l bM e"><text x="22" textLength="585.28">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; gh</text><use href="#c" x="607.28" y="-12.8"/></g>
+<g class="l bN e"><text x="22" textLength="595.2">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghc</text><use href="#c" x="617.2" y="-12.8"/></g>
+<g class="l bO e"><text x="22" textLength="605.12">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr</text><use href="#c" x="627.12" y="-12.8"/></g>
+<g class="l bP e"><text x="22" textLength="615.04">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.</text><use href="#c" x="637.04" y="-12.8"/></g>
+<g class="l bQ e"><text x="22" textLength="624.96">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.i</text><use href="#c" x="646.96" y="-12.8"/></g>
+<g class="l bR e"><text x="22" textLength="634.88">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io</text><use href="#c" x="656.88" y="-12.8"/></g>
+<g class="l bS e"><text x="22" textLength="644.8">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/</text><use href="#c" x="666.8" y="-12.8"/></g>
+<g class="l bT e"><text x="22" textLength="654.72">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/a</text><use href="#c" x="676.72" y="-12.8"/></g>
+<g class="l bU e"><text x="22" textLength="664.64">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/as</text><use href="#c" x="686.64" y="-12.8"/></g>
+<g class="l bV e"><text x="22" textLength="674.56">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asc</text><use href="#c" x="696.56" y="-12.8"/></g>
+<g class="l bW e"><text x="22" textLength="684.48">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asci</text><use href="#c" x="706.48" y="-12.8"/></g>
+<g class="l bX e"><text x="22" textLength="694.4">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/ascii</text><use href="#c" x="716.4" y="-12.8"/></g>
+<g class="l bY e"><text x="22" textLength="704.32">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciin</text><use href="#c" x="726.32" y="-12.8"/></g>
+<g class="l bZ e"><text x="22" textLength="714.24">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciine</text><use href="#c" x="736.24" y="-12.8"/></g>
+<g class="l b0 e"><text x="22" textLength="724.16">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinem</text><use href="#c" x="746.16" y="-12.8"/></g>
+<g class="l b1 e"><text x="22" textLength="734.08">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema</text><use href="#c" x="756.08" y="-12.8"/></g>
+<g class="l b2 e"><text x="22" textLength="744">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/</text><use href="#c" x="766" y="-12.8"/></g>
+<g class="l b3 e"><text x="22" textLength="753.92">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/a</text><use href="#c" x="775.92" y="-12.8"/></g>
+<g class="l b4 e"><text x="22" textLength="763.84">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/ag</text><use href="#c" x="785.84" y="-12.8"/></g>
+<text class="l b5 e" x="22" textLength="773.76">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/agg</text>
+<g class="l b6 e"><g id="r200"><text x="22" textLength="793.6">$ MSYS_NO_PATHCONV=1 docker run --rm -v &quot;//${PWD}:/data&quot; ghcr.io/asciinema/agg /</text></g></g>
+<use href="#r44" y="-240" class="l F"/>
+<use href="#r45" y="-240" class="l F"/>
+<use href="#r46" y="-240" class="l F"/>
+<use href="#r47" y="-240" class="l F"/>
+<use href="#r48" y="-240" class="l F"/>
+<use href="#r49" y="-240" class="l F"/>
+<use href="#r50" y="-240" class="l F"/>
+<use href="#r51" y="-240" class="l F"/>
+<use href="#r52" y="-240" class="l F"/>
+<use href="#r86" class="l F i"/>
+<use href="#r119" y="-20" class="l F"/>
+<use href="#r120" y="-20" class="l F"/>
+<use href="#r121" y="-20" class="l F"/>
+<use href="#r122" y="-20" class="l F"/>
+<use href="#r123" y="-20" class="l F"/>
+<use href="#r124" y="-20" class="l F"/>
+<use href="#r125" y="-20" class="l F"/>
+<use href="#r126" y="-20" class="l F"/>
+<use href="#r127" y="-20" class="l F"/>
+<use href="#r128" class="l F j"/>
+<use href="#r200" class="l F g"/>
+<g class="l b7 e"><text x="22">d</text><use href="#c" x="31.92" y="-12.8"/></g>
+<g class="l b8 e"><text x="22 31.92">da</text><use href="#c" x="41.84" y="-12.8"/></g>
+<g class="l b9 e"><text x="22 31.92 41.84">dat</text><use href="#c" x="51.76" y="-12.8"/></g>
+<g class="l ca e"><text x="22 31.92 41.84 51.76">data</text><use href="#c" x="61.68" y="-12.8"/></g>
+<g class="l cb e"><text x="22" textLength="49.6">data/</text><use href="#c" x="71.6" y="-12.8"/></g>
+<g class="l cc e"><text x="22" textLength="59.52">data/s</text><use href="#c" x="81.52" y="-12.8"/></g>
+<g class="l cd e"><text x="22" textLength="69.44">data/sc</text><use href="#c" x="91.44" y="-12.8"/></g>
+<g class="l ce e"><text x="22" textLength="79.36">data/sce</text><use href="#c" x="101.36" y="-12.8"/></g>
+<g class="l cf e"><text x="22" textLength="89.28">data/scen</text><use href="#c" x="111.28" y="-12.8"/></g>
+<g class="l cg e"><text x="22" textLength="99.2">data/scena</text><use href="#c" x="121.2" y="-12.8"/></g>
+<g class="l ch e"><text x="22" textLength="109.12">data/scenar</text><use href="#c" x="131.12" y="-12.8"/></g>
+<g class="l ci e"><text x="22" textLength="119.04">data/scenari</text><use href="#c" x="141.04" y="-12.8"/></g>
+<g class="l cj e"><text x="22" textLength="128.96">data/scenario</text><use href="#c" x="150.96" y="-12.8"/></g>
+<g class="l ck e"><text x="22" textLength="138.88">data/scenario.</text><use href="#c" x="160.88" y="-12.8"/></g>
+<g class="l cl e"><text x="22" textLength="148.8">data/scenario.c</text><use href="#c" x="170.8" y="-12.8"/></g>
+<g class="l cm e"><text x="22" textLength="158.72">data/scenario.ca</text><use href="#c" x="180.72" y="-12.8"/></g>
+<g class="l cn e"><text x="22" textLength="168.64">data/scenario.cas</text><use href="#c" x="190.64" y="-12.8"/></g>
+<text class="l co e" x="22" textLength="178.56">data/scenario.cast</text>
+<g class="l cp e"><text x="22" textLength="198.4">data/scenario.cast /</text><use href="#c" x="220.4" y="-12.8"/></g>
+<g class="l cq e"><text x="22" textLength="208.32">data/scenario.cast /d</text><use href="#c" x="230.32" y="-12.8"/></g>
+<g class="l cr e"><text x="22" textLength="218.24">data/scenario.cast /da</text><use href="#c" x="240.24" y="-12.8"/></g>
+<g class="l cs e"><text x="22" textLength="228.16">data/scenario.cast /dat</text><use href="#c" x="250.16" y="-12.8"/></g>
+<g class="l ct e"><text x="22" textLength="238.08">data/scenario.cast /data</text><use href="#c" x="260.08" y="-12.8"/></g>
+<g class="l cu e"><text x="22" textLength="248">data/scenario.cast /data/</text><use href="#c" x="270" y="-12.8"/></g>
+<g class="l cv e"><text x="22" textLength="257.92">data/scenario.cast /data/s</text><use href="#c" x="279.92" y="-12.8"/></g>
+<g class="l cw e"><text x="22" textLength="267.84">data/scenario.cast /data/sc</text><use href="#c" x="289.84" y="-12.8"/></g>
+<g class="l cx e"><text x="22" textLength="277.76">data/scenario.cast /data/sce</text><use href="#c" x="299.76" y="-12.8"/></g>
+<g class="l cy e"><text x="22" textLength="287.68">data/scenario.cast /data/scen</text><use href="#c" x="309.68" y="-12.8"/></g>
+<g class="l cz e"><text x="22" textLength="297.6">data/scenario.cast /data/scena</text><use href="#c" x="319.6" y="-12.8"/></g>
+<g class="l cA e"><text x="22" textLength="307.52">data/scenario.cast /data/scenar</text><use href="#c" x="329.52" y="-12.8"/></g>
+<g class="l cB e"><text x="22" textLength="317.44">data/scenario.cast /data/scenari</text><use href="#c" x="339.44" y="-12.8"/></g>
+<g class="l cC e"><text x="22" textLength="327.36">data/scenario.cast /data/scenario</text><use href="#c" x="349.36" y="-12.8"/></g>
+<g class="l cD e"><text x="22" textLength="337.28">data/scenario.cast /data/scenario.</text><use href="#c" x="359.28" y="-12.8"/></g>
+<g class="l cE e"><text x="22" textLength="347.2">data/scenario.cast /data/scenario.g</text><use href="#c" x="369.2" y="-12.8"/></g>
+<g class="l cF e"><text x="22" textLength="357.12">data/scenario.cast /data/scenario.gi</text><use href="#c" x="379.12" y="-12.8"/></g>
+<g class="l cG e"><g id="r257"><text x="22" textLength="367.04">data/scenario.cast /data/scenario.gif</text></g><use href="#c" x="389.04" y="-12.8"/></g>
+<use href="#r45" y="-260" class="l G"/>
+<use href="#r46" y="-260" class="l G"/>
+<use href="#r47" y="-260" class="l G"/>
+<use href="#r48" y="-260" class="l G"/>
+<use href="#r49" y="-260" class="l G"/>
+<use href="#r50" y="-260" class="l G"/>
+<text class="l G k" x="22" textLength="69.44"># post:</text>
+<use href="#r52" y="-260" class="l G"/>
+<use href="#r86" class="l G m"/>
+<use href="#r119" y="-40" class="l G"/>
+<use href="#r120" y="-40" class="l G"/>
+<use href="#r121" y="-40" class="l G"/>
+<use href="#r122" y="-40" class="l G"/>
+<use href="#r123" y="-40" class="l G"/>
+<use href="#r124" y="-40" class="l G"/>
+<use href="#r125" y="-40" class="l G"/>
+<use href="#r126" y="-40" class="l G"/>
+<use href="#r127" y="-40" class="l G"/>
+<use href="#r128" class="l G n"/>
+<use href="#r200" class="l G j"/>
+<use href="#r257" class="l G g"/>
+<text class="l B a" x="22" textLength="783.68">103 / 124 [=======================================&gt;--------] 83.06 % 61.89/s 0s</text>
+<text class="l B f" x="22" textLength="783.68">104 / 124 [========================================&gt;-------] 83.87 % 61.92/s 0s</text>
+<text class="l B d" x="22" textLength="783.68">105 / 124 [========================================&gt;-------] 84.68 % 61.97/s 0s</text>
+<text class="l B o" x="22" textLength="783.68">106 / 124 [=========================================&gt;------] 85.48 % 62.01/s 0s</text>
+<text class="l B p" x="22" textLength="783.68">107 / 124 [=========================================&gt;------] 86.29 % 62.05/s 0s</text>
+<text class="l B q" x="22" textLength="783.68">108 / 124 [=========================================&gt;------] 87.10 % 62.06/s 0s</text>
+<text class="l B r" x="22" textLength="783.68">109 / 124 [==========================================&gt;-----] 87.90 % 62.10/s 0s</text>
+<text class="l B s" x="22" textLength="783.68">110 / 124 [==========================================&gt;-----] 88.71 % 62.13/s 0s</text>
+<text class="l B k" x="22" textLength="783.68">111 / 124 [==========================================&gt;-----] 89.52 % 62.13/s 0s</text>
+<text class="l B t" x="22" textLength="783.68">112 / 124 [===========================================&gt;----] 90.32 % 62.14/s 0s</text>
+<text class="l B m" x="22" textLength="783.68">113 / 124 [===========================================&gt;----] 91.13 % 62.20/s 0s</text>
+<text class="l B i" x="22" textLength="783.68">114 / 124 [============================================&gt;---] 91.94 % 62.24/s 0s</text>
+<text class="l B h" x="22" textLength="783.68">115 / 124 [============================================&gt;---] 92.74 % 62.20/s 0s</text>
+<text class="l B u" x="22" textLength="783.68">116 / 124 [============================================&gt;---] 93.55 % 62.37/s 0s</text>
+<text class="l B v" x="22" textLength="783.68">117 / 124 [=============================================&gt;--] 94.35 % 62.77/s 0s</text>
+<text class="l B w" x="22" textLength="783.68">118 / 124 [=============================================&gt;--] 95.16 % 63.14/s 0s</text>
+<text class="l B x" x="22" textLength="783.68">119 / 124 [==============================================&gt;-] 95.97 % 63.52/s 0s</text>
+<text class="l B y" x="22" textLength="783.68">120 / 124 [==============================================&gt;-] 96.77 % 63.90/s 0s</text>
+<text class="l B z" x="22" textLength="783.68">121 / 124 [==============================================&gt;-] 97.58 % 64.27/s 0s</text>
+<text class="l B A" x="22" textLength="783.68">122 / 124 [================================================] 98.39 % 64.63/s 0s</text>
+<text class="l B n" x="22" textLength="783.68">123 / 124 [================================================] 99.19 % 64.87/s 0s</text>
+<text class="l B j" x="22" textLength="783.68">124 / 124 [==================================================] 100.00 % 65.12/s</text>
+<text class="l B g b" x="22" textLength="605.12">[WARN  fontdb] Fallback to loading from known font dir paths.</text>
+<g class="l cH e"><text x="22">$</text><use href="#c" x="41.84" y="-12.8"/></g>
+<use href="#c" x="131.12" y="50" class="l cI"/>
+<use href="#c" x="141.04" y="50" class="l cJ"/>
+<use href="#c" x="180.72" y="50" class="l cK"/>
+<use href="#c" x="22" y="70" class="l cL"/>
+<use href="#c" x="22" y="90" class="l cM"/>
+<use href="#c" x="71.6" y="90" class="l cN"/>
+<use href="#c" x="81.52" y="90" class="l cO"/>
+<use href="#c" x="210.48" y="90" class="l cP"/>
+<use href="#c" x="22" y="110" class="l cQ"/>
+<use href="#c" x="22" y="510" class="l cR"/>
+<use href="#c" x="71.6" y="510" class="l I"/>
+<use href="#c" x="111.28" y="510" class="l J"/>
+<use href="#c" x="121.2" y="510" class="l K"/>
+<use href="#c" x="131.12" y="510" class="l cS"/>
+<use href="#c" x="141.04" y="510" class="l cT"/>
+<use href="#c" x="270" y="510" class="l cU"/>
+<use href="#c" x="279.92" y="510" class="l cV"/>
+<use href="#c" x="359.28" y="510" class="l cW"/>
+<use href="#c" x="369.2" y="510" class="l cX"/>
+<use href="#c" x="22" y="510" class="l cY"/>
+<use href="#c" x="220.4" y="510" class="l cZ"/>
+<use href="#c" x="230.32" y="510" class="l c0"/>
+<use href="#c" x="289.84" y="510" class="l c1"/>
+<use href="#c" x="299.76" y="510" class="l c2"/>
+<use href="#c" x="329.52" y="510" class="l c3"/>
+<use href="#c" x="339.44" y="510" class="l c4"/>
+<use href="#c" x="379.12" y="510" class="l c5"/>
+<use href="#c" x="389.04" y="510" class="l c6"/>
+<use href="#c" x="408.88" y="510" class="l c7"/>
+<use href="#c" x="418.8" y="510" class="l c8"/>
+<use href="#c" x="577.52" y="510" class="l c9"/>
+<use href="#c" x="587.44" y="510" class="l da"/>
+<use href="#c" x="795.76" y="510" class="l db"/>
+<use href="#c" x="805.68" y="510" class="l dc"/>
+<use href="#c" x="200.56" y="510" class="l dd"/>
+<use href="#c" x="210.48" y="510" class="l de"/>
+<use href="#c" x="22" y="510" class="l df"/>
 </g>
 </svg>
