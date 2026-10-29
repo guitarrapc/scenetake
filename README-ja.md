@@ -156,6 +156,25 @@ scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light]
   - 実行時間が長いコマンドは `execution-duration` で見やすく調整できます
   - 長い出力を自然にリプレイしたい場合（`docker build` や `sleep` を挟むステップなど）は、その step に `stream-output: true` と必要なら `max-duration` を指定します。デフォルトの pipe emit はタイピング演出のため一括表示のままです
 
+**GIF で日本語などの CJK 文字を使う**
+
+`ghcr.io/asciinema/agg` イメージには CJK フォントが入っていません。agg はどのフォントにもない文字を何も描画しないため、日本語・中国語・韓国語の文字（全角カタカナなど）は空白になります。`fonts/` などのフォルダに CJK フォントを置いて `--font-dir` で渡し、`--text-font-family` の欧文等幅フォントの後ろにそのファミリー名を追加してください。先頭のフォントがセル幅の基準になります。
+
+```bash
+# Linux/macOS
+docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20 --last-frame-duration 0 --font-dir /data/fonts --text-font-family "JetBrains Mono,BIZ UDGothic"
+
+# Windows PowerShell
+# フォントのフォルダはコンテナにコピーする。Windows の Docker Desktop ではバインドマウント上のフォントを読み込めない（Input/output error）
+$id = docker create -v "$($PWD.Path):/data:ro" ghcr.io/asciinema/agg /data/scenario.cast /tmp/scenario.gif --font-size 20 --last-frame-duration 0 --font-dir /fonts --text-font-family "JetBrains Mono,BIZ UDGothic"
+docker cp .\fonts "${id}:/fonts"
+docker start -a $id
+docker cp "${id}:/tmp/scenario.gif" scenario.gif
+docker rm $id
+```
+
+`BIZ UDGothic`（OFL、Google Fonts で配布）は一例です。ほかの CJK フォントでも、そのファミリー名を指定すれば使えます。
+
 ## 出力モード
 
 出力モードは、通常出力、ストリーム出力、TUI出力、対話型アプリケーション出力の4種類があります。モードはstepごとに切り替えられます。

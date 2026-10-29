@@ -156,6 +156,25 @@ scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light]
   - For long-running commands, use `execution-duration` to keep playback readable.
   - For natural replay of long output (`docker build`, staged `sleep`, …), set `stream-output: true` and optionally `max-duration` on that step. Default pipe emit stays instant for typing and short demos.
 
+**CJK text in GIFs**
+
+The `ghcr.io/asciinema/agg` image has no CJK font, and agg draws nothing for a character that none of its fonts has, so Japanese, Chinese, and Korean text (for example full-width katakana) comes out as empty cells. Put a CJK font in a folder such as `fonts/`, pass it with `--font-dir`, and add its family name after the Latin monospace font in `--text-font-family`. The first family sets the cell width.
+
+```bash
+# Linux/macOS
+docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20 --last-frame-duration 0 --font-dir /data/fonts --text-font-family "JetBrains Mono,BIZ UDGothic"
+
+# Windows PowerShell
+# Copy the font folder into the container: Docker Desktop on Windows fails to read a font from a bind mount (Input/output error)
+$id = docker create -v "$($PWD.Path):/data:ro" ghcr.io/asciinema/agg /data/scenario.cast /tmp/scenario.gif --font-size 20 --last-frame-duration 0 --font-dir /fonts --text-font-family "JetBrains Mono,BIZ UDGothic"
+docker cp .\fonts "${id}:/fonts"
+docker start -a $id
+docker cp "${id}:/tmp/scenario.gif" scenario.gif
+docker rm $id
+```
+
+`BIZ UDGothic` (OFL, available on Google Fonts) is one example. Any CJK font works when you pass its family name.
+
 ## Output modes
 
 There are four output modes: ordinary output, stream output, TUI output, and interactive application output. You can switch mode per step.
