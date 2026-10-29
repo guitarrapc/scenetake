@@ -17,6 +17,28 @@ internal static class SvgRender
         svg.WriteTo(stream);
     }
 
+    /// <summary>
+    /// Above this size an SVG is hard to share: GitHub rejects image uploads over 10MB, and
+    /// browsers slow down on that many layers. Heavy output belongs in mp4 instead.
+    /// </summary>
+    internal const long LargeSvgBytes = 10_000_000;
+
+    /// <summary>
+    /// The warning to print for an SVG of <paramref name="bytes"/>, or null when it is small enough.
+    /// <paramref name="fromCast"/> picks the mp4 suggestion: the <c>mp4</c> subcommand for casts,
+    /// <c>--format mp4</c> on the scenario path.
+    /// </summary>
+    internal static string? SizeWarning(long bytes, int maxFps, bool fromCast)
+    {
+        if (bytes <= LargeSvgBytes)
+            return null;
+
+        var size = (bytes / 1_000_000.0).ToString("0.0", CultureInfo.InvariantCulture); // decimal MB, as in the mp4 log
+        var mp4 = fromCast ? "scenetake mp4 <cast>" : "--format mp4";
+        var sampling = maxFps == 0 ? "--max-fps 20" : "a lower --max-fps";
+        return $"SVG is {size}MB (over 10MB). Heavy output such as full-screen TUIs is much smaller as mp4 ({mp4}) or as SVG with {sampling}";
+    }
+
     /// <summary>Renders the SVG as a string. <see cref="WriteSvg"/> streams to disk instead.</summary>
     internal static string RenderToString(
         IReadOnlyList<CastEvent> events,

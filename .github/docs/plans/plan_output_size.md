@@ -121,7 +121,7 @@ Guidance once both tracks land:
 | 1 | A1. Streaming replay (memory) — **done 2026-10-29** | Small change with byte-identical output that removes the out-of-memory failure. It also gives B a replay stepper (`TerminalReplay.EnumerateCaptures`). |
 | 2 | B0–B4. mp4 output — **done 2026-10-29** | Main fix for the reported use case. |
 | 3 | A2. Compact row encoding — **done 2026-10-29** | Independent of B, and only changes SVG row output. |
-| 4 | A3. Size warning | Comes after B so the warning can recommend mp4. |
+| 4 | A3. Size warning — **done 2026-10-29** | Comes after B so the warning can recommend mp4. |
 | 5 | B5. Window chrome in mp4, and extras | Not needed for v1. |
 
 Shared touch points:

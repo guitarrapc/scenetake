@@ -8,9 +8,9 @@ Full-screen TUIs (`matrix`, `btop`, banner animations) redraw most cells every f
 
 | Recording | SVG | GIF (agg) | mp4 |
 |---|---|---|---|
-| `matrix --fps 60`, 200×60, 7.5s | 117MB | 19MB | 9.4MB; 4.5MB with `--max-size 1280x1024` |
-| Same, 384×108 (4K frame) | 455MB | — | 30.2MB |
-| `samples/basic.cast` (typing) | **129KB** | 414KB | 189KB |
+| `matrix --fps 60`, 200×60, 7.5s | 26.9MB (117MB before the row encoding in spec_svg.md) | 19MB | 9.8MB; 4.8MB with `--max-size 1280x1024` |
+| Same, 384×108 (4K frame) | 96.7MB (455MB before) | — | 31.7MB |
+| `samples/basic.cast` (typing) | **108KB** | 414KB | 194KB |
 
 X (Twitter) accepts H.264 mp4, not SVG. SVG stays the right format for typing demos embedded in a README. mp4 is for heavy output and sharing.
 

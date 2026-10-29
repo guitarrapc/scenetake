@@ -72,6 +72,17 @@ Progress and status go to stderr (`Loading:`, `Written:`, `Done:`). File paths i
 
 **Warnings.** Non-fatal issues print `Warning: …` to stderr and execution continues. Feature-specific warn-and-continue rules: [spec_highlight.md](spec_highlight.md), [spec_svg.md](spec_svg.md), [spec_scenario.md](spec_scenario.md) → Step exit codes.
 
+**Large SVG.** After writing an SVG over 10MB, scenetake prints the warning below. The file is kept and the exit code does not change.
+
+```
+Warning: SVG is 26.9MB (over 10MB). Heavy output such as full-screen TUIs is much smaller as mp4 (--format mp4) or as SVG with --max-fps 20
+```
+
+- The `svg` subcommand suggests `scenetake mp4 <cast>` instead of `--format mp4`.
+- When `--max-fps` is already set, the warning suggests "a lower `--max-fps`".
+
+**Sizes** in logs and warnings use decimal units (1MB = 1,000,000 bytes).
+
 **Recorded `steps`.** When a step command exits non-zero, scenetake prints:
 
 - `Warning: step exited <code>: <run>`

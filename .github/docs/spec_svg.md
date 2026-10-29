@@ -149,6 +149,7 @@ Does **not** scale with `font-size` (matches real OS window chrome). Tuned at de
 | `pre` | Fail-fast; no cast or SVG. See [spec_pre_post.md](spec_pre_post.md). |
 | Cast write | Fail; SVG not attempted. |
 | SVG render | Cast retained; partial `.svg` deleted; exit non-zero; `post` still runs. |
+| Written SVG over 10MB | Warning suggesting `--format mp4` or `--max-fps` ([spec_cli.md](spec_cli.md) → Logging); files kept, exit code unchanged. |
 | `post` | Fail-fast; cast (and SVG if written) remain. See [spec_pre_post.md](spec_pre_post.md). |
 
 ### `svg` subcommand
@@ -158,6 +159,7 @@ Does **not** scale with `font-size` (matches real OS window chrome). Tuned at de
 | Cast not found, invalid header, missing/out-of-range terminal size, invalid event JSON | Exit non-zero; no SVG |
 | SVG render failure | Exit non-zero; partial `.svg` deleted |
 | Unsupported event codes, invalid resize | Warning only; continue |
+| Written SVG over 10MB | Warning suggesting mp4 or `--max-fps` ([spec_cli.md](spec_cli.md) → Logging); file kept, exit `0` |
 
 The cast file is never modified by the `svg` subcommand.
 

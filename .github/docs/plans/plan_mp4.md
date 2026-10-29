@@ -299,11 +299,11 @@ Measured with the Native AOT win-x64 build, and in Docker (Ubuntu 24.04, ffmpeg 
 
 | Check | Result |
 |---|---|
-| matrix 200×60, defaults | 2020×1208, 30fps, 9.4MB, 5.1s (prototype estimate 8.8MB; within ±15%) |
-| Same with `--max-size 1280x1024` | 1280×764, 4.5MB |
-| Same with `--fps 60` | 13.2MB |
-| matrix 384×108 | 3860×2168, 30.2MB, 16.6s |
-| `samples/basic.cast` | 189KB; decoded theme background (40, 44, 52), exact |
+| matrix 200×60, defaults | 2020×1208, 30fps, 9.8MB, 5.1s (prototype estimate 8.8MB; within ±15%) |
+| Same with `--max-size 1280x1024` | 1280×764, 4.8MB |
+| Same with `--fps 60` | 13.9MB |
+| matrix 384×108 | 3860×2168, 31.7MB, 16.6s |
+| `samples/basic.cast` | 194KB; decoded theme background (40, 44, 52), exact |
 | ffprobe | h264 High, yuv420p, BT.709 tags, constant frame rate |
 | Native AOT binary (win-x64) | +225KB (4.28MB → 4.51MB), no new warnings |
 | Tests | `mp4_render_test` 16 passed; `mp4_ffmpeg_test` 9 passed on Linux (6 on Windows, where real encodes skip without ffmpeg); every existing suite still passes |

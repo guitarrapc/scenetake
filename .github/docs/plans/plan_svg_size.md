@@ -220,6 +220,19 @@ Sizes from the `svg` subcommand:
 
 ## A3. Size Warning
 
+Status: **Implemented** (2026-10-29).
+
+What was built:
+
+- **Message.** The final text is in [spec_cli.md](../spec_cli.md) → Logging. It names the size and suggests mp4 and `--max-fps`:
+  - the `svg` subcommand suggests `scenetake mp4 <cast>`; the scenario path suggests `--format mp4`;
+  - when `--max-fps` is already set, it suggests a lower value instead of 20.
+- **Threshold.** Over 10,000,000 bytes.
+- **Sizes.** Logs and warnings now use decimal MB. The mp4 `Written:` line used to divide by 1024², so docs that quoted it understated mp4 sizes by about 5%. Those numbers were corrected (for example matrix 200×60: 9.4MB → 9.8MB).
+- **When it fires.** After A2, the 200×60 matrix SVG (26.9MB) warns; `--max-fps 20` (5.9MB) and every repository sample stay below the threshold.
+
+Original proposal:
+
 After writing an SVG larger than 10MB (the GitHub image attachment limit), print:
 
 ```

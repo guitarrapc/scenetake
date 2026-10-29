@@ -124,6 +124,8 @@ if (args[0] is "svg")
 
         SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath, recording.LoopDuration);
         Console.Error.WriteLine($"Written: {FormatDisplayPath(svgOutputPath)}  ({recording.Events.Count} events, {recording.LoopDuration:F1}s)");
+        if (SvgRender.SizeWarning(new FileInfo(svgOutputPath).Length, svgRenderSettings.MaxFps, fromCast: true) is { } svgSizeWarning)
+            Console.Error.WriteLine($"Warning: {svgSizeWarning}");
         Console.Error.WriteLine($"Done: {FormatDisplayPath(svgOutputPath)}");
         return 0;
     }
@@ -331,6 +333,8 @@ if (outputFormat == OutputFormat.Svg)
     {
         SvgRender.WriteSvg(events, width, height, renderSettings, svgPath!);
         Console.Error.WriteLine($"Written: {FormatDisplayPath(svgPath!)}");
+        if (SvgRender.SizeWarning(new FileInfo(svgPath!).Length, renderSettings.MaxFps, fromCast: false) is { } svgSizeWarning)
+            Console.Error.WriteLine($"Warning: {svgSizeWarning}");
     }
     catch (Exception ex)
     {
@@ -2979,10 +2983,11 @@ static void PrintMp4Written(string path, Mp4Result result) =>
     Console.Error.WriteLine(
         $"Written: {FormatDisplayPath(path)}  ({result.Width}x{result.Height}, {result.Fps}fps, {result.Frames} frames, {FormatBytes(result.Bytes)}, font: {result.Font.Family})");
 
+// Decimal units (1MB = 1,000,000 bytes), matching ls, Finder, and the size warning.
 static string FormatBytes(long bytes) =>
-    bytes >= 1024 * 1024
-        ? string.Create(CultureInfo.InvariantCulture, $"{bytes / (1024.0 * 1024.0):0.0}MB")
-        : string.Create(CultureInfo.InvariantCulture, $"{bytes / 1024.0:0.0}KB");
+    bytes >= 1_000_000
+        ? string.Create(CultureInfo.InvariantCulture, $"{bytes / 1_000_000.0:0.0}MB")
+        : string.Create(CultureInfo.InvariantCulture, $"{bytes / 1_000.0:0.0}KB");
 
 /// <summary>Matches <paramref name="name"/> as <c>--name value</c> or <c>--name=value</c>. Returns true when it matched; error is set for a missing value.</summary>
 static bool TryTakeOptionValue(string[] args, ref int i, string name, out string value, out string error)

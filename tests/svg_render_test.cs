@@ -26,6 +26,7 @@ failures += Run("BackgroundSpanCoversStyleChanges", BackgroundSpanCoversStyleCha
 failures += Run("UnderlinedRowUsesRunForm", UnderlinedRowUsesRunForm);
 failures += Run("RowLayersShareKeyframeRules", RowLayersShareKeyframeRules);
 failures += Run("CombiningMarkDoesNotFailRender", CombiningMarkDoesNotFailRender);
+failures += Run("LargeSvgWarnsWithAlternatives", LargeSvgWarnsWithAlternatives);
 
 return failures == 0 ? 0 : 1;
 
@@ -160,6 +161,24 @@ static bool CombiningMarkDoesNotFailRender()
     // "e" + U+0301 shares one cell. 1.4.x threw here, treating the mark as a low surrogate.
     var svg = RenderInline(20, 2, """[0.0, "o", "café ok"]""");
     return DecodeRowLayers(svg).Any(r => r.Text.StartsWith("caf", StringComparison.Ordinal) && r.Text.Contains("́ ok", StringComparison.Ordinal));
+}
+
+static bool LargeSvgWarnsWithAlternatives()
+{
+    // Over 10MB warns; the suggestion depends on the entry point and on --max-fps already being set.
+    var limit = SvgRender.LargeSvgBytes;
+    var fromScenario = SvgRender.SizeWarning(28_215_000, maxFps: 0, fromCast: false);
+    var fromCast = SvgRender.SizeWarning(28_215_000, maxFps: 0, fromCast: true);
+    var sampled = SvgRender.SizeWarning(limit + 1, maxFps: 20, fromCast: true);
+    return SvgRender.SizeWarning(limit, 0, fromCast: false) is null
+        && SvgRender.SizeWarning(129_000, 0, fromCast: true) is null
+        && fromScenario is not null
+        && fromScenario.StartsWith("SVG is 28.2MB (over 10MB).", StringComparison.Ordinal)
+        && fromScenario.Contains("as mp4 (--format mp4)", StringComparison.Ordinal)
+        && fromScenario.Contains("with --max-fps 20", StringComparison.Ordinal)
+        && fromCast is not null && fromCast.Contains("(scenetake mp4 <cast>)", StringComparison.Ordinal)
+        && sampled is not null && sampled.Contains("with a lower --max-fps", StringComparison.Ordinal)
+        && !sampled.Contains("--max-fps 20", StringComparison.Ordinal);
 }
 
 static string RenderInline(int cols, int rows, string events)
