@@ -8,8 +8,8 @@ Full-screen TUIs (`matrix`, `btop`, banner animations) redraw most cells every f
 
 | Recording | SVG | GIF (agg) | mp4 |
 |---|---|---|---|
-| `matrix --fps 60`, 200×60, 7.5s | 19.7MB (117MB before the encoding work in spec_svg.md) | 19MB | 8.0MB; 3.9MB with `--max-size 1280x1024` |
-| Same, 384×108 (4K frame) | 70.7MB (455MB before) | — | 26.4MB |
+| `matrix --fps 60`, 200×60, 7.5s | 17.0MB (117MB before the encoding work in spec_svg.md) | 19MB | 8.0MB; 3.9MB with `--max-size 1280x1024` |
+| Same, 384×108 (4K frame) | 53.2MB (455MB before) | — | 26.4MB |
 | `samples/basic.cast` (typing) | **46KB** | 414KB | 98KB |
 | `samples/git.cast` (typing) | **31KB** | — | 226KB |
 
@@ -46,7 +46,7 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
 - Frame `k` shows the screen after every event with time ≤ `k / fps`. States shorter than one frame are not shown.
 - The video length is the SVG loop period, so it includes the final hold.
 - Like the SVG, `--format mp4` renders the cast it just wrote, so it gives the same file as `scenetake mp4` on that cast with the same options.
-- Like the SVG, nothing is shown before the first event, not even the cursor.
+- Like the SVG, nothing is shown before the first event, not even the cursor. A cast with no events differs: its SVG shows the cursor throughout, while the mp4 shows only the background.
 - Like the SVG, a trailing blank alternate-screen restore is dropped, so a TUI recording ends on the app's last screen.
 
 ### Layout
@@ -55,6 +55,9 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
 - **Padding:** the SVG inner padding, filled with the theme background. There is no transparent outer margin, because video has no alpha.
 - **Even sizes:** width and height are rounded up to even numbers, because yuv420p requires it.
 - **Canvas:** the largest terminal size across resize events, as in the SVG.
+- **Size limits:** two limits come from ffmpeg and x264, and both are checked before recording.
+  - ffmpeg accepts a raw frame only while (width + 128) × (height + 128) is below 2^28, about 16000×16000. A 512×512 terminal is within it at `--font-size 36` and over it from 37. The error suggests a smaller `--font-size` or terminal size. `--max-size` cannot help, because it scales the frame after ffmpeg reads it.
+  - x264 accepts at most 16384 pixels on each side of the encoded video. 512 columns are 15904 pixels wide at `--font-size 50` and 16416 from 51. `--max-size` scales the video below the limit, and the error suggests it.
 
 ### Colors and Cursor
 
@@ -69,7 +72,15 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
   3. Fallbacks for CJK, symbols, braille, and emoji outlines (for example BIZ UDGothic and Segoe UI Symbol on Windows, Hiragino on macOS, Noto Sans CJK on Linux).
 
   Each character uses the first font that has it. Characters no font has draw as an outlined box.
-- **Installed fonts** are found by reading only each file's headers.
+- **Installed fonts** are found by reading only each file's headers. A file is skipped when it cannot be read or one of its tables lies outside the file. A face is skipped when stb_truetype could not use it:
+  - it has no outlines stb_truetype draws (bitmap-only or CFF2), or no `head`, `hhea`, or `hmtx` table;
+  - its cmap has no Unicode subtable (symbol fonts such as Symbol and Wingdings).
+
+  The render scans again when it starts, after the steps, so a font that `pre` or the steps install is used. The check before `pre` still needs one usable font, so `pre` cannot install the only one. A font reached through a symbolic link loads like the file it points to.
+- **Loading a face** checks what stb_truetype reads without bounds checks: the fields it reads from `head`, `hhea`, and `maxp`, the lengths of `hmtx` and `loca`, and every `loca` entry against the end of `glyf`. A face that fails is skipped like a missing one. A glyph id from the cmap at or past maxp's glyph count reads as missing. Damaged glyph outlines and cmap subtables are not checked otherwise.
+- **`--font-file`** is an error when the file has no usable face, or when any face it would draw with (regular, bold, italic, bold-italic) fails to load, instead of falling back to another font. That check does not keep the file mapped, so a `pre` command can replace the font file. The render releases every font file it loaded when it ends, whether it succeeds or fails, so `post` can replace or delete them too.
+- **Memory.** Font files are memory-mapped, so a face is never read whole. Loading reads the table directory, the fields it checks, every `loca` entry, and the cmap encoding records, plus the header and indexes of a CFF face. A glyph lookup reads only what it touches.
+- **The log** names the regular face of the first family in the chain whose regular face loads. A family whose regular file fails the load checks draws no regular text, so it is passed over. When no regular face loads, the log names the first family.
 - **mp4 depends on the machine.** The same cast renders with the fonts installed where scenetake runs, whereas an SVG uses the viewer's fonts. Pass `--font-file` to pin the font.
 - **Bold and italic** use real faces when the family has them; otherwise they are synthesized (thickened strokes, slanted rows). Variable fonts always use synthetic bold.
 - **Procedural glyphs:** box drawing (U+2500–U+257F, except the diagonals), block elements (U+2580–U+259F), and braille (U+2800–U+28FF) are drawn as shapes that reach the cell edges.
@@ -95,10 +106,10 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
 | Setting | Value | Why |
 |---|---|---|
 | Codec | libx264, High profile, yuv420p | X requires H.264 High with yuv420p, and it plays in every browser and on phones. |
-| Quality | `--crf`, default `23` | x264's default. Higher values make smaller files. |
-| Preset | `slower` | Smaller than `slow` on every recording tested, at equal or higher SSIM. `veryslow` was larger on typing (and 3× slower). |
+| Quality | `--crf`, default `23`, range `1`–`51` | x264's default. Higher values make smaller files. `0` (lossless) is rejected: x264 then writes the High 4:4:4 Predictive profile, which X and many players reject. |
+| Preset | `slower` | Smaller than `slow` on every recording tested, at equal or higher SSIM. `veryslow` was larger on typing and took 1.4–2.1× as long. |
 | Psychovisual tuning | Off (`-psy 0`) | It spends bits on texture detail; terminal frames are flat color and sharp text. Off was smaller at equal or higher SSIM and looked the same side by side. |
-| Keyframes | At most every 30 seconds | x264's default (every 250 frames, 8.3s at 30fps) was 46% of a typing demo: each keyframe redraws the whole screen while the frames between are tiny. 30 seconds keeps seeking cheap. |
+| Keyframes | At most every 30 seconds | A keyframe redraws the whole screen while the frames between are tiny. In a typing demo, x264's default interval (250 frames, 8.3s at 30fps) added a keyframe that alone was 21% of the file. 30 seconds keeps seeking cheap. |
 | Reference frames | 8, capped so the stream stays within level 5.2 | 8 references at 4K would need level 6.0, which many phone and TV decoders lack. 4K gets 5. |
 | Frame rate | `--fps`, default `30`, max `60` | 30fps keeps terminal motion smooth. For `matrix --fps 60` it is 27% smaller than 60fps (8.0MB vs 11.0MB). X allows up to 60. |
 | Color | BT.709 conversion and BT.709 tags | Untagged output (ffmpeg's default BT.601 conversion) shifts theme colors in players that assume BT.709. |
@@ -107,12 +118,14 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
 ## ffmpeg
 
 - **Locating ffmpeg.** The `SCENETAKE_FFMPEG` environment variable names the binary. Otherwise scenetake uses `ffmpeg` on `PATH`.
-- **Required encoder.** scenetake checks for the libx264 encoder before rendering. When ffmpeg is missing or lacks libx264, the error ends with install hints:
+- **Required encoder.** scenetake checks for the libx264 encoder before rendering. An ffmpeg that does not answer within 15 seconds is an error. When ffmpeg is missing or lacks libx264, the error ends with install hints:
   - Windows: `winget install Gyan.FFmpeg`, or `scoop install ffmpeg`;
   - macOS: `brew install ffmpeg`;
   - Debian/Ubuntu: `sudo apt install ffmpeg`;
   - Fedora: RPM Fusion's `ffmpeg`, because the default `ffmpeg-free` has no libx264.
-- **Partial files.** scenetake encodes to a hidden temporary file in the output folder and renames it when ffmpeg succeeds. On failure or Ctrl+C, ffmpeg is stopped and the temporary file is deleted, so a partial `.mp4` is never left behind. Ctrl+C ends scenetake about one second later, with the platform's interrupt exit code (130 on Unix, `0xC000013A` on Windows).
+- **Output path.** The output folder must exist, the output path must not be a directory, and it must not be the input file. These are checked before rendering. On the scenario path all three are checked before `pre`, except the folder when `pre` has commands, and all three again after `pre`, which may create the folder, or put a directory or a link to the scenario where an output goes ([spec_cli.md](spec_cli.md) → Output Paths).
+- **Earlier output.** A file already at the output path is deleted when encoding starts, so a failed encode or a Ctrl+C never leaves a video from an earlier run. Font and frame-size errors found by the checks before `pre`, or by the `mp4` subcommand, keep it. On the scenario path any render failure after the recording deletes it, because it no longer matches the new cast. On the `mp4` subcommand a cast that cannot be read deletes it, as with SVG.
+- **Partial files.** scenetake encodes to a temporary file in the output folder, named `.<output name>.<id>.partial`, and renames it when ffmpeg succeeds. On failure or Ctrl+C, ffmpeg is stopped and the temporary file is deleted, so a partial `.mp4` is not left behind. A crash inside stb_truetype, on a font whose glyph data is damaged, would still leave one. Ctrl+C ends scenetake about one second later, with the platform's interrupt exit code (130 on Unix, `0xC000013A` on Windows).
 
 ## Failure Behavior
 
@@ -120,33 +133,39 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
 
 | Phase | On failure |
 |---|---|
-| ffmpeg missing, no libx264, or no usable font | Checked before `pre`: error, nothing recorded, exit `1` |
+| Output path a directory, the output is the scenario file, or the output folder missing when there is no `pre` | Checked before `pre`: error, nothing recorded, exit `1` |
+| ffmpeg missing, no libx264, no usable font, or a frame over the size limits | Checked before `pre`: error, nothing recorded, exit `1` |
 | `pre` | Unchanged ([spec_pre_post.md](spec_pre_post.md)) |
-| Cast write | Fail; mp4 is not attempted |
-| mp4 render or encode | Cast is kept; no `.mp4`; exit non-zero; `post` still runs |
-| Ctrl+C while encoding | Cast is kept; no `.mp4` or temporary file; ffmpeg stopped; `post` does not run |
+| An output check fails after `pre` (folder missing, or `pre` put a directory or a link to the scenario where an output goes) | Error before the recording; `post` runs; exit `1`, or the failing `post` command's code |
+| Cast write | Error; mp4 is not attempted; `post` runs; exit `1`, or the failing `post` command's code |
+| mp4 render or encode | Cast is kept; no `.mp4`, and one from an earlier run is deleted; exit non-zero; `post` still runs |
+| Ctrl+C while encoding | Cast is kept; no `.mp4` (an earlier one was deleted when encoding started) or temporary file; ffmpeg stopped; `post` does not run |
 | `post` | Unchanged |
 
 ### `mp4` subcommand
 
 | Situation | Behavior |
 |---|---|
-| Cast errors | Same as the `svg` subcommand |
+| The output is the input file (for example `scenetake mp4 clip.mp4`) | Error before anything is read; the input is untouched; exit `1` |
+| Cast errors | Same as the `svg` subcommand: a cast that is not found keeps an `.mp4` from an earlier run, and a cast that cannot be read deletes it |
 | ffmpeg missing or no libx264 | Error with install hints; exit `1` |
-| Font not found | Error naming `--font-file`; exit `1` |
-| Encode failure | Error with the end of ffmpeg's stderr; no output file; exit `1` |
+| Output folder missing, or output path is a directory | Error naming the path, before rendering; exit `1` |
+| Font not found | Error naming `--font-file`; an `.mp4` from an earlier run is kept; exit `1` |
+| Frame over the size limits | Error suggesting a smaller `--font-size` or terminal, and `--max-size` when a side is over x264's 16384; an `.mp4` from an earlier run is kept; exit `1` |
+| Encode failure | Error with the end of ffmpeg's stderr; no output file (an earlier one was deleted when encoding started); exit `1` |
 | Ctrl+C while encoding | No output or temporary file; ffmpeg stopped |
 
-The cast file is never modified by the `mp4` subcommand.
+The input file is never modified by the `mp4` subcommand.
 
 ## Testing
 
 | Suite | Coverage | Needs |
 |---|---|---|
-| `tests/mp4_render_test.cs` | Layout, colors, cursor, procedural glyphs, frame timing, trailing trim, matrix tint, option parsing, ffmpeg arguments | An installed font (prints `skip` without one) |
-| `tests/mp4_ffmpeg_test.cs` | Option rules, missing ffmpeg, no libx264, encode failure with no leftover file, scenario path keeps the cast, real encodes checked with `ffprobe`, SIGINT mid-encode leaves no files (Unix only) | `SCENETAKE_BIN`; real encodes also need `ffmpeg` and `ffprobe` on `PATH` |
+| `tests/mp4_render_test.cs` | Layout, colors, cursor, procedural glyphs (also at font sizes 1–3), frame timing, trailing trim, matrix tint, option parsing, ffmpeg arguments, both size limits, the ffmpeg probe timeout, output path checks, font files that are malformed, symbol-only, unreadable (Unix only), fail to load, or have short tables, out-of-range glyph ids, every `--font-file` face loading, a valid font file accepted and not held open by the check or after the render, a font reached through a symbolic link, the installed fonts rescanned, the log naming a font that loads, and the default fonts passing the table checks | An installed font (prints `skip` without one). Three tests also skip when their premise fails: the unreadable-file test when it runs as a user who can read any file, such as root, the bold-face test when the installed font cannot make a regular and bold collection, and the log test when the copied font's own family does not load. The release after the render can fail only on Windows, which refuses to replace a mapped file. The link test skips without permission to make symbolic links. |
+| `tests/mp4_ffmpeg_test.cs` | Option rules, missing ffmpeg, no libx264, encode failure with no leftover file, scenario path keeps the cast and still runs `post`, an earlier `.mp4` is gone while ffmpeg runs and kept on a font or frame-size error, outputs never replace the input (also through a directory link, a file link, a link whose target passes through another link, a `..` in a link's target on Unix, and on Windows `\\?\` and `\??\` spellings, also while the input is held open without read sharing), the output folder checked after `pre`, or before it when there is no `pre`, and the rest before it, every output check run again after `pre` (`pre` puts a directory, or a link to the scenario, where the cast goes), a relative link target reached through a directory link resolved as each OS resolves it, scenario errors found before `pre` (YAML the parser rejects, a missing shell, a list as `run`), step keys that contradict each other found before `pre`, `post` run when the cast write fails or the recording stops (an interactive step whose output is redirected, a PTY command holding a NUL), an error rather than an unhandled exception when a step removes the scenario's working folder, SVG failures reported while the output is held open, a font that `pre` or a step installs used by the render (Linux only), ffmpeg, font, terminal size, and frame size checked before `pre`, real encodes checked with `ffprobe`, SIGINT mid-encode leaves no files, an earlier `.mp4` included (Unix only) | `SCENETAKE_BIN`; real encodes also need `ffmpeg` and `ffprobe` on `PATH`. Without permission to make links, the link cases print a note and are left out. The font-install test skips without a TrueType font with outlines and a Windows family name under `/usr/share/fonts` or `/usr/local/share/fonts`. |
+| `tests/scenario_render_test.cs` | `--format mp4` gives the same file as the `mp4` subcommand on the written cast. The scenario puts an event 0.3ms past a frame edge, so rendering from the in-memory events would differ | `SCENETAKE_BIN`, `ffmpeg` |
 
-CI runs both suites on all six platforms; GitHub runner images ship no ffmpeg, so real encodes are skipped there. A separate Linux job installs ffmpeg and runs real encodes with the Native AOT binary.
+CI runs these suites on all six platforms. GitHub runner images ship no ffmpeg, so real encodes are skipped there. A separate Linux job installs ffmpeg and runs the three suites with real encodes and the Native AOT binary.
 
 ## Cross-Document Notes
 
@@ -185,9 +204,20 @@ Sizes are for `matrix --fps 60` at 200×60, 7.5s, 60fps unless noted. CRF values
 - **Ctrl+C reaches ffmpeg too.** A console Ctrl+C (or a terminal's SIGINT to the process group) also reaches ffmpeg, which then finalizes its output on its own.
   - The cleanup must therefore stop ffmpeg and remove the temporary file itself, from the Ctrl+C handler: once that handler returns, the process ends, so `finally` blocks never run.
   - On Windows with a Scoop shim, the process scenetake waits for is the shim. The real ffmpeg can still hold the file for a moment after the shim exits, so a single delete attempt failed now and then and left a `.partial` (1 in 3 tries). Retrying the delete for up to 3 seconds made all 10 later tries clean.
+- **stb_truetype trusts the file.** It reads tables through raw pointers without bounds checks. A font whose `glyf` table pointed past the end of the file crashed scenetake with an access violation, so no cleanup ran and a `.partial` file stayed. The font scan therefore checks each table's offset and length against the file size. A table inside the file can still be too short: an empty `loca` at the end of the file crashed the same way on non-ASCII text, and silently drew no text on ASCII. Loading a face therefore also checks the table lengths and every `loca` entry.
+- **Symbol fonts.** `stbtt_InitFont` fails on a font whose cmap has only a symbol subtable (Symbol, Wingdings, Marlett). Before the scan checked for a Unicode subtable, such a font in `font-family` aborted the render instead of falling back to the next family.
+- **Fallback memory.** A character no font has, such as a Powerline symbol without a Nerd Font, is looked up in every fallback font. Reading each file into memory raised the peak working set from 17MB to 109MB on Windows 11. With memory-mapped files it peaks at about 18MB, about 1MB above plain ASCII (17MB). Most of that comes from checking each fallback face's `loca` table when it loads.
+- **Tiny font sizes.** At the smallest font sizes a line is wider than the cell: a heavy line at font sizes 1–2, and a double line up to 5. At 1–2 drawing it wrote past the glyph's mask and failed the render, so lines and fills are clipped to the cell.
+- **A hung ffmpeg.** Reading ffmpeg's stdout to the end blocks until ffmpeg closes it, normally when it exits, so a timed wait after the read never times out. An ffmpeg that hung for 25 seconds took 25 seconds and was reported as having no libx264. The probe reads stdout asynchronously, so its 15-second timeout holds. It also closes ffmpeg's stdin, so a wrapper that waits for input finishes instead of hanging.
+- **The input as its own output.** Without an output path, the output takes the input's name with the new extension. So `scenetake mp4 clip.mp4` named the input as its output, and the failed render deleted the input. Outputs are checked against the input before anything else runs.
+- **ffmpeg's size limits are far below .NET's.** The first size check only kept the RGB frame within one array, about 715 million pixels. x264 rejects a side over 16384, and ffmpeg a raw frame from about 258 to 264 million pixels depending on its shape, so frames between those passed the check and failed only after the recording.
+- **`pre` may replace the font.** Keeping the `--font-file` mapped from the check before `pre` locked it on Windows, so a `pre` that copied a new font over it failed. The check releases the file. The render's own mapping also outlived the render, so a `post` that restored or deleted the font failed the same way. The render releases its fonts when it ends.
+- **Font links.** FileInfo reports a symbolic link's own size, so a font installed as a link (Ubuntu's font package ships several) failed the table checks and was skipped, while the log still named it. The size comes from the opened file, and the log passes over a family whose regular face fails to load, as **The log** above describes.
+- **Ctrl+C skips cleanup that waits for a failure.** Deleting an earlier `.mp4` in the catch block missed Ctrl+C, which ends the process from its handler. Deleting it when encoding starts covers both.
+- **Draining frames on Windows.** A stand-in ffmpeg that drained stdin with `more >nul` stopped reading after about 65,500 lines and waited: with lines of 1, 3, 4, 5 or 300 bytes, 65,533 lines went through and 65,534 hung. Lines of 2 bytes still went through at 140,000. A dark background such as `#0a0a0a` puts that many LF bytes in the frames, so the render, which has no timeout there, hung. The tests drain stdin with PowerShell instead.
 - **Testing Ctrl+C.** A non-interactive shell starts background jobs with SIGINT ignored, and programs inherit that. A naive `cmd & kill -INT $!` test therefore never reaches the handler; use job control (`set -m`) or start the process directly. On Windows, Ctrl+C was sent with `AttachConsole` + `GenerateConsoleCtrlEvent` to a child in its own console. That is too fragile for CI, so the automated test is Unix only.
 - **Encoder defaults for terminal frames (2026-10-29).** The first defaults (`slow`, psy on, x264's keyframe every 250 frames) were revised after measuring where the bytes went.
-  - In the typing demo, 3 keyframes were 46% of the file, about 44KB each for a full screen of text, while the frames between were tens of bytes.
+  - In the typing demo, keyframes were 46% of the video data, while the frames between were tens of bytes. There were three: the blank first frame (0.8KB), a scene cut at 6.0s (46.8KB), and the 250-frame interval at 14.3s (42.1KB). Raising the interval alone removed the last one and saved 21% (200.6KB → 158.5KB).
   - The same frames were then encoded with several settings and compared by SSIM against a lossless reference:
 
     | Recording | Before | `slower`, psy off, keyframe ≤ 30s | SSIM before → after |
@@ -198,6 +228,6 @@ Sizes are for `matrix --fps 60` at 200×60, 7.5s, 60fps unless noted. CRF values
     | matrix 200×60 | 10.0MB | 8.0MB (−20%) | 0.94244 → 0.94761 |
     | matrix 384×108 (refs capped to 5) | 32.1MB | 26.4MB (−18%) | 0.94132 → 0.94566 |
 
-  - With the same rare keyframes, `veryslow` was 31% smaller than the old default on typing, against 46% for `slower`, and took 1.5× as long as `slower`.
+  - With psy on and the same rare keyframes, `veryslow` was 31% smaller than the old default on typing, against 46% for `slower`, and took 1.4–2.1× as long as `slower` in repeated timings.
   - Skipping duplicate frames (`mpdecimate`, variable frame rate) saved less and lowered SSIM.
   - `--crf 25` with the new settings is another 8–19% smaller at roughly the old SSIM. That trade is left to the user rather than made the default.

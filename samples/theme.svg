@@ -49,112 +49,112 @@ text { dominant-baseline: alphabetic; }
 .y{animation-name:y}
 @keyframes z{22.81%{opacity:1}23.34%{opacity:0}}
 .z{animation-name:z}
-@keyframes A{23.34%{opacity:1}23.8%{opacity:0}}
-.A{animation-name:A}
-@keyframes B{23.8%{opacity:1}24.17%{opacity:0}}
-.B{animation-name:B}
-@keyframes C{24.17%{opacity:1}25.18%{opacity:0}}
-.C{animation-name:C}
-@keyframes D{25.18%{opacity:1}25.63%{opacity:0}}
-.D{animation-name:D}
-@keyframes E{25.63%{opacity:1}26.04%{opacity:0}}
-.E{animation-name:E}
-@keyframes F{26.04%{opacity:1}26.55%{opacity:0}}
-.F{animation-name:F}
-@keyframes G{26.55%{opacity:1}27.06%{opacity:0}}
-.G{animation-name:G}
-@keyframes H{27.06%{opacity:1}28.14%{opacity:0}}
-.H{animation-name:H}
-@keyframes I{28.14%{opacity:1}28.64%{opacity:0}}
-.I{animation-name:I}
-@keyframes J{28.64%{opacity:1}29.06%{opacity:0}}
-.J{animation-name:J}
-@keyframes K{29.06%{opacity:1}29.55%{opacity:0}}
-.K{animation-name:K}
-@keyframes L{29.55%{opacity:1}30.1%{opacity:0}}
-.L{animation-name:L}
-@keyframes M{30.1%{opacity:1}30.6%{opacity:0}}
-.M{animation-name:M}
-@keyframes N{30.6%{opacity:1}30.94%{opacity:0}}
-.N{animation-name:N}
-@keyframes O{30.94%{opacity:1}31.29%{opacity:0}}
-.O{animation-name:O}
-@keyframes P{31.29%{opacity:1}31.66%{opacity:0}}
-.P{animation-name:P}
-@keyframes Q{31.66%{opacity:1}31.98%{opacity:0}}
-.Q{animation-name:Q}
-@keyframes R{31.98%{opacity:1}32.49%{opacity:0}}
-.R{animation-name:R}
-@keyframes S{32.49%{opacity:1}32.96%{opacity:0}}
-.S{animation-name:S}
-@keyframes T{32.96%{opacity:1}33.48%{opacity:0}}
-.T{animation-name:T}
-@keyframes U{33.48%{opacity:1}34.07%{opacity:0}}
-.U{animation-name:U}
-@keyframes V{34.07%{opacity:1}34.42%{opacity:0}}
-.V{animation-name:V}
-@keyframes W{34.42%{opacity:1}35.05%{opacity:0}}
-.W{animation-name:W}
-@keyframes X{35.05%{opacity:1}}
-.X{animation-name:X}
-@keyframes Y{38.51%{opacity:1}}
-.Y{animation-name:Y}
-@keyframes Z{55.74%{opacity:1}56.53%{opacity:0}}
-.Z{animation-name:Z}
-@keyframes aa{56.53%{opacity:1}56.85%{opacity:0}}
+@keyframes aa{23.34%{opacity:1}23.8%{opacity:0}}
 .aa{animation-name:aa}
-@keyframes ab{56.85%{opacity:1}57.43%{opacity:0}}
+@keyframes ab{23.8%{opacity:1}24.17%{opacity:0}}
 .ab{animation-name:ab}
-@keyframes ac{57.43%{opacity:1}57.95%{opacity:0}}
+@keyframes ac{24.17%{opacity:1}25.18%{opacity:0}}
 .ac{animation-name:ac}
-@keyframes ad{57.95%{opacity:1}58.97%{opacity:0}}
+@keyframes ad{25.18%{opacity:1}25.63%{opacity:0}}
 .ad{animation-name:ad}
-@keyframes ae{58.97%{opacity:1}59.52%{opacity:0}}
+@keyframes ae{25.63%{opacity:1}26.04%{opacity:0}}
 .ae{animation-name:ae}
-@keyframes af{59.52%{opacity:1}60%{opacity:0}}
+@keyframes af{26.04%{opacity:1}26.55%{opacity:0}}
 .af{animation-name:af}
-@keyframes ag{60%{opacity:1}60.58%{opacity:0}}
+@keyframes ag{26.55%{opacity:1}27.06%{opacity:0}}
 .ag{animation-name:ag}
-@keyframes ah{60.58%{opacity:1}61.19%{opacity:0}}
+@keyframes ah{27.06%{opacity:1}28.14%{opacity:0}}
 .ah{animation-name:ah}
-@keyframes ai{61.19%{opacity:1}61.59%{opacity:0}}
+@keyframes ai{28.14%{opacity:1}28.64%{opacity:0}}
 .ai{animation-name:ai}
-@keyframes aj{61.59%{opacity:1}62.07%{opacity:0}}
+@keyframes aj{28.64%{opacity:1}29.06%{opacity:0}}
 .aj{animation-name:aj}
-@keyframes ak{62.07%{opacity:1}}
+@keyframes ak{29.06%{opacity:1}29.55%{opacity:0}}
 .ak{animation-name:ak}
-@keyframes al{65.53%{opacity:1}}
+@keyframes al{29.55%{opacity:1}30.1%{opacity:0}}
 .al{animation-name:al}
-@keyframes am{82.77%{opacity:1}}
+@keyframes am{30.1%{opacity:1}30.6%{opacity:0}}
 .am{animation-name:am}
-@keyframes an{16.12%{opacity:1}16.58%{opacity:0}}
+@keyframes an{30.6%{opacity:1}30.94%{opacity:0}}
 .an{animation-name:an}
-@keyframes ao{16.58%{opacity:1}16.94%{opacity:0}}
+@keyframes ao{30.94%{opacity:1}31.29%{opacity:0}}
 .ao{animation-name:ao}
-@keyframes ap{24.17%{opacity:1}24.58%{opacity:0}}
+@keyframes ap{31.29%{opacity:1}31.66%{opacity:0}}
 .ap{animation-name:ap}
-@keyframes aq{24.58%{opacity:1}25.18%{opacity:0}}
+@keyframes aq{31.66%{opacity:1}31.98%{opacity:0}}
 .aq{animation-name:aq}
-@keyframes ar{27.06%{opacity:1}27.64%{opacity:0}}
+@keyframes ar{31.98%{opacity:1}32.49%{opacity:0}}
 .ar{animation-name:ar}
-@keyframes as{27.64%{opacity:1}28.14%{opacity:0}}
+@keyframes as{32.49%{opacity:1}32.96%{opacity:0}}
 .as{animation-name:as}
-@keyframes at{35.05%{opacity:1}35.38%{opacity:0}}
+@keyframes at{32.96%{opacity:1}33.48%{opacity:0}}
 .at{animation-name:at}
-@keyframes au{35.38%{opacity:1}38.51%{opacity:0}}
+@keyframes au{33.48%{opacity:1}34.07%{opacity:0}}
 .au{animation-name:au}
-@keyframes av{38.51%{opacity:1}55.74%{opacity:0}}
+@keyframes av{34.07%{opacity:1}34.42%{opacity:0}}
 .av{animation-name:av}
-@keyframes aw{57.95%{opacity:1}58.51%{opacity:0}}
+@keyframes aw{34.42%{opacity:1}35.05%{opacity:0}}
 .aw{animation-name:aw}
-@keyframes ax{58.51%{opacity:1}58.97%{opacity:0}}
+@keyframes ax{35.05%{opacity:1}}
 .ax{animation-name:ax}
-@keyframes ay{62.07%{opacity:1}62.4%{opacity:0}}
+@keyframes ay{38.51%{opacity:1}}
 .ay{animation-name:ay}
-@keyframes az{62.4%{opacity:1}65.53%{opacity:0}}
+@keyframes az{55.74%{opacity:1}56.53%{opacity:0}}
 .az{animation-name:az}
-@keyframes aA{65.53%{opacity:1}82.77%{opacity:0}}
-.aA{animation-name:aA}
+@keyframes a0{56.53%{opacity:1}56.85%{opacity:0}}
+.a0{animation-name:a0}
+@keyframes a1{56.85%{opacity:1}57.43%{opacity:0}}
+.a1{animation-name:a1}
+@keyframes a2{57.43%{opacity:1}57.95%{opacity:0}}
+.a2{animation-name:a2}
+@keyframes a3{57.95%{opacity:1}58.97%{opacity:0}}
+.a3{animation-name:a3}
+@keyframes a4{58.97%{opacity:1}59.52%{opacity:0}}
+.a4{animation-name:a4}
+@keyframes a5{59.52%{opacity:1}60%{opacity:0}}
+.a5{animation-name:a5}
+@keyframes a6{60%{opacity:1}60.58%{opacity:0}}
+.a6{animation-name:a6}
+@keyframes a7{60.58%{opacity:1}61.19%{opacity:0}}
+.a7{animation-name:a7}
+@keyframes a8{61.19%{opacity:1}61.59%{opacity:0}}
+.a8{animation-name:a8}
+@keyframes a9{61.59%{opacity:1}62.07%{opacity:0}}
+.a9{animation-name:a9}
+@keyframes ba{62.07%{opacity:1}}
+.ba{animation-name:ba}
+@keyframes bb{65.53%{opacity:1}}
+.bb{animation-name:bb}
+@keyframes bc{82.77%{opacity:1}}
+.bc{animation-name:bc}
+@keyframes bd{16.12%{opacity:1}16.58%{opacity:0}}
+.bd{animation-name:bd}
+@keyframes be{16.58%{opacity:1}16.94%{opacity:0}}
+.be{animation-name:be}
+@keyframes bf{24.17%{opacity:1}24.58%{opacity:0}}
+.bf{animation-name:bf}
+@keyframes bh{24.58%{opacity:1}25.18%{opacity:0}}
+.bh{animation-name:bh}
+@keyframes bi{27.06%{opacity:1}27.64%{opacity:0}}
+.bi{animation-name:bi}
+@keyframes bj{27.64%{opacity:1}28.14%{opacity:0}}
+.bj{animation-name:bj}
+@keyframes bk{35.05%{opacity:1}35.38%{opacity:0}}
+.bk{animation-name:bk}
+@keyframes bl{35.38%{opacity:1}38.51%{opacity:0}}
+.bl{animation-name:bl}
+@keyframes bm{38.51%{opacity:1}55.74%{opacity:0}}
+.bm{animation-name:bm}
+@keyframes bn{57.95%{opacity:1}58.51%{opacity:0}}
+.bn{animation-name:bn}
+@keyframes bo{58.51%{opacity:1}58.97%{opacity:0}}
+.bo{animation-name:bo}
+@keyframes bp{62.07%{opacity:1}62.4%{opacity:0}}
+.bp{animation-name:bp}
+@keyframes bq{62.4%{opacity:1}65.53%{opacity:0}}
+.bq{animation-name:bq}
+@keyframes br{65.53%{opacity:1}82.77%{opacity:0}}
+.br{animation-name:br}
 @keyframes e{0%{opacity:1}}
 .e{animation-name:e}
 </style>
@@ -186,58 +186,58 @@ text { dominant-baseline: alphabetic; }
 <g class="l x a"><text x="18" textLength="198.4">$ printf '\033[1;34m</text><use href="#c" x="216.4" y="-12.8"/></g>
 <g class="l y a"><text x="18" textLength="208.32">$ printf '\033[1;34mL</text><use href="#c" x="226.32" y="-12.8"/></g>
 <g class="l z a"><text x="18" textLength="218.24">$ printf '\033[1;34mLi</text><use href="#c" x="236.24" y="-12.8"/></g>
-<g class="l A a"><text x="18" textLength="228.16">$ printf '\033[1;34mLig</text><use href="#c" x="246.16" y="-12.8"/></g>
-<g class="l B a"><text x="18" textLength="238.08">$ printf '\033[1;34mLigh</text><use href="#c" x="256.08" y="-12.8"/></g>
-<text class="l C a" x="18" textLength="248">$ printf '\033[1;34mLight</text>
-<g class="l D a"><text x="18" textLength="267.84">$ printf '\033[1;34mLight t</text><use href="#c" x="285.84" y="-12.8"/></g>
-<g class="l E a"><text x="18" textLength="277.76">$ printf '\033[1;34mLight th</text><use href="#c" x="295.76" y="-12.8"/></g>
-<g class="l F a"><text x="18" textLength="287.68">$ printf '\033[1;34mLight the</text><use href="#c" x="305.68" y="-12.8"/></g>
-<g class="l G a"><text x="18" textLength="297.6">$ printf '\033[1;34mLight them</text><use href="#c" x="315.6" y="-12.8"/></g>
-<text class="l H a" x="18" textLength="307.52">$ printf '\033[1;34mLight theme</text>
-<g class="l I a"><text x="18" textLength="327.36">$ printf '\033[1;34mLight theme p</text><use href="#c" x="345.36" y="-12.8"/></g>
-<g class="l J a"><text x="18" textLength="337.28">$ printf '\033[1;34mLight theme pr</text><use href="#c" x="355.28" y="-12.8"/></g>
-<g class="l K a"><text x="18" textLength="347.2">$ printf '\033[1;34mLight theme pre</text><use href="#c" x="365.2" y="-12.8"/></g>
-<g class="l L a"><text x="18" textLength="357.12">$ printf '\033[1;34mLight theme pres</text><use href="#c" x="375.12" y="-12.8"/></g>
-<g class="l M a"><text x="18" textLength="367.04">$ printf '\033[1;34mLight theme prese</text><use href="#c" x="385.04" y="-12.8"/></g>
-<g class="l N a"><text x="18" textLength="376.96">$ printf '\033[1;34mLight theme preset</text><use href="#c" x="394.96" y="-12.8"/></g>
-<g class="l O a"><text x="18" textLength="386.88">$ printf '\033[1;34mLight theme preset\</text><use href="#c" x="404.88" y="-12.8"/></g>
-<g class="l P a"><text x="18" textLength="396.8">$ printf '\033[1;34mLight theme preset\0</text><use href="#c" x="414.8" y="-12.8"/></g>
-<g class="l Q a"><text x="18" textLength="406.72">$ printf '\033[1;34mLight theme preset\03</text><use href="#c" x="424.72" y="-12.8"/></g>
-<g class="l R a"><text x="18" textLength="416.64">$ printf '\033[1;34mLight theme preset\033</text><use href="#c" x="434.64" y="-12.8"/></g>
-<g class="l S a"><text x="18" textLength="426.56">$ printf '\033[1;34mLight theme preset\033[</text><use href="#c" x="444.56" y="-12.8"/></g>
-<g class="l T a"><text x="18" textLength="436.48">$ printf '\033[1;34mLight theme preset\033[0</text><use href="#c" x="454.48" y="-12.8"/></g>
-<g class="l U a"><text x="18" textLength="446.4">$ printf '\033[1;34mLight theme preset\033[0m</text><use href="#c" x="464.4" y="-12.8"/></g>
-<g class="l V a"><text x="18" textLength="456.32">$ printf '\033[1;34mLight theme preset\033[0m\</text><use href="#c" x="474.32" y="-12.8"/></g>
-<g class="l W a"><text x="18" textLength="466.24">$ printf '\033[1;34mLight theme preset\033[0m\n</text><use href="#c" x="484.24" y="-12.8"/></g>
-<text class="l X a" x="18" textLength="476.16">$ printf '\033[1;34mLight theme preset\033[0m\n'</text>
-<text class="l Y b" x="18" y="44.8" font-weight="bold" textLength="178.56">Light theme preset</text>
-<g class="l Z"><text x="18" y="64.8">$</text><use href="#c" x="37.84" y="52"/></g>
-<g class="l aa"><text x="18 37.84" y="64.8">$e</text><use href="#c" x="47.76" y="52"/></g>
-<g class="l ab"><text x="18 37.84 47.76" y="64.8">$ec</text><use href="#c" x="57.68" y="52"/></g>
-<g class="l ac"><text x="18 37.84 47.76 57.68" y="64.8">$ech</text><use href="#c" x="67.6" y="52"/></g>
-<text class="l ad d" x="18" textLength="59.52">$ echo</text>
-<g class="l ae d"><text x="18" textLength="79.36">$ echo &quot;</text><use href="#c" x="97.36" y="-12.8"/></g>
-<g class="l af d"><text x="18" textLength="89.28">$ echo &quot;D</text><use href="#c" x="107.28" y="-12.8"/></g>
-<g class="l ag d"><text x="18" textLength="99.2">$ echo &quot;Do</text><use href="#c" x="117.2" y="-12.8"/></g>
-<g class="l ah d"><text x="18" textLength="109.12">$ echo &quot;Don</text><use href="#c" x="127.12" y="-12.8"/></g>
-<g class="l ai d"><text x="18" textLength="119.04">$ echo &quot;Done</text><use href="#c" x="137.04" y="-12.8"/></g>
-<g class="l aj d"><text x="18" textLength="128.96">$ echo &quot;Done!</text><use href="#c" x="146.96" y="-12.8"/></g>
-<text class="l ak d" x="18" textLength="138.88">$ echo &quot;Done!&quot;</text>
-<text class="l al" x="18" y="84.8" textLength="49.6">Done!</text>
-<g class="l am"><text x="18" y="104.8">$</text><use href="#c" x="37.84" y="92"/></g>
-<use href="#c" x="97.36" y="12" class="l an"/>
-<use href="#c" x="107.28" y="12" class="l ao"/>
-<use href="#c" x="266" y="12" class="l ap"/>
-<use href="#c" x="275.92" y="12" class="l aq"/>
-<use href="#c" x="325.52" y="12" class="l ar"/>
-<use href="#c" x="335.44" y="12" class="l as"/>
-<use href="#c" x="494.16" y="12" class="l at"/>
-<use href="#c" x="18" y="32" class="l au"/>
-<use href="#c" x="18" y="52" class="l av"/>
-<use href="#c" x="77.52" y="52" class="l aw"/>
-<use href="#c" x="87.44" y="52" class="l ax"/>
-<use href="#c" x="156.88" y="52" class="l ay"/>
-<use href="#c" x="18" y="72" class="l az"/>
-<use href="#c" x="18" y="92" class="l aA"/>
+<g class="l aa a"><text x="18" textLength="228.16">$ printf '\033[1;34mLig</text><use href="#c" x="246.16" y="-12.8"/></g>
+<g class="l ab a"><text x="18" textLength="238.08">$ printf '\033[1;34mLigh</text><use href="#c" x="256.08" y="-12.8"/></g>
+<text class="l ac a" x="18" textLength="248">$ printf '\033[1;34mLight</text>
+<g class="l ad a"><text x="18" textLength="267.84">$ printf '\033[1;34mLight t</text><use href="#c" x="285.84" y="-12.8"/></g>
+<g class="l ae a"><text x="18" textLength="277.76">$ printf '\033[1;34mLight th</text><use href="#c" x="295.76" y="-12.8"/></g>
+<g class="l af a"><text x="18" textLength="287.68">$ printf '\033[1;34mLight the</text><use href="#c" x="305.68" y="-12.8"/></g>
+<g class="l ag a"><text x="18" textLength="297.6">$ printf '\033[1;34mLight them</text><use href="#c" x="315.6" y="-12.8"/></g>
+<text class="l ah a" x="18" textLength="307.52">$ printf '\033[1;34mLight theme</text>
+<g class="l ai a"><text x="18" textLength="327.36">$ printf '\033[1;34mLight theme p</text><use href="#c" x="345.36" y="-12.8"/></g>
+<g class="l aj a"><text x="18" textLength="337.28">$ printf '\033[1;34mLight theme pr</text><use href="#c" x="355.28" y="-12.8"/></g>
+<g class="l ak a"><text x="18" textLength="347.2">$ printf '\033[1;34mLight theme pre</text><use href="#c" x="365.2" y="-12.8"/></g>
+<g class="l al a"><text x="18" textLength="357.12">$ printf '\033[1;34mLight theme pres</text><use href="#c" x="375.12" y="-12.8"/></g>
+<g class="l am a"><text x="18" textLength="367.04">$ printf '\033[1;34mLight theme prese</text><use href="#c" x="385.04" y="-12.8"/></g>
+<g class="l an a"><text x="18" textLength="376.96">$ printf '\033[1;34mLight theme preset</text><use href="#c" x="394.96" y="-12.8"/></g>
+<g class="l ao a"><text x="18" textLength="386.88">$ printf '\033[1;34mLight theme preset\</text><use href="#c" x="404.88" y="-12.8"/></g>
+<g class="l ap a"><text x="18" textLength="396.8">$ printf '\033[1;34mLight theme preset\0</text><use href="#c" x="414.8" y="-12.8"/></g>
+<g class="l aq a"><text x="18" textLength="406.72">$ printf '\033[1;34mLight theme preset\03</text><use href="#c" x="424.72" y="-12.8"/></g>
+<g class="l ar a"><text x="18" textLength="416.64">$ printf '\033[1;34mLight theme preset\033</text><use href="#c" x="434.64" y="-12.8"/></g>
+<g class="l as a"><text x="18" textLength="426.56">$ printf '\033[1;34mLight theme preset\033[</text><use href="#c" x="444.56" y="-12.8"/></g>
+<g class="l at a"><text x="18" textLength="436.48">$ printf '\033[1;34mLight theme preset\033[0</text><use href="#c" x="454.48" y="-12.8"/></g>
+<g class="l au a"><text x="18" textLength="446.4">$ printf '\033[1;34mLight theme preset\033[0m</text><use href="#c" x="464.4" y="-12.8"/></g>
+<g class="l av a"><text x="18" textLength="456.32">$ printf '\033[1;34mLight theme preset\033[0m\</text><use href="#c" x="474.32" y="-12.8"/></g>
+<g class="l aw a"><text x="18" textLength="466.24">$ printf '\033[1;34mLight theme preset\033[0m\n</text><use href="#c" x="484.24" y="-12.8"/></g>
+<text class="l ax a" x="18" textLength="476.16">$ printf '\033[1;34mLight theme preset\033[0m\n'</text>
+<text class="l ay b" x="18" y="44.8" font-weight="bold" textLength="178.56">Light theme preset</text>
+<g class="l az"><text x="18" y="64.8">$</text><use href="#c" x="37.84" y="52"/></g>
+<g class="l a0"><text x="18 37.84" y="64.8">$e</text><use href="#c" x="47.76" y="52"/></g>
+<g class="l a1"><text x="18 37.84 47.76" y="64.8">$ec</text><use href="#c" x="57.68" y="52"/></g>
+<g class="l a2"><text x="18 37.84 47.76 57.68" y="64.8">$ech</text><use href="#c" x="67.6" y="52"/></g>
+<text class="l a3 d" x="18" textLength="59.52">$ echo</text>
+<g class="l a4 d"><text x="18" textLength="79.36">$ echo &quot;</text><use href="#c" x="97.36" y="-12.8"/></g>
+<g class="l a5 d"><text x="18" textLength="89.28">$ echo &quot;D</text><use href="#c" x="107.28" y="-12.8"/></g>
+<g class="l a6 d"><text x="18" textLength="99.2">$ echo &quot;Do</text><use href="#c" x="117.2" y="-12.8"/></g>
+<g class="l a7 d"><text x="18" textLength="109.12">$ echo &quot;Don</text><use href="#c" x="127.12" y="-12.8"/></g>
+<g class="l a8 d"><text x="18" textLength="119.04">$ echo &quot;Done</text><use href="#c" x="137.04" y="-12.8"/></g>
+<g class="l a9 d"><text x="18" textLength="128.96">$ echo &quot;Done!</text><use href="#c" x="146.96" y="-12.8"/></g>
+<text class="l ba d" x="18" textLength="138.88">$ echo &quot;Done!&quot;</text>
+<text class="l bb" x="18" y="84.8" textLength="49.6">Done!</text>
+<g class="l bc"><text x="18" y="104.8">$</text><use href="#c" x="37.84" y="92"/></g>
+<use href="#c" x="97.36" y="12" class="l bd"/>
+<use href="#c" x="107.28" y="12" class="l be"/>
+<use href="#c" x="266" y="12" class="l bf"/>
+<use href="#c" x="275.92" y="12" class="l bh"/>
+<use href="#c" x="325.52" y="12" class="l bi"/>
+<use href="#c" x="335.44" y="12" class="l bj"/>
+<use href="#c" x="494.16" y="12" class="l bk"/>
+<use href="#c" x="18" y="32" class="l bl"/>
+<use href="#c" x="18" y="52" class="l bm"/>
+<use href="#c" x="77.52" y="52" class="l bn"/>
+<use href="#c" x="87.44" y="52" class="l bo"/>
+<use href="#c" x="156.88" y="52" class="l bp"/>
+<use href="#c" x="18" y="72" class="l bq"/>
+<use href="#c" x="18" y="92" class="l br"/>
 </g>
 </svg>

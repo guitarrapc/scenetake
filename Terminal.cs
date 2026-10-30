@@ -68,7 +68,6 @@ internal sealed class ScreenBuffer
     private int _scrollTop;
     private int _scrollBottom;
     private bool _pendingWrap;
-    private readonly List<ScreenCell[]> _scrollbackRows = [];
 
     internal ScreenBuffer(int width, int height, TerminalTheme theme)
     {
@@ -92,7 +91,6 @@ internal sealed class ScreenBuffer
     internal int CursorCol { get; private set; }
     internal bool CursorVisible { get; set; }
     internal CellStyle DefaultStyle { get; }
-    internal int ScrollbackCount => _scrollbackRows.Count;
 
     internal ScreenCell GetCell(int row, int col)
     {
@@ -406,11 +404,7 @@ internal sealed class ScreenBuffer
         _pendingWrap = false;
         if (CursorRow == _scrollBottom)
         {
-            ScrollRegionUp(
-                _scrollTop,
-                _scrollBottom,
-                1,
-                includeScrollback: !_isAltScreen && _scrollTop == 0 && _scrollBottom == Height - 1);
+            ScrollRegionUp(_scrollTop, _scrollBottom, 1);
             return;
         }
 
@@ -539,11 +533,7 @@ internal sealed class ScreenBuffer
     }
 
     internal void ScrollUpLines(int count) =>
-        ScrollRegionUp(
-            _scrollTop,
-            _scrollBottom,
-            count,
-            includeScrollback: !_isAltScreen && _scrollTop == 0 && _scrollBottom == Height - 1);
+        ScrollRegionUp(_scrollTop, _scrollBottom, count);
 
     internal void ScrollDownLines(int count) =>
         ScrollRegionDown(_scrollTop, _scrollBottom, count);
@@ -729,7 +719,9 @@ internal sealed class ScreenBuffer
         _ => false
     };
 
-    private void ScrollRegionUp(int top, int bottom, int count, bool includeScrollback)
+    // Rows scrolled off the top are dropped. Nothing renders scrollback, and keeping it would grow
+    // replay memory with every line a recording scrolls.
+    private void ScrollRegionUp(int top, int bottom, int count)
     {
         if (count <= 0 || top < 0 || bottom >= Height || top > bottom)
             return;
@@ -737,14 +729,6 @@ internal sealed class ScreenBuffer
         count = Math.Min(count, bottom - top + 1);
         for (var i = 0; i < count; i++)
         {
-            if (includeScrollback && top == 0)
-            {
-                var topRow = new ScreenCell[Width];
-                for (var col = 0; col < Width; col++)
-                    topRow[col] = _cells[0, col];
-                _scrollbackRows.Add(topRow);
-            }
-
             for (var row = top + 1; row <= bottom; row++)
             {
                 for (var col = 0; col < Width; col++)
@@ -1549,21 +1533,23 @@ internal static class CastEventLayout
 }
 
 /// <summary>
-/// One changed screen state on the replay timeline. Holds no screen contents:
-/// <see cref="Ordinal"/> identifies the capture in <see cref="TerminalReplay.EnumerateCaptures"/>,
-/// so a renderer replays the events again to see the screen.
+/// One changed screen state on the replay timeline. Holds no screen contents, because keeping every
+/// screen grows with events × screen size. <see cref="EventIndex"/> names the event after which it is
+/// shown, and <see cref="TerminalReplay.ReplaySelected"/> replays up to it to draw the screen.
 /// </summary>
-internal sealed class ReplayFrame(double time, int ordinal, int viewportWidth, int viewportHeight, ulong signature, bool isBlank)
+internal sealed class ReplayFrame(double time, int viewportWidth, int viewportHeight, ulong signature, bool isBlank, int eventIndex)
 {
     internal double Time { get; } = time;
-    internal int Ordinal { get; } = ordinal;
     internal int ViewportWidth { get; } = viewportWidth;
     internal int ViewportHeight { get; } = viewportHeight;
     internal ulong Signature { get; } = signature;
     internal bool IsBlank { get; } = isBlank;
 
+    /// <summary>The event after which this screen state is shown: -1 before any event, <c>events.Count</c> after all of them.</summary>
+    internal int EventIndex { get; } = eventIndex;
+
     internal ReplayFrame WithTime(double time) =>
-        new(time, Ordinal, ViewportWidth, ViewportHeight, Signature, IsBlank);
+        new(time, ViewportWidth, ViewportHeight, Signature, IsBlank, EventIndex);
 }
 
 /// <summary>
@@ -1571,7 +1557,7 @@ internal sealed class ReplayFrame(double time, int ordinal, int viewportWidth, i
 /// valid until the enumeration advances: it may be the live emulator buffer.
 /// </summary>
 internal readonly record struct ReplayCapture(
-    int Ordinal, double Time, ScreenBuffer View, int ViewportWidth, int ViewportHeight, ulong Signature, int EventIndex);
+    double Time, ScreenBuffer View, int ViewportWidth, int ViewportHeight, ulong Signature, int EventIndex);
 
 /// <summary>
 /// Steps the emulator through cast events by time, for fixed-rate sampling (mp4).
@@ -1609,8 +1595,9 @@ internal sealed class ReplayStepper
     }
 
     /// <summary>
-    /// False until the first event is applied. Like the SVG, nothing (not even the
-    /// cursor) is shown before that.
+    /// False until the first event is applied. Nothing, not even the cursor, is drawn before that,
+    /// as in the SVG. A recording with no events differs: its SVG shows the cursor throughout,
+    /// while the mp4 shows only the background.
     /// </summary>
     internal bool Started { get; private set; }
 
@@ -1692,7 +1679,7 @@ internal static class TerminalReplay
         foreach (var capture in EnumerateCaptures(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme))
         {
             frames.Add(new ReplayFrame(
-                capture.Time, capture.Ordinal, capture.ViewportWidth, capture.ViewportHeight, capture.Signature, IsBlankBuffer(capture.View)));
+                capture.Time, capture.ViewportWidth, capture.ViewportHeight, capture.Signature, IsBlankBuffer(capture.View), capture.EventIndex));
         }
 
         return TrimTrailingBlankRestore(frames, events);
@@ -1731,23 +1718,21 @@ internal static class TerminalReplay
             return events.Count;
 
         var frames = new List<ReplayFrame>();
-        var eventIndices = new List<int>();
         foreach (var capture in EnumerateCaptures(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme))
         {
             frames.Add(new ReplayFrame(
-                capture.Time, capture.Ordinal, capture.ViewportWidth, capture.ViewportHeight, capture.Signature, IsBlankBuffer(capture.View)));
-            eventIndices.Add(capture.EventIndex);
+                capture.Time, capture.ViewportWidth, capture.ViewportHeight, capture.Signature, IsBlankBuffer(capture.View), capture.EventIndex));
         }
 
         var kept = TrimTrailingBlankRestore(frames, events).Count;
-        return kept < frames.Count && eventIndices[kept] >= 0 ? eventIndices[kept] : events.Count;
+        return kept < frames.Count && frames[kept].EventIndex >= 0 ? frames[kept].EventIndex : events.Count;
     }
 
     /// <summary>
     /// Replays <paramref name="events"/> and yields each changed screen state in order.
-    /// Ordinals are stable across calls with the same arguments, which lets a renderer
-    /// select frames from <see cref="BuildFrames"/> and replay again to draw them.
-    /// When nothing changes, yields the final state once at time 0.
+    /// The first applied event always yields, because the screen starts with no signature.
+    /// A recording with no output or resize events yields its final state once, at time 0.
+    /// Markers are not applied, and the cast reader drops input events.
     /// </summary>
     internal static IEnumerable<ReplayCapture> EnumerateCaptures(
         IReadOnlyList<CastEvent> events,
@@ -1760,13 +1745,14 @@ internal static class TerminalReplay
         var buffer = new ScreenBuffer(initialWidth, initialHeight, theme);
         var parser = new AnsiParser(buffer, theme);
         ulong? lastSignature = null;
-        var ordinal = 0;
+        var yielded = false;
 
         if (!IsBlankBuffer(buffer))
         {
             var signature = buffer.ComputeCanvasSignature(canvasWidth, canvasHeight);
             lastSignature = signature;
-            yield return new ReplayCapture(ordinal++, 0, ViewForCanvas(buffer, canvasWidth, canvasHeight), buffer.Width, buffer.Height, signature, -1);
+            yielded = true;
+            yield return new ReplayCapture(0, ViewForCanvas(buffer, canvasWidth, canvasHeight), buffer.Width, buffer.Height, signature, -1);
         }
 
         for (var eventIndex = 0; eventIndex < events.Count; eventIndex++)
@@ -1787,17 +1773,62 @@ internal static class TerminalReplay
                 continue;
 
             lastSignature = signature;
-            yield return new ReplayCapture(ordinal++, ev.Time, ViewForCanvas(buffer, canvasWidth, canvasHeight), buffer.Width, buffer.Height, signature, eventIndex);
+            yielded = true;
+            yield return new ReplayCapture(ev.Time, ViewForCanvas(buffer, canvasWidth, canvasHeight), buffer.Width, buffer.Height, signature, eventIndex);
         }
 
-        if (ordinal == 0)
+        if (!yielded)
         {
             var view = ViewForCanvas(buffer, canvasWidth, canvasHeight);
-            yield return new ReplayCapture(0, 0, view, buffer.Width, buffer.Height, view.ComputeCanvasSignature(view.Width, view.Height), -1);
+            yield return new ReplayCapture(0, view, buffer.Width, buffer.Height, view.ComputeCanvasSignature(view.Width, view.Height), events.Count);
         }
     }
 
-    /// <summary>The live buffer when it already fills the canvas; otherwise a resized copy.</summary>
+    /// <summary>
+    /// Replays <paramref name="events"/> again to draw <paramref name="frames"/>, which came from
+    /// <see cref="BuildFrames"/> with the same arguments (possibly a subset, at changed times). It
+    /// stops at each frame's event and does not hash the screen, which only the first pass needs.
+    /// </summary>
+    internal static IEnumerable<(ReplayFrame Frame, ScreenBuffer View)> ReplaySelected(
+        IReadOnlyList<CastEvent> events,
+        int initialWidth,
+        int initialHeight,
+        int canvasWidth,
+        int canvasHeight,
+        TerminalTheme theme,
+        IReadOnlyList<ReplayFrame> frames)
+    {
+        var buffer = new ScreenBuffer(initialWidth, initialHeight, theme);
+        var parser = new AnsiParser(buffer, theme);
+        var next = 0;
+        while (next < frames.Count && frames[next].EventIndex < 0)
+            yield return (frames[next++], ViewForCanvas(buffer, canvasWidth, canvasHeight));
+
+        for (var eventIndex = 0; eventIndex < events.Count && next < frames.Count; eventIndex++)
+        {
+            var ev = events[eventIndex];
+            if (ev.Kind == CastEventKind.Marker)
+                continue;
+
+            if (ev.Kind == CastEventKind.Resize)
+                buffer.Resize(ev.ResizeWidth, ev.ResizeHeight);
+            else if (ev.HasUtf8Output)
+                parser.ProcessUtf8(ev.Utf8Output.Span);
+            else
+                parser.Process(ev.Data);
+
+            if (frames[next].EventIndex == eventIndex)
+                yield return (frames[next++], ViewForCanvas(buffer, canvasWidth, canvasHeight));
+        }
+
+        while (next < frames.Count && frames[next].EventIndex >= events.Count)
+            yield return (frames[next++], ViewForCanvas(buffer, canvasWidth, canvasHeight));
+
+        if (next != frames.Count)
+            throw new InvalidOperationException($"replay reached {next} of {frames.Count} frames");
+    }
+
+    /// <summary>The live buffer when it already fills the canvas, otherwise a resized copy.</summary>
     internal static ScreenBuffer ViewForCanvas(ScreenBuffer source, int canvasWidth, int canvasHeight)
     {
         if (source.Width == canvasWidth && source.Height == canvasHeight)

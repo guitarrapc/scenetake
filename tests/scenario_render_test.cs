@@ -4,8 +4,8 @@
 #:property ImplicitUsings=enable
 
 // The scenario path renders SVG and mp4 from the cast it just wrote, so its output is the same
-// as running `scenetake svg|mp4` on that cast. Before, it rendered the in-memory events with
-// unrounded times, and the same recording produced different SVGs on the two paths.
+// as running `scenetake svg|mp4` on that cast. The in-memory events differ from the cast: their
+// times are not rounded to milliseconds, and they still hold markers.
 //
 // Usage (from repository root):
 //   SCENETAKE_BIN=/path/to/scenetake dotnet run tests/scenario_render_test.cs
@@ -80,8 +80,11 @@ static bool Mp4Matches(string scenetake, string repoRoot, string work)
 {
     var stem = Path.Combine(work, "video");
     var fromCast = Path.Combine(work, "video-from-cast.mp4");
-    var (runExit, runStderr) = Exec(scenetake, repoRoot, ["--format", "mp4", "--fps", "10", WriteScenario(work, "video.yaml"), stem]);
-    var (mp4Exit, mp4Stderr) = Exec(scenetake, repoRoot, ["mp4", "--fps", "10", stem + ".cast", fromCast]);
+    // At 60fps a frame edge falls at 0.700s. The scenario's first output, the prompt, is at 0.7003s in
+    // memory and 0.700s in the cast, on opposite sides of that edge. Rendering from the in-memory
+    // events would show it one frame later, so the two files would differ.
+    var (runExit, runStderr) = Exec(scenetake, repoRoot, ["--format", "mp4", "--fps", "60", WriteScenario(work, "video.yaml"), stem]);
+    var (mp4Exit, mp4Stderr) = Exec(scenetake, repoRoot, ["mp4", "--fps", "60", stem + ".cast", fromCast]);
     if (runExit != 0 || mp4Exit != 0)
     {
         Console.Error.WriteLine(runStderr + mp4Stderr);
@@ -92,6 +95,7 @@ static bool Mp4Matches(string scenetake, string repoRoot, string work)
 }
 
 // Typing jitter gives event times that are not whole milliseconds, which the cast then rounds.
+// pre-delay 0.2003 puts the first prompt 0.3ms past a 60fps frame edge (see Mp4Matches).
 static string WriteScenario(string work, string name)
 {
     var path = Path.Combine(work, name);
@@ -99,9 +103,12 @@ static string WriteScenario(string work, string name)
         title: "scenario render"
         width: 40
         height: 6
+        settings:
+          pre-delay: 0.2003
         steps:
           - echo first line
-          - echo second line
+          - name: "second step"
+            run: echo second line
         """);
     return path;
 }

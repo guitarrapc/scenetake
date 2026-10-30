@@ -151,7 +151,7 @@ scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light]
 
 # 既存の cast ファイルを mp4 に変換
 scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light]
-  [--fps N] [--crf N] [--max-size WxH]
+  [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH]
   <input.cast> [output.mp4]
 ```
 
@@ -166,7 +166,7 @@ mp4 用のオプションは `--format mp4` 時と `mp4` サブコマンドで�
 
 **SVG と mp4 の使い分け**
 
-タイピング中心や短い出力なら、たいてい SVG が最も小さく（mp4 の半分程度になることも多い）、README に埋め込めて、拡大しても文字がぼけません。毎フレーム画面全体を描き直す全画面 TUI（`matrix`、`btop` など）は、SVG や GIF だと非常に大きくなります。こうした録画や、X・Slack での共有には mp4 を使ってください。たとえば `matrix --fps 60` を 200×60 で 7.5 秒録ると、SVG は 19.7MB、mp4 は 8.0MB（`--max-size 1280x1024` なら 3.9MB）です。SVG が 10MB を超えると、scenetake は警告を表示します。
+タイピング中心や短い出力なら、たいてい SVG が最も小さく（mp4 の半分程度になることも多い）、README に埋め込めて、拡大しても文字がぼけません。毎フレーム画面全体を描き直す全画面 TUI（`matrix`、`btop` など）は、SVG や GIF だと非常に大きくなります。こうした録画や、X・Slack での共有には mp4 を使ってください。たとえば `matrix --fps 60` を 200×60 で 7.5 秒録ると、SVG は 17.0MB、mp4 は 8.0MB（`--max-size 1280x1024` なら 3.9MB）です。SVG が 10MB を超えると、scenetake は警告を表示します。
 
 mp4 出力は、libx264 入りの [ffmpeg](https://ffmpeg.org/) を別プログラムとして呼び出します。インストール方法は次のとおりです。
 
@@ -392,7 +392,7 @@ steps:
 
   - echo "Done!"
 
-# Optional teardown; runs after cast is written, not recorded
+# Optional teardown; runs last, not recorded
 post:
   - echo "demo complete (not recorded)"
 ```

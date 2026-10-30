@@ -82,7 +82,7 @@ internal static class CastReader
         if (!RenderSettingsResolver.IsValidTerminalSize(width, height))
         {
             throw new CastReadException(
-                $"cast terminal size must be {RenderSettingsResolver.MinTerminalCols}–{RenderSettingsResolver.MaxTerminalCols}");
+                $"cast terminal size must be between {RenderSettingsResolver.MinTerminalCols} and {RenderSettingsResolver.MaxTerminalCols}");
         }
 
         var (fg, bg, palette) = ParseTheme(theme);
@@ -147,7 +147,7 @@ internal static class CastReader
         if (!warned)
         {
             warned = true;
-            Console.Error.WriteLine($"Warning: svg: invalid font-size '{sizeText}'; using default font size");
+            Console.Error.WriteLine($"Warning: cast: invalid font-size '{sizeText}'; using default font size");
         }
     }
 
@@ -162,7 +162,7 @@ internal static class CastReader
         if (!warned)
         {
             warned = true;
-            Console.Error.WriteLine($"Warning: svg: invalid font-family '{familyText}'; using default font-family");
+            Console.Error.WriteLine($"Warning: cast: invalid font-family '{familyText}'; using default font-family");
         }
     }
 
@@ -177,7 +177,7 @@ internal static class CastReader
         if (!warned)
         {
             warned = true;
-            Console.Error.WriteLine($"Warning: svg: invalid window '{windowText}'; using no window chrome");
+            Console.Error.WriteLine($"Warning: cast: invalid window '{windowText}'; using no window chrome");
         }
     }
 
@@ -234,7 +234,7 @@ internal static class CastReader
         }
     }
 
-    private static bool TryParseHexColor(string? value, out string color)
+    internal static bool TryParseHexColor(string? value, out string color)
     {
         color = "";
         if (string.IsNullOrWhiteSpace(value))
@@ -254,14 +254,14 @@ internal static class CastReader
         return true;
     }
 
-    private static bool TryParsePalette(string? value, out string palette)
+    internal static bool TryParsePalette(string? value, out string palette)
     {
         palette = "";
         if (string.IsNullOrWhiteSpace(value))
             return false;
 
         var parts = value.Split(':', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length < 16)
+        if (parts.Length != 16)
             return false;
 
         var colors = new string[16];
@@ -315,7 +315,7 @@ internal static class CastReader
                     if (!TryParseResizeData(data, out var resizeWidth, out var resizeHeight))
                     {
                         if (warnedCodes.Add("invalid-resize"))
-                            Console.Error.WriteLine("Warning: svg: invalid resize event data; skipping");
+                            Console.Error.WriteLine("Warning: cast: invalid resize event data; skipping");
 
                         return true;
                     }
@@ -330,7 +330,7 @@ internal static class CastReader
                 {
                     var unknown = codeText[1].ToString();
                     if (warnedCodes.Add(unknown))
-                        Console.Error.WriteLine($"Warning: svg: unsupported cast event code '{unknown}'; skipping");
+                        Console.Error.WriteLine($"Warning: cast: unsupported cast event code '{unknown}'; skipping");
 
                     return true;
                 }
@@ -341,7 +341,7 @@ internal static class CastReader
             ? codeText[1..^1].ToString()
             : root[1].GetString() ?? "";
         if (warnedCodes.Add(code))
-            Console.Error.WriteLine($"Warning: svg: unsupported cast event code '{code}'; skipping");
+            Console.Error.WriteLine($"Warning: cast: unsupported cast event code '{code}'; skipping");
 
         return true;
     }

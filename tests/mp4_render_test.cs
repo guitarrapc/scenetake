@@ -13,7 +13,7 @@
 #:include ../Mp4.cs
 
 // mp4 frame rendering without ffmpeg: layout, colors, procedural glyphs, timing, and options.
-// Tests that draw frames need one installed font; they print "skip" when none is found.
+// Tests that draw frames need one installed font. They print "skip" when none is found.
 //
 // Usage (from repository root):
 //   dotnet run tests/mp4_render_test.cs
@@ -29,17 +29,36 @@ failures += Run("BoxLinesReachCellEdges", BoxLinesReachCellEdges);
 failures += Run("DoubleCornerJoinsInsideCell", DoubleCornerJoinsInsideCell);
 failures += Run("BrailleDrawsDots", BrailleDrawsDots);
 failures += Run("SyntheticBoldAndItalic", SyntheticBoldAndItalic);
-failures += RunFrames("FrameColorsMatchTheme", FrameColorsMatchTheme);
-failures += RunFrames("CursorBlendsHalfForeground", CursorBlendsHalfForeground);
-failures += RunFrames("NothingShownBeforeFirstEvent", NothingShownBeforeFirstEvent);
-failures += RunFrames("FrameShowsEventsUpToItsTime", FrameShowsEventsUpToItsTime);
-failures += RunFrames("TrailingBlankRestoreIsTrimmed", TrailingBlankRestoreIsTrimmed);
-failures += RunFrames("MatrixTintMatchesSvg", MatrixTintMatchesSvg);
-failures += RunFrames("MacosChromeDrawsTrafficLights", MacosChromeDrawsTrafficLights);
-failures += RunFrames("WindowsChromeDrawsButtons", WindowsChromeDrawsButtons);
+failures += Run("FrameColorsMatchTheme", FrameColorsMatchTheme);
+failures += Run("CursorBlendsHalfForeground", CursorBlendsHalfForeground);
+failures += Run("NothingShownBeforeFirstEvent", NothingShownBeforeFirstEvent);
+failures += Run("FrameShowsEventsUpToItsTime", FrameShowsEventsUpToItsTime);
+failures += Run("TrailingBlankRestoreIsTrimmed", TrailingBlankRestoreIsTrimmed);
+failures += Run("MatrixTintMatchesSvg", MatrixTintMatchesSvg);
+failures += Run("MacosChromeDrawsTrafficLights", MacosChromeDrawsTrafficLights);
+failures += Run("WindowsChromeDrawsButtons", WindowsChromeDrawsButtons);
+failures += Run("BoxDrawingAtTinySizesStaysInCell", BoxDrawingAtTinySizesStaysInCell);
+failures += Run("HugeFrameIsReportedClearly", HugeFrameIsReportedClearly);
+failures += Run("FfmpegProbeTimesOut", FfmpegProbeTimesOut);
+failures += Run("OutputPathIsCheckedFirst", OutputPathIsCheckedFirst);
+failures += Run("FontTableOutsideFileIsRejected", FontTableOutsideFileIsRejected);
+failures += Run("SymbolOnlyFontIsRejected", SymbolOnlyFontIsRejected);
+failures += Run("UnreadableFontFileIsReported", UnreadableFontFileIsReported);
+failures += Run("X264SideLimitIsChecked", X264SideLimitIsChecked);
+failures += Run("FontFileThatCannotLoadIsAnError", FontFileThatCannotLoadIsAnError);
+failures += Run("ShortFontTableIsRejected", ShortFontTableIsRejected);
+failures += Run("DefaultFontsPassTableChecks", DefaultFontsPassTableChecks);
+failures += Run("OutOfRangeGlyphIdsAreMissing", OutOfRangeGlyphIdsAreMissing);
+failures += Run("EveryFontFileFaceMustLoad", EveryFontFileFaceMustLoad);
+failures += Run("FontFileIsNotHeldOpen", FontFileIsNotHeldOpen);
+failures += Run("FontFileIsReleasedAfterRender", FontFileIsReleasedAfterRender);
+failures += Run("LinkedFontFileLoads", LinkedFontFileLoads);
+failures += Run("InstalledFontsCanBeRescanned", InstalledFontsCanBeRescanned);
+failures += Run("LogNamesAFontThatLoads", LogNamesAFontThatLoads);
 
 return failures == 0 ? 0 : 1;
 
+// A test that needs an installed font and finds none is skipped, not failed: some CI runners have no fonts.
 static int Run(string name, Func<bool> test)
 {
     try
@@ -53,23 +72,15 @@ static int Run(string name, Func<bool> test)
         Console.Error.WriteLine($"FAIL {name}");
         return 1;
     }
+    catch (Exception ex) when (ex is FontNotFoundException or SkipTestException)
+    {
+        Console.Error.WriteLine($"skip {name}: {ex.Message}");
+        return 0;
+    }
     catch (Exception ex)
     {
         Console.Error.WriteLine($"FAIL {name}: {ex}");
         return 1;
-    }
-}
-
-static int RunFrames(string name, Func<bool> test)
-{
-    try
-    {
-        return Run(name, test);
-    }
-    catch (FontNotFoundException ex)
-    {
-        Console.Error.WriteLine($"skip {name}: {ex.Message}");
-        return 0;
     }
 }
 
@@ -90,14 +101,16 @@ static bool FitWithinKeepsAspectAndEvenSize() =>
     Mp4Render.FitWithin(2020, 1208, 1280, 1024) == (1280, 764)
     && Mp4Render.FitWithin(820, 488, 1280, 1024) == (820, 488)   // never upscales
     && Mp4Render.FitWithin(1000, 3000, 1280, 1024) == (340, 1024) // height-limited
-    && Mp4Render.FitWithin(820, 488, 0, 0) == (820, 488);
+    && Mp4Render.FitWithin(820, 488, 0, 0) == (820, 488)
+    && Mp4Render.FitWithin(820, 1288, 1280, 1024) == (650, 1024); // 1288 × 1024/1288 in floating point is 1023.99…
 
 static bool OptionParsing() =>
     Mp4Settings.TryParseFps("60", out var fps, out _) && fps == 60
     && !Mp4Settings.TryParseFps("0", out _, out _)
     && !Mp4Settings.TryParseFps("61", out _, out _)
     && !Mp4Settings.TryParseFps("30.5", out _, out _)
-    && Mp4Settings.TryParseCrf("0", out _, out _) && !Mp4Settings.TryParseCrf("52", out _, out _)
+    && !Mp4Settings.TryParseCrf("0", out _, out var crfError) && crfError == "--crf must be between 1 and 51: 0" // lossless 0 is High 4:4:4
+    && Mp4Settings.TryParseCrf("1", out _, out _) && !Mp4Settings.TryParseCrf("52", out _, out _)
     && Mp4Settings.TryParseMaxSize("1280x1024", out var w, out var h, out _) && (w, h) == (1280, 1024)
     && !Mp4Settings.TryParseMaxSize("1280", out _, out _, out _)
     && !Mp4Settings.TryParseMaxSize("8x8", out _, out _, out _)
@@ -159,7 +172,7 @@ static bool BoxLinesReachCellEdges()
 
 static bool DoubleCornerJoinsInsideCell()
 {
-    // ╔: both lines reach the right and bottom edges; nothing above or left of the outer corner.
+    // ╔: both lines reach the right and bottom edges, and nothing is drawn above or left of the outer corner.
     var layout = RasterLayout.Create(32, 1, 1);
     CellGlyphs.TryDraw(0x2554, layout, 1, out var corner);
     var w = layout.CellWidth;
@@ -216,7 +229,7 @@ static bool SyntheticBoldAndItalic()
 
 static bool FrameColorsMatchTheme()
 {
-    // Red background space at col 0; green █ at col 2. Dark theme: bg #282c34, palette 1 #ac4142, palette 2 #7e8e50.
+    // Red background space at col 0, green █ at col 2. Dark theme: bg #282c34, palette 1 #ac4142, palette 2 #7e8e50.
     var (frames, layout) = Render(
         """[0.0,"o","\u001b[41m \u001b[0m \u001b[32m█\u001b[0m\u001b[?25l"]""", fps: 10);
     var last = frames[^1];
@@ -245,7 +258,7 @@ static bool NothingShownBeforeFirstEvent()
 
 static bool FrameShowsEventsUpToItsTime()
 {
-    // Frame k shows events with time ≤ k / fps; the loop holds the last frame for one more idle gap (0.5s).
+    // Frame k shows events with time ≤ k / fps. The loop holds the last frame for one more idle gap (0.5s).
     var (frames, layout) = Render(
         """
         [0.0,"o","\u001b[?25l█"]
@@ -258,7 +271,7 @@ static bool FrameShowsEventsUpToItsTime()
 
 static bool TrailingBlankRestoreIsTrimmed()
 {
-    // A full-screen app exits to a blank main screen; like the SVG, the video ends on the app's last screen.
+    // A full-screen app exits to a blank main screen. Like the SVG, the video ends on the app's last screen.
     var (frames, layout) = Render(
         """
         [0.0,"o","\u001b[?1049h\u001b[2J\u001b[H█\u001b[?25l"]
@@ -327,3 +340,602 @@ static (byte, byte, byte) Pixel(byte[] frame, RasterLayout layout, int x, int y)
 
 static (byte, byte, byte) CellPixel(byte[] frame, RasterLayout layout, int row, int col) =>
     Pixel(frame, layout, layout.CellX(col) + layout.CellWidth / 2, layout.RowY(row) + layout.CellHeight / 2);
+
+static bool BoxDrawingAtTinySizesStaysInCell()
+{
+    // At font sizes 1–3 a cell is 1×1, 1×3, or 2×4 pixels, narrower than a heavy (2px) or double (4px)
+    // line. At size 1 any write past the 1×1 mask throws, so drawing each of these without an exception
+    // shows the lines are clipped. At sizes 2 and 3 an overrun can wrap into the next mask row without
+    // throwing, so those sizes only show that drawing succeeds.
+    int[] glyphs = [0x2501, 0x2503, 0x2551, 0x2550, 0x256C, 0x250F, 0x254B];
+    foreach (var fontSize in new[] { 1, 2, 3 })
+    {
+        var layout = RasterLayout.Create(fontSize, 1, 1);
+        foreach (var codepoint in glyphs)
+        {
+            if (!CellGlyphs.TryDraw(codepoint, layout, 1, out _))
+                return false;
+        }
+    }
+
+    return true;
+}
+
+static bool HugeFrameIsReportedClearly()
+{
+    // ffmpeg takes a raw frame only while (width + 128) × (height + 128) is below 2^28. For 512×512
+    // cells that holds at font size 36 (11296x23056) and fails at 37 (11808x23568).
+    try
+    {
+        RasterLayout.Create(37, 512, 512);
+        return false;
+    }
+    catch (FrameTooLargeException ex)
+    {
+        var fits = RasterLayout.Create(36, 512, 512);
+        return ex.Message.Contains("11808x23568", StringComparison.Ordinal) && (fits.Width, fits.Height) == (11296, 23056);
+    }
+}
+
+static bool X264SideLimitIsChecked()
+{
+    // x264 rejects a side over 16384. 512 columns are 15904 pixels wide at font size 50 and 16416 at
+    // 51. --max-size scales the video below the limit, so it makes the same frame encodable.
+    var wide = RasterLayout.Create(51, 512, 24);
+    try
+    {
+        Mp4Render.OutputSize(wide, Mp4Settings.Default);
+        return false;
+    }
+    catch (FrameTooLargeException ex)
+    {
+        return ex.Message.Contains("16416x", StringComparison.Ordinal)
+            && Mp4Render.OutputSize(RasterLayout.Create(50, 512, 24), Mp4Settings.Default).Width == 15904
+            && Mp4Render.OutputSize(wide, Mp4Settings.Default with { MaxWidth = 1280, MaxHeight = 1024 }).Width == 1280;
+    }
+}
+
+static bool FfmpegProbeTimesOut()
+{
+    // A "ffmpeg" that never answers must fail at the timeout, not hang until it exits. The fake runs
+    // for 5s and the timeout is 1s.
+    var directory = Path.Combine(Path.GetTempPath(), $"scenetake-slow-ffmpeg-{Guid.NewGuid():N}");
+    Directory.CreateDirectory(directory);
+    try
+    {
+        string path;
+        if (OperatingSystem.IsWindows())
+        {
+            path = Path.Combine(directory, "ffmpeg.cmd");
+            File.WriteAllText(path, "@ping -n 6 127.0.0.1 >nul\r\n");
+        }
+        else
+        {
+            path = Path.Combine(directory, "ffmpeg");
+            File.WriteAllText(path, "#!/bin/sh\nsleep 5\n");
+            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        }
+
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var found = Ffmpeg.HasLibx264(path, out var error, timeoutMilliseconds: 1_000);
+        return !found && error.Contains("did not respond", StringComparison.Ordinal) && watch.Elapsed < TimeSpan.FromSeconds(4);
+    }
+    finally
+    {
+        Directory.Delete(directory, recursive: true);
+    }
+}
+
+static bool OutputPathIsCheckedFirst()
+{
+    // A missing output folder or a directory in the output's place is reported by name before any
+    // frame is drawn. The ffmpeg path does not exist, so reaching ffmpeg would fail differently.
+    var recording = CastReader.Read("tests/marker-delay.cast");
+    var directory = Path.Combine(Path.GetTempPath(), $"scenetake-mp4-out-{Guid.NewGuid():N}");
+    Directory.CreateDirectory(Path.Combine(directory, "taken.mp4"));
+    try
+    {
+        string Error(string output)
+        {
+            try
+            {
+                Mp4Render.WriteMp4(recording.Events, recording.Width, recording.Height, recording.RenderSettings, Mp4Settings.Default, output, "no-such-ffmpeg", recording.LoopDuration);
+                return "";
+            }
+            catch (Mp4Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+
+        var missing = Path.Combine(directory, "missing", "x.mp4");
+        var taken = Path.Combine(directory, "taken.mp4");
+        return Error(missing) == $"output folder does not exist: {Path.GetDirectoryName(missing)}"
+            && Error(taken) == $"output path is a directory: {taken}";
+    }
+    finally
+    {
+        Directory.Delete(directory, recursive: true);
+    }
+}
+
+static bool FontTableOutsideFileIsRejected()
+{
+    // stb_truetype reads tables without bounds checks, so a table past the end of the file would crash
+    // the process during rendering. The header scan must reject the file instead.
+    var path = CopyInstalledTrueTypeFont(data => PatchTableOffset(data, "glyf", 0x7FF00000));
+    try
+    {
+        var scanRejects = false;
+        try
+        {
+            FontCatalog.ReadFaces(path);
+        }
+        catch (InvalidDataException)
+        {
+            scanRejects = true;
+        }
+
+        return scanRejects && FontFileError(path).Contains(path, StringComparison.Ordinal);
+    }
+    finally
+    {
+        File.Delete(path);
+    }
+}
+
+static bool SymbolOnlyFontIsRejected()
+{
+    // A font whose cmap has no Unicode subtable (Symbol, Wingdings) cannot be loaded by stb_truetype.
+    // It must be left out at scan time, so --font-file fails before recording and a family list skips it.
+    var path = CopyInstalledTrueTypeFont(data => PatchCmapToSymbol(data));
+    try
+    {
+        return FontCatalog.ReadFaces(path).Count == 0 && FontFileError(path).Contains("no usable outline font", StringComparison.Ordinal);
+    }
+    finally
+    {
+        File.Delete(path);
+    }
+}
+
+static bool UnreadableFontFileIsReported()
+{
+    // A --font-file without read permission must give the font error, not an unhandled exception.
+    if (OperatingSystem.IsWindows())
+        throw new SkipTestException("needs Unix file modes");
+
+    var path = CopyInstalledTrueTypeFont(_ => { });
+    try
+    {
+        File.SetUnixFileMode(path, UnixFileMode.None);
+        try
+        {
+            using (File.OpenRead(path))
+                throw new SkipTestException("running as a user who can read any file");
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+
+        return FontFileError(path).Contains(path, StringComparison.Ordinal);
+    }
+    finally
+    {
+        File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+        File.Delete(path);
+    }
+}
+
+static bool FontFileThatCannotLoadIsAnError()
+{
+    // With loca renamed to "CFF ", the header scan sees outlines it can draw, but stb_truetype cannot
+    // load the face. The scan alone would accept the file and the render would use another font.
+    var path = CopyInstalledTrueTypeFont(data => PatchTableTag(data, "loca", "CFF "));
+    try
+    {
+        return FontCatalog.ReadFaces(path).Count == 1 && FontFileError(path).Contains(path, StringComparison.Ordinal);
+    }
+    finally
+    {
+        File.Delete(path);
+    }
+}
+
+static bool ShortFontTableIsRejected()
+{
+    // Every variant passes the header scan: each table lies inside the file, and head, hhea, and hmtx
+    // exist. stb_truetype reads the fields and tables changed here without bounds checks, so drawing
+    // from any of these fonts could crash the process. Each one must fail to load instead.
+    Action<byte[]>[] variants =
+    [
+        data =>
+        {
+            PatchTableOffset(data, "loca", (uint)data.Length);
+            PatchTableLength(data, "loca", 0);
+        },
+        data => PatchTableLength(data, "glyf", 0),  // the loca entries then point past the end of glyf
+        data => PatchTableLength(data, "head", 51), // indexToLocFormat is at 50 and 51
+        data => PatchTableLength(data, "hhea", 35), // numberOfHMetrics is at 34 and 35
+        data => PatchTableLength(data, "maxp", 5),  // numGlyphs is at 4 and 5
+        data => PatchTableLength(data, "hmtx", 0),
+        data => WriteUInt16(data, TableOffset(data, "hhea") + 34, 0), // the face then has no long metrics
+    ];
+    foreach (var patch in variants)
+    {
+        var path = CopyInstalledTrueTypeFont(patch);
+        try
+        {
+            if (FontCatalog.ReadFaces(path).Count != 1 || !FontFileError(path).Contains(path, StringComparison.Ordinal))
+                return false;
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    return true;
+}
+
+static bool OutOfRangeGlyphIdsAreMissing()
+{
+    // stb_truetype reads hmtx by the glyph id the cmap gives, without checking it against maxp's glyph
+    // count. Both fonts load: one lowers the glyph count to 1, the other maps only 'A' to 0xE0000000
+    // in a format 12 subtable, whose 32-bit id comes back negative. 'A' must read as missing in both.
+    // Space reads as missing too: its id is 1 or more, outside the first font's one glyph, and the
+    // second font's cmap, which maps only 'A', is the one in use.
+    var fewGlyphs = CopyInstalledTrueTypeFont(data => WriteUInt16(data, TableOffset(data, "maxp") + 4, 1));
+    var negativeId = RewriteInstalledTrueTypeFont(data => MapToGlyph(data, 'A', 0xE0000000));
+    try
+    {
+        return new[] { fewGlyphs, negativeId }.All(path =>
+            LoadedFace.TryLoad(FontCatalog.ReadFaces(path)[0]) is { } face && face.GlyphIndex('A') == 0 && face.GlyphIndex(' ') == 0);
+    }
+    finally
+    {
+        LoadedFace.ReleaseAll();
+        File.Delete(fewGlyphs);
+        File.Delete(negativeId);
+    }
+}
+
+static bool EveryFontFileFaceMustLoad()
+{
+    // The collection holds one static face twice. The first is marked regular (OS/2 weight 400), and the
+    // second bold (700) with an empty hmtx. The scan accepts both, and the family picks the second as
+    // its bold face, or as its bold-italic face when the source is italic. Checking only the regular
+    // face would let that text fall back to another font without a word. A variable source would give
+    // the family no bold face to check. The test proves something only when the second face reads as
+    // 700 and the first face loads, so it checks both.
+    var path = Path.Combine(Path.GetTempPath(), $"scenetake-font-{Guid.NewGuid():N}.ttc");
+    var source = File.ReadAllBytes(InstalledSingleFaceTrueType(nonVariable: true));
+    WriteUInt16(source, TableOffset(source, "OS/2") + 4, 400);
+    var bold = (byte[])source.Clone();
+    WriteUInt16(bold, TableOffset(bold, "OS/2") + 4, 700);
+    PatchTableLength(bold, "hmtx", 0);
+    File.WriteAllBytes(path, Collection(source, bold));
+    try
+    {
+        var faces = FontCatalog.ReadFaces(path);
+        if (faces.Count != 2 || faces[1].Weight != 700 || !LoadedFace.CanLoad(faces[0]))
+            throw new SkipTestException("the installed font cannot make a regular and bold collection");
+        return FontFileError(path).Contains(path, StringComparison.Ordinal);
+    }
+    finally
+    {
+        File.Delete(path);
+    }
+}
+
+static bool FontFileIsNotHeldOpen()
+{
+    // The scenario path checks --font-file before pre, and pre may replace the file. Windows cannot
+    // replace a file that is memory-mapped, so the check must not keep it mapped. Unix allows either.
+    // The unchanged copy must also be accepted, so the check does not pass by rejecting every font.
+    var path = CopyInstalledTrueTypeFont(_ => { });
+    var accepted = FontFileError(path) == "";
+    File.WriteAllBytes(path, File.ReadAllBytes(path));
+    File.Delete(path);
+    return accepted;
+}
+
+static bool FontFileIsReleasedAfterRender()
+{
+    // post may replace or delete the --font-file. Windows cannot while the render keeps it mapped, so
+    // WriteMp4 must release every face it loaded. The render must draw text in that font, which needs
+    // only a process that reads the frames, so a stand-in ffmpeg does. Unix lets a mapped file be
+    // replaced, so the test can fail only on Windows.
+    var font = CopyInstalledTrueTypeFont(_ => { });
+    var cast = Path.Combine(Path.GetTempPath(), $"scenetake-mp4-{Guid.NewGuid():N}.cast");
+    var output = Path.ChangeExtension(cast, ".mp4");
+    var ffmpeg = WriteFrameReadingFfmpeg(Path.GetTempPath());
+    try
+    {
+        File.WriteAllText(cast, "{\"version\":3,\"term\":{\"cols\":8,\"rows\":2}}\n[0.1, \"o\", \"Ab\"]\n");
+        var recording = CastReader.Read(cast);
+        var result = Mp4Render.WriteMp4(recording.Events, recording.Width, recording.Height, recording.RenderSettings,
+            Mp4Settings.Default with { FontFile = font }, output, ffmpeg, recording.LoopDuration);
+        File.WriteAllBytes(font, File.ReadAllBytes(font));
+        File.Delete(font);
+        return result.Font.Path == font;
+    }
+    finally
+    {
+        // Cleanup must not throw: a font still held would hide the failure above.
+        foreach (var path in new[] { cast, output, font, ffmpeg })
+            TryDeleteFile(path);
+    }
+}
+
+static bool LogNamesAFontThatLoads()
+{
+    // An installed family whose regular file fails the load checks draws no regular text, so the log
+    // must not name it. A copy of an installed font with an empty hmtx gets a family name no installed
+    // font has, so it is the only face of its family and that family's regular face. Reflection puts it
+    // in the installed list without installing it. The copy's own family comes next in the chain, so
+    // the log should name that family's regular face, which must load for the test to prove anything.
+    var broken = CopyInstalledTrueTypeFont(data => PatchTableLength(data, "hmtx", 0));
+    var installed = typeof(FontCatalog).GetField("s_installed", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
+    var copied = FontCatalog.ReadFaces(broken)[0];
+    var face = copied with { Family = $"scenetake-broken-{Guid.NewGuid():N}", TypographicFamily = null, PostScriptName = null };
+    var original = FontFamilyFaces.FromFaces(copied.Family, FontCatalog.Installed.Where(f => f.Matches(copied.Family)).ToList());
+    installed.SetValue(null, new List<FontFaceInfo> { face }.Concat(FontCatalog.Installed).ToList());
+    try
+    {
+        if (original is null || !LoadedFace.CanLoad(original.Regular))
+            throw new SkipTestException("the copied font's own family does not load");
+        var glyphs = GlyphSource.Create($"\"{face.Family}\", \"{copied.Family}\"", null, RasterLayout.Create(16, 1, 1));
+        return !LoadedFace.CanLoad(face) && glyphs.Primary == original.Regular;
+    }
+    finally
+    {
+        FontCatalog.Rescan();
+        LoadedFace.ReleaseAll();
+        TryDeleteFile(broken);
+    }
+}
+
+static void TryDeleteFile(string path)
+{
+    try
+    {
+        File.Delete(path);
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+    {
+    }
+}
+
+/// <summary>A stand-in ffmpeg that reads every frame from stdin, then writes its output file (the last argument).</summary>
+static string WriteFrameReadingFfmpeg(string directory)
+{
+    if (OperatingSystem.IsWindows())
+    {
+        // Not "more >nul": with enough LF bytes in its input, more stops reading and waits, and raw frames
+        // can hold that many. spec_mp4.md records the measurement.
+        const string WindowsStdinSink = "powershell -NoProfile -NonInteractive -Command \"[Console]::OpenStandardInput().CopyTo([IO.Stream]::Null)\"";
+        var path = Path.Combine(directory, $"scenetake-ffmpeg-{Guid.NewGuid():N}.cmd");
+        File.WriteAllText(path,
+            "@echo off\r\n" +
+            WindowsStdinSink + "\r\n" +
+            ":last\r\n" +
+            "if not \"%~2\"==\"\" (shift & goto last)\r\n" +
+            "echo video> \"%~1\"\r\n" +
+            "exit /b 0\r\n");
+        return path;
+    }
+    else
+    {
+        var path = Path.Combine(directory, $"scenetake-ffmpeg-{Guid.NewGuid():N}");
+        File.WriteAllText(path,
+            "#!/bin/sh\n" +
+            "cat >/dev/null\n" +
+            "for last; do :; done\n" +
+            "echo video > \"$last\"\n" +
+            "exit 0\n");
+        File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        return path;
+    }
+}
+
+static bool LinkedFontFileLoads()
+{
+    // A font reached through a symbolic link must load like the file itself. A link's own size is
+    // not the font's, so a size taken from the link would fail the table checks.
+    var font = CopyInstalledTrueTypeFont(_ => { });
+    var link = Path.Combine(Path.GetTempPath(), $"scenetake-font-link-{Guid.NewGuid():N}.ttf");
+    try
+    {
+        try
+        {
+            File.CreateSymbolicLink(link, font);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            throw new SkipTestException("this machine does not allow symbolic links");
+        }
+
+        return FontFileError(link) == "";
+    }
+    finally
+    {
+        File.Delete(link);
+        File.Delete(font);
+    }
+}
+
+static bool InstalledFontsCanBeRescanned()
+{
+    // pre may install a font, so the render scans again after pre. A rescan must not reuse the earlier scan.
+    var first = FontCatalog.Installed;
+    FontCatalog.Rescan();
+    return !ReferenceEquals(first, FontCatalog.Installed) && FontCatalog.Installed.Count == first.Count;
+}
+
+static unsafe bool DefaultFontsPassTableChecks()
+{
+    // The table checks must not reject a font that stb_truetype loads. These are the fonts every
+    // render tries, so a wrong length rule would show up here.
+    var names = GlyphSource.DefaultMonospaceFamilies().Concat(GlyphSource.FallbackFamilies()).ToList();
+    var faces = FontCatalog.Installed.Where(face => names.Any(face.Matches)).ToList();
+    if (faces.Count == 0)
+        throw new FontNotFoundException("none of the default fonts is installed");
+
+    foreach (var face in faces)
+    {
+        var data = File.ReadAllBytes(face.Path);
+        bool stbLoads;
+        fixed (byte* bytes = data)
+        {
+            try
+            {
+                var offset = StbTrueTypeSharp.StbTrueType.stbtt_GetFontOffsetForIndex(bytes, face.Index);
+                using var info = new StbTrueTypeSharp.StbTrueType.stbtt_fontinfo();
+                stbLoads = offset >= 0 && StbTrueTypeSharp.StbTrueType.stbtt_InitFont(info, bytes, offset) != 0;
+            }
+            catch (Exception)
+            {
+                stbLoads = false;
+            }
+        }
+
+        if (stbLoads && LoadedFace.TryLoad(face) is null)
+        {
+            Console.Error.WriteLine($"  rejected {face.Path} #{face.Index}");
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/// <summary>The FontNotFoundException message for <paramref name="path"/> as --font-file, or "" when it loads.</summary>
+static string FontFileError(string path)
+{
+    try
+    {
+        GlyphSource.Create("monospace", path, RasterLayout.Create(16, 1, 1));
+        return "";
+    }
+    catch (FontNotFoundException ex)
+    {
+        return ex.Message;
+    }
+}
+
+/// <summary>Copies an installed single-face TrueType font to a temporary file, changed by <paramref name="patch"/>.</summary>
+static string CopyInstalledTrueTypeFont(Action<byte[]> patch) =>
+    RewriteInstalledTrueTypeFont(data =>
+    {
+        patch(data);
+        return data;
+    });
+
+/// <summary>Copies an installed single-face TrueType font to a temporary file, replaced by what <paramref name="patch"/> returns.</summary>
+static string RewriteInstalledTrueTypeFont(Func<byte[], byte[]> patch)
+{
+    var data = patch(File.ReadAllBytes(InstalledSingleFaceTrueType()));
+    var path = Path.Combine(Path.GetTempPath(), $"scenetake-font-{Guid.NewGuid():N}.ttf");
+    File.WriteAllBytes(path, data);
+    return path;
+}
+
+static string InstalledSingleFaceTrueType(bool nonVariable = false) =>
+    FontCatalog.Installed
+        .Where(face => !nonVariable || !face.Variable)
+        .Select(face => face.Path)
+        .FirstOrDefault(p => p.EndsWith(".ttf", StringComparison.OrdinalIgnoreCase) && FontCatalog.ReadFaces(p).Count == 1)
+    ?? throw new FontNotFoundException("no installed single-face TrueType font to copy");
+
+static int TableOffset(byte[] data, string tag) =>
+    (int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(TableRecord(data, tag) + 8));
+
+static void WriteUInt16(byte[] data, int at, ushort value) =>
+    System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(at), value);
+
+/// <summary>Appends a format 12 cmap subtable that maps <paramref name="codepoint"/> to <paramref name="glyph"/>, and points every Unicode encoding record at it.</summary>
+static byte[] MapToGlyph(byte[] data, int codepoint, uint glyph)
+{
+    var cmap = TableOffset(data, "cmap");
+    var subtable = new byte[28];
+    WriteUInt16(subtable, 0, 12);
+    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(subtable.AsSpan(4), (uint)subtable.Length);
+    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(subtable.AsSpan(12), 1);
+    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(subtable.AsSpan(16), (uint)codepoint);
+    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(subtable.AsSpan(20), (uint)codepoint);
+    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(subtable.AsSpan(24), glyph);
+    var result = data.Concat(subtable).ToArray();
+    var count = System.Buffers.Binary.BinaryPrimitives.ReadUInt16BigEndian(result.AsSpan(cmap + 2));
+    for (var i = 0; i < count; i++)
+    {
+        var record = cmap + 4 + i * 8;
+        var platform = System.Buffers.Binary.BinaryPrimitives.ReadUInt16BigEndian(result.AsSpan(record));
+        var encoding = System.Buffers.Binary.BinaryPrimitives.ReadUInt16BigEndian(result.AsSpan(record + 2));
+        if (platform == 0 || (platform == 3 && encoding is 1 or 10))
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(record + 4), (uint)(data.Length - cmap));
+    }
+
+    return result;
+}
+
+/// <summary>A font collection (TTC) of two single-face fonts, with each face's table offsets moved to where it lands.</summary>
+static byte[] Collection(byte[] first, byte[] second)
+{
+    const int header = 12 + 2 * 4;
+    var secondStart = header + ((first.Length + 3) & ~3);
+    var result = new byte[secondStart + second.Length];
+    System.Text.Encoding.ASCII.GetBytes("ttcf").CopyTo(result, 0);
+    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(4), 0x00010000);
+    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(8), 2);
+    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(12), header);
+    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(result.AsSpan(16), (uint)secondStart);
+    foreach (var (face, start) in new[] { (first, header), (second, secondStart) })
+    {
+        face.CopyTo(result, start);
+        var tables = System.Buffers.Binary.BinaryPrimitives.ReadUInt16BigEndian(face.AsSpan(4));
+        for (var i = 0; i < tables; i++)
+        {
+            var offset = result.AsSpan(start + 12 + i * 16 + 8, 4);
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(offset, System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(offset) + (uint)start);
+        }
+    }
+
+    return result;
+}
+
+static int TableRecord(byte[] data, string tag)
+{
+    var count = System.Buffers.Binary.BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(4));
+    for (var i = 0; i < count; i++)
+    {
+        var record = 12 + i * 16;
+        if (System.Text.Encoding.ASCII.GetString(data, record, 4) == tag)
+            return record;
+    }
+
+    throw new FontNotFoundException($"font has no {tag} table");
+}
+
+static void PatchTableOffset(byte[] data, string tag, uint offset) =>
+    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(data.AsSpan(TableRecord(data, tag) + 8), offset);
+
+static void PatchTableLength(byte[] data, string tag, uint length) =>
+    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(data.AsSpan(TableRecord(data, tag) + 12), length);
+
+static void PatchTableTag(byte[] data, string tag, string newTag) =>
+    System.Text.Encoding.ASCII.GetBytes(newTag).CopyTo(data, TableRecord(data, tag));
+
+// Every cmap encoding record becomes Windows platform 3, encoding 0 (symbol), as in Symbol.ttf.
+static void PatchCmapToSymbol(byte[] data)
+{
+    var cmap = (int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(TableRecord(data, "cmap") + 8));
+    var count = System.Buffers.Binary.BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(cmap + 2));
+    for (var i = 0; i < count; i++)
+    {
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(cmap + 4 + i * 8), 3);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(cmap + 6 + i * 8), 0);
+    }
+}
+
+sealed class SkipTestException(string reason) : Exception(reason);

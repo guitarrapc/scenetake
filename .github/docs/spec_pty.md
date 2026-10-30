@@ -73,8 +73,8 @@ When a map-form step has `pty: true` and `interactive: true` (default `false`):
 
 | Condition | Behavior |
 |---|---|
-| `interactive: true` without `pty: true` | Fatal error |
-| `normalize-typing: true` without `interactive: true` | Fatal error |
+| `interactive: true` without `pty: true` | Scenario error, reported before `pre` runs |
+| `normalize-typing: true` without `interactive: true` | Scenario error, reported before `pre` runs |
 | Host stdin or stdout redirected | Fatal error at step entry |
 | `Pty.IsSupported` false | Fatal error (same as other PTY steps) |
 
@@ -98,10 +98,12 @@ PTY steps follow the same **recorded step** exit-code rules as pipe steps. See [
 | Condition | Behavior |
 |---|---|
 | Child non-zero exit | Warning on stderr; recording continues; scenetake exits `0` (same as pipe `steps`) |
-| PTY spawn / ConPTY / `openpty` failure | Fatal error; scenario run aborts |
+| PTY spawn / ConPTY / `openpty` failure | Fatal error; the recording stops |
 | Output drain timeout | Fatal error (`TimeoutException` from capture) |
 | Interactive step on non-TTY host | Fatal error at step entry |
 | Cancel during interactive attach | Host terminal restored on dispose; scenario aborts if the run is interrupted |
+
+Each fatal error stops the recording: no cast is written, `post` runs, and scenetake exits `1`, or with the failing `post` command's code ([spec_pre_post.md](spec_pre_post.md)).
 
 ## Verification
 
@@ -135,5 +137,5 @@ Integration tests require `SCENETAKE_BIN` pointing at a published scenetake bina
 - Interactive steps record wall-clock chunk times so TUI motion (banner animations, spinner frames) replays at real speed in cast/SVG. Startup-offset compress applies only to non-interactive PTY.
 - **Host resize sync breaks vim/svg replay**: `PtyConsoleInput.Attach` defaults to resizing the PTY to the host console. vim then emits cursor addresses for the larger height (for example row 44 on a 44-row host) while the cast header stays at scenario `height` (24). SVG replay clamps out-of-range rows and corrupts the session. scenetake uses `PtyConsoleAttachOptions.SyncHostSize = false` so the PTY keeps scenario geometry.
 - On Unix, scenetake writes `\r\n` to host stdout after detach so the parent shell prompt realigns after raw-mode interactive output.
-- Recorded step failures belong in the cast as demo content; only infrastructure failures (spawn, drain timeout) should abort the run. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
+- Recorded step failures belong in the cast as demo content; only infrastructure failures (spawn, drain timeout) should stop the recording. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
 - A TUI behind ConPTY cannot detect Windows Terminal; it can only read `WT_SESSION` inherited from the shell that started scenetake. A pwsh without `WT_SESSION` made `matrix` fall back to 16 colors even though the recording renders 24-bit color. scenetake now sets `COLORTERM=truecolor` for PTY children instead of relying on host hints ([spec_scenario.md](spec_scenario.md) → Lessons Learned).

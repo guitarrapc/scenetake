@@ -63,7 +63,7 @@ Every cast file written by the scenario path includes render metadata in the hea
 | `env.SHELL` | resolved shell | `TERM` is represented by `term.type`. |
 | `tags` | `st:font-size=N`, `st:font-family=…`, `st:window=macos\|windows` | SVG render metadata. `st:window` is omitted when window chrome is off. Unknown tags are ignored by external tools. |
 
-On read, v2 headers use top-level `width`, `height`, and `theme` only. Render metadata defaults apply unless overridden by CLI: v3 `st:font-size` / `st:font-family` / `st:window` in `tags`. Invalid header values warn once and fall back to defaults when read by the `svg` subcommand.
+On read, v2 headers use top-level `width`, `height`, and `theme` only. Render metadata defaults apply unless overridden by CLI: v3 `st:font-size` / `st:font-family` / `st:window` in `tags`. Invalid `st:` render tags warn once each and fall back to defaults. An invalid `theme` color, or a palette that is not 16 colors, falls back to the defaults without a warning. A missing or out-of-range terminal size is an error. This holds wherever a cast is read: the `svg` and `mp4` subcommands, and the scenario path's SVG and mp4 output.
 
 ## Event Stream
 
@@ -94,7 +94,7 @@ Only `steps` content is recorded.
 |---|---|
 | `pre` | No — stdout/stderr appear in the CLI only. |
 | `steps` | Yes — simulated typing, command output, markers, comments. |
-| `post` | No — runs after the cast file is written. |
+| `post` | No — runs last and is never recorded. |
 
 Step exit codes during recording: [spec_scenario.md](spec_scenario.md) → Step exit codes.
 

@@ -150,12 +150,13 @@ internal sealed class Utf8ChunkBuffer
     }
 
     /// <summary>
-    /// Writes a segment that holds one element (<c>&lt;text</c> or <c>&lt;rect</c>) with
-    /// <paramref name="classes"/> added in front of its own class list, if it has one.
+    /// Writes a segment that holds one <c>&lt;text</c> element with <paramref name="classes"/> added in
+    /// front of its own class list, if it has one. Row rects never come here: a class would take them
+    /// out of the crisp-edge rule for rects without one.
     /// </summary>
     internal void WriteWithClasses(Stream stream, Utf8Segment segment, string classes)
     {
-        const int TagLength = 5; // "<text" or "<rect"
+        const int TagLength = 5; // "<text"
         var element = _chunks[segment.Chunk].AsSpan(segment.Offset, segment.Length);
         var rest = element[TagLength..];
         var classAttribute = " class=\""u8;
@@ -438,6 +439,26 @@ internal static class RenderSettingsResolver
             return false;
         }
 
+        // The colors go into the cast header, and SVG and mp4 are rendered from the cast. Values the
+        // cast reader does not accept would be replaced there by the defaults without a word.
+        if (!string.IsNullOrWhiteSpace(theme?.Fg) && !CastReader.TryParseHexColor(theme.Fg, out _))
+        {
+            error = $"invalid render.theme.fg (expected #rgb or #rrggbb): {theme.Fg}";
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(theme?.Bg) && !CastReader.TryParseHexColor(theme.Bg, out _))
+        {
+            error = $"invalid render.theme.bg (expected #rgb or #rrggbb): {theme.Bg}";
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(theme?.Palette) && !CastReader.TryParsePalette(theme.Palette, out _))
+        {
+            error = $"invalid render.theme.palette (expected 16 colors as #rgb or #rrggbb, separated by ':'): {theme.Palette}";
+            return false;
+        }
+
         resolved = MergeTheme(baseTheme, theme);
         return true;
     }
@@ -535,7 +556,7 @@ internal static class SvgFrameRenderer
     private const double LayerFadeSeconds = 0.001;
     private const double CursorBlockOpacity = 0.5;
 
-    // A <use> plus the id it needs costs about this much; shorter rows are cheaper to repeat.
+    // A <use> plus the id it needs costs about this much. Shorter rows are cheaper to repeat.
     private const int MinReusableRowChars = 48;
     private const string Space = " ";
 
@@ -724,16 +745,10 @@ internal static class SvgFrameRenderer
         var verify = new StringBuilder(4096);
         var firstLayerByRowHash = new Dictionary<ulong, int>();
         var origin = metrics.ContentOrigin;
-        var next = 0;
 
-        foreach (var capture in TerminalReplay.EnumerateCaptures(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme))
+        foreach (var (frame, buffer) in TerminalReplay.ReplaySelected(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme, frames))
         {
-            if (capture.Ordinal != frames[next].Ordinal)
-                continue;
-
-            var frame = frames[next++];
             var time = frame.Time;
-            var buffer = capture.View;
 
             if (viewportActive is null || viewportActive.P0 != frame.ViewportWidth || viewportActive.P1 != frame.ViewportHeight)
             {
@@ -787,29 +802,36 @@ internal static class SvgFrameRenderer
 
                 // Row-local content (baseline at y=0, moved by the row's class) drops y from every
                 // <text>, but the layer then needs the row class, and the row its CSS rule once.
-                // Keep whichever form is shorter.
+                // The row-local pass also measures the absolute form, so the absolute form is encoded
+                // here only when it is kept: when it is shorter, or while the row's savings have not
+                // paid for its rule.
+                var rowTop = origin.Y + row * metrics.LineHeight;
                 local.Clear();
-                var localShape = AppendRow(local, buffer, row, origin.X, -metrics.BaselineOffset, rowLocal: true, context);
-                absolute.Clear();
-                var absoluteShape = AppendRow(absolute, buffer, row, origin.X, origin.Y + row * metrics.LineHeight, rowLocal: false, context);
+                var localShape = AppendRow(local, buffer, row, origin.X, -metrics.BaselineOffset, rowLocal: true, context, rowTop);
                 bool rowLocal;
                 if (context.RowClasses[row] is { } rowClass)
                 {
-                    rowLocal = local.Length + 1 + rowClass.Length < absolute.Length;
+                    rowLocal = local.Length + 1 + rowClass.Length < localShape.AbsoluteLength;
                 }
                 else
                 {
-                    // Until the row has a class, add up what row-local content would have saved; once that
+                    // Until the row has a class, add up what row-local content would have saved. Once that
                     // pays for the row's CSS rule, the row gets its class.
                     var nameLength = context.Names.PeekLength();
-                    var saving = absolute.Length - (local.Length + 1 + nameLength);
+                    var saving = localShape.AbsoluteLength - (local.Length + 1 + nameLength);
                     if (saving > 0)
                         context.RowSavings[row] += saving;
                     rowLocal = context.RowSavings[row] > RowRule(new string('r', nameLength), RowBaseline(metrics, row)).Length + 1;
                 }
 
-                var fragment = rowLocal ? local : absolute;
-                var shape = rowLocal ? localShape : absoluteShape;
+                var fragment = local;
+                var shape = localShape;
+                if (!rowLocal)
+                {
+                    absolute.Clear();
+                    shape = AppendRow(absolute, buffer, row, origin.X, rowTop, rowLocal: false, context, rowTop);
+                    fragment = absolute;
+                }
                 var layer = new AnimLayer(time, row) { ElementCount = shape.Elements, SingleText = shape.SingleText };
 
                 // Scrolling moves unchanged rows to other lines. Reuse the first layer that showed the
@@ -830,7 +852,8 @@ internal static class SvgFrameRenderer
                         else
                         {
                             verify.Clear();
-                            AppendRow(verify, buffer, row, origin.X, origin.Y + sourceLayer.P0 * metrics.LineHeight, rowLocal: false, context);
+                            var sourceTop = origin.Y + sourceLayer.P0 * metrics.LineHeight;
+                            AppendRow(verify, buffer, row, origin.X, sourceTop, rowLocal: false, context, sourceTop);
                             same = rowLayers.SegmentEquals(sourceLayer.Content, verify);
                         }
 
@@ -865,13 +888,7 @@ internal static class SvgFrameRenderer
             for (var row = 0; row < canvasHeight; row++)
                 buffer.CopyRowTo(row, previousCells[row]);
             hasPrevious = true;
-
-            if (next == frames.Count)
-                break;
         }
-
-        if (next != frames.Count)
-            throw new InvalidOperationException($"SVG replay reached {next} of {frames.Count} frames.");
 
         return new LayerSet(rows, cursors, viewports);
     }
@@ -979,7 +996,7 @@ internal static class SvgFrameRenderer
         sb.AppendLf(CultureInfo.InvariantCulture,
             $"text {{ font-family: {render.FontFamily}; font-size: {render.FontSize}px; white-space: pre; }}");
         sb.AppendLf("text { dominant-baseline: alphabetic; }");
-        // Background and block rects in rows carry no class, also inside reused <use> content; this gives them crisp edges.
+        // Background and block rects in rows carry no class, also inside reused <use> content. This rule gives them crisp edges.
         sb.AppendLf(".bg,rect:not([class]) { shape-rendering: crispEdges; }");
         // Every animated element: hidden by default, switched exactly at its keyframe offsets, looping.
         sb.AppendLf(CultureInfo.InvariantCulture, $".l {{ opacity: 0; animation: {loopDurationText}s step-end infinite; }}");
@@ -1125,7 +1142,7 @@ internal static class SvgFrameRenderer
 
         /// <summary>
         /// Visible from <paramref name="showTime"/> until <paramref name="hideTime"/>. With step-end timing
-        /// the opacity switches exactly at each offset; the implicit 0% and 100% keyframes take the
+        /// the opacity switches exactly at each offset. The implicit 0% and 100% keyframes take the
         /// element's hidden opacity. A layer's hide and its replacement's show share one offset, so
         /// they switch together.
         /// </summary>
@@ -1149,13 +1166,14 @@ internal static class SvgFrameRenderer
     }
 
     /// <summary>
-    /// Short class names, shared by rows, colors, and keyframes so they never collide: a–z and A–Z,
-    /// then a letter followed by letters or digits. Skips <c>l</c>, <c>c</c>, and <c>bg</c>, which
-    /// the SVG uses itself, and words CSS reserves for <c>animation-name</c>.
+    /// Short class names, shared by rows, colors, and keyframes so they never collide: a–z, then a
+    /// letter followed by letters or digits. Lowercase only, because an SVG inlined in an HTML page
+    /// without a doctype matches class names regardless of case. Skips <c>l</c>, <c>c</c>, and
+    /// <c>bg</c>, which the SVG uses itself, and words CSS reserves for <c>animation-name</c>.
     /// </summary>
     private sealed class ClassNamePool
     {
-        private const string FirstChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        private const string FirstChars = "abcdefghijklmnopqrstuvwxyz";
         private const string NextChars = FirstChars + "0123456789";
         private long _next;
 
@@ -1210,8 +1228,8 @@ internal static class SvgFrameRenderer
 
     /// <summary>
     /// Text colors as classes. The theme's foreground is inherited from the enclosing group and
-    /// needs nothing; any other color gets a short class on first use, and one CSS rule.
-    /// A CSS rule on <c>text</c> itself would not do: it overrides every <c>fill</c> attribute.
+    /// needs nothing. Any other color gets a short class on first use, and one CSS rule. A CSS rule
+    /// on <c>text</c> itself would not do, because it overrides every <c>fill</c> attribute.
     /// </summary>
     private sealed class FillClasses(string defaultFill, ClassNamePool names)
     {
@@ -1258,7 +1276,7 @@ internal static class SvgFrameRenderer
         internal FillClasses Fills { get; }
         internal Utf8ChunkBuffer Content { get; } = new();
 
-        /// <summary>Per canvas row, the class that moves row-local content to that row; null until a layer needs it.</summary>
+        /// <summary>Per canvas row, the class that moves row-local content to that row, or null until a layer needs it.</summary>
         internal string?[] RowClasses { get; }
 
         /// <summary>Per canvas row without a class yet, the characters row-local content would have saved so far.</summary>
@@ -1368,8 +1386,11 @@ internal static class SvgFrameRenderer
         return sb.ToString();
     }
 
-    /// <summary>The number of elements in an encoded row, and whether its only element is a &lt;text&gt;.</summary>
-    private readonly record struct RowShape(int Elements, bool SingleText);
+    /// <summary>
+    /// The number of elements in an encoded row, whether its only element is a &lt;text&gt;, and, for
+    /// row-local content, how many characters the same row would take with absolute coordinates.
+    /// </summary>
+    private readonly record struct RowShape(int Elements, bool SingleText, int AbsoluteLength);
 
     /// <summary>
     /// Appends one row on a single line: background spans first, then block elements as rects,
@@ -1381,7 +1402,10 @@ internal static class SvgFrameRenderer
     /// </list>
     /// Rows with underlined cells always use the run form, because the underline runs under the spaces.
     /// <paramref name="rowTop"/> is the row's top edge. Row-local content has its baseline at y=0,
-    /// so its &lt;text&gt; elements carry no <c>y</c>.
+    /// so its &lt;text&gt; elements carry no <c>y</c>. For row-local content the result also gives the
+    /// length of the absolute encoding at <paramref name="absoluteRowTop"/>, so the caller can choose a form
+    /// before encoding the absolute one. The absolute encoding adds <c>y</c> to every
+    /// &lt;text&gt;, moves every rect, and can pick the other text form.
     /// </summary>
     private static RowShape AppendRow(
         StringBuilder sb,
@@ -1390,18 +1414,24 @@ internal static class SvgFrameRenderer
         double originX,
         double rowTop,
         bool rowLocal,
-        EncodeContext context)
+        EncodeContext context,
+        double absoluteRowTop)
     {
         var metrics = context.Metrics;
         var theme = context.Theme;
-        var textYAttribute = rowLocal ? "" : string.Create(CultureInfo.InvariantCulture, $" y=\"{rowTop + metrics.BaselineOffset:0.##}\"");
+        var start = sb.Length;
+        var absoluteTextY = string.Create(CultureInfo.InvariantCulture, $" y=\"{absoluteRowTop + metrics.BaselineOffset:0.##}\"");
+        var textYAttribute = rowLocal ? "" : absoluteTextY;
         var hasUnderline = AppendBackgroundSpans(sb, buffer, row, originX, rowTop, metrics, theme, out var backgroundRects);
-        var blockRects = AppendBlockRects(sb, buffer, row, originX, rowTop, metrics, theme);
+        var blockRects = AppendBlockRects(sb, buffer, row, originX, rowTop, metrics, theme, absoluteRowTop, out var blockYGrowth);
+        var rectsLength = sb.Length - start;
 
         var runForm = t_runForm ??= new StringBuilder(1024);
         runForm.Clear();
         var runTexts = AppendRunText(runForm, buffer, row, originX, textYAttribute, context);
         var texts = runTexts;
+        var listLength = int.MaxValue;
+        var listTexts = 0;
         if (hasUnderline)
         {
             sb.Append(runForm);
@@ -1410,7 +1440,8 @@ internal static class SvgFrameRenderer
         {
             var listForm = t_listForm ??= new StringBuilder(1024);
             listForm.Clear();
-            var listTexts = AppendGlyphListText(listForm, buffer, row, originX, textYAttribute, context);
+            listTexts = AppendGlyphListText(listForm, buffer, row, originX, textYAttribute, context);
+            listLength = listForm.Length;
             if (listForm.Length < runForm.Length)
             {
                 sb.Append(listForm);
@@ -1422,9 +1453,22 @@ internal static class SvgFrameRenderer
             }
         }
 
+        var absoluteLength = sb.Length - start;
+        if (rowLocal)
+        {
+            // Absolute content adds y to every <text> and changes the y of every rect. The absolute
+            // encoding makes its own choice between the two text forms, so compare them again.
+            var backgroundYGrowth = backgroundRects * (Format(absoluteRowTop).Length - Format(rowTop).Length);
+            var absoluteRun = runForm.Length + runTexts * absoluteTextY.Length;
+            var absoluteList = hasUnderline ? int.MaxValue : listLength + listTexts * absoluteTextY.Length;
+            absoluteLength = rectsLength + backgroundYGrowth + blockYGrowth + (absoluteList < absoluteRun ? absoluteList : absoluteRun);
+        }
+
         var elements = backgroundRects + blockRects + texts;
-        return new RowShape(elements, elements == 1 && texts == 1);
+        return new RowShape(elements, elements == 1 && texts == 1, absoluteLength);
     }
+
+    private static string Format(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
 
     /// <summary>
     /// One rect per run of cells with the same non-theme background, regardless of foreground
@@ -1475,8 +1519,10 @@ internal static class SvgFrameRenderer
     /// height. Parts of one color and height that touch along the row merge into one rect.
     /// </summary>
     private static int AppendBlockRects(
-        StringBuilder sb, ScreenBuffer buffer, int row, double originX, double rowTop, SvgMetrics metrics, TerminalTheme theme)
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, double rowTop, SvgMetrics metrics, TerminalTheme theme,
+        double absoluteRowTop, out int absoluteYGrowth)
     {
+        absoluteYGrowth = 0;
         var parts = t_blockParts ??= [];
         parts.Clear();
         for (var col = 0; col < buffer.Width; col++)
@@ -1503,8 +1549,10 @@ internal static class SvgFrameRenderer
                 continue;
             }
 
+            var partTop = current.Y * metrics.LineHeight / 8;
+            absoluteYGrowth += Format(absoluteRowTop + partTop).Length - Format(rowTop + partTop).Length;
             sb.Append(CultureInfo.InvariantCulture,
-                $"<rect x=\"{originX + current.X * metrics.CharWidth / 8:0.##}\" y=\"{rowTop + current.Y * metrics.LineHeight / 8:0.##}\" width=\"{current.Width * metrics.CharWidth / 8:0.##}\" height=\"{current.Height * metrics.LineHeight / 8:0.##}\" fill=\"{current.Fill}\"");
+                $"<rect x=\"{originX + current.X * metrics.CharWidth / 8:0.##}\" y=\"{rowTop + partTop:0.##}\" width=\"{current.Width * metrics.CharWidth / 8:0.##}\" height=\"{current.Height * metrics.LineHeight / 8:0.##}\" fill=\"{current.Fill}\"");
             if (current.Alpha < BlockPart.Opaque)
                 sb.Append(" fill-opacity=\"").Append(current.Alpha switch { 1 => "0.25", 2 => "0.5", _ => "0.75" }).Append('"');
             sb.Append("/>");
@@ -1568,24 +1616,47 @@ internal static class SvgFrameRenderer
         }
     }
 
-    /// <summary>Run form: the original encoding (runs break on any color or style change), without background rects. Returns the number of &lt;text&gt; elements.</summary>
+    /// <summary>
+    /// Run form: runs break on any color or style change. Background rects are drawn separately.
+    /// Returns the number of &lt;text&gt; elements.
+    /// <list type="bullet">
+    /// <item><c>textLength</c> spans the run's cells, not its UTF-16 length, so combining marks and
+    /// surrogate pairs do not stretch the run past its cells.</item>
+    /// <item>Underlined spaces up to the row's last underlined character keep their underline, as in
+    /// the mp4 rasterizer. Spaces after a run's last drawn cell are left out.</item>
+    /// <item>A block element is a rect. When it is underlined, the run carries a space in its cell, so
+    /// the underline runs under the block as it does in mp4.</item>
+    /// </list>
+    /// </summary>
     private static int AppendRunText(
         StringBuilder sb, ScreenBuffer buffer, int row, double originX, string textYAttribute, EncodeContext context)
     {
         var metrics = context.Metrics;
         var theme = context.Theme;
+        var lastUnderlined = -1;
+        for (var c = 0; c < buffer.Width; c++)
+        {
+            var underlined = buffer.GetCell(row, c);
+            if (!underlined.IsWideContinuation && underlined.Underline && underlined.Text != Space)
+                lastUnderlined = c;
+        }
+
+        bool Draws(ScreenCell candidate, int at) => candidate.Text != Space || (candidate.Underline && at <= lastUnderlined);
+        static bool SkipsText(ScreenCell candidate) => IsBlockCell(candidate.Text) && !candidate.Underline;
+        static string RunText(ScreenCell candidate) => IsBlockCell(candidate.Text) ? Space : candidate.Text;
+
         var texts = 0;
         var col = 0;
         while (col < buffer.Width)
         {
             var cell = buffer.GetCell(row, col);
-            if (cell.IsWideContinuation || IsBlockCell(cell.Text))
+            if (cell.IsWideContinuation || SkipsText(cell))
             {
                 col++;
                 continue;
             }
 
-            if (cell.Text == Space && CellColors.ResolveBackground(cell, theme) is null)
+            if (!Draws(cell, col) && CellColors.ResolveBackground(cell, theme) is null)
             {
                 col++;
                 continue;
@@ -1600,16 +1671,23 @@ internal static class SvgFrameRenderer
 
             var runText = (t_runText ??= new StringBuilder(64));
             runText.Clear();
-            runText.Append(cell.Text);
-            col++;
+            runText.Append(RunText(cell));
+            var drawnChars = 0;
+            var drawnEnd = runStart;
+            if (Draws(cell, col))
+            {
+                drawnChars = runText.Length;
+                drawnEnd = col + (cell.IsWide ? 2 : 1);
+            }
 
+            col++;
             while (col < buffer.Width)
             {
                 var next = buffer.GetCell(row, col);
                 if (next.IsWideContinuation)
                     break;
 
-                if (IsBlockCell(next.Text))
+                if (SkipsText(next))
                     break;
 
                 var nextFg = CellColors.ResolveTintedForeground(buffer, row, col, next, theme);
@@ -1620,22 +1698,24 @@ internal static class SvgFrameRenderer
                     break;
                 }
 
-                runText.Append(next.Text);
+                runText.Append(RunText(next));
+                if (Draws(next, col))
+                {
+                    drawnChars = runText.Length;
+                    drawnEnd = col + 1;
+                }
+
                 col++;
             }
 
-            var visibleLen = runText.Length;
-            while (visibleLen > 0 && runText[visibleLen - 1] == ' ')
-                visibleLen--;
-
-            if (visibleLen == 0)
+            if (drawnChars == 0)
                 continue; // only spaces: the background span already covers them
 
-            var drawText = visibleLen == runText.Length ? runText.ToString() : runText.ToString(0, visibleLen);
+            var drawText = drawnChars == runText.Length ? runText.ToString() : runText.ToString(0, drawnChars);
             AppendTextStart(sb, runFg, context.Fills);
             sb.Append(CultureInfo.InvariantCulture, $" x=\"{originX + runStart * metrics.CharWidth:0.##}\"").Append(textYAttribute);
             AppendFontStyle(sb, runBold, runItalic, runUnderline);
-            sb.Append(CultureInfo.InvariantCulture, $" textLength=\"{visibleLen * metrics.CharWidth:0.##}\">{EscapeXml(drawText)}</text>");
+            sb.Append(CultureInfo.InvariantCulture, $" textLength=\"{(drawnEnd - runStart) * metrics.CharWidth:0.##}\">{EscapeXml(drawText)}</text>");
             texts++;
         }
 
@@ -1726,7 +1806,7 @@ internal static class SvgFrameRenderer
             sb.Append(" class=\"").Append(fillClass).Append('"');
     }
 
-    // Presentation attributes; normal weight, upright style, and no decoration are the defaults.
+    // Presentation attributes. Normal weight, upright style, and no decoration are the defaults, so they are not written.
     private static void AppendFontStyle(StringBuilder sb, bool bold, bool italic, bool underline)
     {
         if (bold)
@@ -1755,11 +1835,15 @@ internal static class SvgFrameRenderer
         }
     }
 
+    // U+FFFE and U+FFFF (from `cat` of a binary file, for example) are not allowed anywhere in XML,
+    // and one of them makes the whole SVG fail to load. Control characters never reach a cell.
+    private static bool IsXmlInvalid(char c) => c is '\uFFFE' or '\uFFFF';
+
     private static string EscapeXml(string text)
     {
         for (var i = 0; i < text.Length; i++)
         {
-            if (text[i] is '&' or '<' or '>' or '"')
+            if (text[i] is '&' or '<' or '>' or '"' || IsXmlInvalid(text[i]))
             {
                 var sb = t_escape ??= new StringBuilder(64);
                 sb.Clear();
@@ -1772,6 +1856,7 @@ internal static class SvgFrameRenderer
                         case '<': sb.Append("&lt;"); break;
                         case '>': sb.Append("&gt;"); break;
                         case '"': sb.Append("&quot;"); break;
+                        case var c when IsXmlInvalid(c): sb.Append('\uFFFD'); break;
                         default: sb.Append(text[i]); break;
                     }
                 }
@@ -1786,7 +1871,7 @@ internal static class SvgFrameRenderer
     private static List<ReplayFrame> OptimizeFrames(IReadOnlyList<ReplayFrame> frames, int maxFps)
     {
         if (maxFps <= 0)
-            return frames is List<ReplayFrame> list ? list : [.. frames];
+            return DropZeroLengthFrames(frames);
 
         if (frames.Count <= 1)
             return frames is List<ReplayFrame> single ? single : [.. frames];
@@ -1794,6 +1879,24 @@ internal static class SvgFrameRenderer
         var normalized = NormalizeTiming(frames, maxFps);
         var reduced = ReduceFrames(normalized, maxFps);
         return SpreadCollapsedFrameTimes(reduced, maxFps);
+    }
+
+    /// <summary>
+    /// Keeps only the last of frames that share a time. The others would be shown and hidden at the
+    /// same offset, so they are never visible, but their layers still cost bytes (output written
+    /// several times within one millisecond, as full-screen TUIs do).
+    /// </summary>
+    private static List<ReplayFrame> DropZeroLengthFrames(IReadOnlyList<ReplayFrame> frames)
+    {
+        var kept = new List<ReplayFrame>(frames.Count);
+        for (var i = 0; i < frames.Count; i++)
+        {
+            if (i + 1 < frames.Count && HaveSameTime(frames[i + 1].Time, frames[i].Time))
+                continue;
+            kept.Add(frames[i]);
+        }
+
+        return kept;
     }
 
     private static List<ReplayFrame> NormalizeTiming(IReadOnlyList<ReplayFrame> frames, int maxFps)
@@ -2069,7 +2172,7 @@ internal static class SvgFrameRenderer
         /// <summary>Row layers: content drawn with its baseline at y=0, moved to its row by the row's class.</summary>
         internal bool RowLocal { get; set; }
 
-        /// <summary>Row layers: the number of elements in <see cref="Content"/>; 0 for a row that went blank.</summary>
+        /// <summary>Row layers: the number of elements in <see cref="Content"/>, which is 0 for a row that went blank.</summary>
         internal int ElementCount { get; set; }
 
         /// <summary>Row layers: <see cref="Content"/> is a single &lt;text&gt;, which can carry the layer's classes itself.</summary>

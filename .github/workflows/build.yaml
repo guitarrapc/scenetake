@@ -165,8 +165,8 @@ jobs:
           dotnet run tests/readme_sync_test.cs
           dotnet run tests/svg_render_test.cs
           dotnet run tests/window_chrome_test.cs
+          # Runner images ship no ffmpeg, so the tests below skip real encodes here. The mp4 job runs them.
           SCENETAKE_BIN="$binary_path" dotnet run tests/scenario_render_test.cs
-          # Runner images ship no ffmpeg: real encodes skip here and run in the mp4 job.
           dotnet run tests/mp4_render_test.cs
           SCENETAKE_BIN="$binary_path" dotnet run tests/mp4_ffmpeg_test.cs
 
@@ -212,6 +212,7 @@ jobs:
           done
           dotnet run tests/mp4_render_test.cs
           SCENETAKE_BIN="$binary_path" dotnet run tests/mp4_ffmpeg_test.cs
+          SCENETAKE_BIN="$binary_path" dotnet run tests/scenario_render_test.cs
 
   build-complete:
     needs: [npm-pack, build, mp4]

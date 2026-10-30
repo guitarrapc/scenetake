@@ -1,6 +1,5 @@
 using System.Buffers.Binary;
 using System.Globalization;
-using System.Runtime.InteropServices;
 using System.Text;
 using StbTrueTypeSharp;
 
@@ -24,7 +23,16 @@ internal readonly record struct RasterLayout(
         var titleBar = window == WindowStyle.None ? 0 : Round(SvgFrameRenderer.ChromeTitleBarHeight);
         var width = cols * cellWidth + padX * 2;
         var height = titleBar + rows * cellHeight + padY * 2;
-        return new RasterLayout(cols, rows, cellWidth, cellHeight, baseline, padX, padY, width + (width & 1), height + (height & 1), fontSize, window, titleBar);
+        width += width & 1;
+        height += height & 1;
+
+        // ffmpeg rejects a raw input frame unless (width + 128) × (height + 128) is below 2^28, about
+        // 16000x16000. Large accepted sizes reach that, for example 512×512 cells from font size 37.
+        // Checking it here also keeps the RGB24 frame within one array and int arithmetic.
+        if ((width + 128L) * (height + 128L) >= 1L << 28)
+            throw new FrameTooLargeException($"an mp4 frame of {width}x{height} pixels is too large for ffmpeg; use a smaller --font-size or terminal size");
+
+        return new RasterLayout(cols, rows, cellWidth, cellHeight, baseline, padX, padY, width, height, fontSize, window, titleBar);
     }
 
     internal int CellX(int col) => PadX + col * CellWidth;
@@ -51,12 +59,15 @@ internal sealed record FontFaceInfo(
         || string.Equals(PostScriptName, family, StringComparison.OrdinalIgnoreCase);
 }
 
-/// <summary>Finds installed fonts by reading only each file's table directory and name, OS/2, and post tables.</summary>
+/// <summary>Finds installed fonts by reading only each file's headers: the table directory, the name, OS/2, and post tables, and the cmap encoding records.</summary>
 internal static class FontCatalog
 {
     private static List<FontFaceInfo>? s_installed;
 
     internal static IReadOnlyList<FontFaceInfo> Installed => s_installed ??= Scan(FontDirectories());
+
+    /// <summary>Drops the scan, so the next use of <see cref="Installed"/> sees fonts installed since.</summary>
+    internal static void Rescan() => s_installed = null;
 
     internal static IEnumerable<string> FontDirectories()
     {
@@ -108,7 +119,7 @@ internal static class FontCatalog
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or ArgumentOutOfRangeException)
                 {
-                    // Unreadable or malformed font files are skipped.
+                    // Files that cannot be read, or whose headers are malformed, are skipped.
                 }
             }
         }
@@ -143,8 +154,12 @@ internal static class FontCatalog
             var tables = ReadTableDirectory(stream, faceOffsets[index]);
             if (!tables.TryGetValue("name", out var nameTable))
                 continue;
-            if (!tables.ContainsKey("glyf") && !tables.ContainsKey("CFF "))
+            if (!(tables.ContainsKey("glyf") && tables.ContainsKey("loca")) && !tables.ContainsKey("CFF "))
                 continue; // no outlines stb_truetype can draw (bitmap-only or CFF2)
+            if (!tables.ContainsKey("head") || !tables.ContainsKey("hhea") || !tables.ContainsKey("hmtx"))
+                continue; // stb_truetype cannot load the face without them
+            if (!tables.TryGetValue("cmap", out var cmapTable) || !HasUnicodeCmap(stream, cmapTable.Offset, cmapTable.Length))
+                continue; // symbol fonts (Symbol, Wingdings) have only a symbol cmap subtable, which stb_truetype cannot load
 
             var names = ReadNames(stream, nameTable.Offset, nameTable.Length);
             var family = names.Family ?? names.TypographicFamily;
@@ -179,11 +194,40 @@ internal static class FontCatalog
         for (var i = 0; i < count; i++)
         {
             var record = records.AsSpan(i * 16, 16);
-            tables[Encoding.ASCII.GetString(record[..4])] =
-                (BinaryPrimitives.ReadUInt32BigEndian(record[8..]), (int)BinaryPrimitives.ReadUInt32BigEndian(record[12..]));
+            var offset = (long)BinaryPrimitives.ReadUInt32BigEndian(record[8..]);
+            var length = (long)BinaryPrimitives.ReadUInt32BigEndian(record[12..]);
+            // stb_truetype reads tables through raw pointers without bounds checks, so a table past the
+            // end of the file would crash the process later instead of failing here.
+            if (offset + length > stream.Length || length > int.MaxValue)
+                throw new InvalidDataException("font table outside the file");
+            tables[Encoding.ASCII.GetString(record[..4])] = (offset, (int)length);
         }
 
         return tables;
+    }
+
+    /// <summary>Whether the cmap has a Unicode subtable (platform 0, or Windows platform 3 with encoding 1 or 10), the ones stb_truetype reads.</summary>
+    private static bool HasUnicodeCmap(FileStream stream, long offset, int length)
+    {
+        if (length < 4)
+            return false;
+
+        var count = ReadUInt16(stream, offset + 2);
+        if (4 + count * 8L > length)
+            return false;
+
+        var records = new byte[count * 8];
+        stream.Position = offset + 4;
+        stream.ReadExactly(records);
+        for (var i = 0; i < count; i++)
+        {
+            var platform = BinaryPrimitives.ReadUInt16BigEndian(records.AsSpan(i * 8));
+            var encoding = BinaryPrimitives.ReadUInt16BigEndian(records.AsSpan(i * 8 + 2));
+            if (platform == 0 || (platform == 3 && encoding is 1 or 10))
+                return true;
+        }
+
+        return false;
     }
 
     private static (string? Family, string? TypographicFamily, string? PostScriptName) ReadNames(FileStream stream, long offset, int length)
@@ -247,39 +291,213 @@ internal static class FontCatalog
 
 internal sealed class FontNotFoundException(string message) : Exception(message);
 
-/// <summary>A font face loaded into stb_truetype. The font data stays pinned for the process lifetime.</summary>
+internal sealed class FrameTooLargeException(string message) : Exception(message);
+
+/// <summary>
+/// A face loaded for drawing. The file is memory-mapped rather than read, because a glyph that no
+/// font covers is looked up in every fallback family, and reading each whole file would keep them
+/// all in memory. A face that <see cref="TryLoad"/> keeps stays mapped until <see cref="ReleaseAll"/>.
+/// </summary>
 internal sealed unsafe class LoadedFace
 {
-    private static readonly Dictionary<(string Path, int Index), LoadedFace> s_loaded = [];
-    private readonly GCHandle _pin;
+    private static readonly Dictionary<(string Path, int Index), LoadedFace?> s_loaded = [];
+    private readonly System.IO.MemoryMappedFiles.MemoryMappedFile _file;
+    private readonly System.IO.MemoryMappedFiles.MemoryMappedViewAccessor? _view;
+    private readonly int _glyphCount;
 
-    private LoadedFace(FontFaceInfo info, byte[] data)
+    private LoadedFace(FontFaceInfo info)
     {
         Info = info;
-        _pin = GCHandle.Alloc(data, GCHandleType.Pinned);
-        var bytes = (byte*)_pin.AddrOfPinnedObject();
-        var offset = StbTrueType.stbtt_GetFontOffsetForIndex(bytes, info.Index);
-        Font = new StbTrueType.stbtt_fontinfo();
-        if (offset < 0 || StbTrueType.stbtt_InitFont(Font, bytes, offset) == 0)
-            throw new InvalidDataException($"cannot load font {info.Path}");
+
+        // The size comes from the opened file, because FileInfo reports a symbolic link's own size.
+        var stream = new FileStream(info.Path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        long size;
+        try
+        {
+            size = stream.Length;
+            _file = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(
+                stream, mapName: null, capacity: 0, System.IO.MemoryMappedFiles.MemoryMappedFileAccess.Read,
+                HandleInheritability.None, leaveOpen: false);
+        }
+        catch
+        {
+            stream.Dispose();
+            throw;
+        }
+
+        var acquired = false;
+        try
+        {
+            _view = _file.CreateViewAccessor(0, 0, System.IO.MemoryMappedFiles.MemoryMappedFileAccess.Read);
+            byte* bytes = null;
+            _view.SafeMemoryMappedViewHandle.AcquirePointer(ref bytes);
+            acquired = true;
+            bytes += _view.PointerOffset;
+            var offset = StbTrueType.stbtt_GetFontOffsetForIndex(bytes, info.Index);
+            if (offset < 0 || !FontTables.TryCheck(bytes, size, offset, out _glyphCount))
+                throw new InvalidDataException($"cannot load font {info.Path}");
+
+            Font = new StbTrueType.stbtt_fontinfo();
+            if (StbTrueType.stbtt_InitFont(Font, bytes, offset) == 0)
+                throw new InvalidDataException($"cannot load font {info.Path}");
+        }
+        catch
+        {
+            if (acquired)
+                _view!.SafeMemoryMappedViewHandle.ReleasePointer();
+            _view?.Dispose();
+            _file.Dispose();
+            throw;
+        }
     }
 
     internal FontFaceInfo Info { get; }
 
-    internal StbTrueType.stbtt_fontinfo Font { get; }
+    internal StbTrueType.stbtt_fontinfo Font { get; } = null!;
 
-    internal static LoadedFace Load(FontFaceInfo info)
+    /// <summary>
+    /// The loaded face, or null when the file cannot be opened, its tables fail <see cref="FontTables"/>,
+    /// or stb_truetype rejects it. The header scan does not check everything loading needs.
+    /// </summary>
+    internal static LoadedFace? TryLoad(FontFaceInfo info)
     {
         if (!s_loaded.TryGetValue((info.Path, info.Index), out var face))
         {
-            face = new LoadedFace(info, File.ReadAllBytes(info.Path));
+            face = Open(info);
             s_loaded[(info.Path, info.Index)] = face;
         }
 
         return face;
     }
 
-    internal int GlyphIndex(int codepoint) => StbTrueType.stbtt_FindGlyphIndex(Font, codepoint);
+    /// <summary>
+    /// Whether the face loads, without keeping its file mapped. A check before <c>pre</c> runs uses
+    /// this, because a mapped file cannot be replaced on Windows, and <c>pre</c> may replace the font.
+    /// </summary>
+    internal static bool CanLoad(FontFaceInfo info)
+    {
+        if (s_loaded.TryGetValue((info.Path, info.Index), out var loaded))
+            return loaded is not null;
+
+        var face = Open(info);
+        face?.Close();
+        return face is not null;
+    }
+
+    /// <summary>
+    /// Releases every face <see cref="TryLoad"/> kept. A renderer calls it when it is done drawing:
+    /// Windows cannot replace or delete a mapped file, and <c>post</c> may do either to a font.
+    /// </summary>
+    internal static void ReleaseAll()
+    {
+        foreach (var face in s_loaded.Values)
+            face?.Close();
+        s_loaded.Clear();
+    }
+
+    /// <summary>The glyph for <paramref name="codepoint"/>, or 0 when the font has none.</summary>
+    internal int GlyphIndex(int codepoint)
+    {
+        // A cmap entry past the glyph count would read hmtx beyond what FontTables checked. A format 12
+        // cmap holds 32-bit glyph ids, which come back negative from 0x80000000 up.
+        var index = StbTrueType.stbtt_FindGlyphIndex(Font, codepoint);
+        return (uint)index < (uint)_glyphCount ? index : 0;
+    }
+
+    private static LoadedFace? Open(FontFaceInfo info)
+    {
+        try
+        {
+            return new LoadedFace(info);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // StbTrueTypeSharp throws a plain Exception for some unsupported fonts.
+            return null;
+        }
+    }
+
+    private void Close()
+    {
+        Font.Dispose();
+        _view!.SafeMemoryMappedViewHandle.ReleasePointer();
+        _view.Dispose();
+        _file.Dispose();
+    }
+}
+
+/// <summary>
+/// Checks the tables stb_truetype reads at fixed offsets or by glyph index. It reads them through raw
+/// pointers without bounds checks, so a table that is too short, or a loca entry past the end of glyf,
+/// would crash the process instead of failing to load. The glyph outlines and the cmap subtables
+/// themselves are not checked.
+/// </summary>
+internal static unsafe class FontTables
+{
+    internal static bool TryCheck(byte* data, long size, int faceOffset, out int glyphCount)
+    {
+        glyphCount = 0;
+        if (faceOffset + 12L > size)
+            return false;
+
+        var tableCount = U16(data + faceOffset + 4);
+        if (faceOffset + 12L + tableCount * 16L > size)
+            return false;
+
+        if (!Find(data, size, faceOffset, tableCount, "head"u8, out var head, out var headLength) || headLength < 54
+            || !Find(data, size, faceOffset, tableCount, "hhea"u8, out var hhea, out var hheaLength) || hheaLength < 36
+            || !Find(data, size, faceOffset, tableCount, "maxp"u8, out var maxp, out var maxpLength) || maxpLength < 6
+            || !Find(data, size, faceOffset, tableCount, "hmtx"u8, out var hmtx, out var hmtxLength))
+        {
+            return false;
+        }
+
+        glyphCount = U16(data + maxp + 4);
+        var longMetrics = U16(data + hhea + 34);
+        if (longMetrics == 0 || hmtxLength < 4L * Math.Min(longMetrics, glyphCount) + 2L * Math.Max(0, glyphCount - longMetrics))
+            return false;
+
+        if (!Find(data, size, faceOffset, tableCount, "glyf"u8, out _, out var glyfLength))
+            return true; // CFF outlines, which are not checked here
+
+        if (!Find(data, size, faceOffset, tableCount, "loca"u8, out var loca, out var locaLength))
+            return false;
+
+        var longOffsets = U16(data + head + 50) != 0;
+        if (locaLength < (glyphCount + 1L) * (longOffsets ? 4 : 2))
+            return false;
+
+        for (var i = 0; i <= glyphCount; i++)
+        {
+            var at = longOffsets ? U32(data + loca + i * 4L) : U16(data + loca + i * 2L) * 2L;
+            if (at > glyfLength)
+                return false;
+        }
+
+        return true;
+    }
+
+    private static bool Find(byte* data, long size, int faceOffset, int tableCount, ReadOnlySpan<byte> tag, out long offset, out long length)
+    {
+        for (var i = 0; i < tableCount; i++)
+        {
+            var record = data + faceOffset + 12 + i * 16;
+            if (!new ReadOnlySpan<byte>(record, 4).SequenceEqual(tag))
+                continue;
+
+            offset = U32(record + 8);
+            length = U32(record + 12);
+            return offset + length <= size;
+        }
+
+        offset = 0;
+        length = 0;
+        return false;
+    }
+
+    private static int U16(byte* at) => BinaryPrimitives.ReadUInt16BigEndian(new ReadOnlySpan<byte>(at, 2));
+
+    private static long U32(byte* at) => BinaryPrimitives.ReadUInt32BigEndian(new ReadOnlySpan<byte>(at, 4));
 }
 
 /// <summary>The faces of one family, and how each style is drawn: a real face, or a synthetic bold/italic.</summary>
@@ -302,6 +520,9 @@ internal sealed class FontFamilyFaces
     internal string Name { get; }
 
     internal FontFaceInfo Regular => _regular;
+
+    /// <summary>Every face this family draws with: regular, and bold, italic, or bold-italic where the family has them.</summary>
+    internal IEnumerable<FontFaceInfo> Faces => new[] { _regular, _bold, _italic, _boldItalic }.OfType<FontFaceInfo>().Distinct();
 
     /// <summary>Picks regular, bold, italic, and bold-italic faces from <paramref name="faces"/>, or null when none is upright or italic.</summary>
     internal static FontFamilyFaces? FromFaces(string name, IReadOnlyList<FontFaceInfo> faces)
@@ -350,7 +571,7 @@ internal sealed class FontFamilyFaces
 
 /// <summary>
 /// Turns cell text into alpha masks: box drawing, blocks, and braille are drawn
-/// procedurally; everything else comes from the first font in the chain that has the glyph.
+/// procedurally. Everything else comes from the first font in the chain that has the glyph.
 /// </summary>
 internal sealed unsafe class GlyphSource
 {
@@ -365,8 +586,13 @@ internal sealed unsafe class GlyphSource
         _layout = layout;
     }
 
-    /// <summary>The primary face, for log messages.</summary>
-    internal FontFaceInfo Primary => _chain[0].Regular;
+    /// <summary>
+    /// The regular face of the first family in the chain whose regular face loads, or of the first
+    /// family when none does, for log messages. A family whose regular file fails the load checks draws
+    /// no regular text, so naming it would point at the wrong font.
+    /// </summary>
+    internal FontFaceInfo Primary =>
+        _chain.Select(family => family.Regular).FirstOrDefault(face => LoadedFace.TryLoad(face) is not null) ?? _chain[0].Regular;
 
     /// <summary>
     /// Builds the font chain: <paramref name="fontFile"/> if given, then the families in the
@@ -386,13 +612,18 @@ internal sealed unsafe class GlyphSource
             {
                 faces = FontCatalog.ReadFaces(fontFile);
             }
-            catch (Exception ex) when (ex is IOException or InvalidDataException or ArgumentOutOfRangeException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or ArgumentOutOfRangeException)
             {
                 throw new FontNotFoundException($"cannot read font file {fontFile}: {ex.Message}");
             }
 
             var family = FontFamilyFaces.FromFaces(Path.GetFileName(fontFile), faces)
                 ?? throw new FontNotFoundException($"no usable outline font in {fontFile}");
+
+            // The header scan cannot see everything loading needs. Without this check a face that
+            // fails to load would be skipped like any fallback, and another font drawn instead.
+            if (!family.Faces.All(LoadedFace.CanLoad))
+                throw new FontNotFoundException($"cannot load font file {fontFile}: its tables are malformed or unsupported");
             chain.Add(family);
         }
 
@@ -475,8 +706,7 @@ internal sealed unsafe class GlyphSource
         foreach (var family in _chain)
         {
             var (info, syntheticBold, syntheticItalic) = family.Resolve(bold, italic);
-            var face = LoadedFace.Load(info);
-            if (face.GlyphIndex(first.Value) == 0)
+            if (LoadedFace.TryLoad(info) is not { } face || face.GlyphIndex(first.Value) == 0)
                 continue;
 
             var glyph = Rasterize(face, text, span);
@@ -651,7 +881,7 @@ internal sealed unsafe class GlyphSource
 internal static class CellGlyphs
 {
     // Arms per box-drawing code point U+2500–U+257F as "UDLR" weights: 0 none, 1 light, 2 heavy, 3 double.
-    // A suffix ":n" makes the line dashed with n segments; ":a" draws a rounded corner.
+    // A suffix ":n" makes the line dashed with n segments, and ":a" draws a rounded corner.
     // Null entries (diagonals U+2571–U+2573) come from the font.
     private static readonly string?[] BoxArms =
     [
@@ -738,8 +968,8 @@ internal static class CellGlyphs
 
     /// <summary>
     /// Double lines (U+2550–U+256C) and their single-line mixes. Each of the two parallel
-    /// lines ends where the Unicode name says it joins: in ╔ the outer line turns at the
-    /// outer corner and the inner line at the inner corner; in ╬ no line crosses the center.
+    /// lines ends where the Unicode name says it joins. In ╔ the outer line turns at the
+    /// outer corner and the inner line at the inner corner. In ╬ no line crosses the center.
     /// Arms are 0 none, 1 single, 3 double.
     /// </summary>
     private static void DrawDouble(byte[] alpha, int width, int height, int up, int down, int left, int right, int thickness)
@@ -806,26 +1036,30 @@ internal static class CellGlyphs
             Band(vc, vc + t, 0, horizontalDouble == 2 ? ht + t : horizontalDouble == 1 ? hb + t : hc + t);
     }
 
+    // Lines and fills are clipped to the cell, because at the smallest font sizes a line is wider than
+    // the cell: a heavy line at font sizes 1–2, and a double line up to font size 5.
     private static void HorizontalLine(byte[] alpha, int width, int height, int x0, int x1, int thickness, int dashes)
     {
-        var y0 = (height - thickness) / 2;
-        for (var x = x0; x < x1; x++)
+        var y0 = Math.Max(0, (height - thickness) / 2);
+        var y1 = Math.Min(height, y0 + thickness);
+        for (var x = Math.Max(0, x0); x < Math.Min(width, x1); x++)
         {
             if (dashes > 0 && InDashGap(x, width, dashes))
                 continue;
-            for (var y = y0; y < y0 + thickness; y++)
+            for (var y = y0; y < y1; y++)
                 alpha[y * width + x] = 255;
         }
     }
 
     private static void VerticalLine(byte[] alpha, int width, int height, int y0, int y1, int thickness, int dashes)
     {
-        var x0 = (width - thickness) / 2;
-        for (var y = y0; y < y1; y++)
+        var x0 = Math.Max(0, (width - thickness) / 2);
+        var x1 = Math.Min(width, x0 + thickness);
+        for (var y = Math.Max(0, y0); y < Math.Min(height, y1); y++)
         {
             if (dashes > 0 && InDashGap(y, height, dashes))
                 continue;
-            for (var x = x0; x < x0 + thickness; x++)
+            for (var x = x0; x < x1; x++)
                 alpha[y * width + x] = 255;
         }
     }
@@ -918,8 +1152,10 @@ internal static class CellGlyphs
 
     private static void Fill(byte[] alpha, int stride, int x0, int y0, int x1, int y1, byte value)
     {
-        for (var y = y0; y < y1; y++)
-            alpha.AsSpan(y * stride + x0, Math.Max(0, x1 - x0)).Fill(value);
+        x0 = Math.Clamp(x0, 0, stride);
+        x1 = Math.Clamp(x1, x0, stride);
+        for (var y = Math.Max(0, y0); y < Math.Min(alpha.Length / stride, y1); y++)
+            alpha.AsSpan(y * stride + x0, x1 - x0).Fill(value);
     }
 }
 

@@ -20,14 +20,14 @@ text { dominant-baseline: alphabetic; }
 .x{transform:translate(0,244.8px)}
 .y{transform:translate(0,264.8px)}
 .z{transform:translate(0,284.8px)}
-.A{transform:translate(0,304.8px)}
-.B{transform:translate(0,324.8px)}
-.C{transform:translate(0,344.8px)}
-.E{transform:translate(0,364.8px)}
-.F{transform:translate(0,384.8px)}
+.aa{transform:translate(0,304.8px)}
+.ab{transform:translate(0,324.8px)}
+.ac{transform:translate(0,344.8px)}
+.ae{transform:translate(0,364.8px)}
+.af{transform:translate(0,384.8px)}
 .n{transform:translate(0,404.8px)}
 .j{transform:translate(0,424.8px)}
-.G{transform:translate(0,444.8px)}
+.ag{transform:translate(0,444.8px)}
 .h{transform:translate(0,464.8px)}
 .g{transform:translate(0,484.8px)}
 .o{transform:translate(0,504.8px)}
@@ -36,526 +36,526 @@ text { dominant-baseline: alphabetic; }
 .i{transform:translate(0,564.8px)}
 .f{transform:translate(0,584.8px)}
 .d{transform:translate(0,604.8px)}
-.D{fill:#ac4142}
-@keyframes P{4.654%{opacity:1}4.986%{opacity:0}}
-.P{animation-name:P}
-@keyframes Q{4.986%{opacity:1}5.225%{opacity:0}}
-.Q{animation-name:Q}
-@keyframes R{5.225%{opacity:1}5.578%{opacity:0}}
-.R{animation-name:R}
-@keyframes S{5.578%{opacity:1}6.123%{opacity:0}}
-.S{animation-name:S}
-@keyframes T{6.123%{opacity:1}6.356%{opacity:0}}
-.T{animation-name:T}
-@keyframes U{6.356%{opacity:1}6.681%{opacity:0}}
-.U{animation-name:U}
-@keyframes V{6.681%{opacity:1}7.02%{opacity:0}}
-.V{animation-name:V}
-@keyframes W{7.02%{opacity:1}7.373%{opacity:0}}
-.W{animation-name:W}
-@keyframes X{7.373%{opacity:1}7.785%{opacity:0}}
-.X{animation-name:X}
-@keyframes Y{7.785%{opacity:1}8.117%{opacity:0}}
-.Y{animation-name:Y}
-@keyframes Z{8.117%{opacity:1}8.536%{opacity:0}}
-.Z{animation-name:Z}
-@keyframes aa{8.536%{opacity:1}8.955%{opacity:0}}
-.aa{animation-name:aa}
-@keyframes ab{8.955%{opacity:1}20.21%{opacity:0}}
-.ab{animation-name:ab}
-@keyframes ac{10.703%{opacity:1}20.21%{opacity:0}}
-.ac{animation-name:ac}
-@keyframes ad{15.357%{opacity:1}15.689%{opacity:0}}
-.ad{animation-name:ad}
-@keyframes ae{15.689%{opacity:1}16.009%{opacity:0}}
-.ae{animation-name:ae}
-@keyframes af{16.009%{opacity:1}16.394%{opacity:0}}
-.af{animation-name:af}
-@keyframes ag{16.394%{opacity:1}17.032%{opacity:0}}
-.ag{animation-name:ag}
-@keyframes ah{17.032%{opacity:1}17.312%{opacity:0}}
-.ah{animation-name:ah}
-@keyframes ai{17.312%{opacity:1}17.617%{opacity:0}}
-.ai{animation-name:ai}
-@keyframes aj{17.617%{opacity:1}17.963%{opacity:0}}
-.aj{animation-name:aj}
-@keyframes ak{17.963%{opacity:1}18.242%{opacity:0}}
-.ak{animation-name:ak}
-@keyframes al{18.242%{opacity:1}18.575%{opacity:0}}
-.al{animation-name:al}
-@keyframes am{18.575%{opacity:1}20.21%{opacity:0}}
-.am{animation-name:am}
-@keyframes M{20.21%{opacity:1}38.958%{opacity:0}}
-.M{animation-name:M}
-@keyframes an{31.512%{opacity:1}31.844%{opacity:0}}
-.an{animation-name:an}
-@keyframes ao{31.844%{opacity:1}32.083%{opacity:0}}
-.ao{animation-name:ao}
-@keyframes ap{32.083%{opacity:1}32.502%{opacity:0}}
+.ad{fill:#ac4142}
+@keyframes ap{4.654%{opacity:1}4.986%{opacity:0}}
 .ap{animation-name:ap}
-@keyframes aq{32.502%{opacity:1}33.147%{opacity:0}}
+@keyframes aq{4.986%{opacity:1}5.225%{opacity:0}}
 .aq{animation-name:aq}
-@keyframes ar{33.147%{opacity:1}33.573%{opacity:0}}
+@keyframes ar{5.225%{opacity:1}5.578%{opacity:0}}
 .ar{animation-name:ar}
-@keyframes as{33.573%{opacity:1}33.965%{opacity:0}}
+@keyframes as{5.578%{opacity:1}6.123%{opacity:0}}
 .as{animation-name:as}
-@keyframes at{33.965%{opacity:1}34.769%{opacity:0}}
+@keyframes at{6.123%{opacity:1}6.356%{opacity:0}}
 .at{animation-name:at}
-@keyframes au{34.769%{opacity:1}35.168%{opacity:0}}
+@keyframes au{6.356%{opacity:1}6.681%{opacity:0}}
 .au{animation-name:au}
-@keyframes av{35.168%{opacity:1}35.501%{opacity:0}}
+@keyframes av{6.681%{opacity:1}7.02%{opacity:0}}
 .av{animation-name:av}
-@keyframes aw{35.501%{opacity:1}35.88%{opacity:0}}
+@keyframes aw{7.02%{opacity:1}7.373%{opacity:0}}
 .aw{animation-name:aw}
-@keyframes ax{35.88%{opacity:1}36.225%{opacity:0}}
+@keyframes ax{7.373%{opacity:1}7.785%{opacity:0}}
 .ax{animation-name:ax}
-@keyframes ay{36.225%{opacity:1}36.531%{opacity:0}}
+@keyframes ay{7.785%{opacity:1}8.117%{opacity:0}}
 .ay{animation-name:ay}
-@keyframes az{36.531%{opacity:1}36.917%{opacity:0}}
+@keyframes az{8.117%{opacity:1}8.536%{opacity:0}}
 .az{animation-name:az}
-@keyframes aA{36.917%{opacity:1}37.229%{opacity:0}}
-.aA{animation-name:aA}
-@keyframes aB{37.229%{opacity:1}37.535%{opacity:0}}
-.aB{animation-name:aB}
-@keyframes aC{37.535%{opacity:1}38.313%{opacity:0}}
-.aC{animation-name:aC}
-@keyframes aD{38.313%{opacity:1}38.645%{opacity:0}}
-.aD{animation-name:aD}
-@keyframes aE{38.645%{opacity:1}38.958%{opacity:0}}
-.aE{animation-name:aE}
-@keyframes N{38.958%{opacity:1}40.287%{opacity:0}}
-.N{animation-name:N}
-@keyframes I{40.287%{opacity:1}55.119%{opacity:0}}
-.I{animation-name:I}
-@keyframes aF{51.589%{opacity:1}51.921%{opacity:0}}
-.aF{animation-name:aF}
-@keyframes aG{51.921%{opacity:1}52.26%{opacity:0}}
-.aG{animation-name:aG}
-@keyframes aH{52.26%{opacity:1}52.653%{opacity:0}}
-.aH{animation-name:aH}
-@keyframes aI{52.653%{opacity:1}53.211%{opacity:0}}
-.aI{animation-name:aI}
-@keyframes aJ{53.211%{opacity:1}53.543%{opacity:0}}
-.aJ{animation-name:aJ}
-@keyframes aK{53.543%{opacity:1}53.896%{opacity:0}}
-.aK{animation-name:aK}
-@keyframes aL{53.896%{opacity:1}54.155%{opacity:0}}
-.aL{animation-name:aL}
-@keyframes aM{54.155%{opacity:1}54.434%{opacity:0}}
-.aM{animation-name:aM}
-@keyframes aN{54.434%{opacity:1}54.727%{opacity:0}}
-.aN{animation-name:aN}
-@keyframes aO{54.727%{opacity:1}55.119%{opacity:0}}
-.aO{animation-name:aO}
-@keyframes J{55.119%{opacity:1}56.449%{opacity:0}}
-.J{animation-name:J}
-@keyframes K{56.449%{opacity:1}76.067%{opacity:0}}
-.K{animation-name:K}
-@keyframes aP{61.102%{opacity:1}61.435%{opacity:0}}
-.aP{animation-name:aP}
-@keyframes aQ{61.435%{opacity:1}62.146%{opacity:0}}
-.aQ{animation-name:aQ}
-@keyframes aR{62.146%{opacity:1}62.824%{opacity:0}}
-.aR{animation-name:aR}
-@keyframes aS{62.824%{opacity:1}64.101%{opacity:0}}
-.aS{animation-name:aS}
-@keyframes aT{64.101%{opacity:1}64.686%{opacity:0}}
-.aT{animation-name:aT}
-@keyframes aU{64.686%{opacity:1}65.317%{opacity:0}}
-.aU{animation-name:aU}
-@keyframes aV{65.317%{opacity:1}65.995%{opacity:0}}
-.aV{animation-name:aV}
-@keyframes aW{65.995%{opacity:1}67.238%{opacity:0}}
-.aW{animation-name:aW}
-@keyframes aX{67.238%{opacity:1}67.97%{opacity:0}}
-.aX{animation-name:aX}
-@keyframes aY{67.97%{opacity:1}68.728%{opacity:0}}
-.aY{animation-name:aY}
-@keyframes aZ{68.728%{opacity:1}69.439%{opacity:0}}
-.aZ{animation-name:aZ}
-@keyframes a0{69.439%{opacity:1}70.017%{opacity:0}}
+@keyframes a0{8.536%{opacity:1}8.955%{opacity:0}}
 .a0{animation-name:a0}
-@keyframes a1{70.017%{opacity:1}70.669%{opacity:0}}
+@keyframes a1{8.955%{opacity:1}20.21%{opacity:0}}
 .a1{animation-name:a1}
-@keyframes a2{70.669%{opacity:1}72.018%{opacity:0}}
+@keyframes a2{10.703%{opacity:1}20.21%{opacity:0}}
 .a2{animation-name:a2}
-@keyframes a3{72.018%{opacity:1}72.657%{opacity:0}}
+@keyframes a3{15.357%{opacity:1}15.689%{opacity:0}}
 .a3{animation-name:a3}
-@keyframes a4{72.657%{opacity:1}73.335%{opacity:0}}
+@keyframes a4{15.689%{opacity:1}16.009%{opacity:0}}
 .a4{animation-name:a4}
-@keyframes a5{73.335%{opacity:1}73.926%{opacity:0}}
+@keyframes a5{16.009%{opacity:1}16.394%{opacity:0}}
 .a5{animation-name:a5}
-@keyframes a6{73.926%{opacity:1}74.671%{opacity:0}}
+@keyframes a6{16.394%{opacity:1}17.032%{opacity:0}}
 .a6{animation-name:a6}
-@keyframes a7{74.671%{opacity:1}75.329%{opacity:0}}
+@keyframes a7{17.032%{opacity:1}17.312%{opacity:0}}
 .a7{animation-name:a7}
-@keyframes a8{75.329%{opacity:1}76.067%{opacity:0}}
+@keyframes a8{17.312%{opacity:1}17.617%{opacity:0}}
 .a8{animation-name:a8}
-@keyframes L{76.067%{opacity:1}77.397%{opacity:0}}
-.L{animation-name:L}
-@keyframes H{77.397%{opacity:1}}
-.H{animation-name:H}
-@keyframes a9{88.698%{opacity:1}}
+@keyframes a9{17.617%{opacity:1}17.963%{opacity:0}}
 .a9{animation-name:a9}
-@keyframes ba{5.578%{opacity:1}5.837%{opacity:0}}
+@keyframes ba{17.963%{opacity:1}18.242%{opacity:0}}
 .ba{animation-name:ba}
-@keyframes bb{5.837%{opacity:1}6.123%{opacity:0}}
+@keyframes bb{18.242%{opacity:1}18.575%{opacity:0}}
 .bb{animation-name:bb}
-@keyframes bc{8.955%{opacity:1}9.374%{opacity:0}}
+@keyframes bc{18.575%{opacity:1}20.21%{opacity:0}}
 .bc{animation-name:bc}
-@keyframes bd{9.374%{opacity:1}10.703%{opacity:0}}
+@keyframes am{20.21%{opacity:1}38.958%{opacity:0}}
+.am{animation-name:am}
+@keyframes bd{31.512%{opacity:1}31.844%{opacity:0}}
 .bd{animation-name:bd}
-@keyframes be{10.703%{opacity:1}15.357%{opacity:0}}
+@keyframes be{31.844%{opacity:1}32.083%{opacity:0}}
 .be{animation-name:be}
-@keyframes bf{16.394%{opacity:1}16.687%{opacity:0}}
+@keyframes bf{32.083%{opacity:1}32.502%{opacity:0}}
 .bf{animation-name:bf}
-@keyframes bh{16.687%{opacity:1}17.032%{opacity:0}}
+@keyframes bh{32.502%{opacity:1}33.147%{opacity:0}}
 .bh{animation-name:bh}
-@keyframes bi{18.575%{opacity:1}18.88%{opacity:0}}
+@keyframes bi{33.147%{opacity:1}33.573%{opacity:0}}
 .bi{animation-name:bi}
-@keyframes bj{18.88%{opacity:1}20.21%{opacity:0}}
+@keyframes bj{33.573%{opacity:1}33.965%{opacity:0}}
 .bj{animation-name:bj}
-@keyframes bk{20.21%{opacity:1}31.512%{opacity:0}}
+@keyframes bk{33.965%{opacity:1}34.769%{opacity:0}}
 .bk{animation-name:bk}
-@keyframes bl{32.502%{opacity:1}32.828%{opacity:0}}
+@keyframes bl{34.769%{opacity:1}35.168%{opacity:0}}
 .bl{animation-name:bl}
-@keyframes bm{32.828%{opacity:1}33.147%{opacity:0}}
+@keyframes bm{35.168%{opacity:1}35.501%{opacity:0}}
 .bm{animation-name:bm}
-@keyframes bn{33.965%{opacity:1}34.377%{opacity:0}}
+@keyframes bn{35.501%{opacity:1}35.88%{opacity:0}}
 .bn{animation-name:bn}
-@keyframes bo{34.377%{opacity:1}34.769%{opacity:0}}
+@keyframes bo{35.88%{opacity:1}36.225%{opacity:0}}
 .bo{animation-name:bo}
-@keyframes bp{37.535%{opacity:1}37.947%{opacity:0}}
+@keyframes bp{36.225%{opacity:1}36.531%{opacity:0}}
 .bp{animation-name:bp}
-@keyframes bq{37.947%{opacity:1}38.313%{opacity:0}}
+@keyframes bq{36.531%{opacity:1}36.917%{opacity:0}}
 .bq{animation-name:bq}
-@keyframes br{38.958%{opacity:1}51.589%{opacity:0}}
+@keyframes br{36.917%{opacity:1}37.229%{opacity:0}}
 .br{animation-name:br}
-@keyframes bs{52.653%{opacity:1}52.892%{opacity:0}}
+@keyframes bs{37.229%{opacity:1}37.535%{opacity:0}}
 .bs{animation-name:bs}
-@keyframes bt{52.892%{opacity:1}53.211%{opacity:0}}
+@keyframes bt{37.535%{opacity:1}38.313%{opacity:0}}
 .bt{animation-name:bt}
-@keyframes bu{55.119%{opacity:1}61.102%{opacity:0}}
+@keyframes bu{38.313%{opacity:1}38.645%{opacity:0}}
 .bu{animation-name:bu}
-@keyframes bv{62.824%{opacity:1}63.489%{opacity:0}}
+@keyframes bv{38.645%{opacity:1}38.958%{opacity:0}}
 .bv{animation-name:bv}
-@keyframes bw{63.489%{opacity:1}64.101%{opacity:0}}
+@keyframes an{38.958%{opacity:1}40.287%{opacity:0}}
+.an{animation-name:an}
+@keyframes ai{40.287%{opacity:1}55.119%{opacity:0}}
+.ai{animation-name:ai}
+@keyframes bw{51.589%{opacity:1}51.921%{opacity:0}}
 .bw{animation-name:bw}
-@keyframes bx{65.995%{opacity:1}66.567%{opacity:0}}
+@keyframes bx{51.921%{opacity:1}52.26%{opacity:0}}
 .bx{animation-name:bx}
-@keyframes by{66.567%{opacity:1}67.238%{opacity:0}}
+@keyframes by{52.26%{opacity:1}52.653%{opacity:0}}
 .by{animation-name:by}
-@keyframes bz{70.669%{opacity:1}71.28%{opacity:0}}
+@keyframes bz{52.653%{opacity:1}53.211%{opacity:0}}
 .bz{animation-name:bz}
-@keyframes bA{71.28%{opacity:1}72.018%{opacity:0}}
-.bA{animation-name:bA}
-@keyframes bB{76.067%{opacity:1}88.698%{opacity:0}}
-.bB{animation-name:bB}
-@keyframes O{0%{opacity:1}}
-.O{animation-name:O}
+@keyframes b0{53.211%{opacity:1}53.543%{opacity:0}}
+.b0{animation-name:b0}
+@keyframes b1{53.543%{opacity:1}53.896%{opacity:0}}
+.b1{animation-name:b1}
+@keyframes b2{53.896%{opacity:1}54.155%{opacity:0}}
+.b2{animation-name:b2}
+@keyframes b3{54.155%{opacity:1}54.434%{opacity:0}}
+.b3{animation-name:b3}
+@keyframes b4{54.434%{opacity:1}54.727%{opacity:0}}
+.b4{animation-name:b4}
+@keyframes b5{54.727%{opacity:1}55.119%{opacity:0}}
+.b5{animation-name:b5}
+@keyframes aj{55.119%{opacity:1}56.449%{opacity:0}}
+.aj{animation-name:aj}
+@keyframes ak{56.449%{opacity:1}76.067%{opacity:0}}
+.ak{animation-name:ak}
+@keyframes b6{61.102%{opacity:1}61.435%{opacity:0}}
+.b6{animation-name:b6}
+@keyframes b7{61.435%{opacity:1}62.146%{opacity:0}}
+.b7{animation-name:b7}
+@keyframes b8{62.146%{opacity:1}62.824%{opacity:0}}
+.b8{animation-name:b8}
+@keyframes b9{62.824%{opacity:1}64.101%{opacity:0}}
+.b9{animation-name:b9}
+@keyframes ca{64.101%{opacity:1}64.686%{opacity:0}}
+.ca{animation-name:ca}
+@keyframes cb{64.686%{opacity:1}65.317%{opacity:0}}
+.cb{animation-name:cb}
+@keyframes cc{65.317%{opacity:1}65.995%{opacity:0}}
+.cc{animation-name:cc}
+@keyframes cd{65.995%{opacity:1}67.238%{opacity:0}}
+.cd{animation-name:cd}
+@keyframes ce{67.238%{opacity:1}67.97%{opacity:0}}
+.ce{animation-name:ce}
+@keyframes cf{67.97%{opacity:1}68.728%{opacity:0}}
+.cf{animation-name:cf}
+@keyframes cg{68.728%{opacity:1}69.439%{opacity:0}}
+.cg{animation-name:cg}
+@keyframes ch{69.439%{opacity:1}70.017%{opacity:0}}
+.ch{animation-name:ch}
+@keyframes ci{70.017%{opacity:1}70.669%{opacity:0}}
+.ci{animation-name:ci}
+@keyframes cj{70.669%{opacity:1}72.018%{opacity:0}}
+.cj{animation-name:cj}
+@keyframes ck{72.018%{opacity:1}72.657%{opacity:0}}
+.ck{animation-name:ck}
+@keyframes cl{72.657%{opacity:1}73.335%{opacity:0}}
+.cl{animation-name:cl}
+@keyframes cm{73.335%{opacity:1}73.926%{opacity:0}}
+.cm{animation-name:cm}
+@keyframes cn{73.926%{opacity:1}74.671%{opacity:0}}
+.cn{animation-name:cn}
+@keyframes co{74.671%{opacity:1}75.329%{opacity:0}}
+.co{animation-name:co}
+@keyframes cp{75.329%{opacity:1}76.067%{opacity:0}}
+.cp{animation-name:cp}
+@keyframes al{76.067%{opacity:1}77.397%{opacity:0}}
+.al{animation-name:al}
+@keyframes ah{77.397%{opacity:1}}
+.ah{animation-name:ah}
+@keyframes cq{88.698%{opacity:1}}
+.cq{animation-name:cq}
+@keyframes cr{5.578%{opacity:1}5.837%{opacity:0}}
+.cr{animation-name:cr}
+@keyframes cs{5.837%{opacity:1}6.123%{opacity:0}}
+.cs{animation-name:cs}
+@keyframes ct{8.955%{opacity:1}9.374%{opacity:0}}
+.ct{animation-name:ct}
+@keyframes cu{9.374%{opacity:1}10.703%{opacity:0}}
+.cu{animation-name:cu}
+@keyframes cv{10.703%{opacity:1}15.357%{opacity:0}}
+.cv{animation-name:cv}
+@keyframes cw{16.394%{opacity:1}16.687%{opacity:0}}
+.cw{animation-name:cw}
+@keyframes cx{16.687%{opacity:1}17.032%{opacity:0}}
+.cx{animation-name:cx}
+@keyframes cy{18.575%{opacity:1}18.88%{opacity:0}}
+.cy{animation-name:cy}
+@keyframes cz{18.88%{opacity:1}20.21%{opacity:0}}
+.cz{animation-name:cz}
+@keyframes c0{20.21%{opacity:1}31.512%{opacity:0}}
+.c0{animation-name:c0}
+@keyframes c1{32.502%{opacity:1}32.828%{opacity:0}}
+.c1{animation-name:c1}
+@keyframes c2{32.828%{opacity:1}33.147%{opacity:0}}
+.c2{animation-name:c2}
+@keyframes c3{33.965%{opacity:1}34.377%{opacity:0}}
+.c3{animation-name:c3}
+@keyframes c4{34.377%{opacity:1}34.769%{opacity:0}}
+.c4{animation-name:c4}
+@keyframes c5{37.535%{opacity:1}37.947%{opacity:0}}
+.c5{animation-name:c5}
+@keyframes c6{37.947%{opacity:1}38.313%{opacity:0}}
+.c6{animation-name:c6}
+@keyframes c7{38.958%{opacity:1}51.589%{opacity:0}}
+.c7{animation-name:c7}
+@keyframes c8{52.653%{opacity:1}52.892%{opacity:0}}
+.c8{animation-name:c8}
+@keyframes c9{52.892%{opacity:1}53.211%{opacity:0}}
+.c9{animation-name:c9}
+@keyframes da{55.119%{opacity:1}61.102%{opacity:0}}
+.da{animation-name:da}
+@keyframes db{62.824%{opacity:1}63.489%{opacity:0}}
+.db{animation-name:db}
+@keyframes dc{63.489%{opacity:1}64.101%{opacity:0}}
+.dc{animation-name:dc}
+@keyframes dd{65.995%{opacity:1}66.567%{opacity:0}}
+.dd{animation-name:dd}
+@keyframes de{66.567%{opacity:1}67.238%{opacity:0}}
+.de{animation-name:de}
+@keyframes df{70.669%{opacity:1}71.28%{opacity:0}}
+.df{animation-name:df}
+@keyframes dg{71.28%{opacity:1}72.018%{opacity:0}}
+.dg{animation-name:dg}
+@keyframes dh{76.067%{opacity:1}88.698%{opacity:0}}
+.dh{animation-name:dh}
+@keyframes ao{0%{opacity:1}}
+.ao{animation-name:ao}
 </style>
 <defs>
 <rect id="c" class="c" width="9.92" height="20"/>
 <mask id="viewport-mask" x="0" y="0" width="829.6" height="624" maskUnits="userSpaceOnUse">
-<rect class="l O viewport-mask-0" x="8" y="8" width="813.6" height="608" fill="white"/>
+<rect class="l ao viewport-mask-0" x="8" y="8" width="813.6" height="608" fill="white"/>
 </mask>
 </defs>
 <g mask="url(#viewport-mask)" fill="#d0d0d0">
-<rect class="bg l O viewport-bg-0" x="8" y="8" width="813.6" height="608" fill="#282c34"/>
-<g class="l P"><text x="18" y="24.8">$</text><use href="#c" x="37.84" y="12"/></g>
-<g class="l Q"><text x="18 37.84" y="24.8">$g</text><use href="#c" x="47.76" y="12"/></g>
-<g class="l R"><text x="18 37.84 47.76" y="24.8">$gi</text><use href="#c" x="57.68" y="12"/></g>
-<g class="l S"><g id="r3"><text x="18 37.84 47.76 57.68" y="24.8">$git</text></g></g>
-<g class="l T a"><text x="18" textLength="69.44">$ git -</text><use href="#c" x="87.44" y="-12.8"/></g>
-<g class="l U a"><text x="18" textLength="79.36">$ git --</text><use href="#c" x="97.36" y="-12.8"/></g>
-<g class="l V a"><text x="18" textLength="89.28">$ git --v</text><use href="#c" x="107.28" y="-12.8"/></g>
-<g class="l W a"><text x="18" textLength="99.2">$ git --ve</text><use href="#c" x="117.2" y="-12.8"/></g>
-<g class="l X a"><text x="18" textLength="109.12">$ git --ver</text><use href="#c" x="127.12" y="-12.8"/></g>
-<g class="l Y a"><text x="18" textLength="119.04">$ git --vers</text><use href="#c" x="137.04" y="-12.8"/></g>
-<g class="l Z a"><text x="18" textLength="128.96">$ git --versi</text><use href="#c" x="146.96" y="-12.8"/></g>
-<g class="l aa a"><text x="18" textLength="138.88">$ git --versio</text><use href="#c" x="156.88" y="-12.8"/></g>
-<text class="l ab a" x="18" textLength="148.8">$ git --version</text>
-<text class="l ac" x="18" y="44.8" textLength="277.76">git version 2.49.0.windows.1</text>
-<g class="l ad"><text x="18" y="64.8">$</text><use href="#c" x="37.84" y="52"/></g>
-<g class="l ae"><text x="18 37.84" y="64.8">$g</text><use href="#c" x="47.76" y="52"/></g>
-<g class="l af"><text x="18 37.84 47.76" y="64.8">$gi</text><use href="#c" x="57.68" y="52"/></g>
-<use href="#r3" y="40" class="l ag"/>
-<g class="l ah b"><text x="18" textLength="69.44">$ git s</text><use href="#c" x="87.44" y="-12.8"/></g>
-<g class="l ai b"><text x="18" textLength="79.36">$ git st</text><use href="#c" x="97.36" y="-12.8"/></g>
-<g class="l aj b"><text x="18" textLength="89.28">$ git sta</text><use href="#c" x="107.28" y="-12.8"/></g>
-<g class="l ak b"><text x="18" textLength="99.2">$ git stat</text><use href="#c" x="117.2" y="-12.8"/></g>
-<g class="l al b"><text x="18" textLength="109.12">$ git statu</text><use href="#c" x="127.12" y="-12.8"/></g>
-<text class="l am b" x="18" textLength="119.04">$ git status</text>
-<text class="l M a" x="18" textLength="158.72">On branch stream</text>
-<g class="l M"><g id="r25"><text x="18" y="44.8" textLength="525.76">Your branch is ahead of 'origin/stream' by 6 commits.</text></g></g>
-<g class="l M b"><g id="r26"><text x="37.84" textLength="456.32">(use &quot;git push&quot; to publish your local commits)</text></g></g>
-<g class="l M"><g id="r27"><text x="18" y="104.8" textLength="297.6">Changes not staged for commit:</text></g></g>
-<g class="l M"><g id="r28"><text x="37.84" y="124.8" textLength="605.12">(use &quot;git add/rm &lt;file&gt;...&quot; to update what will be committed)</text></g></g>
-<g class="l M"><g id="r29"><text x="37.84" y="144.8" textLength="684.48">(use &quot;git restore &lt;file&gt;...&quot; to discard changes in working directory)</text></g></g>
-<g class="l M"><g id="r30"><text x="97.36" y="164.8" textLength="337.28">deleted:    samples/basic-test.gif</text></g></g>
-<g class="l M"><g id="r31"><text x="97.36" y="184.8" textLength="297.6">modified:   samples/basic.cast</text></g></g>
-<g class="l M"><g id="r32"><text x="97.36" y="204.8" textLength="287.68">modified:   samples/basic.gif</text></g></g>
-<g class="l M"><g id="r33"><text x="97.36" y="224.8" textLength="287.68">modified:   samples/basic.svg</text></g></g>
-<g class="l M"><g id="r34"><text x="97.36" y="244.8" textLength="287.68">modified:   samples/demo.cast</text></g></g>
-<g class="l M"><g id="r35"><text x="97.36" y="264.8" textLength="277.76">modified:   samples/demo.gif</text></g></g>
-<g class="l M"><g id="r36"><text x="97.36" y="284.8" textLength="277.76">modified:   samples/demo.svg</text></g></g>
-<g class="l M"><g id="r37"><text x="97.36" y="304.8" textLength="277.76">modified:   samples/git.cast</text></g></g>
-<g class="l M"><g id="r38"><text x="97.36" y="324.8" textLength="267.84">modified:   samples/git.gif</text></g></g>
-<g class="l M"><g id="r39"><text x="97.36" y="344.8" textLength="267.84">modified:   samples/git.svg</text></g></g>
-<g class="l M"><g id="r40"><text x="97.36" y="364.8" textLength="337.28">modified:   samples/highlight.cast</text></g></g>
-<g class="l M"><g id="r41"><text x="97.36" y="384.8" textLength="327.36">modified:   samples/highlight.gif</text></g></g>
-<g class="l M"><g id="r42"><text x="97.36" y="404.8" textLength="327.36">modified:   samples/highlight.svg</text></g></g>
-<g class="l M"><g id="r43"><text x="97.36" y="424.8" textLength="277.76">modified:   samples/pty.cast</text></g></g>
-<g class="l M"><g id="r44"><text x="97.36" y="444.8" textLength="267.84">modified:   samples/pty.gif</text></g></g>
-<g class="l M"><g id="r45"><text x="97.36" y="464.8" textLength="267.84">modified:   samples/pty.svg</text></g></g>
-<g class="l M"><g id="r46"><text x="97.36" y="484.8" textLength="337.28">modified:   samples/quickstart.gif</text></g></g>
-<g class="l M"><g id="r47"><text x="97.36" y="504.8" textLength="396.8">modified:   samples/scenario_format.cast</text></g></g>
-<g class="l M"><g id="r48"><text x="97.36" y="524.8" textLength="386.88">modified:   samples/scenario_format.gif</text></g></g>
-<g class="l M"><g id="r49"><text x="97.36" y="544.8" textLength="386.88">modified:   samples/scenario_format.svg</text></g></g>
-<g class="l M"><g id="r50"><text x="18" y="584.8" textLength="644.8">no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)</text></g></g>
-<g class="l an"><text x="18" y="604.8">$</text><use href="#c" x="37.84" y="592"/></g>
-<g class="l ao"><text x="18 37.84" y="604.8">$g</text><use href="#c" x="47.76" y="592"/></g>
-<g class="l ap"><text x="18 37.84 47.76" y="604.8">$gi</text><use href="#c" x="57.68" y="592"/></g>
-<use href="#r3" y="580" class="l aq"/>
-<g class="l ar d"><text x="18" textLength="69.44">$ git l</text><use href="#c" x="87.44" y="-12.8"/></g>
-<g class="l as d"><text x="18" textLength="79.36">$ git lo</text><use href="#c" x="97.36" y="-12.8"/></g>
-<text class="l at d" x="18" textLength="89.28">$ git log</text>
-<g class="l au d"><text x="18" textLength="109.12">$ git log -</text><use href="#c" x="127.12" y="-12.8"/></g>
-<g class="l av d"><text x="18" textLength="119.04">$ git log --</text><use href="#c" x="137.04" y="-12.8"/></g>
-<g class="l aw d"><text x="18" textLength="128.96">$ git log --o</text><use href="#c" x="146.96" y="-12.8"/></g>
-<g class="l ax d"><text x="18" textLength="138.88">$ git log --on</text><use href="#c" x="156.88" y="-12.8"/></g>
-<g class="l ay d"><text x="18" textLength="148.8">$ git log --one</text><use href="#c" x="166.8" y="-12.8"/></g>
-<g class="l az d"><text x="18" textLength="158.72">$ git log --onel</text><use href="#c" x="176.72" y="-12.8"/></g>
-<g class="l aA d"><text x="18" textLength="168.64">$ git log --oneli</text><use href="#c" x="186.64" y="-12.8"/></g>
-<g class="l aB d"><text x="18" textLength="178.56">$ git log --onelin</text><use href="#c" x="196.56" y="-12.8"/></g>
-<text class="l aC d" x="18" textLength="188.48">$ git log --oneline</text>
-<g class="l aD d"><text x="18" textLength="208.32">$ git log --oneline -</text><use href="#c" x="226.32" y="-12.8"/></g>
-<g class="l aE d"><g id="r68"><text x="18" textLength="218.24">$ git log --oneline -5</text></g><use href="#c" x="236.24" y="-12.8"/></g>
-<use href="#r25" y="-20" class="l N"/>
-<use href="#r26" class="l N e"/>
-<use href="#r27" y="-20" class="l N"/>
-<use href="#r28" y="-20" class="l N"/>
-<use href="#r29" y="-20" class="l N"/>
-<use href="#r30" y="-20" class="l N"/>
-<use href="#r31" y="-20" class="l N"/>
-<use href="#r32" y="-20" class="l N"/>
-<use href="#r33" y="-20" class="l N"/>
-<use href="#r34" y="-20" class="l N"/>
-<use href="#r35" y="-20" class="l N"/>
-<use href="#r36" y="-20" class="l N"/>
-<use href="#r37" y="-20" class="l N"/>
-<use href="#r38" y="-20" class="l N"/>
-<use href="#r39" y="-20" class="l N"/>
-<use href="#r40" y="-20" class="l N"/>
-<use href="#r41" y="-20" class="l N"/>
-<use href="#r42" y="-20" class="l N"/>
-<use href="#r43" y="-20" class="l N"/>
-<use href="#r44" y="-20" class="l N"/>
-<use href="#r45" y="-20" class="l N"/>
-<use href="#r46" y="-20" class="l N"/>
-<use href="#r47" y="-20" class="l N"/>
-<use href="#r48" y="-20" class="l N"/>
-<use href="#r49" y="-20" class="l N"/>
-<use href="#r50" y="-20" class="l N"/>
-<use href="#r68" class="l N f"/>
-<use href="#r29" y="-120" class="l I"/>
-<use href="#r30" y="-120" class="l I"/>
-<use href="#r31" y="-120" class="l I"/>
-<use href="#r32" y="-120" class="l I"/>
-<use href="#r33" y="-120" class="l I"/>
-<use href="#r34" y="-120" class="l I"/>
-<use href="#r35" y="-120" class="l I"/>
-<use href="#r36" y="-120" class="l I"/>
-<use href="#r37" y="-120" class="l I"/>
-<use href="#r38" y="-120" class="l I"/>
-<use href="#r39" y="-120" class="l I"/>
-<use href="#r40" y="-120" class="l I"/>
-<use href="#r41" y="-120" class="l I"/>
-<use href="#r42" y="-120" class="l I"/>
-<use href="#r43" y="-120" class="l I"/>
-<use href="#r44" y="-120" class="l I"/>
-<use href="#r45" y="-120" class="l I"/>
-<use href="#r46" y="-120" class="l I"/>
-<use href="#r47" y="-120" class="l I"/>
-<use href="#r48" y="-120" class="l I"/>
-<use href="#r49" y="-120" class="l I"/>
-<use href="#r50" y="-120" class="l I"/>
-<use href="#r68" class="l I g"/>
-<g class="l I"><g id="r119"><text x="18" y="504.8" textLength="416.64">2b6f6ac chore: remove unnecessary handling</text></g></g>
-<g class="l I"><g id="r120"><text x="18" y="524.8" textLength="535.68">67875bc fix: streaming output order, remove NUL stdout</text></g></g>
-<g class="l I"><g id="r121"><text x="18" y="544.8" textLength="228.16">0eeb06b fix: svg render</text></g></g>
-<g class="l I"><g id="r122"><text x="18" y="564.8" textLength="188.48">6f1afe8 fix: stream</text></g></g>
-<g class="l I f"><g id="r123"><text x="18" textLength="357.12">8f047a1 fix: instant emit regression</text></g></g>
-<g class="l aF d"><text x="18">$</text><use href="#c" x="37.84" y="-12.8"/></g>
-<g class="l aG d"><text x="18 37.84">$g</text><use href="#c" x="47.76" y="-12.8"/></g>
-<g class="l aH d"><text x="18 37.84 47.76">$gi</text><use href="#c" x="57.68" y="-12.8"/></g>
-<text class="l aI d" x="18 37.84 47.76 57.68">$git</text>
-<g class="l aJ d"><text x="18" textLength="69.44">$ git b</text><use href="#c" x="87.44" y="-12.8"/></g>
-<g class="l aK d"><text x="18" textLength="79.36">$ git br</text><use href="#c" x="97.36" y="-12.8"/></g>
-<g class="l aL d"><text x="18" textLength="89.28">$ git bra</text><use href="#c" x="107.28" y="-12.8"/></g>
-<g class="l aM d"><text x="18" textLength="99.2">$ git bran</text><use href="#c" x="117.2" y="-12.8"/></g>
-<g class="l aN d"><text x="18" textLength="109.12">$ git branc</text><use href="#c" x="127.12" y="-12.8"/></g>
-<g class="l aO d"><g id="r133"><text x="18" textLength="119.04">$ git branch</text></g><use href="#c" x="137.04" y="-12.8"/></g>
-<use href="#r30" y="-140" class="l J"/>
-<use href="#r31" y="-140" class="l J"/>
-<use href="#r32" y="-140" class="l J"/>
-<use href="#r33" y="-140" class="l J"/>
-<use href="#r34" y="-140" class="l J"/>
-<use href="#r35" y="-140" class="l J"/>
-<use href="#r36" y="-140" class="l J"/>
-<use href="#r37" y="-140" class="l J"/>
-<use href="#r38" y="-140" class="l J"/>
-<use href="#r39" y="-140" class="l J"/>
-<use href="#r40" y="-140" class="l J"/>
-<use href="#r41" y="-140" class="l J"/>
-<use href="#r42" y="-140" class="l J"/>
-<use href="#r43" y="-140" class="l J"/>
-<use href="#r44" y="-140" class="l J"/>
-<use href="#r45" y="-140" class="l J"/>
-<use href="#r46" y="-140" class="l J"/>
-<use href="#r47" y="-140" class="l J"/>
-<use href="#r48" y="-140" class="l J"/>
-<use href="#r49" y="-140" class="l J"/>
-<use href="#r50" y="-140" class="l J"/>
-<use href="#r68" class="l J h"/>
-<use href="#r119" y="-20" class="l J"/>
-<use href="#r120" y="-20" class="l J"/>
-<use href="#r121" y="-20" class="l J"/>
-<use href="#r122" y="-20" class="l J"/>
-<use href="#r123" class="l J i"/>
-<use href="#r133" class="l J f"/>
-<use href="#r32" y="-180" class="l K"/>
-<use href="#r33" y="-180" class="l K"/>
-<use href="#r34" y="-180" class="l K"/>
-<use href="#r35" y="-180" class="l K"/>
-<use href="#r36" y="-180" class="l K"/>
-<use href="#r37" y="-180" class="l K"/>
-<use href="#r38" y="-180" class="l K"/>
-<use href="#r39" y="-180" class="l K"/>
-<use href="#r40" y="-180" class="l K"/>
-<use href="#r41" y="-180" class="l K"/>
-<use href="#r42" y="-180" class="l K"/>
-<use href="#r43" y="-180" class="l K"/>
-<use href="#r44" y="-180" class="l K"/>
-<use href="#r45" y="-180" class="l K"/>
-<use href="#r46" y="-180" class="l K"/>
-<use href="#r47" y="-180" class="l K"/>
-<use href="#r48" y="-180" class="l K"/>
-<use href="#r49" y="-180" class="l K"/>
-<use href="#r50" y="-180" class="l K"/>
-<use href="#r68" class="l K j"/>
-<use href="#r119" y="-60" class="l K"/>
-<use href="#r120" y="-60" class="l K"/>
-<use href="#r121" y="-60" class="l K"/>
-<use href="#r122" y="-60" class="l K"/>
-<use href="#r123" class="l K k"/>
-<use href="#r133" class="l K m"/>
-<text class="l K i" x="18" textLength="79.36">* stream</text>
-<text class="l K f" x="37.84 47.76 57.68 67.6">main</text>
-<g class="l aP d"><text x="18">$</text><use href="#c" x="37.84" y="-12.8"/></g>
-<g class="l aQ d"><text x="18 37.84">$g</text><use href="#c" x="47.76" y="-12.8"/></g>
-<g class="l aR d"><text x="18 37.84 47.76">$gi</text><use href="#c" x="57.68" y="-12.8"/></g>
-<text class="l aS d" x="18 37.84 47.76 57.68">$git</text>
-<g class="l aT d"><text x="18" textLength="69.44">$ git d</text><use href="#c" x="87.44" y="-12.8"/></g>
-<g class="l aU d"><text x="18" textLength="79.36">$ git di</text><use href="#c" x="97.36" y="-12.8"/></g>
-<g class="l aV d"><text x="18" textLength="89.28">$ git dif</text><use href="#c" x="107.28" y="-12.8"/></g>
-<text class="l aW d" x="18" textLength="99.2">$ git diff</text>
-<g class="l aX d"><text x="18" textLength="119.04">$ git diff -</text><use href="#c" x="137.04" y="-12.8"/></g>
-<g class="l aY d"><text x="18" textLength="128.96">$ git diff --</text><use href="#c" x="146.96" y="-12.8"/></g>
-<g class="l aZ d"><text x="18" textLength="138.88">$ git diff --s</text><use href="#c" x="156.88" y="-12.8"/></g>
-<g class="l a0 d"><text x="18" textLength="148.8">$ git diff --st</text><use href="#c" x="166.8" y="-12.8"/></g>
-<g class="l a1 d"><text x="18" textLength="158.72">$ git diff --sta</text><use href="#c" x="176.72" y="-12.8"/></g>
-<text class="l a2 d" x="18" textLength="168.64">$ git diff --stat</text>
-<g class="l a3 d"><text x="18" textLength="188.48">$ git diff --stat H</text><use href="#c" x="206.48" y="-12.8"/></g>
-<g class="l a4 d"><text x="18" textLength="198.4">$ git diff --stat HE</text><use href="#c" x="216.4" y="-12.8"/></g>
-<g class="l a5 d"><text x="18" textLength="208.32">$ git diff --stat HEA</text><use href="#c" x="226.32" y="-12.8"/></g>
-<g class="l a6 d"><text x="18" textLength="218.24">$ git diff --stat HEAD</text><use href="#c" x="236.24" y="-12.8"/></g>
-<g class="l a7 d"><text x="18" textLength="228.16">$ git diff --stat HEAD~</text><use href="#c" x="246.16" y="-12.8"/></g>
-<g class="l a8 d"><g id="r209"><text x="18" textLength="238.08">$ git diff --stat HEAD~1</text></g><use href="#c" x="256.08" y="-12.8"/></g>
-<use href="#r33" y="-200" class="l L"/>
-<use href="#r34" y="-200" class="l L"/>
-<use href="#r35" y="-200" class="l L"/>
-<use href="#r36" y="-200" class="l L"/>
-<use href="#r37" y="-200" class="l L"/>
-<use href="#r38" y="-200" class="l L"/>
-<use href="#r39" y="-200" class="l L"/>
-<use href="#r40" y="-200" class="l L"/>
-<use href="#r41" y="-200" class="l L"/>
-<use href="#r42" y="-200" class="l L"/>
-<use href="#r43" y="-200" class="l L"/>
-<use href="#r44" y="-200" class="l L"/>
-<use href="#r45" y="-200" class="l L"/>
-<use href="#r46" y="-200" class="l L"/>
-<use href="#r47" y="-200" class="l L"/>
-<use href="#r48" y="-200" class="l L"/>
-<use href="#r49" y="-200" class="l L"/>
-<use href="#r50" y="-200" class="l L"/>
-<use href="#r68" class="l L n"/>
-<use href="#r119" y="-80" class="l L"/>
-<use href="#r120" y="-80" class="l L"/>
-<use href="#r121" y="-80" class="l L"/>
-<use href="#r122" y="-80" class="l L"/>
-<use href="#r123" class="l L o"/>
-<use href="#r133" class="l L k"/>
-<text class="l L m" x="18" textLength="79.36">* stream</text>
-<text class="l L i" x="37.84 47.76 57.68 67.6">main</text>
-<use href="#r209" class="l L f"/>
-<text class="l H a" x="27.92" textLength="585.28">samples/demo.gif             |   Bin 314430 -&gt; 322034 bytes</text>
-<text class="l H e" x="27.92" textLength="386.88">samples/demo.svg             |    52 +-</text>
-<text class="l H b" x="27.92" textLength="386.88">samples/git.cast             |     6 +-</text>
-<text class="l H p" x="27.92" textLength="585.28">samples/git.gif              |   Bin 309882 -&gt; 319104 bytes</text>
-<text class="l H q" x="27.92" textLength="386.88">samples/git.svg              |  1714 +-</text>
-<text class="l H r" x="27.92" textLength="386.88">samples/highlight.cast       |     4 +-</text>
-<text class="l H s" x="27.92" textLength="585.28">samples/highlight.gif        |   Bin 478895 -&gt; 475725 bytes</text>
-<text class="l H t" x="27.92" textLength="386.88">samples/highlight.svg        |    58 +-</text>
-<text class="l H u" x="27.92" textLength="386.88">samples/pty.cast             |   284 +-</text>
-<text class="l H v" x="27.92" textLength="605.12">samples/pty.gif              |   Bin 1263415 -&gt; 1183054 bytes</text>
-<text class="l H w" x="27.92" textLength="773.76">samples/pty.svg              | 41798 +++++++++++++++++++++++++----------------</text>
-<text class="l H x" x="27.92" textLength="585.28">samples/quickstart.gif       |   Bin 314431 -&gt; 314431 bytes</text>
-<text class="l H y" x="27.92" textLength="386.88">samples/scenario_format.cast |    64 +-</text>
-<text class="l H z" x="27.92" textLength="585.28">samples/scenario_format.gif  |   Bin 597677 -&gt; 726571 bytes</text>
-<text class="l H A" x="27.92" textLength="406.72">samples/scenario_format.svg  |  3240 ++--</text>
-<text class="l H B" x="27.92" textLength="376.96">scenetake.cs                 |    22 -</text>
-<text class="l H C" x="27.92" textLength="565.44">21 files changed, 29278 insertions(+), 19793 deletions(-)</text>
-<text class="l H E D" x="18" textLength="793.6">warning: in the working copy of 'samples/basic.svg', CRLF will be replaced by LF</text>
-<text class="l H F D" x="27.92" textLength="277.76">the next time Git touches it</text>
-<text class="l H n D" x="18" textLength="783.68">warning: in the working copy of 'samples/demo.svg', CRLF will be replaced by LF</text>
-<text class="l H j D" x="18" textLength="277.76">the next time Git touches it</text>
-<text class="l H G D" x="18" textLength="793.6">warning: in the working copy of 'samples/git.svg', CRLF will be replaced by LF t</text>
-<g class="l H h"><g id="r260"><text class="D" x="18" textLength="267.84">he next time Git touches it</text></g></g>
-<text class="l H g D" x="18" textLength="793.6">warning: in the working copy of 'samples/highlight.svg', CRLF will be replaced b</text>
-<text class="l H o D" x="18" textLength="327.36">y LF the next time Git touches it</text>
-<text class="l H k D" x="18" textLength="793.6">warning: in the working copy of 'samples/pty.svg', CRLF will be replaced by LF t</text>
-<use href="#r260" class="l H m"/>
-<text class="l H i D" x="18" textLength="793.6">warning: in the working copy of 'samples/scenario_format.svg', CRLF will be repl</text>
-<text class="l H f D" x="18" textLength="386.88">aced by LF the next time Git touches it</text>
-<g class="l a9 d"><text x="18">$</text><use href="#c" x="37.84" y="-12.8"/></g>
-<use href="#c" x="67.6" y="12" class="l ba"/>
-<use href="#c" x="77.52" y="12" class="l bb"/>
-<use href="#c" x="166.8" y="12" class="l bc"/>
-<use href="#c" x="18" y="32" class="l bd"/>
-<use href="#c" x="18" y="52" class="l be"/>
-<use href="#c" x="67.6" y="52" class="l bf"/>
-<use href="#c" x="77.52" y="52" class="l bh"/>
-<use href="#c" x="137.04" y="52" class="l bi"/>
-<use href="#c" x="18" y="72" class="l bj"/>
-<use href="#c" x="18" y="592" class="l bk"/>
-<use href="#c" x="67.6" y="592" class="l bl"/>
-<use href="#c" x="77.52" y="592" class="l bm"/>
-<use href="#c" x="107.28" y="592" class="l bn"/>
-<use href="#c" x="117.2" y="592" class="l bo"/>
-<use href="#c" x="206.48" y="592" class="l bp"/>
-<use href="#c" x="216.4" y="592" class="l bq"/>
-<use href="#c" x="18" y="592" class="l br"/>
-<use href="#c" x="67.6" y="592" class="l bs"/>
-<use href="#c" x="77.52" y="592" class="l bt"/>
-<use href="#c" x="18" y="592" class="l bu"/>
-<use href="#c" x="67.6" y="592" class="l bv"/>
-<use href="#c" x="77.52" y="592" class="l bw"/>
-<use href="#c" x="117.2" y="592" class="l bx"/>
-<use href="#c" x="127.12" y="592" class="l by"/>
-<use href="#c" x="186.64" y="592" class="l bz"/>
-<use href="#c" x="196.56" y="592" class="l bA"/>
-<use href="#c" x="18" y="592" class="l bB"/>
+<rect class="bg l ao viewport-bg-0" x="8" y="8" width="813.6" height="608" fill="#282c34"/>
+<g class="l ap"><text x="18" y="24.8">$</text><use href="#c" x="37.84" y="12"/></g>
+<g class="l aq"><text x="18 37.84" y="24.8">$g</text><use href="#c" x="47.76" y="12"/></g>
+<g class="l ar"><text x="18 37.84 47.76" y="24.8">$gi</text><use href="#c" x="57.68" y="12"/></g>
+<g class="l as"><g id="r3"><text x="18 37.84 47.76 57.68" y="24.8">$git</text></g></g>
+<g class="l at a"><text x="18" textLength="69.44">$ git -</text><use href="#c" x="87.44" y="-12.8"/></g>
+<g class="l au a"><text x="18" textLength="79.36">$ git --</text><use href="#c" x="97.36" y="-12.8"/></g>
+<g class="l av a"><text x="18" textLength="89.28">$ git --v</text><use href="#c" x="107.28" y="-12.8"/></g>
+<g class="l aw a"><text x="18" textLength="99.2">$ git --ve</text><use href="#c" x="117.2" y="-12.8"/></g>
+<g class="l ax a"><text x="18" textLength="109.12">$ git --ver</text><use href="#c" x="127.12" y="-12.8"/></g>
+<g class="l ay a"><text x="18" textLength="119.04">$ git --vers</text><use href="#c" x="137.04" y="-12.8"/></g>
+<g class="l az a"><text x="18" textLength="128.96">$ git --versi</text><use href="#c" x="146.96" y="-12.8"/></g>
+<g class="l a0 a"><text x="18" textLength="138.88">$ git --versio</text><use href="#c" x="156.88" y="-12.8"/></g>
+<text class="l a1 a" x="18" textLength="148.8">$ git --version</text>
+<text class="l a2" x="18" y="44.8" textLength="277.76">git version 2.49.0.windows.1</text>
+<g class="l a3"><text x="18" y="64.8">$</text><use href="#c" x="37.84" y="52"/></g>
+<g class="l a4"><text x="18 37.84" y="64.8">$g</text><use href="#c" x="47.76" y="52"/></g>
+<g class="l a5"><text x="18 37.84 47.76" y="64.8">$gi</text><use href="#c" x="57.68" y="52"/></g>
+<use href="#r3" y="40" class="l a6"/>
+<g class="l a7 b"><text x="18" textLength="69.44">$ git s</text><use href="#c" x="87.44" y="-12.8"/></g>
+<g class="l a8 b"><text x="18" textLength="79.36">$ git st</text><use href="#c" x="97.36" y="-12.8"/></g>
+<g class="l a9 b"><text x="18" textLength="89.28">$ git sta</text><use href="#c" x="107.28" y="-12.8"/></g>
+<g class="l ba b"><text x="18" textLength="99.2">$ git stat</text><use href="#c" x="117.2" y="-12.8"/></g>
+<g class="l bb b"><text x="18" textLength="109.12">$ git statu</text><use href="#c" x="127.12" y="-12.8"/></g>
+<text class="l bc b" x="18" textLength="119.04">$ git status</text>
+<text class="l am a" x="18" textLength="158.72">On branch stream</text>
+<g class="l am"><g id="r25"><text x="18" y="44.8" textLength="525.76">Your branch is ahead of 'origin/stream' by 6 commits.</text></g></g>
+<g class="l am b"><g id="r26"><text x="37.84" textLength="456.32">(use &quot;git push&quot; to publish your local commits)</text></g></g>
+<g class="l am"><g id="r27"><text x="18" y="104.8" textLength="297.6">Changes not staged for commit:</text></g></g>
+<g class="l am"><g id="r28"><text x="37.84" y="124.8" textLength="605.12">(use &quot;git add/rm &lt;file&gt;...&quot; to update what will be committed)</text></g></g>
+<g class="l am"><g id="r29"><text x="37.84" y="144.8" textLength="684.48">(use &quot;git restore &lt;file&gt;...&quot; to discard changes in working directory)</text></g></g>
+<g class="l am"><g id="r30"><text x="97.36" y="164.8" textLength="337.28">deleted:    samples/basic-test.gif</text></g></g>
+<g class="l am"><g id="r31"><text x="97.36" y="184.8" textLength="297.6">modified:   samples/basic.cast</text></g></g>
+<g class="l am"><g id="r32"><text x="97.36" y="204.8" textLength="287.68">modified:   samples/basic.gif</text></g></g>
+<g class="l am"><g id="r33"><text x="97.36" y="224.8" textLength="287.68">modified:   samples/basic.svg</text></g></g>
+<g class="l am"><g id="r34"><text x="97.36" y="244.8" textLength="287.68">modified:   samples/demo.cast</text></g></g>
+<g class="l am"><g id="r35"><text x="97.36" y="264.8" textLength="277.76">modified:   samples/demo.gif</text></g></g>
+<g class="l am"><g id="r36"><text x="97.36" y="284.8" textLength="277.76">modified:   samples/demo.svg</text></g></g>
+<g class="l am"><g id="r37"><text x="97.36" y="304.8" textLength="277.76">modified:   samples/git.cast</text></g></g>
+<g class="l am"><g id="r38"><text x="97.36" y="324.8" textLength="267.84">modified:   samples/git.gif</text></g></g>
+<g class="l am"><g id="r39"><text x="97.36" y="344.8" textLength="267.84">modified:   samples/git.svg</text></g></g>
+<g class="l am"><g id="r40"><text x="97.36" y="364.8" textLength="337.28">modified:   samples/highlight.cast</text></g></g>
+<g class="l am"><g id="r41"><text x="97.36" y="384.8" textLength="327.36">modified:   samples/highlight.gif</text></g></g>
+<g class="l am"><g id="r42"><text x="97.36" y="404.8" textLength="327.36">modified:   samples/highlight.svg</text></g></g>
+<g class="l am"><g id="r43"><text x="97.36" y="424.8" textLength="277.76">modified:   samples/pty.cast</text></g></g>
+<g class="l am"><g id="r44"><text x="97.36" y="444.8" textLength="267.84">modified:   samples/pty.gif</text></g></g>
+<g class="l am"><g id="r45"><text x="97.36" y="464.8" textLength="267.84">modified:   samples/pty.svg</text></g></g>
+<g class="l am"><g id="r46"><text x="97.36" y="484.8" textLength="337.28">modified:   samples/quickstart.gif</text></g></g>
+<g class="l am"><g id="r47"><text x="97.36" y="504.8" textLength="396.8">modified:   samples/scenario_format.cast</text></g></g>
+<g class="l am"><g id="r48"><text x="97.36" y="524.8" textLength="386.88">modified:   samples/scenario_format.gif</text></g></g>
+<g class="l am"><g id="r49"><text x="97.36" y="544.8" textLength="386.88">modified:   samples/scenario_format.svg</text></g></g>
+<g class="l am"><g id="r50"><text x="18" y="584.8" textLength="644.8">no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)</text></g></g>
+<g class="l bd"><text x="18" y="604.8">$</text><use href="#c" x="37.84" y="592"/></g>
+<g class="l be"><text x="18 37.84" y="604.8">$g</text><use href="#c" x="47.76" y="592"/></g>
+<g class="l bf"><text x="18 37.84 47.76" y="604.8">$gi</text><use href="#c" x="57.68" y="592"/></g>
+<use href="#r3" y="580" class="l bh"/>
+<g class="l bi d"><text x="18" textLength="69.44">$ git l</text><use href="#c" x="87.44" y="-12.8"/></g>
+<g class="l bj d"><text x="18" textLength="79.36">$ git lo</text><use href="#c" x="97.36" y="-12.8"/></g>
+<text class="l bk d" x="18" textLength="89.28">$ git log</text>
+<g class="l bl d"><text x="18" textLength="109.12">$ git log -</text><use href="#c" x="127.12" y="-12.8"/></g>
+<g class="l bm d"><text x="18" textLength="119.04">$ git log --</text><use href="#c" x="137.04" y="-12.8"/></g>
+<g class="l bn d"><text x="18" textLength="128.96">$ git log --o</text><use href="#c" x="146.96" y="-12.8"/></g>
+<g class="l bo d"><text x="18" textLength="138.88">$ git log --on</text><use href="#c" x="156.88" y="-12.8"/></g>
+<g class="l bp d"><text x="18" textLength="148.8">$ git log --one</text><use href="#c" x="166.8" y="-12.8"/></g>
+<g class="l bq d"><text x="18" textLength="158.72">$ git log --onel</text><use href="#c" x="176.72" y="-12.8"/></g>
+<g class="l br d"><text x="18" textLength="168.64">$ git log --oneli</text><use href="#c" x="186.64" y="-12.8"/></g>
+<g class="l bs d"><text x="18" textLength="178.56">$ git log --onelin</text><use href="#c" x="196.56" y="-12.8"/></g>
+<text class="l bt d" x="18" textLength="188.48">$ git log --oneline</text>
+<g class="l bu d"><text x="18" textLength="208.32">$ git log --oneline -</text><use href="#c" x="226.32" y="-12.8"/></g>
+<g class="l bv d"><g id="r68"><text x="18" textLength="218.24">$ git log --oneline -5</text></g><use href="#c" x="236.24" y="-12.8"/></g>
+<use href="#r25" y="-20" class="l an"/>
+<use href="#r26" class="l an e"/>
+<use href="#r27" y="-20" class="l an"/>
+<use href="#r28" y="-20" class="l an"/>
+<use href="#r29" y="-20" class="l an"/>
+<use href="#r30" y="-20" class="l an"/>
+<use href="#r31" y="-20" class="l an"/>
+<use href="#r32" y="-20" class="l an"/>
+<use href="#r33" y="-20" class="l an"/>
+<use href="#r34" y="-20" class="l an"/>
+<use href="#r35" y="-20" class="l an"/>
+<use href="#r36" y="-20" class="l an"/>
+<use href="#r37" y="-20" class="l an"/>
+<use href="#r38" y="-20" class="l an"/>
+<use href="#r39" y="-20" class="l an"/>
+<use href="#r40" y="-20" class="l an"/>
+<use href="#r41" y="-20" class="l an"/>
+<use href="#r42" y="-20" class="l an"/>
+<use href="#r43" y="-20" class="l an"/>
+<use href="#r44" y="-20" class="l an"/>
+<use href="#r45" y="-20" class="l an"/>
+<use href="#r46" y="-20" class="l an"/>
+<use href="#r47" y="-20" class="l an"/>
+<use href="#r48" y="-20" class="l an"/>
+<use href="#r49" y="-20" class="l an"/>
+<use href="#r50" y="-20" class="l an"/>
+<use href="#r68" class="l an f"/>
+<use href="#r29" y="-120" class="l ai"/>
+<use href="#r30" y="-120" class="l ai"/>
+<use href="#r31" y="-120" class="l ai"/>
+<use href="#r32" y="-120" class="l ai"/>
+<use href="#r33" y="-120" class="l ai"/>
+<use href="#r34" y="-120" class="l ai"/>
+<use href="#r35" y="-120" class="l ai"/>
+<use href="#r36" y="-120" class="l ai"/>
+<use href="#r37" y="-120" class="l ai"/>
+<use href="#r38" y="-120" class="l ai"/>
+<use href="#r39" y="-120" class="l ai"/>
+<use href="#r40" y="-120" class="l ai"/>
+<use href="#r41" y="-120" class="l ai"/>
+<use href="#r42" y="-120" class="l ai"/>
+<use href="#r43" y="-120" class="l ai"/>
+<use href="#r44" y="-120" class="l ai"/>
+<use href="#r45" y="-120" class="l ai"/>
+<use href="#r46" y="-120" class="l ai"/>
+<use href="#r47" y="-120" class="l ai"/>
+<use href="#r48" y="-120" class="l ai"/>
+<use href="#r49" y="-120" class="l ai"/>
+<use href="#r50" y="-120" class="l ai"/>
+<use href="#r68" class="l ai g"/>
+<g class="l ai"><g id="r119"><text x="18" y="504.8" textLength="416.64">2b6f6ac chore: remove unnecessary handling</text></g></g>
+<g class="l ai"><g id="r120"><text x="18" y="524.8" textLength="535.68">67875bc fix: streaming output order, remove NUL stdout</text></g></g>
+<g class="l ai"><g id="r121"><text x="18" y="544.8" textLength="228.16">0eeb06b fix: svg render</text></g></g>
+<g class="l ai"><g id="r122"><text x="18" y="564.8" textLength="188.48">6f1afe8 fix: stream</text></g></g>
+<g class="l ai f"><g id="r123"><text x="18" textLength="357.12">8f047a1 fix: instant emit regression</text></g></g>
+<g class="l bw d"><text x="18">$</text><use href="#c" x="37.84" y="-12.8"/></g>
+<g class="l bx d"><text x="18 37.84">$g</text><use href="#c" x="47.76" y="-12.8"/></g>
+<g class="l by d"><text x="18 37.84 47.76">$gi</text><use href="#c" x="57.68" y="-12.8"/></g>
+<text class="l bz d" x="18 37.84 47.76 57.68">$git</text>
+<g class="l b0 d"><text x="18" textLength="69.44">$ git b</text><use href="#c" x="87.44" y="-12.8"/></g>
+<g class="l b1 d"><text x="18" textLength="79.36">$ git br</text><use href="#c" x="97.36" y="-12.8"/></g>
+<g class="l b2 d"><text x="18" textLength="89.28">$ git bra</text><use href="#c" x="107.28" y="-12.8"/></g>
+<g class="l b3 d"><text x="18" textLength="99.2">$ git bran</text><use href="#c" x="117.2" y="-12.8"/></g>
+<g class="l b4 d"><text x="18" textLength="109.12">$ git branc</text><use href="#c" x="127.12" y="-12.8"/></g>
+<g class="l b5 d"><g id="r133"><text x="18" textLength="119.04">$ git branch</text></g><use href="#c" x="137.04" y="-12.8"/></g>
+<use href="#r30" y="-140" class="l aj"/>
+<use href="#r31" y="-140" class="l aj"/>
+<use href="#r32" y="-140" class="l aj"/>
+<use href="#r33" y="-140" class="l aj"/>
+<use href="#r34" y="-140" class="l aj"/>
+<use href="#r35" y="-140" class="l aj"/>
+<use href="#r36" y="-140" class="l aj"/>
+<use href="#r37" y="-140" class="l aj"/>
+<use href="#r38" y="-140" class="l aj"/>
+<use href="#r39" y="-140" class="l aj"/>
+<use href="#r40" y="-140" class="l aj"/>
+<use href="#r41" y="-140" class="l aj"/>
+<use href="#r42" y="-140" class="l aj"/>
+<use href="#r43" y="-140" class="l aj"/>
+<use href="#r44" y="-140" class="l aj"/>
+<use href="#r45" y="-140" class="l aj"/>
+<use href="#r46" y="-140" class="l aj"/>
+<use href="#r47" y="-140" class="l aj"/>
+<use href="#r48" y="-140" class="l aj"/>
+<use href="#r49" y="-140" class="l aj"/>
+<use href="#r50" y="-140" class="l aj"/>
+<use href="#r68" class="l aj h"/>
+<use href="#r119" y="-20" class="l aj"/>
+<use href="#r120" y="-20" class="l aj"/>
+<use href="#r121" y="-20" class="l aj"/>
+<use href="#r122" y="-20" class="l aj"/>
+<use href="#r123" class="l aj i"/>
+<use href="#r133" class="l aj f"/>
+<use href="#r32" y="-180" class="l ak"/>
+<use href="#r33" y="-180" class="l ak"/>
+<use href="#r34" y="-180" class="l ak"/>
+<use href="#r35" y="-180" class="l ak"/>
+<use href="#r36" y="-180" class="l ak"/>
+<use href="#r37" y="-180" class="l ak"/>
+<use href="#r38" y="-180" class="l ak"/>
+<use href="#r39" y="-180" class="l ak"/>
+<use href="#r40" y="-180" class="l ak"/>
+<use href="#r41" y="-180" class="l ak"/>
+<use href="#r42" y="-180" class="l ak"/>
+<use href="#r43" y="-180" class="l ak"/>
+<use href="#r44" y="-180" class="l ak"/>
+<use href="#r45" y="-180" class="l ak"/>
+<use href="#r46" y="-180" class="l ak"/>
+<use href="#r47" y="-180" class="l ak"/>
+<use href="#r48" y="-180" class="l ak"/>
+<use href="#r49" y="-180" class="l ak"/>
+<use href="#r50" y="-180" class="l ak"/>
+<use href="#r68" class="l ak j"/>
+<use href="#r119" y="-60" class="l ak"/>
+<use href="#r120" y="-60" class="l ak"/>
+<use href="#r121" y="-60" class="l ak"/>
+<use href="#r122" y="-60" class="l ak"/>
+<use href="#r123" class="l ak k"/>
+<use href="#r133" class="l ak m"/>
+<text class="l ak i" x="18" textLength="79.36">* stream</text>
+<text class="l ak f" x="37.84 47.76 57.68 67.6">main</text>
+<g class="l b6 d"><text x="18">$</text><use href="#c" x="37.84" y="-12.8"/></g>
+<g class="l b7 d"><text x="18 37.84">$g</text><use href="#c" x="47.76" y="-12.8"/></g>
+<g class="l b8 d"><text x="18 37.84 47.76">$gi</text><use href="#c" x="57.68" y="-12.8"/></g>
+<text class="l b9 d" x="18 37.84 47.76 57.68">$git</text>
+<g class="l ca d"><text x="18" textLength="69.44">$ git d</text><use href="#c" x="87.44" y="-12.8"/></g>
+<g class="l cb d"><text x="18" textLength="79.36">$ git di</text><use href="#c" x="97.36" y="-12.8"/></g>
+<g class="l cc d"><text x="18" textLength="89.28">$ git dif</text><use href="#c" x="107.28" y="-12.8"/></g>
+<text class="l cd d" x="18" textLength="99.2">$ git diff</text>
+<g class="l ce d"><text x="18" textLength="119.04">$ git diff -</text><use href="#c" x="137.04" y="-12.8"/></g>
+<g class="l cf d"><text x="18" textLength="128.96">$ git diff --</text><use href="#c" x="146.96" y="-12.8"/></g>
+<g class="l cg d"><text x="18" textLength="138.88">$ git diff --s</text><use href="#c" x="156.88" y="-12.8"/></g>
+<g class="l ch d"><text x="18" textLength="148.8">$ git diff --st</text><use href="#c" x="166.8" y="-12.8"/></g>
+<g class="l ci d"><text x="18" textLength="158.72">$ git diff --sta</text><use href="#c" x="176.72" y="-12.8"/></g>
+<text class="l cj d" x="18" textLength="168.64">$ git diff --stat</text>
+<g class="l ck d"><text x="18" textLength="188.48">$ git diff --stat H</text><use href="#c" x="206.48" y="-12.8"/></g>
+<g class="l cl d"><text x="18" textLength="198.4">$ git diff --stat HE</text><use href="#c" x="216.4" y="-12.8"/></g>
+<g class="l cm d"><text x="18" textLength="208.32">$ git diff --stat HEA</text><use href="#c" x="226.32" y="-12.8"/></g>
+<g class="l cn d"><text x="18" textLength="218.24">$ git diff --stat HEAD</text><use href="#c" x="236.24" y="-12.8"/></g>
+<g class="l co d"><text x="18" textLength="228.16">$ git diff --stat HEAD~</text><use href="#c" x="246.16" y="-12.8"/></g>
+<g class="l cp d"><g id="r209"><text x="18" textLength="238.08">$ git diff --stat HEAD~1</text></g><use href="#c" x="256.08" y="-12.8"/></g>
+<use href="#r33" y="-200" class="l al"/>
+<use href="#r34" y="-200" class="l al"/>
+<use href="#r35" y="-200" class="l al"/>
+<use href="#r36" y="-200" class="l al"/>
+<use href="#r37" y="-200" class="l al"/>
+<use href="#r38" y="-200" class="l al"/>
+<use href="#r39" y="-200" class="l al"/>
+<use href="#r40" y="-200" class="l al"/>
+<use href="#r41" y="-200" class="l al"/>
+<use href="#r42" y="-200" class="l al"/>
+<use href="#r43" y="-200" class="l al"/>
+<use href="#r44" y="-200" class="l al"/>
+<use href="#r45" y="-200" class="l al"/>
+<use href="#r46" y="-200" class="l al"/>
+<use href="#r47" y="-200" class="l al"/>
+<use href="#r48" y="-200" class="l al"/>
+<use href="#r49" y="-200" class="l al"/>
+<use href="#r50" y="-200" class="l al"/>
+<use href="#r68" class="l al n"/>
+<use href="#r119" y="-80" class="l al"/>
+<use href="#r120" y="-80" class="l al"/>
+<use href="#r121" y="-80" class="l al"/>
+<use href="#r122" y="-80" class="l al"/>
+<use href="#r123" class="l al o"/>
+<use href="#r133" class="l al k"/>
+<text class="l al m" x="18" textLength="79.36">* stream</text>
+<text class="l al i" x="37.84 47.76 57.68 67.6">main</text>
+<use href="#r209" class="l al f"/>
+<text class="l ah a" x="27.92" textLength="585.28">samples/demo.gif             |   Bin 314430 -&gt; 322034 bytes</text>
+<text class="l ah e" x="27.92" textLength="386.88">samples/demo.svg             |    52 +-</text>
+<text class="l ah b" x="27.92" textLength="386.88">samples/git.cast             |     6 +-</text>
+<text class="l ah p" x="27.92" textLength="585.28">samples/git.gif              |   Bin 309882 -&gt; 319104 bytes</text>
+<text class="l ah q" x="27.92" textLength="386.88">samples/git.svg              |  1714 +-</text>
+<text class="l ah r" x="27.92" textLength="386.88">samples/highlight.cast       |     4 +-</text>
+<text class="l ah s" x="27.92" textLength="585.28">samples/highlight.gif        |   Bin 478895 -&gt; 475725 bytes</text>
+<text class="l ah t" x="27.92" textLength="386.88">samples/highlight.svg        |    58 +-</text>
+<text class="l ah u" x="27.92" textLength="386.88">samples/pty.cast             |   284 +-</text>
+<text class="l ah v" x="27.92" textLength="605.12">samples/pty.gif              |   Bin 1263415 -&gt; 1183054 bytes</text>
+<text class="l ah w" x="27.92" textLength="773.76">samples/pty.svg              | 41798 +++++++++++++++++++++++++----------------</text>
+<text class="l ah x" x="27.92" textLength="585.28">samples/quickstart.gif       |   Bin 314431 -&gt; 314431 bytes</text>
+<text class="l ah y" x="27.92" textLength="386.88">samples/scenario_format.cast |    64 +-</text>
+<text class="l ah z" x="27.92" textLength="585.28">samples/scenario_format.gif  |   Bin 597677 -&gt; 726571 bytes</text>
+<text class="l ah aa" x="27.92" textLength="406.72">samples/scenario_format.svg  |  3240 ++--</text>
+<text class="l ah ab" x="27.92" textLength="376.96">scenetake.cs                 |    22 -</text>
+<text class="l ah ac" x="27.92" textLength="565.44">21 files changed, 29278 insertions(+), 19793 deletions(-)</text>
+<text class="l ah ae ad" x="18" textLength="793.6">warning: in the working copy of 'samples/basic.svg', CRLF will be replaced by LF</text>
+<text class="l ah af ad" x="27.92" textLength="277.76">the next time Git touches it</text>
+<text class="l ah n ad" x="18" textLength="783.68">warning: in the working copy of 'samples/demo.svg', CRLF will be replaced by LF</text>
+<text class="l ah j ad" x="18" textLength="277.76">the next time Git touches it</text>
+<text class="l ah ag ad" x="18" textLength="793.6">warning: in the working copy of 'samples/git.svg', CRLF will be replaced by LF t</text>
+<g class="l ah h"><g id="r260"><text class="ad" x="18" textLength="267.84">he next time Git touches it</text></g></g>
+<text class="l ah g ad" x="18" textLength="793.6">warning: in the working copy of 'samples/highlight.svg', CRLF will be replaced b</text>
+<text class="l ah o ad" x="18" textLength="327.36">y LF the next time Git touches it</text>
+<text class="l ah k ad" x="18" textLength="793.6">warning: in the working copy of 'samples/pty.svg', CRLF will be replaced by LF t</text>
+<use href="#r260" class="l ah m"/>
+<text class="l ah i ad" x="18" textLength="793.6">warning: in the working copy of 'samples/scenario_format.svg', CRLF will be repl</text>
+<text class="l ah f ad" x="18" textLength="386.88">aced by LF the next time Git touches it</text>
+<g class="l cq d"><text x="18">$</text><use href="#c" x="37.84" y="-12.8"/></g>
+<use href="#c" x="67.6" y="12" class="l cr"/>
+<use href="#c" x="77.52" y="12" class="l cs"/>
+<use href="#c" x="166.8" y="12" class="l ct"/>
+<use href="#c" x="18" y="32" class="l cu"/>
+<use href="#c" x="18" y="52" class="l cv"/>
+<use href="#c" x="67.6" y="52" class="l cw"/>
+<use href="#c" x="77.52" y="52" class="l cx"/>
+<use href="#c" x="137.04" y="52" class="l cy"/>
+<use href="#c" x="18" y="72" class="l cz"/>
+<use href="#c" x="18" y="592" class="l c0"/>
+<use href="#c" x="67.6" y="592" class="l c1"/>
+<use href="#c" x="77.52" y="592" class="l c2"/>
+<use href="#c" x="107.28" y="592" class="l c3"/>
+<use href="#c" x="117.2" y="592" class="l c4"/>
+<use href="#c" x="206.48" y="592" class="l c5"/>
+<use href="#c" x="216.4" y="592" class="l c6"/>
+<use href="#c" x="18" y="592" class="l c7"/>
+<use href="#c" x="67.6" y="592" class="l c8"/>
+<use href="#c" x="77.52" y="592" class="l c9"/>
+<use href="#c" x="18" y="592" class="l da"/>
+<use href="#c" x="67.6" y="592" class="l db"/>
+<use href="#c" x="77.52" y="592" class="l dc"/>
+<use href="#c" x="117.2" y="592" class="l dd"/>
+<use href="#c" x="127.12" y="592" class="l de"/>
+<use href="#c" x="186.64" y="592" class="l df"/>
+<use href="#c" x="196.56" y="592" class="l dg"/>
+<use href="#c" x="18" y="592" class="l dh"/>
 </g>
 </svg>

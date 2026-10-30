@@ -8,7 +8,7 @@ A scenario file is the single declarative input for scenetake: terminal dimensio
 
 ## File Structure
 
-Top-level keys use kebab-case. Recommended order for readability: metadata → `settings` → `render` → `pre` → `steps` → `post`. Key order does not affect behavior.
+Top-level keys use kebab-case. Recommended order for readability: metadata → `settings` → `render` → `pre` → `steps` → `post`. Key order does not affect behavior. Keys scenetake does not know, at any level, are ignored without a warning.
 
 ```yaml
 title: "Demo"
@@ -46,8 +46,8 @@ post:
 | Key | Default | Description |
 |---|---|---|
 | `title` | — | Optional cast title |
-| `width` | `120` | Terminal columns in the cast header and PTY geometry when a step uses `pty: true` |
-| `height` | `24` | Terminal rows in the cast header and PTY geometry when a step uses `pty: true` |
+| `width` | `120` | Terminal columns in the cast header and PTY geometry when a step uses `pty: true`. `1`–`512`, the cast's range; checked before `pre` runs. |
+| `height` | `24` | Terminal rows in the cast header and PTY geometry when a step uses `pty: true`. `1`–`512`, checked before `pre` runs. |
 | `cwd` | process cwd | Working directory for `pre`, `steps`, and `post` |
 | `shell` | `$SHELL` / `pwsh` | Shell for all commands. Values: `bash`, `pwsh`, `powershell`, or a path |
 
@@ -94,9 +94,9 @@ Display metadata for the cast header. Written on every run. Header mapping: [spe
 | `font-size` | `16` | Monospace font size (`1`–`128`) |
 | `font-family` | built-in stack | CSS `font-family` value (`1`–`16` families, `256` characters max). If `monospace` / `ui-monospace` is absent, `monospace` is appended. |
 | `theme.preset` | `dark` | Built-in preset: `dark` or `light` |
-| `theme.fg` | from preset | Optional foreground override (hex) |
-| `theme.bg` | from preset | Optional background override (hex) |
-| `theme.palette` | from preset | Optional 16-color palette override (colon-separated hex) |
+| `theme.fg` | from preset | Optional foreground override, `#rgb` or `#rrggbb` |
+| `theme.bg` | from preset | Optional background override, `#rgb` or `#rrggbb` |
+| `theme.palette` | from preset | Optional palette override: 16 colors, `#rgb` or `#rrggbb`, separated by `:` |
 | `window` | omitted (`none`) | Optional window chrome: `macos` or `windows` |
 
 `settings` controls recording; `render` controls presentation. CLI may override `font-size`, `font-family`, `window`, and theme preset. See [spec_cli.md](spec_cli.md).
@@ -122,7 +122,7 @@ Map-form steps recognize:
 
 | Key | Required | Description |
 |---|---|---|
-| `run` | yes | Command string |
+| `run` | yes | Command string. A list or a mapping is an error found before anything runs |
 | `name` | no | Comment line before typing. Optional `[style]` prefix: [spec_highlight.md](spec_highlight.md) |
 | `typing-speed`, `typing-jitter`, `pre-delay`, `post-delay`, `execution-duration` | no | Override `settings` for this step |
 | `stream-output`, `max-duration`, `silence-threshold`, `max-idle` | no | Override `settings` output-timing keys for this step |
@@ -143,7 +143,7 @@ Recorded `steps` (pipe redirect or `pty: true`) observe the child exit code when
 |---|---|
 | Exit code `0` | No warning; recording continues |
 | Non-zero exit | Warning on stderr; recording continues; later steps still run |
-| Fatal error | Run aborts (for example PTY spawn failure or output drain timeout). See [spec_pty.md](spec_pty.md) |
+| Fatal error (for example PTY spawn failure or output drain timeout) | Recording stops; no cast; `post` runs; exit `1`, or the failing `post` command's code. See [spec_pty.md](spec_pty.md) |
 
 scenetake exits `0` after a successful cast write even when individual steps exited non-zero, unless `pre`, `post`, SVG, or another fatal error occurs. Failed command output can remain in the cast as legitimate demo content.
 
@@ -159,13 +159,16 @@ A command that needs another value sets it itself, for example `COLORTERM= tool`
 
 ## Execution Order
 
-1. Resolve settings, shell, cwd, deterministic seed, and timestamp from the YAML file.
-2. Execute `pre` commands.
-3. Execute and record `steps`.
-4. Write the cast file (including `render` metadata).
-5. If `--format svg`, render SVG. See [spec_svg.md](spec_svg.md).
-6. Execute `post` commands.
-7. Report success or failure.
+1. Read the YAML file and resolve the render settings.
+2. Check the terminal size, a step `run` given as a list or a mapping, step keys that contradict each other, the outputs (their folder too when there are no `pre` commands), and for `--format mp4` ffmpeg, a usable font, and the frame size ([spec_cli.md](spec_cli.md) → Output Paths, [spec_mp4.md](spec_mp4.md)). Any failure stops the run before anything executes.
+3. Derive the deterministic seed and timestamp, and resolve the shell. A shell that cannot be found stops the run before anything executes: on Windows any shell, on Unix one given by an absolute path with no `..` in it. A shell with a NUL character is refused too, on every platform and whether it is a name or a path, because the OS reads it only up to the NUL and would start a different file. On Unix a shell given by name or by a relative path is started as written, so `$0` and the shell's own messages in the recording keep that name. A missing one fails at the first command.
+4. Execute `pre` commands.
+5. Run every output check again, the folder included, since `pre` may have changed what is there. A failure skips steps 6–8 and still runs `post`.
+6. Execute and record `steps`.
+7. Write the cast file (including `render` metadata). An error in step 6 or 7 skips the rest and still runs `post`.
+8. If `--format svg` or `--format mp4`, render it from the written cast. See [spec_svg.md](spec_svg.md) and [spec_mp4.md](spec_mp4.md).
+9. Execute `post` commands.
+10. Report success or failure.
 
 ## Determinism
 

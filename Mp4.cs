@@ -6,10 +6,10 @@ using System.Text;
 internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int MaxHeight, string? FontFile)
 {
     internal const int DefaultFps = 30, MinFps = 1, MaxFps = 60;
-    internal const int DefaultCrf = 23, MinCrf = 0, MaxCrf = 51;
+    // CRF 0 is lossless, and x264 then writes the High 4:4:4 Predictive profile, which X and many players reject.
+    internal const int DefaultCrf = 23, MinCrf = 1, MaxCrf = 51;
     internal const int MinSize = 16, MaxSize = 16384;
-    // x264 settings for terminal frames (measured in spec_mp4.md → Encoding):
-    // "slower" plus psy off plus rare keyframes cut 20–51% at equal or higher SSIM than "slow".
+    // x264 settings chosen for terminal frames. The measurements are in spec_mp4.md → Lessons Learned.
     internal const string Preset = "slower";
     internal const int PresetRefs = 8;          // x264 "slower"
     internal const int KeyframeSeconds = 30;    // longest gap between keyframes, for seeking
@@ -33,7 +33,7 @@ internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int 
             || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out height)
             || width is < MinSize or > MaxSize || height is < MinSize or > MaxSize)
         {
-            error = $"--max-size must be WIDTHxHEIGHT with each side {MinSize}–{MaxSize} (for example 1280x1024): {text}";
+            error = $"--max-size must be WIDTHxHEIGHT with each side between {MinSize} and {MaxSize} (for example 1280x1024): {text}";
             return false;
         }
 
@@ -45,7 +45,7 @@ internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int 
     {
         if (!int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out value) || value < min || value > max)
         {
-            error = $"{name} must be {min}–{max}: {text}";
+            error = $"{name} must be between {min} and {max}: {text}";
             return false;
         }
 
@@ -112,7 +112,11 @@ internal sealed class Mp4FrameRenderer
 
 internal static class Mp4Render
 {
-    /// <summary>Renders and encodes to <paramref name="outputPath"/> through ffmpeg at <paramref name="ffmpegPath"/>.</summary>
+    /// <summary>
+    /// Renders and encodes to <paramref name="outputPath"/> through ffmpeg at <paramref name="ffmpegPath"/>.
+    /// Every font file it loaded is released when it returns or throws, because <c>post</c>, which runs
+    /// even after a failed render, may replace or delete one, and Windows does not allow that while it is mapped.
+    /// </summary>
     internal static Mp4Result WriteMp4(
         IReadOnlyList<CastEvent> events,
         int width,
@@ -123,18 +127,51 @@ internal static class Mp4Render
         string ffmpegPath,
         double? loopDurationOverride = null)
     {
+        try
+        {
+            return Encode(events, width, height, render, settings, outputPath, ffmpegPath, loopDurationOverride);
+        }
+        finally
+        {
+            LoadedFace.ReleaseAll();
+        }
+    }
+
+    private static Mp4Result Encode(
+        IReadOnlyList<CastEvent> events,
+        int width,
+        int height,
+        ResolvedRenderSettings render,
+        Mp4Settings settings,
+        string outputPath,
+        string ffmpegPath,
+        double? loopDurationOverride)
+    {
+        // Check the output path first: ffmpeg would report a missing folder under the temporary file's
+        // name, and a directory in the way would only fail at the final rename, after the whole encode.
+        var fullOutputPath = Path.GetFullPath(outputPath);
+        var directory = Path.GetDirectoryName(fullOutputPath) ?? ".";
+        if (!Directory.Exists(directory))
+            throw new Mp4Exception($"output folder does not exist: {directory}");
+        if (Directory.Exists(fullOutputPath))
+            throw new Mp4Exception($"output path is a directory: {fullOutputPath}");
+
         var loopDuration = loopDurationOverride ?? TerminalReplay.ComputeLoopDuration(events);
         var renderer = new Mp4FrameRenderer(events, width, height, render, settings, loopDuration);
         var layout = renderer.Layout;
-        var (outputWidth, outputHeight) = FitWithin(layout.Width, layout.Height, settings.MaxWidth, settings.MaxHeight);
+        var (outputWidth, outputHeight) = OutputSize(layout, settings);
 
-        var directory = Path.GetDirectoryName(Path.GetFullPath(outputPath)) ?? ".";
+        // An output from an earlier run is deleted before encoding. Ctrl+C ends the process from the
+        // handler below, so deleting it only after a failure would leave it behind in that case.
+        if (File.Exists(fullOutputPath))
+            File.Delete(fullOutputPath);
+
         var tempPath = Path.Combine(directory, $".{Path.GetFileName(outputPath)}.{Guid.NewGuid():N}.partial");
         var arguments = BuildArguments(layout.Width, layout.Height, settings, outputWidth, outputHeight, tempPath);
 
-        // On Ctrl+C the process ends right after this handler returns, so it must stop ffmpeg and
-        // remove the partial file itself; catch/finally below never run. It is registered before
-        // ffmpeg starts so there is no window where Ctrl+C leaves an ffmpeg-finalized partial file.
+        // On Ctrl+C the process ends soon after this handler returns, and the catch and finally
+        // blocks below may not get to run. So the handler stops ffmpeg and removes the partial file
+        // itself. It is registered before ffmpeg starts, so no Ctrl+C can leave a partial file behind.
         FfmpegProcess? ffmpeg = null;
         ConsoleCancelEventHandler onCancel = (_, _) =>
         {
@@ -165,15 +202,15 @@ internal static class Mp4Render
     }
 
     /// <summary>
-    /// ffmpeg arguments: raw RGB24 on stdin; optional lanczos downscale; BT.709 conversion and
-    /// tags (untagged BT.601 output shifts theme colors in players); H.264 High via libx264.
+    /// ffmpeg arguments: raw RGB24 on stdin, an optional lanczos downscale, BT.709 conversion and
+    /// tags (untagged BT.601 output shifts theme colors in players), and H.264 High via libx264.
     /// <list type="bullet">
-    /// <item><c>-psy 0</c>: psychovisual tuning spends bits on texture detail; terminal frames are flat
-    /// color and sharp text, and were smaller with it off at equal or higher SSIM.</item>
-    /// <item><c>-g</c>: x264's default keyframe every 250 frames was nearly half of a typing demo; a mostly
-    /// static terminal needs few. At most every <see cref="Mp4Settings.KeyframeSeconds"/> keeps seeking cheap.</item>
+    /// <item><c>-psy 0</c>: psychovisual tuning spends bits on texture detail, which terminal frames of
+    /// flat color and sharp text do not have.</item>
+    /// <item><c>-g</c>: each keyframe redraws the whole screen, and a mostly static terminal needs few.
+    /// One at least every <see cref="Mp4Settings.KeyframeSeconds"/> keeps seeking cheap.</item>
     /// <item><c>-refs</c>: capped for large frames so the stream stays within level 5.2, which hardware
-    /// decoders support widely; 8 references at 4K would need level 6.0.</item>
+    /// decoders support widely. 8 references at 4K would need level 6.0.</item>
     /// </list>
     /// </summary>
     internal static List<string> BuildArguments(int width, int height, Mp4Settings settings, int outputWidth, int outputHeight, string outputPath)
@@ -197,20 +234,50 @@ internal static class Mp4Render
         ];
     }
 
-    /// <summary>Largest even size within the limits that keeps the aspect ratio. Never upscales; 0 means no limit.</summary>
+    /// <summary>The encoded size: the frame fitted within <c>--max-size</c>.</summary>
+    internal static (int Width, int Height) OutputSize(RasterLayout layout, Mp4Settings settings)
+    {
+        // x264 rejects a side over 16384. A wide terminal reaches that without --max-size, for
+        // example 512 columns from font size 51.
+        var (width, height) = FitWithin(layout.Width, layout.Height, settings.MaxWidth, settings.MaxHeight);
+        if (width > Mp4Settings.MaxSize || height > Mp4Settings.MaxSize)
+        {
+            throw new FrameTooLargeException(
+                $"an mp4 video of {width}x{height} is too large for x264, which accepts at most {Mp4Settings.MaxSize} on each side; pass --max-size, or use a smaller --font-size or terminal size");
+        }
+
+        return (width, height);
+    }
+
+    /// <summary>
+    /// Largest even size within the limits that keeps the aspect ratio, and never larger than the
+    /// frame. A limit of 0 means none. Integer arithmetic, because a floating-point scale can land
+    /// just below the limit and lose 2 pixels to the even rounding.
+    /// </summary>
     internal static (int Width, int Height) FitWithin(int width, int height, int maxWidth, int maxHeight)
     {
-        var scale = 1.0;
-        if (maxWidth > 0)
-            scale = Math.Min(scale, (double)maxWidth / width);
-        if (maxHeight > 0)
-            scale = Math.Min(scale, (double)maxHeight / height);
-        if (scale >= 1.0)
+        var tooWide = maxWidth > 0 && width > maxWidth;
+        var tooHigh = maxHeight > 0 && height > maxHeight;
+        if (!tooWide && !tooHigh)
             return (width, height);
 
-        var fitWidth = Math.Max(2, (int)Math.Floor(width * scale));
-        var fitHeight = Math.Max(2, (int)Math.Floor(height * scale));
-        return (fitWidth - (fitWidth & 1), fitHeight - (fitHeight & 1));
+        // The side with the smaller ratio limit / size sets the scale: maxWidth / width <= maxHeight / height.
+        var widthLimited = tooWide && (maxHeight <= 0 || (long)maxWidth * height <= (long)maxHeight * width);
+        long fitWidth, fitHeight;
+        if (widthLimited)
+        {
+            fitWidth = maxWidth;
+            fitHeight = (long)height * maxWidth / width;
+        }
+        else
+        {
+            fitHeight = maxHeight;
+            fitWidth = (long)width * maxHeight / height;
+        }
+
+        fitWidth = Math.Max(2, fitWidth);
+        fitHeight = Math.Max(2, fitHeight);
+        return ((int)(fitWidth - (fitWidth & 1)), (int)(fitHeight - (fitHeight & 1)));
     }
 
     /// <summary>
@@ -292,13 +359,14 @@ internal static class Ffmpeg
         return false;
     }
 
-    internal static bool HasLibx264(string path, out string error)
+    internal static bool HasLibx264(string path, out string error, int timeoutMilliseconds = 15_000)
     {
         error = "";
         try
         {
             var startInfo = new ProcessStartInfo(path)
             {
+                RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -307,17 +375,20 @@ internal static class Ffmpeg
             startInfo.ArgumentList.Add("-hide_banner");
             startInfo.ArgumentList.Add("-encoders");
             using var process = Process.Start(startInfo)!;
+            process.StandardInput.Close(); // a wrapper that waits for input sees end of input instead of the terminal
+
+            // Read asynchronously: a synchronous read would block until ffmpeg closes stdout, before the timeout starts.
+            var stdout = process.StandardOutput.ReadToEndAsync();
             var stderr = process.StandardError.ReadToEndAsync();
-            var stdout = process.StandardOutput.ReadToEnd();
-            if (!process.WaitForExit(15_000))
+            if (!process.WaitForExit(timeoutMilliseconds) || !stdout.Wait(timeoutMilliseconds))
             {
                 process.Kill(entireProcessTree: true);
-                error = $"ffmpeg did not respond: {path}";
+                error = string.Create(CultureInfo.InvariantCulture, $"ffmpeg did not respond within {timeoutMilliseconds / 1000.0:0.#}s: {path}");
                 return false;
             }
 
-            _ = stderr.Result;
-            if (stdout.Contains(" libx264 ", StringComparison.Ordinal))
+            _ = stderr.Wait(timeoutMilliseconds);
+            if (stdout.Result.Contains(" libx264 ", StringComparison.Ordinal))
                 return true;
 
             error = $"ffmpeg has no libx264 encoder: {path}";
@@ -454,7 +525,7 @@ internal sealed class FfmpegProcess : IDisposable
 
     private Mp4Exception Failure(string what)
     {
-        // The timed wait does not wait for the async stderr reader; the untimed one does.
+        // The timed wait does not wait for the async stderr reader, but the untimed one does.
         if (_process.WaitForExit(5_000))
         {
             _process.WaitForExit();
