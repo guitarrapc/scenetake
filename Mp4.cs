@@ -12,6 +12,7 @@ internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int 
     // x264 settings chosen for terminal frames. The measurements are in spec_mp4.md → Lessons Learned.
     internal const string Preset = "slower";
     internal const int PresetRefs = 8;          // x264 "slower"
+    internal const int MotionSearchRange = 128; // pixels; "slower" searches 16, less than one row at the default font size
     internal const int KeyframeSeconds = 30;    // longest gap between keyframes, for seeking
     internal const int Level52DpbMacroblocks = 184_320; // H.264 level 5.2 decoded picture buffer
 
@@ -207,6 +208,9 @@ internal static class Mp4Render
     /// <list type="bullet">
     /// <item><c>-psy 0</c>: psychovisual tuning spends bits on texture detail, which terminal frames of
     /// flat color and sharp text do not have.</item>
+    /// <item><c>merange</c>: a scroll moves text by whole rows, 20 pixels at the default font size. The
+    /// preset's 16-pixel search misses it and codes the moved text again. A wider search also finds the
+    /// same character elsewhere on screen, which matters for redrawn TUIs.</item>
     /// <item><c>-g</c>: each keyframe redraws the whole screen, and a mostly static terminal needs few.
     /// One at least every <see cref="Mp4Settings.KeyframeSeconds"/> keeps seeking cheap.</item>
     /// <item><c>-refs</c>: capped for large frames so the stream stays within level 5.2, which hardware
@@ -228,6 +232,7 @@ internal static class Mp4Render
             "-vf", scale + ",format=yuv420p",
             "-c:v", "libx264", "-preset", Mp4Settings.Preset, "-crf", settings.Crf.ToString(CultureInfo.InvariantCulture),
             "-psy", "0", "-refs", refs.ToString(CultureInfo.InvariantCulture),
+            "-x264-params", "merange=" + Mp4Settings.MotionSearchRange.ToString(CultureInfo.InvariantCulture),
             "-g", (settings.Fps * Mp4Settings.KeyframeSeconds).ToString(CultureInfo.InvariantCulture),
             "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
             "-movflags", "+faststart", "-f", "mp4", "-y", outputPath,

@@ -178,9 +178,12 @@ static bool SubcommandWritesH264(string scenetake, string repoRoot, string work)
         return false;
     }
 
+    // x264 writes the settings it used into the stream. The search range shows that ffmpeg passed -x264-params on.
     var stream = Probe(output);
+    var x264Settings = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(output));
     return stream["codec_name"] == "h264" && stream["profile"] == "High" && stream["pix_fmt"] == "yuv420p"
         && stream["color_space"] == "bt709" && stream["r_frame_rate"] == "30/1"
+        && x264Settings.Contains("me_range=128 ", StringComparison.Ordinal)
         && stderr.Contains("Written:", StringComparison.Ordinal);
 }
 
