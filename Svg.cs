@@ -1022,6 +1022,8 @@ internal static class SvgFrameRenderer
                 $"<rect id=\"c\" class=\"c\" width=\"{metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\"/>");
         }
 
+        context.Glyphs.AppendDefs(sb, metrics);
+
         sb.AppendLf(CultureInfo.InvariantCulture,
             $"<mask id=\"viewport-mask\" x=\"0\" y=\"0\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" maskUnits=\"userSpaceOnUse\">");
         for (var i = 0; i < viewportLayers.Count; i++)
@@ -1274,6 +1276,7 @@ internal static class SvgFrameRenderer
         internal TerminalTheme Theme { get; }
         internal ClassNamePool Names { get; } = new();
         internal FillClasses Fills { get; }
+        internal SoftGlyphDefs Glyphs { get; } = new();
         internal Utf8ChunkBuffer Content { get; } = new();
 
         /// <summary>Per canvas row, the class that moves row-local content to that row, or null until a layer needs it.</summary>
@@ -1394,7 +1397,7 @@ internal static class SvgFrameRenderer
 
     /// <summary>
     /// Appends one row on a single line: background spans first, then block elements as rects,
-    /// then the row's text in whichever encoding is shorter for it.
+    /// then soft font glyphs as &lt;use&gt;s, then the row's text in whichever encoding is shorter for it.
     /// <list type="bullet">
     /// <item>Run form: one &lt;text&gt; per style run, spread with <c>textLength</c>. Small for prose.</item>
     /// <item>Glyph-list form: one &lt;text&gt; per style with an <c>x</c> per glyph and no spaces.
@@ -1424,6 +1427,7 @@ internal static class SvgFrameRenderer
         var textYAttribute = rowLocal ? "" : absoluteTextY;
         var hasUnderline = AppendBackgroundSpans(sb, buffer, row, originX, rowTop, metrics, theme, out var backgroundRects);
         var blockRects = AppendBlockRects(sb, buffer, row, originX, rowTop, metrics, theme, absoluteRowTop, out var blockYGrowth);
+        var glyphUses = AppendSoftGlyphs(sb, buffer, row, originX, textYAttribute, context);
         var rectsLength = sb.Length - start;
 
         var runForm = t_runForm ??= new StringBuilder(1024);
@@ -1461,10 +1465,11 @@ internal static class SvgFrameRenderer
             var backgroundYGrowth = backgroundRects * (Format(absoluteRowTop).Length - Format(rowTop).Length);
             var absoluteRun = runForm.Length + runTexts * absoluteTextY.Length;
             var absoluteList = hasUnderline ? int.MaxValue : listLength + listTexts * absoluteTextY.Length;
-            absoluteLength = rectsLength + backgroundYGrowth + blockYGrowth + (absoluteList < absoluteRun ? absoluteList : absoluteRun);
+            var glyphYGrowth = glyphUses * absoluteTextY.Length;
+            absoluteLength = rectsLength + backgroundYGrowth + blockYGrowth + glyphYGrowth + (absoluteList < absoluteRun ? absoluteList : absoluteRun);
         }
 
-        var elements = backgroundRects + blockRects + texts;
+        var elements = backgroundRects + blockRects + glyphUses + texts;
         return new RowShape(elements, elements == 1 && texts == 1, absoluteLength);
     }
 
@@ -1617,6 +1622,126 @@ internal static class SvgFrameRenderer
     }
 
     /// <summary>
+    /// Soft font (DECDLD) glyphs: one &lt;use&gt; of the glyph's path per cell. Like a &lt;text&gt; it sits
+    /// at the row's baseline, so row-local content needs no <c>y</c>, and its color is a fill class, or
+    /// inherited for the theme's foreground. Returns the number of &lt;use&gt;s.
+    /// </summary>
+    private static int AppendSoftGlyphs(
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, string textYAttribute, EncodeContext context)
+    {
+        var uses = 0;
+        for (var col = 0; col < buffer.Width; col++)
+        {
+            var cell = buffer.GetCell(row, col);
+            if (cell.Glyph is not { } glyph)
+                continue;
+
+            var fill = CellColors.ResolveTintedForeground(buffer, row, col, cell, context.Theme);
+            sb.Append("<use href=\"#").Append(context.Glyphs.IdFor(glyph)).Append('"')
+                .Append(CultureInfo.InvariantCulture, $" x=\"{originX + col * context.Metrics.CharWidth:0.##}\"").Append(textYAttribute);
+            if (context.Fills.ClassFor(fill) is { } fillClass)
+                sb.Append(" class=\"").Append(fillClass).Append('"');
+            sb.Append("/>");
+            uses++;
+        }
+
+        return uses;
+    }
+
+    /// <summary>
+    /// Soft font glyphs, each one &lt;path&gt; in &lt;defs&gt; that cells draw with a &lt;use&gt;. The path is
+    /// in the glyph's own pixels, scaled to the cell and moved up by the baseline offset, so a &lt;use&gt;
+    /// at a text baseline covers its cell. Ids are given on first use and skip <c>c</c> (the cursor)
+    /// and names starting with <c>r</c> (reused rows are <c>r0</c>, <c>r1</c>, …).
+    /// </summary>
+    private sealed class SoftGlyphDefs
+    {
+        private const string FirstChars = "abdefghijklmnopqstuvwxyz";
+        private const string NextChars = "abcdefghijklmnopqrstuvwxyz0123456789";
+        private readonly Dictionary<SoftGlyph, string> _ids = [];
+        private readonly List<(SoftGlyph Glyph, string Id)> _ordered = [];
+
+        internal string IdFor(SoftGlyph glyph)
+        {
+            if (!_ids.TryGetValue(glyph, out var id))
+            {
+                id = NameAt(_ordered.Count);
+                _ids[glyph] = id;
+                _ordered.Add((glyph, id));
+            }
+
+            return id;
+        }
+
+        internal void AppendDefs(StringBuilder sb, SvgMetrics metrics)
+        {
+            foreach (var (glyph, id) in _ordered)
+            {
+                sb.Append(CultureInfo.InvariantCulture,
+                    $"<path id=\"{id}\" transform=\"translate(0 {-metrics.BaselineOffset:0.##}) scale({metrics.CharWidth / glyph.Width:0.#####} {metrics.LineHeight / glyph.Height:0.#####})\" d=\"");
+                AppendPixels(sb, glyph);
+                sb.AppendLf("\"/>");
+            }
+        }
+
+        /// <summary>
+        /// The glyph's pixels as rects in one path: a run along a row, extended down over the rows
+        /// below that have the same pixels free. One path keeps the rects free of seams when anti-aliased.
+        /// </summary>
+        internal static void AppendPixels(StringBuilder sb, SoftGlyph glyph)
+        {
+            Span<ulong> covered = stackalloc ulong[glyph.Height];
+            for (var y = 0; y < glyph.Height; y++)
+            {
+                var free = glyph.Rows[y] & ~covered[y];
+                while (free != 0)
+                {
+                    var x = System.Numerics.BitOperations.TrailingZeroCount(free);
+                    var end = x;
+                    while (end < glyph.Width && ((free >> end) & 1) != 0)
+                        end++;
+
+                    var run = (end == 64 ? ulong.MaxValue : (1UL << end) - 1) & ~((1UL << x) - 1);
+                    var bottom = y + 1;
+                    while (bottom < glyph.Height && (glyph.Rows[bottom] & ~covered[bottom] & run) == run)
+                        bottom++;
+                    for (var yy = y; yy < bottom; yy++)
+                        covered[yy] |= run;
+
+                    sb.Append(CultureInfo.InvariantCulture, $"M{x} {y}h{end - x}v{bottom - y}h{x - end}z");
+                    free &= ~run;
+                }
+            }
+        }
+
+        private static string NameAt(int index)
+        {
+            if (index < FirstChars.Length)
+                return ScreenBuffer.CharStr(FirstChars[index]);
+
+            index -= FirstChars.Length;
+            var length = 2;
+            var count = FirstChars.Length * NextChars.Length;
+            while (index >= count)
+            {
+                index -= count;
+                length++;
+                count *= NextChars.Length;
+            }
+
+            var chars = new char[length];
+            for (var i = length - 1; i > 0; i--)
+            {
+                chars[i] = NextChars[index % NextChars.Length];
+                index /= NextChars.Length;
+            }
+
+            chars[0] = FirstChars[index];
+            return new string(chars);
+        }
+    }
+
+    /// <summary>
     /// Run form: runs break on any color or style change. Background rects are drawn separately.
     /// Returns the number of &lt;text&gt; elements.
     /// <list type="bullet">
@@ -1624,8 +1749,8 @@ internal static class SvgFrameRenderer
     /// surrogate pairs do not stretch the run past its cells.</item>
     /// <item>Underlined spaces up to the row's last underlined character keep their underline, as in
     /// the mp4 rasterizer. Spaces after a run's last drawn cell are left out.</item>
-    /// <item>A block element is a rect. When it is underlined, the run carries a space in its cell, so
-    /// the underline runs under the block as it does in mp4.</item>
+    /// <item>A block element is a rect, and a soft font glyph a &lt;use&gt;. When one is underlined, the run
+    /// carries a space in its cell, so the underline runs under it as it does in mp4.</item>
     /// </list>
     /// </summary>
     private static int AppendRunText(
@@ -1642,8 +1767,8 @@ internal static class SvgFrameRenderer
         }
 
         bool Draws(ScreenCell candidate, int at) => candidate.Text != Space || (candidate.Underline && at <= lastUnderlined);
-        static bool SkipsText(ScreenCell candidate) => IsBlockCell(candidate.Text) && !candidate.Underline;
-        static string RunText(ScreenCell candidate) => IsBlockCell(candidate.Text) ? Space : candidate.Text;
+        static bool SkipsText(ScreenCell candidate) => IsShapeCell(candidate) && !candidate.Underline;
+        static string RunText(ScreenCell candidate) => IsShapeCell(candidate) ? Space : candidate.Text;
 
         var texts = 0;
         var col = 0;
@@ -1740,7 +1865,7 @@ internal static class SvgFrameRenderer
         {
             var cell = buffer.GetCell(row, col);
             var text = cell.Text;
-            if (cell.IsWideContinuation || text.Length == 0 || (text.Length == 1 && char.IsWhiteSpace(text[0])) || IsBlockCell(text))
+            if (cell.IsWideContinuation || text.Length == 0 || (text.Length == 1 && char.IsWhiteSpace(text[0])) || cell.Glyph is not null || IsBlockCell(text))
                 continue;
 
             var fg = CellColors.ResolveTintedForeground(buffer, row, col, cell, theme);
@@ -2052,6 +2177,9 @@ internal static class SvgFrameRenderer
 
     /// <summary>Whether the cell holds a block element (U+2580–U+259F, shades included), which is drawn as rects.</summary>
     private static bool IsBlockCell(string text) => TryGetBlockCodepoint(text, out _);
+
+    /// <summary>Whether the cell is drawn as a shape rather than text: a block element or a soft font glyph.</summary>
+    private static bool IsShapeCell(ScreenCell cell) => cell.Glyph is not null || IsBlockCell(cell.Text);
 
     private static bool TryGetBlockCodepoint(string text, out int codepoint)
     {

@@ -34,9 +34,15 @@ internal readonly record struct CellStyle(
         new(theme.Foreground, theme.Background, false, false, false);
 }
 
-internal readonly struct ScreenCell(string text, CellStyle style, bool isWide = false, bool isWideContinuation = false)
+internal readonly struct ScreenCell(string text, CellStyle style, bool isWide = false, bool isWideContinuation = false, SoftGlyph? glyph = null)
 {
     internal string Text => text;
+
+    /// <summary>
+    /// The soft font (DECDLD) glyph drawn in this cell instead of <see cref="Text"/>, or null.
+    /// <see cref="Text"/> then holds the character code the program wrote.
+    /// </summary>
+    internal SoftGlyph? Glyph => glyph;
     internal CellStyle Style => style;
     internal string Foreground => style.Foreground;
     internal string Background => style.Background;
@@ -48,6 +54,71 @@ internal readonly struct ScreenCell(string text, CellStyle style, bool isWide = 
     internal bool IsWide => isWide;
     internal bool IsWideContinuation => isWideContinuation;
     internal CellStyle ToStyle() => style;
+}
+
+/// <summary>
+/// One glyph of a soft font (DECDLD): the bitmap of its character matrix, which renderers scale to
+/// the cell. Glyphs are interned, so equal bitmaps are one instance and cells compare them by reference.
+/// </summary>
+internal sealed class SoftGlyph
+{
+    /// <summary>Largest matrix kept, in pixels. DEC terminals use at most 16×32; data beyond these is dropped.</summary>
+    internal const int MaxWidth = 64;
+    internal const int MaxHeight = 64;
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<SoftGlyph, SoftGlyph> s_interned = new(ContentComparer.Instance);
+
+    private SoftGlyph(int width, int height, ulong[] rows, ulong hash)
+    {
+        Width = width;
+        Height = height;
+        Rows = rows;
+        Hash = hash;
+    }
+
+    internal int Width { get; }
+    internal int Height { get; }
+
+    /// <summary>One entry per pixel row, top first. Bit x is the pixel in column x, so column 0 is bit 0.</summary>
+    internal ulong[] Rows { get; }
+
+    /// <summary>A hash of the bitmap, the same in every replay, for row hashes and frame signatures.</summary>
+    internal ulong Hash { get; }
+
+    internal bool IsSet(int x, int y) => ((Rows[y] >> x) & 1) != 0;
+
+    /// <summary>The glyph for this bitmap. Bits at or beyond <paramref name="width"/> are ignored.</summary>
+    internal static SoftGlyph Intern(int width, int height, ReadOnlySpan<ulong> rows)
+    {
+        width = Math.Clamp(width, 1, MaxWidth);
+        height = Math.Clamp(height, 1, MaxHeight);
+        var mask = width == 64 ? ulong.MaxValue : (1UL << width) - 1;
+        var copy = new ulong[height];
+        const ulong fnvPrime = 1099511628211UL;
+        var hash = 1469598103934665603UL;
+        hash = (hash ^ (ulong)width) * fnvPrime;
+        hash = (hash ^ (ulong)height) * fnvPrime;
+        for (var y = 0; y < height; y++)
+        {
+            copy[y] = y < rows.Length ? rows[y] & mask : 0;
+            hash = (hash ^ copy[y]) * fnvPrime;
+        }
+
+        var candidate = new SoftGlyph(width, height, copy, hash);
+        return s_interned.GetOrAdd(candidate, candidate);
+    }
+
+    private sealed class ContentComparer : IEqualityComparer<SoftGlyph>
+    {
+        internal static readonly ContentComparer Instance = new();
+
+        public bool Equals(SoftGlyph? x, SoftGlyph? y) =>
+            ReferenceEquals(x, y)
+            || (x is not null && y is not null && x.Hash == y.Hash && x.Width == y.Width && x.Height == y.Height
+                && x.Rows.AsSpan().SequenceEqual(y.Rows));
+
+        public int GetHashCode(SoftGlyph obj) => obj.Hash.GetHashCode();
+    }
 }
 
 internal sealed class ScreenBuffer
@@ -110,7 +181,7 @@ internal sealed class ScreenBuffer
         {
             ref readonly var a = ref _cells[row, col];
             ref readonly var b = ref other._cells[row, col];
-            if (a.Text != b.Text || a.Style != b.Style || a.IsWide != b.IsWide || a.IsWideContinuation != b.IsWideContinuation)
+            if (a.Text != b.Text || a.Style != b.Style || a.IsWide != b.IsWide || a.IsWideContinuation != b.IsWideContinuation || a.Glyph != b.Glyph)
                 return false;
         }
 
@@ -128,7 +199,7 @@ internal sealed class ScreenBuffer
         {
             ref readonly var a = ref _cells[row, col];
             ref readonly var b = ref other[col];
-            if (a.Text != b.Text || a.Style != b.Style || a.IsWide != b.IsWide || a.IsWideContinuation != b.IsWideContinuation)
+            if (a.Text != b.Text || a.Style != b.Style || a.IsWide != b.IsWide || a.IsWideContinuation != b.IsWideContinuation || a.Glyph != b.Glyph)
                 return false;
         }
 
@@ -143,7 +214,7 @@ internal sealed class ScreenBuffer
     {
         foreach (ref readonly var cell in cells)
         {
-            if (cell.Text != Space || cell.Style != defaultStyle || cell.IsWide || cell.IsWideContinuation)
+            if (cell.Text != Space || cell.Style != defaultStyle || cell.IsWide || cell.IsWideContinuation || cell.Glyph is not null)
                 return false;
         }
 
@@ -158,7 +229,7 @@ internal sealed class ScreenBuffer
         for (var col = 0; col < Width; col++)
         {
             ref readonly var cell = ref _cells[row, col];
-            if (cell.Text != Space || cell.Style != DefaultStyle || cell.IsWide || cell.IsWideContinuation)
+            if (cell.Text != Space || cell.Style != DefaultStyle || cell.IsWide || cell.IsWideContinuation || cell.Glyph is not null)
                 return false;
         }
 
@@ -180,6 +251,8 @@ internal sealed class ScreenBuffer
             hash = MixString(hash, style.Foreground.AsSpan(), fnvPrime);
             hash = MixString(hash, style.Background.AsSpan(), fnvPrime);
             hash = MixByte(hash, PackStyleFlags(style, cell.IsWide, cell.IsWideContinuation), fnvPrime);
+            if (cell.Glyph is { } glyph)
+                hash = MixUlong(hash, glyph.Hash, fnvPrime);
         }
 
         return hash;
@@ -207,6 +280,8 @@ internal sealed class ScreenBuffer
                 signature = MixString(signature, style.Foreground.AsSpan(), fnvPrime);
                 signature = MixString(signature, style.Background.AsSpan(), fnvPrime);
                 signature = MixByte(signature, PackStyleFlags(style, cell.IsWide, cell.IsWideContinuation), fnvPrime);
+                if (cell.Glyph is { } glyph)
+                    signature = MixUlong(signature, glyph.Hash, fnvPrime);
             }
         }
 
@@ -243,6 +318,17 @@ internal sealed class ScreenBuffer
     {
         signature ^= value;
         signature *= fnvPrime;
+        return signature;
+    }
+
+    private static ulong MixUlong(ulong signature, ulong value, ulong fnvPrime)
+    {
+        unchecked
+        {
+            signature ^= value;
+            signature *= fnvPrime;
+        }
+
         return signature;
     }
 
@@ -341,6 +427,25 @@ internal sealed class ScreenBuffer
         }
     }
 
+    /// <summary>Writes a soft font glyph for character code <paramref name="code"/> at the cursor, one cell wide.</summary>
+    internal void PutSoftGlyph(char code, SoftGlyph glyph, CellStyle style)
+    {
+        if (_pendingWrap)
+        {
+            _pendingWrap = false;
+            CursorCol = 0;
+            Index();
+        }
+
+        _cells[CursorRow, CursorCol] = new ScreenCell(CharStr(code), style, glyph: glyph);
+        CursorCol++;
+        if (CursorCol >= Width)
+        {
+            _pendingWrap = true;
+            CursorCol = Width - 1;
+        }
+    }
+
     internal void PutSurrogatePair(char high, char low, CellStyle style) =>
         PutCodePoint(char.ConvertToUtf32(high, low), string.Create(2, (high, low), static (s, t) => { s[0] = t.high; s[1] = t.low; }), style);
 
@@ -360,7 +465,8 @@ internal sealed class ScreenBuffer
             col--;
 
         var prev = _cells[row, col];
-        if (prev.Text == " ")
+        // A soft font glyph is a bitmap that marks cannot combine with, and it stays one cell wide.
+        if (prev.Text == " " || prev.Glyph is not null)
             return;
 
         _cells[row, col] = new ScreenCell(
@@ -839,6 +945,7 @@ internal sealed class AnsiParser
     private readonly ScreenBuffer _buffer;
     private readonly TerminalTheme _theme;
     private readonly List<int> _csiParams = new(8);
+    private readonly CharsetState _charsets = new();
     private CellStyle _style;
     private byte[] _buf = [];
     private int _pendingLength;
@@ -962,6 +1069,31 @@ internal sealed class AnsiParser
         }
 
         var ch = (char)rune.Value;
+        if (ch < ' ')
+        {
+            // SO and SI invoke G1 or G0 into GL. The in-box Windows ConPTY sends a soft font through G1 this way.
+            if (ch == '\u000E')
+            {
+                _charsets.LockingShift(1);
+                return;
+            }
+
+            if (ch == '\u000F')
+            {
+                _charsets.LockingShift(0);
+                return;
+            }
+        }
+        else if (ch <= '\u007F' && _charsets.MapsAscii && _charsets.TryMap(ch, out var glyph))
+        {
+            // A code with no glyph in the loaded font is blank, as on DEC terminals.
+            if (glyph is null)
+                _buffer.PutChar(' ', _style);
+            else
+                _buffer.PutSoftGlyph(ch, glyph, _style);
+            return;
+        }
+
         if (IsVariationSelector(ch))
         {
             _buffer.AppendToPreviousCell(ScreenBuffer.CharStr(ch));
@@ -1001,18 +1133,27 @@ internal sealed class AnsiParser
             case (byte)']':
                 return TrySkipOsc(input, index + 2, out endIndex);
             case (byte)'P':
-                return TrySkipOsc(input, index + 2, out endIndex);
-            case (byte)'(' or (byte)')' or (byte)'*' or (byte)'+' or (byte)'-' or (byte)'.' or (byte)'/' or (byte)'#' or (byte)'%':
-                if (index + 2 >= input.Length)
-                    return false;
-                endIndex = index + 2;
-                return true;
+                return TryHandleDcs(input, index + 2, out endIndex);
+            case >= 0x20 and <= 0x2F:
+                return TryHandleIntermediateEscape(input, index, out endIndex);
             case (byte)'7':
                 _buffer.SaveCursor();
+                _charsets.Save();
                 endIndex = index + 1;
                 return true;
             case (byte)'8':
                 _buffer.RestoreCursor();
+                _charsets.Restore();
+                endIndex = index + 1;
+                return true;
+            case (byte)'n' or (byte)'o':
+                // LS2 and LS3 invoke G2 or G3 into GL until the next shift.
+                _charsets.LockingShift(input[index + 1] == (byte)'n' ? 2 : 3);
+                endIndex = index + 1;
+                return true;
+            case (byte)'N' or (byte)'O':
+                // SS2 and SS3: G2 or G3 for the next character only.
+                _charsets.SingleShift(input[index + 1] == (byte)'N' ? 2 : 3);
                 endIndex = index + 1;
                 return true;
             case (byte)'D':
@@ -1031,12 +1172,61 @@ internal sealed class AnsiParser
                 _buffer.ClearDisplay(2);
                 _buffer.MoveCursorTo(0, 0);
                 _style = _buffer.DefaultStyle;
+                _charsets.Reset();
                 endIndex = index + 1;
                 return true;
             default:
                 endIndex = index + 1;
                 return true;
         }
+    }
+
+    /// <summary>
+    /// <c>ESC I… F</c>: intermediates 0x20–0x2F, then one final byte 0x30–0x7E. <c>ESC ( F</c> to
+    /// <c>ESC / F</c> designate a character set into G0–G3, and the set's name may itself carry an
+    /// intermediate, as a soft font's <c>ESC ( SP @</c> does. Other sequences of this shape are skipped.
+    /// </summary>
+    private bool TryHandleIntermediateEscape(ReadOnlySpan<byte> input, int index, out int endIndex)
+    {
+        endIndex = index;
+        var i = index + 1;
+        while (i < input.Length && input[i] is >= 0x20 and <= 0x2F)
+            i++;
+        if (i >= input.Length)
+            return false;
+
+        if (input[i] is < 0x30 or > 0x7E)
+        {
+            // Malformed: drop the intermediates and handle the byte after them normally.
+            endIndex = i - 1;
+            return true;
+        }
+
+        endIndex = i;
+        var introducer = input[index + 1];
+        var slot = introducer switch
+        {
+            (byte)'(' => 0,
+            (byte)')' or (byte)'-' => 1,
+            (byte)'*' or (byte)'.' => 2,
+            (byte)'+' or (byte)'/' => 3,
+            _ => -1,
+        };
+        if (slot >= 0)
+            _charsets.Designate(slot, input[(index + 2)..(i + 1)], is96: introducer is (byte)'-' or (byte)'.' or (byte)'/');
+        return true;
+    }
+
+    /// <summary>A DCS string. A DECDLD soft font is loaded; every other DCS is skipped as before.</summary>
+    private bool TryHandleDcs(ReadOnlySpan<byte> input, int start, out int endIndex)
+    {
+        if (!TrySkipOsc(input, start, out endIndex))
+            return false;
+
+        // endIndex is the terminator's last byte: BEL, or the backslash of ESC \.
+        var bodyEnd = input[endIndex] == 0x07 ? endIndex : endIndex - 1;
+        _charsets.TryLoadSoftFont(input[start..bodyEnd]);
+        return true;
     }
 
     private static bool TrySkipOsc(ReadOnlySpan<byte> input, int start, out int endIndex, bool caretTerminator = false)
@@ -1383,6 +1573,249 @@ internal sealed class AnsiParser
     }
 }
 
+/// <summary>
+/// Character sets G0–G3, the shifts that invoke them into GL, and DECDLD soft fonts. Only soft fonts
+/// change what is drawn: any other set, such as DEC line drawing, still draws as ASCII.
+/// <list type="bullet">
+/// <item>A designation names a set: <c>ESC ( B</c> is ASCII into G0, <c>ESC ) @</c> is the set named
+/// <c>@</c> into G1. A soft font is used wherever a designation names it, before or after it loads.</item>
+/// <item>The in-box Windows ConPTY renames a soft font to <c>@</c>, designates it into G1, and wraps
+/// each run of its characters in SO/SI. A program on Unix designates it into G0 under its own name,
+/// for example <c>ESC ( SP @</c>. Both reach the same cells.</item>
+/// <item>DECSC and DECRC save and restore the designations and the GL shift, as DEC terminals do.
+/// RIS resets them and drops every soft font.</item>
+/// </list>
+/// </summary>
+internal sealed class CharsetState
+{
+    private const int MaxParameterValue = 100_000;
+    private static readonly Charset Ascii = new("B", false);
+
+    private readonly Charset[] _sets = [Ascii, Ascii, Ascii, Ascii];
+
+    /// <summary>The loaded soft font each of G0–G3 names, or null, kept current so printing needs no lookup.</summary>
+    private readonly SoftGlyph?[]?[] _active = new SoftGlyph?[]?[4];
+    private Dictionary<Charset, SoftGlyph?[]>? _fonts;
+    private (Charset[] Sets, int Gl)? _saved;
+    private int _gl;
+    private int _singleShift = -1;
+
+    /// <summary>A set by its designator bytes (<c>B</c>, <c>0</c>, <c> @</c>) and size: 94 or 96 characters.</summary>
+    private readonly record struct Charset(string Name, bool Is96);
+
+    /// <summary>Whether printable ASCII may come from a soft font. False until a soft font is in GL or a single shift is pending.</summary>
+    internal bool MapsAscii => _singleShift >= 0 || _active[_gl] is not null;
+
+    /// <summary>
+    /// Maps <paramref name="ch"/> (0x20–0x7F) through the set in GL, or the single-shifted set. True when that
+    /// set is a soft font: <paramref name="glyph"/> is then the glyph, or null for a code the font does not define.
+    /// A 94-character set keeps space and DEL as they are.
+    /// </summary>
+    internal bool TryMap(char ch, out SoftGlyph? glyph)
+    {
+        glyph = null;
+        var set = _gl;
+        if (_singleShift >= 0)
+        {
+            set = _singleShift;
+            _singleShift = -1;
+        }
+
+        if (_active[set] is not { } font || (!_sets[set].Is96 && ch is ' ' or '\u007F'))
+            return false;
+
+        glyph = font[ch - 0x20];
+        return true;
+    }
+
+    internal void Designate(int slot, ReadOnlySpan<byte> name, bool is96)
+    {
+        _sets[slot] = new Charset(NameOf(name), is96);
+        _active[slot] = _fonts?.GetValueOrDefault(_sets[slot]);
+    }
+
+    internal void LockingShift(int slot) => _gl = slot;
+
+    internal void SingleShift(int slot) => _singleShift = slot;
+
+    internal void Save() => _saved = ((Charset[])_sets.Clone(), _gl);
+
+    /// <summary>Restores what <see cref="Save"/> kept, or the defaults when nothing was saved.</summary>
+    internal void Restore()
+    {
+        if (_saved is { } saved)
+        {
+            saved.Sets.CopyTo(_sets, 0);
+            _gl = saved.Gl;
+        }
+        else
+        {
+            Array.Fill(_sets, Ascii);
+            _gl = 0;
+        }
+
+        _singleShift = -1;
+        Refresh();
+    }
+
+    internal void Reset()
+    {
+        Array.Fill(_sets, Ascii);
+        _gl = 0;
+        _singleShift = -1;
+        _saved = null;
+        _fonts = null;
+        Refresh();
+    }
+
+    /// <summary>
+    /// Loads a DECDLD soft font from a DCS body, the bytes between <c>ESC P</c> and the terminator:
+    /// <c>Pfn;Pcn;Pe;Pcmw;Pss;Pt;Pcmh;Pcss { Dscs glyph;glyph;…</c>. Any other DCS (Sixel, DECRQSS,
+    /// tmux passthrough) has something other than digits and <c>;</c> before its first <c>{</c>, and is left alone.
+    /// <list type="bullet">
+    /// <item>Glyphs load from code 0x20 + Pcn (0x21 at the lowest for a 94-character set, Pcss 0) up to the
+    /// end of the set. A glyph with no pixels leaves its code undefined, which draws blank.</item>
+    /// <item>Each glyph is sixel bands separated by <c>/</c>. A sixel character (0x3F–0x7E) holds six
+    /// vertical pixels of one column, top pixel in bit 0.</item>
+    /// <item>The matrix is Pcmw × Pcmh pixels (Pcmw 2–4 are the VT220 widths 5–7). A size given as 0 is
+    /// taken from the data: its widest glyph, and six rows per band. Renderers scale the matrix to the cell.</item>
+    /// <item>Pe 0 replaces the font of this name, 1 replaces only the codes loaded, 2 drops every soft font first.
+    /// Cells already on screen keep the glyphs they were written with.</item>
+    /// </list>
+    /// </summary>
+    internal void TryLoadSoftFont(ReadOnlySpan<byte> body)
+    {
+        var brace = body.IndexOf((byte)'{');
+        if (brace < 0)
+            return;
+
+        // Pfn, Pcn, Pe, Pcmw, Pss, Pt, Pcmh, Pcss. -1 is a parameter left out.
+        Span<int> p = stackalloc int[8];
+        p.Fill(-1);
+        var index = 0;
+        foreach (var b in body[..brace])
+        {
+            if (b is >= (byte)'0' and <= (byte)'9')
+            {
+                if (index < p.Length)
+                    p[index] = Math.Min(Math.Max(p[index], 0) * 10 + (b - '0'), MaxParameterValue);
+            }
+            else if (b == (byte)';')
+            {
+                index++;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        var rest = body[(brace + 1)..];
+        var nameEnd = 0;
+        while (nameEnd < rest.Length && rest[nameEnd] is >= 0x20 and <= 0x2F)
+            nameEnd++;
+        if (nameEnd >= rest.Length || rest[nameEnd] is < 0x30 or > 0x7E)
+            return;
+
+        var is96 = p[7] == 1;
+        var charset = new Charset(NameOf(rest[..(nameEnd + 1)]), is96);
+        var glyphs = DecodeGlyphs(rest[(nameEnd + 1)..], out var columns, out var bands);
+
+        var width = p[3] switch
+        {
+            2 => 5,
+            3 => 6,
+            4 => 7,
+            >= 5 => Math.Min(p[3], SoftGlyph.MaxWidth),
+            _ => Math.Max(1, columns),
+        };
+        var height = p[6] >= 1 ? Math.Min(p[6], SoftGlyph.MaxHeight) : Math.Clamp(bands * 6, 1, SoftGlyph.MaxHeight);
+
+        _fonts ??= [];
+        if (p[2] == 2)
+            _fonts.Clear();
+        if (p[2] != 1 || !_fonts.TryGetValue(charset, out var font))
+            font = new SoftGlyph?[96];
+
+        var code = 0x20 + Math.Max(p[1], 0);
+        if (!is96 && code == 0x20)
+            code = 0x21;
+        var last = is96 ? 0x7F : 0x7E;
+        foreach (var rows in glyphs)
+        {
+            if (code > last)
+                break;
+            font[code - 0x20] = rows is null ? null : SoftGlyph.Intern(width, height, rows);
+            code++;
+        }
+
+        _fonts[charset] = font;
+        Refresh();
+    }
+
+    /// <summary>
+    /// Sixel data to bitmaps, one per glyph (null when it has no pixels), with the widest glyph's
+    /// column count and the largest band count. Pixels beyond the kept matrix size are dropped.
+    /// </summary>
+    private static List<ulong[]?> DecodeGlyphs(ReadOnlySpan<byte> data, out int columns, out int bands)
+    {
+        var glyphs = new List<ulong[]?>();
+        columns = 0;
+        bands = 0;
+        ulong[]? rows = null;
+        var x = 0;
+        var band = 0;
+        for (var i = 0; i <= data.Length; i++)
+        {
+            var b = i < data.Length ? data[i] : (byte)';';
+            if (b == (byte)';')
+            {
+                glyphs.Add(rows);
+                rows = null;
+                x = 0;
+                band = 0;
+                continue;
+            }
+
+            if (b == (byte)'/')
+            {
+                band++;
+                x = 0;
+                continue;
+            }
+
+            if (b is < 0x3F or > 0x7E)
+                continue;
+
+            var bits = b - 0x3F;
+            for (var k = 0; k < 6 && bits != 0; k++)
+            {
+                var y = band * 6 + k;
+                if ((bits & (1 << k)) != 0 && x < SoftGlyph.MaxWidth && y < SoftGlyph.MaxHeight)
+                {
+                    rows ??= new ulong[SoftGlyph.MaxHeight];
+                    rows[y] |= 1UL << x;
+                }
+            }
+
+            x++;
+            columns = Math.Max(columns, x);
+            bands = Math.Max(bands, band + 1);
+        }
+
+        return glyphs;
+    }
+
+    private void Refresh()
+    {
+        for (var slot = 0; slot < _sets.Length; slot++)
+            _active[slot] = _fonts?.GetValueOrDefault(_sets[slot]);
+    }
+
+    private static string NameOf(ReadOnlySpan<byte> name) =>
+        name.Length == 1 ? ScreenBuffer.CharStr((char)name[0]) : Encoding.ASCII.GetString(name);
+}
+
 internal enum CastEventKind
 {
     Output,
@@ -1496,8 +1929,14 @@ internal static class CastEventLayout
             return SkipAnsiStringSequence(output, index + 2);
         if (introducer is 'P' or '^' or '_')
             return SkipAnsiStringSequence(output, index + 2);
-        if (introducer is '(' or ')' or '*' or '+' or '-' or '.' or '/')
-            return Math.Min(index + 3, output.Length);
+        if (introducer is >= ' ' and <= '/')
+        {
+            // Intermediates, then the final byte: ESC ( B, and a soft font's ESC ( SP @.
+            var i = index + 1;
+            while (i < output.Length && output[i] is >= ' ' and <= '/')
+                i++;
+            return Math.Min(i + 1, output.Length);
+        }
 
         return Math.Min(index + 2, output.Length);
     }

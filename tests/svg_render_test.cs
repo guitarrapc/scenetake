@@ -53,6 +53,10 @@ failures += Run("LargeSvgWarnsWithAlternatives", LargeSvgWarnsWithAlternatives);
 failures += Run("DefaultFontFamilyPassesValidation", DefaultFontFamilyPassesValidation);
 failures += Run("OwnCastReadsWithoutFontFamilyWarning", OwnCastReadsWithoutFontFamilyWarning);
 failures += Run("TooManyFontFamiliesStillWarns", TooManyFontFamiliesStillWarns);
+failures += Run("SoftFontGlyphsAreUses", SoftFontGlyphsAreUses);
+failures += Run("SoftFontThroughG0IsTheSame", SoftFontThroughG0IsTheSame);
+failures += Run("UnderlinedSoftGlyphsKeepUnderline", UnderlinedSoftGlyphsKeepUnderline);
+failures += Run("SoftGlyphIdsAvoidOtherIds", SoftGlyphIdsAvoidOtherIds);
 
 return failures == 0 ? 0 : 1;
 
@@ -109,6 +113,109 @@ static string RenderCast(string castPath, int? maxFps = null)
         ? recording.RenderSettings with { MaxFps = fps }
         : recording.RenderSettings;
     return SvgRender.RenderToString(recording.Events, recording.Width, recording.Height, render, recording.LoopDuration);
+}
+
+// Soft fonts (DECDLD). Glyphs are written as rows of '#' and '.', top row first.
+
+/// <summary>Sixel data for one glyph: one band per six rows, one character per column, top pixel in bit 0.</summary>
+static string SixelGlyph(string[] rows)
+{
+    var sb = new System.Text.StringBuilder();
+    var width = rows.Max(r => r.Length);
+    for (var band = 0; band * 6 < rows.Length; band++)
+    {
+        if (band > 0)
+            sb.Append('/');
+        for (var x = 0; x < width; x++)
+        {
+            var bits = 0;
+            for (var k = 0; k < 6; k++)
+            {
+                var y = band * 6 + k;
+                if (y < rows.Length && x < rows[y].Length && rows[y][x] == '#')
+                    bits |= 1 << k;
+            }
+
+            sb.Append((char)(0x3F + bits));
+        }
+    }
+
+    return sb.ToString();
+}
+
+/// <summary>A DECDLD string loading <paramref name="glyphs"/> from code 0x21, with a matrix the size of the first glyph.</summary>
+static string Decdld(string name, params string[][] glyphs) =>
+    $"\u001bP1;1;0;{glyphs[0][0].Length};0;2;{glyphs[0].Length};0{{" + name + string.Join(';', glyphs.Select(SixelGlyph)) + "\u001b\\";
+
+/// <summary>An "o" event at <paramref name="time"/> with <paramref name="text"/> escaped for JSON.</summary>
+static string OutputEvent(double time, string text)
+{
+    var sb = new System.Text.StringBuilder("[").Append(time.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append(", \"o\", \"");
+    foreach (var ch in text)
+    {
+        if (ch is '"' or '\\')
+            sb.Append('\\').Append(ch);
+        else if (ch < ' ')
+            sb.Append("\\u").Append(((int)ch).ToString("x4", System.Globalization.CultureInfo.InvariantCulture));
+        else
+            sb.Append(ch);
+    }
+
+    return sb.Append("\"]").ToString();
+}
+
+static bool SoftFontGlyphsAreUses()
+{
+    // The in-box ConPTY form: the font in G1, its characters between SO and SI. Each glyph is one path in
+    // <defs>, in its own pixels, scaled to the 9.92 × 20 cell and lifted by the 12.8 baseline offset. Each
+    // cell is a <use> of it in the cell's color. The codes the program wrote (! and ") are not text.
+    string[] corner = ["##...", "##...", "....#", ".....", ".....", "....."];
+    string[] bar = ["#####", ".....", ".....", ".....", ".....", "....."];
+    var svg = RenderInline(10, 2, OutputEvent(0, Decdld("@", corner, bar) + "\u001b)@\u001b[31m\u000E!\"!\u000F\u001b[0mx"));
+    var paths = System.Text.RegularExpressions.Regex.Matches(svg,
+        """<path id="([a-z0-9]+)" transform="translate\(0 -12.8\) scale\(1.984 3.33333\)" d="([^"]+)"/>""");
+    var pathById = paths.ToDictionary(m => m.Groups[1].Value, m => m.Groups[2].Value);
+    var fills = SvgRenderTestPatterns.FillClassPattern.Matches(svg).ToDictionary(m => m.Groups[1].Value, m => m.Groups[2].Value);
+    var uses = SvgRenderTestPatterns.GlyphUsePattern.Matches(svg).ToList();
+    return paths.Count == 2
+        && uses.Count == 3
+        && uses.Select(u => pathById.GetValueOrDefault(u.Groups[1].Value)).SequenceEqual(["M0 0h2v2h-2zM4 2h1v1h-1z", "M0 0h5v1h-5z", "M0 0h2v2h-2zM4 2h1v1h-1z"])
+        && uses.Select(u => u.Groups[2].Value).SequenceEqual(["18", "27.92", "37.84"])
+        && uses.All(u => string.Equals(fills.GetValueOrDefault(u.Groups[4].Value), "#ac4142", StringComparison.OrdinalIgnoreCase))
+        && DecodeRowLayers(svg).Any(layer => layer is { Row: 0, Text: "□□□x" })
+        && !System.Text.RegularExpressions.Regex.IsMatch(svg, """<text[^>]*>[^<]*(!|&quot;|")""");
+}
+
+static bool SoftFontThroughG0IsTheSame()
+{
+    // A program's own form (Unix, out-of-band ConPTY): the font named " @" in G0. It draws exactly as the in-box form.
+    string[] corner = ["##...", "##...", "....#", ".....", ".....", "....."];
+    var inBox = RenderInline(10, 2, OutputEvent(0, Decdld("@", corner) + "\u001b)@\u000E!\u000Fx"));
+    var own = RenderInline(10, 2, OutputEvent(0, Decdld(" @", corner) + "\u001b( @!\u001b(Bx"));
+    return inBox == own && SvgRenderTestPatterns.GlyphUsePattern.Matches(own).Count == 1;
+}
+
+static bool UnderlinedSoftGlyphsKeepUnderline()
+{
+    // Like a block element, an underlined glyph puts an underlined space in the run over its cell.
+    string[] corner = ["##...", "##...", "....#", ".....", ".....", "....."];
+    var svg = RenderInline(10, 2, OutputEvent(0, Decdld("@", corner) + "\u001b(@\u001b[4m!!\u001b(Bab\u001b[0m"));
+    return svg.Contains("text-decoration=\"underline\" textLength=\"39.68\">  ab</text>", StringComparison.Ordinal)
+        && SvgRenderTestPatterns.GlyphUsePattern.Matches(svg).Count == 2;
+}
+
+static bool SoftGlyphIdsAvoidOtherIds()
+{
+    // 40 different glyphs get 40 ids, none of them the cursor's "c" or starting with "r" like reused rows (r0, r1, …).
+    var glyphs = Enumerable.Range(0, 40)
+        .Select(k => Enumerable.Range(0, 12).Select(y => new string(Enumerable.Range(0, 5).Select(x => x == k % 5 && y == k / 5 ? '#' : '.').ToArray())).ToArray())
+        .ToArray();
+    var codes = new string(Enumerable.Range(0x21, 40).Select(c => (char)c).ToArray());
+    var svg = RenderInline(40, 2, OutputEvent(0, Decdld("@", glyphs) + "\u001b(@" + codes));
+    var ids = System.Text.RegularExpressions.Regex.Matches(svg, """<path id="([a-z0-9]+)" """).Select(m => m.Groups[1].Value).ToList();
+    return ids.Count == 40 && ids.Distinct().Count() == 40 && ids[0] == "a"
+        && ids.All(id => id != "c" && !id.StartsWith('r'))
+        && SvgRenderTestPatterns.GlyphUsePattern.Matches(svg).Count == 40;
 }
 
 static bool CurlOutputSurvivesFrameSampling()
@@ -346,6 +453,8 @@ static List<(int Layer, string Keyframe, string Text, int Row)> DecodeRowLayers(
             baseline = baselineById[layer.Groups["ref"].Value] + double.Parse(layer.Groups["dy"].Value, inv);
         else if (SvgRenderTestPatterns.TextYPattern.Match(markup) is { Success: true } textY)
             baseline = double.Parse(textY.Groups[1].Value, inv);
+        else if (SvgRenderTestPatterns.GlyphUsePattern.Match(markup) is { Success: true, Groups: var useGroups } && useGroups[3].Success)
+            baseline = double.Parse(useGroups[3].Value, inv);
         else if (SvgRenderTestPatterns.RectYPattern.Match(markup) is { Success: true } rectY)
         {
             // A block rect starts anywhere in its cell (▄ at half the line, ▁ at 7/8), so its row is the line it starts in.
@@ -375,6 +484,10 @@ static List<(int Layer, string Keyframe, string Text, int Row)> DecodeRowLayers(
                     glyphs.Add((xs[0] + i * cellWidth, elements.GetTextElement()));
             }
         }
+
+        // A soft font glyph is a <use> of its path at its cell's x. It decodes as □.
+        foreach (System.Text.RegularExpressions.Match use in SvgRenderTestPatterns.GlyphUsePattern.Matches(markup))
+            glyphs.Add((double.Parse(use.Groups[2].Value, inv), "□"));
 
         foreach (var (x, _) in glyphs)
             minX = Math.Min(minX, x);
@@ -926,6 +1039,12 @@ file static class SvgRenderTestPatterns
     // A cursor position: a <use> of the one cursor rect, inside a row layer or with its own timing.
     internal static readonly System.Text.RegularExpressions.Regex CursorPattern = new(
         """<use href="#c" x="([0-9.]+)" y="(-?[0-9.]+)"(?: class="l [a-z][a-z0-9]*")?/>""",
+        System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    // A soft font glyph in a row: a <use> of its path, at the text baseline. Not the cursor (#c) or a reused row (#rN).
+    // Groups: 1 the path id, 2 x, 3 y (absolute content only), 4 the fill class (none for the theme's foreground).
+    internal static readonly System.Text.RegularExpressions.Regex GlyphUsePattern = new(
+        """<use href="#(?!c"|r\d)([a-z][a-z0-9]*)" x="([0-9.]+)"(?: y="(-?[0-9.]+)")?(?: class="([a-z0-9]+)")?/>""",
         System.Text.RegularExpressions.RegexOptions.Compiled);
 
     // Groups: 1 the class list (with a fill class unless the text has the theme's foreground), 2 x, 3 the glyphs.

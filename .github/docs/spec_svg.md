@@ -44,10 +44,32 @@ Cast file format (header, versions, written event codes): [spec_cast.md](spec_ca
 | Alternate screen (`?1049h/l`), cursor visibility (`?25h/l`) | Yes |
 | SGR: bold, faint, italic, underline, reverse, 16/256/true color | Yes — `;` and `:` forms |
 | Unicode wide chars, surrogate pairs, combining marks, VS | Yes |
-| OSC / DCS / charset designations | Skipped (not rendered) |
+| OSC, DCS other than soft fonts | Skipped (not rendered) |
+| Soft fonts (DECDLD), G0–G3 designations, SI/SO, LS2/LS3, SS2/SS3 | Yes — soft font glyphs are drawn from their bitmaps; other sets (DEC line drawing) draw as ASCII (see [Soft fonts](#soft-fonts)) |
 | Block elements U+2580–U+259F | Yes — rects covering their exact part of the cell, as in mp4 (see [Row encoding](#row-encoding)) |
 
 Tests: `tests/terminal_tests.cs`.
+
+### Soft fonts
+
+A program can load its own glyphs into the terminal with a DECDLD string and draw them with plain ASCII codes, as `matrix --mode movie` does. Without soft font support the DCS was skipped, so a recording showed the ASCII codes (`#`, `2`, `=`) instead of the glyphs.
+
+- **Loading.** `ESC P Pfn;Pcn;Pe;Pcmw;Pss;Pt;Pcmh;Pcss { name glyph;glyph… ESC \`.
+  - Glyphs load from code 0x20 + Pcn, at 0x21 at the lowest for a 94-character set (Pcss 0).
+  - The matrix is Pcmw × Pcmh pixels, with Pcmw 2–4 the VT220 widths 5–7. A size given as 0 comes from the data.
+  - Pe 0 replaces the font of that name, 1 only the codes loaded, 2 drops every font first.
+  - Other DCS strings (Sixel, DECRQSS, tmux passthrough) stay skipped.
+- **Selecting.** `ESC (`, `)`, `*`, `+` (94-character sets) and `ESC -`, `.`, `/` (96-character sets) name a set into G0–G3. The name may carry an intermediate, as in `ESC ( SP @`. SI, SO, LS2, and LS3 pick the set for GL, and SS2 and SS3 for one character. A font is used wherever a designation names it, whether the designation comes before or after the font loads. DECSC and DECRC save and restore the designations and GL with the cursor, and RIS drops every font.
+- **One font, two byte streams.** Both draw the same cells:
+
+  | Path | Font name | Set | Characters |
+  |---|---|---|---|
+  | Unix, or the out-of-band ConPTY | as the program wrote it (` @`) | G0 (`ESC ( SP @`), then `ESC ( B` | plain ASCII |
+  | The in-box Windows ConPTY | rewritten to `@` | G1 (`ESC ) @`) | each run between SO and SI |
+
+- **Cells.** A cell keeps the glyph it was written with, and the code as its text. A code the font does not define draws blank, as on DEC terminals. Glyphs are compared by bitmap, so the same font loaded twice draws the same.
+- **Drawing.** The matrix is stretched to the cell whatever its size, as terminals do: 12×24 becomes 9.92×20 at 16px. The SVG draws each glyph as one path in `<defs>` and each cell as a `<use>` of it ([Row encoding](#row-encoding)). mp4 scales the bitmap ([spec_mp4.md](spec_mp4.md) → Fonts).
+- **Whether a program sends a soft font is up to the program.** It sees scenetake's PTY, not the host terminal. The in-box ConPTY answers the device attributes query (DA1) itself and lists soft fonts. On Unix nothing answers it. matrix 1.2.0 therefore uses its soft font under scenetake only on Windows with `WT_SESSION` set (`run: WT_SESSION=1 matrix --mode movie`), and falls back to katakana otherwise.
 
 ### Animation and layout (plain terminal)
 
@@ -75,17 +97,20 @@ Tests: `tests/terminal_tests.cs`.
 
 ### Row encoding
 
-Each row layer is one line. It holds the row's background rects, then its block elements, then its text. Lines end with `\n` on every OS.
+Each row layer is one line. It holds the row's background rects, then its block elements, then its soft font glyphs, then its text. Lines end with `\n` on every OS.
 
 - **Background.** One `<rect>` covers each run of cells with the same non-theme background, whatever the foreground or style. A single CSS rule gives these rects crisp edges.
 - **Block elements** (U+2580–U+259F) are rects covering their exact part of the cell, as the mp4 rasterizer draws them:
   - halves, eighths, and quadrants;
   - shades (░ ▒ ▓) as 25%, 50%, and 75% `fill-opacity`;
   - parts of one color and height that touch along the row merge into one rect.
+- **Soft font glyphs** ([Soft fonts](#soft-fonts)) are one `<use href="#id" x>` per cell, at the text baseline like a `<text>`, so row-local content needs no `y`. The color is a fill class, or inherited for the theme's foreground.
+  - Each glyph is one `<path>` in `<defs>`: its pixels as rects in the glyph's own pixels, scaled to the cell and moved up by the baseline offset. One path per glyph keeps anti-aliased rects free of seams.
+  - Ids are given on first use. They skip `c` (the cursor) and names starting with `r` (reused rows are `r0`, `r1`, …).
 - **Text.** Each row uses whichever of two encodings is shorter:
   - **Run form:** one `<text>` per run of identical style, spread to the run's cells with `textLength`. This is small for prose and typing.
   - **Glyph-list form:** one `<text>` per foreground and weight/slant, with an `x` for each glyph and spaces left out. This is small for sparse colored output such as matrix rain, gauges, and TUI chrome.
-- **Rows with underlined cells** always use the run form, because the underline also runs under spaces between words. Underlined spaces are drawn with their underline up to the row's last underlined character that is not a space, as in mp4. Spaces after it are left out like any other trailing spaces. An underlined block element puts an underlined space in the run over its cell, so the underline also runs under the block, as in mp4.
+- **Rows with underlined cells** always use the run form, because the underline also runs under spaces between words. Underlined spaces are drawn with their underline up to the row's last underlined character that is not a space, as in mp4. Spaces after it are left out like any other trailing spaces. An underlined block element or soft font glyph puts an underlined space in the run over its cell, so the underline also runs under it, as in mp4.
 - **Colors.** Text in the theme's foreground has no fill of its own; it inherits one from the group around all rows. Any other text color is a class with one CSS rule. Rects keep `fill` attributes, so that the crisp-edge rule still matches them.
 - **Row-local coordinates.** A row layer may draw its content with the baseline at y=0, so its `<text>` elements carry no `y`. A per-row class (`transform: translate(0, Ypx)`) then moves the layer to its row.
   - Each layer keeps whichever form is shorter.
@@ -210,8 +235,8 @@ The input file is never modified by the `svg` subcommand.
 
 | Suite | Coverage |
 |-------|----------|
-| `tests/terminal_tests.cs` | VT emulator (CSI, Unicode, alt screen) |
-| `tests/svg_render_test.cs` | Row-diff smoke, marker timing, `--max-fps`, matrix rain tint, streamed file output matches in-memory render, row encoding choice (glyph list vs run, underline, multi-unit cells, background spans, shared keyframe rules), combining marks, block and shade rects, LF line endings, inherited foreground and fill classes, single-text layers, row-local content in every layer form, short lowercase class names, unused keyframes left out, dropped zero-length frames, run `textLength` in cells, underlined spaces and block elements, plain block elements kept out of run text, block-only rows decoded to their row, XML-invalid characters, scenario theme color validation, cast warning prefix. Text checks decode every layer form back to row text, color, and row, and cursor checks cover cursors inside row layers and with their own timing, so a layer or cursor drawn on the wrong line fails. |
+| `tests/terminal_tests.cs` | VT emulator (CSI, Unicode, alt screen). Soft fonts: both byte streams, a DECDLD split across chunks, a designation before the load, undefined codes, the matrix size from the data, erase control, other DCS strings skipped, glyph cells against text cells, DECSC/DECRC, RIS, single shifts |
+| `tests/svg_render_test.cs` | Row-diff smoke, marker timing, `--max-fps`, matrix rain tint, streamed file output matches in-memory render, row encoding choice (glyph list vs run, underline, multi-unit cells, background spans, shared keyframe rules), combining marks, block and shade rects, LF line endings, inherited foreground and fill classes, single-text layers, row-local content in every layer form, short lowercase class names, unused keyframes left out, dropped zero-length frames, run `textLength` in cells, underlined spaces and block elements, plain block elements kept out of run text, block-only rows decoded to their row, XML-invalid characters, scenario theme color validation, cast warning prefix, soft font glyphs as `<use>`s of `<defs>` paths (path pixels, scale, position, color), both soft font byte streams giving the same SVG, underlined glyphs, glyph ids. Text checks decode every layer form back to row text, color, and row, and cursor checks cover cursors inside row layers and with their own timing, so a layer or cursor drawn on the wrong line fails. |
 | `tests/scenario_render_test.cs` | Scenario path (`--format svg` / `--format mp4`) output is byte-identical to `scenetake svg` / `scenetake mp4` on the written cast (default, `--max-fps`, render overrides). Needs `SCENETAKE_BIN`; mp4 also needs ffmpeg. |
 | `tests/window_chrome_test.cs` | `render.window` / cast tag / CLI resolution; chrome SVG structure |
 
@@ -245,6 +270,8 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 | One cursor element moved by keyframes | 14–24% smaller typing SVGs. But moving one element with `translate`, `transform`, or CSS `x`/`y` added 50–70% main-thread time on busy recordings in headless Edge. Many cursor elements that only switch `opacity` cost nothing extra. |
 | One shared timeline (an animated custom property `--f`, each layer's show and hide as numbers) | 13–20% smaller typing SVGs. Animated on every layer, it tripled main-thread time (basic: about 110 → 335 ms/s). Animated once on the root, it was cheaper for typing, but it dropped frames on pty and interactive-pty (p95 33–50ms). |
 | Per-cell lifetimes for matrix-like output | Only 14% of matrix 200×60 glyphs (5% for pty) carry over unchanged, glyph and color, into the next layer of their row. Per-cell timing would cost more than it saves. |
+| Soft font glyphs as private-use characters in the cell text | No renderer would need to change, but Nerd Font icons and Powerline symbols use the same range and would be drawn as soft font glyphs. |
+| Soft font glyphs as a web font in a `data:` URI | It would keep the compact glyph-list form for matrix rain. But it needs a font writer, and the browser's font rasterizer would not match the mp4's bitmap scaling. Not tried. |
 | Cell-unit coordinates (`scale(cellWidth)` per row, integer `x`) | Another 8 points off matrix output. But matrix 200×60 played about 1.5× slower per frame, and text drawn at 1.6px and scaled up is unchecked in Firefox and Safari. Chromium does not apply its minimum font size to SVG inside `<img>`. |
 
 ## Lessons Learned
@@ -278,4 +305,10 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 - **TUIs write one screen several times within a millisecond.** In matrix 200×60, 2,711 layers had a zero-length keyframe, 2.7MB of a 19.7MB SVG that was never visible.
 - **Scrollback that nothing reads still costs memory.** The screen kept every row scrolled off the top. A cast that scrolls 300,000 lines peaked at 1,050MB for a 2KB SVG. Dropping those rows brought it to 144MB, with the same output.
 - **Render time.** Two changes took matrix 200×60 from 3.3s to 2.3s and 384×108 from 23s to 14.8s, with byte-identical output. First, each changed row is encoded row-local, and that pass also measures the absolute form. The absolute form is then encoded only when it is kept or when the reuse check compares it with an earlier absolute layer, instead of for every row. Second, the drawing pass no longer hashes every screen again. With unseen frames dropped, they take 1.7s and 10.1s (Windows 11).
+- **The in-box ConPTY re-encodes soft fonts.** matrix writes its font as ` @` and designates it into G0. Through the in-box ConPTY of Windows 11 (build 26200), the same font arrived renamed to `@`, designated into G1, with every run of its codes between SO and SI, and the host answered DA1 itself. Through the out-of-band ConPTY 1.25, the bytes arrived as written, as on Unix. Handling designations and shifts in general covers both.
+- **`ESC ( SP @` left an `@` on screen.** A designation was read as exactly one byte after `(`, so a set name with an intermediate printed its final byte.
+- **Rows with no text can show seams outside `<img>`.** Row-local layers move to fractional baselines, 24.8px at 16px.
+  - A layer with no `<text>`, such as a row of soft font glyphs or block elements on a black background, showed a faint line between rows when the SVG was opened directly or inlined in HTML in Edge. Through `<img>` the same file showed none.
+  - Rounding the row translates removed the lines in the inlined test. It would also move every text baseline by up to half a pixel, so it is not done.
+- **Soft font SVGs are larger.** A 60×16, 3s matrix recording was 420KB with the soft font, against 273KB with `--mode kana`. A glyph costs a `<use>` of about 30 bytes, where the glyph-list form spends one character and an `x`. The one-cell glyphs also give matrix twice as many columns.
 - **matrix 200×60 is past what a browser can play.** It plays at 1–2 frames per second in headless Edge, with or without GPU. Shrinking it matters for file-size limits, not for playback.
