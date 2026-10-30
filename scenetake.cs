@@ -300,6 +300,14 @@ if (FindStepKeyError(scenario) is { } stepKeyError)
     return 1;
 }
 
+// The OS reads a path only up to a NUL, so pre, post and the pipe steps would run in the folder named
+// before it. A PTY step refuses the NUL itself, but only after pre has run.
+if (scenario.Cwd is not null && scenario.Cwd.Contains('\0'))
+{
+    Console.Error.WriteLine($"Error: cwd cannot contain a NUL character: {scenario.Cwd}");
+    return 1;
+}
+
 // The cast is written only after pre and the recording, so the outputs are checked first. When pre
 // has commands, their folder is checked after pre instead, because pre may create it.
 var preHasCommands = scenario.Pre?.Any(command => !string.IsNullOrWhiteSpace(command)) == true;

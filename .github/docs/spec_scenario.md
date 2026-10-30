@@ -160,7 +160,7 @@ A command that needs another value sets it itself, for example `COLORTERM= tool`
 ## Execution Order
 
 1. Read the YAML file and resolve the render settings.
-2. Check the terminal size, a step `run` given as a list or a mapping, step keys that contradict each other, the outputs (their folder too when there are no `pre` commands), and for `--format mp4` ffmpeg, a usable font, and the frame size ([spec_cli.md](spec_cli.md) → Output Paths, [spec_mp4.md](spec_mp4.md)). Any failure stops the run before anything executes.
+2. Check the terminal size, a step `run` given as a list or a mapping, step keys that contradict each other, a `cwd` with a NUL character (the OS would read the folder before it), the outputs (their folder too when there are no `pre` commands), and for `--format mp4` ffmpeg, a usable font, and the frame size ([spec_cli.md](spec_cli.md) → Output Paths, [spec_mp4.md](spec_mp4.md)). Any failure stops the run before anything executes.
 3. Derive the deterministic seed and timestamp, and resolve the shell. A shell that cannot be found stops the run before anything executes: on Windows any shell, on Unix one given by an absolute path with no `..` in it. A shell with a NUL character is refused too, on every platform and whether it is a name or a path, because the OS reads it only up to the NUL and would start a different file. On Unix a shell given by name or by a relative path is started as written, so `$0` and the shell's own messages in the recording keep that name. A missing one fails at the first command.
 4. Execute `pre` commands.
 5. Run every output check again, the folder included, since `pre` may have changed what is there. A failure skips steps 6–8 and still runs `post`.

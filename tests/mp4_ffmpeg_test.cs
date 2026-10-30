@@ -726,8 +726,8 @@ static bool ScenarioErrorsStopBeforePre(string scenetake, string repoRoot, strin
 {
     // Each scenario must end with an error before anything runs, not with an unhandled exception: YAML the
     // parser rejects in different ways (a broken token, a value of the wrong type, a key given twice in a
-    // step), a shell that does not exist, and a run that is a list. Only the list case could run pre before
-    // a later refusal, so its pre marker shows the order. The others cannot reach pre at all.
+    // step), a shell that does not exist, a shell or a cwd with a NUL, and a run that is a list. Without
+    // their refusal the NUL and list cases would run pre, so the pre marker shows the order.
     var directory = Directory.CreateDirectory(Path.Combine(work, "before-pre")).FullName;
     var cwd = directory.Replace('\\', '/');
     var missingShell = OperatingSystem.IsWindows() ? $"{cwd}/no-such-shell.exe" : "/no/such/shell";
@@ -735,6 +735,8 @@ static bool ScenarioErrorsStopBeforePre(string scenetake, string repoRoot, strin
     // the NUL is refused. On Unix the ".." after the NUL would also skip the check for a missing absolute path.
     var nulPath = OperatingSystem.IsWindows() ? Environment.SystemDirectory.Replace('\\', '/') + "/cmd.exe\\0" : "/bin/sh\\0/..";
     var nulName = OperatingSystem.IsWindows() ? "cmd.exe\\0" : "sh\\0zsh";
+    // The OS reads this cwd as the test folder, so without the refusal pre runs there and leaves its marker.
+    var nulCwd = $"{cwd}\\0/named-but-missing";
     var cases = new (string Name, string Body, string Error)[]
     {
         ("token", "title: \"unclosed\nsteps:\n  - run: echo hi\n", "Error: cannot read"),
@@ -743,13 +745,15 @@ static bool ScenarioErrorsStopBeforePre(string scenetake, string repoRoot, strin
         ("shell", $"shell: '{missingShell}'\nsteps:\n  - run: echo hi\n", "Error: Shell"),
         ("nulpath", $"shell: \"{nulPath}\"\nsteps:\n  - run: echo hi\n", "a shell cannot contain a NUL character"),
         ("nulname", $"shell: \"{nulName}\"\nsteps:\n  - run: echo hi\n", "a shell cannot contain a NUL character"),
+        ("nulcwd", $"cwd: \"{nulCwd}\"\nsteps:\n  - run: echo hi\n", "cwd cannot contain a NUL character"),
         ("list", "steps:\n  - run: [echo, hi]\n", "Error: Step key 'run' must be a command string"),
     };
     var refused = true;
     foreach (var (name, body, error) in cases)
     {
         var scenario = Path.Combine(directory, $"{name}.yaml");
-        File.WriteAllText(scenario, $"cwd: '{cwd}'\npre:\n  - echo ran > {name}-pre-ran.txt\n{body}");
+        var cwdKey = body.StartsWith("cwd:", StringComparison.Ordinal) ? "" : $"cwd: '{cwd}'\n";
+        File.WriteAllText(scenario, $"{cwdKey}pre:\n  - echo ran > {name}-pre-ran.txt\n{body}");
         var (exit, stderr) = Exec(scenetake, repoRoot, [scenario]);
         if (exit != 1 || !stderr.Contains(error, StringComparison.Ordinal) || stderr.Contains("Unhandled", StringComparison.Ordinal)
             || File.Exists(Path.Combine(directory, $"{name}-pre-ran.txt")))

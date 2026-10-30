@@ -29,7 +29,7 @@ YAML structure for `pre`/`post`: [spec_scenario.md](spec_scenario.md). CLI loggi
 
 | Phase | On failure |
 |---|---|
-| Scenario errors found before `pre` (a scenario file that cannot be read or parsed, render settings, terminal size, a step `run` given as a list or a mapping, step keys that contradict each other, outputs, `--format mp4` needs, a shell that cannot be found, on Unix one given by an absolute path with no `..`, and a shell with a NUL character) | Error; nothing runs; exit `1`. |
+| Scenario errors found before `pre` (a scenario file that cannot be read or parsed, render settings, terminal size, a step `run` given as a list or a mapping, step keys that contradict each other, a `cwd` with a NUL character, outputs, `--format mp4` needs, a shell that cannot be found, on Unix one given by an absolute path with no `..`, and a shell with a NUL character) | Error; nothing runs; exit `1`. |
 | `pre` | Fail-fast; `steps`, cast write, and `post` are skipped; exit with the command's code. |
 | An output check fails after `pre` (folder missing, or `pre` put a directory or a link to the scenario where an output goes) | `steps` and cast write are skipped; `post` runs; exit `1`, or the failing `post` command's code ([spec_cli.md](spec_cli.md) → Output Paths). |
 | `steps` | Recording continues. Non-zero exits warn on stderr; scenetake exits `0` unless another fatal error occurs. See [spec_scenario.md](spec_scenario.md) → Step exit codes. A step error that stops the recording, such as an interactive step without a terminal or a PTY that cannot start, skips the cast write; `post` runs; exit `1`, or the failing `post` command's code. |
