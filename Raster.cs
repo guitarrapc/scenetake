@@ -579,6 +579,7 @@ internal sealed unsafe class GlyphSource
     private readonly List<FontFamilyFaces> _chain;
     private readonly RasterLayout _layout;
     private readonly Dictionary<(string Text, int Style, int Span), RasterGlyph> _cache = new();
+    private readonly Dictionary<SoftGlyph, RasterGlyph> _softCache = new();
 
     private GlyphSource(List<FontFamilyFaces> chain, RasterLayout layout)
     {
@@ -693,6 +694,18 @@ internal sealed unsafe class GlyphSource
         var glyph = Build(text, bold, italic, span);
         _cache[(text, style, span)] = glyph;
         return glyph;
+    }
+
+    /// <summary>The mask for a soft font glyph: its bitmap scaled to the cell (see <see cref="CellGlyphs.DrawSoft"/>).</summary>
+    internal RasterGlyph GetSoft(SoftGlyph glyph)
+    {
+        if (!_softCache.TryGetValue(glyph, out var mask))
+        {
+            mask = CellGlyphs.DrawSoft(glyph, _layout);
+            _softCache[glyph] = mask;
+        }
+
+        return mask;
     }
 
     private RasterGlyph Build(string text, bool bold, bool italic, int span)
@@ -915,6 +928,45 @@ internal static class CellGlyphs
 
         glyph = new RasterGlyph(width, height, 0, -layout.Baseline, alpha);
         return true;
+    }
+
+    /// <summary>
+    /// A soft font (DECDLD) glyph scaled to fill the cell, as terminals draw it whatever the matrix size.
+    /// Each pixel's alpha is the share of its area the glyph's set pixels cover, so a 12×24 matrix
+    /// in a 10×20 cell keeps every stroke instead of dropping whole rows and columns.
+    /// </summary>
+    internal static RasterGlyph DrawSoft(SoftGlyph glyph, RasterLayout layout)
+    {
+        var width = layout.CellWidth;
+        var height = layout.CellHeight;
+        var alpha = new byte[width * height];
+        var scaleX = (double)glyph.Width / width;
+        var scaleY = (double)glyph.Height / height;
+        var area = scaleX * scaleY;
+        for (var y = 0; y < height; y++)
+        {
+            var top = y * scaleY;
+            var bottom = top + scaleY;
+            for (var x = 0; x < width; x++)
+            {
+                var left = x * scaleX;
+                var right = left + scaleX;
+                var covered = 0d;
+                for (var gy = (int)top; gy < Math.Min(glyph.Height, (int)Math.Ceiling(bottom)); gy++)
+                {
+                    var overlapY = Math.Min(bottom, gy + 1) - Math.Max(top, gy);
+                    for (var gx = (int)left; gx < Math.Min(glyph.Width, (int)Math.Ceiling(right)); gx++)
+                    {
+                        if (glyph.IsSet(gx, gy))
+                            covered += overlapY * (Math.Min(right, gx + 1) - Math.Max(left, gx));
+                    }
+                }
+
+                alpha[y * width + x] = (byte)Math.Clamp((int)Math.Round(covered / area * 255), 0, 255);
+            }
+        }
+
+        return new RasterGlyph(width, height, 0, -layout.Baseline, alpha);
     }
 
     /// <summary>An outlined box for characters no font has.</summary>
@@ -1323,7 +1375,7 @@ internal sealed class FrameRasterizer
 
             var span = cell.IsWide ? 2 : 1;
             var x = _layout.CellX(col);
-            var glyph = _glyphs.Get(cell.Text, cell.Bold, cell.Italic, span);
+            var glyph = cell.Glyph is { } soft ? _glyphs.GetSoft(soft) : _glyphs.Get(cell.Text, cell.Bold, cell.Italic, span);
             var fg = glyph.Width != 0 || (cell.Underline && col <= lastUnderlined)
                 ? Color(CellColors.ResolveTintedForeground(view, row, col, cell, _theme))
                 : default;

@@ -48,6 +48,8 @@ failures += Run("X264SideLimitIsChecked", X264SideLimitIsChecked);
 failures += Run("FontFileThatCannotLoadIsAnError", FontFileThatCannotLoadIsAnError);
 failures += Run("ShortFontTableIsRejected", ShortFontTableIsRejected);
 failures += Run("DefaultFontsPassTableChecks", DefaultFontsPassTableChecks);
+failures += Run("SoftGlyphScalesByCoverage", SoftGlyphScalesByCoverage);
+failures += Run("SoftGlyphFrameUsesCellColor", SoftGlyphFrameUsesCellColor);
 failures += Run("OutOfRangeGlyphIdsAreMissing", OutOfRangeGlyphIdsAreMissing);
 failures += Run("EveryFontFileFaceMustLoad", EveryFontFileFaceMustLoad);
 failures += Run("FontFileIsNotHeldOpen", FontFileIsNotHeldOpen);
@@ -340,6 +342,35 @@ static (byte, byte, byte) Pixel(byte[] frame, RasterLayout layout, int x, int y)
 
 static (byte, byte, byte) CellPixel(byte[] frame, RasterLayout layout, int row, int col) =>
     Pixel(frame, layout, layout.CellX(col) + layout.CellWidth / 2, layout.RowY(row) + layout.CellHeight / 2);
+
+static bool SoftGlyphScalesByCoverage()
+{
+    // A 12×24 matrix in a 10×20 cell (16px). Columns 0–5 set: output columns 0–4 cover glyph x 0–6 fully,
+    // columns 5–9 nothing. One set pixel in a 2×2 matrix fills the cell's top-left quarter.
+    var layout = RasterLayout.Create(16, 1, 1);
+    var halfRows = Enumerable.Repeat(0x3FUL, 24).ToArray();
+    var half = CellGlyphs.DrawSoft(SoftGlyph.Intern(12, 24, halfRows), layout);
+    var quarter = CellGlyphs.DrawSoft(SoftGlyph.Intern(2, 2, [1UL, 0UL]), layout);
+    int At(RasterGlyph g, int x, int y) => g.Alpha[y * g.Width + x];
+    var w = layout.CellWidth;
+    var h = layout.CellHeight;
+    return half.Width == w && half.Height == h && half.OffsetX == 0 && half.OffsetY == -layout.Baseline
+        && Enumerable.Range(0, h).All(y => At(half, 4, y) == 255 && At(half, 5, y) == 0)
+        && At(quarter, w / 2 - 1, h / 2 - 1) == 255 && At(quarter, w / 2, h / 2 - 1) == 0 && At(quarter, w / 2 - 1, h / 2) == 0;
+}
+
+static bool SoftGlyphFrameUsesCellColor()
+{
+    // A soft font glyph with every pixel set fills its cell in the cell's color: red (#ac4142) in the dark theme.
+    // The in-box ConPTY form: the font in G1, its character between SO and SI. The space after it is background.
+    var full = new string('~', 5) + "/" + new string('~', 5);
+    var (frames, layout) = Render(
+        "[0.0,\"o\",\"\\u001bP1;1;0;5;0;2;12;0{@" + full + "\\u001b\\\\\\u001b)@\\u001b[31m\\u000e!\\u000f \\u001b[0m\\u001b[?25l\"]", fps: 10);
+    var last = frames[^1];
+    return CellPixel(last, layout, 0, 0) == (0xac, 0x41, 0x42)
+        && Pixel(last, layout, layout.CellX(0), layout.RowY(0)) == (0xac, 0x41, 0x42)
+        && CellPixel(last, layout, 0, 1) == (40, 44, 52);
+}
 
 static bool BoxDrawingAtTinySizesStaysInCell()
 {

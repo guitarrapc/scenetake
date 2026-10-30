@@ -25,6 +25,19 @@ failures += Run("ScrollRegion", ScrollRegion);
 failures += Run("NameCommentPrefixIgnoresTrailingAnsiControls", NameCommentPrefixIgnoresTrailingAnsiControls);
 failures += Run("AlternateScreenRestoreKeepsNextPromptAdjacent", AlternateScreenRestoreKeepsNextPromptAdjacent);
 failures += Run("VimRedrawAtScenarioHeight", VimRedrawAtScenarioHeight);
+failures += Run("SoftFontThroughG1AndShiftOut", SoftFontThroughG1AndShiftOut);
+failures += Run("SoftFontThroughG0WithIntermediate", SoftFontThroughG0WithIntermediate);
+failures += Run("DesignationWithIntermediatePrintsNothing", DesignationWithIntermediatePrintsNothing);
+failures += Run("SoftFontSplitAcrossChunks", SoftFontSplitAcrossChunks);
+failures += Run("SoftFontDesignatedBeforeLoad", SoftFontDesignatedBeforeLoad);
+failures += Run("UndefinedSoftFontCodeIsBlank", UndefinedSoftFontCodeIsBlank);
+failures += Run("SoftFontMatrixSizeFromData", SoftFontMatrixSizeFromData);
+failures += Run("SoftFontEraseControl", SoftFontEraseControl);
+failures += Run("OtherDcsStaySkipped", OtherDcsStaySkipped);
+failures += Run("SoftGlyphCellsDifferFromText", SoftGlyphCellsDifferFromText);
+failures += Run("SaveRestoreKeepsCharsets", SaveRestoreKeepsCharsets);
+failures += Run("ResetDropsSoftFonts", ResetDropsSoftFonts);
+failures += Run("SingleShiftMapsOneCharacter", SingleShiftMapsOneCharacter);
 
 return failures == 0 ? 0 : 1;
 
@@ -287,6 +300,232 @@ static bool AlternateScreenRestoreKeepsNextPromptAdjacent()
         && buffer.IsRowBlank(2)
         && buffer.CursorRow == 1
         && buffer.CursorCol == 2;
+}
+
+// Soft fonts (DECDLD). Glyphs are written as rows of '#' and '.', top row first.
+
+static string[] Diagonal() => ["#....", ".#...", "..#..", "...#.", "....#", "....."];
+static string[] TopBar() => ["#####", ".....", ".....", ".....", ".....", "....."];
+
+/// <summary>Sixel data for one glyph: one band per six rows, one character per column, top pixel in bit 0.</summary>
+static string SixelGlyph(string[] rows)
+{
+    var sb = new StringBuilder();
+    var width = rows.Max(r => r.Length);
+    for (var band = 0; band * 6 < rows.Length; band++)
+    {
+        if (band > 0)
+            sb.Append('/');
+        for (var x = 0; x < width; x++)
+        {
+            var bits = 0;
+            for (var k = 0; k < 6; k++)
+            {
+                var y = band * 6 + k;
+                if (y < rows.Length && x < rows[y].Length && rows[y][x] == '#')
+                    bits |= 1 << k;
+            }
+
+            sb.Append((char)(0x3F + bits));
+        }
+    }
+
+    return sb.ToString();
+}
+
+/// <summary>A DECDLD string: <c>ESC P parameters { name glyph;glyph… ESC \</c>.</summary>
+static string Decdld(string parameters, string name, params string[][] glyphs) =>
+    "\u001bP" + parameters + "{" + name + string.Join(';', glyphs.Select(SixelGlyph)) + "\u001b\\";
+
+static bool GlyphIs(ScreenCell cell, string[] rows)
+{
+    if (cell.Glyph is not { } glyph || glyph.Width != rows[0].Length || glyph.Height != rows.Length)
+        return false;
+    for (var y = 0; y < rows.Length; y++)
+    {
+        for (var x = 0; x < rows[y].Length; x++)
+        {
+            if (glyph.IsSet(x, y) != (rows[y][x] == '#'))
+                return false;
+        }
+    }
+
+    return true;
+}
+
+static bool SoftFontThroughG1AndShiftOut()
+{
+    // The in-box Windows ConPTY's form: the font renamed to "@", designated into G1, and each run of
+    // its characters between SO and SI. Text outside SO/SI stays ASCII.
+    var theme = DarkTheme();
+    var buffer = new ScreenBuffer(10, 2, theme);
+    var parser = new AnsiParser(buffer, theme);
+    parser.Process(Decdld("1;1;0;5;0;2;6;0", "@", Diagonal(), TopBar()) + "\u001b)@x\u000E!\"\u000F!");
+
+    return buffer.GetCell(0, 0) is { Text: "x", Glyph: null }
+        && GlyphIs(buffer.GetCell(0, 1), Diagonal()) && buffer.GetCell(0, 1).Text == "!"
+        && GlyphIs(buffer.GetCell(0, 2), TopBar())
+        && buffer.GetCell(0, 3) is { Text: "!", Glyph: null }
+        && buffer.CursorCol == 4;
+}
+
+static bool SoftFontThroughG0WithIntermediate()
+{
+    // The form a program writes itself (matrix on Unix, or the out-of-band ConPTY): a name with an
+    // intermediate, designated into G0, then ASCII designated back.
+    var theme = DarkTheme();
+    var buffer = new ScreenBuffer(10, 2, theme);
+    var parser = new AnsiParser(buffer, theme);
+    parser.Process(Decdld("1;1;0;5;0;2;6;0", " @", Diagonal()) + "\u001b( @!\u001b(B!");
+
+    return GlyphIs(buffer.GetCell(0, 0), Diagonal())
+        && buffer.GetCell(0, 1) is { Text: "!", Glyph: null }
+        && buffer.CursorCol == 2;
+}
+
+static bool DesignationWithIntermediatePrintsNothing()
+{
+    // ESC ( SP @ is one sequence. Reading only one byte after "(" used to print the "@".
+    // DEC line drawing (ESC ( 0) is not drawn as lines and stays ASCII.
+    var theme = DarkTheme();
+    var buffer = new ScreenBuffer(10, 2, theme);
+    var parser = new AnsiParser(buffer, theme);
+    parser.Process("\u001b( @AB\u001b(0q\u001b(B");
+
+    return RowText(buffer, 0) == "ABq" && buffer.CursorCol == 3;
+}
+
+static bool SoftFontSplitAcrossChunks()
+{
+    var theme = DarkTheme();
+    var buffer = new ScreenBuffer(10, 2, theme);
+    var parser = new AnsiParser(buffer, theme);
+    var load = Decdld("1;1;0;5;0;2;6;0", " @", Diagonal()) + "\u001b( @!";
+    var cuts = new[] { 3, 12, load.IndexOf('\\'), load.Length - 3 };
+    var start = 0;
+    foreach (var cut in cuts)
+    {
+        parser.Process(load[start..cut]);
+        start = cut;
+    }
+
+    parser.Process(load[start..]);
+    return GlyphIs(buffer.GetCell(0, 0), Diagonal()) && buffer.CursorCol == 1;
+}
+
+static bool SoftFontDesignatedBeforeLoad()
+{
+    // A designation names a set. The font is used once it loads, whichever comes first.
+    var theme = DarkTheme();
+    var buffer = new ScreenBuffer(10, 2, theme);
+    var parser = new AnsiParser(buffer, theme);
+    parser.Process("\u001b( @!" + Decdld("1;1;0;5;0;2;6;0", " @", Diagonal()) + "!");
+
+    return buffer.GetCell(0, 0) is { Text: "!", Glyph: null } && GlyphIs(buffer.GetCell(0, 1), Diagonal());
+}
+
+static bool UndefinedSoftFontCodeIsBlank()
+{
+    // One glyph at 0x21. 0x22 has none and draws blank, as on DEC terminals. Space stays a space in a 94-character set.
+    var theme = DarkTheme();
+    var buffer = new ScreenBuffer(10, 2, theme);
+    var parser = new AnsiParser(buffer, theme);
+    parser.Process(Decdld("1;1;0;5;0;2;6;0", "@", Diagonal()) + "\u001b(@\" !");
+
+    return buffer.GetCell(0, 0) is { Text: " ", Glyph: null }
+        && buffer.GetCell(0, 1) is { Text: " ", Glyph: null }
+        && GlyphIs(buffer.GetCell(0, 2), Diagonal());
+}
+
+static bool SoftFontMatrixSizeFromData()
+{
+    // Pcmw 0 and Pcmh 0: the width is the widest glyph, the height six rows per band.
+    string[] tall = ["#....", ".....", ".....", ".....", ".....", ".....", "....#"];
+    var theme = DarkTheme();
+    var buffer = new ScreenBuffer(10, 2, theme);
+    var parser = new AnsiParser(buffer, theme);
+    parser.Process(Decdld("1;1;0;0;0;2;0;0", "@", tall) + "\u001b(@!");
+
+    return buffer.GetCell(0, 0).Glyph is { Width: 5, Height: 12 } glyph
+        && glyph.IsSet(0, 0) && glyph.IsSet(4, 6) && !glyph.IsSet(4, 0);
+}
+
+static bool SoftFontEraseControl()
+{
+    // Pe 1 replaces only the codes it loads; Pe 0 replaces the whole font.
+    var theme = DarkTheme();
+    var buffer = new ScreenBuffer(10, 2, theme);
+    var parser = new AnsiParser(buffer, theme);
+    parser.Process(Decdld("1;1;0;5;0;2;6;0", "@", Diagonal(), Diagonal()) + Decdld("1;2;1;5;0;2;6;0", "@", TopBar()) + "\u001b(@!\"");
+    parser.Process(Decdld("1;2;0;5;0;2;6;0", "@", TopBar()) + "!\"");
+
+    return GlyphIs(buffer.GetCell(0, 0), Diagonal()) && GlyphIs(buffer.GetCell(0, 1), TopBar())
+        && buffer.GetCell(0, 2) is { Text: " ", Glyph: null } && GlyphIs(buffer.GetCell(0, 3), TopBar());
+}
+
+static bool OtherDcsStaySkipped()
+{
+    // DECRQSS and a Sixel image (whose data has "{") are not soft fonts and print nothing.
+    var theme = DarkTheme();
+    var buffer = new ScreenBuffer(10, 2, theme);
+    var parser = new AnsiParser(buffer, theme);
+    parser.Process("\u001bP$qm\u001b\\A\u001bPq#0;2;0;0;0#0~~{{\u001b\\B\u001bP1;1{@\u001b\\C");
+
+    return RowText(buffer, 0) == "ABC" && buffer.GetCell(0, 2).Glyph is null;
+}
+
+static bool SoftGlyphCellsDifferFromText()
+{
+    // A glyph cell and a plain cell with the same code are different rows. Equal bitmaps are one glyph.
+    var theme = DarkTheme();
+    var soft = new ScreenBuffer(4, 1, theme);
+    new AnsiParser(soft, theme).Process(Decdld("1;1;0;5;0;2;6;0", "@", Diagonal()) + "\u001b(@!");
+    var other = new ScreenBuffer(4, 1, theme);
+    new AnsiParser(other, theme).Process(Decdld("1;1;0;5;0;2;6;0", " A", Diagonal()) + "\u001b( A!");
+    var plain = new ScreenBuffer(4, 1, theme);
+    new AnsiParser(plain, theme).Process("!");
+
+    var copy = new ScreenCell[4];
+    plain.CopyRowTo(0, copy);
+    return !soft.RowEquals(plain, 0) && !soft.RowEquals(0, copy)
+        && soft.RowHash(0) != plain.RowHash(0)
+        && soft.ComputeCanvasSignature(4, 1) != plain.ComputeCanvasSignature(4, 1)
+        && !soft.IsRowBlank(0)
+        && ReferenceEquals(soft.GetCell(0, 0).Glyph, other.GetCell(0, 0).Glyph)
+        && soft.RowEquals(other, 0);
+}
+
+static bool SaveRestoreKeepsCharsets()
+{
+    // DECSC saves the designations and the GL shift with the cursor, and DECRC brings them back.
+    var theme = DarkTheme();
+    var buffer = new ScreenBuffer(10, 2, theme);
+    var parser = new AnsiParser(buffer, theme);
+    parser.Process(Decdld("1;1;0;5;0;2;6;0", "@", Diagonal()) + "\u001b)@\u000E\u001b7\u000F\u001b8!");
+
+    return GlyphIs(buffer.GetCell(0, 0), Diagonal());
+}
+
+static bool ResetDropsSoftFonts()
+{
+    // RIS resets the designations and drops every soft font.
+    var theme = DarkTheme();
+    var buffer = new ScreenBuffer(10, 2, theme);
+    var parser = new AnsiParser(buffer, theme);
+    parser.Process(Decdld("1;1;0;5;0;2;6;0", "@", Diagonal()) + "\u001b(@\u001bc!\u001b(@!");
+
+    return buffer.GetCell(0, 0) is { Text: "!", Glyph: null } && buffer.GetCell(0, 1) is { Text: "!", Glyph: null };
+}
+
+static bool SingleShiftMapsOneCharacter()
+{
+    // SS2 takes the next character from G2 only.
+    var theme = DarkTheme();
+    var buffer = new ScreenBuffer(10, 2, theme);
+    var parser = new AnsiParser(buffer, theme);
+    parser.Process(Decdld("1;1;0;5;0;2;6;0", "@", Diagonal()) + "\u001b*@\u001bN!!");
+
+    return GlyphIs(buffer.GetCell(0, 0), Diagonal()) && buffer.GetCell(0, 1) is { Text: "!", Glyph: null };
 }
 
 static string RowText(ScreenBuffer buffer, int row)

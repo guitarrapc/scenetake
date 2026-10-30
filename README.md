@@ -257,6 +257,8 @@ steps:
 
 scenetake runs every command with `COLORTERM=truecolor`, so tools that pick their color depth from the environment will use true color.
 
+Recordings also draw DECDLD soft fonts, but a program behind the PTY cannot detect that. Tell it in the scenario, for example `matrix --mode movie --soft-font`.
+
 ### Interactive application output
 
 For interactive applications (`vim`, `copilot`, etc.), set both `pty: true` and `interactive: true`. PTY is enabled and interactive child-process input becomes possible. If you set `normalize-typing: true`, banners/help output keeps real timing while only user typing is re-timed for readability.
