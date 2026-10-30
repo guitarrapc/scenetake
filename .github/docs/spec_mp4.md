@@ -8,10 +8,10 @@ Full-screen TUIs (`matrix`, `btop`, banner animations) redraw most cells every f
 
 | Recording | SVG | GIF (agg) | mp4 |
 |---|---|---|---|
-| `matrix --fps 60`, 200×60, 7.5s | 17.0MB (117MB before the encoding work in spec_svg.md) | 19MB | 8.0MB; 3.9MB with `--max-size 1280x1024` |
-| Same, 384×108 (4K frame) | 53.2MB (455MB before) | — | 26.4MB |
-| `samples/basic.cast` (typing) | **46KB** | 414KB | 98KB |
-| `samples/git.cast` (typing) | **31KB** | — | 226KB |
+| `matrix --fps 60`, 200×60, 7.5s | 17.0MB (117MB before the encoding work in spec_svg.md) | 19MB | 4.4MB; 2.8MB with `--max-size 1280x1024` |
+| Same, 384×108 (4K frame) | 53.2MB (455MB before) | — | 14.9MB |
+| `samples/basic.cast` (typing) | **46KB** | 414KB | 83KB |
+| `samples/git.cast` (typing) | **31KB** | — | 184KB |
 
 X (Twitter) accepts H.264 mp4, not SVG. SVG stays the right format for typing demos embedded in a README. mp4 is for heavy output and sharing.
 
@@ -109,9 +109,10 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
 | Quality | `--crf`, default `23`, range `1`–`51` | x264's default. Higher values make smaller files. `0` (lossless) is rejected: x264 then writes the High 4:4:4 Predictive profile, which X and many players reject. |
 | Preset | `slower` | Smaller than `slow` on every recording tested, at equal or higher SSIM. `veryslow` was larger on typing and took 1.4–2.1× as long. |
 | Psychovisual tuning | Off (`-psy 0`) | It spends bits on texture detail; terminal frames are flat color and sharp text. Off was smaller at equal or higher SSIM and looked the same side by side. |
+| Motion search range | 128 pixels (`merange`; `slower` searches 16) | A scroll moves text by whole rows, 20 pixels at the default font size, so a 16-pixel search missed scrolls and coded the moved text again. A wider search also finds the same character elsewhere in recent frames, which redrawn TUIs repeat. 15–45% smaller at the same CRF. SSIM rose, except on interactive-pty, where it fell by 0.00003. Typing encodes as fast as before; matrix 200×60 takes 8.0s instead of 3.3s. |
 | Keyframes | At most every 30 seconds | A keyframe redraws the whole screen while the frames between are tiny. In a typing demo, x264's default interval (250 frames, 8.3s at 30fps) added a keyframe that alone was 21% of the file. 30 seconds keeps seeking cheap. |
 | Reference frames | 8, capped so the stream stays within level 5.2 | 8 references at 4K would need level 6.0, which many phone and TV decoders lack. 4K gets 5. |
-| Frame rate | `--fps`, default `30`, max `60` | 30fps keeps terminal motion smooth. For `matrix --fps 60` it is 27% smaller than 60fps (8.0MB vs 11.0MB). X allows up to 60. |
+| Frame rate | `--fps`, default `30`, max `60` | 30fps keeps terminal motion smooth. For `matrix --fps 60` it is 28% smaller than 60fps (4.4MB vs 6.1MB). X allows up to 60. |
 | Color | BT.709 conversion and BT.709 tags | Untagged output (ffmpeg's default BT.601 conversion) shifts theme colors in players that assume BT.709. |
 | Container | mp4 with `+faststart` | Playback and upload processing can start before the whole file arrives. |
 
@@ -162,7 +163,7 @@ The input file is never modified by the `mp4` subcommand.
 | Suite | Coverage | Needs |
 |---|---|---|
 | `tests/mp4_render_test.cs` | Layout, colors, cursor, procedural glyphs (also at font sizes 1–3), frame timing, trailing trim, matrix tint, option parsing, ffmpeg arguments, both size limits, the ffmpeg probe timeout, output path checks, font files that are malformed, symbol-only, unreadable (Unix only), fail to load, or have short tables, out-of-range glyph ids, every `--font-file` face loading, a valid font file accepted and not held open by the check or after the render, a font reached through a symbolic link, the installed fonts rescanned, the log naming a font that loads, and the default fonts passing the table checks | An installed font (prints `skip` without one). Three tests also skip when their premise fails: the unreadable-file test when it runs as a user who can read any file, such as root, the bold-face test when the installed font cannot make a regular and bold collection, and the log test when the copied font's own family does not load. The release after the render can fail only on Windows, which refuses to replace a mapped file. The link test skips without permission to make symbolic links. |
-| `tests/mp4_ffmpeg_test.cs` | Option rules, missing ffmpeg, no libx264, encode failure with no leftover file, scenario path keeps the cast and still runs `post`, an earlier `.mp4` is gone while ffmpeg runs and kept on a font or frame-size error, outputs never replace the input (also through a directory link, a file link, a link whose target passes through another link, a `..` in a link's target on Unix, and on Windows `\\?\` and `\??\` spellings, also while the input is held open without read sharing), the output folder checked after `pre`, or before it when there is no `pre`, and the rest before it, every output check run again after `pre` (`pre` puts a directory, or a link to the scenario, where the cast goes), a relative link target reached through a directory link resolved as each OS resolves it, scenario errors found before `pre` (YAML the parser rejects, a missing shell, a list as `run`), step keys that contradict each other found before `pre`, `post` run when the cast write fails or the recording stops (an interactive step whose output is redirected, a PTY command holding a NUL), an error rather than an unhandled exception when a step removes the scenario's working folder, SVG failures reported while the output is held open, a font that `pre` or a step installs used by the render (Linux only), ffmpeg, font, terminal size, and frame size checked before `pre`, real encodes checked with `ffprobe`, SIGINT mid-encode leaves no files, an earlier `.mp4` included (Unix only) | `SCENETAKE_BIN`; real encodes also need `ffmpeg` and `ffprobe` on `PATH`. Without permission to make links, the link cases print a note and are left out. The font-install test skips without a TrueType font with outlines and a Windows family name under `/usr/share/fonts` or `/usr/local/share/fonts`. |
+| `tests/mp4_ffmpeg_test.cs` | Option rules, missing ffmpeg, no libx264, encode failure with no leftover file, scenario path keeps the cast and still runs `post`, an earlier `.mp4` is gone while ffmpeg runs and kept on a font or frame-size error, outputs never replace the input (also through a directory link, a file link, a link whose target passes through another link, a `..` in a link's target on Unix, and on Windows `\\?\` and `\??\` spellings, also while the input is held open without read sharing), the output folder checked after `pre`, or before it when there is no `pre`, and the rest before it, every output check run again after `pre` (`pre` puts a directory, or a link to the scenario, where the cast goes), a relative link target reached through a directory link resolved as each OS resolves it, scenario errors found before `pre` (YAML the parser rejects, a missing shell, a list as `run`), step keys that contradict each other found before `pre`, `post` run when the cast write fails or the recording stops (an interactive step whose output is redirected, a PTY command holding a NUL), an error rather than an unhandled exception when a step removes the scenario's working folder, SVG failures reported while the output is held open, a font that `pre` or a step installs used by the render (Linux only), ffmpeg, font, terminal size, and frame size checked before `pre`, real encodes checked with `ffprobe` and for the motion search range x264 records in the stream, SIGINT mid-encode leaves no files, an earlier `.mp4` included (Unix only) | `SCENETAKE_BIN`; real encodes also need `ffmpeg` and `ffprobe` on `PATH`. Without permission to make links, the link cases print a note and are left out. The font-install test skips without a TrueType font with outlines and a Windows family name under `/usr/share/fonts` or `/usr/local/share/fonts`. |
 | `tests/scenario_render_test.cs` | `--format mp4` gives the same file as the `mp4` subcommand on the written cast. The scenario puts an event 0.3ms past a frame edge, so rendering from the in-memory events would differ | `SCENETAKE_BIN`, `ffmpeg` |
 
 CI runs these suites on all six platforms. GitHub runner images ship no ffmpeg, so real encodes are skipped there. A separate Linux job installs ffmpeg and runs the three suites with real encodes and the Native AOT binary.
@@ -187,8 +188,12 @@ Sizes are for `matrix --fps 60` at 200×60, 7.5s, 60fps unless noted. CRF values
 | A fallback encoder when libx264 is missing | `libopenh264` has no CRF mode, and Fedora's build may be a stub. scenetake errors with an install hint instead. |
 | Named presets (`--preset x`) | `--max-size 1280x1024`, documented in the README, covers X. |
 | Both formats in one run (`--format svg,mp4`) | One format per run. Run the `svg` or `mp4` subcommand on the written cast for the other. |
-| Frame rate following the recording | Fixed default 30fps: 27% smaller than 60fps for matrix and still smooth. `--fps` raises it. |
+| Frame rate following the recording | Fixed default 30fps: 28% smaller than 60fps for matrix and still smooth. `--fps` raises it. |
 | A bundled font | About 0.3–0.6MB per face. `--font-file` pins the font when output must match across machines. |
+| Exhaustive motion search (`esa`, `tesa`) | Not smaller for the time. On matrix 200×60 at 30fps and CRF 23, `esa` over 64 pixels gave 4.3MB in 13.2s and `tesa` 4.3MB in 23.0s, against `umh` over 128 pixels, 4.4MB in 8.0s. |
+| A wider motion search (192 or 256 pixels) | Matrix 200×60 at 30fps shrank to 4.0MB and 3.7MB but took 12.8s and 17.9s. Typing gained under 1% at 192. |
+| 16 reference frames | With the 128-pixel search, matrix 200×60 at 30fps was 3.8MB instead of 4.4MB but took 14.4s instead of 8.0s, and typing was about 1% larger at equal SSIM. 4K stays capped at 5 by level 5.2. |
+| Other x264 options | Measured with the 16-pixel search, at equal SSIM over CRF 20–29: `subme 11` was 2–4% smaller at 1.2× the time. `aq-mode`, `aq-strength`, deblocking, 16 B-frames, no scene cuts, and a 250-frame lookahead were within 3% on average or mixed between recordings. A chroma QP offset moved bits between chroma and luma, and SSIM and PSNR disagreed on it. Turning off the macroblock tree was 16–27% larger on typing and TUIs. |
 
 ## Lessons Learned
 
@@ -231,3 +236,21 @@ Sizes are for `matrix --fps 60` at 200×60, 7.5s, 60fps unless noted. CRF values
   - With psy on and the same rare keyframes, `veryslow` was 31% smaller than the old default on typing, against 46% for `slower`, and took 1.4–2.1× as long as `slower` in repeated timings.
   - Skipping duplicate frames (`mpdecimate`, variable frame rate) saved less and lowered SSIM.
   - `--crf 25` with the new settings is another 8–19% smaller at roughly the old SSIM. That trade is left to the user rather than made the default.
+- **Motion search range (2026-10-30).** x264's `slower` searches motion within 16 pixels, and one row of text is 20 pixels at the default font size, so it missed scrolls.
+  - In the typing demo, the frames after a scroll took 1.0–3.3KB each with the 16-pixel search and 0.2–0.8KB with 32 pixels.
+  - Sizes at CRF 23 from the `mp4` subcommand, and the time x264 took on the same frames read from a lossless file:
+
+    | Recording | 16 pixels | 128 pixels | Encode time |
+    |---|---|---|---|
+    | basic (typing) | 98.4KB | 83.3KB (−15%) | 0.8s, unchanged |
+    | git (typing) | 226.0KB | 183.7KB (−19%) | — |
+    | interactive-pty (TUI) | 463.9KB | 261.0KB (−44%) | 1.8s → 1.9s |
+    | pty (small matrix) | 435.2KB | 310.0KB (−29%) | — |
+    | matrix 200×60 | 8.0MB | 4.4MB (−45%) | 3.3s → 8.0s |
+    | matrix 384×108 | 26.4MB | 14.9MB (−44%) | 10.3s → 16.6s |
+
+  - At equal SSIM, from sizes over CRF 20–29 compared against a lossless render, the 128-pixel search saved 17–21% on typing, 31% on pty, 42% on interactive-pty, and 51% on matrix.
+  - The saving grows with the row height. On basic it was 12% at font size 12 (15-pixel rows, inside the old range), 17% at 16, and 72% at 24 (30-pixel rows). On interactive-pty it was 40%, 42%, and 63%.
+  - Matrix redraws most characters in place every frame, so its saving does not come from scrolls. It kept growing with the range, which fits the encoder copying the same character from elsewhere on screen.
+  - A range just above one row went wrong with exhaustive search: `tesa` over 24 pixels, the `placebo` preset's search, made basic 55% larger (98.4KB → 152.0KB). `umh` over 24 pixels saved only 2–4%.
+  - The comparison has to match frames by number. The lossless reference was ffv1 in Matroska, which rounds timestamps to milliseconds, so matching by time paired neighboring frames, and matrix PSNR barely moved with CRF (32.1dB at CRF 20, 32.0dB at 23; 43.3dB and 41.4dB once frames were paired by number).

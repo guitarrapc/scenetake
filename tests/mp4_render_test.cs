@@ -124,11 +124,11 @@ static bool FfmpegArgumentsUseH264Bt709()
     var fourK = string.Join(' ', Mp4Render.BuildArguments(3860, 2168, Mp4Settings.Default, 3860, 2168, "out.mp4"));
     return plain.Contains("-f rawvideo -pix_fmt rgb24 -s 820x488 -r 30 -i -", StringComparison.Ordinal)
         && plain.Contains("-vf scale=out_color_matrix=bt709:out_range=tv,format=yuv420p", StringComparison.Ordinal)
-        && plain.Contains("-c:v libx264 -preset slower -crf 23 -psy 0 -refs 8 -g 900", StringComparison.Ordinal)
+        && plain.Contains("-c:v libx264 -preset slower -crf 23 -psy 0 -refs 8 -x264-params merange=128 -g 900", StringComparison.Ordinal)
         && plain.Contains("-colorspace bt709 -color_primaries bt709 -color_trc bt709", StringComparison.Ordinal)
         && plain.Contains("-movflags +faststart -f mp4", StringComparison.Ordinal)
         && scaled.Contains("scale=1280:764:flags=lanczos:out_color_matrix=bt709", StringComparison.Ordinal)
-        && scaled.Contains("-crf 28 -psy 0 -refs 8 -g 1800", StringComparison.Ordinal)
+        && scaled.Contains("-crf 28 -psy 0 -refs 8 -x264-params merange=128 -g 1800", StringComparison.Ordinal)
         && fourK.Contains("-refs 5 ", StringComparison.Ordinal);
 }
 
