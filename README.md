@@ -165,6 +165,35 @@ SVG is usually the smallest for typing and short output (often half the size of 
 
 mp4 output runs [ffmpeg](https://ffmpeg.org/) with libx264 as a separate program. Install it with `winget install Gyan.FFmpeg` or `scoop install ffmpeg` (Windows), `brew install ffmpeg` (macOS), or `sudo apt install ffmpeg` (Debian/Ubuntu). Set `SCENETAKE_FFMPEG` to use a specific binary. mp4 uses fonts installed on your machine: the `font-family` list first, then CJK and symbol fonts. Pass `--font-file` to pin one. `--window` adds the same title bar as SVG, without the outer margin and shadow.
 
+**Terminal size and resolution**
+
+`width` and `height` set the terminal size in columns and rows (`term.cols` and `term.rows` in a cast file). The output's pixel size follows from them. At the default `font-size` of 16:
+
+| Output | Pixel width | Pixel height |
+| --- | --- | --- |
+| mp4 | `width × 10 + 20` | `height × 20 + 8` |
+| mp4 with `--window` | `width × 10 + 20` | `height × 20 + 42` |
+| SVG | `width × 9.92 + 36` | `height × 20 + 24` |
+| SVG with `--window` | `width × 9.92 + 44` | `height × 20 + 66` |
+
+For example, the default 120×24 is 1220×488 as mp4 and 1226.4×504 as SVG.
+
+To fill a video resolution, use the largest `width` × `height` that fits. At `font-size` 16:
+
+| Resolution | `width` × `height` → mp4 size | With `--window` |
+| --- | --- | --- |
+| 1280×720 (HD) | 126 × 35 → 1280×708 | 126 × 33 → 1280×702 |
+| 1280×1024 (X upload limit) | 126 × 50 → 1280×1008 | 126 × 49 → 1280×1022 |
+| 1920×1080 (Full HD) | 190 × 53 → 1920×1068 | 190 × 51 → 1920×1062 |
+| 2560×1440 (WQHD) | 254 × 71 → 2560×1428 | 254 × 69 → 2560×1422 |
+| 3840×2160 (4K) | 382 × 107 → 3840×2148 | 382 × 105 → 3840×2142 |
+
+- A row is 20 pixels tall, so the height usually ends a little short of the resolution.
+- Text stays sharper when the recording already fits than when `--max-size` scales a larger one down.
+- A larger `font-size` makes each cell larger, so fewer columns and rows fit. A cell is `font-size × 0.62` wide and `font-size × 1.25` tall, rounded to whole pixels in mp4, and the padding also changes with `font-size`. See Layout in [spec_mp4.md](.github/docs/spec_mp4.md#layout).
+- SVG does not blur when scaled, so its pixel size only sets the size it is first shown at.
+- A recording that resizes uses its largest size.
+
 **Notes**
 
 - `shell`:
