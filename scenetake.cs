@@ -2878,6 +2878,9 @@ static ShellLaunch ResolveWindowsShell(string? requested)
         throw new InvalidOperationException("No supported shell was found on Windows. Install pwsh or powershell, or set the scenario's shell to a Git Bash or MSYS bash.exe path.");
     }
 
+    if (Path.IsPathRooted(requested) || requested.Contains(Path.DirectorySeparatorChar) || requested.Contains(Path.AltDirectorySeparatorChar))
+        return ResolveWindowsShellPath(requested);
+
     if (IsPowerShellName(requested))
     {
         var exeName = NormalizeWindowsShellName(requested);
@@ -2903,18 +2906,50 @@ static ShellLaunch ResolveWindowsShell(string? requested)
         throw new InvalidOperationException("Shell 'bash' was requested, but a Git Bash or MSYS bash.exe could not be found. WSL bash is intentionally not used.");
     }
 
-    if (Path.IsPathRooted(requested) || requested.Contains(Path.DirectorySeparatorChar) || requested.Contains(Path.AltDirectorySeparatorChar))
-    {
-        if (File.Exists(requested))
-            return new ShellLaunch(requested, ["-c"], requested, requested);
-
-        throw new InvalidOperationException($"Shell '{requested}' was requested, but the path does not exist.");
-    }
-
     if (TryResolveExecutableOnWindows(requested, out var resolvedExecutable))
         return new ShellLaunch(resolvedExecutable, ["-c"], resolvedExecutable, requested);
 
     throw new InvalidOperationException($"Shell '{requested}' could not be resolved on Windows.");
+}
+
+static ShellLaunch ResolveWindowsShellPath(string requested)
+{
+    // A path names the file to start. Looking its name up instead would start another pwsh, cmd or bash, or
+    // refuse one that exists. The full path drops a trailing dot or space as Windows does, so "cmd.exe."
+    // still gets cmd's arguments. It also gives cmd backslashes: cmd reads each "/" in its own path as a switch.
+    string fullPath;
+    try
+    {
+        fullPath = Path.GetFullPath(requested.Trim());
+    }
+    catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+    {
+        throw new InvalidOperationException($"Shell '{requested}' was requested, but it is not a valid path: {ex.Message}");
+    }
+
+    string[]? arguments = NormalizeWindowsShellName(fullPath) switch
+    {
+        "pwsh" or "powershell" => ["-NoLogo", "-NoProfile", "-Command"],
+        "cmd" => ["/c"],
+        "bash" => ["-lc"],
+        _ => null,
+    };
+
+    if (arguments is ["-lc"] && IsWslBashPath(fullPath))
+        throw new InvalidOperationException($"Shell '{requested}' was requested, but it is WSL bash, which scenetake does not use. Set a Git Bash or MSYS bash.exe path.");
+
+    if (arguments is null)
+    {
+        // Any other shell starts as written, as it always has.
+        if (File.Exists(requested))
+            return new ShellLaunch(requested, ["-c"], requested, requested);
+    }
+    else if (File.Exists(fullPath))
+    {
+        return new ShellLaunch(fullPath, arguments, fullPath, fullPath);
+    }
+
+    throw new InvalidOperationException($"Shell '{requested}' was requested, but the path does not exist.");
 }
 
 static bool IsPowerShellName(string shell)

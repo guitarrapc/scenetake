@@ -57,6 +57,13 @@ try
     else
         failures += Run("UnixShellStartsAsNamed", () => UnixShellStartsAsNamed(scenetake, repoRoot, work));
 
+    // Only Windows looks pwsh, powershell, cmd and bash up by name, so only there could a path to one of
+    // them start another file.
+    if (OperatingSystem.IsWindows())
+        failures += Run("WindowsShellPathStartsThatFile", () => WindowsShellPathStartsThatFile(scenetake, repoRoot, work));
+    else
+        Console.Error.WriteLine("skip WindowsShellPathStartsThatFile: Windows only");
+
     if (FindOnPath("ffmpeg") is null || FindOnPath("ffprobe") is null)
     {
         Console.Error.WriteLine("skip mp4 encode tests: ffmpeg and ffprobe not found on PATH");
@@ -803,6 +810,57 @@ static bool UnixShellStartsAsNamed(string scenetake, string repoRoot, string wor
     }
 
     return keepsName && staleExit == 0 && dotdotExit == 0;
+}
+
+static bool WindowsShellPathStartsThatFile(string scenetake, string repoRoot, string work)
+{
+    // Each shell is a path whose file name is cmd, bash or pwsh, names that are otherwise looked up on PATH
+    // or in the Git folders. A lookup by name would start the System32 cmd instead of the wrapper, start it
+    // for a path that does not exist, start Git bash for the WSL one, and refuse pwsh when PATH has none.
+    // The "dot" case starts cmd through "cmd.exe.", whose name only matches once the trailing dot is
+    // dropped. Without that, cmd starts with "-c" and reads the "/" in its own path as switches, so pre runs
+    // "md" instead of echo. Its PTY step checks that a path still gets cmd's arguments there.
+    var directory = Directory.CreateDirectory(Path.Combine(work, "windows-shell")).FullName;
+    var cwd = directory.Replace('\\', '/');
+    var system = Environment.SystemDirectory.Replace('\\', '/');
+    var pipeSteps = "steps:\n  - run: echo hi\n";
+    var ptySteps = "steps:\n  - run: echo hi\n  - run: echo pty\n    pty: true\n";
+    Directory.CreateDirectory(Path.Combine(directory, "wrap"));
+    var wrapperMarker = Path.Combine(directory, "wrapper-ran.txt");
+    File.WriteAllText(Path.Combine(directory, "wrap", "cmd.cmd"), $"@echo wrapper> \"{wrapperMarker}\"\r\n@\"%ComSpec%\" %*\r\n");
+    var cases = new List<(string Name, string Shell, string Steps, Dictionary<string, string>? Environment, string? Error)>
+    {
+        ("wrapper", $"{cwd}/wrap/cmd.cmd", pipeSteps, null, null),
+        ("missing", $"{cwd}/nowhere/cmd.exe", pipeSteps, null, $"Shell '{cwd}/nowhere/cmd.exe' was requested, but the path does not exist."),
+        ("dot", $"{system}/cmd.exe.", ptySteps, null, null),
+        ("wsl", $"{system}/bash.exe", pipeSteps, null, "but it is WSL bash"),
+    };
+    if (FindOnPath("pwsh") is { } pwsh)
+    {
+        var systemOnly = new Dictionary<string, string> { ["PATH"] = Environment.SystemDirectory + ";" + Environment.GetEnvironmentVariable("SystemRoot") };
+        cases.Add(("pwsh", pwsh.Replace('\\', '/'), ptySteps, systemOnly, null));
+    }
+
+    var passed = true;
+    foreach (var (name, shell, steps, environment, error) in cases)
+    {
+        var scenario = Path.Combine(directory, $"{name}.yaml");
+        File.WriteAllText(scenario, $"cwd: '{cwd}'\nshell: '{shell}'\npre:\n  - echo ran > {name}-pre-ran.txt\n{steps}");
+        var (exit, stderr) = Exec(scenetake, repoRoot, [scenario, Path.Combine(directory, name)], environment);
+        var marker = Path.Combine(directory, $"{name}-pre-ran.txt");
+        var ok = !stderr.Contains("Unhandled", StringComparison.Ordinal) && (error is null
+            ? exit == 0 && File.Exists(marker) && File.ReadAllText(marker).Contains("ran", StringComparison.Ordinal)
+            : exit == 1 && stderr.Contains(error, StringComparison.Ordinal) && !File.Exists(marker));
+        if (name == "wrapper")
+            ok &= File.Exists(wrapperMarker);
+        if (!ok)
+        {
+            Console.Error.WriteLine($"  {name}: exit {exit}{Environment.NewLine}{stderr}");
+            passed = false;
+        }
+    }
+
+    return passed;
 }
 
 static bool SvgFailureWithAnOpenOutputIsReported(string scenetake, string repoRoot, string work)

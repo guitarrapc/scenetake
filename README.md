@@ -170,6 +170,7 @@ mp4 output runs [ffmpeg](https://ffmpeg.org/) with libx264 as a separate program
 - `shell`:
   - Linux/macOS default shell is `$SHELL`, with `bash` as fallback.
   - Windows default shell is `pwsh`, with `powershell` as fallback. On Windows, `shell: bash` uses Git Bash / MSYS `bash` when available.
+  - On Windows a path such as `C:/tools/pwsh-preview/pwsh.exe` starts that file. WSL `bash` is not used, even by path.
 - `settings` provides defaults for prompt and timing.
 - `render` controls cast header display metadata (`st:font-size` tag, `term.theme`) and SVG output. See [.github/docs/spec_cast.md](.github/docs/spec_cast.md) and [.github/docs/spec_svg.md](.github/docs/spec_svg.md).
 - `pre` / `post` run setup and teardown commands outside the recording flow. Their stdout/stderr are printed to the CLI, but are never written to the cast file.
