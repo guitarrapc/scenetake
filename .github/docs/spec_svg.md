@@ -69,7 +69,7 @@ A program can load its own glyphs into the terminal with a DECDLD string and dra
 
 - **Cells.** A cell keeps the glyph it was written with, and the code as its text. A code the font does not define draws blank, as on DEC terminals. Glyphs are compared by bitmap, so the same font loaded twice draws the same.
 - **Drawing.** The matrix is stretched to the cell whatever its size, as terminals do: 12×24 becomes 9.92×20 at 16px. The SVG draws each glyph as one path in `<defs>` and each cell as a `<use>` of it ([Row encoding](#row-encoding)). mp4 scales the bitmap ([spec_mp4.md](spec_mp4.md) → Fonts).
-- **Whether a program sends a soft font is up to the program.** It sees scenetake's PTY, not the host terminal. The in-box ConPTY answers the device attributes query (DA1) itself and lists soft fonts. On Unix nothing answers it. matrix 1.2.0 therefore uses its soft font under scenetake only on Windows with `WT_SESSION` set (`run: WT_SESSION=1 matrix --mode movie`), and falls back to katakana otherwise.
+- **Whether a program sends a soft font is up to the program.** It sees scenetake's PTY, not the host terminal, so it cannot confirm that the recording draws soft fonts. The in-box ConPTY answers the device attributes query (DA1) itself, and on Unix nothing answers it. The scenario tells the program instead: `run: matrix --mode movie --soft-font`. matrix 1.2.0 has no `--soft-font`, and under scenetake it uses the soft font only on Windows with `WT_SESSION` set.
 
 ### Animation and layout (plain terminal)
 
@@ -271,6 +271,7 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 | One shared timeline (an animated custom property `--f`, each layer's show and hide as numbers) | 13–20% smaller typing SVGs. Animated on every layer, it tripled main-thread time (basic: about 110 → 335 ms/s). Animated once on the root, it was cheaper for typing, but it dropped frames on pty and interactive-pty (p95 33–50ms). |
 | Per-cell lifetimes for matrix-like output | Only 14% of matrix 200×60 glyphs (5% for pty) carry over unchanged, glyph and color, into the next layer of their row. Per-cell timing would cost more than it saves. |
 | Soft font glyphs as private-use characters in the cell text | No renderer would need to change, but Nerd Font icons and Powerline symbols use the same range and would be drawn as soft font glyphs. |
+| scenetake naming itself to commands (`TERM_PROGRAM=scenetake`) so they use their soft font | It worked for matrix on Windows and in WSL. But each program would have to know scenetake by name, and it would replace the host's `TERM_PROGRAM` for every command. A program flag such as matrix's `--soft-font` keeps both tools independent. |
 | Soft font glyphs as a web font in a `data:` URI | It would keep the compact glyph-list form for matrix rain. But it needs a font writer, and the browser's font rasterizer would not match the mp4's bitmap scaling. Not tried. |
 | Cell-unit coordinates (`scale(cellWidth)` per row, integer `x`) | Another 8 points off matrix output. But matrix 200×60 played about 1.5× slower per frame, and text drawn at 1.6px and scaled up is unchecked in Firefox and Safari. Chromium does not apply its minimum font size to SVG inside `<img>`. |
 
