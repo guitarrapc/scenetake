@@ -89,6 +89,6 @@ steps:
 
   - echo "Done!"
 
-# Optional teardown; runs after cast is written, not recorded
+# Optional teardown; runs last, not recorded
 post:
   - echo "demo complete (not recorded)"

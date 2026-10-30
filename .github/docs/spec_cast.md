@@ -63,7 +63,7 @@ Every cast file written by the scenario path includes render metadata in the hea
 | `env.SHELL` | resolved shell | `TERM` is represented by `term.type`. |
 | `tags` | `st:font-size=N`, `st:font-family=…`, `st:window=macos\|windows` | SVG render metadata. `st:window` is omitted when window chrome is off. Unknown tags are ignored by external tools. |
 
-On read, v2 headers use top-level `width`, `height`, and `theme` only. Render metadata defaults apply unless overridden by CLI: v3 `st:font-size` / `st:font-family` / `st:window` in `tags`. Invalid header values warn once and fall back to defaults when read by the `svg` subcommand.
+On read, v2 headers use top-level `width`, `height`, and `theme` only. Render metadata defaults apply unless overridden by CLI: v3 `st:font-size` / `st:font-family` / `st:window` in `tags`. Invalid `st:` render tags warn once each and fall back to defaults. An invalid `theme` color, or a palette that is not 16 colors, falls back to the defaults without a warning. A missing or out-of-range terminal size is an error. This holds wherever a cast is read: the `svg` and `mp4` subcommands, and the scenario path's SVG and mp4 output.
 
 ## Event Stream
 
@@ -94,7 +94,7 @@ Only `steps` content is recorded.
 |---|---|
 | `pre` | No — stdout/stderr appear in the CLI only. |
 | `steps` | Yes — simulated typing, command output, markers, comments. |
-| `post` | No — runs after the cast file is written. |
+| `post` | No — runs last and is never recorded. |
 
 Step exit codes during recording: [spec_scenario.md](spec_scenario.md) → Step exit codes.
 
@@ -120,3 +120,4 @@ Adding v2-only header fields (such as top-level `width` / `height`) to v3 files 
 - v3 adoption in downstream tools is not uniform; documenting minimum agg version prevents false "invalid cast" reports when the file is valid v3.
 - Top-level v2 compatibility fields on a v3 file parse in old agg but produce broken GIFs because event timing semantics differ.
 - **A broken GIF is not always the cast or agg.** On Windows with Docker Desktop (28.5.1, WSL2 backend), agg writing its GIF straight to a bind-mounted Windows folder sometimes left a few ~4 KiB runs of unrelated bytes in the file. Viewers then showed noise bands and stale glyphs that neither the SVG nor a single-frame agg render had. agg's output was byte-identical across runs when written inside the container and copied out with `docker cp`, so the README's Windows agg commands do that.
+- **Validation limits must accept what scenetake writes.** The default `font-family` stack has 11 families and is recorded in every cast header, but the family limit was 10. Every cast scenetake wrote was therefore read back as "invalid font-family" (and fell back to the same default), printing a warning on each `svg` or `mp4` conversion. The limit is now 16, and a test checks that the default stack passes validation.

@@ -3,738 +3,308 @@
 <style>
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
-.bg { shape-rendering: crispEdges; }
-.layer { opacity: 0; }
-.cursor-block { fill: #d0d0d0; fill-opacity: 0.5; }
-@keyframes k0 { 0%,11.664677%{opacity:0;} 11.671972%,12.40147%{opacity:1;} 12.41606%,100%{opacity:0;} }
-@keyframes k1 { 0%,12.394175%{opacity:0;} 12.40147%,12.768758%{opacity:1;} 12.783348%,100%{opacity:0;} }
-@keyframes k2 { 0%,12.761463%{opacity:0;} 12.768758%,13.264481%{opacity:1;} 13.279071%,100%{opacity:0;} }
-@keyframes k3 { 0%,13.257186%{opacity:0;} 13.264481%,13.820301%{opacity:1;} 13.834891%,100%{opacity:0;} }
-@keyframes k4 { 0%,13.813006%{opacity:0;} 13.820301%,14.14039%{opacity:1;} 14.15498%,100%{opacity:0;} }
-@keyframes k5 { 0%,14.133095%{opacity:0;} 14.14039%,14.590913%{opacity:1;} 14.605503%,100%{opacity:0;} }
-@keyframes k6 { 0%,14.583618%{opacity:0;} 14.590913%,15.411438%{opacity:1;} 15.426028%,100%{opacity:0;} }
-@keyframes k7 { 0%,15.404143%{opacity:0;} 15.411438%,15.90455%{opacity:1;} 15.91914%,100%{opacity:0;} }
-@keyframes k8 { 0%,15.897255%{opacity:0;} 15.90455%,16.259684%{opacity:1;} 16.274274%,100%{opacity:0;} }
-@keyframes k9 { 0%,16.252389%{opacity:0;} 16.259684%,16.711623%{opacity:1;} 16.726213%,100%{opacity:0;} }
-@keyframes k10 { 0%,16.704328%{opacity:0;} 16.711623%,17.229669%{opacity:1;} 17.244259%,100%{opacity:0;} }
-@keyframes k11 { 0%,17.222374%{opacity:0;} 17.229669%,17.615647%{opacity:1;} 17.630237%,100%{opacity:0;} }
-@keyframes k12 { 0%,17.608352%{opacity:0;} 17.615647%,18.167279%{opacity:1;} 18.181869%,100%{opacity:0;} }
-@keyframes k13 { 0%,18.159984%{opacity:0;} 18.167279%,18.506495%{opacity:1;} 18.521085%,100%{opacity:0;} }
-@keyframes k14 { 0%,18.4992%{opacity:0;} 18.506495%,18.892487%{opacity:1;} 18.907077%,100%{opacity:0;} }
-@keyframes k15 { 0%,18.885192%{opacity:0;} 18.892487%,19.240093%{opacity:1;} 19.254683%,100%{opacity:0;} }
-@keyframes k16 { 0%,19.232798%{opacity:0;} 19.240093%,19.715945%{opacity:1;} 19.730535%,100%{opacity:0;} }
-@keyframes k17 { 0%,19.70865%{opacity:0;} 19.715945%,20.263623%{opacity:1;} 20.278213%,100%{opacity:0;} }
-@keyframes k18 { 0%,20.256328%{opacity:0;} 20.263623%,20.810426%{opacity:1;} 20.825016%,100%{opacity:0;} }
-@keyframes k19 { 0%,20.803131%{opacity:0;} 20.810426%,21.372504%{opacity:1;} 21.387094%,100%{opacity:0;} }
-@keyframes k20 { 0%,21.365209%{opacity:0;} 21.372504%,21.849436%{opacity:1;} 21.864026%,100%{opacity:0;} }
-@keyframes k21 { 0%,21.842141%{opacity:0;} 21.849436%,22.54367%{opacity:1;} 22.55826%,100%{opacity:0;} }
-@keyframes k22 { 0%,22.536375%{opacity:0;} 22.54367%,22.847973%{opacity:1;} 22.862563%,100%{opacity:0;} }
-@keyframes k23 { 0%,22.840678%{opacity:0;} 22.847973%,23.288998%{opacity:1;} 23.303588%,100%{opacity:0;} }
-@keyframes k24 { 0%,23.281703%{opacity:0;} 23.288998%,23.647386%{opacity:1;} 23.661976%,100%{opacity:0;} }
-@keyframes k25 { 0%,23.640091%{opacity:0;} 23.647386%,23.952083%{opacity:1;} 23.966673%,100%{opacity:0;} }
-@keyframes k26 { 0%,23.944788%{opacity:0;} 23.952083%,24.779991%{opacity:1;} 24.794581%,100%{opacity:0;} }
-@keyframes k27 { 0%,24.772696%{opacity:0;} 24.779991%,25.077597%{opacity:1;} 25.092187%,100%{opacity:0;} }
-@keyframes k28 { 0%,25.070302%{opacity:0;} 25.077597%,25.606716%{opacity:1;} 25.621306%,100%{opacity:0;} }
-@keyframes k29 { 0%,25.599421%{opacity:0;} 25.606716%,26.125813%{opacity:1;} 26.140403%,100%{opacity:0;} }
-@keyframes k30 { 0%,26.118518%{opacity:0;} 26.125813%,26.863146%{opacity:1;} 26.877736%,100%{opacity:0;} }
-@keyframes k31 { 0%,26.855851%{opacity:0;} 26.863146%,27.21936%{opacity:1;} 27.23395%,100%{opacity:0;} }
-@keyframes k32 { 0%,27.212065%{opacity:0;} 27.21936%,27.743752%{opacity:1;} 27.758342%,100%{opacity:0;} }
-@keyframes k33 { 0%,27.736457%{opacity:0;} 27.743752%,28.266992%{opacity:1;} 28.281582%,100%{opacity:0;} }
-@keyframes k34 { 0%,28.259697%{opacity:0;} 28.266992%,28.591079%{opacity:1;} 28.605669%,100%{opacity:0;} }
-@keyframes k35 { 0%,28.583784%{opacity:0;} 28.591079%,29.644971%{opacity:1;} 29.659561%,100%{opacity:0;} }
-@keyframes k36 { 0%,29.637676%{opacity:0;} 29.644971%,30.17269%{opacity:1;} 30.18728%,100%{opacity:0;} }
-@keyframes k37 { 0%,30.165395%{opacity:0;} 30.17269%,30.496339%{opacity:1;} 30.510929%,100%{opacity:0;} }
-@keyframes k38 { 0%,30.489044%{opacity:0;} 30.496339%,31.015888%{opacity:1;} 31.030478%,100%{opacity:0;} }
-@keyframes k39 { 0%,31.008593%{opacity:0;} 31.015888%,31.36933%{opacity:1;} 31.383919%,100%{opacity:0;} }
-@keyframes k40 { 0%,31.362035%{opacity:0;} 31.36933%,31.87814%{opacity:1;} 31.89273%,100%{opacity:0;} }
-@keyframes k41 { 0%,31.870845%{opacity:0;} 31.87814%,32.845936%{opacity:1;} 32.860526%,100%{opacity:0;} }
-@keyframes k42 { 0%,32.838641%{opacity:0;} 32.845936%,33.390594%{opacity:1;} 33.405184%,100%{opacity:0;} }
-@keyframes k43 { 0%,33.383299%{opacity:0;} 33.390594%,33.693059%{opacity:1;} 33.707649%,100%{opacity:0;} }
-@keyframes k44 { 0%,33.685764%{opacity:0;} 33.693059%,34.027986%{opacity:1;} 34.042576%,100%{opacity:0;} }
-@keyframes k45 { 0%,34.020691%{opacity:0;} 34.027986%,34.332799%{opacity:1;} 34.347389%,100%{opacity:0;} }
-@keyframes k46 { 0%,34.325504%{opacity:0;} 34.332799%,34.773504%{opacity:1;} 34.788094%,100%{opacity:0;} }
-@keyframes k47 { 0%,34.766209%{opacity:0;} 34.773504%,35.346656%{opacity:1;} 35.361246%,100%{opacity:0;} }
-@keyframes k48 { 0%,35.339361%{opacity:0;} 35.346656%,35.678519%{opacity:1;} 35.693109%,100%{opacity:0;} }
-@keyframes k49 { 0%,35.671224%{opacity:0;} 35.678519%,36.177671%{opacity:1;} 36.192261%,100%{opacity:0;} }
-@keyframes k50 { 0%,36.170376%{opacity:0;} 36.177671%,36.726765%{opacity:1;} 36.741355%,100%{opacity:0;} }
-@keyframes k51 { 0%,36.71947%{opacity:0;} 36.726765%,37.221831%{opacity:1;} 37.236421%,100%{opacity:0;} }
-@keyframes k52 { 0%,37.214536%{opacity:0;} 37.221831%,37.765162%{opacity:1;} 37.779752%,100%{opacity:0;} }
-@keyframes k53 { 0%,37.757867%{opacity:0;} 37.765162%,38.227824%{opacity:1;} 38.242414%,100%{opacity:0;} }
-@keyframes k54 { 0%,38.220529%{opacity:0;} 38.227824%,38.611744%{opacity:1;} 38.626334%,100%{opacity:0;} }
-@keyframes k55 { 0%,38.604449%{opacity:0;} 38.611744%,39.182518%{opacity:1;} 39.197108%,100%{opacity:0;} }
-@keyframes k56 { 0%,39.175223%{opacity:0;} 39.182518%,39.603906%{opacity:1;} 39.618496%,100%{opacity:0;} }
-@keyframes k57 { 0%,39.596611%{opacity:0;} 39.603906%,100%{opacity:1;} }
-@keyframes k58 { 0%,42.870687%{opacity:0;} 42.877981%,100%{opacity:1;} }
-@keyframes k59 { 0%,58.919648%{opacity:0;} 58.926943%,59.656441%{opacity:1;} 59.671031%,100%{opacity:0;} }
-@keyframes k60 { 0%,59.649146%{opacity:0;} 59.656441%,60.005769%{opacity:1;} 60.020359%,100%{opacity:0;} }
-@keyframes k61 { 0%,59.998474%{opacity:0;} 60.005769%,60.512172%{opacity:1;} 60.526762%,100%{opacity:0;} }
-@keyframes k62 { 0%,60.504877%{opacity:0;} 60.512172%,61.09472%{opacity:1;} 61.10931%,100%{opacity:0;} }
-@keyframes k63 { 0%,61.087425%{opacity:0;} 61.09472%,61.87861%{opacity:1;} 61.8932%,100%{opacity:0;} }
-@keyframes k64 { 0%,61.871315%{opacity:0;} 61.87861%,62.445211%{opacity:1;} 62.459801%,100%{opacity:0;} }
-@keyframes k65 { 0%,62.437916%{opacity:0;} 62.445211%,62.890395%{opacity:1;} 62.904985%,100%{opacity:0;} }
-@keyframes k66 { 0%,62.8831%{opacity:0;} 62.890395%,63.298374%{opacity:1;} 63.312964%,100%{opacity:0;} }
-@keyframes k67 { 0%,63.291079%{opacity:0;} 63.298374%,63.741938%{opacity:1;} 63.756528%,100%{opacity:0;} }
-@keyframes k68 { 0%,63.734643%{opacity:0;} 63.741938%,64.324048%{opacity:1;} 64.338638%,100%{opacity:0;} }
-@keyframes k69 { 0%,64.316753%{opacity:0;} 64.324048%,64.657925%{opacity:1;} 64.672515%,100%{opacity:0;} }
-@keyframes k70 { 0%,64.65063%{opacity:0;} 64.657925%,100%{opacity:1;} }
-@keyframes k71 { 0%,67.894782%{opacity:0;} 67.902077%,100%{opacity:1;} }
-@keyframes k72 { 0%,83.943743%{opacity:0;} 83.951038%,100%{opacity:1;} }
-@keyframes k73 { 0%,14.583618%{opacity:0;} 14.590913%,14.882771%{opacity:1;} 14.897361%,100%{opacity:0;} }
-@keyframes k74 { 0%,14.875476%{opacity:0;} 14.882771%,15.411438%{opacity:1;} 15.426028%,100%{opacity:0;} }
-@keyframes k75 { 0%,21.842141%{opacity:0;} 21.849436%,22.251229%{opacity:1;} 22.265819%,100%{opacity:0;} }
-@keyframes k76 { 0%,22.243934%{opacity:0;} 22.251229%,22.54367%{opacity:1;} 22.55826%,100%{opacity:0;} }
-@keyframes k77 { 0%,23.944788%{opacity:0;} 23.952083%,24.351162%{opacity:1;} 24.365752%,100%{opacity:0;} }
-@keyframes k78 { 0%,24.343867%{opacity:0;} 24.351162%,24.779991%{opacity:1;} 24.794581%,100%{opacity:0;} }
-@keyframes k79 { 0%,26.118518%{opacity:0;} 26.125813%,26.420136%{opacity:1;} 26.434726%,100%{opacity:0;} }
-@keyframes k80 { 0%,26.412841%{opacity:0;} 26.420136%,26.863146%{opacity:1;} 26.877736%,100%{opacity:0;} }
-@keyframes k81 { 0%,28.583784%{opacity:0;} 28.591079%,29.140245%{opacity:1;} 29.154835%,100%{opacity:0;} }
-@keyframes k82 { 0%,29.13295%{opacity:0;} 29.140245%,29.644971%{opacity:1;} 29.659561%,100%{opacity:0;} }
-@keyframes k83 { 0%,31.870845%{opacity:0;} 31.87814%,32.420376%{opacity:1;} 32.434966%,100%{opacity:0;} }
-@keyframes k84 { 0%,32.413081%{opacity:0;} 32.420376%,32.845936%{opacity:1;} 32.860526%,100%{opacity:0;} }
-@keyframes k85 { 0%,39.596611%{opacity:0;} 39.603906%,39.959988%{opacity:1;} 39.974578%,100%{opacity:0;} }
-@keyframes k86 { 0%,39.952693%{opacity:0;} 39.959988%,42.877981%{opacity:1;} 42.892571%,100%{opacity:0;} }
-@keyframes k87 { 0%,42.870687%{opacity:0;} 42.877981%,58.926943%{opacity:1;} 58.941533%,100%{opacity:0;} }
-@keyframes k88 { 0%,61.087425%{opacity:0;} 61.09472%,61.478174%{opacity:1;} 61.492764%,100%{opacity:0;} }
-@keyframes k89 { 0%,61.470879%{opacity:0;} 61.478174%,61.87861%{opacity:1;} 61.8932%,100%{opacity:0;} }
-@keyframes k90 { 0%,64.65063%{opacity:0;} 64.657925%,64.984084%{opacity:1;} 64.998674%,100%{opacity:0;} }
-@keyframes k91 { 0%,64.976789%{opacity:0;} 64.984084%,67.902077%{opacity:1;} 67.916667%,100%{opacity:0;} }
-@keyframes k92 { 0%,67.894782%{opacity:0;} 67.902077%,83.951038%{opacity:1;} 83.965628%,100%{opacity:0;} }
-@keyframes k93 { 0%,100%{opacity:1;} }
-.layer-0 { animation:k0 6.854026s linear infinite; }
-.layer-1 { animation:k1 6.854026s linear infinite; }
-.layer-2 { animation:k2 6.854026s linear infinite; }
-.layer-3 { animation:k3 6.854026s linear infinite; }
-.layer-4 { animation:k4 6.854026s linear infinite; }
-.layer-5 { animation:k5 6.854026s linear infinite; }
-.layer-6 { animation:k6 6.854026s linear infinite; }
-.layer-7 { animation:k7 6.854026s linear infinite; }
-.layer-8 { animation:k8 6.854026s linear infinite; }
-.layer-9 { animation:k9 6.854026s linear infinite; }
-.layer-10 { animation:k10 6.854026s linear infinite; }
-.layer-11 { animation:k11 6.854026s linear infinite; }
-.layer-12 { animation:k12 6.854026s linear infinite; }
-.layer-13 { animation:k13 6.854026s linear infinite; }
-.layer-14 { animation:k14 6.854026s linear infinite; }
-.layer-15 { animation:k15 6.854026s linear infinite; }
-.layer-16 { animation:k16 6.854026s linear infinite; }
-.layer-17 { animation:k17 6.854026s linear infinite; }
-.layer-18 { animation:k18 6.854026s linear infinite; }
-.layer-19 { animation:k19 6.854026s linear infinite; }
-.layer-20 { animation:k20 6.854026s linear infinite; }
-.layer-21 { animation:k21 6.854026s linear infinite; }
-.layer-22 { animation:k22 6.854026s linear infinite; }
-.layer-23 { animation:k23 6.854026s linear infinite; }
-.layer-24 { animation:k24 6.854026s linear infinite; }
-.layer-25 { animation:k25 6.854026s linear infinite; }
-.layer-26 { animation:k26 6.854026s linear infinite; }
-.layer-27 { animation:k27 6.854026s linear infinite; }
-.layer-28 { animation:k28 6.854026s linear infinite; }
-.layer-29 { animation:k29 6.854026s linear infinite; }
-.layer-30 { animation:k30 6.854026s linear infinite; }
-.layer-31 { animation:k31 6.854026s linear infinite; }
-.layer-32 { animation:k32 6.854026s linear infinite; }
-.layer-33 { animation:k33 6.854026s linear infinite; }
-.layer-34 { animation:k34 6.854026s linear infinite; }
-.layer-35 { animation:k35 6.854026s linear infinite; }
-.layer-36 { animation:k36 6.854026s linear infinite; }
-.layer-37 { animation:k37 6.854026s linear infinite; }
-.layer-38 { animation:k38 6.854026s linear infinite; }
-.layer-39 { animation:k39 6.854026s linear infinite; }
-.layer-40 { animation:k40 6.854026s linear infinite; }
-.layer-41 { animation:k41 6.854026s linear infinite; }
-.layer-42 { animation:k42 6.854026s linear infinite; }
-.layer-43 { animation:k43 6.854026s linear infinite; }
-.layer-44 { animation:k44 6.854026s linear infinite; }
-.layer-45 { animation:k45 6.854026s linear infinite; }
-.layer-46 { animation:k46 6.854026s linear infinite; }
-.layer-47 { animation:k47 6.854026s linear infinite; }
-.layer-48 { animation:k48 6.854026s linear infinite; }
-.layer-49 { animation:k49 6.854026s linear infinite; }
-.layer-50 { animation:k50 6.854026s linear infinite; }
-.layer-51 { animation:k51 6.854026s linear infinite; }
-.layer-52 { animation:k52 6.854026s linear infinite; }
-.layer-53 { animation:k53 6.854026s linear infinite; }
-.layer-54 { animation:k54 6.854026s linear infinite; }
-.layer-55 { animation:k55 6.854026s linear infinite; }
-.layer-56 { animation:k56 6.854026s linear infinite; }
-.layer-57 { animation:k57 6.854026s linear infinite; }
-.layer-58 { animation:k58 6.854026s linear infinite; }
-.layer-59 { animation:k59 6.854026s linear infinite; }
-.layer-60 { animation:k60 6.854026s linear infinite; }
-.layer-61 { animation:k61 6.854026s linear infinite; }
-.layer-62 { animation:k62 6.854026s linear infinite; }
-.layer-63 { animation:k63 6.854026s linear infinite; }
-.layer-64 { animation:k64 6.854026s linear infinite; }
-.layer-65 { animation:k65 6.854026s linear infinite; }
-.layer-66 { animation:k66 6.854026s linear infinite; }
-.layer-67 { animation:k67 6.854026s linear infinite; }
-.layer-68 { animation:k68 6.854026s linear infinite; }
-.layer-69 { animation:k69 6.854026s linear infinite; }
-.layer-70 { animation:k70 6.854026s linear infinite; }
-.layer-71 { animation:k71 6.854026s linear infinite; }
-.layer-72 { animation:k72 6.854026s linear infinite; }
-.cursor-layer-0 { animation:k0 6.854026s linear infinite; }
-.cursor-layer-1 { animation:k1 6.854026s linear infinite; }
-.cursor-layer-2 { animation:k2 6.854026s linear infinite; }
-.cursor-layer-3 { animation:k3 6.854026s linear infinite; }
-.cursor-layer-4 { animation:k4 6.854026s linear infinite; }
-.cursor-layer-5 { animation:k5 6.854026s linear infinite; }
-.cursor-layer-6 { animation:k73 6.854026s linear infinite; }
-.cursor-layer-7 { animation:k74 6.854026s linear infinite; }
-.cursor-layer-8 { animation:k7 6.854026s linear infinite; }
-.cursor-layer-9 { animation:k8 6.854026s linear infinite; }
-.cursor-layer-10 { animation:k9 6.854026s linear infinite; }
-.cursor-layer-11 { animation:k10 6.854026s linear infinite; }
-.cursor-layer-12 { animation:k11 6.854026s linear infinite; }
-.cursor-layer-13 { animation:k12 6.854026s linear infinite; }
-.cursor-layer-14 { animation:k13 6.854026s linear infinite; }
-.cursor-layer-15 { animation:k14 6.854026s linear infinite; }
-.cursor-layer-16 { animation:k15 6.854026s linear infinite; }
-.cursor-layer-17 { animation:k16 6.854026s linear infinite; }
-.cursor-layer-18 { animation:k17 6.854026s linear infinite; }
-.cursor-layer-19 { animation:k18 6.854026s linear infinite; }
-.cursor-layer-20 { animation:k19 6.854026s linear infinite; }
-.cursor-layer-21 { animation:k20 6.854026s linear infinite; }
-.cursor-layer-22 { animation:k75 6.854026s linear infinite; }
-.cursor-layer-23 { animation:k76 6.854026s linear infinite; }
-.cursor-layer-24 { animation:k22 6.854026s linear infinite; }
-.cursor-layer-25 { animation:k23 6.854026s linear infinite; }
-.cursor-layer-26 { animation:k24 6.854026s linear infinite; }
-.cursor-layer-27 { animation:k25 6.854026s linear infinite; }
-.cursor-layer-28 { animation:k77 6.854026s linear infinite; }
-.cursor-layer-29 { animation:k78 6.854026s linear infinite; }
-.cursor-layer-30 { animation:k27 6.854026s linear infinite; }
-.cursor-layer-31 { animation:k28 6.854026s linear infinite; }
-.cursor-layer-32 { animation:k29 6.854026s linear infinite; }
-.cursor-layer-33 { animation:k79 6.854026s linear infinite; }
-.cursor-layer-34 { animation:k80 6.854026s linear infinite; }
-.cursor-layer-35 { animation:k31 6.854026s linear infinite; }
-.cursor-layer-36 { animation:k32 6.854026s linear infinite; }
-.cursor-layer-37 { animation:k33 6.854026s linear infinite; }
-.cursor-layer-38 { animation:k34 6.854026s linear infinite; }
-.cursor-layer-39 { animation:k81 6.854026s linear infinite; }
-.cursor-layer-40 { animation:k82 6.854026s linear infinite; }
-.cursor-layer-41 { animation:k36 6.854026s linear infinite; }
-.cursor-layer-42 { animation:k37 6.854026s linear infinite; }
-.cursor-layer-43 { animation:k38 6.854026s linear infinite; }
-.cursor-layer-44 { animation:k39 6.854026s linear infinite; }
-.cursor-layer-45 { animation:k40 6.854026s linear infinite; }
-.cursor-layer-46 { animation:k83 6.854026s linear infinite; }
-.cursor-layer-47 { animation:k84 6.854026s linear infinite; }
-.cursor-layer-48 { animation:k42 6.854026s linear infinite; }
-.cursor-layer-49 { animation:k43 6.854026s linear infinite; }
-.cursor-layer-50 { animation:k44 6.854026s linear infinite; }
-.cursor-layer-51 { animation:k45 6.854026s linear infinite; }
-.cursor-layer-52 { animation:k46 6.854026s linear infinite; }
-.cursor-layer-53 { animation:k47 6.854026s linear infinite; }
-.cursor-layer-54 { animation:k48 6.854026s linear infinite; }
-.cursor-layer-55 { animation:k49 6.854026s linear infinite; }
-.cursor-layer-56 { animation:k50 6.854026s linear infinite; }
-.cursor-layer-57 { animation:k51 6.854026s linear infinite; }
-.cursor-layer-58 { animation:k52 6.854026s linear infinite; }
-.cursor-layer-59 { animation:k53 6.854026s linear infinite; }
-.cursor-layer-60 { animation:k54 6.854026s linear infinite; }
-.cursor-layer-61 { animation:k55 6.854026s linear infinite; }
-.cursor-layer-62 { animation:k56 6.854026s linear infinite; }
-.cursor-layer-63 { animation:k85 6.854026s linear infinite; }
-.cursor-layer-64 { animation:k86 6.854026s linear infinite; }
-.cursor-layer-65 { animation:k87 6.854026s linear infinite; }
-.cursor-layer-66 { animation:k59 6.854026s linear infinite; }
-.cursor-layer-67 { animation:k60 6.854026s linear infinite; }
-.cursor-layer-68 { animation:k61 6.854026s linear infinite; }
-.cursor-layer-69 { animation:k62 6.854026s linear infinite; }
-.cursor-layer-70 { animation:k88 6.854026s linear infinite; }
-.cursor-layer-71 { animation:k89 6.854026s linear infinite; }
-.cursor-layer-72 { animation:k64 6.854026s linear infinite; }
-.cursor-layer-73 { animation:k65 6.854026s linear infinite; }
-.cursor-layer-74 { animation:k66 6.854026s linear infinite; }
-.cursor-layer-75 { animation:k67 6.854026s linear infinite; }
-.cursor-layer-76 { animation:k68 6.854026s linear infinite; }
-.cursor-layer-77 { animation:k69 6.854026s linear infinite; }
-.cursor-layer-78 { animation:k90 6.854026s linear infinite; }
-.cursor-layer-79 { animation:k91 6.854026s linear infinite; }
-.cursor-layer-80 { animation:k92 6.854026s linear infinite; }
-.cursor-layer-81 { animation:k72 6.854026s linear infinite; }
-.viewport-mask-0,.viewport-bg-0,.viewport-chrome-0 { animation:k93 6.854026s linear infinite; }
+.bg,rect:not([class]) { shape-rendering: crispEdges; }
+.l { opacity: 0; animation: 6.854s step-end infinite; }
+.c { fill: #d0d0d0; fill-opacity: 0.5; }
+.a{transform:translate(0,62.8px)}
+.d{transform:translate(0,102.8px)}
+.b{fill:#82b8e0}
+@keyframes f{11.67%{opacity:1}12.4%{opacity:0}}
+.f{animation-name:f}
+@keyframes g{12.4%{opacity:1}12.77%{opacity:0}}
+.g{animation-name:g}
+@keyframes h{12.77%{opacity:1}13.26%{opacity:0}}
+.h{animation-name:h}
+@keyframes i{13.26%{opacity:1}13.82%{opacity:0}}
+.i{animation-name:i}
+@keyframes j{13.82%{opacity:1}14.14%{opacity:0}}
+.j{animation-name:j}
+@keyframes k{14.14%{opacity:1}14.59%{opacity:0}}
+.k{animation-name:k}
+@keyframes m{14.59%{opacity:1}15.41%{opacity:0}}
+.m{animation-name:m}
+@keyframes n{15.41%{opacity:1}15.9%{opacity:0}}
+.n{animation-name:n}
+@keyframes o{15.9%{opacity:1}16.25%{opacity:0}}
+.o{animation-name:o}
+@keyframes p{16.25%{opacity:1}16.71%{opacity:0}}
+.p{animation-name:p}
+@keyframes q{16.71%{opacity:1}17.23%{opacity:0}}
+.q{animation-name:q}
+@keyframes r{17.23%{opacity:1}17.61%{opacity:0}}
+.r{animation-name:r}
+@keyframes s{17.61%{opacity:1}18.16%{opacity:0}}
+.s{animation-name:s}
+@keyframes t{18.16%{opacity:1}18.5%{opacity:0}}
+.t{animation-name:t}
+@keyframes u{18.5%{opacity:1}18.89%{opacity:0}}
+.u{animation-name:u}
+@keyframes v{18.89%{opacity:1}19.24%{opacity:0}}
+.v{animation-name:v}
+@keyframes w{19.24%{opacity:1}19.71%{opacity:0}}
+.w{animation-name:w}
+@keyframes x{19.71%{opacity:1}20.27%{opacity:0}}
+.x{animation-name:x}
+@keyframes y{20.27%{opacity:1}20.81%{opacity:0}}
+.y{animation-name:y}
+@keyframes z{20.81%{opacity:1}21.37%{opacity:0}}
+.z{animation-name:z}
+@keyframes aa{21.37%{opacity:1}21.86%{opacity:0}}
+.aa{animation-name:aa}
+@keyframes ab{21.86%{opacity:1}22.54%{opacity:0}}
+.ab{animation-name:ab}
+@keyframes ac{22.54%{opacity:1}22.85%{opacity:0}}
+.ac{animation-name:ac}
+@keyframes ad{22.85%{opacity:1}23.29%{opacity:0}}
+.ad{animation-name:ad}
+@keyframes ae{23.29%{opacity:1}23.65%{opacity:0}}
+.ae{animation-name:ae}
+@keyframes af{23.65%{opacity:1}23.96%{opacity:0}}
+.af{animation-name:af}
+@keyframes ag{23.96%{opacity:1}24.77%{opacity:0}}
+.ag{animation-name:ag}
+@keyframes ah{24.77%{opacity:1}25.08%{opacity:0}}
+.ah{animation-name:ah}
+@keyframes ai{25.08%{opacity:1}25.61%{opacity:0}}
+.ai{animation-name:ai}
+@keyframes aj{25.61%{opacity:1}26.13%{opacity:0}}
+.aj{animation-name:aj}
+@keyframes ak{26.13%{opacity:1}26.86%{opacity:0}}
+.ak{animation-name:ak}
+@keyframes al{26.86%{opacity:1}27.22%{opacity:0}}
+.al{animation-name:al}
+@keyframes am{27.22%{opacity:1}27.75%{opacity:0}}
+.am{animation-name:am}
+@keyframes an{27.75%{opacity:1}28.26%{opacity:0}}
+.an{animation-name:an}
+@keyframes ao{28.26%{opacity:1}28.6%{opacity:0}}
+.ao{animation-name:ao}
+@keyframes ap{28.6%{opacity:1}29.65%{opacity:0}}
+.ap{animation-name:ap}
+@keyframes aq{29.65%{opacity:1}30.17%{opacity:0}}
+.aq{animation-name:aq}
+@keyframes ar{30.17%{opacity:1}30.49%{opacity:0}}
+.ar{animation-name:ar}
+@keyframes as{30.49%{opacity:1}31.02%{opacity:0}}
+.as{animation-name:as}
+@keyframes at{31.02%{opacity:1}31.37%{opacity:0}}
+.at{animation-name:at}
+@keyframes au{31.37%{opacity:1}31.88%{opacity:0}}
+.au{animation-name:au}
+@keyframes av{31.88%{opacity:1}32.84%{opacity:0}}
+.av{animation-name:av}
+@keyframes aw{32.84%{opacity:1}33.4%{opacity:0}}
+.aw{animation-name:aw}
+@keyframes ax{33.4%{opacity:1}33.69%{opacity:0}}
+.ax{animation-name:ax}
+@keyframes ay{33.69%{opacity:1}34.02%{opacity:0}}
+.ay{animation-name:ay}
+@keyframes az{34.02%{opacity:1}34.33%{opacity:0}}
+.az{animation-name:az}
+@keyframes a0{34.33%{opacity:1}34.77%{opacity:0}}
+.a0{animation-name:a0}
+@keyframes a1{34.77%{opacity:1}35.35%{opacity:0}}
+.a1{animation-name:a1}
+@keyframes a2{35.35%{opacity:1}35.67%{opacity:0}}
+.a2{animation-name:a2}
+@keyframes a3{35.67%{opacity:1}36.18%{opacity:0}}
+.a3{animation-name:a3}
+@keyframes a4{36.18%{opacity:1}36.72%{opacity:0}}
+.a4{animation-name:a4}
+@keyframes a5{36.72%{opacity:1}37.22%{opacity:0}}
+.a5{animation-name:a5}
+@keyframes a6{37.22%{opacity:1}37.76%{opacity:0}}
+.a6{animation-name:a6}
+@keyframes a7{37.76%{opacity:1}38.23%{opacity:0}}
+.a7{animation-name:a7}
+@keyframes a8{38.23%{opacity:1}38.61%{opacity:0}}
+.a8{animation-name:a8}
+@keyframes a9{38.61%{opacity:1}39.19%{opacity:0}}
+.a9{animation-name:a9}
+@keyframes ba{39.19%{opacity:1}39.6%{opacity:0}}
+.ba{animation-name:ba}
+@keyframes bb{39.6%{opacity:1}}
+.bb{animation-name:bb}
+@keyframes bc{42.88%{opacity:1}}
+.bc{animation-name:bc}
+@keyframes bd{58.93%{opacity:1}59.66%{opacity:0}}
+.bd{animation-name:bd}
+@keyframes be{59.66%{opacity:1}60.01%{opacity:0}}
+.be{animation-name:be}
+@keyframes bf{60.01%{opacity:1}60.52%{opacity:0}}
+.bf{animation-name:bf}
+@keyframes bh{60.52%{opacity:1}61.09%{opacity:0}}
+.bh{animation-name:bh}
+@keyframes bi{61.09%{opacity:1}61.88%{opacity:0}}
+.bi{animation-name:bi}
+@keyframes bj{61.88%{opacity:1}62.45%{opacity:0}}
+.bj{animation-name:bj}
+@keyframes bk{62.45%{opacity:1}62.9%{opacity:0}}
+.bk{animation-name:bk}
+@keyframes bl{62.9%{opacity:1}63.29%{opacity:0}}
+.bl{animation-name:bl}
+@keyframes bm{63.29%{opacity:1}63.74%{opacity:0}}
+.bm{animation-name:bm}
+@keyframes bn{63.74%{opacity:1}64.33%{opacity:0}}
+.bn{animation-name:bn}
+@keyframes bo{64.33%{opacity:1}64.66%{opacity:0}}
+.bo{animation-name:bo}
+@keyframes bp{64.66%{opacity:1}}
+.bp{animation-name:bp}
+@keyframes bq{67.9%{opacity:1}}
+.bq{animation-name:bq}
+@keyframes br{83.95%{opacity:1}}
+.br{animation-name:br}
+@keyframes bs{14.59%{opacity:1}14.88%{opacity:0}}
+.bs{animation-name:bs}
+@keyframes bt{14.88%{opacity:1}15.41%{opacity:0}}
+.bt{animation-name:bt}
+@keyframes bu{21.86%{opacity:1}22.25%{opacity:0}}
+.bu{animation-name:bu}
+@keyframes bv{22.25%{opacity:1}22.54%{opacity:0}}
+.bv{animation-name:bv}
+@keyframes bw{23.96%{opacity:1}24.35%{opacity:0}}
+.bw{animation-name:bw}
+@keyframes bx{24.35%{opacity:1}24.77%{opacity:0}}
+.bx{animation-name:bx}
+@keyframes by{26.13%{opacity:1}26.42%{opacity:0}}
+.by{animation-name:by}
+@keyframes bz{26.42%{opacity:1}26.86%{opacity:0}}
+.bz{animation-name:bz}
+@keyframes b0{28.6%{opacity:1}29.14%{opacity:0}}
+.b0{animation-name:b0}
+@keyframes b1{29.14%{opacity:1}29.65%{opacity:0}}
+.b1{animation-name:b1}
+@keyframes b2{31.88%{opacity:1}32.42%{opacity:0}}
+.b2{animation-name:b2}
+@keyframes b3{32.42%{opacity:1}32.84%{opacity:0}}
+.b3{animation-name:b3}
+@keyframes b4{39.6%{opacity:1}39.96%{opacity:0}}
+.b4{animation-name:b4}
+@keyframes b5{39.96%{opacity:1}42.88%{opacity:0}}
+.b5{animation-name:b5}
+@keyframes b6{42.88%{opacity:1}58.93%{opacity:0}}
+.b6{animation-name:b6}
+@keyframes b7{61.09%{opacity:1}61.48%{opacity:0}}
+.b7{animation-name:b7}
+@keyframes b8{61.48%{opacity:1}61.88%{opacity:0}}
+.b8{animation-name:b8}
+@keyframes b9{64.66%{opacity:1}64.98%{opacity:0}}
+.b9{animation-name:b9}
+@keyframes ca{64.98%{opacity:1}67.9%{opacity:0}}
+.ca{animation-name:ca}
+@keyframes cb{67.9%{opacity:1}83.95%{opacity:0}}
+.cb{animation-name:cb}
+@keyframes e{0%{opacity:1}}
+.e{animation-name:e}
 </style>
 <defs>
 <filter id="window-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.22"/></filter>
+<rect id="c" class="c" width="9.92" height="20"/>
 <mask id="viewport-mask" x="0" y="0" width="837.6" height="546" maskUnits="userSpaceOnUse">
-<rect class="layer viewport-mask-0" x="12" y="46" width="813.6" height="488" fill="white"/>
+<rect class="l e viewport-mask-0" x="12" y="46" width="813.6" height="488" fill="white"/>
 </mask>
 </defs>
-<rect class="layer viewport-chrome-0" x="12" y="12" width="813.6" height="522" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
-<path class="layer viewport-chrome-0" d="M 20,12 H 817.6 Q 825.6,12 825.6,20 V 46 H 12 V 20 Q 12,12 20,12 Z" fill="#323232"/>
-<line class="layer viewport-chrome-0" x1="12" y1="46" x2="825.6" y2="46" stroke="#1a1a1a" stroke-width="1"/>
-<circle class="layer viewport-chrome-0" cx="34" cy="29" r="8" fill="#ff5f57"/>
-<circle class="layer viewport-chrome-0" cx="60" cy="29" r="8" fill="#febc2e"/>
-<circle class="layer viewport-chrome-0" cx="86" cy="29" r="8" fill="#28c840"/>
-<g mask="url(#viewport-mask)">
-<rect class="bg layer viewport-bg-0" x="12" y="46" width="813.6" height="488" fill="#282c34"/>
-<g class="layer layer-0">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
-</g>
-<g class="layer layer-1">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">$ p</text>
-</g>
-<g class="layer layer-2">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="39.68" lengthAdjust="spacing">$ pr</text>
-</g>
-<g class="layer layer-3">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">$ pri</text>
-</g>
-<g class="layer layer-4">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ prin</text>
-</g>
-<g class="layer layer-5">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="69.44" lengthAdjust="spacing">$ print</text>
-</g>
-<g class="layer layer-6">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">$ printf</text>
-</g>
-<g class="layer layer-7">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">$ printf '</text>
-</g>
-<g class="layer layer-8">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="109.12" lengthAdjust="spacing">$ printf '\</text>
-</g>
-<g class="layer layer-9">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacing">$ printf '\0</text>
-</g>
-<g class="layer layer-10">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">$ printf '\03</text>
-</g>
-<g class="layer layer-11">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">$ printf '\033</text>
-</g>
-<g class="layer layer-12">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="148.8" lengthAdjust="spacing">$ printf '\033[</text>
-</g>
-<g class="layer layer-13">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="158.72" lengthAdjust="spacing">$ printf '\033[1</text>
-</g>
-<g class="layer layer-14">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="168.64" lengthAdjust="spacing">$ printf '\033[1;</text>
-</g>
-<g class="layer layer-15">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="178.56" lengthAdjust="spacing">$ printf '\033[1;3</text>
-</g>
-<g class="layer layer-16">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="188.48" lengthAdjust="spacing">$ printf '\033[1;34</text>
-</g>
-<g class="layer layer-17">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="198.4" lengthAdjust="spacing">$ printf '\033[1;34m</text>
-</g>
-<g class="layer layer-18">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="208.32" lengthAdjust="spacing">$ printf '\033[1;34mD</text>
-</g>
-<g class="layer layer-19">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="218.24" lengthAdjust="spacing">$ printf '\033[1;34mDa</text>
-</g>
-<g class="layer layer-20">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="228.16" lengthAdjust="spacing">$ printf '\033[1;34mDar</text>
-</g>
-<g class="layer layer-21">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="238.08" lengthAdjust="spacing">$ printf '\033[1;34mDark</text>
-</g>
-<g class="layer layer-22">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="257.92" lengthAdjust="spacing">$ printf '\033[1;34mDark t</text>
-</g>
-<g class="layer layer-23">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="267.84" lengthAdjust="spacing">$ printf '\033[1;34mDark th</text>
-</g>
-<g class="layer layer-24">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="277.76" lengthAdjust="spacing">$ printf '\033[1;34mDark the</text>
-</g>
-<g class="layer layer-25">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="287.68" lengthAdjust="spacing">$ printf '\033[1;34mDark them</text>
-</g>
-<g class="layer layer-26">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="297.6" lengthAdjust="spacing">$ printf '\033[1;34mDark theme</text>
-</g>
-<g class="layer layer-27">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="317.44" lengthAdjust="spacing">$ printf '\033[1;34mDark theme w</text>
-</g>
-<g class="layer layer-28">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="327.36" lengthAdjust="spacing">$ printf '\033[1;34mDark theme wi</text>
-</g>
-<g class="layer layer-29">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="337.28" lengthAdjust="spacing">$ printf '\033[1;34mDark theme wit</text>
-</g>
-<g class="layer layer-30">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="347.2" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with</text>
-</g>
-<g class="layer layer-31">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="367.04" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with m</text>
-</g>
-<g class="layer layer-32">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="376.96" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with ma</text>
-</g>
-<g class="layer layer-33">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="386.88" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with mac</text>
-</g>
-<g class="layer layer-34">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="396.8" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macO</text>
-</g>
-<g class="layer layer-35">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="406.72" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS</text>
-</g>
-<g class="layer layer-36">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="426.56" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS w</text>
-</g>
-<g class="layer layer-37">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="436.48" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS wi</text>
-</g>
-<g class="layer layer-38">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="446.4" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS win</text>
-</g>
-<g class="layer layer-39">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="456.32" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS wind</text>
-</g>
-<g class="layer layer-40">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="466.24" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS windo</text>
-</g>
-<g class="layer layer-41">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="476.16" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window</text>
-</g>
-<g class="layer layer-42">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="496" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window c</text>
-</g>
-<g class="layer layer-43">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="505.92" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window ch</text>
-</g>
-<g class="layer layer-44">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="515.84" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window chr</text>
-</g>
-<g class="layer layer-45">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="525.76" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window chro</text>
-</g>
-<g class="layer layer-46">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="535.68" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window chrom</text>
-</g>
-<g class="layer layer-47">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="545.6" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window chrome</text>
-</g>
-<g class="layer layer-48">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="555.52" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window chrome\</text>
-</g>
-<g class="layer layer-49">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="565.44" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window chrome\0</text>
-</g>
-<g class="layer layer-50">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="575.36" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window chrome\03</text>
-</g>
-<g class="layer layer-51">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="585.28" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window chrome\033</text>
-</g>
-<g class="layer layer-52">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="595.2" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window chrome\033[</text>
-</g>
-<g class="layer layer-53">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="605.12" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window chrome\033[0</text>
-</g>
-<g class="layer layer-54">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="615.04" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window chrome\033[0m</text>
-</g>
-<g class="layer layer-55">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="624.96" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window chrome\033[0m\</text>
-</g>
-<g class="layer layer-56">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="634.88" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window chrome\033[0m\n</text>
-</g>
-<g class="layer layer-57">
-<text x="22" y="62.8" fill="#d0d0d0" font-weight="normal" textLength="644.8" lengthAdjust="spacing">$ printf '\033[1;34mDark theme with macOS window chrome\033[0m\n'</text>
-</g>
-<g class="layer layer-58">
-<text x="22" y="82.8" fill="#82b8e0" font-weight="bold" textLength="347.2" lengthAdjust="spacing">Dark theme with macOS window chrome</text>
-</g>
-<g class="layer layer-59">
-<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
-</g>
-<g class="layer layer-60">
-<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="29.76" lengthAdjust="spacing">$ e</text>
-</g>
-<g class="layer layer-61">
-<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="39.68" lengthAdjust="spacing">$ ec</text>
-</g>
-<g class="layer layer-62">
-<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">$ ech</text>
-</g>
-<g class="layer layer-63">
-<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="59.52" lengthAdjust="spacing">$ echo</text>
-</g>
-<g class="layer layer-64">
-<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="79.36" lengthAdjust="spacing">$ echo &quot;</text>
-</g>
-<g class="layer layer-65">
-<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="89.28" lengthAdjust="spacing">$ echo &quot;D</text>
-</g>
-<g class="layer layer-66">
-<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="99.2" lengthAdjust="spacing">$ echo &quot;Do</text>
-</g>
-<g class="layer layer-67">
-<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="109.12" lengthAdjust="spacing">$ echo &quot;Don</text>
-</g>
-<g class="layer layer-68">
-<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="119.04" lengthAdjust="spacing">$ echo &quot;Done</text>
-</g>
-<g class="layer layer-69">
-<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="128.96" lengthAdjust="spacing">$ echo &quot;Done!</text>
-</g>
-<g class="layer layer-70">
-<text x="22" y="102.8" fill="#d0d0d0" font-weight="normal" textLength="138.88" lengthAdjust="spacing">$ echo &quot;Done!&quot;</text>
-</g>
-<g class="layer layer-71">
-<text x="22" y="122.8" fill="#d0d0d0" font-weight="normal" textLength="49.6" lengthAdjust="spacing">Done!</text>
-</g>
-<g class="layer layer-72">
-<text x="22" y="142.8" fill="#d0d0d0" font-weight="normal" textLength="9.92" lengthAdjust="spacing">$</text>
-</g>
-<g class="layer cursor-layer-0">
-<rect class="cursor-block" x="41.84" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-1">
-<rect class="cursor-block" x="51.76" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-2">
-<rect class="cursor-block" x="61.68" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-3">
-<rect class="cursor-block" x="71.6" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-4">
-<rect class="cursor-block" x="81.52" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-5">
-<rect class="cursor-block" x="91.44" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-6">
-<rect class="cursor-block" x="101.36" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-7">
-<rect class="cursor-block" x="111.28" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-8">
-<rect class="cursor-block" x="121.2" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-9">
-<rect class="cursor-block" x="131.12" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-10">
-<rect class="cursor-block" x="141.04" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-11">
-<rect class="cursor-block" x="150.96" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-12">
-<rect class="cursor-block" x="160.88" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-13">
-<rect class="cursor-block" x="170.8" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-14">
-<rect class="cursor-block" x="180.72" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-15">
-<rect class="cursor-block" x="190.64" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-16">
-<rect class="cursor-block" x="200.56" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-17">
-<rect class="cursor-block" x="210.48" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-18">
-<rect class="cursor-block" x="220.4" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-19">
-<rect class="cursor-block" x="230.32" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-20">
-<rect class="cursor-block" x="240.24" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-21">
-<rect class="cursor-block" x="250.16" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-22">
-<rect class="cursor-block" x="260.08" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-23">
-<rect class="cursor-block" x="270" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-24">
-<rect class="cursor-block" x="279.92" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-25">
-<rect class="cursor-block" x="289.84" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-26">
-<rect class="cursor-block" x="299.76" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-27">
-<rect class="cursor-block" x="309.68" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-28">
-<rect class="cursor-block" x="319.6" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-29">
-<rect class="cursor-block" x="329.52" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-30">
-<rect class="cursor-block" x="339.44" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-31">
-<rect class="cursor-block" x="349.36" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-32">
-<rect class="cursor-block" x="359.28" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-33">
-<rect class="cursor-block" x="369.2" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-34">
-<rect class="cursor-block" x="379.12" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-35">
-<rect class="cursor-block" x="389.04" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-36">
-<rect class="cursor-block" x="398.96" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-37">
-<rect class="cursor-block" x="408.88" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-38">
-<rect class="cursor-block" x="418.8" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-39">
-<rect class="cursor-block" x="428.72" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-40">
-<rect class="cursor-block" x="438.64" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-41">
-<rect class="cursor-block" x="448.56" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-42">
-<rect class="cursor-block" x="458.48" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-43">
-<rect class="cursor-block" x="468.4" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-44">
-<rect class="cursor-block" x="478.32" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-45">
-<rect class="cursor-block" x="488.24" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-46">
-<rect class="cursor-block" x="498.16" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-47">
-<rect class="cursor-block" x="508.08" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-48">
-<rect class="cursor-block" x="518" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-49">
-<rect class="cursor-block" x="527.92" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-50">
-<rect class="cursor-block" x="537.84" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-51">
-<rect class="cursor-block" x="547.76" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-52">
-<rect class="cursor-block" x="557.68" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-53">
-<rect class="cursor-block" x="567.6" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-54">
-<rect class="cursor-block" x="577.52" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-55">
-<rect class="cursor-block" x="587.44" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-56">
-<rect class="cursor-block" x="597.36" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-57">
-<rect class="cursor-block" x="607.28" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-58">
-<rect class="cursor-block" x="617.2" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-59">
-<rect class="cursor-block" x="627.12" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-60">
-<rect class="cursor-block" x="637.04" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-61">
-<rect class="cursor-block" x="646.96" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-62">
-<rect class="cursor-block" x="656.88" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-63">
-<rect class="cursor-block" x="666.8" y="50" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-64">
-<rect class="cursor-block" x="22" y="70" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-65">
-<rect class="cursor-block" x="22" y="90" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-66">
-<rect class="cursor-block" x="41.84" y="90" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-67">
-<rect class="cursor-block" x="51.76" y="90" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-68">
-<rect class="cursor-block" x="61.68" y="90" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-69">
-<rect class="cursor-block" x="71.6" y="90" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-70">
-<rect class="cursor-block" x="81.52" y="90" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-71">
-<rect class="cursor-block" x="91.44" y="90" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-72">
-<rect class="cursor-block" x="101.36" y="90" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-73">
-<rect class="cursor-block" x="111.28" y="90" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-74">
-<rect class="cursor-block" x="121.2" y="90" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-75">
-<rect class="cursor-block" x="131.12" y="90" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-76">
-<rect class="cursor-block" x="141.04" y="90" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-77">
-<rect class="cursor-block" x="150.96" y="90" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-78">
-<rect class="cursor-block" x="160.88" y="90" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-79">
-<rect class="cursor-block" x="22" y="110" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-80">
-<rect class="cursor-block" x="22" y="130" width="9.92" height="20"/>
-</g>
-<g class="layer cursor-layer-81">
-<rect class="cursor-block" x="41.84" y="130" width="9.92" height="20"/>
-</g>
+<rect class="l e viewport-chrome-0" x="12" y="12" width="813.6" height="522" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
+<path class="l e viewport-chrome-0" d="M 20,12 H 817.6 Q 825.6,12 825.6,20 V 46 H 12 V 20 Q 12,12 20,12 Z" fill="#323232"/>
+<line class="l e viewport-chrome-0" x1="12" y1="46" x2="825.6" y2="46" stroke="#1a1a1a" stroke-width="1"/>
+<circle class="l e viewport-chrome-0" cx="34" cy="29" r="8" fill="#ff5f57"/>
+<circle class="l e viewport-chrome-0" cx="60" cy="29" r="8" fill="#febc2e"/>
+<circle class="l e viewport-chrome-0" cx="86" cy="29" r="8" fill="#28c840"/>
+<g mask="url(#viewport-mask)" fill="#d0d0d0">
+<rect class="bg l e viewport-bg-0" x="12" y="46" width="813.6" height="488" fill="#282c34"/>
+<g class="l f"><text x="22" y="62.8">$</text><use href="#c" x="41.84" y="50"/></g>
+<g class="l g"><text x="22 41.84" y="62.8">$p</text><use href="#c" x="51.76" y="50"/></g>
+<g class="l h"><text x="22 41.84 51.76" y="62.8">$pr</text><use href="#c" x="61.68" y="50"/></g>
+<g class="l i"><text x="22 41.84 51.76 61.68" y="62.8">$pri</text><use href="#c" x="71.6" y="50"/></g>
+<g class="l j a"><text x="22" textLength="59.52">$ prin</text><use href="#c" x="81.52" y="-12.8"/></g>
+<g class="l k a"><text x="22" textLength="69.44">$ print</text><use href="#c" x="91.44" y="-12.8"/></g>
+<text class="l m a" x="22" textLength="79.36">$ printf</text>
+<g class="l n a"><text x="22" textLength="99.2">$ printf '</text><use href="#c" x="121.2" y="-12.8"/></g>
+<g class="l o a"><text x="22" textLength="109.12">$ printf '\</text><use href="#c" x="131.12" y="-12.8"/></g>
+<g class="l p a"><text x="22" textLength="119.04">$ printf '\0</text><use href="#c" x="141.04" y="-12.8"/></g>
+<g class="l q a"><text x="22" textLength="128.96">$ printf '\03</text><use href="#c" x="150.96" y="-12.8"/></g>
+<g class="l r a"><text x="22" textLength="138.88">$ printf '\033</text><use href="#c" x="160.88" y="-12.8"/></g>
+<g class="l s a"><text x="22" textLength="148.8">$ printf '\033[</text><use href="#c" x="170.8" y="-12.8"/></g>
+<g class="l t a"><text x="22" textLength="158.72">$ printf '\033[1</text><use href="#c" x="180.72" y="-12.8"/></g>
+<g class="l u a"><text x="22" textLength="168.64">$ printf '\033[1;</text><use href="#c" x="190.64" y="-12.8"/></g>
+<g class="l v a"><text x="22" textLength="178.56">$ printf '\033[1;3</text><use href="#c" x="200.56" y="-12.8"/></g>
+<g class="l w a"><text x="22" textLength="188.48">$ printf '\033[1;34</text><use href="#c" x="210.48" y="-12.8"/></g>
+<g class="l x a"><text x="22" textLength="198.4">$ printf '\033[1;34m</text><use href="#c" x="220.4" y="-12.8"/></g>
+<g class="l y a"><text x="22" textLength="208.32">$ printf '\033[1;34mD</text><use href="#c" x="230.32" y="-12.8"/></g>
+<g class="l z a"><text x="22" textLength="218.24">$ printf '\033[1;34mDa</text><use href="#c" x="240.24" y="-12.8"/></g>
+<g class="l aa a"><text x="22" textLength="228.16">$ printf '\033[1;34mDar</text><use href="#c" x="250.16" y="-12.8"/></g>
+<text class="l ab a" x="22" textLength="238.08">$ printf '\033[1;34mDark</text>
+<g class="l ac a"><text x="22" textLength="257.92">$ printf '\033[1;34mDark t</text><use href="#c" x="279.92" y="-12.8"/></g>
+<g class="l ad a"><text x="22" textLength="267.84">$ printf '\033[1;34mDark th</text><use href="#c" x="289.84" y="-12.8"/></g>
+<g class="l ae a"><text x="22" textLength="277.76">$ printf '\033[1;34mDark the</text><use href="#c" x="299.76" y="-12.8"/></g>
+<g class="l af a"><text x="22" textLength="287.68">$ printf '\033[1;34mDark them</text><use href="#c" x="309.68" y="-12.8"/></g>
+<text class="l ag a" x="22" textLength="297.6">$ printf '\033[1;34mDark theme</text>
+<g class="l ah a"><text x="22" textLength="317.44">$ printf '\033[1;34mDark theme w</text><use href="#c" x="339.44" y="-12.8"/></g>
+<g class="l ai a"><text x="22" textLength="327.36">$ printf '\033[1;34mDark theme wi</text><use href="#c" x="349.36" y="-12.8"/></g>
+<g class="l aj a"><text x="22" textLength="337.28">$ printf '\033[1;34mDark theme wit</text><use href="#c" x="359.28" y="-12.8"/></g>
+<text class="l ak a" x="22" textLength="347.2">$ printf '\033[1;34mDark theme with</text>
+<g class="l al a"><text x="22" textLength="367.04">$ printf '\033[1;34mDark theme with m</text><use href="#c" x="389.04" y="-12.8"/></g>
+<g class="l am a"><text x="22" textLength="376.96">$ printf '\033[1;34mDark theme with ma</text><use href="#c" x="398.96" y="-12.8"/></g>
+<g class="l an a"><text x="22" textLength="386.88">$ printf '\033[1;34mDark theme with mac</text><use href="#c" x="408.88" y="-12.8"/></g>
+<g class="l ao a"><text x="22" textLength="396.8">$ printf '\033[1;34mDark theme with macO</text><use href="#c" x="418.8" y="-12.8"/></g>
+<text class="l ap a" x="22" textLength="406.72">$ printf '\033[1;34mDark theme with macOS</text>
+<g class="l aq a"><text x="22" textLength="426.56">$ printf '\033[1;34mDark theme with macOS w</text><use href="#c" x="448.56" y="-12.8"/></g>
+<g class="l ar a"><text x="22" textLength="436.48">$ printf '\033[1;34mDark theme with macOS wi</text><use href="#c" x="458.48" y="-12.8"/></g>
+<g class="l as a"><text x="22" textLength="446.4">$ printf '\033[1;34mDark theme with macOS win</text><use href="#c" x="468.4" y="-12.8"/></g>
+<g class="l at a"><text x="22" textLength="456.32">$ printf '\033[1;34mDark theme with macOS wind</text><use href="#c" x="478.32" y="-12.8"/></g>
+<g class="l au a"><text x="22" textLength="466.24">$ printf '\033[1;34mDark theme with macOS windo</text><use href="#c" x="488.24" y="-12.8"/></g>
+<text class="l av a" x="22" textLength="476.16">$ printf '\033[1;34mDark theme with macOS window</text>
+<g class="l aw a"><text x="22" textLength="496">$ printf '\033[1;34mDark theme with macOS window c</text><use href="#c" x="518" y="-12.8"/></g>
+<g class="l ax a"><text x="22" textLength="505.92">$ printf '\033[1;34mDark theme with macOS window ch</text><use href="#c" x="527.92" y="-12.8"/></g>
+<g class="l ay a"><text x="22" textLength="515.84">$ printf '\033[1;34mDark theme with macOS window chr</text><use href="#c" x="537.84" y="-12.8"/></g>
+<g class="l az a"><text x="22" textLength="525.76">$ printf '\033[1;34mDark theme with macOS window chro</text><use href="#c" x="547.76" y="-12.8"/></g>
+<g class="l a0 a"><text x="22" textLength="535.68">$ printf '\033[1;34mDark theme with macOS window chrom</text><use href="#c" x="557.68" y="-12.8"/></g>
+<g class="l a1 a"><text x="22" textLength="545.6">$ printf '\033[1;34mDark theme with macOS window chrome</text><use href="#c" x="567.6" y="-12.8"/></g>
+<g class="l a2 a"><text x="22" textLength="555.52">$ printf '\033[1;34mDark theme with macOS window chrome\</text><use href="#c" x="577.52" y="-12.8"/></g>
+<g class="l a3 a"><text x="22" textLength="565.44">$ printf '\033[1;34mDark theme with macOS window chrome\0</text><use href="#c" x="587.44" y="-12.8"/></g>
+<g class="l a4 a"><text x="22" textLength="575.36">$ printf '\033[1;34mDark theme with macOS window chrome\03</text><use href="#c" x="597.36" y="-12.8"/></g>
+<g class="l a5 a"><text x="22" textLength="585.28">$ printf '\033[1;34mDark theme with macOS window chrome\033</text><use href="#c" x="607.28" y="-12.8"/></g>
+<g class="l a6 a"><text x="22" textLength="595.2">$ printf '\033[1;34mDark theme with macOS window chrome\033[</text><use href="#c" x="617.2" y="-12.8"/></g>
+<g class="l a7 a"><text x="22" textLength="605.12">$ printf '\033[1;34mDark theme with macOS window chrome\033[0</text><use href="#c" x="627.12" y="-12.8"/></g>
+<g class="l a8 a"><text x="22" textLength="615.04">$ printf '\033[1;34mDark theme with macOS window chrome\033[0m</text><use href="#c" x="637.04" y="-12.8"/></g>
+<g class="l a9 a"><text x="22" textLength="624.96">$ printf '\033[1;34mDark theme with macOS window chrome\033[0m\</text><use href="#c" x="646.96" y="-12.8"/></g>
+<g class="l ba a"><text x="22" textLength="634.88">$ printf '\033[1;34mDark theme with macOS window chrome\033[0m\n</text><use href="#c" x="656.88" y="-12.8"/></g>
+<text class="l bb a" x="22" textLength="644.8">$ printf '\033[1;34mDark theme with macOS window chrome\033[0m\n'</text>
+<text class="l bc b" x="22" y="82.8" font-weight="bold" textLength="347.2">Dark theme with macOS window chrome</text>
+<g class="l bd"><text x="22" y="102.8">$</text><use href="#c" x="41.84" y="90"/></g>
+<g class="l be"><text x="22 41.84" y="102.8">$e</text><use href="#c" x="51.76" y="90"/></g>
+<g class="l bf"><text x="22 41.84 51.76" y="102.8">$ec</text><use href="#c" x="61.68" y="90"/></g>
+<g class="l bh"><text x="22 41.84 51.76 61.68" y="102.8">$ech</text><use href="#c" x="71.6" y="90"/></g>
+<text class="l bi d" x="22" textLength="59.52">$ echo</text>
+<g class="l bj d"><text x="22" textLength="79.36">$ echo &quot;</text><use href="#c" x="101.36" y="-12.8"/></g>
+<g class="l bk d"><text x="22" textLength="89.28">$ echo &quot;D</text><use href="#c" x="111.28" y="-12.8"/></g>
+<g class="l bl d"><text x="22" textLength="99.2">$ echo &quot;Do</text><use href="#c" x="121.2" y="-12.8"/></g>
+<g class="l bm d"><text x="22" textLength="109.12">$ echo &quot;Don</text><use href="#c" x="131.12" y="-12.8"/></g>
+<g class="l bn d"><text x="22" textLength="119.04">$ echo &quot;Done</text><use href="#c" x="141.04" y="-12.8"/></g>
+<g class="l bo d"><text x="22" textLength="128.96">$ echo &quot;Done!</text><use href="#c" x="150.96" y="-12.8"/></g>
+<text class="l bp d" x="22" textLength="138.88">$ echo &quot;Done!&quot;</text>
+<text class="l bq" x="22" y="122.8" textLength="49.6">Done!</text>
+<g class="l br"><text x="22" y="142.8">$</text><use href="#c" x="41.84" y="130"/></g>
+<use href="#c" x="101.36" y="50" class="l bs"/>
+<use href="#c" x="111.28" y="50" class="l bt"/>
+<use href="#c" x="260.08" y="50" class="l bu"/>
+<use href="#c" x="270" y="50" class="l bv"/>
+<use href="#c" x="319.6" y="50" class="l bw"/>
+<use href="#c" x="329.52" y="50" class="l bx"/>
+<use href="#c" x="369.2" y="50" class="l by"/>
+<use href="#c" x="379.12" y="50" class="l bz"/>
+<use href="#c" x="428.72" y="50" class="l b0"/>
+<use href="#c" x="438.64" y="50" class="l b1"/>
+<use href="#c" x="498.16" y="50" class="l b2"/>
+<use href="#c" x="508.08" y="50" class="l b3"/>
+<use href="#c" x="666.8" y="50" class="l b4"/>
+<use href="#c" x="22" y="70" class="l b5"/>
+<use href="#c" x="22" y="90" class="l b6"/>
+<use href="#c" x="81.52" y="90" class="l b7"/>
+<use href="#c" x="91.44" y="90" class="l b8"/>
+<use href="#c" x="160.88" y="90" class="l b9"/>
+<use href="#c" x="22" y="110" class="l ca"/>
+<use href="#c" x="22" y="130" class="l cb"/>
 </g>
 </svg>

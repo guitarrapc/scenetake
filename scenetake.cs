@@ -7,8 +7,11 @@
 #:package MiniPty@1.4.0
 #:package MiniPty.Capture@1.4.0
 #:package MiniPty.Console@1.4.0
+#:package StbTrueTypeSharp@1.26.13
 #:include Terminal.cs
 #:include Svg.cs
+#:include Raster.cs
+#:include Mp4.cs
 #:include CastReader.cs
 #:include JsonEscape.cs
 #:include PtyLeadingInitFilter.cs
@@ -100,6 +103,12 @@ if (args[0] is "svg")
     }
 
     var svgOutputPath = RenderSettingsResolver.ResolveCastSvgOutputPath(castPath, svgOutputArg);
+    if (!TryCheckOutputPaths(castPath, [svgOutputPath], out var svgOutputError))
+    {
+        Console.Error.WriteLine($"Error: {svgOutputError}");
+        return 1;
+    }
+
     Console.Error.WriteLine($"Loading: {FormatDisplayPath(castPath)}");
 
     try
@@ -121,21 +130,92 @@ if (args[0] is "svg")
 
         SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath, recording.LoopDuration);
         Console.Error.WriteLine($"Written: {FormatDisplayPath(svgOutputPath)}  ({recording.Events.Count} events, {recording.LoopDuration:F1}s)");
+        if (SvgRender.SizeWarning(new FileInfo(svgOutputPath).Length, svgRenderSettings.MaxFps, fromCast: true) is { } svgSizeWarning)
+            Console.Error.WriteLine($"Warning: {svgSizeWarning}");
         Console.Error.WriteLine($"Done: {FormatDisplayPath(svgOutputPath)}");
         return 0;
     }
     catch (CastReadException ex)
     {
-        if (File.Exists(svgOutputPath))
-            File.Delete(svgOutputPath);
+        DeleteFileIfExists(svgOutputPath);
         Console.Error.WriteLine($"Error: {ex.Message}");
         return 1;
     }
     catch (Exception ex)
     {
-        if (File.Exists(svgOutputPath))
-            File.Delete(svgOutputPath);
+        DeleteFileIfExists(svgOutputPath);
         Console.Error.WriteLine($"Error: SVG render failed: {ex.Message}");
+        return 1;
+    }
+}
+
+if (args[0] is "mp4")
+{
+    if (args.Length == 2 && args[1] is "-h" or "--help")
+    {
+        PrintMp4Usage();
+        return 0;
+    }
+
+    if (!TryParseMp4Args(args, out var mp4CastArg, out var mp4OutputArg, out var mp4FontSize, out var mp4FontFamily, out var mp4ThemePreset, out var mp4Window, out var mp4Options, out var mp4Error))
+    {
+        Console.Error.WriteLine($"Error: {mp4Error}");
+        PrintMp4Usage();
+        return 1;
+    }
+
+    var mp4CastPath = Path.GetFullPath(mp4CastArg);
+    if (!File.Exists(mp4CastPath))
+    {
+        Console.Error.WriteLine($"Error: {FormatDisplayPath(mp4CastPath)} not found");
+        return 1;
+    }
+
+    var mp4OutputPath = RenderSettingsResolver.ResolveCastMp4OutputPath(mp4CastPath, mp4OutputArg);
+    if (!TryCheckOutputPaths(mp4CastPath, [mp4OutputPath], out var mp4OutputError))
+    {
+        Console.Error.WriteLine($"Error: {mp4OutputError}");
+        return 1;
+    }
+
+    if (!Ffmpeg.TryResolve(out var mp4Ffmpeg, out var mp4FfmpegError))
+    {
+        Console.Error.WriteLine($"Error: {mp4FfmpegError}");
+        return 1;
+    }
+
+    Console.Error.WriteLine($"Loading: {FormatDisplayPath(mp4CastPath)}");
+    try
+    {
+        var recording = CastReader.Read(mp4CastPath);
+        var mp4RenderSettings = RenderSettingsResolver.ApplySvgOverrides(
+            recording.RenderSettings,
+            mp4FontSize,
+            mp4FontFamily,
+            mp4ThemePreset,
+            mp4Window,
+            maxFpsOverride: null,
+            out var mp4OverrideError);
+        if (mp4OverrideError.Length != 0)
+        {
+            Console.Error.WriteLine($"Error: {mp4OverrideError}");
+            return 1;
+        }
+
+        var result = Mp4Render.WriteMp4(recording.Events, recording.Width, recording.Height, mp4RenderSettings, mp4Options.ToSettings(), mp4OutputPath, mp4Ffmpeg, recording.LoopDuration);
+        PrintMp4Written(mp4OutputPath, result);
+        Console.Error.WriteLine($"Done: {FormatDisplayPath(mp4OutputPath)}");
+        return 0;
+    }
+    catch (Exception ex)
+    {
+        // As with SVG, a cast that cannot be read removes an output from an earlier run, so it is not
+        // mistaken for a video of this cast. Font and frame-size errors stop the render before it
+        // writes anything and leave that output as it was, as the scenario path does when it finds
+        // them before pre. WriteMp4 removes it once encoding starts.
+        if (ex is not (FontNotFoundException or FrameTooLargeException))
+            DeleteFileIfExists(mp4OutputPath);
+        Console.Error.WriteLine(ex is CastReadException or FontNotFoundException or FrameTooLargeException ? $"Error: {ex.Message}" : $"Error: mp4 render failed: {ex.Message}");
         return 1;
     }
 }
@@ -152,7 +232,7 @@ if (args[0] is "-h" or "--help")
     return 0;
 }
 
-if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runError))
+if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runError))
 {
     Console.Error.WriteLine($"Error: {runError}");
     PrintUsage();
@@ -169,19 +249,71 @@ if (!File.Exists(scenarioPath))
 var outputStem = RenderSettingsResolver.ResolveOutputStem(scenarioPath, outputArg);
 var outputPath = outputStem + ".cast";
 var svgPath = outputFormat == OutputFormat.Svg ? outputStem + ".svg" : null;
+var mp4Path = outputFormat == OutputFormat.Mp4 ? outputStem + ".mp4" : null;
 
 Console.Error.WriteLine($"Loading: {FormatDisplayPath(scenarioPath)}");
-var yaml = File.ReadAllText(scenarioPath, Encoding.UTF8);
 // Register VYaml formatters explicitly for NativeAOT (source generator cannot call __Register via reflection)
 Scenario.__RegisterVYamlFormatter();
 ScenarioSettings.__RegisterVYamlFormatter();
 ScenarioRender.__RegisterVYamlFormatter();
 ScenarioTheme.__RegisterVYamlFormatter();
-var scenario = ParseScenario(yaml);
+string yaml;
+Scenario scenario;
+try
+{
+    yaml = File.ReadAllText(scenarioPath, Encoding.UTF8);
+    scenario = ParseScenario(yaml);
+}
+catch (Exception ex)
+{
+    // The read can fail like any file read. Parsing a string in memory fails only on what the file holds,
+    // and the YAML library throws several exception types for that, some of them not public, so no
+    // narrower catch can name them all.
+    Console.Error.WriteLine($"Error: cannot read {FormatDisplayPath(scenarioPath)}: {ex.Message}");
+    return 1;
+}
+
 if (!RenderSettingsResolver.TryResolve(scenario, runThemePreset, out var renderSettings, out var themeError))
 {
     Console.Error.WriteLine($"Error: {themeError}");
     PrintUsage();
+    return 1;
+}
+
+// The cast records width and height as its terminal size. Check them before running anything:
+// a size the cast format does not allow would otherwise fail only when SVG or mp4 reads the cast back.
+var scenarioWidth = scenario.Width ?? 120;
+var scenarioHeight = scenario.Height ?? 24;
+if (!RenderSettingsResolver.IsValidTerminalSize(scenarioWidth, scenarioHeight))
+{
+    Console.Error.WriteLine(
+        $"Error: width must be between {RenderSettingsResolver.MinTerminalCols} and {RenderSettingsResolver.MaxTerminalCols}, and height between {RenderSettingsResolver.MinTerminalRows} and {RenderSettingsResolver.MaxTerminalRows}: {scenarioWidth}x{scenarioHeight}");
+    return 1;
+}
+
+// scenetake refuses step keys that contradict each other, and a run given as a list or a mapping. They
+// are checked before anything runs, so pre and the steps before the bad one never run for a scenario
+// that is refused anyway.
+if (FindStepKeyError(scenario) is { } stepKeyError)
+{
+    Console.Error.WriteLine($"Error: {stepKeyError}");
+    return 1;
+}
+
+// The OS reads a path only up to a NUL, so pre, post and the pipe steps would run in the folder named
+// before it. A PTY step refuses the NUL itself, but only after pre has run.
+if (scenario.Cwd is not null && scenario.Cwd.Contains('\0'))
+{
+    Console.Error.WriteLine($"Error: cwd cannot contain a NUL character: {scenario.Cwd}");
+    return 1;
+}
+
+// The cast is written only after pre and the recording, so the outputs are checked first. When pre
+// has commands, their folder is checked after pre instead, because pre may create it.
+var preHasCommands = scenario.Pre?.Any(command => !string.IsNullOrWhiteSpace(command)) == true;
+if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path], out var outputPathError, requireFolder: !preHasCommands))
+{
+    Console.Error.WriteLine($"Error: {outputPathError}");
     return 1;
 }
 
@@ -193,15 +325,70 @@ if (runWindow is WindowStyle runWindowValue)
     renderSettings = renderSettings with { Window = runWindowValue };
 if (runMaxFps is int runMaxFpsValue)
     renderSettings = renderSettings with { MaxFps = runMaxFpsValue };
+
+// mp4 needs ffmpeg, a font, and a frame size that ffmpeg and x264 accept. Check them before running
+// anything, so a long recording does not fail at the end.
+string? ffmpegPath = null;
+if (outputFormat == OutputFormat.Mp4)
+{
+    if (!Ffmpeg.TryResolve(out var resolvedFfmpeg, out var ffmpegError))
+    {
+        Console.Error.WriteLine($"Error: {ffmpegError}");
+        return 1;
+    }
+
+    try
+    {
+        var layout = RasterLayout.Create(renderSettings.FontSize, scenarioWidth, scenarioHeight, renderSettings.Window);
+        Mp4Render.OutputSize(layout, runMp4Options.ToSettings());
+        GlyphSource.Create(renderSettings.FontFamily, runMp4Options.FontFile, layout);
+    }
+    catch (Exception ex) when (ex is FontNotFoundException or FrameTooLargeException)
+    {
+        Console.Error.WriteLine($"Error: {ex.Message}");
+        return 1;
+    }
+
+    ffmpegPath = resolvedFfmpeg;
+}
+
 var deterministicSeed = ComputeDeterministicSeed(yaml);
 var deterministicTimestamp = ComputeDeterministicTimestamp(deterministicSeed);
 
-var shell = ResolveShell(scenario);
+ShellLaunch shell;
+try
+{
+    shell = ResolveShell(scenario);
+}
+catch (InvalidOperationException ex)
+{
+    Console.Error.WriteLine($"Error: {ex.Message}");
+    return 1;
+}
+
 Console.Error.WriteLine($"Using shell: {shell.DisplayName}");
 
 var preExitCode = await RunScenarioCommandsAsync(scenario.Pre, "pre", scenario.Cwd, shell, verbose);
 if (preExitCode != 0)
     return preExitCode;
+
+// Stops the run with an error after pre has succeeded. post still runs, so what pre set up is torn down.
+async Task<int> StopAfterPreAsync(string error)
+{
+    Console.Error.WriteLine($"Error: {error}");
+    var cleanupExitCode = await RunScenarioCommandsAsync(scenario.Post, "post", scenario.Cwd, shell, verbose);
+    return cleanupExitCode != 0 ? cleanupExitCode : 1;
+}
+
+// pre may create the output folder, or put a directory or a link to the input where an output goes, so
+// every output check runs again. Found here, they stop the run before the recording, instead of failing
+// the cast write or overwriting the input.
+if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path], out var outputCheckError))
+    return await StopAfterPreAsync(outputCheckError);
+
+// pre or the steps may install fonts. The mp4 render scans again when it starts, instead of using
+// the scan made before pre.
+FontCatalog.Rescan();
 
 if (verbose)
     PrintPhase("steps");
@@ -212,32 +399,64 @@ try
 {
     events = await GenerateAsync(scenario, shell, deterministicSeed, verbose);
 }
-catch (InvalidOperationException ex)
+catch (Exception ex)
 {
-    Console.Error.WriteLine($"Error: {ex.Message}");
-    return 1;
+    // A step can fail in many ways, such as a command the PTY cannot start, or a working folder that an
+    // earlier step removed. Each stops the recording, and post must still run. --verbose keeps the type
+    // and stack, which an unexpected exception needs.
+    return await StopAfterPreAsync(verbose ? ex.ToString() : ex.Message);
 }
 
-WriteCast(scenario, events, outputPath, shell, deterministicTimestamp, renderSettings);
+try
+{
+    WriteCast(scenario, events, outputPath, shell, deterministicTimestamp, renderSettings);
+}
+catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+{
+    // A step may remove the output folder or lock the file.
+    return await StopAfterPreAsync($"cannot write the cast: {ex.Message}");
+}
 
 var duration = events.Count > 0 ? events[^1].Time : 0.0;
 Console.Error.WriteLine($"Written: {FormatDisplayPath(outputPath)}  ({events.Count} events, {duration:F1}s)");
 
+// SVG and mp4 are rendered from the cast as written, not from the in-memory events. The cast stores
+// millisecond times, so only the cast gives the same output as `scenetake svg|mp4 <cast>`. The header
+// carries the font, theme, and window overrides. --max-fps is not stored, so it is applied again.
 var exitCode = 0;
 if (outputFormat == OutputFormat.Svg)
 {
-    var width = scenario.Width ?? 120;
-    var height = scenario.Height ?? 24;
     try
     {
-        SvgRender.WriteSvg(events, width, height, renderSettings, svgPath!);
+        var written = CastReader.Read(outputPath);
+        var svgSettings = written.RenderSettings with { MaxFps = renderSettings.MaxFps };
+        SvgRender.WriteSvg(written.Events, written.Width, written.Height, svgSettings, svgPath!, written.LoopDuration);
         Console.Error.WriteLine($"Written: {FormatDisplayPath(svgPath!)}");
+        if (SvgRender.SizeWarning(new FileInfo(svgPath!).Length, svgSettings.MaxFps, fromCast: false) is { } svgSizeWarning)
+            Console.Error.WriteLine($"Warning: {svgSizeWarning}");
     }
     catch (Exception ex)
     {
-        if (File.Exists(svgPath!))
-            File.Delete(svgPath!);
+        DeleteFileIfExists(svgPath!);
         Console.Error.WriteLine($"Error: SVG render failed: {ex.Message}");
+        exitCode = 1;
+    }
+}
+
+if (outputFormat == OutputFormat.Mp4)
+{
+    try
+    {
+        // WriteMp4 encodes to a temporary file and renames it, so a failure leaves no partial .mp4.
+        var written = CastReader.Read(outputPath);
+        var result = Mp4Render.WriteMp4(written.Events, written.Width, written.Height, written.RenderSettings, runMp4Options.ToSettings(), mp4Path!, ffmpegPath!, written.LoopDuration);
+        PrintMp4Written(mp4Path!, result);
+    }
+    catch (Exception ex)
+    {
+        // An .mp4 from an earlier run no longer matches the new cast.
+        DeleteFileIfExists(mp4Path!);
+        Console.Error.WriteLine($"Error: mp4 render failed: {ex.Message}");
         exitCode = 1;
     }
 }
@@ -251,6 +470,8 @@ if (exitCode != 0)
 
 if (outputFormat == OutputFormat.Svg)
     Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(svgPath!)}");
+else if (outputFormat == OutputFormat.Mp4)
+    Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(mp4Path!)}");
 else
     Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}");
 return 0;
@@ -381,6 +602,7 @@ static bool TryParseRunArgs(
     out string? themePresetOverride,
     out WindowStyle? windowOverride,
     out int? maxFpsOverride,
+    out Mp4Options mp4Options,
     out string error)
 {
     scenarioPath = "";
@@ -392,6 +614,7 @@ static bool TryParseRunArgs(
     themePresetOverride = null;
     windowOverride = null;
     maxFpsOverride = null;
+    mp4Options = new Mp4Options();
     error = "";
 
     for (var i = 0; i < args.Length; i++)
@@ -432,6 +655,13 @@ static bool TryParseRunArgs(
         }
 
         if (TryConsumeMaxFpsArg(args, ref i, ref maxFpsOverride, out error))
+        {
+            if (error.Length != 0)
+                return false;
+            continue;
+        }
+
+        if (TryConsumeMp4Arg(args, ref i, mp4Options, out error))
         {
             if (error.Length != 0)
                 return false;
@@ -479,6 +709,24 @@ static bool TryParseRunArgs(
         }
 
         error = $"unexpected argument: {arg}";
+        return false;
+    }
+
+    if (outputFormat != OutputFormat.Mp4 && mp4Options.FirstOption is string mp4Option)
+    {
+        error = $"{mp4Option} requires --format mp4";
+        return false;
+    }
+
+    if (outputFormat == OutputFormat.Mp4 && maxFpsOverride.HasValue)
+    {
+        error = "--max-fps applies to SVG; use --fps for mp4";
+        return false;
+    }
+
+    if (outputFormat == OutputFormat.Cast && maxFpsOverride.HasValue)
+    {
+        error = "--max-fps requires --format svg";
         return false;
     }
 
@@ -719,6 +967,9 @@ static bool TryParseOutputFormat(string value, out OutputFormat format, out stri
         case "svg":
             format = OutputFormat.Svg;
             return true;
+        case "mp4":
+            format = OutputFormat.Mp4;
+            return true;
         default:
             error = $"unknown format: {value}";
             return false;
@@ -763,10 +1014,6 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
         var usePty = GetBool(command.Extra, false, "pty");
         var useInteractive = GetBool(command.Extra, false, "interactive");
         var normalizeTyping = GetBool(command.Extra, false, "normalize-typing");
-        if (useInteractive && !usePty)
-            throw new InvalidOperationException("Step key 'interactive: true' requires 'pty: true'.");
-        if (normalizeTyping && !useInteractive)
-            throw new InvalidOperationException("Step key 'normalize-typing: true' requires 'interactive: true'.");
 
         if (events.Count == 0)
             t += preDelay;
@@ -1340,6 +1587,34 @@ static void EmitTypedCommand(
 
     events.Add(CastEvent.Output(Math.Round(t, 6), "\r\n"));
     t += 0.15;
+}
+
+/// <summary>The error for the first step whose run is a list or a mapping or whose keys contradict each other, or null when none is.</summary>
+static string? FindStepKeyError(Scenario scenario)
+{
+    foreach (var step in scenario.Steps ?? [])
+    {
+        // A list or a mapping under run would otherwise be run as its type name.
+        if (step is Dictionary<object, object?> map && map.TryGetValue("run", out var run) && run is System.Collections.IEnumerable and not string)
+            return "Step key 'run' must be a command string, not a list or a mapping.";
+
+        var command = ParseCommand(step);
+        if (string.IsNullOrWhiteSpace(command.Cmd))
+            continue;
+
+        // GetBool warns about a value it cannot read, and the recording reads these keys again.
+        var usePty = IsTrue(command.Extra, "pty");
+        var useInteractive = IsTrue(command.Extra, "interactive");
+        if (useInteractive && !usePty)
+            return "Step key 'interactive: true' requires 'pty: true'.";
+        if (IsTrue(command.Extra, "normalize-typing") && !useInteractive)
+            return "Step key 'normalize-typing: true' requires 'interactive: true'.";
+    }
+
+    return null;
+
+    static bool IsTrue(Dictionary<string, object?> extra, string key) =>
+        extra.TryGetValue(key, out var value) && (value is true || (bool.TryParse(value?.ToString(), out var parsed) && parsed));
 }
 
 static CommandEntry ParseCommand(object? item)
@@ -2565,6 +2840,11 @@ static ShellLaunch ResolveShell(Scenario scenario)
 {
     var requested = scenario.Shell;
 
+    // The OS reads a path or a name only up to a NUL, so a shell with one would start a different file.
+    // Windows matches cmd, pwsh, powershell and bash by name alone, so its own checks would not catch it.
+    if (requested is not null && requested.Contains('\0'))
+        throw new InvalidOperationException($"Shell '{requested}' was requested, but a shell cannot contain a NUL character.");
+
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         return ResolveWindowsShell(requested);
 
@@ -2573,6 +2853,14 @@ static ShellLaunch ResolveShell(Scenario scenario)
 
     if (string.IsNullOrWhiteSpace(requested))
         requested = "bash";
+
+    // A shell given by an absolute path that does not exist would fail only at the first command, after
+    // pre may have run. A name or a relative path is started as written. A full path would change the
+    // shell's $0 and its messages in the recording, and pipe and PTY commands each look a name up by their
+    // own rules, so a lookup here could pick a file that neither start would. A path with ".." is left to
+    // the start too: File.Exists removes ".." as text, and the OS applies it after the links before it.
+    if (Path.IsPathRooted(requested) && !requested.Split('/').Contains("..") && !File.Exists(requested))
+        throw new InvalidOperationException($"Shell '{requested}' was requested, but it could not be found.");
 
     return new ShellLaunch(requested, ["-lc"], requested, requested);
 }
@@ -2587,8 +2875,11 @@ static ShellLaunch ResolveWindowsShell(string? requested)
         if (TryResolveExecutableOnWindows("powershell", out var powershell))
             return new ShellLaunch(powershell, ["-NoLogo", "-NoProfile", "-Command"], powershell, "powershell");
 
-        throw new InvalidOperationException("No supported shell was found on Windows. Install pwsh or powershell, or set settings.shell to a Git Bash or MSYS bash.exe path.");
+        throw new InvalidOperationException("No supported shell was found on Windows. Install pwsh or powershell, or set the scenario's shell to a Git Bash or MSYS bash.exe path.");
     }
+
+    if (Path.IsPathRooted(requested) || requested.Contains(Path.DirectorySeparatorChar) || requested.Contains(Path.AltDirectorySeparatorChar))
+        return ResolveWindowsShellPath(requested);
 
     if (IsPowerShellName(requested))
     {
@@ -2615,18 +2906,50 @@ static ShellLaunch ResolveWindowsShell(string? requested)
         throw new InvalidOperationException("Shell 'bash' was requested, but a Git Bash or MSYS bash.exe could not be found. WSL bash is intentionally not used.");
     }
 
-    if (Path.IsPathRooted(requested) || requested.Contains(Path.DirectorySeparatorChar) || requested.Contains(Path.AltDirectorySeparatorChar))
-    {
-        if (File.Exists(requested))
-            return new ShellLaunch(requested, ["-c"], requested, requested);
-
-        throw new InvalidOperationException($"Shell '{requested}' was requested, but the path does not exist.");
-    }
-
     if (TryResolveExecutableOnWindows(requested, out var resolvedExecutable))
         return new ShellLaunch(resolvedExecutable, ["-c"], resolvedExecutable, requested);
 
     throw new InvalidOperationException($"Shell '{requested}' could not be resolved on Windows.");
+}
+
+static ShellLaunch ResolveWindowsShellPath(string requested)
+{
+    // A path names the file to start. Looking its name up instead would start another pwsh, cmd or bash, or
+    // refuse one that exists. The full path drops a trailing dot or space as Windows does, so "cmd.exe."
+    // still gets cmd's arguments. It also gives cmd backslashes: cmd reads each "/" in its own path as a switch.
+    string fullPath;
+    try
+    {
+        fullPath = Path.GetFullPath(requested.Trim());
+    }
+    catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+    {
+        throw new InvalidOperationException($"Shell '{requested}' was requested, but it is not a valid path: {ex.Message}");
+    }
+
+    string[]? arguments = NormalizeWindowsShellName(fullPath) switch
+    {
+        "pwsh" or "powershell" => ["-NoLogo", "-NoProfile", "-Command"],
+        "cmd" => ["/c"],
+        "bash" => ["-lc"],
+        _ => null,
+    };
+
+    if (arguments is ["-lc"] && IsWslBashPath(fullPath))
+        throw new InvalidOperationException($"Shell '{requested}' was requested, but it is WSL bash, which scenetake does not use. Set a Git Bash or MSYS bash.exe path.");
+
+    if (arguments is null)
+    {
+        // Any other shell starts as written, as it always has.
+        if (File.Exists(requested))
+            return new ShellLaunch(requested, ["-c"], requested, requested);
+    }
+    else if (File.Exists(fullPath))
+    {
+        return new ShellLaunch(fullPath, arguments, fullPath, fullPath);
+    }
+
+    throw new InvalidOperationException($"Shell '{requested}' was requested, but the path does not exist.");
 }
 
 static bool IsPowerShellName(string shell)
@@ -2804,7 +3127,7 @@ static string CreateInitialScenarioYaml()
         run: echo "Running in a PTY, which is useful for TUI app and tty-based output"
         pty: true
 
-    # Optional teardown commands. They run after the cast file is written, but are not recorded in the cast.
+    # Optional teardown commands. They run last and are not recorded in the cast.
     # post:
     #   - echo "run after steps"
 
@@ -2813,10 +3136,354 @@ static string CreateInitialScenarioYaml()
 
 static void PrintUsage()
 {
-    Console.Error.WriteLine("Usage: scenetake [--verbose] [--format cast|svg] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <scenario.yaml> [output]");
+    Console.Error.WriteLine("Usage: scenetake [--verbose] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH] [--font-file PATH] <scenario.yaml> [output]");
     Console.Error.WriteLine("       scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
+    Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH] <input.cast> [output.mp4]");
     Console.Error.WriteLine("       scenetake init [scenario.yaml]");
     Console.Error.WriteLine("       scenetake --help");
+}
+
+static void PrintMp4Usage()
+{
+    Console.Error.WriteLine("Usage: scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH] <input.cast> [output.mp4]");
+    Console.Error.WriteLine("Converts an existing asciinema v2/v3 cast file to H.264 mp4. Requires ffmpeg with libx264 on PATH,");
+    Console.Error.WriteLine($"or set {Ffmpeg.PathVariable} to its path. --max-size 1280x1024 fits X (Twitter) uploads.");
+}
+
+static void PrintMp4Written(string path, Mp4Result result) =>
+    Console.Error.WriteLine(
+        $"Written: {FormatDisplayPath(path)}  ({result.Width}x{result.Height}, {result.Fps}fps, {result.Frames} frames, {FormatBytes(result.Bytes)}, font: {result.Font.Family})");
+
+// Decimal units (1MB = 1,000,000 bytes), the same as the SVG size warning. Sizes just under 1MB
+// that round up to "1000.0KB" print as 1.0MB instead.
+static string FormatBytes(long bytes)
+{
+    var kilobytes = string.Create(CultureInfo.InvariantCulture, $"{bytes / 1_000.0:0.0}");
+    return bytes >= 1_000_000 || kilobytes == "1000.0"
+        ? string.Create(CultureInfo.InvariantCulture, $"{bytes / 1_000_000.0:0.0}MB")
+        : kilobytes + "KB";
+}
+
+/// <summary>
+/// Checks that each output can be written: it is not a directory, it is not the input file, and, with
+/// <paramref name="requireFolder"/>, its folder exists. A failed render deletes its output, so writing
+/// over the input would lose it.
+/// </summary>
+static bool TryCheckOutputPaths(string inputPath, IEnumerable<string?> outputPaths, out string error, bool requireFolder = true)
+{
+    foreach (var outputPath in outputPaths)
+    {
+        if (outputPath is null)
+            continue;
+
+        var directory = Path.GetDirectoryName(Path.GetFullPath(outputPath)) ?? ".";
+        if (requireFolder && !Directory.Exists(directory))
+        {
+            error = $"output folder does not exist: {FormatDisplayPath(directory)}";
+            return false;
+        }
+
+        if (Directory.Exists(outputPath))
+        {
+            error = $"output path is a directory: {FormatDisplayPath(outputPath)}";
+            return false;
+        }
+
+        if (IsSamePath(outputPath, inputPath))
+        {
+            error = $"the output would replace the input file: {FormatDisplayPath(inputPath)} (pass another output path)";
+            return false;
+        }
+    }
+
+    error = "";
+    return true;
+}
+
+/// <summary>
+/// Whether two paths name the same file. Paths are compared ignoring case, because a volume can ignore
+/// case on any OS. On Windows two existing files with the same volume serial number and file index are
+/// the same file too, which catches symbolic links, junctions, hard links, mapped and subst drives, and
+/// \\?\, \??\ and UNC spellings. On a volume that reports serial number 0, the final paths Windows gives
+/// the two open files are compared instead, which still catches links. Elsewhere links on every part of
+/// each path are followed first, because a symbolic link reaches the same file under another path. A hard
+/// link is not detected there.
+/// </summary>
+static bool IsSamePath(string left, string right) =>
+    OperatingSystem.IsWindows()
+        // Windows links are not walked by hand. Windows resolves a relative link target against the path as
+        // it was opened, not the folder a junction leads to, so a walk could name another file. The file
+        // index and the final path come from Windows itself.
+        ? string.Equals(Path.GetFullPath(left), Path.GetFullPath(right), StringComparison.OrdinalIgnoreCase)
+            || (WindowsFileId(left) is { } a && WindowsFileId(right) is { } b && IsSameWindowsFile(a, b))
+        : string.Equals(FollowLinks(left), FollowLinks(right), StringComparison.OrdinalIgnoreCase);
+
+static bool IsSameWindowsFile((uint Volume, ulong Index, uint Links, string? FinalPath) left, (uint Volume, ulong Index, uint Links, string? FinalPath) right)
+{
+    if (left.Volume != 0)
+        return left.Volume == right.Volume && left.Index == right.Index;
+
+    // A volume with serial number 0 can repeat an index across the file systems it serves, so the index
+    // alone is not enough. A final path that could not be read proves nothing. Two names in one folder
+    // with the same index are a hard link, which both report as more than one link. A bind mount can put
+    // files of two file systems in one folder, and a single-link file there is never a hard link.
+    if (SharedName(left.FinalPath) is not { } leftPath || SharedName(right.FinalPath) is not { } rightPath)
+        return false;
+    return string.Equals(leftPath, rightPath, StringComparison.OrdinalIgnoreCase)
+        || (left.Index == right.Index && left.Links > 1 && right.Links > 1
+            && string.Equals(Path.GetDirectoryName(leftPath), Path.GetDirectoryName(rightPath), StringComparison.OrdinalIgnoreCase));
+
+    // WSL serves the same files under two server names, and the final path keeps the one the path was
+    // opened with.
+    static string? SharedName(string? finalPath)
+    {
+        const string alias = @"\\?\UNC\wsl$\";
+        return finalPath is not null && finalPath.StartsWith(alias, StringComparison.OrdinalIgnoreCase)
+            ? @"\\?\UNC\wsl.localhost\" + finalPath[alias.Length..]
+            : finalPath;
+    }
+}
+
+/// <summary>The full path with every link on the way replaced by its target.</summary>
+static string FollowLinks(string path)
+{
+    // One count for the whole walk, not a depth per link. A target may pass through earlier links again,
+    // and a depth limit alone lets that double the work at every level. Linux follows at most 40 links
+    // in one path, so a path that needs more names no file there.
+    var linksLeft = 40;
+    return FollowLinksWithin(Path.GetFullPath(path), ref linksLeft);
+}
+
+static string FollowLinksWithin(string full, ref int linksLeft)
+{
+    var root = Path.GetPathRoot(full) ?? "";
+    var current = root;
+    foreach (var part in full[root.Length..].Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries))
+    {
+        // A link's target is used as the link wrote it, so it may hold "..". Unix applies ".." to the folder
+        // reached through the links before it. Path.GetFullPath would remove it as text.
+        if (part == ".")
+            continue;
+        if (part == "..")
+        {
+            current = Path.GetDirectoryName(current) ?? root;
+            continue;
+        }
+
+        current = Path.Combine(current, part);
+        try
+        {
+            FileSystemInfo info = Directory.Exists(current) ? new DirectoryInfo(current) : new FileInfo(current);
+            if (info.LinkTarget is { } target && linksLeft-- > 0)
+            {
+                // The target may be relative to the link's folder, and may pass through another link,
+                // such as macOS /var to /private/var, so it is walked again.
+                current = FollowLinksWithin(Path.Combine(Path.GetDirectoryName(current) ?? root, target), ref linksLeft);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // A link that cannot be followed is compared as it is written.
+        }
+    }
+
+    return current;
+}
+
+/// <summary>The volume serial number, file index and final path of an existing file, or null when the file cannot be opened.</summary>
+static unsafe (uint Volume, ulong Index, uint Links, string? FinalPath)? WindowsFileId(string path)
+{
+    // A handle that asks for no access opens even when another process denies sharing, which a read handle
+    // would not. The \\?\ form is not limited to 260 characters. A path already in a device form is used
+    // as it is, since a second prefix would make it invalid.
+    const uint FileShareReadWriteDelete = 7, OpenExisting = 3;
+    var full = Path.GetFullPath(path);
+    var name = full.StartsWith(@"\\?\", StringComparison.Ordinal) || full.StartsWith(@"\\.\", StringComparison.Ordinal) || full.StartsWith(@"\??\", StringComparison.Ordinal) ? full
+        : full.StartsWith(@"\\", StringComparison.Ordinal) ? @"\\?\UNC\" + full[2..]
+        : @"\\?\" + full;
+    using var handle = CreateFileW(name, 0, FileShareReadWriteDelete, IntPtr.Zero, OpenExisting, 0, IntPtr.Zero);
+    if (handle.IsInvalid || !GetFileInformationByHandle(handle, out var info))
+        return null;
+
+    // Some network file systems report serial number 0 for every file, and repeat indexes across the
+    // volumes they serve, so the caller compares the final path there. A path that does not fit is
+    // asked for again with the length Windows returned, which counts the terminating null.
+    string? finalPath = null;
+    var buffer = new char[1024];
+    for (var attempt = 0; attempt < 2 && finalPath is null; attempt++)
+    {
+        uint length;
+        fixed (char* chars = buffer)
+            length = GetFinalPathNameByHandleW(handle, chars, (uint)buffer.Length, 0);
+        if (length == 0)
+            break;
+        if (length < buffer.Length)
+            finalPath = new string(buffer, 0, (int)length);
+        else
+            buffer = new char[length];
+    }
+
+    return (info.VolumeSerialNumber, ((ulong)info.FileIndexHigh << 32) | info.FileIndexLow, info.NumberOfLinks, finalPath);
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode, ExactSpelling = true)]
+    static extern Microsoft.Win32.SafeHandles.SafeFileHandle CreateFileW(string fileName, uint desiredAccess, uint shareMode, IntPtr securityAttributes, uint creationDisposition, uint flagsAndAttributes, IntPtr templateFile);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    static extern bool GetFileInformationByHandle(Microsoft.Win32.SafeHandles.SafeFileHandle file, out WindowsFileInformation information);
+
+    [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
+    static extern uint GetFinalPathNameByHandleW(Microsoft.Win32.SafeHandles.SafeFileHandle file, char* path, uint length, uint flags);
+}
+
+static void DeleteFileIfExists(string path)
+{
+    try
+    {
+        if (File.Exists(path))
+            File.Delete(path);
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+    {
+        // Keep the original error. A file that cannot be removed stays as it was.
+    }
+}
+
+/// <summary>Matches <paramref name="name"/> as <c>--name value</c> or <c>--name=value</c>. Returns true when it matched, with error set when the value is missing.</summary>
+static bool TryTakeOptionValue(string[] args, ref int i, string name, out string value, out string error)
+{
+    value = "";
+    error = "";
+    var arg = args[i];
+    if (arg == name)
+    {
+        // "--font-file --fps 30" means the value was left out, not a font file named "--fps".
+        if (i + 1 >= args.Length || args[i + 1].StartsWith("--", StringComparison.Ordinal))
+            error = $"{name} requires a value";
+        else
+            value = args[++i];
+        return true;
+    }
+
+    if (arg.StartsWith(name + "=", StringComparison.Ordinal))
+    {
+        value = arg[(name.Length + 1)..];
+        if (value.Length == 0)
+            error = $"{name} requires a value";
+        return true;
+    }
+
+    return false;
+}
+
+static bool TryConsumeMp4Arg(string[] args, ref int i, Mp4Options options, out string error)
+{
+    var arg = args[i];
+    if (TryTakeOptionValue(args, ref i, "--fps", out var value, out error))
+    {
+        if (error.Length == 0 && options.Fps.HasValue)
+            error = "duplicate option: --fps";
+        else if (error.Length == 0 && Mp4Settings.TryParseFps(value, out var fps, out error))
+            options.Fps = fps;
+    }
+    else if (TryTakeOptionValue(args, ref i, "--crf", out value, out error))
+    {
+        if (error.Length == 0 && options.Crf.HasValue)
+            error = "duplicate option: --crf";
+        else if (error.Length == 0 && Mp4Settings.TryParseCrf(value, out var crf, out error))
+            options.Crf = crf;
+    }
+    else if (TryTakeOptionValue(args, ref i, "--max-size", out value, out error))
+    {
+        if (error.Length == 0 && options.MaxSize.HasValue)
+            error = "duplicate option: --max-size";
+        else if (error.Length == 0 && Mp4Settings.TryParseMaxSize(value, out var maxWidth, out var maxHeight, out error))
+            options.MaxSize = (maxWidth, maxHeight);
+    }
+    else if (TryTakeOptionValue(args, ref i, "--font-file", out value, out error))
+    {
+        if (error.Length == 0 && options.FontFile is not null)
+            error = "duplicate option: --font-file";
+        else if (error.Length == 0)
+            options.FontFile = Path.GetFullPath(value);
+    }
+    else
+    {
+        return false;
+    }
+
+    options.FirstOption ??= arg.Split('=')[0];
+    return true;
+}
+
+static bool IsMaxFpsArg(string arg) => arg == "--max-fps" || arg.StartsWith("--max-fps=", StringComparison.Ordinal);
+
+static bool TryParseMp4Args(
+    string[] args,
+    out string castPath,
+    out string? outputPath,
+    out int? fontSizeOverride,
+    out string? fontFamilyOverride,
+    out string? themePresetOverride,
+    out WindowStyle? windowOverride,
+    out Mp4Options mp4Options,
+    out string error)
+{
+    castPath = "";
+    outputPath = null;
+    fontSizeOverride = null;
+    fontFamilyOverride = null;
+    themePresetOverride = null;
+    windowOverride = null;
+    mp4Options = new Mp4Options();
+    error = "";
+
+    for (var i = 1; i < args.Length; i++)
+    {
+        var arg = args[i];
+        if (TryConsumeFontSizeArg(args, ref i, ref fontSizeOverride, out error)
+            || TryConsumeFontFamilyArg(args, ref i, ref fontFamilyOverride, out error)
+            || TryConsumeThemeArg(args, ref i, ref themePresetOverride, out error)
+            || TryConsumeWindowArg(args, ref i, ref windowOverride, out error)
+            || TryConsumeMp4Arg(args, ref i, mp4Options, out error))
+        {
+            if (error.Length != 0)
+                return false;
+            continue;
+        }
+
+        if (IsMaxFpsArg(arg))
+        {
+            error = "--max-fps applies to SVG; use --fps for mp4";
+            return false;
+        }
+
+        if (arg.StartsWith('-'))
+        {
+            error = $"unknown option: {arg}";
+            return false;
+        }
+
+        if (castPath.Length == 0)
+        {
+            castPath = arg;
+            continue;
+        }
+
+        if (outputPath is null)
+        {
+            outputPath = arg;
+            continue;
+        }
+
+        error = $"unexpected argument: {arg}";
+        return false;
+    }
+
+    if (castPath.Length != 0)
+        return true;
+
+    error = "cast path is required";
+    return false;
 }
 
 static void PrintInitUsage()
@@ -2842,10 +3509,46 @@ static string GetAppVersion()
     return version?.ToString(3) ?? "0.0.0";
 }
 
+/// <summary>The BY_HANDLE_FILE_INFORMATION that GetFileInformationByHandle fills. Each FILETIME is two 32-bit halves, so the 64-bit fields are packed to 4 bytes.</summary>
+[StructLayout(LayoutKind.Sequential, Pack = 4)]
+internal struct WindowsFileInformation
+{
+    public uint FileAttributes;
+    public long CreationTime;
+    public long LastAccessTime;
+    public long LastWriteTime;
+    public uint VolumeSerialNumber;
+    public uint FileSizeHigh;
+    public uint FileSizeLow;
+    public uint NumberOfLinks;
+    public uint FileIndexHigh;
+    public uint FileIndexLow;
+}
+
 enum OutputFormat
 {
     Cast,
     Svg,
+    Mp4,
+}
+
+/// <summary>mp4 options from the command line. Unset values take the <see cref="Mp4Settings"/> defaults.</summary>
+sealed class Mp4Options
+{
+    internal int? Fps { get; set; }
+    internal int? Crf { get; set; }
+    internal (int Width, int Height)? MaxSize { get; set; }
+    internal string? FontFile { get; set; }
+
+    /// <summary>The first mp4 option given, for errors when mp4 output is not selected.</summary>
+    internal string? FirstOption { get; set; }
+
+    internal Mp4Settings ToSettings() => new(
+        Fps ?? Mp4Settings.DefaultFps,
+        Crf ?? Mp4Settings.DefaultCrf,
+        MaxSize?.Width ?? 0,
+        MaxSize?.Height ?? 0,
+        FontFile);
 }
 
 internal static class PtyCastTiming

@@ -165,9 +165,57 @@ jobs:
           dotnet run tests/readme_sync_test.cs
           dotnet run tests/svg_render_test.cs
           dotnet run tests/window_chrome_test.cs
+          # Runner images ship no ffmpeg, so the tests below skip real encodes here. The mp4 job runs them.
+          SCENETAKE_BIN="$binary_path" dotnet run tests/scenario_render_test.cs
+          dotnet run tests/mp4_render_test.cs
+          SCENETAKE_BIN="$binary_path" dotnet run tests/mp4_ffmpeg_test.cs
+
+  mp4:
+    name: Encode mp4 (linux-x64)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install ffmpeg and fonts
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg fonts-dejavu-core
+
+      - name: Publish NativeAOT binary
+        shell: bash
+        run: |
+          dotnet publish scenetake.cs -c Release -r linux-x64 --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o "$RUNNER_TEMP/scenetake"
+
+      - name: Encode mp4
+        shell: bash
+        run: |
+          set -euo pipefail
+          binary_path="$RUNNER_TEMP/scenetake/scenetake"
+          "$binary_path" mp4 samples/pty.cast "$RUNNER_TEMP/pty.mp4"
+          "$binary_path" mp4 --max-size 1280x1024 --fps 60 samples/interactive-pty.cast "$RUNNER_TEMP/interactive-pty.mp4"
+          "$binary_path" --format mp4 samples/basic.yaml "$RUNNER_TEMP/basic"
+          for file in pty.mp4 interactive-pty.mp4 basic.mp4; do
+            ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,profile,pix_fmt,width,height,r_frame_rate -of compact "$RUNNER_TEMP/$file"
+          done
+          dotnet run tests/mp4_render_test.cs
+          SCENETAKE_BIN="$binary_path" dotnet run tests/mp4_ffmpeg_test.cs
+          SCENETAKE_BIN="$binary_path" dotnet run tests/scenario_render_test.cs
 
   build-complete:
-    needs: [npm-pack, build]
+    needs: [npm-pack, build, mp4]
     timeout-minutes: 5
     runs-on: ubuntu-24.04
     permissions: {}

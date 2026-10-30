@@ -68,7 +68,6 @@ internal sealed class ScreenBuffer
     private int _scrollTop;
     private int _scrollBottom;
     private bool _pendingWrap;
-    private readonly List<ScreenCell[]> _scrollbackRows = [];
 
     internal ScreenBuffer(int width, int height, TerminalTheme theme)
     {
@@ -92,7 +91,6 @@ internal sealed class ScreenBuffer
     internal int CursorCol { get; private set; }
     internal bool CursorVisible { get; set; }
     internal CellStyle DefaultStyle { get; }
-    internal int ScrollbackCount => _scrollbackRows.Count;
 
     internal ScreenCell GetCell(int row, int col)
     {
@@ -119,6 +117,39 @@ internal sealed class ScreenBuffer
         return true;
     }
 
+    /// <summary>Same comparison as <see cref="RowEquals(ScreenBuffer, int)"/>, against a row copied with <see cref="CopyRowTo"/>.</summary>
+    internal bool RowEquals(int row, ReadOnlySpan<ScreenCell> other)
+    {
+        if (Width != other.Length)
+            return false;
+
+        var w = Width;
+        for (var col = 0; col < w; col++)
+        {
+            ref readonly var a = ref _cells[row, col];
+            ref readonly var b = ref other[col];
+            if (a.Text != b.Text || a.Style != b.Style || a.IsWide != b.IsWide || a.IsWideContinuation != b.IsWideContinuation)
+                return false;
+        }
+
+        return true;
+    }
+
+    internal void CopyRowTo(int row, ScreenCell[] destination) =>
+        System.Runtime.InteropServices.MemoryMarshal.CreateReadOnlySpan(ref _cells[row, 0], Width).CopyTo(destination);
+
+    /// <summary>Same test as <see cref="IsRowBlank(int)"/>, for a row copied with <see cref="CopyRowTo"/>.</summary>
+    internal static bool IsRowBlank(ReadOnlySpan<ScreenCell> cells, CellStyle defaultStyle)
+    {
+        foreach (ref readonly var cell in cells)
+        {
+            if (cell.Text != Space || cell.Style != defaultStyle || cell.IsWide || cell.IsWideContinuation)
+                return false;
+        }
+
+        return true;
+    }
+
     internal bool IsRowBlank(int row)
     {
         if ((uint)row >= (uint)Height)
@@ -132,6 +163,26 @@ internal sealed class ScreenBuffer
         }
 
         return true;
+    }
+
+    /// <summary>A hash of one row's cells (text, style, width), for finding rows with identical content.</summary>
+    internal ulong RowHash(int row)
+    {
+        const ulong fnvOffset = 1469598103934665603UL;
+        const ulong fnvPrime = 1099511628211UL;
+
+        var hash = fnvOffset;
+        for (var col = 0; col < Width; col++)
+        {
+            ref readonly var cell = ref _cells[row, col];
+            var style = cell.Style;
+            hash = MixString(hash, cell.Text.AsSpan(), fnvPrime);
+            hash = MixString(hash, style.Foreground.AsSpan(), fnvPrime);
+            hash = MixString(hash, style.Background.AsSpan(), fnvPrime);
+            hash = MixByte(hash, PackStyleFlags(style, cell.IsWide, cell.IsWideContinuation), fnvPrime);
+        }
+
+        return hash;
     }
 
     internal ulong ComputeCanvasSignature(int canvasWidth, int canvasHeight)
@@ -353,11 +404,7 @@ internal sealed class ScreenBuffer
         _pendingWrap = false;
         if (CursorRow == _scrollBottom)
         {
-            ScrollRegionUp(
-                _scrollTop,
-                _scrollBottom,
-                1,
-                includeScrollback: !_isAltScreen && _scrollTop == 0 && _scrollBottom == Height - 1);
+            ScrollRegionUp(_scrollTop, _scrollBottom, 1);
             return;
         }
 
@@ -486,11 +533,7 @@ internal sealed class ScreenBuffer
     }
 
     internal void ScrollUpLines(int count) =>
-        ScrollRegionUp(
-            _scrollTop,
-            _scrollBottom,
-            count,
-            includeScrollback: !_isAltScreen && _scrollTop == 0 && _scrollBottom == Height - 1);
+        ScrollRegionUp(_scrollTop, _scrollBottom, count);
 
     internal void ScrollDownLines(int count) =>
         ScrollRegionDown(_scrollTop, _scrollBottom, count);
@@ -676,7 +719,9 @@ internal sealed class ScreenBuffer
         _ => false
     };
 
-    private void ScrollRegionUp(int top, int bottom, int count, bool includeScrollback)
+    // Rows scrolled off the top are dropped. Nothing renders scrollback, and keeping it would grow
+    // replay memory with every line a recording scrolls.
+    private void ScrollRegionUp(int top, int bottom, int count)
     {
         if (count <= 0 || top < 0 || bottom >= Height || top > bottom)
             return;
@@ -684,14 +729,6 @@ internal sealed class ScreenBuffer
         count = Math.Min(count, bottom - top + 1);
         for (var i = 0; i < count; i++)
         {
-            if (includeScrollback && top == 0)
-            {
-                var topRow = new ScreenCell[Width];
-                for (var col = 0; col < Width; col++)
-                    topRow[col] = _cells[0, col];
-                _scrollbackRows.Add(topRow);
-            }
-
             for (var row = top + 1; row <= bottom; row++)
             {
                 for (var col = 0; col < Width; col++)
@@ -1495,22 +1532,108 @@ internal static class CastEventLayout
     }
 }
 
-internal sealed class ReplayFrame
+/// <summary>
+/// One changed screen state on the replay timeline. Holds no screen contents, because keeping every
+/// screen grows with events × screen size. <see cref="EventIndex"/> names the event after which it is
+/// shown, and <see cref="TerminalReplay.ReplaySelected"/> replays up to it to draw the screen.
+/// </summary>
+internal sealed class ReplayFrame(double time, int viewportWidth, int viewportHeight, ulong signature, bool isBlank, int eventIndex)
 {
-    internal ReplayFrame(double time, ScreenBuffer buffer, int viewportWidth, int viewportHeight, ulong? signature = null)
+    internal double Time { get; } = time;
+    internal int ViewportWidth { get; } = viewportWidth;
+    internal int ViewportHeight { get; } = viewportHeight;
+    internal ulong Signature { get; } = signature;
+    internal bool IsBlank { get; } = isBlank;
+
+    /// <summary>The event after which this screen state is shown: -1 before any event, <c>events.Count</c> after all of them.</summary>
+    internal int EventIndex { get; } = eventIndex;
+
+    internal ReplayFrame WithTime(double time) =>
+        new(time, ViewportWidth, ViewportHeight, Signature, IsBlank, EventIndex);
+}
+
+/// <summary>
+/// A changed screen state during replay. <see cref="View"/> is canvas-sized and is only
+/// valid until the enumeration advances: it may be the live emulator buffer.
+/// </summary>
+internal readonly record struct ReplayCapture(
+    double Time, ScreenBuffer View, int ViewportWidth, int ViewportHeight, ulong Signature, int EventIndex);
+
+/// <summary>
+/// Steps the emulator through cast events by time, for fixed-rate sampling (mp4).
+/// Applies events exactly as <see cref="TerminalReplay.EnumerateCaptures"/> does, so a
+/// sampled screen matches the SVG frame shown at the same time.
+/// </summary>
+internal sealed class ReplayStepper
+{
+    private const double TimeEpsilon = 1e-9;
+    private readonly IReadOnlyList<CastEvent> _events;
+    private readonly ScreenBuffer _buffer;
+    private readonly AnsiParser _parser;
+    private readonly int _canvasWidth;
+    private readonly int _canvasHeight;
+    private readonly int _stopIndex;
+    private int _next;
+    private ulong _lastSignature;
+
+    /// <param name="stopIndex">Events at or after this index are never applied (see <see cref="TerminalReplay.FindTrailingBlankCutoff"/>).</param>
+    internal ReplayStepper(
+        IReadOnlyList<CastEvent> events,
+        int initialWidth,
+        int initialHeight,
+        int canvasWidth,
+        int canvasHeight,
+        TerminalTheme theme,
+        int stopIndex)
     {
-        Time = time;
-        Buffer = buffer;
-        ViewportWidth = viewportWidth;
-        ViewportHeight = viewportHeight;
-        Signature = signature ?? buffer.ComputeCanvasSignature(buffer.Width, buffer.Height);
+        _events = events;
+        _buffer = new ScreenBuffer(initialWidth, initialHeight, theme);
+        _parser = new AnsiParser(_buffer, theme);
+        _canvasWidth = canvasWidth;
+        _canvasHeight = canvasHeight;
+        _stopIndex = Math.Min(stopIndex, events.Count);
     }
 
-    internal double Time { get; }
-    internal ScreenBuffer Buffer { get; }
-    internal int ViewportWidth { get; }
-    internal int ViewportHeight { get; }
-    internal ulong Signature { get; }
+    /// <summary>
+    /// False until the first event is applied. Nothing, not even the cursor, is drawn before that,
+    /// as in the SVG. A recording with no events differs: its SVG shows the cursor throughout,
+    /// while the mp4 shows only the background.
+    /// </summary>
+    internal bool Started { get; private set; }
+
+    /// <summary>The canvas-sized screen. Valid until the next <see cref="AdvanceTo"/>.</summary>
+    internal ScreenBuffer View => TerminalReplay.ViewForCanvas(_buffer, _canvasWidth, _canvasHeight);
+
+    /// <summary>Applies every event with time ≤ <paramref name="time"/>. Returns true when the screen changed.</summary>
+    internal bool AdvanceTo(double time)
+    {
+        var applied = false;
+        while (_next < _stopIndex && _events[_next].Time <= time + TimeEpsilon)
+        {
+            var ev = _events[_next++];
+            if (ev.Kind == CastEventKind.Marker)
+                continue;
+
+            if (ev.Kind == CastEventKind.Resize)
+                _buffer.Resize(ev.ResizeWidth, ev.ResizeHeight);
+            else if (ev.HasUtf8Output)
+                _parser.ProcessUtf8(ev.Utf8Output.Span);
+            else
+                _parser.Process(ev.Data);
+            applied = true;
+        }
+
+        if (!applied)
+            return false;
+
+        var signature = _buffer.ComputeCanvasSignature(_canvasWidth, _canvasHeight);
+        if (Started && signature == _lastSignature)
+            return false;
+
+        Started = true;
+        _lastSignature = signature;
+        return true;
+    }
 }
 
 internal static class TerminalReplay
@@ -1539,7 +1662,79 @@ internal static class TerminalReplay
         return lastTime + CastExitIntervalSeconds;
     }
 
+    /// <summary>
+    /// Builds the replay timeline: one frame per changed screen state, after trimming a
+    /// trailing blank alternate-screen restore. Frames hold no screen contents, so memory
+    /// stays proportional to the number of changes, not changes × screen size.
+    /// </summary>
     internal static List<ReplayFrame> BuildFrames(
+        IReadOnlyList<CastEvent> events,
+        int initialWidth,
+        int initialHeight,
+        int canvasWidth,
+        int canvasHeight,
+        TerminalTheme theme)
+    {
+        var frames = new List<ReplayFrame>();
+        foreach (var capture in EnumerateCaptures(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme))
+        {
+            frames.Add(new ReplayFrame(
+                capture.Time, capture.ViewportWidth, capture.ViewportHeight, capture.Signature, IsBlankBuffer(capture.View), capture.EventIndex));
+        }
+
+        return TrimTrailingBlankRestore(frames, events);
+    }
+
+    /// <summary>
+    /// Index of the first event whose screen change the SVG drops as a trailing blank
+    /// alternate-screen restore, or <c>events.Count</c> when nothing is dropped. A
+    /// fixed-rate renderer stops applying events there so it ends on the same screen.
+    /// </summary>
+    internal static int FindTrailingBlankCutoff(
+        IReadOnlyList<CastEvent> events,
+        int initialWidth,
+        int initialHeight,
+        int canvasWidth,
+        int canvasHeight,
+        TerminalTheme theme)
+    {
+        // Only a blank final screen can be trimmed. Checking that needs a parse-only replay,
+        // which is much cheaper than hashing the screen after every event below.
+        var final = new ScreenBuffer(initialWidth, initialHeight, theme);
+        var finalParser = new AnsiParser(final, theme);
+        foreach (var ev in events)
+        {
+            if (ev.Kind == CastEventKind.Marker)
+                continue;
+            if (ev.Kind == CastEventKind.Resize)
+                final.Resize(ev.ResizeWidth, ev.ResizeHeight);
+            else if (ev.HasUtf8Output)
+                finalParser.ProcessUtf8(ev.Utf8Output.Span);
+            else
+                finalParser.Process(ev.Data);
+        }
+
+        if (!IsBlankBuffer(ViewForCanvas(final, canvasWidth, canvasHeight)))
+            return events.Count;
+
+        var frames = new List<ReplayFrame>();
+        foreach (var capture in EnumerateCaptures(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme))
+        {
+            frames.Add(new ReplayFrame(
+                capture.Time, capture.ViewportWidth, capture.ViewportHeight, capture.Signature, IsBlankBuffer(capture.View), capture.EventIndex));
+        }
+
+        var kept = TrimTrailingBlankRestore(frames, events).Count;
+        return kept < frames.Count && frames[kept].EventIndex >= 0 ? frames[kept].EventIndex : events.Count;
+    }
+
+    /// <summary>
+    /// Replays <paramref name="events"/> and yields each changed screen state in order.
+    /// The first applied event always yields, because the screen starts with no signature.
+    /// A recording with no output or resize events yields its final state once, at time 0.
+    /// Markers are not applied, and the cast reader drops input events.
+    /// </summary>
+    internal static IEnumerable<ReplayCapture> EnumerateCaptures(
         IReadOnlyList<CastEvent> events,
         int initialWidth,
         int initialHeight,
@@ -1549,52 +1744,98 @@ internal static class TerminalReplay
     {
         var buffer = new ScreenBuffer(initialWidth, initialHeight, theme);
         var parser = new AnsiParser(buffer, theme);
-        var frames = new List<ReplayFrame>();
         ulong? lastSignature = null;
-
-        void CaptureIfChanged(double time)
-        {
-            var signature = buffer.ComputeCanvasSignature(canvasWidth, canvasHeight);
-            if (lastSignature is ulong previous && previous == signature)
-                return;
-
-            frames.Add(new ReplayFrame(time, SnapshotForCanvas(buffer, canvasWidth, canvasHeight), buffer.Width, buffer.Height, signature));
-            lastSignature = signature;
-        }
+        var yielded = false;
 
         if (!IsBlankBuffer(buffer))
-            CaptureIfChanged(0);
-
-        foreach (var ev in events)
         {
+            var signature = buffer.ComputeCanvasSignature(canvasWidth, canvasHeight);
+            lastSignature = signature;
+            yielded = true;
+            yield return new ReplayCapture(0, ViewForCanvas(buffer, canvasWidth, canvasHeight), buffer.Width, buffer.Height, signature, -1);
+        }
+
+        for (var eventIndex = 0; eventIndex < events.Count; eventIndex++)
+        {
+            var ev = events[eventIndex];
             if (ev.Kind == CastEventKind.Marker)
                 continue;
 
             if (ev.Kind == CastEventKind.Resize)
-            {
                 buffer.Resize(ev.ResizeWidth, ev.ResizeHeight);
-                CaptureIfChanged(ev.Time);
-                continue;
-            }
-
-            if (ev.HasUtf8Output)
+            else if (ev.HasUtf8Output)
                 parser.ProcessUtf8(ev.Utf8Output.Span);
             else
                 parser.Process(ev.Data);
-            CaptureIfChanged(ev.Time);
+
+            var signature = buffer.ComputeCanvasSignature(canvasWidth, canvasHeight);
+            if (lastSignature is ulong previous && previous == signature)
+                continue;
+
+            lastSignature = signature;
+            yielded = true;
+            yield return new ReplayCapture(ev.Time, ViewForCanvas(buffer, canvasWidth, canvasHeight), buffer.Width, buffer.Height, signature, eventIndex);
         }
 
-        if (frames.Count == 0)
-            frames.Add(new ReplayFrame(0, SnapshotForCanvas(buffer, canvasWidth, canvasHeight), buffer.Width, buffer.Height));
-
-        return TrimTrailingBlankRestore(frames, events);
+        if (!yielded)
+        {
+            var view = ViewForCanvas(buffer, canvasWidth, canvasHeight);
+            yield return new ReplayCapture(0, view, buffer.Width, buffer.Height, view.ComputeCanvasSignature(view.Width, view.Height), events.Count);
+        }
     }
 
-    private static ScreenBuffer SnapshotForCanvas(ScreenBuffer source, int canvasWidth, int canvasHeight)
+    /// <summary>
+    /// Replays <paramref name="events"/> again to draw <paramref name="frames"/>, which came from
+    /// <see cref="BuildFrames"/> with the same arguments (possibly a subset, at changed times). It
+    /// stops at each frame's event and does not hash the screen, which only the first pass needs.
+    /// </summary>
+    internal static IEnumerable<(ReplayFrame Frame, ScreenBuffer View)> ReplaySelected(
+        IReadOnlyList<CastEvent> events,
+        int initialWidth,
+        int initialHeight,
+        int canvasWidth,
+        int canvasHeight,
+        TerminalTheme theme,
+        IReadOnlyList<ReplayFrame> frames)
     {
+        var buffer = new ScreenBuffer(initialWidth, initialHeight, theme);
+        var parser = new AnsiParser(buffer, theme);
+        var next = 0;
+        while (next < frames.Count && frames[next].EventIndex < 0)
+            yield return (frames[next++], ViewForCanvas(buffer, canvasWidth, canvasHeight));
+
+        for (var eventIndex = 0; eventIndex < events.Count && next < frames.Count; eventIndex++)
+        {
+            var ev = events[eventIndex];
+            if (ev.Kind == CastEventKind.Marker)
+                continue;
+
+            if (ev.Kind == CastEventKind.Resize)
+                buffer.Resize(ev.ResizeWidth, ev.ResizeHeight);
+            else if (ev.HasUtf8Output)
+                parser.ProcessUtf8(ev.Utf8Output.Span);
+            else
+                parser.Process(ev.Data);
+
+            if (frames[next].EventIndex == eventIndex)
+                yield return (frames[next++], ViewForCanvas(buffer, canvasWidth, canvasHeight));
+        }
+
+        while (next < frames.Count && frames[next].EventIndex >= events.Count)
+            yield return (frames[next++], ViewForCanvas(buffer, canvasWidth, canvasHeight));
+
+        if (next != frames.Count)
+            throw new InvalidOperationException($"replay reached {next} of {frames.Count} frames");
+    }
+
+    /// <summary>The live buffer when it already fills the canvas, otherwise a resized copy.</summary>
+    internal static ScreenBuffer ViewForCanvas(ScreenBuffer source, int canvasWidth, int canvasHeight)
+    {
+        if (source.Width == canvasWidth && source.Height == canvasHeight)
+            return source;
+
         var copy = source.Clone();
-        if (copy.Width != canvasWidth || copy.Height != canvasHeight)
-            copy.Resize(canvasWidth, canvasHeight);
+        copy.Resize(canvasWidth, canvasHeight);
         return copy;
     }
 
@@ -1627,7 +1868,7 @@ internal static class TerminalReplay
         var lastNonBlank = -1;
         for (var i = frames.Count - 1; i >= 0; i--)
         {
-            if (!IsBlankBuffer(frames[i].Buffer))
+            if (!frames[i].IsBlank)
             {
                 lastNonBlank = i;
                 break;
@@ -2005,5 +2246,101 @@ internal static class InteractivePtyCastEmit
         }
 
         return units;
+    }
+}
+
+/// <summary>
+/// Resolves the colors a renderer draws for a cell: reverse video, bold and faint intensity,
+/// and the matrix-rain tint. Shared by the SVG and mp4 renderers so both agree.
+/// </summary>
+internal static class CellColors
+{
+    internal static string ResolveForeground(ScreenCell cell, TerminalTheme theme) =>
+        ApplyIntensity(cell.Reversed ? cell.Background : cell.Foreground, cell.Bold, cell.Faint);
+
+    /// <summary>
+    /// Foreground with the matrix-rain tint: ANSI bright white next to green on the same
+    /// row draws as bright green (see spec_svg.md).
+    /// </summary>
+    internal static string ResolveTintedForeground(
+        ScreenBuffer buffer, int row, int col, ScreenCell cell, TerminalTheme theme)
+    {
+        var fg = ResolveForeground(cell, theme);
+        var white = theme.AnsiPalette[7];
+        if (fg != white && !string.Equals(fg, white, StringComparison.OrdinalIgnoreCase))
+            return fg;
+
+        return IsNearGreen(buffer, row, col, theme) ? theme.AnsiPalette[10] : fg;
+    }
+
+    private static bool IsNearGreen(ScreenBuffer buffer, int row, int col, TerminalTheme theme)
+    {
+        var green = theme.AnsiPalette[2];
+        var brightGreen = theme.AnsiPalette[10];
+
+        bool GreenAt(int r, int c)
+        {
+            var neighbor = buffer.GetCell(r, c);
+            var fg = neighbor.Reversed ? neighbor.Background : neighbor.Foreground;
+            return fg == green || fg == brightGreen
+                || string.Equals(fg, green, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(fg, brightGreen, StringComparison.OrdinalIgnoreCase);
+        }
+
+        var width = buffer.Width;
+        return (col > 0 && GreenAt(row, col - 1))
+            || (col + 1 < width && GreenAt(row, col + 1));
+    }
+
+    /// <summary>The cell background, or null when it is the theme background (nothing to draw).</summary>
+    internal static string? ResolveBackground(ScreenCell cell, TerminalTheme theme)
+    {
+        var bg = cell.Reversed ? cell.Foreground : cell.Background;
+        return string.Equals(bg, theme.Background, StringComparison.OrdinalIgnoreCase) ? null : bg;
+    }
+
+    internal static string ApplyIntensity(string color, bool bold, bool faint)
+    {
+        var factor = 1d;
+        if (bold) factor *= 1.2d;
+        if (faint) factor *= 0.75d;
+        if (Math.Abs(factor - 1d) < 0.0001d)
+            return color;
+
+        if (!TryParseHexColor(color, out var r, out var g, out var b))
+            return color;
+
+        return string.Create(
+            CultureInfo.InvariantCulture,
+            $"#{(int)Math.Clamp(Math.Round(r * factor), 0, 255):x2}{(int)Math.Clamp(Math.Round(g * factor), 0, 255):x2}{(int)Math.Clamp(Math.Round(b * factor), 0, 255):x2}");
+    }
+
+    internal static bool TryParseHexColor(string color, out int r, out int g, out int b)
+    {
+        r = g = b = 0;
+        if (color.Length != 7 || color[0] != '#'
+            || !TryHexNibble(color[1], out var r0) || !TryHexNibble(color[2], out var r1)
+            || !TryHexNibble(color[3], out var g0) || !TryHexNibble(color[4], out var g1)
+            || !TryHexNibble(color[5], out var b0) || !TryHexNibble(color[6], out var b1))
+        {
+            return false;
+        }
+
+        r = (r0 << 4) | r1;
+        g = (g0 << 4) | g1;
+        b = (b0 << 4) | b1;
+        return true;
+    }
+
+    private static bool TryHexNibble(char c, out int value)
+    {
+        value = c switch
+        {
+            >= '0' and <= '9' => c - '0',
+            >= 'A' and <= 'F' => c - 'A' + 10,
+            >= 'a' and <= 'f' => c - 'a' + 10,
+            _ => -1
+        };
+        return value >= 0;
     }
 }
