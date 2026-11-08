@@ -39,11 +39,16 @@ jobs:
           npm pack
           test -f scenetake-*.tgz
 
+      - name: Test wrapper package selection
+        shell: bash
+        run: bash npm/scripts/test-wrapper.sh
+
   build:
-    name: Publish ${{ matrix.os }}
+    name: Publish ${{ matrix.rid }}
     runs-on: ${{ matrix.os }}
-    # Allow SDK setup, pack, NativeAOT publish, and smoke tests on slower Intel macOS runners.
-    timeout-minutes: 10
+    # Allow SDK setup, pack, NativeAOT publish, and smoke tests on slower Intel macOS runners, and the package and SDK
+    # installs in the Linux build containers.
+    timeout-minutes: 20
     permissions:
       contents: read
     strategy:
@@ -54,6 +59,10 @@ jobs:
             rid: linux-x64
           - os: ubuntu-24.04-arm
             rid: linux-arm64
+          - os: ubuntu-24.04
+            rid: linux-musl-x64
+          - os: ubuntu-24.04-arm
+            rid: linux-musl-arm64
           - os: windows-2025
             rid: win-x64
           - os: windows-11-arm
@@ -68,26 +77,43 @@ jobs:
         with:
           persist-credentials: false
 
+      # A musl leg publishes and tests in its container only: the runner's glibc cannot start a musl binary.
       - name: Set up .NET
+        if: ${{ !startsWith(matrix.rid, 'linux-musl-') }}
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: 10.0.x
 
       - name: Pack global tool
+        if: ${{ !startsWith(matrix.rid, 'linux-musl-') }}
         shell: bash
         run: |
           set -euo pipefail
           dotnet pack scenetake.cs -c Release -o ./nupkg
           test -f nupkg/scenetake.*.nupkg
 
+      # Linked in a container at the release's C library floor (glibc 2.28, musl 1.2.3), which checks the floor and
+      # runs smoke-binary.sh there.
+      - name: Publish NativeAOT binary (Linux)
+        if: ${{ startsWith(matrix.rid, 'linux-') }}
+        shell: bash
+        run: bash scripts/publish-linux.sh "${{ matrix.rid }}" "$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}"
+
       - name: Publish NativeAOT binary
+        if: ${{ !startsWith(matrix.rid, 'linux-') }}
         shell: bash
         run: |
           artifact_dir="$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}"
           mkdir -p "$artifact_dir"
           dotnet publish scenetake.cs -c Release -r "${{ matrix.rid }}" --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o "$artifact_dir"
 
+      - name: Check platform floor (macOS)
+        if: ${{ startsWith(matrix.rid, 'osx-') }}
+        shell: bash
+        run: bash scripts/check-binary-floor.sh "${{ matrix.rid }}" "$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}"
+
       - name: Install matrix CLI
+        if: ${{ !startsWith(matrix.rid, 'linux-musl-') }}
         shell: bash
         run: |
           matrix_version="v1.0.2"
@@ -121,55 +147,95 @@ jobs:
           esac
           echo "$matrix_dir" >> "$GITHUB_PATH"
 
+      # On Linux this runs the binary linked at the glibc floor on the runner's newer glibc.
       - name: Smoke test published binary
+        if: ${{ !startsWith(matrix.rid, 'linux-musl-') }}
         shell: bash
         run: |
-          artifact_dir="$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}"
           binary_name="scenetake"
           if [[ "${{ matrix.rid }}" == win-* ]]; then
             binary_name="scenetake.exe"
           fi
+          bash scripts/smoke-binary.sh "$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}/$binary_name"
 
-          binary_path="$artifact_dir/$binary_name"
-          output_stem="$artifact_dir/smoke"
-
-          test -f "$binary_path"
-
-          "$binary_path" --format svg samples/basic.yaml "$output_stem"
-
-          test -f "$output_stem.cast"
-          test -f "$output_stem.svg"
-
-          "$binary_path" svg "$output_stem.cast" "$artifact_dir/smoke-from-cast.svg"
-
-          test -f "$artifact_dir/smoke-from-cast.svg"
-
-          "$binary_path" svg samples/highlight.cast "$artifact_dir/highlight.svg"
-
-          test -f "$artifact_dir/highlight.svg"
-
-          for fixture in tests/fixtures/*.cast; do
-            stem="$(basename "$fixture" .cast)"
-            "$binary_path" svg "$fixture" "$artifact_dir/fixture-$stem.svg"
-            test -f "$artifact_dir/fixture-$stem.svg"
-          done
-
+      - name: Test sources
+        if: ${{ !startsWith(matrix.rid, 'linux-musl-') }}
+        shell: bash
+        run: |
           dotnet run tests/terminal_tests.cs
           dotnet run tests/json_escape_test.cs
           dotnet run tests/pty_timing_test.cs
           dotnet run tests/pty_continue_test.cs
           dotnet run tests/cast_timing_test.cs
-          SCENETAKE_BIN="$binary_path" dotnet run tests/stream_output_test.cs
-          SCENETAKE_BIN="$binary_path" dotnet run tests/pty_test.cs
           dotnet run tests/interactive_pty_input_test.cs
-          SCENETAKE_BIN="$binary_path" dotnet run tests/interactive_pty_test.cs
           dotnet run tests/readme_sync_test.cs
           dotnet run tests/svg_render_test.cs
           dotnet run tests/window_chrome_test.cs
-          # Runner images ship no ffmpeg, so the tests below skip real encodes here. The mp4 job runs them.
-          SCENETAKE_BIN="$binary_path" dotnet run tests/scenario_render_test.cs
           dotnet run tests/mp4_render_test.cs
-          SCENETAKE_BIN="$binary_path" dotnet run tests/mp4_ffmpeg_test.cs
+
+      - name: Upload macOS binary
+        if: ${{ startsWith(matrix.rid, 'osx-') }}
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: scenetake-${{ matrix.rid }}
+          path: |
+            artifacts/${{ matrix.rid }}/scenetake
+            artifacts/${{ matrix.rid }}/minipty_spawn_helper
+          if-no-files-found: error
+          retention-days: 1
+
+  # The macOS binaries declare macOS 12.0, which check-binary-floor.sh checks. Hosted runners go back only to macOS 15,
+  # so the binaries built on macOS 26 run there too.
+  macos-oldest:
+    name: Run ${{ matrix.rid }} on ${{ matrix.os }}
+    needs: [build]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            rid: osx-arm64
+            matrix-asset: matrix-osx-arm64
+          - os: macos-15-intel
+            rid: osx-x64
+            matrix-asset: matrix-osx-amd64
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Download macOS binary
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: scenetake-${{ matrix.rid }}
+          path: artifacts/${{ matrix.rid }}
+
+      - name: Install matrix CLI
+        shell: bash
+        run: |
+          matrix_dir="$RUNNER_TEMP/matrix"
+          mkdir -p "$matrix_dir"
+          curl -fsSL -o "$RUNNER_TEMP/matrix.tar.gz" "https://github.com/guitarrapc/matrix/releases/download/v1.0.2/${{ matrix.matrix-asset }}.tar.gz"
+          tar -xzf "$RUNNER_TEMP/matrix.tar.gz" -C "$matrix_dir"
+          echo "$matrix_dir" >> "$GITHUB_PATH"
+
+      - name: Smoke test binary built on macOS 26
+        shell: bash
+        run: |
+          artifact_dir="$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}"
+          # Artifacts do not keep file modes.
+          chmod +x "$artifact_dir/scenetake" "$artifact_dir/minipty_spawn_helper"
+          bash scripts/smoke-binary.sh "$artifact_dir/scenetake"
 
   mp4:
     name: Encode mp4 (linux-x64)
@@ -216,7 +282,7 @@ jobs:
           SCENETAKE_BIN="$binary_path" dotnet run tests/scenario_render_test.cs
 
   build-complete:
-    needs: [npm-pack, build, mp4]
+    needs: [npm-pack, build, macos-oldest, mp4]
     timeout-minutes: 5
     runs-on: ubuntu-24.04
     permissions: {}

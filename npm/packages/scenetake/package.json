@@ -22,7 +22,9 @@
     "@scenetake/darwin-arm64": "1.4.2",
     "@scenetake/darwin-x64": "1.4.2",
     "@scenetake/linux-arm64": "1.4.2",
+    "@scenetake/linux-arm64-musl": "1.4.2",
     "@scenetake/linux-x64": "1.4.2",
+    "@scenetake/linux-x64-musl": "1.4.2",
     "@scenetake/win32-arm64": "1.4.2",
     "@scenetake/win32-x64": "1.4.2"
   },

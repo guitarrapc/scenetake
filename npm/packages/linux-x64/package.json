@@ -1,7 +1,7 @@
 {
   "name": "@scenetake/linux-x64",
   "version": "1.4.2",
-  "description": "Linux x64 binary for scenetake",
+  "description": "Linux x64 (glibc) binary for scenetake",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -12,6 +12,9 @@
   ],
   "cpu": [
     "x64"
+  ],
+  "libc": [
+    "glibc"
   ],
   "files": [
     "scenetake"

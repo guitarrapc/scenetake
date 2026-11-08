@@ -67,7 +67,7 @@ jobs:
           echo "- **npm packages:** \`${TAG_VERSION}\`" >> "$GITHUB_STEP_SUMMARY"
 
   publish:
-    name: Publish ${{ matrix.os }}
+    name: Publish ${{ matrix.rid }}
     needs: verify
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -84,6 +84,14 @@ jobs:
           - os: ubuntu-24.04-arm
             rid: linux-arm64
             artifact: scenetake-linux-arm64
+            ext: tar.gz
+          - os: ubuntu-24.04
+            rid: linux-musl-x64
+            artifact: scenetake-linux-musl-amd64
+            ext: tar.gz
+          - os: ubuntu-24.04-arm
+            rid: linux-musl-arm64
+            artifact: scenetake-linux-musl-arm64
             ext: tar.gz
           - os: windows-2025
             rid: win-x64
@@ -107,19 +115,35 @@ jobs:
         with:
           persist-credentials: false
 
+      # Linux publishes in a container that installs its own SDK.
       - name: Set up .NET
+        if: ${{ !startsWith(matrix.rid, 'linux-') }}
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: 10.0.x
 
+      # Linked in a container at the release's C library floor (glibc 2.28, musl 1.2.3), which checks the floor and
+      # runs smoke-binary.sh there.
+      - name: Publish NativeAOT binary (Linux)
+        if: ${{ startsWith(matrix.rid, 'linux-') }}
+        shell: bash
+        run: bash scripts/publish-linux.sh "${{ matrix.rid }}" "$GITHUB_WORKSPACE/release/${{ matrix.rid }}"
+
       - name: Publish NativeAOT binary
+        if: ${{ !startsWith(matrix.rid, 'linux-') }}
         shell: bash
         run: |
           artifact_dir="$GITHUB_WORKSPACE/release/${{ matrix.rid }}"
           mkdir -p "$artifact_dir"
           dotnet publish scenetake.cs -c Release -r "${{ matrix.rid }}" --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o "$artifact_dir"
 
+      - name: Check platform floor (macOS)
+        if: ${{ startsWith(matrix.rid, 'osx-') }}
+        shell: bash
+        run: bash scripts/check-binary-floor.sh "${{ matrix.rid }}" "$GITHUB_WORKSPACE/release/${{ matrix.rid }}"
+
       - name: Smoke test published binary
+        if: ${{ !startsWith(matrix.rid, 'linux-musl-') }}
         shell: bash
         run: |
           artifact_dir="$GITHUB_WORKSPACE/release/${{ matrix.rid }}"

@@ -8,6 +8,29 @@ const { createRequire } = require('module');
 
 const requireFromHere = createRequire(__filename);
 
+// npm installs the Linux package whose `libc` matches the host, or both where npm ignores `libc`, so the wrapper
+// picks by the host's C library. A Node built against glibc reports the glibc it runs on; a musl Node reports none.
+function isMusl() {
+  const report = process.report;
+  if (report && typeof report.getReport === 'function') {
+    const excludeNetwork = report.excludeNetwork;
+    // The network section resolves interface names, which can be slow and is not needed here.
+    report.excludeNetwork = true;
+    try {
+      return !report.getReport().header.glibcVersionRuntime;
+    } catch {
+      // Fall back to the dynamic linker's script below.
+    } finally {
+      report.excludeNetwork = excludeNetwork;
+    }
+  }
+  try {
+    return fs.readFileSync('/usr/bin/ldd', 'utf8').includes('musl');
+  } catch {
+    return false;
+  }
+}
+
 function resolvePlatformPackage() {
   const arch =
     process.arch === 'x64' ? 'x64' :
@@ -19,7 +42,8 @@ function resolvePlatformPackage() {
     process.exit(1);
   }
 
-  const name = `@scenetake/${process.platform}-${arch}`;
+  const libc = process.platform === 'linux' && isMusl() ? '-musl' : '';
+  const name = `@scenetake/${process.platform}-${arch}${libc}`;
   try {
     return path.dirname(requireFromHere.resolve(`${name}/package.json`));
   } catch {

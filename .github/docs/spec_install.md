@@ -15,12 +15,14 @@ scenetake ships as a **native binary** (NativeAOT). Install channels differ in w
 
 ## GitHub Releases
 
-Each tagged release publishes six archives plus checksum sidecars:
+Each tagged release publishes eight archives plus checksum sidecars:
 
 | Asset | Platform |
 |---|---|
-| `scenetake-linux-amd64.tar.gz` | Linux x64 |
-| `scenetake-linux-arm64.tar.gz` | Linux arm64 |
+| `scenetake-linux-amd64.tar.gz` | Linux x64, glibc |
+| `scenetake-linux-arm64.tar.gz` | Linux arm64, glibc |
+| `scenetake-linux-musl-amd64.tar.gz` | Linux x64, musl (Alpine) |
+| `scenetake-linux-musl-arm64.tar.gz` | Linux arm64, musl (Alpine) |
 | `scenetake-osx-amd64.tar.gz` | macOS x64 |
 | `scenetake-osx-arm64.tar.gz` | macOS arm64 |
 | `scenetake-win-amd64.zip` | Windows x64 |
@@ -28,7 +30,34 @@ Each tagged release publishes six archives plus checksum sidecars:
 
 Linux archives contain `scenetake`. macOS archives contain `scenetake` and `minipty_spawn_helper`. Windows archives contain `scenetake.exe`.
 
-Users download one archive, extract it, and run the binary directly. No installer or package manager is involved.
+Users download one archive, extract it, and run the binary directly. No installer or package manager is involved, and the binary needs nothing installed beside it: no .NET runtime and no ICU.
+
+### Platform minimums
+
+| Platform | Minimum | Held by |
+|---|---|---|
+| Linux, glibc | glibc 2.28: RHEL 8 and its rebuilds, Debian 10, Ubuntu 20.04, and later | Linked in AlmaLinux 8 (glibc 2.28) |
+| Linux, musl | musl 1.2.3: Alpine 3.17 and later | Linked in Alpine 3.17 (musl 1.2.3) |
+| macOS | macOS 12.0 | NativeAOT links for 12.0; MiniPty builds `minipty_spawn_helper` for 12.0 |
+| Windows | Windows 10 1809 for PTY steps, MiniPty's ConPTY minimum | Not checked here |
+
+glibc 2.28 is the oldest glibc .NET 10 supports, and MiniPty's files are built for glibc 2.27 and musl 1.2.3, so the floors are those of the runtime and the PTY library, not of scenetake.
+
+**Symbol versions follow the glibc the binary is linked against.** The linker binds each libc symbol to the newest version the link-time glibc has. Up to 1.4.2, the Linux binaries were linked on the runner (Ubuntu 24.04, glibc 2.39) and required `GLIBC_2.38`: `pthread_*`, `dlopen`, and `__libc_start_main` bound to 2.34, and MiniPty 1.4's archive referenced glibc 2.38's `__isoc23_*` names. They did not start on RHEL 8 or 9, Debian 12, or Ubuntu 22.04. Linked in AlmaLinux 8, every symbol binds to a version glibc 2.28 already has (the x64 binary needs `GLIBC_2.17` at most). Linking on a newer host cannot be made safe by editing calls; the link has to see the old glibc.
+
+**The binaries do not need ICU.** scenetake builds with `InvariantGlobalization`. It formats with the invariant culture and compares ordinally, so no output depends on culture data. Up to 1.4.2 the binary loaded ICU at start and aborted where libicu was missing, which is the default on Alpine and in minimal container images.
+
+**macOS 12.0 is declared, not run.** Hosted runners go back only to macOS 15, so CI checks the `minos` each Mach-O file declares and runs the binaries built on macOS 26 on macOS 15. In 1.4.2, `minipty_spawn_helper` declared macOS 26.0, because MiniPty up to 1.4 built it on macOS 26 without a deployment target; MiniPty 1.5.0 builds it for 12.0.
+
+### Verification
+
+Build and release CI hold the minimums for the binary that ships:
+
+- `scripts/publish-linux.sh` links each Linux binary in a container of the floor's distribution, on a runner of its own architecture. The images have no ICU.
+- `scripts/check-binary-floor.sh` fails a binary that requires a glibc version above 2.28, links a library outside the C library (Linux) or outside `/usr/lib` and `/System/Library` (macOS), declares a macOS other than 12.0, or has MiniPty's shim beside it instead of linked in.
+- `scripts/smoke-binary.sh` records scenarios, renders SVG, and runs the integration tests that start the binary. It runs in the floor container, so at glibc 2.28 and musl 1.2.3; on the runners, where the glibc binary also meets glibc 2.39; and on macOS 15 for the binaries built on macOS 26. The musl binaries run only in their container.
+
+The containers have no `matrix`, `ffmpeg`, or `docker`, so the cases that need them skip there and run on the runners. They do get a font, because mp4 rendering stops before it starts ffmpeg when no font is installed, and four `mp4_ffmpeg_test` cases that expect the encoder to fail fail instead.
 
 ---
 
@@ -103,13 +132,15 @@ scenetake therefore uses the **optionalDependencies + per-platform package** pat
 
 ### Package layout
 
-Seven packages are published under the [`@scenetake` npm organization](https://www.npmjs.com/org/scenetake):
+Nine packages are published under the [`@scenetake` npm organization](https://www.npmjs.com/org/scenetake):
 
 | Package | Role | Contents |
 |---|---|---|
 | `scenetake` | Meta package users install | `bin/scenetake.js` wrapper only |
-| `@scenetake/linux-x64` | Platform binary | `scenetake` |
-| `@scenetake/linux-arm64` | Platform binary | `scenetake` |
+| `@scenetake/linux-x64` | Platform binary, glibc | `scenetake` |
+| `@scenetake/linux-arm64` | Platform binary, glibc | `scenetake` |
+| `@scenetake/linux-x64-musl` | Platform binary, musl | `scenetake` |
+| `@scenetake/linux-arm64-musl` | Platform binary, musl | `scenetake` |
 | `@scenetake/darwin-x64` | Platform binary | `scenetake`, `minipty_spawn_helper` |
 | `@scenetake/darwin-arm64` | Platform binary | `scenetake`, `minipty_spawn_helper` |
 | `@scenetake/win32-x64` | Platform binary | `scenetake.exe` |
@@ -117,7 +148,7 @@ Seven packages are published under the [`@scenetake` npm organization](https://w
 
 Package definitions live under `npm/packages/` in the repository. Binaries are **not** committed; release CI or maintainers assemble them from GitHub Release assets before publish.
 
-The meta package lists all six platform packages in `optionalDependencies` at the same semver as itself.
+The meta package lists all eight platform packages in `optionalDependencies` at the same semver as itself.
 
 ### Resolution overview
 
@@ -127,13 +158,13 @@ Install-time selection and runtime execution are separate phases. npm picks the 
 flowchart TD
   A["npm install -g scenetake"] --> B["Fetch scenetake meta package"]
   B --> C["Try each optionalDependency"]
-  C --> D{"@scenetake/* os/cpu\nmatches host?"}
+  C --> D{"@scenetake/* os/cpu/libc\nmatches host?"}
   D -->|yes| E["Install matching platform package"]
   D -->|no| F["Skip without failing"]
   E --> G["Link scenetake → bin/scenetake.js"]
   G --> H["User runs scenetake"]
-  H --> I["Read process.platform + process.arch"]
-  I --> J["Resolve @scenetake/platform-arch"]
+  H --> I["Read process.platform + process.arch,\nand on Linux the C library"]
+  I --> J["Resolve @scenetake/platform-arch[-musl]"]
   J --> K["spawn scenetake(.exe)"]
 ```
 
@@ -143,23 +174,25 @@ When the user runs `npm install -g scenetake` (or adds `scenetake` as a dependen
 
 1. npm downloads the `scenetake` meta package.
 2. npm attempts each entry in `optionalDependencies`.
-3. For each `@scenetake/<platform>-<arch>` package, npm reads that package's `os` and `cpu` fields.
-4. Packages whose `os` / `cpu` **do not match** the host are skipped without failing the install.
-5. The **one matching** platform package is downloaded and extracted next to the meta package under `node_modules`.
+3. For each `@scenetake/*` package, npm reads that package's `os`, `cpu`, and `libc` fields. Only the Linux packages have `libc` (`glibc` or `musl`).
+4. Packages whose fields **do not match** the host are skipped without failing the install.
+5. The **one matching** platform package is downloaded and extracted next to the meta package under `node_modules`. An npm that ignores `libc` installs both Linux packages for the architecture, and the wrapper picks one at run time.
 6. npm links the `scenetake` command to `bin/scenetake.js` from the meta package.
 
 Mapping from Node's view of the host to the optional package name:
 
-| `process.platform` | `process.arch` | Optional package |
-|---|---|---|
-| `linux` | `x64` | `@scenetake/linux-x64` |
-| `linux` | `arm64` | `@scenetake/linux-arm64` |
-| `darwin` | `x64` | `@scenetake/darwin-x64` |
-| `darwin` | `arm64` | `@scenetake/darwin-arm64` |
-| `win32` | `x64` | `@scenetake/win32-x64` |
-| `win32` | `arm64` | `@scenetake/win32-arm64` |
+| `process.platform` | `process.arch` | C library | Optional package |
+|---|---|---|---|
+| `linux` | `x64` | glibc | `@scenetake/linux-x64` |
+| `linux` | `arm64` | glibc | `@scenetake/linux-arm64` |
+| `linux` | `x64` | musl | `@scenetake/linux-x64-musl` |
+| `linux` | `arm64` | musl | `@scenetake/linux-arm64-musl` |
+| `darwin` | `x64` | | `@scenetake/darwin-x64` |
+| `darwin` | `arm64` | | `@scenetake/darwin-arm64` |
+| `win32` | `x64` | | `@scenetake/win32-x64` |
+| `win32` | `arm64` | | `@scenetake/win32-arm64` |
 
-Because selection is driven by npm's `os` / `cpu` metadata, **no `postinstall` download script is required**. This remains valid when npm v12 disables lifecycle scripts by default.
+Because selection is driven by npm's `os` / `cpu` / `libc` metadata, **no `postinstall` download script is required**. This remains valid when npm v12 disables lifecycle scripts by default.
 
 After a global install, layout is conceptually:
 
@@ -176,28 +209,28 @@ After a global install, layout is conceptually:
 
 The `scenetake` command runs `bin/scenetake.js` (Node). On each invocation:
 
-1. Read `process.platform` and `process.arch`.
-2. Build the package name `@scenetake/<platform>-<arch>`.
+1. Read `process.platform` and `process.arch`. On Linux, also find the host's C library: a Node built against glibc reports the glibc it runs on in `process.report`, and a musl Node reports none. Without a report, the wrapper reads `/usr/bin/ldd`, which names musl on musl systems.
+2. Build the package name `@scenetake/<platform>-<arch>`, with `-musl` on a musl host.
 3. Resolve that package's directory via Node module resolution (`createRequire`).
 4. Spawn `scenetake` or `scenetake.exe` inside that directory with the user's CLI arguments.
 
 If the matching platform package is missing (wrong machine, partial install, or optional install skipped), the wrapper exits with a clear error asking the user to reinstall for their platform.
 
-Install-time and runtime use the **same naming rule**, so a successful install implies a successful first run.
+Install-time and runtime use the **same naming rule**, so a successful install implies a successful first run. Build CI checks the Linux rule with `npm/scripts/test-wrapper.sh`: with both Linux packages installed, the wrapper starts the glibc one on the runner and the musl one in an Alpine container.
 
 ### Publishing and release integration
 
 On tag push, the release workflow:
 
-1. Builds and uploads the six GitHub Release archives (see above).
-2. Assembles seven npm package directories from those archives (`npm/scripts/assemble-packages.sh`).
+1. Builds and uploads the eight GitHub Release archives (see above).
+2. Assembles nine npm package directories from those archives (`npm/scripts/assemble-packages.sh`).
 3. Runs `npm stage publish` for each platform package, then the meta package (`npm/scripts/stage-all.sh`).
 
 Staged publishing defers 2FA to a human maintainer: CI stages tarballs on the registry in a non-public state; the maintainer runs `npm stage approve <stage-id>` locally with 2FA to publish.
 
 **Approve platform packages before the meta package** — the meta package's `optionalDependencies` point at registry versions that must already exist (or be staged and approved in order).
 
-**First release on a new scope** requires a one-time manual `npm publish --access public` for all seven packages, because staged publishing expects packages to already exist on the registry. Subsequent versions use stage + approve.
+**First release of a package** requires a one-time manual `npm publish --access public`, because staged publishing expects the package to already exist on the registry. That held for all packages on the new scope, and holds again for `@scenetake/linux-x64-musl` and `@scenetake/linux-arm64-musl`, which were added later: publish them by hand before the first release that includes them, or `stage-all.sh` fails on them. Subsequent versions use stage + approve.
 
 Trusted publishing on the `@scenetake` org should allow `npm stage publish` from GitHub Actions while keeping direct `npm publish` off for automation tokens.
 

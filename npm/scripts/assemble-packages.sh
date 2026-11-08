@@ -56,6 +56,12 @@ copy_package_json linux-x64 "$stage_dir/linux-x64"
 extract_linux "$assets_dir/scenetake-linux-arm64.tar.gz" "$stage_dir/linux-arm64"
 copy_package_json linux-arm64 "$stage_dir/linux-arm64"
 
+extract_linux "$assets_dir/scenetake-linux-musl-amd64.tar.gz" "$stage_dir/linux-x64-musl"
+copy_package_json linux-x64-musl "$stage_dir/linux-x64-musl"
+
+extract_linux "$assets_dir/scenetake-linux-musl-arm64.tar.gz" "$stage_dir/linux-arm64-musl"
+copy_package_json linux-arm64-musl "$stage_dir/linux-arm64-musl"
+
 extract_darwin "$assets_dir/scenetake-osx-amd64.tar.gz" "$stage_dir/darwin-x64"
 copy_package_json darwin-x64 "$stage_dir/darwin-x64"
 
