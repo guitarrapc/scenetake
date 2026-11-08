@@ -10,6 +10,8 @@ packages_dir="$1"
 platform_packages=(
   linux-x64
   linux-arm64
+  linux-x64-musl
+  linux-arm64-musl
   darwin-x64
   darwin-arm64
   win32-x64

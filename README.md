@@ -67,7 +67,14 @@ scenetake is a cross-platform tool that records those scenarios as `.cast` files
 
 ## Quick Start
 
-Download the asset for your OS from GitHub Releases, then place `scenetake` (or `scenetake.exe` on Windows) where you want.
+Download the asset for your OS from GitHub Releases, then place `scenetake` (or `scenetake.exe` on Windows) where you want. The binaries need no .NET runtime and no ICU.
+
+| Asset | Runs on |
+|---|---|
+| `scenetake-linux-amd64.tar.gz`, `scenetake-linux-arm64.tar.gz` | Linux with glibc 2.28+ (RHEL 8, Debian 10, Ubuntu 20.04, and later) |
+| `scenetake-linux-musl-amd64.tar.gz`, `scenetake-linux-musl-arm64.tar.gz` | Linux with musl 1.2.3+ (Alpine 3.17 and later) |
+| `scenetake-osx-amd64.tar.gz`, `scenetake-osx-arm64.tar.gz` | macOS 12.0+ |
+| `scenetake-win-amd64.zip`, `scenetake-win-arm64.zip` | Windows 10 1809+ |
 
 ```sh
 # .NET global tool (.NET 10 SDK required; .NET 10 runtime required to run)
@@ -473,4 +480,4 @@ npm stage list
 npm stage approve <stage-id>
 ```
 
-The first npm release must be published manually (`npm publish`), because staged publishing requires the package to already exist on the registry. Platform packages (`@scenetake/linux-x64`, etc.) must be approved before the main `scenetake` package.
+The first npm release must be published manually (`npm publish`), because staged publishing requires the package to already exist on the registry. That also holds for a platform package added later, such as `@scenetake/linux-x64-musl` and `@scenetake/linux-arm64-musl`. Platform packages (`@scenetake/linux-x64`, etc.) must be approved before the main `scenetake` package.

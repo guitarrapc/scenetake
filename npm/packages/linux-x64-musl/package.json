@@ -1,0 +1,23 @@
+{
+  "name": "@scenetake/linux-x64-musl",
+  "version": "1.4.2",
+  "description": "Linux x64 (musl) binary for scenetake",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guitarrapc/scenetake.git"
+  },
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "libc": [
+    "musl"
+  ],
+  "files": [
+    "scenetake"
+  ],
+  "preferUnplugged": true
+}

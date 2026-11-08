@@ -67,7 +67,14 @@ scenetake は、asciinema を介さずシナリオから `.cast`（任意で `.s
 
 ## クイックスタート
 
-GitHub の Releases ページから利用 OS 向けアセットをダウンロードし、`scenetake`（Windows は `scenetake.exe`）を任意の場所に配置します。
+GitHub の Releases ページから利用 OS 向けアセットをダウンロードし、`scenetake`（Windows は `scenetake.exe`）を任意の場所に配置します。バイナリの実行に .NET ランタイムと ICU は不要です。
+
+| アセット | 動作環境 |
+|---|---|
+| `scenetake-linux-amd64.tar.gz`, `scenetake-linux-arm64.tar.gz` | glibc 2.28 以降の Linux（RHEL 8、Debian 10、Ubuntu 20.04 以降） |
+| `scenetake-linux-musl-amd64.tar.gz`, `scenetake-linux-musl-arm64.tar.gz` | musl 1.2.3 以降の Linux（Alpine 3.17 以降） |
+| `scenetake-osx-amd64.tar.gz`, `scenetake-osx-arm64.tar.gz` | macOS 12.0 以降 |
+| `scenetake-win-amd64.zip`, `scenetake-win-arm64.zip` | Windows 10 1809 以降 |
 
 ```sh
 # .NET グローバルツール（インストールには .NET 10 SDK が必要。実行には .NET 10 ランタイムが必要）
@@ -488,4 +495,4 @@ npm stage list
 npm stage approve <stage-id>
 ```
 
-初回の npm リリースだけは手動の `npm publish` が必要です。staged publishing は registry 上にパッケージが既に存在していることが前提です。メインの `scenetake` より先に、プラットフォームパッケージ（`@scenetake/linux-x64` など）を approve してください。
+初回の npm リリースだけは手動の `npm publish` が必要です。staged publishing は registry 上にパッケージが既に存在していることが前提です。後から追加したプラットフォームパッケージ（`@scenetake/linux-x64-musl`、`@scenetake/linux-arm64-musl`）も同様です。メインの `scenetake` より先に、プラットフォームパッケージ（`@scenetake/linux-x64` など）を approve してください。
