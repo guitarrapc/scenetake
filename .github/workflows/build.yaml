@@ -42,7 +42,8 @@ jobs:
   build:
     name: Publish ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 5
+    # Allow SDK setup, pack, NativeAOT publish, and smoke tests on slower Intel macOS runners.
+    timeout-minutes: 10
     permissions:
       contents: read
     strategy:
