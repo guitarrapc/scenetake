@@ -3,10 +3,10 @@
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
-#:package VYaml@1.3.0
-#:package MiniPty@1.4.0
-#:package MiniPty.Capture@1.4.0
-#:package MiniPty.Console@1.4.0
+#:package VYaml@1.6.1
+#:package MiniPty@1.5.0
+#:package MiniPty.Capture@1.5.0
+#:package MiniPty.Console@1.5.0
 #:package StbTrueTypeSharp@1.26.13
 #:include Terminal.cs
 #:include Svg.cs
@@ -252,11 +252,6 @@ var svgPath = outputFormat == OutputFormat.Svg ? outputStem + ".svg" : null;
 var mp4Path = outputFormat == OutputFormat.Mp4 ? outputStem + ".mp4" : null;
 
 Console.Error.WriteLine($"Loading: {FormatDisplayPath(scenarioPath)}");
-// Register VYaml formatters explicitly for NativeAOT (source generator cannot call __Register via reflection)
-Scenario.__RegisterVYamlFormatter();
-ScenarioSettings.__RegisterVYamlFormatter();
-ScenarioRender.__RegisterVYamlFormatter();
-ScenarioTheme.__RegisterVYamlFormatter();
 string yaml;
 Scenario scenario;
 try
