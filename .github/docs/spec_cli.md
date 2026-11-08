@@ -18,9 +18,9 @@ scenetake exposes a small command-line surface: record scenarios to cast (and op
 | `scenetake --version` | Print version |
 
 ```bash
-scenetake [--verbose] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH] [--font-file PATH] <scenario.yaml> [output]
+scenetake [--verbose] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]
 scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output]
-scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH] <input.cast> [output]
+scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output]
 scenetake init [scenario.yaml]
 ```
 
@@ -30,13 +30,13 @@ Subcommands accept `-h` / `--help` for subcommand-specific usage.
 
 - Options may appear in any order before positional arguments on the scenario, `svg`, and `mp4` paths.
 - Unknown `-` / `--` options are explicit errors (avoids typos becoming path-not-found errors).
-- `--format`, `--font-size`, `--font-family`, `--theme`, `--window`, `--max-fps`, `--fps`, `--crf`, `--max-size`, and `--font-file` accept `--name=value` or `--name value`.
-- Duplicate `--font-size`, `--font-family`, `--theme`, `--window`, `--max-fps`, `--fps`, `--crf`, `--max-size`, or `--font-file` is an error.
+- `--format`, `--font-size`, `--font-family`, `--theme`, `--window`, `--max-fps`, `--fps`, `--crf`, `--max-size`, `--size`, and `--font-file` accept `--name=value` or `--name value`.
+- Duplicate `--font-size`, `--font-family`, `--theme`, `--window`, `--max-fps`, `--fps`, `--crf`, `--max-size`, `--size`, or `--font-file` is an error. `--size` with `--max-size` is an error too: `--size` already sets the output size.
 - Options for the other output format are errors, not ignored:
-  - On the scenario path, `--fps`, `--crf`, `--max-size`, and `--font-file` without `--format mp4` fail with `<option> requires --format mp4`. The `svg` subcommand reports them as unknown options.
+  - On the scenario path, `--fps`, `--crf`, `--max-size`, `--size`, and `--font-file` without `--format mp4` fail with `<option> requires --format mp4`. The `svg` subcommand reports them as unknown options.
   - `--max-fps` with mp4 output fails with `--max-fps applies to SVG; use --fps for mp4`.
   - `--max-fps` with cast output (no `--format svg`) fails with `--max-fps requires --format svg`.
-- For `--fps`, `--crf`, `--max-size`, and `--font-file`, a next argument that starts with `--` is not taken as the value: `--font-file --fps 30` fails with `--font-file requires a value`.
+- For `--fps`, `--crf`, `--max-size`, `--size`, and `--font-file`, a next argument that starts with `--` is not taken as the value: `--font-file --fps 30` fails with `--font-file requires a value`.
 - Range errors use plain ASCII ("between 1 and 60"), so every console code page shows them.
 
 ## Options
@@ -53,6 +53,7 @@ Subcommands accept `-h` / `--help` for subcommand-specific usage.
 | `--fps N` | scenario (`--format mp4`), `mp4` | Constant mp4 frame rate, `1`–`60`. Default `30`. |
 | `--crf N` | scenario (`--format mp4`), `mp4` | H.264 quality, `1`–`51`. Default `23`. Higher values make smaller files. `0` (lossless) is not accepted, because x264 then writes the High 4:4:4 Predictive profile, which X and many players reject. |
 | `--max-size WxH` | scenario (`--format mp4`), `mp4` | Downscale to fit within `W×H` (each side `16`–`16384`), keeping the aspect ratio; never upscales. `1280x1024` fits X video uploads. |
+| `--size WxH` | scenario (`--format mp4`), `mp4` | Make the video exactly `W×H` (each side `16`–`16384` and even): pad with the theme background, and scale down a larger terminal; never upscales. Render only: the terminal's columns and rows are unchanged. Not with `--max-size`. See [spec_mp4.md](spec_mp4.md) → Exact size. |
 | `--font-file PATH` | scenario (`--format mp4`), `mp4` | Primary font file (TTF, OTF, TTC) for mp4, before the `font-family` lookup. See [spec_mp4.md](spec_mp4.md). |
 
 `--format mp4` and the `mp4` subcommand also accept `--font-size`, `--font-family`, `--theme`, and `--window` with the same priority as SVG (CLI > cast header > default). `--window` draws the title bar and buttons without the SVG margin and shadow (see [spec_mp4.md](spec_mp4.md) → Window chrome).

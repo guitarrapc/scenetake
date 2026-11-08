@@ -339,8 +339,9 @@ if (outputFormat == OutputFormat.Mp4)
 
     try
     {
-        var layout = RasterLayout.Create(renderSettings.FontSize, scenarioWidth, scenarioHeight, renderSettings.Window);
-        Mp4Render.OutputSize(layout, runMp4Options.ToSettings());
+        var mp4Settings = runMp4Options.ToSettings();
+        var layout = Mp4Render.CreateLayout(renderSettings.FontSize, scenarioWidth, scenarioHeight, renderSettings.Window, mp4Settings);
+        Mp4Render.OutputSize(layout, mp4Settings);
         GlyphSource.Create(renderSettings.FontFamily, runMp4Options.FontFile, layout);
     }
     catch (Exception ex) when (ex is FontNotFoundException or FrameTooLargeException)
@@ -3136,18 +3137,18 @@ static string CreateInitialScenarioYaml()
 
 static void PrintUsage()
 {
-    Console.Error.WriteLine("Usage: scenetake [--verbose] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH] [--font-file PATH] <scenario.yaml> [output]");
+    Console.Error.WriteLine("Usage: scenetake [--verbose] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
     Console.Error.WriteLine("       scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
-    Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH] <input.cast> [output.mp4]");
+    Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
     Console.Error.WriteLine("       scenetake init [scenario.yaml]");
     Console.Error.WriteLine("       scenetake --help");
 }
 
 static void PrintMp4Usage()
 {
-    Console.Error.WriteLine("Usage: scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH] <input.cast> [output.mp4]");
+    Console.Error.WriteLine("Usage: scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
     Console.Error.WriteLine("Converts an existing asciinema v2/v3 cast file to H.264 mp4. Requires ffmpeg with libx264 on PATH,");
-    Console.Error.WriteLine($"or set {Ffmpeg.PathVariable} to its path. --max-size 1280x1024 fits X (Twitter) uploads.");
+    Console.Error.WriteLine($"or set {Ffmpeg.PathVariable} to its path. --max-size 1280x1024 fits X (Twitter) uploads; --size 1920x1080 pads to exactly that size.");
 }
 
 static void PrintMp4Written(string path, Mp4Result result) =>
@@ -3377,6 +3378,8 @@ static bool TryTakeOptionValue(string[] args, ref int i, string name, out string
 
 static bool TryConsumeMp4Arg(string[] args, ref int i, Mp4Options options, out string error)
 {
+    // --size sets the exact video size, so a --max-size limit would have nothing to do.
+    const string SizeConflictError = "--size and --max-size cannot be used together";
     var arg = args[i];
     if (TryTakeOptionValue(args, ref i, "--fps", out var value, out error))
     {
@@ -3396,8 +3399,19 @@ static bool TryConsumeMp4Arg(string[] args, ref int i, Mp4Options options, out s
     {
         if (error.Length == 0 && options.MaxSize.HasValue)
             error = "duplicate option: --max-size";
+        else if (error.Length == 0 && options.Size.HasValue)
+            error = SizeConflictError;
         else if (error.Length == 0 && Mp4Settings.TryParseMaxSize(value, out var maxWidth, out var maxHeight, out error))
             options.MaxSize = (maxWidth, maxHeight);
+    }
+    else if (TryTakeOptionValue(args, ref i, "--size", out value, out error))
+    {
+        if (error.Length == 0 && options.Size.HasValue)
+            error = "duplicate option: --size";
+        else if (error.Length == 0 && options.MaxSize.HasValue)
+            error = SizeConflictError;
+        else if (error.Length == 0 && Mp4Settings.TryParseSize(value, out var frameWidth, out var frameHeight, out error))
+            options.Size = (frameWidth, frameHeight);
     }
     else if (TryTakeOptionValue(args, ref i, "--font-file", out value, out error))
     {
@@ -3538,6 +3552,7 @@ sealed class Mp4Options
     internal int? Fps { get; set; }
     internal int? Crf { get; set; }
     internal (int Width, int Height)? MaxSize { get; set; }
+    internal (int Width, int Height)? Size { get; set; }
     internal string? FontFile { get; set; }
 
     /// <summary>The first mp4 option given, for errors when mp4 output is not selected.</summary>
@@ -3548,6 +3563,8 @@ sealed class Mp4Options
         Crf ?? Mp4Settings.DefaultCrf,
         MaxSize?.Width ?? 0,
         MaxSize?.Height ?? 0,
+        Size?.Width ?? 0,
+        Size?.Height ?? 0,
         FontFile);
 }
 

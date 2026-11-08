@@ -41,6 +41,8 @@ try
     failures += Run("ScenarioErrorsAfterPreRunPost", () => ScenarioErrorsAfterPreRunPost(scenetake, repoRoot, work));
     failures += Run("SvgFailureWithAnOpenOutputIsReported", () => SvgFailureWithAnOpenOutputIsReported(scenetake, repoRoot, work));
     failures += Run("ScenarioChecksFrameSizeBeforePre", () => ScenarioChecksFrameSizeBeforePre(scenetake, repoRoot, work));
+    failures += Run("SizeOptionRules", () => SizeOptionRules(scenetake, repoRoot, work));
+    failures += Run("ScenarioChecksSizeFrameBeforePre", () => ScenarioChecksSizeFrameBeforePre(scenetake, repoRoot, work));
     failures += Run("EarlierMp4GoesWhenEncodingStarts", () => EarlierMp4GoesWhenEncodingStarts(scenetake, repoRoot, work));
 
     // The test copies a font from the Linux font folders and installs it where XDG_DATA_HOME points the
@@ -72,6 +74,7 @@ try
     {
         failures += Run("SubcommandWritesH264", () => SubcommandWritesH264(scenetake, repoRoot, work));
         failures += Run("MaxSizeDownscales", () => MaxSizeDownscales(scenetake, repoRoot, work));
+        failures += Run("SizeEncodesExactFrame", () => SizeEncodesExactFrame(scenetake, repoRoot, work));
         failures += Run("ScenarioFormatMp4", () => ScenarioFormatMp4(scenetake, repoRoot, work));
 
         // Windows delivers Ctrl+C per console. Sending one to a child needs a separate console,
@@ -201,6 +204,28 @@ static bool MaxSizeDownscales(string scenetake, string repoRoot, string work)
     var width = int.Parse(stream["width"]);
     var height = int.Parse(stream["height"]);
     return width <= 320 && height <= 320 && width % 2 == 0 && height % 2 == 0 && stream["r_frame_rate"] == "12/1";
+}
+
+static bool SizeEncodesExactFrame(string scenetake, string repoRoot, string work)
+{
+    // pty.cast is 60×14, 620×288 at 16px. 640×360 pads it; 320×180 pads it to 16:9 and scales it down.
+    // The scenario path takes --size too: its 40×6 terminal is 420×128.
+    var padded = Path.Combine(work, "padded.mp4");
+    var scaled = Path.Combine(work, "scaled.mp4");
+    var (paddedExit, paddedStderr) = Exec(scenetake, repoRoot, ["mp4", "--size", "640x360", "--fps", "12", "samples/pty.cast", padded]);
+    var (scaledExit, scaledStderr) = Exec(scenetake, repoRoot, ["mp4", "--size=320x180", "--window", "macos", "--fps", "12", "samples/pty.cast", scaled]);
+    var stem = Path.Combine(work, "sized-scenario");
+    var (scenarioExit, scenarioStderr) = Exec(scenetake, repoRoot, ["--format", "mp4", "--size", "1280x720", WriteScenario(work, "sized.yaml"), stem]);
+    if (paddedExit != 0 || scaledExit != 0 || scenarioExit != 0)
+    {
+        Console.Error.WriteLine(paddedStderr + scaledStderr + scenarioStderr);
+        return false;
+    }
+
+    static (string, string) Size(Dictionary<string, string> stream) => (stream["width"], stream["height"]);
+    return Size(Probe(padded)) == ("640", "360") && paddedStderr.Contains("(640x360, 12fps", StringComparison.Ordinal)
+        && Size(Probe(scaled)) == ("320", "180")
+        && Size(Probe(stem + ".mp4")) == ("1280", "720");
 }
 
 static bool ScenarioFormatMp4(string scenetake, string repoRoot, string work)
@@ -904,6 +929,42 @@ static bool ScenarioChecksFrameSizeBeforePre(string scenetake, string repoRoot, 
     var scenario = WriteScenarioWithHooks(directory, "s.yaml", width: 512);
     var (exit, stderr) = Exec(scenetake, repoRoot, ["--format", "mp4", "--font-size", "64", scenario], new() { ["SCENETAKE_FFMPEG"] = fake });
     return exit == 1 && stderr.Contains("20512x", StringComparison.Ordinal) && stderr.Contains("too large for x264", StringComparison.Ordinal)
+        && !File.Exists(Path.Combine(directory, "s.cast")) && !File.Exists(Path.Combine(directory, "pre-ran.txt"));
+}
+
+static bool SizeOptionRules(string scenetake, string repoRoot, string work)
+{
+    // --size is an mp4 option, takes an even size, and cannot be combined with --max-size in either order.
+    var scenario = WriteScenario(work, "size-rules.yaml");
+    var output = Path.Combine(work, "size-rules.mp4");
+    var (svgExit, svgStderr) = Exec(scenetake, repoRoot, ["--format", "svg", "--size", "1920x1080", scenario]);
+    var (oddExit, oddStderr) = Exec(scenetake, repoRoot, ["mp4", "--size", "1921x1080", "samples/basic.cast", output]);
+    var (rangeExit, rangeStderr) = Exec(scenetake, repoRoot, ["mp4", "--size", "1920x16386", "samples/basic.cast", output]);
+    var (bothExit, bothStderr) = Exec(scenetake, repoRoot, ["mp4", "--size", "1920x1080", "--max-size", "1280x1024", "samples/basic.cast", output]);
+    var (reverseExit, reverseStderr) = Exec(scenetake, repoRoot, ["--format", "mp4", "--max-size=1280x1024", "--size=1920x1080", scenario]);
+    var (duplicateExit, duplicateStderr) = Exec(scenetake, repoRoot, ["mp4", "--size", "1920x1080", "--size=1280x720", "samples/basic.cast", output]);
+    var (missingExit, missingStderr) = Exec(scenetake, repoRoot, ["mp4", "--size", "--fps", "30", "samples/basic.cast", output]);
+    var (subcommandExit, subcommandStderr) = Exec(scenetake, repoRoot, ["svg", "--size", "1920x1080", "samples/basic.cast"]);
+    return svgExit == 1 && svgStderr.Contains("--size requires --format mp4", StringComparison.Ordinal)
+        && oddExit == 1 && oddStderr.Contains("--size must have an even width and height, which yuv420p requires: 1921x1080", StringComparison.Ordinal)
+        && rangeExit == 1 && rangeStderr.Contains("--size must be WIDTHxHEIGHT with each side between 16 and 16384", StringComparison.Ordinal)
+        && bothExit == 1 && bothStderr.Contains("--size and --max-size cannot be used together", StringComparison.Ordinal)
+        && reverseExit == 1 && reverseStderr.Contains("--size and --max-size cannot be used together", StringComparison.Ordinal)
+        && duplicateExit == 1 && duplicateStderr.Contains("duplicate option: --size", StringComparison.Ordinal)
+        && missingExit == 1 && missingStderr.Contains("--size requires a value", StringComparison.Ordinal)
+        && subcommandExit == 1 && subcommandStderr.Contains("unknown option: --size", StringComparison.Ordinal)
+        && !File.Exists(output) && !File.Exists(Path.ChangeExtension(scenario, ".cast"));
+}
+
+static bool ScenarioChecksSizeFrameBeforePre(string scenetake, string repoRoot, string work)
+{
+    // 512 columns at font size 50 are 15904 pixels wide. Padding that to the shape of 16×16384 before
+    // scaling is far over ffmpeg's raw frame limit, so the run stops before pre or any recording.
+    var directory = Directory.CreateDirectory(Path.Combine(work, "size-frame")).FullName;
+    var fake = WriteFakeFfmpeg(directory, "ffmpeg-ok", hasLibx264: true);
+    var scenario = WriteScenarioWithHooks(directory, "s.yaml", width: 512);
+    var (exit, stderr) = Exec(scenetake, repoRoot, ["--format", "mp4", "--font-size", "50", "--size", "16x16384", scenario], new() { ["SCENETAKE_FFMPEG"] = fake });
+    return exit == 1 && stderr.Contains("too large for ffmpeg; --size 16x16384 pads the 15904x", StringComparison.Ordinal)
         && !File.Exists(Path.Combine(directory, "s.cast")) && !File.Exists(Path.Combine(directory, "pre-ran.txt"));
 }
 
