@@ -3,7 +3,8 @@ using System.Globalization;
 using System.Text;
 
 /// <summary>mp4 options. Defaults and the reasons for them are in .github/docs/spec_mp4.md.</summary>
-internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int MaxHeight, string? FontFile)
+/// <remarks><see cref="FrameWidth"/> and <see cref="FrameHeight"/> are <c>--size</c>; 0 means none.</remarks>
+internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int MaxHeight, int FrameWidth, int FrameHeight, string? FontFile)
 {
     internal const int DefaultFps = 30, MinFps = 1, MaxFps = 60;
     // CRF 0 is lossless, and x264 then writes the High 4:4:4 Predictive profile, which X and many players reject.
@@ -16,7 +17,7 @@ internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int 
     internal const int KeyframeSeconds = 30;    // longest gap between keyframes, for seeking
     internal const int Level52DpbMacroblocks = 184_320; // H.264 level 5.2 decoded picture buffer
 
-    internal static Mp4Settings Default => new(DefaultFps, DefaultCrf, 0, 0, null);
+    internal static Mp4Settings Default => new(DefaultFps, DefaultCrf, 0, 0, 0, 0, null);
 
     internal static bool TryParseFps(string text, out int fps, out string error) =>
         TryParseInt(text, "--fps", MinFps, MaxFps, out fps, out error);
@@ -24,8 +25,26 @@ internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int 
     internal static bool TryParseCrf(string text, out int crf, out string error) =>
         TryParseInt(text, "--crf", MinCrf, MaxCrf, out crf, out error);
 
-    /// <summary>Parses <c>WxH</c>, for example <c>1280x1024</c>.</summary>
-    internal static bool TryParseMaxSize(string text, out int width, out int height, out string error)
+    /// <summary>Parses <c>--max-size WxH</c>, for example <c>1280x1024</c>.</summary>
+    internal static bool TryParseMaxSize(string text, out int width, out int height, out string error) =>
+        TryParseDimensions(text, "--max-size", "1280x1024", out width, out height, out error);
+
+    /// <summary>Parses <c>--size WxH</c>, for example <c>1920x1080</c>. The video is exactly this size, so both sides must be even for yuv420p.</summary>
+    internal static bool TryParseSize(string text, out int width, out int height, out string error)
+    {
+        if (!TryParseDimensions(text, "--size", "1920x1080", out width, out height, out error))
+            return false;
+
+        if (((width | height) & 1) != 0)
+        {
+            error = $"--size must have an even width and height, which yuv420p requires: {text}";
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool TryParseDimensions(string text, string name, string example, out int width, out int height, out string error)
     {
         width = height = 0;
         var parts = text.Split('x', 'X');
@@ -34,7 +53,7 @@ internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int 
             || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out height)
             || width is < MinSize or > MaxSize || height is < MinSize or > MaxSize)
         {
-            error = $"--max-size must be WIDTHxHEIGHT with each side between {MinSize} and {MaxSize} (for example 1280x1024): {text}";
+            error = $"{name} must be WIDTHxHEIGHT with each side between {MinSize} and {MaxSize} (for example {example}): {text}";
             return false;
         }
 
@@ -85,7 +104,7 @@ internal sealed class Mp4FrameRenderer
         _theme = TerminalTheme.FromResolved(render.Theme);
         _fps = settings.Fps;
         var (cols, rows) = TerminalReplay.ResolveCanvasSize(width, height, events);
-        Layout = RasterLayout.Create(render.FontSize, cols, rows, render.Window);
+        Layout = Mp4Render.CreateLayout(render.FontSize, cols, rows, render.Window, settings);
         Glyphs = GlyphSource.Create(render.FontFamily, settings.FontFile, Layout);
         FrameCount = Math.Max(1, (int)Math.Ceiling(loopDuration * settings.Fps - 1e-9));
     }
@@ -239,9 +258,20 @@ internal static class Mp4Render
         ];
     }
 
-    /// <summary>The encoded size: the frame fitted within <c>--max-size</c>.</summary>
+    /// <summary>The drawn frame: the terminal at its own size, or inside the <c>--size</c> frame.</summary>
+    internal static RasterLayout CreateLayout(int fontSize, int cols, int rows, WindowStyle window, Mp4Settings settings)
+    {
+        var layout = RasterLayout.Create(fontSize, cols, rows, window);
+        return settings.FrameWidth > 0 ? layout.FitFrame(settings.FrameWidth, settings.FrameHeight) : layout;
+    }
+
+    /// <summary>The encoded size: <c>--size</c>, or the frame fitted within <c>--max-size</c>.</summary>
     internal static (int Width, int Height) OutputSize(RasterLayout layout, Mp4Settings settings)
     {
+        // --size is even and within x264's limit. A drawn frame larger than it is scaled down to it.
+        if (settings.FrameWidth > 0)
+            return (settings.FrameWidth, settings.FrameHeight);
+
         // x264 rejects a side over 16384. A wide terminal reaches that without --max-size, for
         // example 512 columns from font size 51.
         var (width, height) = FitWithin(layout.Width, layout.Height, settings.MaxWidth, settings.MaxHeight);

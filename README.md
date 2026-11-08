@@ -111,6 +111,9 @@ scenetake mp4 scenario.cast
 # Fit X (Twitter) video upload limits
 scenetake mp4 scenario.cast --max-size 1280x1024
 
+# Make the mp4 exactly 1920x1080, for video editors and joining clips
+scenetake mp4 scenario.cast --size 1920x1080
+
 # Generate cast and mp4 in one command
 scenetake --format mp4 scenario.yaml
 
@@ -141,7 +144,7 @@ scenetake init [scenario.yaml]
 scenetake [--verbose] [--format cast|svg|mp4]
   [--font-size N] [--font-family FAMILIES] [--theme dark|light]
   [--window none|macos|windows] [--max-fps N]
-  [--fps N] [--crf N] [--max-size WxH] [--font-file PATH]
+  [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH]
   scenario.yaml [output]
 
 # Convert an existing cast file to SVG
@@ -151,13 +154,13 @@ scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light]
 
 # Convert an existing cast file to mp4
 scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light]
-  [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH]
+  [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH]
   <input.cast> [output.mp4]
 ```
 
 `--max-fps` caps SVG animation frame rate (`0` = off, use full cast timing). It applies when `--format svg` is set or on the `svg` subcommand.
 
-mp4 options apply with `--format mp4` or on the `mp4` subcommand: `--fps` sets the frame rate (default `30`, max `60`), `--crf` sets quality (default `23`; higher is smaller), `--max-size` downscales to fit (for example `1280x1024` for X), and `--font-file` picks the font file.
+mp4 options apply with `--format mp4` or on the `mp4` subcommand: `--fps` sets the frame rate (default `30`, max `60`), `--crf` sets quality (default `23`; higher is smaller), `--max-size` downscales to fit (for example `1280x1024` for X), `--size` makes the video exactly that size (for example `1920x1080`; see Terminal size and resolution below), and `--font-file` picks the font file. `--size` and `--max-size` cannot be used together.
 
 **SVG or mp4**
 
@@ -188,11 +191,17 @@ To fill a video resolution, use the largest `width` × `height` that fits. At `f
 | 2560×1440 (WQHD) | 254 × 71 → 2560×1428 | 254 × 69 → 2560×1422 |
 | 3840×2160 (4K) | 382 × 107 → 3840×2148 | 382 × 105 → 3840×2142 |
 
-- A row is 20 pixels tall, so the height usually ends a little short of the resolution.
-- Text stays sharper when the recording already fits than when `--max-size` scales a larger one down.
+- A row is 20 pixels tall, so the height usually ends a little short of the resolution. `--size` fills the rest (below).
+- Text stays sharper when the recording already fits than when `--max-size` or `--size` scales a larger one down.
 - A larger `font-size` makes each cell larger, so fewer columns and rows fit. A cell is `font-size × 0.62` wide and `font-size × 1.25` tall, rounded to whole pixels in mp4, and the padding also changes with `font-size`. See Layout in [spec_mp4.md](.github/docs/spec_mp4.md#layout).
 - SVG does not blur when scaled, so its pixel size only sets the size it is first shown at.
 - A recording that resizes uses its largest size.
+
+`--size WxH` makes the mp4 exactly `W×H`. Both sides must be even. The recorded terminal does not change; only the video frame around it does.
+
+- A terminal that fits is centered, and the rest is the theme background. 190 × 53 at `--size 1920x1080` gets 6 pixels above and 6 below. The `--window` title bar stays at the top edge.
+- A larger terminal is padded to that shape, then scaled down. 200 × 60 (2020×1208) becomes 1920×1080 with about 57 pixels on each side, its text scaled to 89%.
+- A smaller terminal is not enlarged. 80 × 24 sits in the middle of the frame; use a larger `--font-size` for larger text.
 
 **Notes**
 

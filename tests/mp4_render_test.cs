@@ -21,6 +21,10 @@
 var failures = 0;
 failures += Run("LayoutRoundsSvgMetrics", LayoutRoundsSvgMetrics);
 failures += Run("FitWithinKeepsAspectAndEvenSize", FitWithinKeepsAspectAndEvenSize);
+failures += Run("SizePadsTerminalIntoFrame", SizePadsTerminalIntoFrame);
+failures += Run("SizeSetsOutputAndScale", SizeSetsOutputAndScale);
+failures += Run("SizeTooFarFromTerminalShapeIsReported", SizeTooFarFromTerminalShapeIsReported);
+failures += Run("SizePaddingUsesBackgroundAndFullTitleBar", SizePaddingUsesBackgroundAndFullTitleBar);
 failures += Run("OptionParsing", OptionParsing);
 failures += Run("FfmpegArgumentsUseH264Bt709", FfmpegArgumentsUseH264Bt709);
 failures += Run("FontFamilyListParsing", FontFamilyListParsing);
@@ -106,6 +110,76 @@ static bool FitWithinKeepsAspectAndEvenSize() =>
     && Mp4Render.FitWithin(820, 488, 0, 0) == (820, 488)
     && Mp4Render.FitWithin(820, 1288, 1280, 1024) == (650, 1024); // 1288 × 1024/1288 in floating point is 1023.99…
 
+static bool SizePadsTerminalIntoFrame()
+{
+    // 190×53 at 16px is 1920×1068: the 12 spare rows of pixels split 6 above and 6 below.
+    var fits = RasterLayout.Create(16, 190, 53).FitFrame(1920, 1080);
+    // 34 + 51×20 + 8 = 1062 with a title bar: the bar stays at the top, and 9 + 9 go around the terminal.
+    var chrome = RasterLayout.Create(16, 190, 51, WindowStyle.Macos).FitFrame(1920, 1080);
+    // 1×1 at 15px is 27×27 (cell 9×19, padding 9×4) before Create's even rounding: 37 spare pixels, 18 left and 19 right.
+    var odd = RasterLayout.Create(15, 1, 1).FitFrame(64, 64);
+    // 200×60 is 2020×1208, narrower than 16:9: padded at the sides to 2148×1208, to be scaled to 1920×1080.
+    var narrow = RasterLayout.Create(16, 200, 60).FitFrame(1920, 1080);
+    // 512×24 is 5140×488, wider than 16:9: padded above and below to 5140×2892.
+    var wide = RasterLayout.Create(16, 512, 24).FitFrame(1920, 1080);
+    // Larger in one side only: 190×60 is 1920×1208, so the width is padded too.
+    var tall = RasterLayout.Create(16, 190, 60).FitFrame(1920, 1080);
+    // A frame of exactly the terminal's size changes nothing.
+    var exact = RasterLayout.Create(16, 80, 24).FitFrame(820, 488);
+    return fits is { Width: 1920, Height: 1080, PadX: 10, PadY: 10, CellWidth: 10, CellHeight: 20 } && fits.RowY(0) == 10 && fits.CellX(0) == 10
+        && chrome is { Width: 1920, Height: 1080, TitleBarHeight: 34, PadY: 13 } && chrome.RowY(0) == 47
+        && odd is { Width: 64, Height: 64, PadX: 27, PadY: 22 }
+        && narrow is { Width: 2148, Height: 1208, PadX: 74, PadY: 4 }
+        && wide is { Width: 5140, Height: 2892, PadX: 10, PadY: 1206 }
+        && tall is { Width: 2148, Height: 1208, PadX: 124, PadY: 4 }
+        && exact == RasterLayout.Create(16, 80, 24);
+}
+
+static bool SizeSetsOutputAndScale()
+{
+    var size = Mp4Settings.Default with { FrameWidth = 1920, FrameHeight = 1080 };
+    var fits = Mp4Render.CreateLayout(16, 190, 53, WindowStyle.None, size);
+    var large = Mp4Render.CreateLayout(16, 200, 60, WindowStyle.None, size);
+    var fitsArgs = string.Join(' ', Mp4Render.BuildArguments(fits.Width, fits.Height, size, 1920, 1080, "out.mp4"));
+    var largeArgs = string.Join(' ', Mp4Render.BuildArguments(large.Width, large.Height, size, 1920, 1080, "out.mp4"));
+    return Mp4Render.OutputSize(fits, size) == (1920, 1080) && Mp4Render.OutputSize(large, size) == (1920, 1080)
+        && fitsArgs.Contains("-s 1920x1080 ", StringComparison.Ordinal) && !fitsArgs.Contains("lanczos", StringComparison.Ordinal)
+        && largeArgs.Contains("-s 2148x1208 ", StringComparison.Ordinal) && largeArgs.Contains("scale=1920:1080:flags=lanczos", StringComparison.Ordinal)
+        && Mp4Render.CreateLayout(16, 80, 24, WindowStyle.Macos, Mp4Settings.Default) == RasterLayout.Create(16, 80, 24, WindowStyle.Macos);
+}
+
+static bool SizeTooFarFromTerminalShapeIsReported()
+{
+    // 512×1 at 50px is 15904×79. Padding it to the shape of 16×16384 needs 15904×16285696 pixels before
+    // scaling, far over ffmpeg's raw frame limit, while the same terminal fits a 16:9 frame.
+    try
+    {
+        RasterLayout.Create(50, 512, 1).FitFrame(16, 16384);
+        return false;
+    }
+    catch (FrameTooLargeException ex)
+    {
+        return ex.Message.Contains("15904x16285696", StringComparison.Ordinal)
+            && ex.Message.Contains("--size 16x16384", StringComparison.Ordinal)
+            && RasterLayout.Create(50, 512, 1).FitFrame(1920, 1080) is { Width: 15904, Height: 8946 };
+    }
+}
+
+static bool SizePaddingUsesBackgroundAndFullTitleBar()
+{
+    // 8×3 with a title bar is 100×102 at 16px. In 200×200 the cells start at x 10 + 50 and y 34 + 4 + 49.
+    var (frames, layout) = Render("""[0.0,"o","█\u001b[?25l"]""", fps: 10, window: "macos", size: (200, 200));
+    var last = frames[^1];
+    var background = (0x28, 0x2c, 0x34);
+    return layout is { Width: 200, Height: 200, PadX: 60, PadY: 53 } && last.Length == 200 * 200 * 3
+        && Pixel(last, layout, 22, 17) == (0xff, 0x5f, 0x57)            // buttons keep their place at the left
+        && Pixel(last, layout, 195, 5) == (0x32, 0x32, 0x32)            // the bar spans the whole frame
+        && Pixel(last, layout, 195, 33) == (0x1a, 0x1a, 0x1a)
+        && Pixel(last, layout, 5, 60) == background && Pixel(last, layout, 195, 195) == background
+        && Pixel(last, layout, 100, 40) == background                   // padding between the bar and the terminal
+        && CellPixel(last, layout, 0, 0) == (0xd0, 0xd0, 0xd0) && layout.CellX(0) == 60 && layout.RowY(0) == 87;
+}
+
 static bool OptionParsing() =>
     Mp4Settings.TryParseFps("60", out var fps, out _) && fps == 60
     && !Mp4Settings.TryParseFps("0", out _, out _)
@@ -116,7 +190,16 @@ static bool OptionParsing() =>
     && Mp4Settings.TryParseMaxSize("1280x1024", out var w, out var h, out _) && (w, h) == (1280, 1024)
     && !Mp4Settings.TryParseMaxSize("1280", out _, out _, out _)
     && !Mp4Settings.TryParseMaxSize("8x8", out _, out _, out _)
-    && !Mp4Settings.TryParseMaxSize("-1x100", out _, out _, out _);
+    && !Mp4Settings.TryParseMaxSize("-1x100", out _, out _, out _)
+    && Mp4Settings.TryParseSize("1920x1080", out var sw, out var sh, out _) && (sw, sh) == (1920, 1080)
+    && Mp4Settings.TryParseSize("16X16384", out _, out _, out _)
+    && !Mp4Settings.TryParseSize("1921x1080", out _, out _, out var oddError)
+    && oddError == "--size must have an even width and height, which yuv420p requires: 1921x1080"
+    && !Mp4Settings.TryParseSize("1920x1081", out _, out _, out _)
+    && !Mp4Settings.TryParseSize("14x14", out _, out _, out var rangeError)
+    && rangeError == "--size must be WIDTHxHEIGHT with each side between 16 and 16384 (for example 1920x1080): 14x14"
+    && !Mp4Settings.TryParseSize("16386x1080", out _, out _, out _)
+    && !Mp4Settings.TryParseSize("1920", out _, out _, out _);
 
 static bool FfmpegArgumentsUseH264Bt709()
 {
@@ -314,7 +397,7 @@ static bool WindowsChromeDrawsButtons()
         && Pixel(last, layout, layout.Width - 5, 5) == (0x2d, 0x2d, 0x2d);
 }
 
-static (List<byte[]> Frames, RasterLayout Layout) Render(string events, int fps, string? window = null)
+static (List<byte[]> Frames, RasterLayout Layout) Render(string events, int fps, string? window = null, (int Width, int Height)? size = null)
 {
     var path = Path.Combine(Path.GetTempPath(), $"scenetake-mp4-{Guid.NewGuid():N}.cast");
     try
@@ -323,7 +406,7 @@ static (List<byte[]> Frames, RasterLayout Layout) Render(string events, int fps,
         File.WriteAllText(path, "{\"version\":3,\"term\":{\"cols\":8,\"rows\":3,\"type\":\"xterm-256color\"}" + tags + "}\n" + events + "\n");
         var recording = CastReader.Read(path);
         var renderer = new Mp4FrameRenderer(recording.Events, recording.Width, recording.Height, recording.RenderSettings,
-            Mp4Settings.Default with { Fps = fps }, recording.LoopDuration);
+            Mp4Settings.Default with { Fps = fps, FrameWidth = size?.Width ?? 0, FrameHeight = size?.Height ?? 0 }, recording.LoopDuration);
         var frames = new List<byte[]>();
         renderer.Render(pixels => frames.Add((byte[])pixels.Clone()));
         return (frames, renderer.Layout);

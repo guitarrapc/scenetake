@@ -6,6 +6,8 @@ using StbTrueTypeSharp;
 /// <summary>
 /// Pixel layout of a raster frame: the SVG cell metrics rounded to whole pixels, plus the
 /// SVG inner padding. With window chrome, the SVG title bar sits above the terminal.
+/// <see cref="PadX"/> and <see cref="PadY"/> are the padding left of and above the cells; the frame's
+/// remaining width and height are padding on the other sides.
 /// Width and height are even because yuv420p video requires it.
 /// </summary>
 internal readonly record struct RasterLayout(
@@ -25,14 +27,60 @@ internal readonly record struct RasterLayout(
         var height = titleBar + rows * cellHeight + padY * 2;
         width += width & 1;
         height += height & 1;
-
-        // ffmpeg rejects a raw input frame unless (width + 128) × (height + 128) is below 2^28, about
-        // 16000x16000. Large accepted sizes reach that, for example 512×512 cells from font size 37.
-        // Checking it here also keeps the RGB24 frame within one array and int arithmetic.
-        if ((width + 128L) * (height + 128L) >= 1L << 28)
-            throw new FrameTooLargeException($"an mp4 frame of {width}x{height} pixels is too large for ffmpeg; use a smaller --font-size or terminal size");
-
+        CheckRawFrame(width, height, "use a smaller --font-size or terminal size");
         return new RasterLayout(cols, rows, cellWidth, cellHeight, baseline, padX, padY, width, height, fontSize, window, titleBar);
+    }
+
+    /// <summary>
+    /// This layout inside a <c>--size</c> frame. A terminal that fits is centered and the rest is padding
+    /// in the theme background; an odd pixel goes right or below. A terminal larger than the frame gets
+    /// padding to the frame's shape instead, and the encoder scales the result down to the frame size.
+    /// The title bar stays at the top edge and spans the frame; the padding goes around the terminal below it.
+    /// </summary>
+    internal RasterLayout FitFrame(int frameWidth, int frameHeight)
+    {
+        // The terminal before Create rounds it to even sizes.
+        long terminalWidth = Cols * CellWidth + PadX * 2;
+        long terminalHeight = TitleBarHeight + Rows * CellHeight + PadY * 2;
+        long width = frameWidth, height = frameHeight;
+        if (terminalWidth > frameWidth || terminalHeight > frameHeight)
+        {
+            // The side with the smaller ratio frame / terminal sets the scale and keeps its size.
+            if (frameWidth * terminalHeight <= frameHeight * terminalWidth)
+            {
+                width = terminalWidth;
+                height = (terminalWidth * frameHeight + frameWidth - 1) / frameWidth;
+            }
+            else
+            {
+                height = terminalHeight;
+                width = (terminalHeight * frameWidth + frameHeight - 1) / frameHeight;
+            }
+
+            width += width & 1;
+            height += height & 1;
+        }
+
+        CheckRawFrame(width, height,
+            $"--size {frameWidth}x{frameHeight} pads the {terminalWidth}x{terminalHeight} terminal to its shape before scaling; use a --size closer to the terminal's shape");
+        return this with
+        {
+            PadX = PadX + (int)((width - terminalWidth) / 2),
+            PadY = PadY + (int)((height - terminalHeight) / 2),
+            Width = (int)width,
+            Height = (int)height,
+        };
+    }
+
+    /// <summary>
+    /// ffmpeg rejects a raw input frame unless (width + 128) × (height + 128) is below 2^28, about
+    /// 16000x16000. Large accepted sizes reach that, for example 512×512 cells from font size 37.
+    /// Checking it here also keeps the RGB24 frame within one array and int arithmetic.
+    /// </summary>
+    private static void CheckRawFrame(long width, long height, string advice)
+    {
+        if ((width + 128) * (height + 128) >= 1L << 28)
+            throw new FrameTooLargeException($"an mp4 frame of {width}x{height} pixels is too large for ffmpeg; {advice}");
     }
 
     internal int CellX(int col) => PadX + col * CellWidth;

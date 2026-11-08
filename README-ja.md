@@ -111,6 +111,9 @@ scenetake mp4 scenario.cast
 # X (Twitter) の動画アップロード制限に収める
 scenetake mp4 scenario.cast --max-size 1280x1024
 
+# mp4 をちょうど 1920x1080 にする。動画編集やクリップの連結に向く
+scenetake mp4 scenario.cast --size 1920x1080
+
 # cast と mp4 を一度に生成
 scenetake --format mp4 scenario.yaml
 
@@ -141,7 +144,7 @@ scenetake init [scenario.yaml]
 scenetake [--verbose] [--format cast|svg|mp4]
   [--font-size N] [--font-family FAMILIES] [--theme dark|light]
   [--window none|macos|windows] [--max-fps N]
-  [--fps N] [--crf N] [--max-size WxH] [--font-file PATH]
+  [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH]
   scenario.yaml [output]
 
 # 既存の cast ファイルを SVG に変換
@@ -151,7 +154,7 @@ scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light]
 
 # 既存の cast ファイルを mp4 に変換
 scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light]
-  [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH]
+  [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH]
   <input.cast> [output.mp4]
 ```
 
@@ -162,6 +165,7 @@ mp4 用のオプションは `--format mp4` 時と `mp4` サブコマンドで�
 - `--fps`: フレームレート（既定 `30`、最大 `60`）
 - `--crf`: 画質（既定 `23`。大きいほど小さいファイル）
 - `--max-size`: この範囲に収まるよう縮小（X 向けなら `1280x1024`）
+- `--size`: 動画をちょうどこのサイズにする（たとえば `1920x1080`。後述の「ターミナルサイズと解像度」を参照）。`--max-size` とは同時に使えません
 - `--font-file`: 使うフォントファイル
 
 **SVG と mp4 の使い分け**
@@ -201,11 +205,17 @@ mp4 は手元にインストールされたフォントで描画します。`fon
 | 2560×1440（WQHD） | 254 × 71 → 2560×1428 | 254 × 69 → 2560×1422 |
 | 3840×2160（4K） | 382 × 107 → 3840×2148 | 382 × 105 → 3840×2142 |
 
-- 1 行は 20 ピクセルなので、高さはたいてい解像度より少し小さくなります。
-- はじめから収まるサイズで録ると、大きく録って `--max-size` で縮小するより文字がくっきりします。
+- 1 行は 20 ピクセルなので、高さはたいてい解像度より少し小さくなります。残りは `--size` で埋められます（後述）。
+- はじめから収まるサイズで録ると、大きく録って `--max-size` や `--size` で縮小するより文字がくっきりします。
 - `font-size` を大きくするとセルも大きくなり、収まる列数と行数は減ります。セルは幅 `font-size × 0.62`、高さ `font-size × 1.25` で、mp4 では整数ピクセルに丸めます。余白も `font-size` に応じて変わります。詳しくは [spec_mp4.md](.github/docs/spec_mp4.md#layout) の Layout を参照してください。
 - SVG は拡大縮小してもぼけないため、ピクセルサイズは最初に表示される大きさを決めるだけです。
 - 録画中にサイズが変わる場合は、その中で最大のサイズを使います。
+
+`--size WxH` を付けると、mp4 はちょうど `W×H` になります。幅と高さはどちらも偶数にしてください。録画したターミナルは変わらず、変わるのは周りの動画の枠だけです。
+
+- 収まるターミナルは中央に置き、残りをテーマの背景色で埋めます。190 × 53 を `--size 1920x1080` にすると、上下に 6 ピクセルずつ足します。`--window` のタイトルバーは上端に残ります。
+- 大きいターミナルは、その縦横比まで余白を足してから縮小します。200 × 60（2020×1208）は、文字が 89% に縮小され、左右に約 57 ピクセルずつ余白のある 1920×1080 になります。
+- 小さいターミナルは拡大しません。80 × 24 は枠の中央に置かれます。文字を大きくしたいときは `--font-size` を上げてください。
 
 **Notes**
 
