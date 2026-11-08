@@ -3,6 +3,7 @@
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
+#:property InvariantGlobalization=true
 #:package VYaml@1.6.1
 #:package MiniPty@1.5.0
 #:package MiniPty.Capture@1.5.0
