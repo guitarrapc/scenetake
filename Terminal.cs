@@ -608,34 +608,18 @@ internal sealed class ScreenBuffer
 
     internal void InsertLines(int count)
     {
-        if (count <= 0 || CursorRow < _scrollTop || CursorRow > _scrollBottom)
+        if (CursorRow < _scrollTop || CursorRow > _scrollBottom)
             return;
 
-        count = Math.Min(count, _scrollBottom - CursorRow + 1);
-        for (var row = _scrollBottom; row >= CursorRow + count; row--)
-        {
-            for (var col = 0; col < Width; col++)
-                _cells[row, col] = _cells[row - count, col];
-        }
-
-        for (var row = CursorRow; row < CursorRow + count; row++)
-            ClearRow(row);
+        ScrollRegionDown(CursorRow, _scrollBottom, count);
     }
 
     internal void DeleteLines(int count)
     {
-        if (count <= 0 || CursorRow < _scrollTop || CursorRow > _scrollBottom)
+        if (CursorRow < _scrollTop || CursorRow > _scrollBottom)
             return;
 
-        count = Math.Min(count, _scrollBottom - CursorRow + 1);
-        for (var row = CursorRow; row <= _scrollBottom - count; row++)
-        {
-            for (var col = 0; col < Width; col++)
-                _cells[row, col] = _cells[row + count, col];
-        }
-
-        for (var row = _scrollBottom - count + 1; row <= _scrollBottom; row++)
-            ClearRow(row);
+        ScrollRegionUp(CursorRow, _scrollBottom, count);
     }
 
     internal void ScrollUpLines(int count) =>
@@ -833,16 +817,10 @@ internal sealed class ScreenBuffer
             return;
 
         count = Math.Min(count, bottom - top + 1);
-        for (var i = 0; i < count; i++)
-        {
-            for (var row = top + 1; row <= bottom; row++)
-            {
-                for (var col = 0; col < Width; col++)
-                    _cells[row - 1, col] = _cells[row, col];
-            }
-
-            ClearRow(bottom);
-        }
+        var cells = RegionCells(top, bottom);
+        var cleared = count * Width;
+        cells[cleared..].CopyTo(cells);
+        cells[^cleared..].Fill(BlankCell());
     }
 
     private void ScrollRegionDown(int top, int bottom, int count)
@@ -851,17 +829,17 @@ internal sealed class ScreenBuffer
             return;
 
         count = Math.Min(count, bottom - top + 1);
-        for (var i = 0; i < count; i++)
-        {
-            for (var row = bottom - 1; row >= top; row--)
-            {
-                for (var col = 0; col < Width; col++)
-                    _cells[row + 1, col] = _cells[row, col];
-            }
-
-            ClearRow(top);
-        }
+        var cells = RegionCells(top, bottom);
+        var cleared = count * Width;
+        cells[..^cleared].CopyTo(cells[cleared..]);
+        cells[..cleared].Fill(BlankCell());
     }
+
+    // Rows top..bottom of the active screen as one span. Rows are contiguous in the row-major
+    // array, so a scroll moves the whole region in one block copy (which handles the overlap)
+    // instead of copying cell by cell for every line.
+    private Span<ScreenCell> RegionCells(int top, int bottom) =>
+        System.Runtime.InteropServices.MemoryMarshal.CreateSpan(ref _cells[top, 0], (bottom - top + 1) * Width);
 
     private void ClearRow(int row)
     {
@@ -2106,22 +2084,44 @@ internal static class TerminalReplay
     /// trailing blank alternate-screen restore. Frames hold no screen contents, so memory
     /// stays proportional to the number of changes, not changes × screen size.
     /// </summary>
+    /// <param name="lastOfSameTime">
+    /// For a caller that keeps only the last of frames that share a time: skips the screen hash
+    /// for events followed by another event at the same time. Hashing the whole screen after every
+    /// event is most of this pass for full-screen TUIs, which write many events within one
+    /// millisecond. The frames the caller keeps are the same.
+    /// </param>
     internal static List<ReplayFrame> BuildFrames(
         IReadOnlyList<CastEvent> events,
         int initialWidth,
         int initialHeight,
         int canvasWidth,
         int canvasHeight,
-        TerminalTheme theme)
+        TerminalTheme theme,
+        bool lastOfSameTime = false)
+    {
+        if (lastOfSameTime)
+        {
+            // A blank final screen may be trimmed as a restore, and that trim looks at frames inside
+            // same-time runs, so only that case needs every frame.
+            var lastOnly = CollectFrames(EnumerateCaptures(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme, lastOfSameTime: true));
+            if (!lastOnly[^1].IsBlank)
+                return lastOnly;
+        }
+
+        var frames = CollectFrames(EnumerateCaptures(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme));
+        return TrimTrailingBlankRestore(frames, events);
+    }
+
+    private static List<ReplayFrame> CollectFrames(IEnumerable<ReplayCapture> captures)
     {
         var frames = new List<ReplayFrame>();
-        foreach (var capture in EnumerateCaptures(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme))
+        foreach (var capture in captures)
         {
             frames.Add(new ReplayFrame(
                 capture.Time, capture.ViewportWidth, capture.ViewportHeight, capture.Signature, IsBlankBuffer(capture.View), capture.EventIndex));
         }
 
-        return TrimTrailingBlankRestore(frames, events);
+        return frames;
     }
 
     /// <summary>
@@ -2156,13 +2156,7 @@ internal static class TerminalReplay
         if (!IsBlankBuffer(ViewForCanvas(final, canvasWidth, canvasHeight)))
             return events.Count;
 
-        var frames = new List<ReplayFrame>();
-        foreach (var capture in EnumerateCaptures(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme))
-        {
-            frames.Add(new ReplayFrame(
-                capture.Time, capture.ViewportWidth, capture.ViewportHeight, capture.Signature, IsBlankBuffer(capture.View), capture.EventIndex));
-        }
-
+        var frames = CollectFrames(EnumerateCaptures(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme));
         var kept = TrimTrailingBlankRestore(frames, events).Count;
         return kept < frames.Count && frames[kept].EventIndex >= 0 ? frames[kept].EventIndex : events.Count;
     }
@@ -2173,13 +2167,18 @@ internal static class TerminalReplay
     /// A recording with no output or resize events yields its final state once, at time 0.
     /// Markers are not applied, and the cast reader drops input events.
     /// </summary>
+    /// <param name="lastOfSameTime">
+    /// Checks the screen only after the last of the events that share a time, so it yields at most
+    /// one state per time: the state the screen shows when that time has passed.
+    /// </param>
     internal static IEnumerable<ReplayCapture> EnumerateCaptures(
         IReadOnlyList<CastEvent> events,
         int initialWidth,
         int initialHeight,
         int canvasWidth,
         int canvasHeight,
-        TerminalTheme theme)
+        TerminalTheme theme,
+        bool lastOfSameTime = false)
     {
         var buffer = new ScreenBuffer(initialWidth, initialHeight, theme);
         var parser = new AnsiParser(buffer, theme);
@@ -2207,6 +2206,9 @@ internal static class TerminalReplay
             else
                 parser.Process(ev.Data);
 
+            if (lastOfSameTime && NextAppliedEventHasSameTime(events, eventIndex))
+                continue;
+
             var signature = buffer.ComputeCanvasSignature(canvasWidth, canvasHeight);
             if (lastSignature is ulong previous && previous == signature)
                 continue;
@@ -2221,6 +2223,19 @@ internal static class TerminalReplay
             var view = ViewForCanvas(buffer, canvasWidth, canvasHeight);
             yield return new ReplayCapture(0, view, buffer.Width, buffer.Height, view.ComputeCanvasSignature(view.Width, view.Height), events.Count);
         }
+    }
+
+    // Exact equality, stricter than the 1e-9 that the same-time drop uses: a frame the drop keeps has
+    // its next frame more than 1e-9 later, so its event always ends a run here and is never skipped.
+    private static bool NextAppliedEventHasSameTime(IReadOnlyList<CastEvent> events, int index)
+    {
+        for (var next = index + 1; next < events.Count; next++)
+        {
+            if (events[next].Kind != CastEventKind.Marker)
+                return events[next].Time == events[index].Time;
+        }
+
+        return false;
     }
 
     /// <summary>

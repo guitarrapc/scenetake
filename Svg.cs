@@ -61,7 +61,8 @@ internal static class SvgRender
     {
         var (canvasWidth, canvasHeight) = TerminalReplay.ResolveCanvasSize(width, height, events);
         var theme = TerminalTheme.FromResolved(render.Theme);
-        var frames = TerminalReplay.BuildFrames(events, width, height, canvasWidth, canvasHeight, theme);
+        // Without --max-fps only the last of frames that share a time is drawn (DropZeroLengthFrames).
+        var frames = TerminalReplay.BuildFrames(events, width, height, canvasWidth, canvasHeight, theme, lastOfSameTime: render.MaxFps <= 0);
         var loopDuration = loopDurationOverride ?? TerminalReplay.ComputeLoopDuration(events);
         return SvgFrameRenderer.Render(events, width, height, frames, render, canvasWidth, canvasHeight, loopDuration);
     }
@@ -940,7 +941,7 @@ internal static class SvgFrameRenderer
         if (viewportLayers.Count == 0)
             viewportLayers = [new AnimLayer(0, canvasWidth, canvasHeight)];
 
-        var keyframes = new LoopKeyframeRegistry(loopDuration);
+        var keyframes = new LoopKeyframeRegistry(loopDurationText);
         var rowKeyframeIds = new int[rowLayers.Count];
         for (var i = 0; i < rowLayers.Count; i++)
             rowKeyframeIds[i] = keyframes.Register(rowLayers[i].Show, rowLayers[i].Hide);
@@ -998,8 +999,8 @@ internal static class SvgFrameRenderer
         sb.AppendLf("text { dominant-baseline: alphabetic; }");
         // Background and block rects in rows carry no class, also inside reused <use> content. This rule gives them crisp edges.
         sb.AppendLf(".bg,rect:not([class]) { shape-rendering: crispEdges; }");
-        // Every animated element: hidden by default, switched exactly at its keyframe offsets, looping.
-        sb.AppendLf(CultureInfo.InvariantCulture, $".l {{ opacity: 0; animation: {loopDurationText}s step-end infinite; }}");
+        // Every animated element: hidden by default, switched at its window's offsets, looping.
+        sb.AppendLf(CultureInfo.InvariantCulture, $".l {{ visibility: hidden; animation: {loopDurationText}s step-start infinite; }}");
         sb.AppendLf(CultureInfo.InvariantCulture,
             $".c {{ fill: {theme.Foreground}; fill-opacity: {cursorOpacityText}; }}");
         for (var row = 0; row < context.RowClasses.Length; row++)
@@ -1091,79 +1092,175 @@ internal static class SvgFrameRenderer
         string.Create(CultureInfo.InvariantCulture, $".{rowClass}{{transform:translate(0,{baseline:0.##}px)}}");
 
     /// <summary>
-    /// Deduplicated keyframes for show/hide windows within the loop. Each animated element has
-    /// class <c>l</c> (hidden, step-end timing, looping) plus a short class naming its keyframes, so a
-    /// window costs one short keyframe rule and one class rule however many elements share it.
+    /// Deduplicated timing for show/hide windows within the loop. Each animated element has class
+    /// <c>l</c> (hidden, step-start timing, looping) plus a short class naming its window.
+    /// <list type="bullet">
+    /// <item>Windows switch <c>visibility</c>. Browsers skip hidden elements when painting, but still
+    /// raster layers at opacity 0, which made playback stutter whenever typing changed a layer.</item>
+    /// <item>A window that ends inside the loop is an <c>animation-delay</c> to its start plus keyframes
+    /// shared by every window of the same length, <c>@keyframes Z{L%{visibility:visible}}</c>: with
+    /// step-start timing a keyframe's value holds from the keyframe before it up to its own offset.
+    /// Most windows then cost one short class rule, and browsers resolve far fewer keyframes on
+    /// every frame.</item>
+    /// <item>Switch times are whole milliseconds. A delay is exact, but a percentage of the loop is not,
+    /// so a percentage step is at most 1µs of the loop, and offsets round so that an element is shown no
+    /// later and hidden no earlier than its millisecond. A layer and its replacement then overlap for
+    /// under 2µs rather than leave a gap in which the row is empty.</item>
+    /// </list>
     /// Names are given after all elements are counted: the most used get the shortest names, and
-    /// keyframes nothing refers to are not written.
+    /// windows nothing refers to are not written.
     /// </summary>
-    private sealed class LoopKeyframeRegistry(double loopDuration)
+    private sealed class LoopKeyframeRegistry
     {
-        private readonly Dictionary<string, int> _idsByBody = new(StringComparer.Ordinal);
-        private readonly List<string> _bodies = [];
+        private const long ToLoopEnd = -1;
+        private static readonly (long Show, long Hide) Never = (-1, -1);
+        private readonly decimal _loop;
+        private readonly decimal _percentScale;
+        private readonly Dictionary<(long Show, long Hide), int> _ids = [];
+        private readonly List<(long Show, long Hide)> _windows = [];
         private readonly List<int> _uses = [];
-        private readonly string _percentFormat = PercentFormat(loopDuration);
+        private readonly Dictionary<long, string> _lengthNames = [];
         private string?[] _names = [];
+
+        private enum WindowKind { Never, Always, ToLoopEnd, Span }
+
+        /// <param name="loopDurationText">The loop in seconds, as the <c>l</c> rule writes it.</param>
+        internal LoopKeyframeRegistry(string loopDurationText)
+        {
+            _loop = decimal.Parse(loopDurationText, NumberStyles.Float, CultureInfo.InvariantCulture);
+            // One step of a percentage is at most 1µs of the loop.
+            var decimals = _loop <= 0 ? 1 : Math.Clamp((int)Math.Ceiling(Math.Log10((double)_loop) + 4), 1, 9);
+            _percentScale = (decimal)Math.Pow(10, decimals);
+        }
 
         internal int Register(double showTime, double? hideTime)
         {
-            var body = BuildStepKeyframesBody(showTime, hideTime);
-            if (_idsByBody.TryGetValue(body, out var existing))
+            var show = Math.Max(0, Milliseconds(showTime));
+            var hide = hideTime is double time && Milliseconds(time) / 1000m < _loop ? Milliseconds(time) : ToLoopEnd;
+            var window = show / 1000m >= _loop || (hide != ToLoopEnd && hide <= show) ? Never : (show, hide);
+            if (_ids.TryGetValue(window, out var existing))
                 return existing;
 
-            var id = _bodies.Count;
-            _idsByBody[body] = id;
-            _bodies.Add(body);
+            var id = _windows.Count;
+            _ids[window] = id;
+            _windows.Add(window);
             _uses.Add(0);
             return id;
         }
 
         internal void Use(int id, int count = 1) => _uses[id] += count;
 
+        /// <summary>
+        /// Names window classes and the keyframes shared by span lengths. A span from 0 needs no delay,
+        /// so its class is the shared keyframes' name. A later span names them once, in its own rule.
+        /// </summary>
         internal void AssignNames(ClassNamePool pool)
         {
-            _names = new string?[_bodies.Count];
-            var order = Enumerable.Range(0, _bodies.Count).Where(id => _uses[id] > 0).OrderByDescending(id => _uses[id]).ThenBy(id => id);
-            foreach (var id in order)
-                _names[id] = pool.Next();
-        }
-
-        internal string Name(int id) => _names[id] ?? throw new InvalidOperationException($"Keyframe {id} has no name; it was not counted as used.");
-
-        internal void AppendAll(StringBuilder sb)
-        {
-            for (var id = 0; id < _bodies.Count; id++)
+            var lengths = new Dictionary<long, (int Uses, int First)>();
+            var entries = new List<(int Uses, int First, int Window, long Length)>();
+            for (var id = 0; id < _windows.Count; id++)
             {
-                if (_names[id] is not { } name)
+                if (_uses[id] == 0)
                     continue;
 
-                sb.Append("@keyframes ").Append(name).Append('{').Append(_bodies[id]).AppendLf("}");
-                sb.Append('.').Append(name).Append("{animation-name:").Append(name).AppendLf("}");
+                var (show, hide) = _windows[id];
+                if (KindOf(id) == WindowKind.Span)
+                {
+                    var length = hide - show;
+                    var (uses, first) = lengths.TryGetValue(length, out var seen) ? seen : (0, id);
+                    lengths[length] = (uses + (show == 0 ? _uses[id] : 1), first);
+                    if (show == 0)
+                        continue;
+                }
+
+                entries.Add((_uses[id], id, id, 0));
+            }
+
+            foreach (var (length, (uses, first)) in lengths)
+                entries.Add((uses, first, -1, length));
+
+            _names = new string?[_windows.Count];
+            foreach (var entry in entries.OrderByDescending(e => e.Uses).ThenBy(e => e.First).ThenBy(e => e.Window))
+            {
+                var name = pool.Next();
+                if (entry.Window < 0)
+                    _lengthNames[entry.Length] = name;
+                else
+                    _names[entry.Window] = name;
             }
         }
 
-        /// <summary>
-        /// Visible from <paramref name="showTime"/> until <paramref name="hideTime"/>. With step-end timing
-        /// the opacity switches exactly at each offset. The implicit 0% and 100% keyframes take the
-        /// element's hidden opacity. A layer's hide and its replacement's show share one offset, so
-        /// they switch together.
-        /// </summary>
-        private string BuildStepKeyframesBody(double showTime, double? hideTime)
+        internal string Name(int id)
         {
-            var show = showTime <= 0 ? "0" : Percent(showTime);
-            return hideTime is double hide
-                ? $"{show}%{{opacity:1}}{Percent(hide)}%{{opacity:0}}"
-                : $"{show}%{{opacity:1}}";
+            var (show, hide) = _windows[id];
+            var name = KindOf(id) == WindowKind.Span && show == 0 ? _lengthNames.GetValueOrDefault(hide - show) : _names[id];
+            return name ?? throw new InvalidOperationException($"Keyframe {id} has no name; it was not counted as used.");
         }
 
-        private string Percent(double time) =>
-            loopDuration <= 0 ? "0" : (time / loopDuration * 100.0).ToString(_percentFormat, CultureInfo.InvariantCulture);
-
-        /// <summary>Enough decimal places that one step of the percentage is at most 1ms of the loop.</summary>
-        private static string PercentFormat(double loopDuration)
+        internal void AppendAll(StringBuilder sb)
         {
-            var decimals = loopDuration <= 0 ? 1 : Math.Clamp((int)Math.Ceiling(Math.Log10(loopDuration * 10)), 1, 6);
-            return "0." + new string('#', decimals);
+            var writtenLengths = new HashSet<long>();
+            var lengthClasses = new HashSet<long>();
+            for (var id = 0; id < _windows.Count; id++)
+            {
+                if (_uses[id] == 0)
+                    continue;
+
+                var (show, hide) = _windows[id];
+                switch (KindOf(id))
+                {
+                    case WindowKind.Never:
+                        // No rule: the l rule names no animation, so the element stays hidden.
+                        break;
+                    case WindowKind.Always:
+                        sb.Append('.').Append(_names[id]).AppendLf("{visibility:visible}");
+                        break;
+                    case WindowKind.ToLoopEnd:
+                    {
+                        var name = _names[id];
+                        sb.Append("@keyframes ").Append(name).Append('{').Append(Percent(show, roundUp: false)).AppendLf("%{visibility:hidden}to{visibility:visible}}");
+                        sb.Append('.').Append(name).Append("{animation-name:").Append(name).AppendLf("}");
+                        break;
+                    }
+                    case WindowKind.Span:
+                    {
+                        var length = hide - show;
+                        var shared = _lengthNames[length];
+                        if (writtenLengths.Add(length))
+                            sb.Append("@keyframes ").Append(shared).Append('{').Append(Percent(length, roundUp: true)).AppendLf("%{visibility:visible}}");
+
+                        if (show != 0)
+                            sb.Append('.').Append(_names[id]).Append("{animation-delay:").Append(Seconds(show)).Append("s;animation-name:").Append(shared).AppendLf("}");
+                        else if (lengthClasses.Add(length))
+                            sb.Append('.').Append(shared).Append("{animation-name:").Append(shared).AppendLf("}");
+                        break;
+                    }
+                }
+            }
+        }
+
+        private WindowKind KindOf(int id)
+        {
+            var (show, hide) = _windows[id];
+            if (show < 0)
+                return WindowKind.Never;
+            if (hide != ToLoopEnd)
+                return WindowKind.Span;
+            return show == 0 ? WindowKind.Always : WindowKind.ToLoopEnd;
+        }
+
+        private static long Milliseconds(double seconds) => (long)Math.Round(seconds * 1000, MidpointRounding.AwayFromZero);
+
+        private static string Seconds(long milliseconds) => (milliseconds / 1000m).ToString("0.###", CultureInfo.InvariantCulture);
+
+        private string Percent(long milliseconds, bool roundUp)
+        {
+            if (_loop <= 0)
+                return "0";
+
+            var scaled = milliseconds / 1000m / _loop * 100m * _percentScale;
+            var steps = roundUp ? Math.Ceiling(scaled) : Math.Floor(scaled);
+            return (steps / _percentScale).ToString("0.#########", CultureInfo.InvariantCulture);
         }
     }
 

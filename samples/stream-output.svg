@@ -4,175 +4,148 @@
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
 .bg,rect:not([class]) { shape-rendering: crispEdges; }
-.l { opacity: 0; animation: 8.423s step-end infinite; }
+.l { visibility: hidden; animation: 8.423s step-start infinite; }
 .c { fill: #d0d0d0; fill-opacity: 0.5; }
 .b{transform:translate(0,44.8px)}
 .e{transform:translate(0,244.8px)}
 .d{transform:translate(0,304.8px)}
 .a{fill:#7dd6cf}
-@keyframes t{8.31%{opacity:1}83.38%{opacity:0}}
-.t{animation-name:t}
-@keyframes u{8.9%{opacity:1}9.5%{opacity:0}}
-.u{animation-name:u}
-@keyframes v{9.5%{opacity:1}10.15%{opacity:0}}
-.v{animation-name:v}
-@keyframes w{10.15%{opacity:1}10.76%{opacity:0}}
-.w{animation-name:w}
-@keyframes x{10.76%{opacity:1}11.23%{opacity:0}}
-.x{animation-name:x}
-@keyframes y{11.23%{opacity:1}12.41%{opacity:0}}
-.y{animation-name:y}
-@keyframes z{12.41%{opacity:1}13.05%{opacity:0}}
-.z{animation-name:z}
-@keyframes aa{13.05%{opacity:1}14.1%{opacity:0}}
-.aa{animation-name:aa}
-@keyframes ab{14.1%{opacity:1}15.11%{opacity:0}}
-.ab{animation-name:ab}
-@keyframes ac{15.11%{opacity:1}15.59%{opacity:0}}
-.ac{animation-name:ac}
-@keyframes ad{15.59%{opacity:1}16.1%{opacity:0}}
-.ad{animation-name:ad}
-@keyframes ae{16.1%{opacity:1}16.75%{opacity:0}}
-.ae{animation-name:ae}
-@keyframes af{16.75%{opacity:1}17.35%{opacity:0}}
-.af{animation-name:af}
-@keyframes ag{17.35%{opacity:1}17.94%{opacity:0}}
-.ag{animation-name:ag}
-@keyframes ah{17.94%{opacity:1}18.63%{opacity:0}}
-.ah{animation-name:ah}
-@keyframes ai{18.63%{opacity:1}19.39%{opacity:0}}
-.ai{animation-name:ai}
-@keyframes aj{19.39%{opacity:1}19.93%{opacity:0}}
-.aj{animation-name:aj}
-@keyframes ak{19.93%{opacity:1}83.38%{opacity:0}}
-.ak{animation-name:ak}
-@keyframes g{24.52%{opacity:1}83.38%{opacity:0}}
-.g{animation-name:g}
-@keyframes al{24.52%{opacity:1}}
-.al{animation-name:al}
-@keyframes am{32.83%{opacity:1}83.38%{opacity:0}}
-.am{animation-name:am}
-@keyframes an{33.42%{opacity:1}34.01%{opacity:0}}
-.an{animation-name:an}
-@keyframes ao{34.01%{opacity:1}34.55%{opacity:0}}
-.ao{animation-name:ao}
-@keyframes ap{34.55%{opacity:1}35.27%{opacity:0}}
-.ap{animation-name:ap}
-@keyframes h{35.27%{opacity:1}35.84%{opacity:0}}
-.h{animation-name:h}
-@keyframes aq{35.84%{opacity:1}37.27%{opacity:0}}
-.aq{animation-name:aq}
-@keyframes ar{37.27%{opacity:1}37.85%{opacity:0}}
-.ar{animation-name:ar}
-@keyframes as{37.85%{opacity:1}39.08%{opacity:0}}
-.as{animation-name:as}
-@keyframes at{39.08%{opacity:1}40.15%{opacity:0}}
-.at{animation-name:at}
-@keyframes i{40.15%{opacity:1}40.88%{opacity:0}}
-.i{animation-name:i}
-@keyframes j{40.88%{opacity:1}41.45%{opacity:0}}
-.j{animation-name:j}
-@keyframes k{41.45%{opacity:1}41.98%{opacity:0}}
-.k{animation-name:k}
-@keyframes m{41.98%{opacity:1}42.49%{opacity:0}}
-.m{animation-name:m}
-@keyframes n{42.49%{opacity:1}43.25%{opacity:0}}
-.n{animation-name:n}
-@keyframes o{43.25%{opacity:1}43.84%{opacity:0}}
-.o{animation-name:o}
-@keyframes p{43.84%{opacity:1}44.38%{opacity:0}}
-.p{animation-name:p}
-@keyframes q{44.38%{opacity:1}44.89%{opacity:0}}
-.q{animation-name:q}
-@keyframes au{44.89%{opacity:1}83.38%{opacity:0}}
-.au{animation-name:au}
-@keyframes av{47.74%{opacity:1}83.38%{opacity:0}}
-.av{animation-name:av}
-@keyframes aw{47.74%{opacity:1}}
-.aw{animation-name:aw}
-@keyframes ax{59.62%{opacity:1}83.38%{opacity:0}}
-.ax{animation-name:ax}
-@keyframes r{71.51%{opacity:1}83.38%{opacity:0}}
-.r{animation-name:r}
-@keyframes f{83.38%{opacity:1}}
-.f{animation-name:f}
-@keyframes ay{91.69%{opacity:1}}
-.ay{animation-name:ay}
-@keyframes az{8.31%{opacity:1}8.9%{opacity:0}}
-.az{animation-name:az}
-@keyframes a0{11.23%{opacity:1}11.91%{opacity:0}}
-.a0{animation-name:a0}
-@keyframes a1{11.91%{opacity:1}12.41%{opacity:0}}
-.a1{animation-name:a1}
-@keyframes a2{13.05%{opacity:1}13.59%{opacity:0}}
-.a2{animation-name:a2}
-@keyframes a3{13.59%{opacity:1}14.1%{opacity:0}}
-.a3{animation-name:a3}
-@keyframes a4{14.1%{opacity:1}14.64%{opacity:0}}
-.a4{animation-name:a4}
-@keyframes a5{14.64%{opacity:1}15.11%{opacity:0}}
-.a5{animation-name:a5}
-@keyframes a6{19.93%{opacity:1}20.36%{opacity:0}}
+@keyframes ag{75.06827%{visibility:visible}}
+.ah{animation-delay:0.7s;animation-name:ag}
+@keyframes h{0.59362%{visibility:visible}}
+.ai{animation-delay:0.75s;animation-name:h}
+@keyframes o{0.65298%{visibility:visible}}
+.aj{animation-delay:0.8s;animation-name:o}
+@keyframes ak{0.60549%{visibility:visible}}
+.al{animation-delay:0.855s;animation-name:ak}
+@keyframes i{0.4749%{visibility:visible}}
+.am{animation-delay:0.906s;animation-name:i}
+@keyframes an{1.17536%{visibility:visible}}
+.ao{animation-delay:0.946s;animation-name:an}
+@keyframes ap{0.64111%{visibility:visible}}
+.aq{animation-delay:1.045s;animation-name:ap}
+@keyframes ar{1.05664%{visibility:visible}}
+.as{animation-delay:1.099s;animation-name:ar}
+@keyframes at{1.00915%{visibility:visible}}
+.au{animation-delay:1.188s;animation-name:at}
+.av{animation-delay:1.273s;animation-name:i}
+@keyframes j{0.51051%{visibility:visible}}
+.aw{animation-delay:1.313s;animation-name:j}
+.ax{animation-delay:1.356s;animation-name:o}
+.ay{animation-delay:1.411s;animation-name:h}
+.az{animation-delay:1.461s;animation-name:h}
+@keyframes p{0.6886%{visibility:visible}}
+.a0{animation-delay:1.511s;animation-name:p}
+@keyframes m{0.75983%{visibility:visible}}
+.a1{animation-delay:1.569s;animation-name:m}
+@keyframes n{0.54613%{visibility:visible}}
+.a2{animation-delay:1.633s;animation-name:n}
+@keyframes a3{63.44533%{visibility:visible}}
+.a4{animation-delay:1.679s;animation-name:a3}
+@keyframes a5{58.86264%{visibility:visible}}
+.g{animation-delay:2.065s;animation-name:a5}
+@keyframes a6{24.5162%{visibility:hidden}to{visibility:visible}}
 .a6{animation-name:a6}
-@keyframes a7{20.36%{opacity:1}24.52%{opacity:0}}
-.a7{animation-name:a7}
-@keyframes a8{24.52%{opacity:1}32.83%{opacity:0}}
-.a8{animation-name:a8}
-@keyframes a9{32.83%{opacity:1}33.42%{opacity:0}}
-.a9{animation-name:a9}
-@keyframes ba{35.84%{opacity:1}36.51%{opacity:0}}
-.ba{animation-name:ba}
-@keyframes bb{36.51%{opacity:1}37.27%{opacity:0}}
-.bb{animation-name:bb}
-@keyframes bc{37.85%{opacity:1}38.39%{opacity:0}}
-.bc{animation-name:bc}
-@keyframes bd{38.39%{opacity:1}39.08%{opacity:0}}
-.bd{animation-name:bd}
-@keyframes be{39.08%{opacity:1}39.67%{opacity:0}}
-.be{animation-name:be}
-@keyframes bf{39.67%{opacity:1}40.15%{opacity:0}}
-.bf{animation-name:bf}
-@keyframes bh{44.89%{opacity:1}45.36%{opacity:0}}
-.bh{animation-name:bh}
-@keyframes bi{45.36%{opacity:1}47.74%{opacity:0}}
-.bi{animation-name:bi}
-@keyframes bj{47.74%{opacity:1}59.62%{opacity:0}}
-.bj{animation-name:bj}
-@keyframes bk{59.62%{opacity:1}71.51%{opacity:0}}
-.bk{animation-name:bk}
-@keyframes bl{83.38%{opacity:1}91.69%{opacity:0}}
-.bl{animation-name:bl}
-@keyframes s{0%{opacity:1}}
-.s{animation-name:s}
+@keyframes a7{50.55206%{visibility:visible}}
+.a8{animation-delay:2.765s;animation-name:a7}
+.a9{animation-delay:2.815s;animation-name:h}
+@keyframes k{0.53426%{visibility:visible}}
+.ba{animation-delay:2.865s;animation-name:k}
+@keyframes q{0.72421%{visibility:visible}}
+.bb{animation-delay:2.91s;animation-name:q}
+@keyframes r{0.56987%{visibility:visible}}
+.s{animation-delay:2.971s;animation-name:r}
+@keyframes bc{1.42468%{visibility:visible}}
+.bd{animation-delay:3.019s;animation-name:bc}
+@keyframes t{0.58175%{visibility:visible}}
+.be{animation-delay:3.139s;animation-name:t}
+@keyframes bf{1.23472%{visibility:visible}}
+.bh{animation-delay:3.188s;animation-name:bf}
+@keyframes bi{1.06851%{visibility:visible}}
+.bj{animation-delay:3.292s;animation-name:bi}
+.u{animation-delay:3.382s;animation-name:q}
+.v{animation-delay:3.443s;animation-name:r}
+.w{animation-delay:3.491s;animation-name:k}
+.x{animation-delay:3.536s;animation-name:j}
+.y{animation-delay:3.579s;animation-name:m}
+.z{animation-delay:3.643s;animation-name:h}
+.aa{animation-delay:3.693s;animation-name:k}
+.ab{animation-delay:3.738s;animation-name:j}
+@keyframes bk{38.48985%{visibility:visible}}
+.bl{animation-delay:3.781s;animation-name:bk}
+@keyframes bm{35.64051%{visibility:visible}}
+.bn{animation-delay:4.021s;animation-name:bm}
+@keyframes bo{47.73833%{visibility:hidden}to{visibility:visible}}
+.bo{animation-name:bo}
+@keyframes bp{23.75639%{visibility:visible}}
+.bq{animation-delay:5.022s;animation-name:bp}
+@keyframes br{11.87226%{visibility:visible}}
+.ac{animation-delay:6.023s;animation-name:br}
+@keyframes f{83.37884%{visibility:hidden}to{visibility:visible}}
+.f{animation-name:f}
+@keyframes bs{91.68942%{visibility:hidden}to{visibility:visible}}
+.bs{animation-name:bs}
+.bt{animation-delay:0.7s;animation-name:h}
+@keyframes bu{0.67672%{visibility:visible}}
+.bv{animation-delay:0.946s;animation-name:bu}
+@keyframes bw{0.49864%{visibility:visible}}
+.bx{animation-delay:1.003s;animation-name:bw}
+.by{animation-delay:1.099s;animation-name:n}
+.bz{animation-delay:1.145s;animation-name:j}
+.b0{animation-delay:1.188s;animation-name:k}
+.b1{animation-delay:1.233s;animation-name:i}
+@keyframes b2{0.42741%{visibility:visible}}
+.b3{animation-delay:1.679s;animation-name:b2}
+@keyframes b4{4.15529%{visibility:visible}}
+.b5{animation-delay:1.715s;animation-name:b4}
+@keyframes ad{8.31058%{visibility:visible}}
+.b6{animation-delay:2.065s;animation-name:ad}
+.b7{animation-delay:2.765s;animation-name:h}
+@keyframes b8{0.66485%{visibility:visible}}
+.b9{animation-delay:3.019s;animation-name:b8}
+.ca{animation-delay:3.075s;animation-name:m}
+.cb{animation-delay:3.188s;animation-name:n}
+.cc{animation-delay:3.234s;animation-name:p}
+.cd{animation-delay:3.292s;animation-name:t}
+@keyframes ce{0.48677%{visibility:visible}}
+.cf{animation-delay:3.341s;animation-name:ce}
+.cg{animation-delay:3.781s;animation-name:i}
+@keyframes ch{2.37446%{visibility:visible}}
+.ci{animation-delay:3.821s;animation-name:ch}
+@keyframes ae{11.88413%{visibility:visible}}
+.cj{animation-delay:4.021s;animation-name:ae}
+.ck{animation-delay:5.022s;animation-name:ae}
+.cl{animation-delay:7.023s;animation-name:ad}
+.af{visibility:visible}
 </style>
 <defs>
 <rect id="c" class="c" width="9.92" height="20"/>
 <mask id="viewport-mask" x="0" y="0" width="829.6" height="504" maskUnits="userSpaceOnUse">
-<rect class="l s viewport-mask-0" x="8" y="8" width="813.6" height="488" fill="white"/>
+<rect class="l af viewport-mask-0" x="8" y="8" width="813.6" height="488" fill="white"/>
 </mask>
 </defs>
 <g mask="url(#viewport-mask)" fill="#d0d0d0">
-<rect class="bg l s viewport-bg-0" x="8" y="8" width="813.6" height="488" fill="#282c34"/>
-<text class="l t a" x="18" y="24.8" textLength="307.52"># instant emit (ping, one blob)</text>
-<g class="l u"><text x="18" y="44.8">$</text><use href="#c" x="37.84" y="32"/></g>
-<g class="l v"><text x="18 37.84" y="44.8">$p</text><use href="#c" x="47.76" y="32"/></g>
-<g class="l w"><text x="18 37.84 47.76" y="44.8">$pi</text><use href="#c" x="57.68" y="32"/></g>
-<g class="l x"><g id="r4"><text x="18 37.84 47.76 57.68" y="44.8">$pin</text></g><use href="#c" x="67.6" y="32"/></g>
-<text class="l y b" x="18" textLength="59.52">$ ping</text>
-<g class="l z b"><text x="18" textLength="79.36">$ ping -</text><use href="#c" x="97.36" y="-12.8"/></g>
-<g class="l aa b"><g id="r7"><text x="18" textLength="89.28">$ ping -n</text></g></g>
-<g class="l ab b"><g id="r8"><text x="18" textLength="109.12">$ ping -n 4</text></g></g>
-<g class="l ac b"><g id="r9"><text x="18" textLength="128.96">$ ping -n 4 1</text></g><use href="#c" x="146.96" y="-12.8"/></g>
-<g class="l ad b"><g id="r10"><text x="18" textLength="138.88">$ ping -n 4 12</text></g><use href="#c" x="156.88" y="-12.8"/></g>
-<g class="l ae b"><g id="r11"><text x="18" textLength="148.8">$ ping -n 4 127</text></g><use href="#c" x="166.8" y="-12.8"/></g>
-<g class="l af b"><g id="r12"><text x="18" textLength="158.72">$ ping -n 4 127.</text></g><use href="#c" x="176.72" y="-12.8"/></g>
-<g class="l ag b"><g id="r13"><text x="18" textLength="168.64">$ ping -n 4 127.0</text></g><use href="#c" x="186.64" y="-12.8"/></g>
-<g class="l ah b"><g id="r14"><text x="18" textLength="178.56">$ ping -n 4 127.0.</text></g><use href="#c" x="196.56" y="-12.8"/></g>
-<g class="l ai b"><g id="r15"><text x="18" textLength="188.48">$ ping -n 4 127.0.0</text></g><use href="#c" x="206.48" y="-12.8"/></g>
-<g class="l aj b"><g id="r16"><text x="18" textLength="198.4">$ ping -n 4 127.0.0.</text></g><use href="#c" x="216.4" y="-12.8"/></g>
-<g class="l ak b"><g id="r17"><text x="18" textLength="208.32">$ ping -n 4 127.0.0.1</text></g></g>
+<rect class="bg l af viewport-bg-0" x="8" y="8" width="813.6" height="488" fill="#282c34"/>
+<text class="l ah a" x="18" y="24.8" textLength="307.52"># instant emit (ping, one blob)</text>
+<g class="l ai"><text x="18" y="44.8">$</text><use href="#c" x="37.84" y="32"/></g>
+<g class="l aj"><text x="18 37.84" y="44.8">$p</text><use href="#c" x="47.76" y="32"/></g>
+<g class="l al"><text x="18 37.84 47.76" y="44.8">$pi</text><use href="#c" x="57.68" y="32"/></g>
+<g class="l am"><g id="r4"><text x="18 37.84 47.76 57.68" y="44.8">$pin</text></g><use href="#c" x="67.6" y="32"/></g>
+<text class="l ao b" x="18" textLength="59.52">$ ping</text>
+<g class="l aq b"><text x="18" textLength="79.36">$ ping -</text><use href="#c" x="97.36" y="-12.8"/></g>
+<g class="l as b"><g id="r7"><text x="18" textLength="89.28">$ ping -n</text></g></g>
+<g class="l au b"><g id="r8"><text x="18" textLength="109.12">$ ping -n 4</text></g></g>
+<g class="l av b"><g id="r9"><text x="18" textLength="128.96">$ ping -n 4 1</text></g><use href="#c" x="146.96" y="-12.8"/></g>
+<g class="l aw b"><g id="r10"><text x="18" textLength="138.88">$ ping -n 4 12</text></g><use href="#c" x="156.88" y="-12.8"/></g>
+<g class="l ax b"><g id="r11"><text x="18" textLength="148.8">$ ping -n 4 127</text></g><use href="#c" x="166.8" y="-12.8"/></g>
+<g class="l ay b"><g id="r12"><text x="18" textLength="158.72">$ ping -n 4 127.</text></g><use href="#c" x="176.72" y="-12.8"/></g>
+<g class="l az b"><g id="r13"><text x="18" textLength="168.64">$ ping -n 4 127.0</text></g><use href="#c" x="186.64" y="-12.8"/></g>
+<g class="l a0 b"><g id="r14"><text x="18" textLength="178.56">$ ping -n 4 127.0.</text></g><use href="#c" x="196.56" y="-12.8"/></g>
+<g class="l a1 b"><g id="r15"><text x="18" textLength="188.48">$ ping -n 4 127.0.0</text></g><use href="#c" x="206.48" y="-12.8"/></g>
+<g class="l a2 b"><g id="r16"><text x="18" textLength="198.4">$ ping -n 4 127.0.0.</text></g><use href="#c" x="216.4" y="-12.8"/></g>
+<g class="l a4 b"><g id="r17"><text x="18" textLength="208.32">$ ping -n 4 127.0.0.1</text></g></g>
 <g class="l g"><g id="r18"><text x="18" y="84.8" textLength="396.8">Pinging 127.0.0.1 with 32 bytes of data:</text></g></g>
-<g class="l al"><g id="r19"><text x="18" y="104.8" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g></g>
+<g class="l a6"><g id="r19"><text x="18" y="104.8" textLength="466.24">Reply from 127.0.0.1: bytes=32 time&lt;1ms TTL=128</text></g></g>
 <use href="#r19" y="20" class="l g"/>
 <use href="#r19" y="40" class="l g"/>
 <use href="#r19" y="60" class="l g"/>
@@ -180,28 +153,28 @@ text { dominant-baseline: alphabetic; }
 <g class="l g"><g id="r24"><text x="57.68" y="224.8" textLength="515.84">Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),</text></g></g>
 <g class="l g"><g id="r25"><text x="18" y="244.8" textLength="456.32">Approximate round trip times in milli-seconds:</text></g></g>
 <g class="l g"><g id="r26"><text x="57.68" y="264.8" textLength="426.56">Minimum = 0ms, Maximum = 0ms, Average = 0ms</text></g></g>
-<g class="l am"><g id="r27"><text class="a" x="18" y="284.8" textLength="396.8"># stream-output (ping, staggered replay)</text></g></g>
-<g class="l an"><text x="18" y="304.8">$</text><use href="#c" x="37.84" y="292"/></g>
-<g class="l ao"><text x="18 37.84" y="304.8">$p</text><use href="#c" x="47.76" y="292"/></g>
-<g class="l ap"><text x="18 37.84 47.76" y="304.8">$pi</text><use href="#c" x="57.68" y="292"/></g>
-<use href="#r4" y="260" class="l h"/>
-<text class="l aq d" x="18" textLength="59.52">$ ping</text>
-<g class="l ar d"><text x="18" textLength="79.36">$ ping -</text><use href="#c" x="97.36" y="-12.8"/></g>
-<use href="#r7" class="l as d"/>
-<use href="#r8" class="l at d"/>
-<use href="#r9" class="l i d"/>
-<use href="#r10" class="l j d"/>
-<use href="#r11" class="l k d"/>
-<use href="#r12" class="l m d"/>
-<use href="#r13" class="l n d"/>
-<use href="#r14" class="l o d"/>
-<use href="#r15" class="l p d"/>
-<use href="#r16" class="l q d"/>
-<use href="#r17" class="l au d"/>
-<use href="#r18" y="260" class="l av"/>
-<use href="#r19" y="260" class="l aw"/>
-<use href="#r19" y="280" class="l ax"/>
-<use href="#r19" y="300" class="l r"/>
+<g class="l a8"><g id="r27"><text class="a" x="18" y="284.8" textLength="396.8"># stream-output (ping, staggered replay)</text></g></g>
+<g class="l a9"><text x="18" y="304.8">$</text><use href="#c" x="37.84" y="292"/></g>
+<g class="l ba"><text x="18 37.84" y="304.8">$p</text><use href="#c" x="47.76" y="292"/></g>
+<g class="l bb"><text x="18 37.84 47.76" y="304.8">$pi</text><use href="#c" x="57.68" y="292"/></g>
+<use href="#r4" y="260" class="l s"/>
+<text class="l bd d" x="18" textLength="59.52">$ ping</text>
+<g class="l be d"><text x="18" textLength="79.36">$ ping -</text><use href="#c" x="97.36" y="-12.8"/></g>
+<use href="#r7" class="l bh d"/>
+<use href="#r8" class="l bj d"/>
+<use href="#r9" class="l u d"/>
+<use href="#r10" class="l v d"/>
+<use href="#r11" class="l w d"/>
+<use href="#r12" class="l x d"/>
+<use href="#r13" class="l y d"/>
+<use href="#r14" class="l z d"/>
+<use href="#r15" class="l aa d"/>
+<use href="#r16" class="l ab d"/>
+<use href="#r17" class="l bl d"/>
+<use href="#r18" y="260" class="l bn"/>
+<use href="#r19" y="260" class="l bo"/>
+<use href="#r19" y="280" class="l bq"/>
+<use href="#r19" y="300" class="l ac"/>
 <use href="#r18" y="-60" class="l f"/>
 <use href="#r19" y="-60" class="l f"/>
 <use href="#r19" y="-40" class="l f"/>
@@ -220,38 +193,38 @@ text { dominant-baseline: alphabetic; }
 <use href="#r24" y="200" class="l f"/>
 <use href="#r25" y="200" class="l f"/>
 <use href="#r26" y="200" class="l f"/>
-<g class="l ay"><text x="18" y="484.8">$</text><use href="#c" x="37.84" y="472"/></g>
-<use href="#c" x="18" y="32" class="l az"/>
-<use href="#c" x="77.52" y="32" class="l a0"/>
-<use href="#c" x="87.44" y="32" class="l a1"/>
-<use href="#c" x="107.28" y="32" class="l a2"/>
-<use href="#c" x="117.2" y="32" class="l a3"/>
-<use href="#c" x="127.12" y="32" class="l a4"/>
-<use href="#c" x="137.04" y="32" class="l a5"/>
-<use href="#c" x="226.32" y="32" class="l a6"/>
-<use href="#c" x="18" y="52" class="l a7"/>
-<use href="#c" x="18" y="272" class="l a8"/>
-<use href="#c" x="18" y="292" class="l a9"/>
-<use href="#c" x="67.6" y="292" class="l h"/>
-<use href="#c" x="77.52" y="292" class="l ba"/>
-<use href="#c" x="87.44" y="292" class="l bb"/>
-<use href="#c" x="107.28" y="292" class="l bc"/>
-<use href="#c" x="117.2" y="292" class="l bd"/>
-<use href="#c" x="127.12" y="292" class="l be"/>
-<use href="#c" x="137.04" y="292" class="l bf"/>
-<use href="#c" x="146.96" y="292" class="l i"/>
-<use href="#c" x="156.88" y="292" class="l j"/>
-<use href="#c" x="166.8" y="292" class="l k"/>
-<use href="#c" x="176.72" y="292" class="l m"/>
-<use href="#c" x="186.64" y="292" class="l n"/>
-<use href="#c" x="196.56" y="292" class="l o"/>
-<use href="#c" x="206.48" y="292" class="l p"/>
-<use href="#c" x="216.4" y="292" class="l q"/>
-<use href="#c" x="226.32" y="292" class="l bh"/>
-<use href="#c" x="18" y="312" class="l bi"/>
-<use href="#c" x="18" y="372" class="l bj"/>
-<use href="#c" x="18" y="392" class="l bk"/>
-<use href="#c" x="18" y="412" class="l r"/>
-<use href="#c" x="18" y="472" class="l bl"/>
+<g class="l bs"><text x="18" y="484.8">$</text><use href="#c" x="37.84" y="472"/></g>
+<use href="#c" x="18" y="32" class="l bt"/>
+<use href="#c" x="77.52" y="32" class="l bv"/>
+<use href="#c" x="87.44" y="32" class="l bx"/>
+<use href="#c" x="107.28" y="32" class="l by"/>
+<use href="#c" x="117.2" y="32" class="l bz"/>
+<use href="#c" x="127.12" y="32" class="l b0"/>
+<use href="#c" x="137.04" y="32" class="l b1"/>
+<use href="#c" x="226.32" y="32" class="l b3"/>
+<use href="#c" x="18" y="52" class="l b5"/>
+<use href="#c" x="18" y="272" class="l b6"/>
+<use href="#c" x="18" y="292" class="l b7"/>
+<use href="#c" x="67.6" y="292" class="l s"/>
+<use href="#c" x="77.52" y="292" class="l b9"/>
+<use href="#c" x="87.44" y="292" class="l ca"/>
+<use href="#c" x="107.28" y="292" class="l cb"/>
+<use href="#c" x="117.2" y="292" class="l cc"/>
+<use href="#c" x="127.12" y="292" class="l cd"/>
+<use href="#c" x="137.04" y="292" class="l cf"/>
+<use href="#c" x="146.96" y="292" class="l u"/>
+<use href="#c" x="156.88" y="292" class="l v"/>
+<use href="#c" x="166.8" y="292" class="l w"/>
+<use href="#c" x="176.72" y="292" class="l x"/>
+<use href="#c" x="186.64" y="292" class="l y"/>
+<use href="#c" x="196.56" y="292" class="l z"/>
+<use href="#c" x="206.48" y="292" class="l aa"/>
+<use href="#c" x="216.4" y="292" class="l ab"/>
+<use href="#c" x="226.32" y="292" class="l cg"/>
+<use href="#c" x="18" y="312" class="l ci"/>
+<use href="#c" x="18" y="372" class="l cj"/>
+<use href="#c" x="18" y="392" class="l ck"/>
+<use href="#c" x="18" y="412" class="l ac"/>
+<use href="#c" x="18" y="472" class="l cl"/>
 </g>
 </svg>

@@ -22,6 +22,10 @@ failures += Run("CsiParameterWhitespace", CsiParameterWhitespace);
 failures += Run("InvalidUtf8Replacement", InvalidUtf8Replacement);
 failures += Run("InsertBlankCharacters", InsertBlankCharacters);
 failures += Run("ScrollRegion", ScrollRegion);
+failures += Run("ScrollRegionByCount", ScrollRegionByCount);
+failures += Run("InsertAndDeleteLines", InsertAndDeleteLines);
+failures += Run("SameTimeFramesKeepLastScreen", SameTimeFramesKeepLastScreen);
+failures += Run("SameTimeFramesWithBlankFinalScreen", SameTimeFramesWithBlankFinalScreen);
 failures += Run("NameCommentPrefixIgnoresTrailingAnsiControls", NameCommentPrefixIgnoresTrailingAnsiControls);
 failures += Run("AlternateScreenRestoreKeepsNextPromptAdjacent", AlternateScreenRestoreKeepsNextPromptAdjacent);
 failures += Run("VimRedrawAtScenarioHeight", VimRedrawAtScenarioHeight);
@@ -254,6 +258,79 @@ static bool ScrollRegion()
         && buffer.GetCell(1, 0).Text == "C"
         && buffer.GetCell(2, 0).Text == " "
         && buffer.GetCell(3, 0).Text == "D";
+}
+
+/// <summary>Rows A–E with a red C, scroll region rows 2–4, after <paramref name="sequence"/>: the first letter of each row.</summary>
+static (string Rows, bool RedMoved) ScrollRegionAfter(string sequence, int redRow)
+{
+    var theme = DarkTheme();
+    var buffer = new ScreenBuffer(3, 5, theme);
+    var parser = new AnsiParser(buffer, theme);
+    parser.Process("\u001b[1;1HAAA\u001b[2;1HBBB\u001b[3;1H\u001b[31mCCC\u001b[m\u001b[4;1HDDD\u001b[5;1HEEE\u001b[2;4r");
+    parser.Process(sequence);
+    var rows = string.Concat(Enumerable.Range(0, buffer.Height).Select(row => buffer.GetCell(row, 0).Text == " " ? "." : buffer.GetCell(row, 0).Text));
+    var red = redRow < 0 || (buffer.GetCell(redRow, 2).Text == "C" && buffer.GetCell(redRow, 2).Foreground == theme.AnsiPalette[1]);
+    return (rows, red);
+}
+
+static bool ScrollRegionByCount()
+{
+    // Whole rows move together, styles included; rows outside the region stay.
+    return ScrollRegionAfter("\u001b[2S", redRow: -1) == ("AD..E", true)
+        && ScrollRegionAfter("\u001b[1S", redRow: 1) == ("ACD.E", true)
+        && ScrollRegionAfter("\u001b[2T", redRow: -1) == ("A..BE", true)
+        && ScrollRegionAfter("\u001b[1T", redRow: 3) == ("A.BCE", true)
+        && ScrollRegionAfter("\u001b[9S", redRow: -1) == ("A...E", true)
+        && ScrollRegionAfter("\u001b[9T", redRow: -1) == ("A...E", true)
+        && ScrollRegionAfter("\u001b[4;1H\n", redRow: 1) == ("ACD.E", true);
+}
+
+static bool InsertAndDeleteLines()
+{
+    // Lines move from the cursor row to the bottom of the scroll region; outside it nothing happens.
+    return ScrollRegionAfter("\u001b[3;1H\u001b[L", redRow: 3) == ("AB.CE", true)
+        && ScrollRegionAfter("\u001b[2;1H\u001b[2M", redRow: -1) == ("AD..E", true)
+        && ScrollRegionAfter("\u001b[3;1H\u001b[9M", redRow: -1) == ("AB..E", true)
+        && ScrollRegionAfter("\u001b[2;1H\u001b[2L", redRow: -1) == ("A..BE", true)
+        && ScrollRegionAfter("\u001b[5;1H\u001b[M", redRow: 2) == ("ABCDE", true);
+}
+
+static List<CastEvent> OutputEvents(params (double Time, string Data)[] events) =>
+    events.Select(e => e.Data.StartsWith('#') ? CastEvent.Marker(e.Time, e.Data) : CastEvent.Output(e.Time, e.Data)).ToList();
+
+static bool SameTimeFramesKeepLastScreen()
+{
+    // Writes within one millisecond: only the screen after the last of them is kept, at the event
+    // that wrote it. A marker between same-time writes does not split them. The cursor hidden and
+    // shown again at 1.0 leaves the screen as it was, so that time adds no frame.
+    var theme = DarkTheme();
+    var events = OutputEvents(
+        (0.5, "a"), (0.5, "#mark"), (0.5, "b"), (0.5, "c"),
+        (1.0, "\u001b[?25l"), (1.0, "\u001b[?25h"),
+        (1.5, "d"), (2.0, "e"), (2.0, "#end"));
+    var all = TerminalReplay.BuildFrames(events, 8, 2, 8, 2, theme);
+    var last = TerminalReplay.BuildFrames(events, 8, 2, 8, 2, theme, lastOfSameTime: true);
+
+    // What a caller that keeps the last of frames sharing a time sees, without repeats of an unchanged screen.
+    var kept = all.Where((f, i) => i + 1 == all.Count || all[i + 1].Time != f.Time).ToList();
+    kept = kept.Where((f, i) => i == 0 || kept[i - 1].Signature != f.Signature).ToList();
+    return all.Count == 7
+        && last.Select(f => (f.Time, f.Signature)).SequenceEqual(kept.Select(f => (f.Time, f.Signature)))
+        && last.Select(f => f.EventIndex).SequenceEqual([3, 6, 7]);
+}
+
+static bool SameTimeFramesWithBlankFinalScreen()
+{
+    // A blank final screen after leaving the alternate screen is trimmed, which needs every frame:
+    // both modes return the same list.
+    var theme = DarkTheme();
+    var events = OutputEvents(
+        (0.0, "\u001b[?1049h"), (0.5, "x"), (0.5, "y"), (1.0, "\u001b[2J"), (1.0, "\u001b[?1049l"));
+    var all = TerminalReplay.BuildFrames(events, 8, 2, 8, 2, theme);
+    var last = TerminalReplay.BuildFrames(events, 8, 2, 8, 2, theme, lastOfSameTime: true);
+    return all.Count > 0
+        && !all[^1].IsBlank
+        && last.Select(f => (f.Time, f.Signature, f.EventIndex)).SequenceEqual(all.Select(f => (f.Time, f.Signature, f.EventIndex)));
 }
 
 static bool NameCommentPrefixIgnoresTrailingAnsiControls()

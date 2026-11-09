@@ -4,18 +4,17 @@
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
 .bg,rect:not([class]) { shape-rendering: crispEdges; }
-.l { opacity: 0; animation: 1.6s step-end infinite; }
+.l { visibility: hidden; animation: 1.6s step-start infinite; }
 .c { fill: #d0d0d0; fill-opacity: 0.5; }
-@keyframes e{0%{opacity:1}}
-.e{animation-name:e}
-@keyframes f{37.5%{opacity:1}}
+.e{visibility:visible}
+@keyframes f{37.5%{visibility:hidden}to{visibility:visible}}
 .f{animation-name:f}
-@keyframes a{68.75%{opacity:1}}
+@keyframes a{68.75%{visibility:hidden}to{visibility:visible}}
 .a{animation-name:a}
-@keyframes b{0%{opacity:1}37.5%{opacity:0}}
+@keyframes b{37.5%{visibility:visible}}
 .b{animation-name:b}
-@keyframes d{37.5%{opacity:1}68.75%{opacity:0}}
-.d{animation-name:d}
+@keyframes g{31.25%{visibility:visible}}
+.d{animation-delay:0.6s;animation-name:g}
 </style>
 <defs>
 <rect id="c" class="c" width="9.92" height="20"/>
