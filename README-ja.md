@@ -230,6 +230,7 @@ mp4 は手元にインストールされたフォントで描画します。`fon
   - Linux/macOS の既定シェルは `$SHELL`、なければ `bash`
   - Windows の既定シェルは `pwsh`、なければ `powershell`、Windows で `shell: bash` を指定した場合は Git Bash / MSYS の `bash` を使います
   - Windows で `C:/tools/pwsh-preview/pwsh.exe` のようにパスを書くと、そのファイルを起動します。WSL の `bash` はパスで指定しても使いません
+  - 名前で指定したシェルは、カレントディレクトリにある同名ファイルを起動しません。Windows ではそのファイルを無視します。Linux/macOS ではエラーで停止するので、別のディレクトリから実行するか、シェルをフルパスで指定してください
 - `settings` でpromptとtiming の既定値を設定できます
 - `render` は cast ヘッダーの表示メタデータ（`st:font-size` タグ、`term.theme`）と SVG 出力を制御します。詳細は [.github/docs/spec_cast.md](.github/docs/spec_cast.md) と [.github/docs/spec_svg.md](.github/docs/spec_svg.md)
 - `pre` / `post` は録画フロー外で setup / teardown コマンドを実行します。stdout/stderr は CLI に表示されますが、cast ファイルには一切書き込まれません。

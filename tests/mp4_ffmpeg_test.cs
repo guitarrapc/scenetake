@@ -66,6 +66,13 @@ try
     else
         Console.Error.WriteLine("skip WindowsShellPathStartsThatFile: Windows only");
 
+    // A shell name never starts a file from the current directory. Windows looks the name up itself and skips
+    // the file; Unix leaves the lookup to the start, so it refuses the run instead.
+    if (OperatingSystem.IsWindows())
+        failures += Run("WindowsShellNameSkipsCurrentDirectory", () => WindowsShellNameSkipsCurrentDirectory(scenetake, work));
+    else
+        failures += Run("UnixShellNameInCurrentDirectoryIsRefused", () => UnixShellNameInCurrentDirectoryIsRefused(scenetake, repoRoot, work));
+
     if (FindOnPath("ffmpeg") is null || FindOnPath("ffprobe") is null)
     {
         Console.Error.WriteLine("skip mp4 encode tests: ffmpeg and ffprobe not found on PATH");
@@ -882,6 +889,77 @@ static bool WindowsShellPathStartsThatFile(string scenetake, string repoRoot, st
         if (name == "wrapper")
             ok &= File.Exists(wrapperMarker);
         if (!ok)
+        {
+            Console.Error.WriteLine($"  {name}: exit {exit}{Environment.NewLine}{stderr}");
+            passed = false;
+        }
+    }
+
+    return passed;
+}
+
+static bool UnixShellNameInCurrentDirectoryIsRefused(string scenetake, string repoRoot, string work)
+{
+    // .NET starts a bare name from the current directory before PATH, so a repository holding its own "bash"
+    // would run it as the shell. Started from that folder, both a "shell: bash" scenario and one that falls
+    // back to bash (no shell key, SHELL empty) must stop before pre. The same scenario started from another
+    // folder runs with the bash on PATH, so the refusal comes from the current directory alone.
+    var directory = Directory.CreateDirectory(Path.Combine(work, "cwd-shell-unix")).FullName;
+    var binary = Path.GetFullPath(scenetake);
+    var planted = Path.Combine(directory, "planted-ran.txt");
+    var fake = Path.Combine(directory, "bash");
+    File.WriteAllText(fake, $"#!/bin/sh\necho planted > '{planted}'\n");
+    File.SetUnixFileMode(fake, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+    var steps = "pre:\n  - echo ran > pre-ran.txt\nsteps:\n  - run: echo hi\n";
+    var named = Path.Combine(directory, "named.yaml");
+    File.WriteAllText(named, $"cwd: '{directory}'\nshell: bash\n{steps}");
+    var fallback = Path.Combine(directory, "fallback.yaml");
+    File.WriteAllText(fallback, $"cwd: '{directory}'\n{steps}");
+    var preMarker = Path.Combine(directory, "pre-ran.txt");
+
+    var passed = true;
+    foreach (var (name, scenario, environment) in new[] { ("named", named, (Dictionary<string, string>?)null), ("fallback", fallback, new() { ["SHELL"] = "" }) })
+    {
+        var (exit, stderr) = Exec(binary, directory, [scenario, Path.Combine(directory, name)], environment);
+        if (exit != 1 || !stderr.Contains("the current directory has a file named 'bash'", StringComparison.Ordinal)
+            || stderr.Contains("Unhandled", StringComparison.Ordinal) || File.Exists(planted) || File.Exists(preMarker))
+        {
+            Console.Error.WriteLine($"  {name}: exit {exit}{Environment.NewLine}{stderr}");
+            passed = false;
+        }
+    }
+
+    var (elsewhereExit, elsewhereStderr) = Exec(binary, repoRoot, [named, Path.Combine(directory, "elsewhere")]);
+    if (elsewhereExit != 0 || File.Exists(planted) || !File.Exists(preMarker))
+    {
+        Console.Error.WriteLine($"  elsewhere: exit {elsewhereExit}{Environment.NewLine}{elsewhereStderr}");
+        passed = false;
+    }
+
+    return passed;
+}
+
+static bool WindowsShellNameSkipsCurrentDirectory(string scenetake, string work)
+{
+    // A repository could hold its own pwsh.exe or cmd.exe. scenetake used to check the current directory
+    // before PATH, and the extensionless name made it pick these files. They are not programs, so starting
+    // one fails; the shell from PATH writes the pre marker. The default shell (pwsh, then powershell) and
+    // "shell: cmd" are both checked.
+    var directory = Directory.CreateDirectory(Path.Combine(work, "cwd-shell-windows")).FullName;
+    var binary = Path.GetFullPath(scenetake);
+    foreach (var name in new[] { "pwsh", "pwsh.exe", "powershell", "powershell.exe", "cmd", "cmd.exe" })
+        File.WriteAllText(Path.Combine(directory, name), "not a program");
+    var cwd = directory.Replace('\\', '/');
+
+    var passed = true;
+    foreach (var (name, shellKey) in new[] { ("default", ""), ("cmd", "shell: cmd\n") })
+    {
+        var scenario = Path.Combine(directory, $"{name}.yaml");
+        File.WriteAllText(scenario, $"cwd: '{cwd}'\n{shellKey}pre:\n  - echo ran > {name}-pre-ran.txt\nsteps:\n  - run: echo hi\n");
+        var (exit, stderr) = Exec(binary, directory, [scenario, Path.Combine(directory, name)]);
+        var marker = Path.Combine(directory, $"{name}-pre-ran.txt");
+        if (exit != 0 || stderr.Contains("Unhandled", StringComparison.Ordinal) || !File.Exists(marker)
+            || !File.ReadAllText(marker).Contains("ran", StringComparison.Ordinal))
         {
             Console.Error.WriteLine($"  {name}: exit {exit}{Environment.NewLine}{stderr}");
             passed = false;

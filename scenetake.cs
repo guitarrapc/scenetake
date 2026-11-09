@@ -2859,7 +2859,27 @@ static ShellLaunch ResolveShell(Scenario scenario)
     if (Path.IsPathRooted(requested) && !requested.Split('/').Contains("..") && !File.Exists(requested))
         throw new InvalidOperationException($"Shell '{requested}' was requested, but it could not be found.");
 
+    // .NET starts a name with no "/" from the current directory before PATH (pre, post and pipe steps; PTY steps
+    // search PATH only). A cloned repository with a file named like the shell would then run that file as the
+    // shell. Starting the PATH one by full path would change $0, so refuse instead.
+    if (!requested.Contains('/') && CurrentDirectoryHasFile(requested))
+        throw new InvalidOperationException($"Shell '{requested}' was requested, but the current directory has a file named '{requested}', which would start instead of the one on PATH. Run scenetake from another directory, or set the shell to a full path.");
+
     return new ShellLaunch(requested, ["-lc"], requested, requested);
+}
+
+static bool CurrentDirectoryHasFile(string name)
+{
+    try
+    {
+        // File.Exists, as .NET's lookup uses: a link counts even when its target is missing.
+        return File.Exists(Path.Combine(Directory.GetCurrentDirectory(), name));
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+    {
+        // No current directory to read, so .NET cannot start a file from it either.
+        return false;
+    }
 }
 
 static ShellLaunch ResolveWindowsShell(string? requested)
@@ -2968,7 +2988,7 @@ static bool TryResolveWindowsBash(out string resolved)
         Environment.GetEnvironmentVariable("ProgramFiles") ?? string.Empty,
         Environment.GetEnvironmentVariable("ProgramFiles(x86)") ?? string.Empty,
         Environment.GetEnvironmentVariable("LOCALAPPDATA") ?? string.Empty,
-        Environment.GetEnvironmentVariable("ProgramData") ?? string.Empty,
+        // Not ProgramData: every user can create folders there, so another account could add a Git\bin\bash.exe.
     };
 
     var candidatePaths = new[]
@@ -3005,12 +3025,8 @@ static bool IsWslBashPath(string path)
 
 static bool TryResolveExecutableOnWindows(string executableName, out string resolved)
 {
-    if (File.Exists(executableName))
-    {
-        resolved = Path.GetFullPath(executableName);
-        return true;
-    }
-
+    // PATH only, never the current directory: a cloned repository or an extracted archive could hold its own
+    // pwsh, cmd or bash.exe, which would then run as the shell.
     var pathEnv = Environment.GetEnvironmentVariable("PATH");
     if (!string.IsNullOrWhiteSpace(pathEnv))
     {
