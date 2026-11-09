@@ -158,6 +158,10 @@ internal sealed class ScreenBuffer
 
     internal int Width { get; private set; }
     internal int Height { get; private set; }
+
+    /// <summary>How many times the screen has entered or left the alternate screen. Repeated enters or leaves do not count.</summary>
+    internal int AlternateScreenSwitches { get; private set; }
+
     internal int CursorRow { get; private set; }
     internal int CursorCol { get; private set; }
     internal bool CursorVisible { get; set; }
@@ -388,6 +392,7 @@ internal sealed class ScreenBuffer
             _savedMainCol = _savedMainCol,
             _savedMainPendingWrap = _savedMainPendingWrap,
             _isAltScreen = _isAltScreen,
+            AlternateScreenSwitches = AlternateScreenSwitches,
             _scrollTop = _scrollTop,
             _scrollBottom = _scrollBottom,
             _pendingWrap = _pendingWrap,
@@ -697,6 +702,7 @@ internal sealed class ScreenBuffer
             _scrollTop = 0;
             _scrollBottom = Height - 1;
             _isAltScreen = true;
+            AlternateScreenSwitches++;
             return;
         }
 
@@ -705,6 +711,7 @@ internal sealed class ScreenBuffer
 
         _cells = _mainCells;
         _isAltScreen = false;
+        AlternateScreenSwitches++;
         CursorRow = Clamp(_savedMainRow, 0, Height - 1);
         CursorCol = Clamp(_savedMainCol, 0, Width - 1);
         _pendingWrap = _savedMainPendingWrap;
@@ -1976,6 +1983,9 @@ internal sealed class ReplayFrame(double time, int viewportWidth, int viewportHe
 internal readonly record struct ReplayCapture(
     double Time, ScreenBuffer View, int ViewportWidth, int ViewportHeight, ulong Signature, int EventIndex);
 
+/// <summary>See <see cref="TerminalReplay.PlanFixedRate"/>.</summary>
+internal sealed record FixedRatePlan(int StopIndex, IReadOnlyList<int> ScreenSwitchFrames);
+
 /// <summary>
 /// Steps the emulator through cast events by time, for fixed-rate sampling (mp4).
 /// Applies events exactly as <see cref="TerminalReplay.EnumerateCaptures"/> does, so a
@@ -1983,7 +1993,7 @@ internal readonly record struct ReplayCapture(
 /// </summary>
 internal sealed class ReplayStepper
 {
-    private const double TimeEpsilon = 1e-9;
+    internal const double TimeEpsilon = 1e-9;
     private readonly IReadOnlyList<CastEvent> _events;
     private readonly ScreenBuffer _buffer;
     private readonly AnsiParser _parser;
@@ -1993,7 +2003,7 @@ internal sealed class ReplayStepper
     private int _next;
     private ulong _lastSignature;
 
-    /// <param name="stopIndex">Events at or after this index are never applied (see <see cref="TerminalReplay.FindTrailingBlankCutoff"/>).</param>
+    /// <param name="stopIndex">Events at or after this index are never applied (see <see cref="TerminalReplay.PlanFixedRate"/>).</param>
     internal ReplayStepper(
         IReadOnlyList<CastEvent> events,
         int initialWidth,
@@ -2125,40 +2135,109 @@ internal static class TerminalReplay
     }
 
     /// <summary>
-    /// Index of the first event whose screen change the SVG drops as a trailing blank
-    /// alternate-screen restore, or <c>events.Count</c> when nothing is dropped. A
-    /// fixed-rate renderer stops applying events there so it ends on the same screen.
+    /// What a fixed-rate renderer needs before it draws, from one parse of the recording in the common case:
+    /// <list type="bullet">
+    /// <item><see cref="FixedRatePlan.StopIndex"/>: the first event whose screen change the SVG drops as a trailing
+    /// blank alternate-screen restore, or <c>events.Count</c>. The renderer stops applying events there so it
+    /// ends on the same screen.</item>
+    /// <item><see cref="FixedRatePlan.ScreenSwitchFrames"/>: for each switch into or out of the alternate screen,
+    /// the first frame at or after it that shows a non-blank screen. A full-screen program usually enters the
+    /// alternate screen a little before it draws, so the frame of the switch itself is often blank. Frame 0 is
+    /// left out.</item>
+    /// </list>
+    /// Frame <c>k</c> shows the events with time ≤ <c>k / fps</c>, as in <see cref="ReplayStepper"/>.
     /// </summary>
-    internal static int FindTrailingBlankCutoff(
+    internal static FixedRatePlan PlanFixedRate(
         IReadOnlyList<CastEvent> events,
         int initialWidth,
         int initialHeight,
         int canvasWidth,
         int canvasHeight,
-        TerminalTheme theme)
+        TerminalTheme theme,
+        int fps,
+        int frameCount)
     {
-        // Only a blank final screen can be trimmed. Checking that needs a parse-only replay,
-        // which is much cheaper than hashing the screen after every event below.
-        var final = new ScreenBuffer(initialWidth, initialHeight, theme);
-        var finalParser = new AnsiParser(final, theme);
-        foreach (var ev in events)
-        {
-            if (ev.Kind == CastEventKind.Marker)
-                continue;
-            if (ev.Kind == CastEventKind.Resize)
-                final.Resize(ev.ResizeWidth, ev.ResizeHeight);
-            else if (ev.HasUtf8Output)
-                finalParser.ProcessUtf8(ev.Utf8Output.Span);
-            else
-                finalParser.Process(ev.Data);
-        }
+        var switchFrames = FindScreenSwitchFrames(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme, fps, frameCount, events.Count, out var finalIsBlank);
 
-        if (!IsBlankBuffer(ViewForCanvas(final, canvasWidth, canvasHeight)))
-            return events.Count;
+        // Only a blank final screen can be trimmed, and checking which events to drop needs the screen hash
+        // after every event, which is much more expensive than the parse above.
+        if (!finalIsBlank)
+            return new FixedRatePlan(events.Count, switchFrames);
 
         var frames = CollectFrames(EnumerateCaptures(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme));
         var kept = TrimTrailingBlankRestore(frames, events).Count;
-        return kept < frames.Count && frames[kept].EventIndex >= 0 ? frames[kept].EventIndex : events.Count;
+        var stopIndex = kept < frames.Count && frames[kept].EventIndex >= 0 ? frames[kept].EventIndex : events.Count;
+        if (stopIndex == events.Count)
+            return new FixedRatePlan(stopIndex, switchFrames);
+
+        // The dropped events may include a switch, and they change what later frames show.
+        return new FixedRatePlan(stopIndex, FindScreenSwitchFrames(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme, fps, frameCount, stopIndex, out _));
+    }
+
+    private static List<int> FindScreenSwitchFrames(
+        IReadOnlyList<CastEvent> events,
+        int initialWidth,
+        int initialHeight,
+        int canvasWidth,
+        int canvasHeight,
+        TerminalTheme theme,
+        int fps,
+        int frameCount,
+        int stopIndex,
+        out bool finalIsBlank)
+    {
+        var buffer = new ScreenBuffer(initialWidth, initialHeight, theme);
+        var parser = new AnsiParser(buffer, theme);
+        var switchFrames = new List<int>();
+        var seenSwitches = 0;
+        var waitingForScreen = false;
+        var next = 0;
+        for (var frame = 0; frame < frameCount && next < stopIndex; frame++)
+        {
+            var applied = false;
+            while (next < stopIndex && events[next].Time <= frame / (double)fps + ReplayStepper.TimeEpsilon)
+            {
+                applied |= Apply(buffer, parser, events[next++]);
+            }
+
+            if (!applied)
+                continue;
+
+            if (buffer.AlternateScreenSwitches != seenSwitches)
+            {
+                seenSwitches = buffer.AlternateScreenSwitches;
+                waitingForScreen = true;
+            }
+
+            if (waitingForScreen && !IsBlankBuffer(ViewForCanvas(buffer, canvasWidth, canvasHeight)))
+            {
+                if (frame > 0)
+                    switchFrames.Add(frame);
+                waitingForScreen = false;
+            }
+        }
+
+        // Events after the last frame never show, but they decide the final screen.
+        while (next < stopIndex)
+            Apply(buffer, parser, events[next++]);
+
+        finalIsBlank = IsBlankBuffer(ViewForCanvas(buffer, canvasWidth, canvasHeight));
+        return switchFrames;
+    }
+
+    /// <summary>Applies one event as every replay does. Returns false for a marker, which changes nothing.</summary>
+    private static bool Apply(ScreenBuffer buffer, AnsiParser parser, CastEvent ev)
+    {
+        if (ev.Kind == CastEventKind.Marker)
+            return false;
+
+        if (ev.Kind == CastEventKind.Resize)
+            buffer.Resize(ev.ResizeWidth, ev.ResizeHeight);
+        else if (ev.HasUtf8Output)
+            parser.ProcessUtf8(ev.Utf8Output.Span);
+        else
+            parser.Process(ev.Data);
+        return true;
     }
 
     /// <summary>

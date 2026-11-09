@@ -82,6 +82,7 @@ try
         failures += Run("SubcommandWritesH264", () => SubcommandWritesH264(scenetake, repoRoot, work));
         failures += Run("MaxSizeDownscales", () => MaxSizeDownscales(scenetake, repoRoot, work));
         failures += Run("SizeEncodesExactFrame", () => SizeEncodesExactFrame(scenetake, repoRoot, work));
+        failures += Run("ScreenSwitchesAreKeyframes", () => ScreenSwitchesAreKeyframes(scenetake, repoRoot, work));
         failures += Run("ScenarioFormatMp4", () => ScenarioFormatMp4(scenetake, repoRoot, work));
 
         // Windows delivers Ctrl+C per console. Sending one to a child needs a separate console,
@@ -188,13 +189,41 @@ static bool SubcommandWritesH264(string scenetake, string repoRoot, string work)
         return false;
     }
 
-    // x264 writes the settings it used into the stream. The search range shows that ffmpeg passed -x264-params on.
+    // x264 writes the settings it used into the stream. The search range and scene-cut threshold show that ffmpeg passed -x264-params on.
     var stream = Probe(output);
     var x264Settings = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(output));
     return stream["codec_name"] == "h264" && stream["profile"] == "High" && stream["pix_fmt"] == "yuv420p"
         && stream["color_space"] == "bt709" && stream["r_frame_rate"] == "30/1"
         && x264Settings.Contains("me_range=128 ", StringComparison.Ordinal)
+        && x264Settings.Contains(" scenecut=10 ", StringComparison.Ordinal)
         && stderr.Contains("Written:", StringComparison.Ordinal);
+}
+
+static bool ScreenSwitchesAreKeyframes(string scenetake, string repoRoot, string work)
+{
+    // The events of mp4_render_test's ScreenSwitchesBecomeKeyframes. At 10fps scenetake forces frames 12, 31,
+    // and 61, and the times it passes must land on those frames, not the ones before or after.
+    var cast = Path.Combine(work, "switches.cast");
+    File.WriteAllText(cast, "{\"version\":3,\"term\":{\"cols\":20,\"rows\":5,\"type\":\"xterm-256color\"}}\n" +
+        """
+        [0.0,"o","$ "]
+        [1.02,"o","\u001b[?1049h"]
+        [0.13,"o","\u001b[H█"]
+        [1.89,"o","\u001b[?1049l"]
+        [0.49,"o","\u001b[?1049h\u001b[H█"]
+        [1.48,"o","\u001b[?1049hX"]
+        [1.01,"o","\u001b[?1049l"]
+        """ + "\n");
+    var output = Path.Combine(work, "switches.mp4");
+    var (exit, stderr) = Exec(scenetake, repoRoot, ["mp4", "--fps", "10", cast, output]);
+    if (exit != 0)
+    {
+        Console.Error.WriteLine(stderr);
+        return false;
+    }
+
+    var keyframes = ProbeKeyframes(output);
+    return keyframes.Contains(12) && keyframes.Contains(31) && keyframes.Contains(61);
 }
 
 static bool MaxSizeDownscales(string scenetake, string repoRoot, string work)
@@ -398,6 +427,28 @@ static Dictionary<string, string> Probe(string path)
     }
 
     return exit == 0 ? values : throw new InvalidOperationException($"ffprobe failed for {path}");
+}
+
+/// <summary>Numbers of the frames ffprobe reports as keyframes, counted in presentation order from 0.</summary>
+static HashSet<int> ProbeKeyframes(string path)
+{
+    var startInfo = new ProcessStartInfo(FindOnPath("ffprobe")!)
+    {
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+    };
+    foreach (var argument in new[] { "-v", "error", "-select_streams", "v:0", "-show_entries", "frame=key_frame", "-of", "csv=p=0", path })
+        startInfo.ArgumentList.Add(argument);
+
+    using var process = Process.Start(startInfo)!;
+    var output = process.StandardOutput.ReadToEnd();
+    process.WaitForExit();
+    if (process.ExitCode != 0)
+        throw new InvalidOperationException($"ffprobe failed for {path}");
+
+    var lines = output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    return [.. lines.Select((line, frame) => (line, frame)).Where(x => x.line.StartsWith('1')).Select(x => x.frame)];
 }
 
 static string? FindOnPath(string name)

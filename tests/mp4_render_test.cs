@@ -38,6 +38,9 @@ failures += Run("CursorBlendsHalfForeground", CursorBlendsHalfForeground);
 failures += Run("NothingShownBeforeFirstEvent", NothingShownBeforeFirstEvent);
 failures += Run("FrameShowsEventsUpToItsTime", FrameShowsEventsUpToItsTime);
 failures += Run("TrailingBlankRestoreIsTrimmed", TrailingBlankRestoreIsTrimmed);
+failures += Run("ScreenSwitchesBecomeKeyframes", ScreenSwitchesBecomeKeyframes);
+failures += Run("TrimmedRestoreForcesNoKeyframe", TrimmedRestoreForcesNoKeyframe);
+failures += Run("ForcedKeyframesAreSpacedAndCapped", ForcedKeyframesAreSpacedAndCapped);
 failures += Run("MatrixTintMatchesSvg", MatrixTintMatchesSvg);
 failures += Run("MacosChromeDrawsTrafficLights", MacosChromeDrawsTrafficLights);
 failures += Run("WindowsChromeDrawsButtons", WindowsChromeDrawsButtons);
@@ -207,13 +210,19 @@ static bool FfmpegArgumentsUseH264Bt709()
     var scaled = string.Join(' ', Mp4Render.BuildArguments(2020, 1208, Mp4Settings.Default with { Crf = 28, Fps = 60 }, 1280, 764, "out.mp4"));
     // 3860×2168 is 242×136 = 32,912 macroblocks: level 5.2's 184,320-macroblock buffer fits 5 references.
     var fourK = string.Join(' ', Mp4Render.BuildArguments(3860, 2168, Mp4Settings.Default, 3860, 2168, "out.mp4"));
-    return plain.Contains("-f rawvideo -pix_fmt rgb24 -s 820x488 -r 30 -i -", StringComparison.Ordinal)
+    // Forced keyframes are half a frame early: ffmpeg forces the first frame at or after each time.
+    var forced = string.Join(' ', Mp4Render.BuildArguments(80, 60, Mp4Settings.Default with { Fps = 10 }, 80, 60, "out.mp4", [12, 31, 61]));
+    var noneForced = string.Join(' ', Mp4Render.BuildArguments(80, 60, Mp4Settings.Default, 80, 60, "out.mp4", []));
+    return forced.Contains("-g 300 -force_key_frames 1.15,3.05,6.05 -colorspace", StringComparison.Ordinal)
+        && !noneForced.Contains("-force_key_frames", StringComparison.Ordinal)
+        && !plain.Contains("-force_key_frames", StringComparison.Ordinal)
+        && plain.Contains("-f rawvideo -pix_fmt rgb24 -s 820x488 -r 30 -i -", StringComparison.Ordinal)
         && plain.Contains("-vf scale=out_color_matrix=bt709:out_range=tv,format=yuv420p", StringComparison.Ordinal)
-        && plain.Contains("-c:v libx264 -preset slower -crf 23 -psy 0 -refs 8 -x264-params merange=128 -g 900", StringComparison.Ordinal)
+        && plain.Contains("-c:v libx264 -preset slower -crf 23 -psy 0 -refs 8 -x264-params merange=128:scenecut=10 -g 900", StringComparison.Ordinal)
         && plain.Contains("-colorspace bt709 -color_primaries bt709 -color_trc bt709", StringComparison.Ordinal)
         && plain.Contains("-movflags +faststart -f mp4", StringComparison.Ordinal)
         && scaled.Contains("scale=1280:764:flags=lanczos:out_color_matrix=bt709", StringComparison.Ordinal)
-        && scaled.Contains("-crf 28 -psy 0 -refs 8 -x264-params merange=128 -g 1800", StringComparison.Ordinal)
+        && scaled.Contains("-crf 28 -psy 0 -refs 8 -x264-params merange=128:scenecut=10 -g 1800", StringComparison.Ordinal)
         && fourK.Contains("-refs 5 ", StringComparison.Ordinal);
 }
 
@@ -363,6 +372,62 @@ static bool TrailingBlankRestoreIsTrimmed()
         [1.0,"o","\u001b[?1049l"]
         """, fps: 10);
     return CellPixel(frames[^1], layout, 0, 0) == (0xd0, 0xd0, 0xd0);
+}
+
+static bool ScreenSwitchesBecomeKeyframes()
+{
+    // v3 times are intervals. At 10fps: the alternate screen opens blank at 1.02s (frame 11) and is drawn at
+    // 1.15s (frame 12); leaving it at 3.04s shows the prompt again at once (frame 31). Opening and drawing at
+    // 3.53s (frame 36) is less than a second after frame 31, so x264 decides that one. Another enter at 5.01s
+    // is not a switch, because the screen is already in the alternate screen. Leaving at 6.02s is frame 61.
+    var (plan, keyframes) = PlanFor(
+        """
+        [0.0,"o","$ "]
+        [1.02,"o","\u001b[?1049h"]
+        [0.13,"o","\u001b[H█"]
+        [1.89,"o","\u001b[?1049l"]
+        [0.49,"o","\u001b[?1049h\u001b[H█"]
+        [1.48,"o","\u001b[?1049hX"]
+        [1.01,"o","\u001b[?1049l"]
+        """, fps: 10);
+    return plan.StopIndex == 7
+        && plan.ScreenSwitchFrames.SequenceEqual([12, 31, 36, 61])
+        && keyframes.SequenceEqual([12, 31, 61]);
+}
+
+static bool TrimmedRestoreForcesNoKeyframe()
+{
+    // The exit to a blank main screen is trimmed, so the frame that would show it is not forced either.
+    // The switch into the alternate screen is in frame 0, which is a keyframe anyway.
+    var (plan, keyframes) = PlanFor(
+        """
+        [0.0,"o","\u001b[?1049h\u001b[2J\u001b[H█\u001b[?25l"]
+        [1.0,"o","\u001b[?1049l"]
+        """, fps: 10);
+    return plan.StopIndex == 1 && plan.ScreenSwitchFrames.Count == 0 && keyframes.Count == 0;
+}
+
+static bool ForcedKeyframesAreSpacedAndCapped() =>
+    Mp4Render.ChooseKeyframes([5, 20, 34, 35, 64], 30).SequenceEqual([5, 35])
+    && Mp4Render.ChooseKeyframes([.. Enumerable.Range(1, 1500).Select(i => i * 30)], 30) is { Count: Mp4Settings.MaxForcedKeyframes } capped
+    && capped[^1] == Mp4Settings.MaxForcedKeyframes * 30;
+
+static (FixedRatePlan Plan, IReadOnlyList<int> Keyframes) PlanFor(string events, int fps)
+{
+    var path = Path.Combine(Path.GetTempPath(), $"scenetake-mp4-{Guid.NewGuid():N}.cast");
+    try
+    {
+        File.WriteAllText(path, "{\"version\":3,\"term\":{\"cols\":8,\"rows\":3,\"type\":\"xterm-256color\"}}\n" + events + "\n");
+        var recording = CastReader.Read(path);
+        var theme = TerminalTheme.FromResolved(recording.RenderSettings.Theme);
+        var plan = TerminalReplay.PlanFixedRate(recording.Events, recording.Width, recording.Height, recording.Width, recording.Height,
+            theme, fps, Mp4FrameRenderer.CountFrames(recording.LoopDuration, fps));
+        return (plan, Mp4Render.ChooseKeyframes(plan.ScreenSwitchFrames, fps));
+    }
+    finally
+    {
+        File.Delete(path);
+    }
 }
 
 static bool MatrixTintMatchesSvg()

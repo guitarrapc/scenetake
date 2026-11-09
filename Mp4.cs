@@ -14,6 +14,8 @@ internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int 
     internal const string Preset = "slower";
     internal const int PresetRefs = 8;          // x264 "slower"
     internal const int MotionSearchRange = 128; // pixels; "slower" searches 16, less than one row at the default font size
+    internal const int SceneCutThreshold = 10;  // x264 defaults to 40; 0 would turn scene cuts off
+    internal const int MaxForcedKeyframes = 1000; // keeps -force_key_frames well inside Windows' 32767-character command line
     internal const int KeyframeSeconds = 30;    // longest gap between keyframes, for seeking
     internal const int Level52DpbMacroblocks = 184_320; // H.264 level 5.2 decoded picture buffer
 
@@ -89,6 +91,7 @@ internal sealed class Mp4FrameRenderer
     private readonly int _initialHeight;
     private readonly TerminalTheme _theme;
     private readonly int _fps;
+    private FixedRatePlan? _plan;
 
     internal Mp4FrameRenderer(
         IReadOnlyList<CastEvent> events,
@@ -106,8 +109,11 @@ internal sealed class Mp4FrameRenderer
         var (cols, rows) = TerminalReplay.ResolveCanvasSize(width, height, events);
         Layout = Mp4Render.CreateLayout(render.FontSize, cols, rows, render.Window, settings);
         Glyphs = GlyphSource.Create(render.FontFamily, settings.FontFile, Layout);
-        FrameCount = Math.Max(1, (int)Math.Ceiling(loopDuration * settings.Fps - 1e-9));
+        FrameCount = CountFrames(loopDuration, settings.Fps);
     }
+
+    /// <summary>Frames in a loop of <paramref name="loopDuration"/> seconds, at least one.</summary>
+    internal static int CountFrames(double loopDuration, int fps) => Math.Max(1, (int)Math.Ceiling(loopDuration * fps - 1e-9));
 
     internal RasterLayout Layout { get; }
 
@@ -115,12 +121,18 @@ internal sealed class Mp4FrameRenderer
 
     internal int FrameCount { get; }
 
+    /// <summary>Where the replay stops and where full-screen programs switch screens. One parse of the recording, done once.</summary>
+    internal FixedRatePlan Plan =>
+        _plan ??= TerminalReplay.PlanFixedRate(_events, _initialWidth, _initialHeight, Layout.Cols, Layout.Rows, _theme, _fps, FrameCount);
+
+    /// <summary>Frames to encode as keyframes: see <see cref="Mp4Render.ChooseKeyframes"/>.</summary>
+    internal IReadOnlyList<int> Keyframes => Mp4Render.ChooseKeyframes(Plan.ScreenSwitchFrames, _fps);
+
     /// <summary>Calls <paramref name="sink"/> with each RGB24 frame in order. The buffer is reused between calls.</summary>
     internal void Render(Action<byte[]> sink)
     {
         var raster = new FrameRasterizer(Layout, _theme, Glyphs);
-        var cutoff = TerminalReplay.FindTrailingBlankCutoff(_events, _initialWidth, _initialHeight, Layout.Cols, Layout.Rows, _theme);
-        var stepper = new ReplayStepper(_events, _initialWidth, _initialHeight, Layout.Cols, Layout.Rows, _theme, cutoff);
+        var stepper = new ReplayStepper(_events, _initialWidth, _initialHeight, Layout.Cols, Layout.Rows, _theme, Plan.StopIndex);
         for (var frame = 0; frame < FrameCount; frame++)
         {
             if (stepper.AdvanceTo(frame / (double)_fps))
@@ -187,7 +199,7 @@ internal static class Mp4Render
             File.Delete(fullOutputPath);
 
         var tempPath = Path.Combine(directory, $".{Path.GetFileName(outputPath)}.{Guid.NewGuid():N}.partial");
-        var arguments = BuildArguments(layout.Width, layout.Height, settings, outputWidth, outputHeight, tempPath);
+        var arguments = BuildArguments(layout.Width, layout.Height, settings, outputWidth, outputHeight, tempPath, renderer.Keyframes);
 
         // On Ctrl+C the process ends soon after this handler returns, and the catch and finally
         // blocks below may not get to run. So the handler stops ffmpeg and removes the partial file
@@ -230,20 +242,27 @@ internal static class Mp4Render
     /// <item><c>merange</c>: a scroll moves text by whole rows, 20 pixels at the default font size. The
     /// preset's 16-pixel search misses it and codes the moved text again. A wider search also finds the
     /// same character elsewhere on screen, which matters for redrawn TUIs.</item>
+    /// <item><c>scenecut</c>: when output scrolls the screen, x264's default threshold starts a keyframe
+    /// that codes the whole screen again, though most of it only moved. A lower threshold keeps
+    /// those changes in predicted frames. It also misses some screens a TUI replaces, which
+    /// <c>-force_key_frames</c> covers.</item>
     /// <item><c>-g</c>: each keyframe redraws the whole screen, and a mostly static terminal needs few.
     /// One at least every <see cref="Mp4Settings.KeyframeSeconds"/> keeps seeking cheap.</item>
+    /// <item><c>-force_key_frames</c>: <paramref name="keyframes"/>, where a full-screen program replaced the
+    /// screen. Each time is half a frame early, because ffmpeg forces the first frame at or after it.</item>
     /// <item><c>-refs</c>: capped for large frames so the stream stays within level 5.2, which hardware
     /// decoders support widely. 8 references at 4K would need level 6.0.</item>
     /// </list>
     /// </summary>
-    internal static List<string> BuildArguments(int width, int height, Mp4Settings settings, int outputWidth, int outputHeight, string outputPath)
+    internal static List<string> BuildArguments(
+        int width, int height, Mp4Settings settings, int outputWidth, int outputHeight, string outputPath, IReadOnlyList<int>? keyframes = null)
     {
         var scale = outputWidth != width || outputHeight != height
             ? $"scale={outputWidth}:{outputHeight}:flags=lanczos:out_color_matrix=bt709:out_range=tv"
             : "scale=out_color_matrix=bt709:out_range=tv";
         var macroblocks = ((outputWidth + 15) / 16) * ((outputHeight + 15) / 16);
         var refs = Math.Clamp(Mp4Settings.Level52DpbMacroblocks / macroblocks, 1, Mp4Settings.PresetRefs);
-        return
+        List<string> arguments =
         [
             "-hide_banner", "-loglevel", "error",
             "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", $"{width}x{height}",
@@ -251,11 +270,43 @@ internal static class Mp4Render
             "-vf", scale + ",format=yuv420p",
             "-c:v", "libx264", "-preset", Mp4Settings.Preset, "-crf", settings.Crf.ToString(CultureInfo.InvariantCulture),
             "-psy", "0", "-refs", refs.ToString(CultureInfo.InvariantCulture),
-            "-x264-params", "merange=" + Mp4Settings.MotionSearchRange.ToString(CultureInfo.InvariantCulture),
+            "-x264-params", string.Create(CultureInfo.InvariantCulture, $"merange={Mp4Settings.MotionSearchRange}:scenecut={Mp4Settings.SceneCutThreshold}"),
             "-g", (settings.Fps * Mp4Settings.KeyframeSeconds).ToString(CultureInfo.InvariantCulture),
+        ];
+        if (keyframes is { Count: > 0 })
+        {
+            arguments.Add("-force_key_frames");
+            arguments.Add(string.Join(',', keyframes.Select(frame => ((frame - 0.5) / settings.Fps).ToString("0.######", CultureInfo.InvariantCulture))));
+        }
+
+        arguments.AddRange(
+        [
             "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
             "-movflags", "+faststart", "-f", "mp4", "-y", outputPath,
-        ];
+        ]);
+        return arguments;
+    }
+
+    /// <summary>
+    /// The frames to force as keyframes, from the frames where a full-screen program entered or left the
+    /// alternate screen and the new screen first shows. x264's own scene-cut test misses some of these, more
+    /// so when <c>--size</c> pads the frame, and then codes the new screen in predicted frames at lower quality
+    /// (spec_mp4.md → Lessons Learned → Scene-cut threshold). A switch less than a second after the last
+    /// forced keyframe is left to x264, so a program that flips screens rapidly does not turn every frame
+    /// into a keyframe, and at most <see cref="Mp4Settings.MaxForcedKeyframes"/> are forced.
+    /// </summary>
+    internal static List<int> ChooseKeyframes(IReadOnlyList<int> screenSwitchFrames, int fps)
+    {
+        var chosen = new List<int>();
+        foreach (var frame in screenSwitchFrames)
+        {
+            if (chosen.Count == Mp4Settings.MaxForcedKeyframes)
+                break;
+            if (chosen.Count == 0 || frame - chosen[^1] >= fps)
+                chosen.Add(frame);
+        }
+
+        return chosen;
     }
 
     /// <summary>The drawn frame: the terminal at its own size, or inside the <c>--size</c> frame.</summary>
