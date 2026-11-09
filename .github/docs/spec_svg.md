@@ -14,7 +14,7 @@ Rich TUI recordings (`copilot --banner`, `sl`, `matrix`, etc.) work on the scena
 
 - SVG output via `--format svg` or the `svg` subcommand. CLI: [spec_cli.md](spec_cli.md). Scenario `render:` keys: [spec_scenario.md](spec_scenario.md).
 - Built-in C# SVG renderer (no bundled external binary).
-- **Row-diff** animated SVG (changed rows only, each switched on and off by step-end CSS keyframes) with optional **`--max-fps`** frame sampling (default **off**).
+- **Row-diff** animated SVG (changed rows only, each shown and hidden by a CSS `visibility` animation) with optional **`--max-fps`** frame sampling (default **off**).
 - VT emulator. (see [VT emulator](#vt-emulator)).
 - Theme presets `dark` (default) and `light`; default `font-size` of `16`; default `font-family` stack tuned for programming.
 - Block cursor (`theme.fg` at 50% opacity, no blink); DECTCEM visibility (`\e[?25h`, `\e[?25l`).
@@ -79,11 +79,12 @@ A program can load its own glyphs into the terminal with a DECDLD string and dra
 - Animations **loop indefinitely**; one cycle matches agg GIF timing with `--last-frame-duration 0`: cast playback through the last output event, then hold the final frame for the preceding output-to-output idle gap before restarting at `t = 0`.
 - **Row-diff** animation: only changed rows are emitted as timed layers. Cursor and viewport resize use separate layers. Row encoding: [Row encoding](#row-encoding).
 - **Layer timing.**
-  - Every animated element has class `l` (hidden, with one shared rule for loop length, step-end timing, and looping) and a keyframe class.
-  - Each keyframe lists only its switch points, for example `@keyframes x{4.969%{opacity:1}5.245%{opacity:0}}`. Offsets have just enough decimals to resolve 1ms of the loop.
-  - With step-end timing, a layer and its replacement switch at the same offset, with no fade.
-  - Keyframes are shared by identical show and hide times, so a full-screen redraw costs one keyframe.
-  - **Class names are short and lowercase.** Rows, colors, and keyframes draw from one pool, so names never collide. The first 959 names are one or two characters. Rows and colors take names as they first appear. Keyframes are named last, most used first. Keyframes nothing refers to are not written.
+  - Every animated element has class `l` (`visibility: hidden`, with one shared rule for loop length, step-start timing, and looping) and a timing class for its window. Hidden elements are not painted. Elements kept at opacity 0 were, and playback stuttered (see [Lessons Learned](#lessons-learned)).
+  - Show and hide times are whole milliseconds. A window that ends inside the loop is a delay to its start plus keyframes shared by every window of the same length: `.x{animation-delay:4.969s;animation-name:y}` with `@keyframes y{2.76076%{visibility:visible}}`. With step-start timing, a keyframe's value holds up to its offset, so one step is the whole window.
+  - Other windows: visible from 0 to the end of the loop is `.x{visibility:visible}`; from a later time to the end of the loop is one keyframe with its own offset. A window that is never visible has no rule.
+  - Offsets have enough decimals to resolve 1µs of the loop. Starts are never later and ends never earlier than their millisecond, so a layer and its replacement overlap for under 2µs and never leave a gap.
+  - Windows with identical show and hide times share one class, so a full-screen redraw costs one rule.
+  - **Class names are short and lowercase.** Rows, colors, and timing draw from one pool, so names never collide. The first 959 names are one or two characters. Rows and colors take names as they first appear. Timing classes and shared keyframes are named last, most used first. A window that starts at 0 takes its keyframes' name as its class. Timing nothing refers to is not written.
   - Names are lowercase because HTML in quirks mode matches class selectors case-insensitively, so `.a` and `.A` would collide in an SVG inlined in such a page.
   - **Screens replaced at the same cast time are dropped.** Without `--max-fps`, when several screens share one cast time, only the last is drawn. The others would be shown and hidden at the same offset, so they are never visible.
 - Trailing blank frames after alternate-screen restore are trimmed when the event stream indicates a screen clear.
@@ -127,18 +128,18 @@ Each row layer is one line. It holds the row's background rects, then its block 
   - Rows shorter than a `<use>` are written out.
 - **The cursor** is one `<rect id="c">` in `<defs>`, and each position is a `<use href="#c" x y>` of it.
   - A position shown and hidden together with a row layer on its own row goes last inside that layer, with no timing of its own.
-  - Other positions carry their own keyframe class.
+  - Other positions carry their own timing class.
 
 The glyph-list form puts each glyph at its cell's left edge. The run form lets the browser spread glyphs with `textLength`, which can place them up to "cell width − font advance" apart. That is a sub-pixel shift for the default fonts (about 0.3px with Cascadia Mono at 16px), so rows look the same either way.
 
-| Cast (`svg` subcommand) | 1.4.2 | Row encoding | + timing and reuse | + classes, block rects, row-local | + unseen frames dropped, lowercase names |
-|---|---|---|---|---|---|
-| `samples/basic.cast` (typing) | 130KB | 108KB | 56KB | 46KB | 46KB (−65% overall) |
-| `samples/scenario_format.cast` (typing) | 433KB | 362KB | 183KB | 147KB | 147KB (−66%) |
-| `samples/interactive-pty.cast` (TUI) | 1.31MB | 0.96MB | 0.53MB | 0.23MB | 0.23MB (−82%) |
-| `samples/pty.cast` (small matrix) | 2.39MB | 0.61MB | 0.56MB | 0.43MB | 0.41MB (−83%) |
-| `matrix --fps 60`, 200×60, 7.5s | 117MB | 26.9MB | 26.4MB | 19.7MB | 17.0MB (−85%) |
-| Same, `--max-fps 20` | 25.6MB | 5.9MB | 5.8MB | 4.3MB | 4.4MB (−83%) |
+| Cast (`svg` subcommand) | 1.4.2 | Row encoding | + timing and reuse | + classes, block rects, row-local | + unseen frames dropped, lowercase names | + visibility, shared keyframes |
+|---|---|---|---|---|---|---|
+| `samples/basic.cast` (typing) | 130KB | 108KB | 56KB | 46KB | 46KB | 42KB (−68% overall) |
+| `samples/scenario_format.cast` (typing) | 433KB | 362KB | 183KB | 147KB | 147KB | 132KB (−70%) |
+| `samples/interactive-pty.cast` (TUI) | 1.31MB | 0.96MB | 0.53MB | 0.23MB | 0.23MB | 0.22MB (−83%) |
+| `samples/pty.cast` (small matrix) | 2.39MB | 0.61MB | 0.56MB | 0.43MB | 0.41MB | 0.41MB (−83%) |
+| `matrix --fps 60`, 200×60, 7.5s | 117MB | 26.9MB | 26.4MB | 19.7MB | 17.0MB | 17.0MB (−85%) |
+| Same, `--max-fps 20` | 25.6MB | 5.9MB | 5.8MB | 4.3MB | 4.35MB | 4.35MB (−83%) |
 
 Every sample got smaller at each step except the last, where lowercase names cost typing samples, interactive-pty, and matrix with `--max-fps 20` a little.
 
@@ -148,6 +149,7 @@ Every sample got smaller at each step except the last, where lowercase names cos
   - 56% off interactive-pty, half of which was block elements as stretched glyphs;
   - 23–26% off matrix output, from fill classes and row-local `y`.
 - **Dropping frames that are never visible** took 5% off pty and 14% off matrix 200×60 (25% at 384×108). **Lowercase names** fit fewer names in one character, which added 0.3–0.9% to typing samples and 0.3% to interactive-pty and to matrix with `--max-fps 20`. With class names masked, the typing samples and that matrix file are byte-identical. In interactive-pty the longer names also moved 3 rows from row-local to absolute coordinates.
+- **Visibility with keyframes shared by window length** took 1–10% off typing samples (8% off basic, 10% off scenario_format) and 4% off interactive-pty (5% with `--max-fps 20`). pty and matrix output, dominated by glyphs, changed by 1% or less. The smallest SVGs, with few layers and few shared lengths, grew by up to 56 bytes, because `visibility` keywords are longer than opacity values (`resize.cast`, 2.0KB, +2.6%).
 
 Sizes are of LF files.
 
@@ -235,8 +237,8 @@ The input file is never modified by the `svg` subcommand.
 
 | Suite | Coverage |
 |-------|----------|
-| `tests/terminal_tests.cs` | VT emulator (CSI, Unicode, alt screen). Soft fonts: both byte streams, a DECDLD split across chunks, a designation before the load, undefined codes, the matrix size from the data, erase control, other DCS strings skipped, glyph cells against text cells, DECSC/DECRC, RIS, single shifts |
-| `tests/svg_render_test.cs` | Row-diff smoke, marker timing, `--max-fps`, matrix rain tint, streamed file output matches in-memory render, row encoding choice (glyph list vs run, underline, multi-unit cells, background spans, shared keyframe rules), combining marks, block and shade rects, LF line endings, inherited foreground and fill classes, single-text layers, row-local content in every layer form, short lowercase class names, unused keyframes left out, dropped zero-length frames, run `textLength` in cells, underlined spaces and block elements, plain block elements kept out of run text, block-only rows decoded to their row, XML-invalid characters, scenario theme color validation, cast warning prefix, soft font glyphs as `<use>`s of `<defs>` paths (path pixels, scale, position, color), both soft font byte streams giving the same SVG, underlined glyphs, glyph ids. Text checks decode every layer form back to row text, color, and row, and cursor checks cover cursors inside row layers and with their own timing, so a layer or cursor drawn on the wrong line fails. |
+| `tests/terminal_tests.cs` | VT emulator (CSI, Unicode, alt screen, region scrolls by count, insert/delete lines). Replay timeline: same-time writes keep the last screen, and a blank final screen gives the same frames either way. Soft fonts: both byte streams, a DECDLD split across chunks, a designation before the load, undefined codes, the matrix size from the data, erase control, other DCS strings skipped, glyph cells against text cells, DECSC/DECRC, RIS, single shifts |
+| `tests/svg_render_test.cs` | Row-diff smoke, marker timing, `--max-fps`, matrix rain tint, streamed file output matches in-memory render, row encoding choice (glyph list vs run, underline, multi-unit cells, background spans, shared keyframe rules), combining marks, block and shade rects, LF line endings, inherited foreground and fill classes, single-text layers, row-local content in every layer form, short lowercase class names, unused timing left out, keyframes shared by window length, no gap where a layer replaces another, dropped zero-length frames, run `textLength` in cells, underlined spaces and block elements, plain block elements kept out of run text, block-only rows decoded to their row, XML-invalid characters, scenario theme color validation, cast warning prefix, soft font glyphs as `<use>`s of `<defs>` paths (path pixels, scale, position, color), both soft font byte streams giving the same SVG, underlined glyphs, glyph ids. Text checks decode every layer form back to row text, color, and row, and cursor checks cover cursors inside row layers and with their own timing, so a layer or cursor drawn on the wrong line fails. |
 | `tests/scenario_render_test.cs` | Scenario path (`--format svg` / `--format mp4`) output is byte-identical to `scenetake svg` / `scenetake mp4` on the written cast (default, `--max-fps`, render overrides). Needs `SCENETAKE_BIN`; mp4 also needs ffmpeg. |
 | `tests/window_chrome_test.cs` | `render.window` / cast tag / CLI resolution; chrome SVG structure |
 
@@ -244,7 +246,8 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 
 **Encoding changes are also checked by hand**, because tests read markup, not pixels.
 
-- **Look.** Render every sample and fixture with the old and new code. Screenshot both through `<img>` in headless Chromium, at 5 points of the loop. Pin the time inside the SVG's own `<style>` (`animation-delay: -Ts; animation-play-state: paused`), then compare pixels.
+- **Look.** Render every sample and fixture with the old and new code. Screenshot both through `<img>` in headless Chromium, at 5 points of the loop. Pin the time inside the SVG's own `<style>` (`animation-delay: -Ts; animation-play-state: paused` on `.l`, and every delay rule moved back by T), then compare pixels.
+- **Timing.** When only the timing encoding changes, the markup with timing classes masked must be identical. Each element's show and hide times can then be compared directly, including whether a layer and its replacement still switch together.
 - **Playback cost.** Play each SVG for a few seconds through `<img>` and read the requestAnimationFrame intervals and the main-thread time over the DevTools protocol.
 
 ## Cross-Document Notes
@@ -267,8 +270,10 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 | Competing with video for full-screen TUIs | SVG is lossless and symbolic, so its size grows with changed cells × frames. Even compact, 4K 60fps matrix is about 53MB, and X does not accept SVG. Those recordings go to mp4 ([spec_mp4.md](spec_mp4.md)). |
 | `.svgz` | It renders only when the server sends `Content-Encoding: gzip`. File-size limits and viewer memory apply to the decompressed SVG anyway. |
 | `--max-fps` on by default | Full timing matters for typing and bulk output such as curl. The size warning suggests it instead. |
-| One cursor element moved by keyframes | 14–24% smaller typing SVGs. But moving one element with `translate`, `transform`, or CSS `x`/`y` added 50–70% main-thread time on busy recordings in headless Edge. Many cursor elements that only switch `opacity` cost nothing extra. |
+| One cursor element moved by keyframes | 14–24% smaller typing SVGs. But moving one element with `translate`, `transform`, or CSS `x`/`y` added 50–70% main-thread time on busy recordings in headless Edge. Many cursor elements that only switch on and off cost nothing extra. |
 | One shared timeline (an animated custom property `--f`, each layer's show and hide as numbers) | 13–20% smaller typing SVGs. Animated on every layer, it tripled main-thread time (basic: about 110 → 335 ms/s). Animated once on the root, it was cheaper for typing, but it dropped frames on pty and interactive-pty (p95 33–50ms). |
+| `visibility` with one keyframes rule per window | It removed the stutter, but main-thread time on scenario_format and interactive-pty rose from 205–214 to 281–315 ms/s, partly because twice as many frames ran. Keyframes shared by window length brought it to 108–144 ms/s. |
+| Shared keyframes with step-end timing | Each shared rule then needs two steps, visible at 0% and hidden at the end. git and stream-output, whose windows rarely share a length, grew 2.6% and 5.9%. With step-start one step is enough. |
 | Per-cell lifetimes for matrix-like output | Only 14% of matrix 200×60 glyphs (5% for pty) carry over unchanged, glyph and color, into the next layer of their row. Per-cell timing would cost more than it saves. |
 | Soft font glyphs as private-use characters in the cell text | No renderer would need to change, but Nerd Font icons and Powerline symbols use the same range and would be drawn as soft font glyphs. |
 | scenetake naming itself to commands (`TERM_PROGRAM=scenetake`) so they use their soft font | It worked for matrix on Windows and in WSL. But each program would have to know scenetake by name, and it would replace the host's `TERM_PROGRAM` for every command. A program flag such as matrix's `--soft-font` keeps both tools independent. |
@@ -291,7 +296,7 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 - Snapshotting the whole screen (both main and alternate grids) on every changed event made memory grow with events × screen size: 4.8GB for a 200×60 full-screen TUI, and more than 43GB at 384×108.
   - Replaying the events twice, once to build the timeline and once to draw the selected frames, costs less than keeping snapshots.
   - It also cut render time from 5.8s to 2.6s at 200×60.
-- **Animation CSS dominated typing demos.** After the row encoding change, about 40% of a typing SVG was CSS: one keyframe per layer with 6-decimal ranges and a millisecond fade, plus one `animation:` rule per layer and per cursor move. Step-end keyframes with only switch points, ms-level precision, one shared `.l` rule, and a class per keyframe halved typing and TUI SVGs.
+- **Animation CSS dominated typing demos.** After the row encoding change, about 40% of a typing SVG was CSS: one keyframe per layer with 6-decimal ranges and a millisecond fade, plus one `animation:` rule per layer and per cursor move. Step-end keyframes with only switch points, ms-level precision, one shared `.l` rule, and a class per keyframe halved typing and TUI SVGs. (Later replaced by delays and keyframes shared by window length; see below.)
 - **Scrolling repeats rows.** Output that scrolls rewrites every row it moves. Reusing the first copy with `<use>` removed 7–36% of typing and TUI samples (interactive-pty most). It needs a byte-exact check, because the matrix-rain tint depends on neighbors. It also needs a CSS selector that still matches inside `<use>` content (`rect:not([class])`, not `g.layer>rect`).
 - **A CSS rule on `text` overrides `fill` attributes.** Setting the default color with `text{fill:…}` turned every colored line into the default color. The default has to be inherited from an ancestor instead.
 - **Block elements: rects, done properly.**
@@ -306,6 +311,10 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 - **TUIs write one screen several times within a millisecond.** In matrix 200×60, 2,711 layers had a zero-length keyframe, 2.7MB of a 19.7MB SVG that was never visible.
 - **Scrollback that nothing reads still costs memory.** The screen kept every row scrolled off the top. A cast that scrolls 300,000 lines peaked at 1,050MB for a 2KB SVG. Dropping those rows brought it to 144MB, with the same output.
 - **Render time.** Two changes took matrix 200×60 from 3.3s to 2.3s and 384×108 from 23s to 14.8s, with byte-identical output. First, each changed row is encoded row-local, and that pass also measures the absolute form. The absolute form is then encoded only when it is kept or when the reuse check compares it with an earlier absolute layer, instead of for every row. Second, the drawing pass no longer hashes every screen again. With unseen frames dropped, they take 1.7s and 10.1s (Windows 11).
+- **Hashing the screen after every event dominated the first pass.** It was 43% of the render at 200×60 and 67% at 384×108, where 10,166 of 10,875 events share their millisecond with the next one. Without `--max-fps` only the last screen of such a run is drawn, so the screen is now hashed only after the run's last event. The SVGs are byte-identical, and in one session 200×60 went from 2.0s to 1.3s and 384×108 from 17.1s to 5.0s. A blank final screen still takes the full pass, because trimming a trailing restore looks at frames inside same-time runs.
+- **Scrolls moved one cell at a time.** Every line feed at the bottom copied each cell of the scroll region, so a cast that scrolls 300,000 lines took 6.1s for a 2KB SVG. Rows are contiguous in the screen array, so one block copy now moves the region for scrolls and for inserted and deleted lines: 1.5s, with the same output.
+- **Hidden layers at opacity 0 still cost paint time.** scenario_format and interactive-pty played at 46–64 fps, with bursts of frames near 100ms whenever typing changed a layer (headless Edge, `<img>`, 120Hz). SVGs from before #54 did the same or worse. Switching `visibility` instead removed every long frame. With keyframes shared by window length, main-thread time also fell: basic from 106 to 56 ms/s, scenario_format from 218 to 108, interactive-pty from 189 to 144, pty from 207 to 185. Firefox and Safari are not checked.
+- **A delay is exact, a percentage of the loop is not.** An end offset rounded to 1ms of the loop could hide a layer up to 0.5ms before its replacement shows, which a frame can land in. Offsets that resolve 1µs and round toward overlap kept every sample and matrix 200×60 at no gap and at most 1.3µs of overlap, with show and hide times within 0.5ms of the old ones.
 - **The in-box ConPTY re-encodes soft fonts.** matrix writes its font as ` @` and designates it into G0. Through the in-box ConPTY of Windows 11 (build 26200), the same font arrived renamed to `@`, designated into G1, with every run of its codes between SO and SI, and the host answered DA1 itself. Through the out-of-band ConPTY 1.25, the bytes arrived as written, as on Unix. Handling designations and shifts in general covers both.
 - **`ESC ( SP @` left an `@` on screen.** A designation was read as exactly one byte after `(`, so a set name with an intermediate printed its final byte.
 - **Rows with no text can show seams outside `<img>`.** Row-local layers move to fractional baselines, 24.8px at 16px.

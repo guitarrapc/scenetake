@@ -27,6 +27,7 @@ failures += Run("BackgroundSpanCoversStyleChanges", BackgroundSpanCoversStyleCha
 failures += Run("UnderlinedRowUsesRunForm", UnderlinedRowUsesRunForm);
 failures += Run("RowLayersShareKeyframeRules", RowLayersShareKeyframeRules);
 failures += Run("StepKeyframesAreCompact", StepKeyframesAreCompact);
+failures += Run("LayerSwitchesLeaveNoGap", LayerSwitchesLeaveNoGap);
 failures += Run("ScrolledRowsReuseContent", ScrolledRowsReuseContent);
 failures += Run("CursorJoinsRowLayers", CursorJoinsRowLayers);
 failures += Run("SvgUsesLfLineEndings", SvgUsesLfLineEndings);
@@ -292,14 +293,53 @@ static bool RowLayersShareKeyframeRules()
 
 static bool StepKeyframesAreCompact()
 {
-    // Each keyframe lists only its switch points, at about 1ms precision, with step-end timing set once.
+    // A window is a delay in whole milliseconds plus one keyframe step that every window of its length
+    // shares, with step-start timing set once. basic types at a steady pace, so it needs far fewer
+    // keyframes than windows. Layers switch visibility, which browsers skip when painting.
     var svg = RenderCast("samples/basic.cast");
     var keyframes = SvgRenderTestPatterns.KeyframePattern.Matches(svg);
+    var delays = SvgRenderTestPatterns.TimingRulePattern.Matches(svg).Where(m => m.Groups[2].Success).ToList();
     return keyframes.Count > 0
         && keyframes.All(m => SvgRenderTestPatterns.StepBodyPattern.IsMatch(m.Groups[2].Value))
-        && keyframes.All(m => !System.Text.RegularExpressions.Regex.IsMatch(m.Groups[2].Value, @"\.\d{4}"))
-        && svg.Contains("step-end infinite", StringComparison.Ordinal)
-        && !svg.Contains("linear", StringComparison.Ordinal);
+        && delays.Count > keyframes.Count * 2
+        && delays.All(m => !System.Text.RegularExpressions.Regex.IsMatch(m.Groups[2].Value, @"\.\d{4}"))
+        && svg.Contains("step-start infinite", StringComparison.Ordinal)
+        && !svg.Contains("linear", StringComparison.Ordinal)
+        && !svg.Contains("{opacity:", StringComparison.Ordinal);
+}
+
+static bool LayerSwitchesLeaveNoGap()
+{
+    // A loop of 11.2152s makes most percentages inexact. Where one layer replaces another on a row,
+    // the old layer is hidden no earlier than the new one shows, and both show for under 2µs.
+    var svg = RenderInline(12, 2, """
+        [0.1234, "o", "a"]
+        [0.2101, "o", "b"]
+        [0.4443, "o", "c"]
+        [0.3337, "o", "d"]
+        [0.9871, "o", "\r\ne"]
+        [1.2345, "o", "f"]
+        [0.0517, "o", "g"]
+        [3.9152, "o", "h"]
+        """);
+    var timings = ParseKeyframeTimings(svg);
+    var pairs = 0;
+    foreach (var row in DecodeRowLayers(svg).GroupBy(r => r.Row))
+    {
+        var layers = row.Where(r => timings.ContainsKey(r.Keyframe)).Select(r => timings[r.Keyframe]).OrderBy(t => t.Show).ToList();
+        for (var i = 0; i + 1 < layers.Count; i++)
+        {
+            if (layers[i].Hide is not double hide)
+                return false;
+
+            var overlap = hide - layers[i + 1].Show;
+            if (overlap < -1e-12 || overlap >= 2e-6)
+                return false;
+            pairs++;
+        }
+    }
+
+    return svg.Contains("animation: 11.2152s", StringComparison.Ordinal) && pairs >= 6;
 }
 
 static bool ScrolledRowsReuseContent()
@@ -529,10 +569,31 @@ static Dictionary<int, string> VisibleRowsAt(string svg, double timeSeconds)
     return rows;
 }
 
+/// <summary>
+/// Each timing class's window in seconds. A rule gives a delay to the start plus keyframes visible for
+/// the window's length, keyframes visible from an offset to the loop end, or visibility throughout.
+/// A class with no rule is never shown, so it is not listed.
+/// </summary>
 static Dictionary<string, (double Show, double? Hide)> ParseKeyframeTimings(string svg)
 {
     var loopDuration = ParseLoopDuration(svg);
-    return SvgRenderTestPatterns.KeyframePattern.Matches(svg).ToDictionary(m => m.Groups[1].Value, m => ParseCycleTiming(m.Groups[2].Value, loopDuration));
+    var keyframes = SvgRenderTestPatterns.KeyframePattern.Matches(svg).ToDictionary(m => m.Groups[1].Value, m => m.Groups[2].Value);
+    var timings = new Dictionary<string, (double Show, double? Hide)>();
+    foreach (System.Text.RegularExpressions.Match rule in SvgRenderTestPatterns.TimingRulePattern.Matches(svg))
+    {
+        if (!rule.Groups[3].Success)
+        {
+            timings[rule.Groups[1].Value] = (0, null);
+            continue;
+        }
+
+        var delay = rule.Groups[2].Success ? double.Parse(rule.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture) : 0;
+        var step = SvgRenderTestPatterns.StepPattern.Match(keyframes[rule.Groups[3].Value]);
+        var offset = double.Parse(step.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) / 100.0 * loopDuration;
+        timings[rule.Groups[1].Value] = step.Groups[2].Value == "visible" ? (delay, delay + offset) : (offset, null);
+    }
+
+    return timings;
 }
 
 /// <summary>
@@ -564,10 +625,10 @@ static bool MarkerDelayAdvancesTiming()
         return false;
 
     var svg = RenderCast("tests/marker-delay.cast");
-    var keyframe = SvgRenderTestPatterns.KeyframePattern.Match(svg);
-    return svg.Contains("animation: 2.5s step-end infinite", StringComparison.Ordinal)
-        && keyframe.Success
-        && svg.Contains($".{keyframe.Groups[1].Value}{{animation-name:{keyframe.Groups[1].Value}}}", StringComparison.Ordinal);
+    var shows = ParseKeyframeTimings(svg).Values.Select(t => t.Show).ToList();
+    return svg.Contains("animation: 2.5s step-start infinite", StringComparison.Ordinal)
+        && shows.Any(s => Math.Abs(s - 0.5) < 1e-6)
+        && shows.Any(s => Math.Abs(s - 1.5) < 1e-6);
 }
 
 static bool LoopDurationMatchesAggGifCycle()
@@ -585,7 +646,7 @@ static bool SvgLoopsWithCastDuration()
     var recording = CastReader.Read("samples/basic.cast");
     var svg = RenderCast("samples/basic.cast");
     var durationText = recording.LoopDuration.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
-    return svg.Contains($".l {{ opacity: 0; animation: {durationText}s step-end infinite; }}", StringComparison.Ordinal)
+    return svg.Contains($".l {{ visibility: hidden; animation: {durationText}s step-start infinite; }}", StringComparison.Ordinal)
         && SvgRenderTestPatterns.KeyframePattern.IsMatch(svg);
 }
 
@@ -644,17 +705,13 @@ static bool MaxFpsDoesNotChangeLoopDuration()
     var durationText = recording.LoopDuration.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
     var full = RenderCast("samples/basic.cast");
     var sampled = RenderCast("samples/basic.cast", maxFps: 12);
-    return full.Contains($"{durationText}s step-end infinite", StringComparison.Ordinal)
-        && sampled.Contains($"{durationText}s step-end infinite", StringComparison.Ordinal);
+    return full.Contains($"{durationText}s step-start infinite", StringComparison.Ordinal)
+        && sampled.Contains($"{durationText}s step-start infinite", StringComparison.Ordinal);
 }
 
 static int CountVisibleLayersWithText(string svg, double timeSeconds, string text)
 {
-    var loopDuration = ParseLoopDuration(svg);
-    var keyframes = SvgRenderTestPatterns.KeyframePattern.Matches(svg)
-        .ToDictionary(
-            m => m.Groups[1].Value,
-            m => ParseCycleTiming(m.Groups[2].Value, loopDuration));
+    var keyframes = ParseKeyframeTimings(svg);
     var count = 0;
     foreach (var (_, keyframeName, rowText, _) in DecodeRowLayers(svg))
     {
@@ -678,26 +735,6 @@ static double ParseLoopDuration(string svg)
         return 0;
 
     return double.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
-}
-
-static (double Show, double? Hide) ParseCycleTiming(string keyframesBody, double loopDuration)
-{
-    // Step keyframes: "S%{opacity:1}H%{opacity:0}" — visible from S until H (or the loop end).
-    if (loopDuration <= 0)
-        return (0, null);
-
-    double? show = null;
-    double? hide = null;
-    foreach (System.Text.RegularExpressions.Match step in SvgRenderTestPatterns.StepPattern.Matches(keyframesBody))
-    {
-        var time = double.Parse(step.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) / 100.0 * loopDuration;
-        if (step.Groups[2].Value == "1")
-            show ??= time;
-        else if (show is not null)
-            hide ??= time;
-    }
-
-    return (show ?? 0, hide);
 }
 
 static bool CopilotBannerBlockGlyphs()
@@ -877,24 +914,32 @@ static bool CursorSitsOnItsRow()
 
 static bool KeyframeNamesAreShort()
 {
-    // basic has 223 keyframes: one or two characters each, and the most used get the one-letter
-    // names that rows and colors left over.
+    // basic has about 220 timing classes and 60 shared keyframes: one or two characters each, and the
+    // most used get the one-letter names that rows and colors left over.
     var svg = RenderCast("samples/basic.cast");
-    var names = SvgRenderTestPatterns.KeyframePattern.Matches(svg).Select(m => m.Groups[1].Value).ToList();
+    var classes = SvgRenderTestPatterns.TimingRulePattern.Matches(svg).Select(m => m.Groups[1].Value).ToList();
+    var keyframes = SvgRenderTestPatterns.KeyframePattern.Matches(svg).Select(m => m.Groups[1].Value).ToList();
     int Uses(string name) => System.Text.RegularExpressions.Regex.Matches(svg, $"class=\"[^\"]*\\b{name}\\b").Count;
-    var mostUsed = names.OrderByDescending(Uses).First();
-    return names.Count > 26 && names.All(n => n.Length <= 2) && names.Distinct().Count() == names.Count && mostUsed.Length == 1;
+    var mostUsed = classes.OrderByDescending(Uses).First();
+    return classes.Count > 26
+        && classes.Concat(keyframes).All(n => n.Length <= 2)
+        && classes.Distinct().Count() == classes.Count
+        && keyframes.Distinct().Count() == keyframes.Count
+        && mostUsed.Length == 1;
 }
 
 static bool EveryKeyframeIsUsed()
 {
-    // In pty.cast some cursor positions share their timing with a row layer. Their own keyframes are
-    // unused once they move into that layer, and must not be written.
+    // In pty.cast some cursor positions share their timing with a row layer. Their own timing is
+    // unused once they move into that layer, and must not be written. Every keyframes rule is named
+    // by a timing rule.
     var svg = RenderCast("samples/pty.cast");
     var body = svg[svg.IndexOf("</style>", StringComparison.Ordinal)..];
     var used = System.Text.RegularExpressions.Regex.Matches(body, "class=\"([^\"]*)\"").SelectMany(m => m.Groups[1].Value.Split(' ')).ToHashSet();
-    var names = SvgRenderTestPatterns.KeyframePattern.Matches(svg).Select(m => m.Groups[1].Value).ToList();
-    return names.Count > 0 && names.All(used.Contains);
+    var rules = SvgRenderTestPatterns.TimingRulePattern.Matches(svg).ToList();
+    var named = rules.Where(m => m.Groups[3].Success).Select(m => m.Groups[3].Value).ToHashSet();
+    var keyframes = SvgRenderTestPatterns.KeyframePattern.Matches(svg).Select(m => m.Groups[1].Value).ToList();
+    return rules.Count > 0 && rules.All(m => used.Contains(m.Groups[1].Value)) && keyframes.All(named.Contains);
 }
 
 static bool ClassNamesAreLowercase()
@@ -1099,15 +1144,22 @@ file static class SvgRenderTestPatterns
         System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.Compiled);
 
     internal static readonly System.Text.RegularExpressions.Regex DurationPattern = new(
-        """animation: ([0-9.]+)s step-end infinite""",
+        """animation: ([0-9.]+)s step-start infinite""",
         System.Text.RegularExpressions.RegexOptions.Compiled);
 
+    // A timing class rule. Groups: 1 class, 2 delay in seconds (optional), 3 keyframes name; neither
+    // for a class visible throughout.
+    internal static readonly System.Text.RegularExpressions.Regex TimingRulePattern = new(
+        """^\.([a-z][a-z0-9]*)\{(?:(?:animation-delay:([0-9.]+)s;)?animation-name:([a-z][a-z0-9]*)|visibility:visible)\}$""",
+        System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    // The first step of a keyframes body: visible until the offset, or hidden until it and then visible.
     internal static readonly System.Text.RegularExpressions.Regex StepPattern = new(
-        """([0-9.]+)%\{opacity:([01])\}""",
+        """^([0-9.]+)%\{visibility:(visible|hidden)\}""",
         System.Text.RegularExpressions.RegexOptions.Compiled);
 
-    // A whole keyframes body: a show step, optionally followed by a hide step.
+    // A whole keyframes body: visible for the window's length, or from an offset to the loop end.
     internal static readonly System.Text.RegularExpressions.Regex StepBodyPattern = new(
-        """^[0-9.]+%\{opacity:1\}(?:[0-9.]+%\{opacity:0\})?$""",
+        """^[0-9.]+%\{visibility:(?:visible|hidden\}to\{visibility:visible)\}$""",
         System.Text.RegularExpressions.RegexOptions.Compiled);
 }

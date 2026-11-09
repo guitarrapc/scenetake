@@ -4,199 +4,139 @@
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
 .bg,rect:not([class]) { shape-rendering: crispEdges; }
-.l { opacity: 0; animation: 6.854s step-end infinite; }
+.l { visibility: hidden; animation: 6.854s step-start infinite; }
 .c { fill: #d0d0d0; fill-opacity: 0.5; }
 .a{transform:translate(0,62.8px)}
 .d{transform:translate(0,102.8px)}
 .b{fill:#82b8e0}
-@keyframes f{11.67%{opacity:1}12.4%{opacity:0}}
-.f{animation-name:f}
-@keyframes g{12.4%{opacity:1}12.77%{opacity:0}}
-.g{animation-name:g}
-@keyframes h{12.77%{opacity:1}13.26%{opacity:0}}
-.h{animation-name:h}
-@keyframes i{13.26%{opacity:1}13.82%{opacity:0}}
-.i{animation-name:i}
-@keyframes j{13.82%{opacity:1}14.14%{opacity:0}}
-.j{animation-name:j}
-@keyframes k{14.14%{opacity:1}14.59%{opacity:0}}
-.k{animation-name:k}
-@keyframes m{14.59%{opacity:1}15.41%{opacity:0}}
-.m{animation-name:m}
-@keyframes n{15.41%{opacity:1}15.9%{opacity:0}}
-.n{animation-name:n}
-@keyframes o{15.9%{opacity:1}16.25%{opacity:0}}
-.o{animation-name:o}
-@keyframes p{16.25%{opacity:1}16.71%{opacity:0}}
-.p{animation-name:p}
-@keyframes q{16.71%{opacity:1}17.23%{opacity:0}}
-.q{animation-name:q}
-@keyframes r{17.23%{opacity:1}17.61%{opacity:0}}
-.r{animation-name:r}
-@keyframes s{17.61%{opacity:1}18.16%{opacity:0}}
-.s{animation-name:s}
-@keyframes t{18.16%{opacity:1}18.5%{opacity:0}}
-.t{animation-name:t}
-@keyframes u{18.5%{opacity:1}18.89%{opacity:0}}
-.u{animation-name:u}
-@keyframes v{18.89%{opacity:1}19.24%{opacity:0}}
-.v{animation-name:v}
-@keyframes w{19.24%{opacity:1}19.71%{opacity:0}}
-.w{animation-name:w}
-@keyframes x{19.71%{opacity:1}20.27%{opacity:0}}
-.x{animation-name:x}
-@keyframes y{20.27%{opacity:1}20.81%{opacity:0}}
-.y{animation-name:y}
-@keyframes z{20.81%{opacity:1}21.37%{opacity:0}}
-.z{animation-name:z}
-@keyframes aa{21.37%{opacity:1}21.86%{opacity:0}}
-.aa{animation-name:aa}
-@keyframes ab{21.86%{opacity:1}22.54%{opacity:0}}
-.ab{animation-name:ab}
-@keyframes ac{22.54%{opacity:1}22.85%{opacity:0}}
-.ac{animation-name:ac}
-@keyframes ad{22.85%{opacity:1}23.29%{opacity:0}}
-.ad{animation-name:ad}
-@keyframes ae{23.29%{opacity:1}23.65%{opacity:0}}
-.ae{animation-name:ae}
-@keyframes af{23.65%{opacity:1}23.96%{opacity:0}}
-.af{animation-name:af}
-@keyframes ag{23.96%{opacity:1}24.77%{opacity:0}}
-.ag{animation-name:ag}
-@keyframes ah{24.77%{opacity:1}25.08%{opacity:0}}
-.ah{animation-name:ah}
-@keyframes ai{25.08%{opacity:1}25.61%{opacity:0}}
-.ai{animation-name:ai}
-@keyframes aj{25.61%{opacity:1}26.13%{opacity:0}}
-.aj{animation-name:aj}
-@keyframes ak{26.13%{opacity:1}26.86%{opacity:0}}
-.ak{animation-name:ak}
-@keyframes al{26.86%{opacity:1}27.22%{opacity:0}}
-.al{animation-name:al}
-@keyframes am{27.22%{opacity:1}27.75%{opacity:0}}
-.am{animation-name:am}
-@keyframes an{27.75%{opacity:1}28.26%{opacity:0}}
-.an{animation-name:an}
-@keyframes ao{28.26%{opacity:1}28.6%{opacity:0}}
-.ao{animation-name:ao}
-@keyframes ap{28.6%{opacity:1}29.65%{opacity:0}}
-.ap{animation-name:ap}
-@keyframes aq{29.65%{opacity:1}30.17%{opacity:0}}
-.aq{animation-name:aq}
-@keyframes ar{30.17%{opacity:1}30.49%{opacity:0}}
-.ar{animation-name:ar}
-@keyframes as{30.49%{opacity:1}31.02%{opacity:0}}
-.as{animation-name:as}
-@keyframes at{31.02%{opacity:1}31.37%{opacity:0}}
-.at{animation-name:at}
-@keyframes au{31.37%{opacity:1}31.88%{opacity:0}}
-.au{animation-name:au}
-@keyframes av{31.88%{opacity:1}32.84%{opacity:0}}
-.av{animation-name:av}
-@keyframes aw{32.84%{opacity:1}33.4%{opacity:0}}
-.aw{animation-name:aw}
-@keyframes ax{33.4%{opacity:1}33.69%{opacity:0}}
-.ax{animation-name:ax}
-@keyframes ay{33.69%{opacity:1}34.02%{opacity:0}}
-.ay{animation-name:ay}
-@keyframes az{34.02%{opacity:1}34.33%{opacity:0}}
-.az{animation-name:az}
-@keyframes a0{34.33%{opacity:1}34.77%{opacity:0}}
-.a0{animation-name:a0}
-@keyframes a1{34.77%{opacity:1}35.35%{opacity:0}}
-.a1{animation-name:a1}
-@keyframes a2{35.35%{opacity:1}35.67%{opacity:0}}
-.a2{animation-name:a2}
-@keyframes a3{35.67%{opacity:1}36.18%{opacity:0}}
-.a3{animation-name:a3}
-@keyframes a4{36.18%{opacity:1}36.72%{opacity:0}}
-.a4{animation-name:a4}
-@keyframes a5{36.72%{opacity:1}37.22%{opacity:0}}
-.a5{animation-name:a5}
-@keyframes a6{37.22%{opacity:1}37.76%{opacity:0}}
-.a6{animation-name:a6}
-@keyframes a7{37.76%{opacity:1}38.23%{opacity:0}}
-.a7{animation-name:a7}
-@keyframes a8{38.23%{opacity:1}38.61%{opacity:0}}
-.a8{animation-name:a8}
-@keyframes a9{38.61%{opacity:1}39.19%{opacity:0}}
-.a9{animation-name:a9}
-@keyframes ba{39.19%{opacity:1}39.6%{opacity:0}}
-.ba{animation-name:ba}
-@keyframes bb{39.6%{opacity:1}}
-.bb{animation-name:bb}
-@keyframes bc{42.88%{opacity:1}}
-.bc{animation-name:bc}
-@keyframes bd{58.93%{opacity:1}59.66%{opacity:0}}
-.bd{animation-name:bd}
-@keyframes be{59.66%{opacity:1}60.01%{opacity:0}}
-.be{animation-name:be}
-@keyframes bf{60.01%{opacity:1}60.52%{opacity:0}}
-.bf{animation-name:bf}
-@keyframes bh{60.52%{opacity:1}61.09%{opacity:0}}
-.bh{animation-name:bh}
-@keyframes bi{61.09%{opacity:1}61.88%{opacity:0}}
-.bi{animation-name:bi}
-@keyframes bj{61.88%{opacity:1}62.45%{opacity:0}}
-.bj{animation-name:bj}
-@keyframes bk{62.45%{opacity:1}62.9%{opacity:0}}
-.bk{animation-name:bk}
-@keyframes bl{62.9%{opacity:1}63.29%{opacity:0}}
-.bl{animation-name:bl}
-@keyframes bm{63.29%{opacity:1}63.74%{opacity:0}}
-.bm{animation-name:bm}
-@keyframes bn{63.74%{opacity:1}64.33%{opacity:0}}
-.bn{animation-name:bn}
-@keyframes bo{64.33%{opacity:1}64.66%{opacity:0}}
-.bo{animation-name:bo}
-@keyframes bp{64.66%{opacity:1}}
-.bp{animation-name:bp}
-@keyframes bq{67.9%{opacity:1}}
-.bq{animation-name:bq}
-@keyframes br{83.95%{opacity:1}}
-.br{animation-name:br}
-@keyframes bs{14.59%{opacity:1}14.88%{opacity:0}}
-.bs{animation-name:bs}
-@keyframes bt{14.88%{opacity:1}15.41%{opacity:0}}
-.bt{animation-name:bt}
-@keyframes bu{21.86%{opacity:1}22.25%{opacity:0}}
-.bu{animation-name:bu}
-@keyframes bv{22.25%{opacity:1}22.54%{opacity:0}}
-.bv{animation-name:bv}
-@keyframes bw{23.96%{opacity:1}24.35%{opacity:0}}
-.bw{animation-name:bw}
-@keyframes bx{24.35%{opacity:1}24.77%{opacity:0}}
-.bx{animation-name:bx}
-@keyframes by{26.13%{opacity:1}26.42%{opacity:0}}
-.by{animation-name:by}
-@keyframes bz{26.42%{opacity:1}26.86%{opacity:0}}
-.bz{animation-name:bz}
-@keyframes b0{28.6%{opacity:1}29.14%{opacity:0}}
-.b0{animation-name:b0}
-@keyframes b1{29.14%{opacity:1}29.65%{opacity:0}}
-.b1{animation-name:b1}
-@keyframes b2{31.88%{opacity:1}32.42%{opacity:0}}
-.b2{animation-name:b2}
-@keyframes b3{32.42%{opacity:1}32.84%{opacity:0}}
-.b3{animation-name:b3}
-@keyframes b4{39.6%{opacity:1}39.96%{opacity:0}}
+@keyframes s{0.72951%{visibility:visible}}
+.ad{animation-delay:0.8s;animation-name:s}
+@keyframes j{0.36476%{visibility:visible}}
+.ae{animation-delay:0.85s;animation-name:j}
+@keyframes t{0.49607%{visibility:visible}}
+.af{animation-delay:0.875s;animation-name:t}
+@keyframes k{0.55443%{visibility:visible}}
+.ag{animation-delay:0.909s;animation-name:k}
+@keyframes m{0.32099%{visibility:visible}}
+.ah{animation-delay:0.947s;animation-name:m}
+@keyframes n{0.4523%{visibility:visible}}
+.ai{animation-delay:0.969s;animation-name:n}
+@keyframes x{0.81705%{visibility:visible}}
+.aj{animation-delay:1s;animation-name:x}
+.ak{animation-delay:1.056s;animation-name:t}
+@keyframes o{0.35017%{visibility:visible}}
+.al{animation-delay:1.09s;animation-name:o}
+.am{animation-delay:1.114s;animation-name:n}
+@keyframes f{0.52525%{visibility:visible}}
+.an{animation-delay:1.145s;animation-name:f}
+@keyframes y{0.37935%{visibility:visible}}
+.ao{animation-delay:1.181s;animation-name:y}
+.ap{animation-delay:1.207s;animation-name:k}
+@keyframes p{0.33558%{visibility:visible}}
+.aq{animation-delay:1.245s;animation-name:p}
+@keyframes g{0.39394%{visibility:visible}}
+.ar{animation-delay:1.268s;animation-name:g}
+.as{animation-delay:1.295s;animation-name:o}
+@keyframes z{0.46689%{visibility:visible}}
+.at{animation-delay:1.319s;animation-name:z}
+.au{animation-delay:1.351s;animation-name:k}
+@keyframes h{0.53984%{visibility:visible}}
+.av{animation-delay:1.389s;animation-name:h}
+@keyframes u{0.56902%{visibility:visible}}
+.aw{animation-delay:1.426s;animation-name:u}
+@keyframes ax{0.48148%{visibility:visible}}
+.ay{animation-delay:1.465s;animation-name:ax}
+@keyframes az{0.68574%{visibility:visible}}
+.a0{animation-delay:1.498s;animation-name:az}
+@keyframes q{0.3064%{visibility:visible}}
+.a1{animation-delay:1.545s;animation-name:q}
+@keyframes v{0.43771%{visibility:visible}}
+.a2{animation-delay:1.566s;animation-name:v}
+.a3{animation-delay:1.596s;animation-name:j}
+.a4{animation-delay:1.621s;animation-name:q}
+.a5{animation-delay:1.642s;animation-name:x}
+.a6{animation-delay:1.698s;animation-name:q}
+.a7{animation-delay:1.719s;animation-name:f}
+.a8{animation-delay:1.755s;animation-name:f}
+.a9{animation-delay:1.791s;animation-name:s}
+.ba{animation-delay:1.841s;animation-name:j}
+.bb{animation-delay:1.866s;animation-name:f}
+@keyframes i{0.51066%{visibility:visible}}
+.bc{animation-delay:1.902s;animation-name:i}
+.bd{animation-delay:1.937s;animation-name:p}
+@keyframes be{1.05049%{visibility:visible}}
+.bf{animation-delay:1.96s;animation-name:be}
+.bh{animation-delay:2.032s;animation-name:f}
+.bi{animation-delay:2.068s;animation-name:m}
+.bj{animation-delay:2.09s;animation-name:f}
+.bk{animation-delay:2.126s;animation-name:o}
+.bl{animation-delay:2.15s;animation-name:i}
+@keyframes bm{0.96295%{visibility:visible}}
+.bn{animation-delay:2.185s;animation-name:bm}
+.bo{animation-delay:2.251s;animation-name:k}
+@keyframes r{0.29181%{visibility:visible}}
+.bp{animation-delay:2.289s;animation-name:r}
+.bq{animation-delay:2.309s;animation-name:p}
+.br{animation-delay:2.332s;animation-name:q}
+.bs{animation-delay:2.353s;animation-name:v}
+@keyframes w{0.58361%{visibility:visible}}
+.bt{animation-delay:2.383s;animation-name:w}
+.bu{animation-delay:2.423s;animation-name:m}
+.bv{animation-delay:2.445s;animation-name:i}
+.bw{animation-delay:2.48s;animation-name:h}
+.bx{animation-delay:2.517s;animation-name:t}
+.by{animation-delay:2.551s;animation-name:h}
+.bz{animation-delay:2.588s;animation-name:z}
+.b0{animation-delay:2.62s;animation-name:y}
+.b1{animation-delay:2.646s;animation-name:w}
+@keyframes b2{0.40853%{visibility:visible}}
+.b3{animation-delay:2.686s;animation-name:b2}
+@keyframes b4{39.59731%{visibility:hidden}to{visibility:visible}}
 .b4{animation-name:b4}
-@keyframes b5{39.96%{opacity:1}42.88%{opacity:0}}
+@keyframes b5{42.88007%{visibility:hidden}to{visibility:visible}}
 .b5{animation-name:b5}
-@keyframes b6{42.88%{opacity:1}58.93%{opacity:0}}
-.b6{animation-name:b6}
-@keyframes b7{61.09%{opacity:1}61.48%{opacity:0}}
-.b7{animation-name:b7}
-@keyframes b8{61.48%{opacity:1}61.88%{opacity:0}}
-.b8{animation-name:b8}
-@keyframes b9{64.66%{opacity:1}64.98%{opacity:0}}
-.b9{animation-name:b9}
-@keyframes ca{64.98%{opacity:1}67.9%{opacity:0}}
-.ca{animation-name:ca}
-@keyframes cb{67.9%{opacity:1}83.95%{opacity:0}}
-.cb{animation-name:cb}
-@keyframes e{0%{opacity:1}}
-.e{animation-name:e}
+.b6{animation-delay:4.039s;animation-name:s}
+.b7{animation-delay:4.089s;animation-name:o}
+.b8{animation-delay:4.113s;animation-name:i}
+.b9{animation-delay:4.148s;animation-name:u}
+@keyframes ca{0.78787%{visibility:visible}}
+.cb{animation-delay:4.187s;animation-name:ca}
+.cc{animation-delay:4.241s;animation-name:u}
+.cd{animation-delay:4.28s;animation-name:n}
+.ce{animation-delay:4.311s;animation-name:g}
+.cf{animation-delay:4.338s;animation-name:n}
+.cg{animation-delay:4.369s;animation-name:w}
+.ch{animation-delay:4.409s;animation-name:p}
+@keyframes ci{64.66297%{visibility:hidden}to{visibility:visible}}
+.ci{animation-name:ci}
+@keyframes cj{67.90195%{visibility:hidden}to{visibility:visible}}
+.cj{animation-name:cj}
+@keyframes ck{83.95097%{visibility:hidden}to{visibility:visible}}
+.ck{animation-name:ck}
+.cl{animation-delay:1s;animation-name:r}
+.cm{animation-delay:1.02s;animation-name:f}
+.cn{animation-delay:1.498s;animation-name:g}
+.co{animation-delay:1.525s;animation-name:r}
+.cp{animation-delay:1.642s;animation-name:g}
+@keyframes aa{0.42312%{visibility:visible}}
+.cq{animation-delay:1.669s;animation-name:aa}
+.cr{animation-delay:1.791s;animation-name:r}
+.cs{animation-delay:1.811s;animation-name:v}
+.ct{animation-delay:1.96s;animation-name:h}
+.cu{animation-delay:1.997s;animation-name:i}
+.cv{animation-delay:2.185s;animation-name:h}
+.cw{animation-delay:2.222s;animation-name:aa}
+.cx{animation-delay:2.714s;animation-name:j}
+@keyframes ab{2.91801%{visibility:visible}}
+.cy{animation-delay:2.739s;animation-name:ab}
+@keyframes ac{16.04903%{visibility:visible}}
+.cz{animation-delay:2.939s;animation-name:ac}
+.c0{animation-delay:4.187s;animation-name:g}
+.c1{animation-delay:4.214s;animation-name:g}
+.c2{animation-delay:4.432s;animation-name:m}
+.c3{animation-delay:4.454s;animation-name:ab}
+.c4{animation-delay:4.654s;animation-name:ac}
+.e{visibility:visible}
 </style>
 <defs>
 <filter id="window-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.22"/></filter>
@@ -213,98 +153,98 @@ text { dominant-baseline: alphabetic; }
 <circle class="l e viewport-chrome-0" cx="86" cy="29" r="8" fill="#28c840"/>
 <g mask="url(#viewport-mask)" fill="#d0d0d0">
 <rect class="bg l e viewport-bg-0" x="12" y="46" width="813.6" height="488" fill="#282c34"/>
-<g class="l f"><text x="22" y="62.8">$</text><use href="#c" x="41.84" y="50"/></g>
-<g class="l g"><text x="22 41.84" y="62.8">$p</text><use href="#c" x="51.76" y="50"/></g>
-<g class="l h"><text x="22 41.84 51.76" y="62.8">$pr</text><use href="#c" x="61.68" y="50"/></g>
-<g class="l i"><text x="22 41.84 51.76 61.68" y="62.8">$pri</text><use href="#c" x="71.6" y="50"/></g>
-<g class="l j a"><text x="22" textLength="59.52">$ prin</text><use href="#c" x="81.52" y="-12.8"/></g>
-<g class="l k a"><text x="22" textLength="69.44">$ print</text><use href="#c" x="91.44" y="-12.8"/></g>
-<text class="l m a" x="22" textLength="79.36">$ printf</text>
-<g class="l n a"><text x="22" textLength="99.2">$ printf '</text><use href="#c" x="121.2" y="-12.8"/></g>
-<g class="l o a"><text x="22" textLength="109.12">$ printf '\</text><use href="#c" x="131.12" y="-12.8"/></g>
-<g class="l p a"><text x="22" textLength="119.04">$ printf '\0</text><use href="#c" x="141.04" y="-12.8"/></g>
-<g class="l q a"><text x="22" textLength="128.96">$ printf '\03</text><use href="#c" x="150.96" y="-12.8"/></g>
-<g class="l r a"><text x="22" textLength="138.88">$ printf '\033</text><use href="#c" x="160.88" y="-12.8"/></g>
-<g class="l s a"><text x="22" textLength="148.8">$ printf '\033[</text><use href="#c" x="170.8" y="-12.8"/></g>
-<g class="l t a"><text x="22" textLength="158.72">$ printf '\033[1</text><use href="#c" x="180.72" y="-12.8"/></g>
-<g class="l u a"><text x="22" textLength="168.64">$ printf '\033[1;</text><use href="#c" x="190.64" y="-12.8"/></g>
-<g class="l v a"><text x="22" textLength="178.56">$ printf '\033[1;3</text><use href="#c" x="200.56" y="-12.8"/></g>
-<g class="l w a"><text x="22" textLength="188.48">$ printf '\033[1;34</text><use href="#c" x="210.48" y="-12.8"/></g>
-<g class="l x a"><text x="22" textLength="198.4">$ printf '\033[1;34m</text><use href="#c" x="220.4" y="-12.8"/></g>
-<g class="l y a"><text x="22" textLength="208.32">$ printf '\033[1;34mD</text><use href="#c" x="230.32" y="-12.8"/></g>
-<g class="l z a"><text x="22" textLength="218.24">$ printf '\033[1;34mDa</text><use href="#c" x="240.24" y="-12.8"/></g>
-<g class="l aa a"><text x="22" textLength="228.16">$ printf '\033[1;34mDar</text><use href="#c" x="250.16" y="-12.8"/></g>
-<text class="l ab a" x="22" textLength="238.08">$ printf '\033[1;34mDark</text>
-<g class="l ac a"><text x="22" textLength="257.92">$ printf '\033[1;34mDark t</text><use href="#c" x="279.92" y="-12.8"/></g>
-<g class="l ad a"><text x="22" textLength="267.84">$ printf '\033[1;34mDark th</text><use href="#c" x="289.84" y="-12.8"/></g>
-<g class="l ae a"><text x="22" textLength="277.76">$ printf '\033[1;34mDark the</text><use href="#c" x="299.76" y="-12.8"/></g>
-<g class="l af a"><text x="22" textLength="287.68">$ printf '\033[1;34mDark them</text><use href="#c" x="309.68" y="-12.8"/></g>
-<text class="l ag a" x="22" textLength="297.6">$ printf '\033[1;34mDark theme</text>
-<g class="l ah a"><text x="22" textLength="317.44">$ printf '\033[1;34mDark theme w</text><use href="#c" x="339.44" y="-12.8"/></g>
-<g class="l ai a"><text x="22" textLength="327.36">$ printf '\033[1;34mDark theme wi</text><use href="#c" x="349.36" y="-12.8"/></g>
-<g class="l aj a"><text x="22" textLength="337.28">$ printf '\033[1;34mDark theme wit</text><use href="#c" x="359.28" y="-12.8"/></g>
-<text class="l ak a" x="22" textLength="347.2">$ printf '\033[1;34mDark theme with</text>
-<g class="l al a"><text x="22" textLength="367.04">$ printf '\033[1;34mDark theme with m</text><use href="#c" x="389.04" y="-12.8"/></g>
-<g class="l am a"><text x="22" textLength="376.96">$ printf '\033[1;34mDark theme with ma</text><use href="#c" x="398.96" y="-12.8"/></g>
-<g class="l an a"><text x="22" textLength="386.88">$ printf '\033[1;34mDark theme with mac</text><use href="#c" x="408.88" y="-12.8"/></g>
-<g class="l ao a"><text x="22" textLength="396.8">$ printf '\033[1;34mDark theme with macO</text><use href="#c" x="418.8" y="-12.8"/></g>
-<text class="l ap a" x="22" textLength="406.72">$ printf '\033[1;34mDark theme with macOS</text>
-<g class="l aq a"><text x="22" textLength="426.56">$ printf '\033[1;34mDark theme with macOS w</text><use href="#c" x="448.56" y="-12.8"/></g>
-<g class="l ar a"><text x="22" textLength="436.48">$ printf '\033[1;34mDark theme with macOS wi</text><use href="#c" x="458.48" y="-12.8"/></g>
-<g class="l as a"><text x="22" textLength="446.4">$ printf '\033[1;34mDark theme with macOS win</text><use href="#c" x="468.4" y="-12.8"/></g>
-<g class="l at a"><text x="22" textLength="456.32">$ printf '\033[1;34mDark theme with macOS wind</text><use href="#c" x="478.32" y="-12.8"/></g>
-<g class="l au a"><text x="22" textLength="466.24">$ printf '\033[1;34mDark theme with macOS windo</text><use href="#c" x="488.24" y="-12.8"/></g>
-<text class="l av a" x="22" textLength="476.16">$ printf '\033[1;34mDark theme with macOS window</text>
-<g class="l aw a"><text x="22" textLength="496">$ printf '\033[1;34mDark theme with macOS window c</text><use href="#c" x="518" y="-12.8"/></g>
-<g class="l ax a"><text x="22" textLength="505.92">$ printf '\033[1;34mDark theme with macOS window ch</text><use href="#c" x="527.92" y="-12.8"/></g>
-<g class="l ay a"><text x="22" textLength="515.84">$ printf '\033[1;34mDark theme with macOS window chr</text><use href="#c" x="537.84" y="-12.8"/></g>
-<g class="l az a"><text x="22" textLength="525.76">$ printf '\033[1;34mDark theme with macOS window chro</text><use href="#c" x="547.76" y="-12.8"/></g>
-<g class="l a0 a"><text x="22" textLength="535.68">$ printf '\033[1;34mDark theme with macOS window chrom</text><use href="#c" x="557.68" y="-12.8"/></g>
-<g class="l a1 a"><text x="22" textLength="545.6">$ printf '\033[1;34mDark theme with macOS window chrome</text><use href="#c" x="567.6" y="-12.8"/></g>
-<g class="l a2 a"><text x="22" textLength="555.52">$ printf '\033[1;34mDark theme with macOS window chrome\</text><use href="#c" x="577.52" y="-12.8"/></g>
-<g class="l a3 a"><text x="22" textLength="565.44">$ printf '\033[1;34mDark theme with macOS window chrome\0</text><use href="#c" x="587.44" y="-12.8"/></g>
-<g class="l a4 a"><text x="22" textLength="575.36">$ printf '\033[1;34mDark theme with macOS window chrome\03</text><use href="#c" x="597.36" y="-12.8"/></g>
-<g class="l a5 a"><text x="22" textLength="585.28">$ printf '\033[1;34mDark theme with macOS window chrome\033</text><use href="#c" x="607.28" y="-12.8"/></g>
-<g class="l a6 a"><text x="22" textLength="595.2">$ printf '\033[1;34mDark theme with macOS window chrome\033[</text><use href="#c" x="617.2" y="-12.8"/></g>
-<g class="l a7 a"><text x="22" textLength="605.12">$ printf '\033[1;34mDark theme with macOS window chrome\033[0</text><use href="#c" x="627.12" y="-12.8"/></g>
-<g class="l a8 a"><text x="22" textLength="615.04">$ printf '\033[1;34mDark theme with macOS window chrome\033[0m</text><use href="#c" x="637.04" y="-12.8"/></g>
-<g class="l a9 a"><text x="22" textLength="624.96">$ printf '\033[1;34mDark theme with macOS window chrome\033[0m\</text><use href="#c" x="646.96" y="-12.8"/></g>
-<g class="l ba a"><text x="22" textLength="634.88">$ printf '\033[1;34mDark theme with macOS window chrome\033[0m\n</text><use href="#c" x="656.88" y="-12.8"/></g>
-<text class="l bb a" x="22" textLength="644.8">$ printf '\033[1;34mDark theme with macOS window chrome\033[0m\n'</text>
-<text class="l bc b" x="22" y="82.8" font-weight="bold" textLength="347.2">Dark theme with macOS window chrome</text>
-<g class="l bd"><text x="22" y="102.8">$</text><use href="#c" x="41.84" y="90"/></g>
-<g class="l be"><text x="22 41.84" y="102.8">$e</text><use href="#c" x="51.76" y="90"/></g>
-<g class="l bf"><text x="22 41.84 51.76" y="102.8">$ec</text><use href="#c" x="61.68" y="90"/></g>
-<g class="l bh"><text x="22 41.84 51.76 61.68" y="102.8">$ech</text><use href="#c" x="71.6" y="90"/></g>
-<text class="l bi d" x="22" textLength="59.52">$ echo</text>
-<g class="l bj d"><text x="22" textLength="79.36">$ echo &quot;</text><use href="#c" x="101.36" y="-12.8"/></g>
-<g class="l bk d"><text x="22" textLength="89.28">$ echo &quot;D</text><use href="#c" x="111.28" y="-12.8"/></g>
-<g class="l bl d"><text x="22" textLength="99.2">$ echo &quot;Do</text><use href="#c" x="121.2" y="-12.8"/></g>
-<g class="l bm d"><text x="22" textLength="109.12">$ echo &quot;Don</text><use href="#c" x="131.12" y="-12.8"/></g>
-<g class="l bn d"><text x="22" textLength="119.04">$ echo &quot;Done</text><use href="#c" x="141.04" y="-12.8"/></g>
-<g class="l bo d"><text x="22" textLength="128.96">$ echo &quot;Done!</text><use href="#c" x="150.96" y="-12.8"/></g>
-<text class="l bp d" x="22" textLength="138.88">$ echo &quot;Done!&quot;</text>
-<text class="l bq" x="22" y="122.8" textLength="49.6">Done!</text>
-<g class="l br"><text x="22" y="142.8">$</text><use href="#c" x="41.84" y="130"/></g>
-<use href="#c" x="101.36" y="50" class="l bs"/>
-<use href="#c" x="111.28" y="50" class="l bt"/>
-<use href="#c" x="260.08" y="50" class="l bu"/>
-<use href="#c" x="270" y="50" class="l bv"/>
-<use href="#c" x="319.6" y="50" class="l bw"/>
-<use href="#c" x="329.52" y="50" class="l bx"/>
-<use href="#c" x="369.2" y="50" class="l by"/>
-<use href="#c" x="379.12" y="50" class="l bz"/>
-<use href="#c" x="428.72" y="50" class="l b0"/>
-<use href="#c" x="438.64" y="50" class="l b1"/>
-<use href="#c" x="498.16" y="50" class="l b2"/>
-<use href="#c" x="508.08" y="50" class="l b3"/>
-<use href="#c" x="666.8" y="50" class="l b4"/>
-<use href="#c" x="22" y="70" class="l b5"/>
-<use href="#c" x="22" y="90" class="l b6"/>
-<use href="#c" x="81.52" y="90" class="l b7"/>
-<use href="#c" x="91.44" y="90" class="l b8"/>
-<use href="#c" x="160.88" y="90" class="l b9"/>
-<use href="#c" x="22" y="110" class="l ca"/>
-<use href="#c" x="22" y="130" class="l cb"/>
+<g class="l ad"><text x="22" y="62.8">$</text><use href="#c" x="41.84" y="50"/></g>
+<g class="l ae"><text x="22 41.84" y="62.8">$p</text><use href="#c" x="51.76" y="50"/></g>
+<g class="l af"><text x="22 41.84 51.76" y="62.8">$pr</text><use href="#c" x="61.68" y="50"/></g>
+<g class="l ag"><text x="22 41.84 51.76 61.68" y="62.8">$pri</text><use href="#c" x="71.6" y="50"/></g>
+<g class="l ah a"><text x="22" textLength="59.52">$ prin</text><use href="#c" x="81.52" y="-12.8"/></g>
+<g class="l ai a"><text x="22" textLength="69.44">$ print</text><use href="#c" x="91.44" y="-12.8"/></g>
+<text class="l aj a" x="22" textLength="79.36">$ printf</text>
+<g class="l ak a"><text x="22" textLength="99.2">$ printf '</text><use href="#c" x="121.2" y="-12.8"/></g>
+<g class="l al a"><text x="22" textLength="109.12">$ printf '\</text><use href="#c" x="131.12" y="-12.8"/></g>
+<g class="l am a"><text x="22" textLength="119.04">$ printf '\0</text><use href="#c" x="141.04" y="-12.8"/></g>
+<g class="l an a"><text x="22" textLength="128.96">$ printf '\03</text><use href="#c" x="150.96" y="-12.8"/></g>
+<g class="l ao a"><text x="22" textLength="138.88">$ printf '\033</text><use href="#c" x="160.88" y="-12.8"/></g>
+<g class="l ap a"><text x="22" textLength="148.8">$ printf '\033[</text><use href="#c" x="170.8" y="-12.8"/></g>
+<g class="l aq a"><text x="22" textLength="158.72">$ printf '\033[1</text><use href="#c" x="180.72" y="-12.8"/></g>
+<g class="l ar a"><text x="22" textLength="168.64">$ printf '\033[1;</text><use href="#c" x="190.64" y="-12.8"/></g>
+<g class="l as a"><text x="22" textLength="178.56">$ printf '\033[1;3</text><use href="#c" x="200.56" y="-12.8"/></g>
+<g class="l at a"><text x="22" textLength="188.48">$ printf '\033[1;34</text><use href="#c" x="210.48" y="-12.8"/></g>
+<g class="l au a"><text x="22" textLength="198.4">$ printf '\033[1;34m</text><use href="#c" x="220.4" y="-12.8"/></g>
+<g class="l av a"><text x="22" textLength="208.32">$ printf '\033[1;34mD</text><use href="#c" x="230.32" y="-12.8"/></g>
+<g class="l aw a"><text x="22" textLength="218.24">$ printf '\033[1;34mDa</text><use href="#c" x="240.24" y="-12.8"/></g>
+<g class="l ay a"><text x="22" textLength="228.16">$ printf '\033[1;34mDar</text><use href="#c" x="250.16" y="-12.8"/></g>
+<text class="l a0 a" x="22" textLength="238.08">$ printf '\033[1;34mDark</text>
+<g class="l a1 a"><text x="22" textLength="257.92">$ printf '\033[1;34mDark t</text><use href="#c" x="279.92" y="-12.8"/></g>
+<g class="l a2 a"><text x="22" textLength="267.84">$ printf '\033[1;34mDark th</text><use href="#c" x="289.84" y="-12.8"/></g>
+<g class="l a3 a"><text x="22" textLength="277.76">$ printf '\033[1;34mDark the</text><use href="#c" x="299.76" y="-12.8"/></g>
+<g class="l a4 a"><text x="22" textLength="287.68">$ printf '\033[1;34mDark them</text><use href="#c" x="309.68" y="-12.8"/></g>
+<text class="l a5 a" x="22" textLength="297.6">$ printf '\033[1;34mDark theme</text>
+<g class="l a6 a"><text x="22" textLength="317.44">$ printf '\033[1;34mDark theme w</text><use href="#c" x="339.44" y="-12.8"/></g>
+<g class="l a7 a"><text x="22" textLength="327.36">$ printf '\033[1;34mDark theme wi</text><use href="#c" x="349.36" y="-12.8"/></g>
+<g class="l a8 a"><text x="22" textLength="337.28">$ printf '\033[1;34mDark theme wit</text><use href="#c" x="359.28" y="-12.8"/></g>
+<text class="l a9 a" x="22" textLength="347.2">$ printf '\033[1;34mDark theme with</text>
+<g class="l ba a"><text x="22" textLength="367.04">$ printf '\033[1;34mDark theme with m</text><use href="#c" x="389.04" y="-12.8"/></g>
+<g class="l bb a"><text x="22" textLength="376.96">$ printf '\033[1;34mDark theme with ma</text><use href="#c" x="398.96" y="-12.8"/></g>
+<g class="l bc a"><text x="22" textLength="386.88">$ printf '\033[1;34mDark theme with mac</text><use href="#c" x="408.88" y="-12.8"/></g>
+<g class="l bd a"><text x="22" textLength="396.8">$ printf '\033[1;34mDark theme with macO</text><use href="#c" x="418.8" y="-12.8"/></g>
+<text class="l bf a" x="22" textLength="406.72">$ printf '\033[1;34mDark theme with macOS</text>
+<g class="l bh a"><text x="22" textLength="426.56">$ printf '\033[1;34mDark theme with macOS w</text><use href="#c" x="448.56" y="-12.8"/></g>
+<g class="l bi a"><text x="22" textLength="436.48">$ printf '\033[1;34mDark theme with macOS wi</text><use href="#c" x="458.48" y="-12.8"/></g>
+<g class="l bj a"><text x="22" textLength="446.4">$ printf '\033[1;34mDark theme with macOS win</text><use href="#c" x="468.4" y="-12.8"/></g>
+<g class="l bk a"><text x="22" textLength="456.32">$ printf '\033[1;34mDark theme with macOS wind</text><use href="#c" x="478.32" y="-12.8"/></g>
+<g class="l bl a"><text x="22" textLength="466.24">$ printf '\033[1;34mDark theme with macOS windo</text><use href="#c" x="488.24" y="-12.8"/></g>
+<text class="l bn a" x="22" textLength="476.16">$ printf '\033[1;34mDark theme with macOS window</text>
+<g class="l bo a"><text x="22" textLength="496">$ printf '\033[1;34mDark theme with macOS window c</text><use href="#c" x="518" y="-12.8"/></g>
+<g class="l bp a"><text x="22" textLength="505.92">$ printf '\033[1;34mDark theme with macOS window ch</text><use href="#c" x="527.92" y="-12.8"/></g>
+<g class="l bq a"><text x="22" textLength="515.84">$ printf '\033[1;34mDark theme with macOS window chr</text><use href="#c" x="537.84" y="-12.8"/></g>
+<g class="l br a"><text x="22" textLength="525.76">$ printf '\033[1;34mDark theme with macOS window chro</text><use href="#c" x="547.76" y="-12.8"/></g>
+<g class="l bs a"><text x="22" textLength="535.68">$ printf '\033[1;34mDark theme with macOS window chrom</text><use href="#c" x="557.68" y="-12.8"/></g>
+<g class="l bt a"><text x="22" textLength="545.6">$ printf '\033[1;34mDark theme with macOS window chrome</text><use href="#c" x="567.6" y="-12.8"/></g>
+<g class="l bu a"><text x="22" textLength="555.52">$ printf '\033[1;34mDark theme with macOS window chrome\</text><use href="#c" x="577.52" y="-12.8"/></g>
+<g class="l bv a"><text x="22" textLength="565.44">$ printf '\033[1;34mDark theme with macOS window chrome\0</text><use href="#c" x="587.44" y="-12.8"/></g>
+<g class="l bw a"><text x="22" textLength="575.36">$ printf '\033[1;34mDark theme with macOS window chrome\03</text><use href="#c" x="597.36" y="-12.8"/></g>
+<g class="l bx a"><text x="22" textLength="585.28">$ printf '\033[1;34mDark theme with macOS window chrome\033</text><use href="#c" x="607.28" y="-12.8"/></g>
+<g class="l by a"><text x="22" textLength="595.2">$ printf '\033[1;34mDark theme with macOS window chrome\033[</text><use href="#c" x="617.2" y="-12.8"/></g>
+<g class="l bz a"><text x="22" textLength="605.12">$ printf '\033[1;34mDark theme with macOS window chrome\033[0</text><use href="#c" x="627.12" y="-12.8"/></g>
+<g class="l b0 a"><text x="22" textLength="615.04">$ printf '\033[1;34mDark theme with macOS window chrome\033[0m</text><use href="#c" x="637.04" y="-12.8"/></g>
+<g class="l b1 a"><text x="22" textLength="624.96">$ printf '\033[1;34mDark theme with macOS window chrome\033[0m\</text><use href="#c" x="646.96" y="-12.8"/></g>
+<g class="l b3 a"><text x="22" textLength="634.88">$ printf '\033[1;34mDark theme with macOS window chrome\033[0m\n</text><use href="#c" x="656.88" y="-12.8"/></g>
+<text class="l b4 a" x="22" textLength="644.8">$ printf '\033[1;34mDark theme with macOS window chrome\033[0m\n'</text>
+<text class="l b5 b" x="22" y="82.8" font-weight="bold" textLength="347.2">Dark theme with macOS window chrome</text>
+<g class="l b6"><text x="22" y="102.8">$</text><use href="#c" x="41.84" y="90"/></g>
+<g class="l b7"><text x="22 41.84" y="102.8">$e</text><use href="#c" x="51.76" y="90"/></g>
+<g class="l b8"><text x="22 41.84 51.76" y="102.8">$ec</text><use href="#c" x="61.68" y="90"/></g>
+<g class="l b9"><text x="22 41.84 51.76 61.68" y="102.8">$ech</text><use href="#c" x="71.6" y="90"/></g>
+<text class="l cb d" x="22" textLength="59.52">$ echo</text>
+<g class="l cc d"><text x="22" textLength="79.36">$ echo &quot;</text><use href="#c" x="101.36" y="-12.8"/></g>
+<g class="l cd d"><text x="22" textLength="89.28">$ echo &quot;D</text><use href="#c" x="111.28" y="-12.8"/></g>
+<g class="l ce d"><text x="22" textLength="99.2">$ echo &quot;Do</text><use href="#c" x="121.2" y="-12.8"/></g>
+<g class="l cf d"><text x="22" textLength="109.12">$ echo &quot;Don</text><use href="#c" x="131.12" y="-12.8"/></g>
+<g class="l cg d"><text x="22" textLength="119.04">$ echo &quot;Done</text><use href="#c" x="141.04" y="-12.8"/></g>
+<g class="l ch d"><text x="22" textLength="128.96">$ echo &quot;Done!</text><use href="#c" x="150.96" y="-12.8"/></g>
+<text class="l ci d" x="22" textLength="138.88">$ echo &quot;Done!&quot;</text>
+<text class="l cj" x="22" y="122.8" textLength="49.6">Done!</text>
+<g class="l ck"><text x="22" y="142.8">$</text><use href="#c" x="41.84" y="130"/></g>
+<use href="#c" x="101.36" y="50" class="l cl"/>
+<use href="#c" x="111.28" y="50" class="l cm"/>
+<use href="#c" x="260.08" y="50" class="l cn"/>
+<use href="#c" x="270" y="50" class="l co"/>
+<use href="#c" x="319.6" y="50" class="l cp"/>
+<use href="#c" x="329.52" y="50" class="l cq"/>
+<use href="#c" x="369.2" y="50" class="l cr"/>
+<use href="#c" x="379.12" y="50" class="l cs"/>
+<use href="#c" x="428.72" y="50" class="l ct"/>
+<use href="#c" x="438.64" y="50" class="l cu"/>
+<use href="#c" x="498.16" y="50" class="l cv"/>
+<use href="#c" x="508.08" y="50" class="l cw"/>
+<use href="#c" x="666.8" y="50" class="l cx"/>
+<use href="#c" x="22" y="70" class="l cy"/>
+<use href="#c" x="22" y="90" class="l cz"/>
+<use href="#c" x="81.52" y="90" class="l c0"/>
+<use href="#c" x="91.44" y="90" class="l c1"/>
+<use href="#c" x="160.88" y="90" class="l c2"/>
+<use href="#c" x="22" y="110" class="l c3"/>
+<use href="#c" x="22" y="130" class="l c4"/>
 </g>
 </svg>
