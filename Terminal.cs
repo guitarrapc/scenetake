@@ -24,6 +24,9 @@ internal readonly record struct TerminalTheme(string Foreground, string Backgrou
 
         return new TerminalTheme(theme.Fg, theme.Bg, parts[..16]);
     }
+
+    /// <summary>A theme for a screen that is only measured, never drawn. Colors do not move the cursor.</summary>
+    internal static TerminalTheme ForMeasuring() => new("#d0d0d0", "#282c34", (string[])DefaultPalette.Clone());
 }
 
 internal readonly record struct CellStyle(
@@ -1827,6 +1830,48 @@ internal readonly record struct CastEvent(
         new(time, CastEventKind.Resize, $"{width}x{height}", width, height);
 
     internal static CastEvent Marker(double time, string label) => new(time, CastEventKind.Marker, label);
+}
+
+/// <summary>
+/// Plays a recording's events, as they are added, on a screen of the recording's size and reports where the
+/// cursor is. A Windows PTY step starts ConPTY at that position: ConPTY otherwise assumes an empty screen with
+/// its cursor on row 1 and redraws a line (`\r` in a progress bar) with a cursor address for that row, which
+/// lands on the recording's row 1 over earlier output.
+/// </summary>
+internal sealed class CastCursorTracker
+{
+    private readonly ScreenBuffer _buffer;
+    private readonly AnsiParser _parser;
+    private int _next;
+
+    internal CastCursorTracker(int width, int height)
+    {
+        var theme = TerminalTheme.ForMeasuring();
+        _buffer = new ScreenBuffer(width, height, theme);
+        _parser = new AnsiParser(_buffer, theme);
+    }
+
+    /// <summary>
+    /// Plays the events added since the last call and returns the cursor as a 1-based row and column, the form
+    /// of a cursor position report (<c>ESC[row;columnR</c>).
+    /// </summary>
+    internal (int Row, int Column) Advance(IReadOnlyList<CastEvent> events)
+    {
+        for (; _next < events.Count; _next++)
+        {
+            var castEvent = events[_next];
+            if (castEvent.Kind == CastEventKind.Resize)
+                _buffer.Resize(castEvent.ResizeWidth, castEvent.ResizeHeight);
+            else if (castEvent.Kind != CastEventKind.Output)
+                continue;
+            else if (castEvent.HasUtf8Output)
+                _parser.ProcessUtf8(castEvent.Utf8Output.Span);
+            else
+                _parser.Process(castEvent.Data);
+        }
+
+        return (_buffer.CursorRow + 1, _buffer.CursorCol + 1);
+    }
 }
 
 internal static class CastEventLayout

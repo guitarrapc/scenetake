@@ -1,0 +1,14 @@
+title: typing graphemes
+shell: bash
+
+settings:
+  prompt: "$ "
+  typing-speed: 0.01
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+
+# Each emoji is typed as one keystroke: a surrogate pair, a pair with a skin tone modifier, and a
+# ZWJ sequence. か followed by the combining semi-voiced mark U+309A is one character too.
+steps:
+  - run: echo "🎉 👍🏽 👨‍👩‍👧 か゚"

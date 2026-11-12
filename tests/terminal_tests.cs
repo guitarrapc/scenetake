@@ -42,8 +42,26 @@ failures += Run("SoftGlyphCellsDifferFromText", SoftGlyphCellsDifferFromText);
 failures += Run("SaveRestoreKeepsCharsets", SaveRestoreKeepsCharsets);
 failures += Run("ResetDropsSoftFonts", ResetDropsSoftFonts);
 failures += Run("SingleShiftMapsOneCharacter", SingleShiftMapsOneCharacter);
+failures += Run("CastCursorTrackerFollowsEvents", CastCursorTrackerFollowsEvents);
 
 return failures == 0 ? 0 : 1;
+
+static bool CastCursorTrackerFollowsEvents()
+{
+    // A Windows PTY step starts ConPTY at the cursor this reports, so it must match what a player shows:
+    // a 1-based row and column, wrapped lines, scrolling at the bottom, UTF-8 events from earlier PTY
+    // steps, and only the events added since the last call.
+    var tracker = new CastCursorTracker(10, 4);
+    var events = new List<CastEvent> { CastEvent.Output(0, "$ ls\r\n") };
+    var afterTyping = tracker.Advance(events);
+    events.Add(CastEvent.Output(0.1, "0123456789ab"));
+    var afterWrap = tracker.Advance(events);
+    events.Add(CastEvent.Marker(0.2, "name"));
+    events.Add(CastEvent.OutputUtf8(0.3, Encoding.UTF8.GetBytes("\r\n1\r\n2\r\n3\r\n")));
+    var afterScroll = tracker.Advance(events);
+    var again = tracker.Advance(events);
+    return afterTyping == (2, 1) && afterWrap == (3, 3) && afterScroll == (4, 1) && again == (4, 1);
+}
 
 static int Run(string name, Func<bool> test)
 {

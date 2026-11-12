@@ -19,6 +19,7 @@
 #:include CastTimingPipeline.cs
 #:include PipeStreamCapture.cs
 #:include InteractivePtyInput.cs
+#:include Kernel32.cs
 
 using MiniPty;
 using MiniPty.Capture;
@@ -44,6 +45,14 @@ const double DefaultMaxIdle = 0.2;
 const double DefaultBurstThreshold = 0.05;
 const string DefaultStderrColorSpec = "red";
 const string SgrReset = "\u001b[0m";
+// On Windows a pipe child gets a console of its own, whose code page is the OEM code page (932 on Japanese
+// Windows). pwsh writes redirected output in that code page, so a character it lacks, such as an emoji,
+// became "?", and native commands started from it (cmd's echo, ping) wrote that code page too. Setting the
+// console's output encoding to UTF-8 first makes pwsh and those commands write UTF-8, which the pipe reader
+// decodes. It runs in the child's own console, never in the terminal that started scenetake, and it is not
+// part of the typed command or the logs. A failure, which only a child with no console could have, is ignored.
+const string PowerShellUtf8OutputPrefix = "try { [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new() } catch { }; ";
+const string InteractiveNeedsTerminalError = "Interactive PTY steps require a real terminal (stdin and stdout must not be redirected).";
 
 if (args.Length < 1)
 {
@@ -59,7 +68,7 @@ if (args[0] is "init")
         return 0;
     }
 
-    if (!TryParseInitArgs(args, out var initPathArg, out var initError))
+    if (!TryParseInitArgs(args, out var initPathArg, out var initShell, out var initError))
     {
         Console.Error.WriteLine($"Error: {initError}");
         PrintInitUsage();
@@ -77,7 +86,7 @@ if (args[0] is "init")
     }
 
     Directory.CreateDirectory(Path.GetDirectoryName(initPath) ?? ".");
-    File.WriteAllText(initPath, CreateInitialScenarioYaml(), Encoding.UTF8);
+    File.WriteAllText(initPath, CreateInitialScenarioYaml(initShell), Encoding.UTF8);
     Console.Error.WriteLine($"Created: {FormatDisplayPath(initPath)}");
     return 0;
 }
@@ -140,7 +149,7 @@ if (args[0] is "svg")
     catch (CastReadException ex)
     {
         DeleteFileIfExists(svgOutputPath);
-        Console.Error.WriteLine($"Error: {ex.Message}");
+        Console.Error.WriteLine($"Error: {ex.Message}{ScenarioInputHint(castPath, "svg")}");
         return 1;
     }
     catch (Exception ex)
@@ -217,7 +226,12 @@ if (args[0] is "mp4")
         // them before pre. WriteMp4 removes it once encoding starts.
         if (ex is not (FontNotFoundException or FrameTooLargeException))
             DeleteFileIfExists(mp4OutputPath);
-        Console.Error.WriteLine(ex is CastReadException or FontNotFoundException or FrameTooLargeException ? $"Error: {ex.Message}" : $"Error: mp4 render failed: {ex.Message}");
+        Console.Error.WriteLine(ex switch
+        {
+            CastReadException => $"Error: {ex.Message}{ScenarioInputHint(mp4CastPath, "mp4")}",
+            FontNotFoundException or FrameTooLargeException => $"Error: {ex.Message}",
+            _ => $"Error: mp4 render failed: {ex.Message}",
+        });
         return 1;
     }
 }
@@ -297,11 +311,30 @@ if (FindStepKeyError(scenario) is { } stepKeyError)
     return 1;
 }
 
+// An interactive step needs scenetake's own stdin and stdout to be a terminal. Checking it here stops
+// the run before pre and the steps before it, which otherwise ran only to be thrown away.
+if ((Console.IsInputRedirected || Console.IsOutputRedirected) && HasInteractiveStep(scenario))
+{
+    Console.Error.WriteLine($"Error: {InteractiveNeedsTerminalError}");
+    return 1;
+}
+
 // The OS reads a path only up to a NUL, so pre, post and the pipe steps would run in the folder named
 // before it. A PTY step refuses the NUL itself, but only after pre has run.
 if (scenario.Cwd is not null && scenario.Cwd.Contains('\0'))
 {
     Console.Error.WriteLine($"Error: cwd cannot contain a NUL character: {scenario.Cwd}");
+    return 1;
+}
+
+// pre runs in cwd too, so cwd must exist before anything runs. Without this check the first command
+// failed with the OS message "The directory name is invalid", which names neither cwd nor the folder
+// a relative cwd is resolved against (the current directory, not the scenario's folder).
+if (!string.IsNullOrWhiteSpace(scenario.Cwd) && !Directory.Exists(scenario.Cwd))
+{
+    var fullCwd = Path.GetFullPath(scenario.Cwd);
+    var resolvedCwd = Path.IsPathFullyQualified(scenario.Cwd) ? "" : $" (resolved against the current directory: {fullCwd})";
+    Console.Error.WriteLine($"Error: cwd folder does not exist: {scenario.Cwd}{resolvedCwd}. pre runs in cwd too, so create the folder before running scenetake.");
     return 1;
 }
 
@@ -477,13 +510,55 @@ return 0;
 static string FormatDisplayPath(string fullPath) =>
     Path.GetRelativePath(Directory.GetCurrentDirectory(), fullPath).Replace('\\', '/');
 
-static bool TryParseInitArgs(string[] args, out string? path, out string error)
+static bool TryParseInitArgs(string[] args, out string? path, out string? shell, out string error)
 {
     path = null;
+    shell = null;
     error = "";
     for (var i = 1; i < args.Length; i++)
     {
         var arg = args[i];
+        if (arg == "--shell" || arg.StartsWith("--shell=", StringComparison.Ordinal))
+        {
+            string value;
+            if (arg == "--shell")
+            {
+                if (i + 1 >= args.Length)
+                {
+                    error = "--shell requires a value";
+                    return false;
+                }
+
+                value = args[++i];
+            }
+            else
+            {
+                value = arg["--shell=".Length..];
+                if (value.Length == 0)
+                {
+                    error = "--shell requires a value";
+                    return false;
+                }
+            }
+
+            if (shell is not null)
+            {
+                error = "duplicate option: --shell";
+                return false;
+            }
+
+            // The names a scenario's shell key takes. Each picks the syntax of the template's steps;
+            // powershell (Windows PowerShell) runs the same steps as pwsh.
+            if (value is not ("bash" or "pwsh" or "powershell"))
+            {
+                error = $"--shell must be bash, pwsh, or powershell: {value}";
+                return false;
+            }
+
+            shell = value;
+            continue;
+        }
+
         if (arg.StartsWith('-'))
         {
             error = $"unknown option: {arg}";
@@ -993,6 +1068,7 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
     var events = new List<CastEvent>();
     var rng    = new Random(deterministicSeed);
     double t   = 0.5;
+    CastCursorTracker? cursorTracker = null;
 
     var steps = scenario.Steps ?? [];
     for (var i = 0; i < steps.Count; i++)
@@ -1029,9 +1105,15 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
         Console.Error.WriteLine($"  running: {command.Cmd}");
         var width = scenario.Width ?? 120;
         var height = scenario.Height ?? 24;
+        // ConPTY addresses rows from where it believes its cursor starts. Telling it where the recording's
+        // cursor is keeps a redrawn line on its own row instead of row 1. A Unix PTY has no screen model and
+        // passes `\r` through. An interactive step draws on the host terminal too, whose cursor is elsewhere.
+        var ptyStartCursor = usePty && !useInteractive && OperatingSystem.IsWindows()
+            ? (cursorTracker ??= new CastCursorTracker(width, height)).Advance(events)
+            : ((int Row, int Column)?)null;
         var execution = useInteractive
             ? await RunInteractivePtyAsync(command.Cmd, scenario.Cwd, shell, width, height, verbose)
-            : await RunCommandCoreAsync(command.Cmd, scenario.Cwd, shell, usePty, width, height, verbose);
+            : await RunCommandCoreAsync(command.Cmd, scenario.Cwd, shell, usePty, width, height, verbose, ptyStartCursor);
         if (execution.ExitCode != 0)
             WarnStepExitCode(command.Name, command.Cmd, execution.ExitCode);
         var commandStart = t;
@@ -1573,11 +1655,15 @@ static void EmitTypedCommand(
     if (hasRunHighlight && !string.IsNullOrEmpty(runHighlightStyle))
         events.Add(CastEvent.Output(Math.Round(t, 6), runHighlightStyle));
 
-    foreach (var ch in cmd)
+    // One keystroke per user-perceived character (extended grapheme cluster). Typing UTF-16 code units
+    // split an emoji's surrogate pair into two events, which the cast writer stores as two U+FFFD.
+    for (var i = 0; i < cmd.Length;)
     {
-        events.Add(CastEvent.Output(Math.Round(t, 6), TypingChars.Get(ch)));
+        var length = StringInfo.GetNextTextElementLength(cmd.AsSpan(i));
+        events.Add(CastEvent.Output(Math.Round(t, 6), length == 1 ? TypingChars.Get(cmd[i]) : cmd.Substring(i, length)));
         var delay = speed + rng.NextDouble() * 2 * jitter - jitter;
         t += Math.Max(delay, 0.005);
+        i += length;
     }
 
     if (hasRunHighlight && !string.IsNullOrEmpty(runHighlightStyle))
@@ -1587,33 +1673,61 @@ static void EmitTypedCommand(
     t += 0.15;
 }
 
-/// <summary>The error for the first step whose run is a list or a mapping or whose keys contradict each other, or null when none is.</summary>
+/// <summary>
+/// The error for the first step that is a list, has no run, has a run that is a list or a mapping, or has
+/// keys that contradict each other, or for a scenario with no command to record; null when there is none.
+/// </summary>
 static string? FindStepKeyError(Scenario scenario)
 {
-    foreach (var step in scenario.Steps ?? [])
+    var steps = scenario.Steps ?? [];
+    var recorded = 0;
+    for (var index = 0; index < steps.Count; index++)
     {
-        // A list or a mapping under run would otherwise be run as its type name.
-        if (step is Dictionary<object, object?> map && map.TryGetValue("run", out var run) && run is System.Collections.IEnumerable and not string)
-            return "Step key 'run' must be a command string, not a list or a mapping.";
+        var step = steps[index];
+        if (step is Dictionary<object, object?> map)
+        {
+            // YAML reads an unquoted command that holds ": ", such as `- echo key: value`, as a mapping.
+            // Without run it used to be skipped with no message, so the recording lost that command.
+            if (!map.TryGetValue("run", out var run))
+                return $"Step {index + 1} has no 'run' key (keys: {string.Join(", ", map.Keys)}). Quote a command that contains \": \", or write it under 'run:'.";
+
+            // A list or a mapping under run would otherwise be run as its type name.
+            if (run is System.Collections.IEnumerable and not string)
+                return "Step key 'run' must be a command string, not a list or a mapping.";
+        }
+        else if (step is System.Collections.IEnumerable and not string)
+        {
+            // `- [echo, hi]` is a YAML list, which used to be skipped with no message.
+            return $"Step {index + 1} must be a command string or a mapping with 'run', not a list.";
+        }
 
         var command = ParseCommand(step);
         if (string.IsNullOrWhiteSpace(command.Cmd))
             continue;
+        recorded++;
 
         // GetBool warns about a value it cannot read, and the recording reads these keys again.
-        var usePty = IsTrue(command.Extra, "pty");
-        var useInteractive = IsTrue(command.Extra, "interactive");
+        var usePty = IsStepFlagSet(command.Extra, "pty");
+        var useInteractive = IsStepFlagSet(command.Extra, "interactive");
         if (useInteractive && !usePty)
             return "Step key 'interactive: true' requires 'pty: true'.";
-        if (IsTrue(command.Extra, "normalize-typing") && !useInteractive)
+        if (IsStepFlagSet(command.Extra, "normalize-typing") && !useInteractive)
             return "Step key 'normalize-typing: true' requires 'interactive: true'.";
     }
 
-    return null;
+    // A missing or misspelled steps key (`step:`) used to write an empty cast and exit 0.
+    if (recorded == 0)
+        return "The scenario has no steps to record. Add commands under 'steps:'.";
 
-    static bool IsTrue(Dictionary<string, object?> extra, string key) =>
-        extra.TryGetValue(key, out var value) && (value is true || (bool.TryParse(value?.ToString(), out var parsed) && parsed));
+    return null;
 }
+
+/// <summary>Whether a step that will be recorded sets <c>interactive: true</c>.</summary>
+static bool HasInteractiveStep(Scenario scenario) =>
+    (scenario.Steps ?? []).Select(ParseCommand).Any(command => !string.IsNullOrWhiteSpace(command.Cmd) && IsStepFlagSet(command.Extra, "interactive"));
+
+static bool IsStepFlagSet(Dictionary<string, object?> extra, string key) =>
+    extra.TryGetValue(key, out var value) && (value is true || (bool.TryParse(value?.ToString(), out var parsed) && parsed));
 
 static CommandEntry ParseCommand(object? item)
 {
@@ -1648,7 +1762,11 @@ static CommandEntry ParseCommand(object? item)
 static Task<CommandExecution> RunCommand(string cmd, string? cwd, ShellLaunch shell) =>
     RunCommandCoreAsync(cmd, cwd, shell, false, 120, 24);
 
-static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd, ShellLaunch shell, bool usePty, int width, int height, bool verbose = false)
+/// <param name="ptyStartCursor">
+/// For a PTY step on Windows, the recording's cursor as a 1-based row and column. ConPTY then starts drawing
+/// there (<see cref="PtyStartInfo.InheritCursor"/>) instead of on an empty screen of its own. Null elsewhere.
+/// </param>
+static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd, ShellLaunch shell, bool usePty, int width, int height, bool verbose = false, (int Row, int Column)? ptyStartCursor = null)
 {
     if (usePty)
     {
@@ -1659,7 +1777,18 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
             WorkingDirectory = cwd,
             Size = new(width, height),
             Environment = CreateChildEnvironmentOverlay(),
-        }, new PtyCaptureOptions { Completion = new PtyCompleteOptions { DecodeOutput = false } });
+            // ConPTY asks for the cursor position (ESC[6n) and holds the child's output until a report comes.
+            // The report is written up front, so nothing waits, and ConPTY consumes it before the child reads.
+            InheritCursor = ptyStartCursor is not null,
+        }, new PtyCaptureOptions
+        {
+            Completion = new PtyCompleteOptions
+            {
+                DecodeOutput = false,
+                Input = ptyStartCursor is { } cursor ? $"\u001b[{cursor.Row};{cursor.Column}R" : null,
+                SendEofAfterInput = false,
+            },
+        });
         if (verbose)
             Console.Error.WriteLine($"scenetake: pty verbose: chunks={result.Chunks.Count} bytes={result.Output.Length}");
         return CommandExecution.FromCapture(result);
@@ -1674,7 +1803,7 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
     };
     foreach (var arg in shell.Arguments)
         psi.ArgumentList.Add(arg);
-    psi.ArgumentList.Add(cmd);
+    psi.ArgumentList.Add(OperatingSystem.IsWindows() && IsPowerShellLaunch(shell) ? PowerShellUtf8OutputPrefix + cmd : cmd);
     if (!string.IsNullOrWhiteSpace(cwd)) psi.WorkingDirectory = cwd;
     foreach (var (name, value) in CreateChildEnvironmentOverlay())
         psi.Environment[name] = value;
@@ -1686,6 +1815,9 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
     var (stdout, stderr) = CollectPipeOutputs(pipeChunks);
     return CommandExecution.FromPipeStream(stdout, stderr, proc.ExitCode, pipeChunks);
 }
+
+static bool IsPowerShellLaunch(ShellLaunch shell) =>
+    shell.Arguments.Length > 0 && string.Equals(shell.Arguments[^1], "-Command", StringComparison.OrdinalIgnoreCase);
 
 static async Task<CommandExecution> RunInteractivePtyAsync(
     string cmd,
@@ -1700,8 +1832,7 @@ static async Task<CommandExecution> RunInteractivePtyAsync(
 
     if (Console.IsInputRedirected || Console.IsOutputRedirected)
     {
-        throw new InvalidOperationException(
-            "Interactive PTY steps require a real terminal (stdin and stdout must not be redirected).");
+        throw new InvalidOperationException(InteractiveNeedsTerminalError);
     }
 
     using var session = Pty.Start(new PtyStartInfo
@@ -2866,7 +2997,12 @@ static ShellLaunch ResolveShell(Scenario scenario)
     if (!requested.Contains('/') && CurrentDirectoryHasFile(requested))
         throw new InvalidOperationException($"Shell '{requested}' was requested, but the current directory has a file named '{requested}', which would start instead of the one on PATH. Run scenetake from another directory, or set the shell to a full path.");
 
-    return new ShellLaunch(requested, ["-lc"], requested, requested);
+    // PowerShell is also available on Unix; it does not accept POSIX shells' combined -lc switch.
+    // Keep the executable as requested so names, relative paths and symlink traversal are preserved.
+    var arguments = Path.GetFileName(requested) is "pwsh" or "powershell"
+        ? new[] { "-NoLogo", "-NoProfile", "-Command" }
+        : new[] { "-lc" };
+    return new ShellLaunch(requested, arguments, requested, requested);
 }
 
 static bool CurrentDirectoryHasFile(string name)
@@ -3078,15 +3214,38 @@ static long ComputeDeterministicTimestamp(int seed)
     return baseUnixTime + (uint)seed % spanSeconds;
 }
 
-static string CreateInitialScenarioYaml()
+/// <summary>
+/// The starter scenario. Its steps are written for <paramref name="shell"/> (bash, pwsh or powershell) and
+/// the file sets that shell; with no shell they are written for the OS default shell, which the file
+/// leaves unset.
+/// </summary>
+static string CreateInitialScenarioYaml(string? shell)
 {
+    // The default shell is pwsh on Windows and $SHELL elsewhere. pwsh has no `1>&2`, so the stderr step
+    // written for bash recorded a pwsh ParserError in the first demo a Windows user made. The other steps
+    // use commands that pwsh and POSIX shells both run. A Windows user who records with Git Bash, or a
+    // Linux user who records with pwsh, picks the syntax with --shell, and the file then names that shell
+    // so the steps never run in the other one.
+    var powerShellSyntax = shell is null ? OperatingSystem.IsWindows() : shell is "pwsh" or "powershell";
+    var shellLine = shell is not null
+        ? $"shell: {shell}".PadRight(29) + "# The steps below are written for this shell. Values: bash, pwsh, powershell, or a path"
+        : powerShellSyntax
+            ? "# shell: pwsh                # Default on Windows. The steps below are written for pwsh; scenetake init --shell bash writes them for bash"
+            : "# shell: bash                # Default: $SHELL. The steps below are written for POSIX shells; scenetake init --shell pwsh writes them for pwsh";
+    var stderrStep = powerShellSyntax
+        ? """
+            run: "[Console]::Error.WriteLine('stderr sample')"   # pwsh. With shell: bash, use: echo "stderr sample" 1>&2
+        """
+        : """
+            run: echo "stderr sample" 1>&2   # With shell: pwsh, use: "[Console]::Error.WriteLine('stderr sample')"
+        """;
     return $"""
     # scenetake starter scenario. Edit the values below and add commands under steps.
     title: "My App"            # Optional cast title
     # width: 120                 # Default: 120
     # height: 24                 # Default: 24
     # cwd: /your/path            # Optional working directory for all steps
-    # shell: bash                # Optional shell override: bash, pwsh, powershell, or a path
+    {shellLine}
 
     # Optional SVG rendering metadata. Written to the cast header (v3 tags / term.theme) and used by --format svg.
     # render:
@@ -3105,7 +3264,7 @@ static string CreateInitialScenarioYaml()
       pre-delay: {DefaultPreDelay}           # Pause before typing each step.
       post-delay: {DefaultPostDelay}          # Pause after output before the next step.
       execution-duration: {DefaultExecutionDuration} # Optional cast wait after command execution.
-      stderr-color: {DefaultStderrColorSpec}       # Applied only when stderr has no ANSI SGR.
+      stderr-color: {DefaultStderrColorSpec}       # Applied only when stderr has no ANSI SGR. "none" keeps it plain (git and many tools print progress to stderr).
       # stream-output: false         # When true, replay captured chunk times in the cast.
       # max-duration: 15             # Cap step output timeline; also enables stream emit.
       # silence-threshold: {DefaultSilenceThreshold}       # Stream mode: collapse idle gaps longer than this (seconds).
@@ -3121,7 +3280,7 @@ static string CreateInitialScenarioYaml()
       - run: pwd
         post-delay: 1.5
       - name: "[cyan]Styled command typing + output highlight"
-        run: printf 'line1 alpha\nline2 beta gamma\nline3\nline4 delta\n'
+        run: echo 'line1 alpha'; echo 'line2 beta gamma'; echo 'line3'; echo 'line4 delta'
         run-highlight: "bold fg:bright-cyan"
         highlight:
           - at: "1"
@@ -3135,7 +3294,7 @@ static string CreateInitialScenarioYaml()
           - at: "4"
             color: "fg:black bg:114"
       - name: "[bright-yellow]stderr color override"
-        run: echo "stderr sample" 1>&2
+    {stderrStep}
         stderr-color: "bold fg:red"
       - name: "run in a PTY"
         run: echo "Running in a PTY, which is useful for TUI app and tty-based output"
@@ -3153,7 +3312,7 @@ static void PrintUsage()
     Console.Error.WriteLine("Usage: scenetake [--verbose] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
     Console.Error.WriteLine("       scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
     Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
-    Console.Error.WriteLine("       scenetake init [scenario.yaml]");
+    Console.Error.WriteLine("       scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]");
     Console.Error.WriteLine("       scenetake --help");
 }
 
@@ -3167,6 +3326,15 @@ static void PrintMp4Usage()
 static void PrintMp4Written(string path, Mp4Result result) =>
     Console.Error.WriteLine(
         $"Written: {FormatDisplayPath(path)}  ({result.Width}x{result.Height}, {result.Fps}fps, {result.Frames} frames, {FormatBytes(result.Bytes)}, font: {result.Font.Family})");
+
+/// <summary>
+/// A second line for a cast read error when the input is a scenario file: `scenetake svg demo.yaml` is an
+/// easy slip, and the JSON error alone does not say that svg and mp4 take a cast.
+/// </summary>
+static string ScenarioInputHint(string inputPath, string format) =>
+    Path.GetExtension(inputPath).ToLowerInvariant() is ".yaml" or ".yml"
+        ? $"{Environment.NewLine}{format} converts a cast file. To record this scenario, run: scenetake --format {format} {FormatDisplayPath(inputPath)}"
+        : "";
 
 // Decimal units (1MB = 1,000,000 bytes), the same as the SVG size warning. Sizes just under 1MB
 // that round up to "1000.0KB" print as 1.0MB instead.
@@ -3305,7 +3473,7 @@ static string FollowLinksWithin(string full, ref int linksLeft)
 }
 
 /// <summary>The volume serial number, file index and final path of an existing file, or null when the file cannot be opened.</summary>
-static unsafe (uint Volume, ulong Index, uint Links, string? FinalPath)? WindowsFileId(string path)
+static (uint Volume, ulong Index, uint Links, string? FinalPath)? WindowsFileId(string path)
 {
     // A handle that asks for no access opens even when another process denies sharing, which a read handle
     // would not. The \\?\ form is not limited to 260 characters. A path already in a device form is used
@@ -3315,8 +3483,8 @@ static unsafe (uint Volume, ulong Index, uint Links, string? FinalPath)? Windows
     var name = full.StartsWith(@"\\?\", StringComparison.Ordinal) || full.StartsWith(@"\\.\", StringComparison.Ordinal) || full.StartsWith(@"\??\", StringComparison.Ordinal) ? full
         : full.StartsWith(@"\\", StringComparison.Ordinal) ? @"\\?\UNC\" + full[2..]
         : @"\\?\" + full;
-    using var handle = CreateFileW(name, 0, FileShareReadWriteDelete, IntPtr.Zero, OpenExisting, 0, IntPtr.Zero);
-    if (handle.IsInvalid || !GetFileInformationByHandle(handle, out var info))
+    using var handle = Kernel32.CreateFile(name, 0, FileShareReadWriteDelete, OpenExisting, 0);
+    if (handle.IsInvalid || !Kernel32.GetFileInformationByHandle(handle, out var info))
         return null;
 
     // Some network file systems report serial number 0 for every file, and repeat indexes across the
@@ -3326,9 +3494,7 @@ static unsafe (uint Volume, ulong Index, uint Links, string? FinalPath)? Windows
     var buffer = new char[1024];
     for (var attempt = 0; attempt < 2 && finalPath is null; attempt++)
     {
-        uint length;
-        fixed (char* chars = buffer)
-            length = GetFinalPathNameByHandleW(handle, chars, (uint)buffer.Length, 0);
+        var length = Kernel32.GetFinalPathNameByHandle(handle, buffer, 0);
         if (length == 0)
             break;
         if (length < buffer.Length)
@@ -3338,15 +3504,6 @@ static unsafe (uint Volume, ulong Index, uint Links, string? FinalPath)? Windows
     }
 
     return (info.VolumeSerialNumber, ((ulong)info.FileIndexHigh << 32) | info.FileIndexLow, info.NumberOfLinks, finalPath);
-
-    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode, ExactSpelling = true)]
-    static extern Microsoft.Win32.SafeHandles.SafeFileHandle CreateFileW(string fileName, uint desiredAccess, uint shareMode, IntPtr securityAttributes, uint creationDisposition, uint flagsAndAttributes, IntPtr templateFile);
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    static extern bool GetFileInformationByHandle(Microsoft.Win32.SafeHandles.SafeFileHandle file, out WindowsFileInformation information);
-
-    [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
-    static extern uint GetFinalPathNameByHandleW(Microsoft.Win32.SafeHandles.SafeFileHandle file, char* path, uint length, uint flags);
 }
 
 static void DeleteFileIfExists(string path)
@@ -3515,8 +3672,9 @@ static bool TryParseMp4Args(
 
 static void PrintInitUsage()
 {
-    Console.Error.WriteLine("Usage: scenetake init [scenario.yaml]");
-    Console.Error.WriteLine("Creates a commented starter YAML scenario file.");
+    Console.Error.WriteLine("Usage: scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]");
+    Console.Error.WriteLine("Creates a commented starter YAML scenario file. Its steps are written for the OS default shell");
+    Console.Error.WriteLine("(pwsh on Windows, $SHELL elsewhere); --shell writes them for that shell and sets 'shell:' in the file.");
 }
 
 static void PrintSvgUsage()
@@ -3534,22 +3692,6 @@ static string GetAppVersion()
 {
     var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
     return version?.ToString(3) ?? "0.0.0";
-}
-
-/// <summary>The BY_HANDLE_FILE_INFORMATION that GetFileInformationByHandle fills. Each FILETIME is two 32-bit halves, so the 64-bit fields are packed to 4 bytes.</summary>
-[StructLayout(LayoutKind.Sequential, Pack = 4)]
-internal struct WindowsFileInformation
-{
-    public uint FileAttributes;
-    public long CreationTime;
-    public long LastAccessTime;
-    public long LastWriteTime;
-    public uint VolumeSerialNumber;
-    public uint FileSizeHigh;
-    public uint FileSizeLow;
-    public uint NumberOfLinks;
-    public uint FileIndexHigh;
-    public uint FileIndexLow;
 }
 
 enum OutputFormat

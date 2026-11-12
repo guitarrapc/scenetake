@@ -48,8 +48,10 @@ post:
 | `title` | — | Optional cast title |
 | `width` | `120` | Terminal columns in the cast header and PTY geometry when a step uses `pty: true`. `1`–`512`, the cast's range; checked before `pre` runs. |
 | `height` | `24` | Terminal rows in the cast header and PTY geometry when a step uses `pty: true`. `1`–`512`, checked before `pre` runs. |
-| `cwd` | process cwd | Working directory for `pre`, `steps`, and `post` |
+| `cwd` | process cwd | Working directory for `pre`, `steps`, and `post`. A relative path is resolved against the current directory, not the scenario file's folder. The folder must exist before anything runs, because `pre` runs in it too; a missing one is an error found before `pre` runs. |
 | `shell` | `$SHELL` / `pwsh` | Shell for all commands. Values: `bash`, `pwsh`, `powershell`, or a path |
+
+On Linux and macOS, `pwsh` and `powershell` use PowerShell command arguments, including when selected by a path or by `$SHELL`. Other Unix shells use `-lc`. The requested executable name or path is preserved for both pipe and PTY commands, including `pre` and `post`.
 
 ## `settings`
 
@@ -109,20 +111,24 @@ Runtime behavior: [spec_pre_post.md](spec_pre_post.md).
 
 ## `steps`
 
-Required. A sequence of commands to execute and record.
+Required. A sequence of commands to execute and record. An empty step is skipped. A scenario with no command to record (no `steps` key, a misspelled one such as `step:`, or only empty steps) is an error found before anything runs.
+
+Each typed character is one cast event, where a character is an extended grapheme cluster: an emoji, an emoji with a skin tone modifier, a ZWJ sequence, or a letter with combining marks is typed as one keystroke.
 
 ### Forms
 
 | Form | Example | Notes |
 |---|---|---|
-| String | `- echo "hi"` | Uses `settings` defaults |
+| String | `- echo "hi"` | Uses `settings` defaults. Quote a command that contains `: ` (`- "echo key: value"`): YAML reads it as a mapping otherwise |
 | Map | `- run: git status` | Allows per-step keys below |
+
+A step that is a YAML list (`- [echo, hi]`) is an error found before anything runs.
 
 Map-form steps recognize:
 
 | Key | Required | Description |
 |---|---|---|
-| `run` | yes | Command string. A list or a mapping is an error found before anything runs |
+| `run` | yes | Command string. A missing `run`, or a list or a mapping under it, is an error found before anything runs. The error for a missing `run` names the keys the step has, so an unquoted `- echo key: value` shows up as the key `echo key` |
 | `name` | no | Comment line before typing. Optional `[style]` prefix: [spec_highlight.md](spec_highlight.md) |
 | `typing-speed`, `typing-jitter`, `pre-delay`, `post-delay`, `execution-duration` | no | Override `settings` for this step |
 | `stream-output`, `max-duration`, `silence-threshold`, `max-idle` | no | Override `settings` output-timing keys for this step |
@@ -157,10 +163,20 @@ Why: commands never draw on the host terminal. They run behind scenetake's pipe 
 
 A command that needs another value sets it itself, for example `COLORTERM= tool` in bash or `$env:COLORTERM = ''; tool` in pwsh.
 
+### Output encoding on Windows
+
+What a pipe step, `pre`, or `post` writes is recorded the same whatever code page the terminal that started scenetake uses. Each child runs in a console of its own, whose code page is the system's OEM code page (932 on Japanese Windows), and tools write one of two encodings: UTF-8 (git, Git Bash and other MSYS tools, most cross-platform CLIs), or the console's code page (cmd, ping and other Windows console tools, and pwsh unless told otherwise).
+
+- scenetake reads each line as UTF-8 when it is valid UTF-8, and in the OEM code page when it is not. Text in a legacy double-byte code page is almost never valid UTF-8, and ASCII reads the same in both. A BOM at the start of the output is skipped.
+- With `shell: pwsh` or `powershell` (by name or path), scenetake runs `[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()` before the command. pwsh then writes UTF-8, so a character the OEM code page lacks, such as an emoji, is kept, and the commands it starts write UTF-8 too, because they share its console. This changes only the child's own console. The typed command, the `running:` line, and error messages show the command as written. A command that must open the script, such as one starting with `using namespace`, fails behind this prefix; put it in a script file and run that instead.
+- `shell: cmd` and Git Bash get no prefix. A Windows console tool they start writes the OEM code page, which the fallback reads; a character outside that code page is already lost there.
+
+PTY steps need none of this: ConPTY translates everything to UTF-8. On Linux and macOS scenetake reads pipes in the encoding .NET picks for the process, as before.
+
 ## Execution Order
 
 1. Read the YAML file and resolve the render settings.
-2. Check the terminal size, a step `run` given as a list or a mapping, step keys that contradict each other, a `cwd` with a NUL character (the OS would read the folder before it), the outputs (their folder too when there are no `pre` commands), and for `--format mp4` ffmpeg, a usable font, and the frame size ([spec_cli.md](spec_cli.md) → Output Paths, [spec_mp4.md](spec_mp4.md)). Any failure stops the run before anything executes.
+2. Check the terminal size, a scenario with no command to record, a step that is a list or has no `run`, a step `run` given as a list or a mapping, step keys that contradict each other, an `interactive: true` step while scenetake's stdin or stdout is redirected ([spec_pty.md](spec_pty.md) → Interactive PTY), a `cwd` with a NUL character (the OS would read the folder before it), a `cwd` that does not exist, the outputs (their folder too when there are no `pre` commands), and for `--format mp4` ffmpeg, a usable font, and the frame size ([spec_cli.md](spec_cli.md) → Output Paths, [spec_mp4.md](spec_mp4.md)). Any failure stops the run before anything executes.
 3. Derive the deterministic seed and timestamp, and resolve the shell. A shell that cannot be found stops the run before anything executes: on Windows any shell, on Unix one given by an absolute path with no `..` in it. A shell with a NUL character is refused too, on every platform and whether it is a name or a path, because the OS reads it only up to the NUL and would start a different file. On Unix a shell given by name or by a relative path is started as written, so `$0` and the shell's own messages in the recording keep that name. A missing one fails at the first command. A shell given by name stops the run when the current directory has a file of that name: .NET would start that file before the one on PATH (see Lessons Learned). On Windows a shell given as a path starts that file, and its file name picks the arguments: pwsh and powershell `-Command`, cmd `/c`, bash `-lc`, any other `-c`. For those four names the full path is started, with a trailing dot or space dropped as Windows does. A shell given by name alone is looked up: pwsh, powershell and cmd on PATH, bash in the Git and MSYS folders under Program Files and the user's local app data, and then on PATH. The lookup never uses the current directory or ProgramData. WSL bash is never used, not even by path.
 4. Execute `pre` commands.
 5. Run every output check again, the folder included, since `pre` may have changed what is there. A failure skips steps 6–8 and still runs `post`.
@@ -177,6 +193,8 @@ Deterministic seed and timestamp are derived from the whole YAML file (normalize
 ## Init Template
 
 `scenetake init` creates a commented starter file following this structure. Optional sections (`render`, `pre`, `post`, coloring examples) should be present but commented so users discover features without enabling them by default.
+
+Every step in the template must run in the shell it is written for. That shell is the one `scenetake init --shell bash|pwsh|powershell` names, and the file then sets `shell:` to it, so the steps never run in another shell. Without `--shell` it is the OS default shell, pwsh on Windows and `$SHELL` (a POSIX shell) elsewhere, and `shell:` stays commented out. Commands both kinds of shell run, such as `echo`, are used where they can be. The stderr step cannot be written that way, so it is `[Console]::Error.WriteLine(...)` for pwsh and powershell and `echo ... 1>&2` for bash, with a comment that shows the other form.
 
 ## Cross-Document Notes
 
@@ -198,3 +216,9 @@ Deterministic seed and timestamp are derived from the whole YAML file (normalize
 - **Host terminal hints leak into recordings.** `matrix` decides true color from `COLORTERM`, `TERM`, `WT_SESSION`, or `TERM_PROGRAM`. When scenetake ran from a pwsh without `WT_SESSION`, `matrix` printed `warning: true color not supported` into the cast and recorded 16 colors; with `WT_SESSION` set, the same scenario recorded true color. Users reasonably expect a Windows Terminal session to have it, but not every shell shown in Windows Terminal does. Setting `COLORTERM=truecolor` for every command removed that dependency (see Command Environment).
 - **A Windows shell path used to be matched by name only.** A path whose file name was pwsh, powershell, cmd or bash was looked up by that name, so a wrapper or a second install never ran, a missing path still started the PATH copy, and a pwsh path was refused when PATH had no pwsh. `C:/WINDOWS/system32/cmd.exe.` missed the name match because of the trailing dot. It then started as written with `-c`, and cmd read the `/` in its own path as switches: pre ran `md` and left folders such as `-c` in the cwd. Starting the full path fixes both, since it uses backslashes and drops the dot.
 - **A shell name used to start a file from the current directory.** A user can record a demo of a project they cloned by running their own scenario from inside it. If the clone held a `pwsh` and a `pwsh.exe` (Windows), or an executable `bash` (Unix), that file ran as the shell before `pre`, and the run showed no sign of it. On Windows, scenetake's own lookup checked the current directory before PATH. On Unix, .NET's `Process.Start` checks it before PATH for pre, post and pipe steps; PTY steps search PATH only. Windows now looks on PATH only. Unix refuses the run instead, because starting the PATH copy by full path would change `$0` and the shell's messages in the recording. The Git and MSYS folder probe also checked ProgramData before PATH. Any user can create folders there, so another account could plant a `bash.exe` that ran in your session. ProgramData is no longer probed.
+- **Windows pipe output depended on the terminal's code page.** scenetake decoded pipe output in the code page of the terminal that started it, but a child gets a console of its own whose code page is the OEM code page, whatever the terminal uses. Measured on Japanese Windows (2026-11-13): from a cp932 terminal, Git Bash's `echo "絵文字"` recorded as `邨ｵ譁・ｭ・脂` and git's `報告書.txt` as `蝣ｱ蜻頑嶌.txt`, while pwsh and cmd were right; from a 65001 terminal, the opposite, so the default Windows shell broke for users who had switched their terminal to UTF-8. pwsh turned an emoji into `??` under both, because it wrote the OEM code page. Decoding UTF-8 with a per-line OEM fallback, and telling pwsh to write UTF-8, recorded byte-identical casts from both terminals with every line right. The fallback needs the OS's own code page conversion (`MultiByteToWideChar`), because .NET without `System.Text.Encoding.CodePages` has no code page 932. Declared first as a `DllImport` without `CharSet.Unicode`, it marshaled the output buffer as one-byte chars and returned no text. kernel32 is now loaded with `NativeLibrary` and called through unmanaged function pointers that take `char*`, so no marshaling stands between the call and the buffer.
+- **Steps used to be dropped without a word.** YAML reads `- echo key: value` as a mapping with the key `echo key`. With no `run`, scenetake skipped that step, so the command was missing from the recording and nothing said why. A misspelled `step:` recorded an empty cast and exited `0`. Both are now errors before anything runs, and the missing-`run` error lists the step's keys, which shows how YAML read the line.
+- **Typing went one UTF-16 code unit at a time.** An emoji outside the Basic Multilingual Plane was split into its two surrogates, and the cast writer stored each as U+FFFD, on every OS. Typing by extended grapheme cluster also keeps skin tone modifiers, ZWJ sequences, and combining marks on the character they belong to. Commands without such characters type exactly as before, so their casts do not change.
+- **A missing `cwd` failed with the OS message.** `pre` runs in `cwd`, so a scenario whose `pre` was meant to create `cwd` failed on its first command with "The directory name is invalid" (Windows) or "No such file or directory" (Unix), which names neither `cwd` nor the folder a relative `cwd` is resolved against. The check before `pre` names both.
+- **The init template only ran in bash.** Windows starts pwsh by default, where `echo "stderr sample" 1>&2` is a ParserError, so the first recording a Windows user made showed a red error, and the `printf` step needed a `printf` on PATH, which Windows does not have. The template now picks commands the OS's default shell runs. Choosing by OS alone left out a Windows user who records with Git Bash and a Linux or macOS user who records with pwsh, so `--shell` picks the syntax, and the file names that shell because the template's steps only run there.
+- **Unix PowerShell needs its own command arguments.** `init --shell pwsh` wrote a valid PowerShell scenario, but Unix shell launches passed `-lc` to every shell. PowerShell rejects that switch with exit code 64, so both pipe and PTY steps failed on Linux and macOS. PowerShell now receives `-NoLogo -NoProfile -Command` on Unix too.

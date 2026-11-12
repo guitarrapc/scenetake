@@ -52,6 +52,8 @@ else
         failures += await RunAsync("IntegrationMatrixFixture", () => Task.FromResult(IntegrationMatrixFixture(repoRoot, "matrix-unix-pty.yaml")));
 }
 
+failures += await RunAsync("IntegrationPtyRedrawKeepsRow", () => Task.FromResult(IntegrationPtyRedrawKeepsRow(repoRoot)));
+
 return failures == 0 ? 0 : 1;
 
 static bool IntegrationTestsEnabled(string repoRoot)
@@ -396,6 +398,43 @@ static bool IntegrationPtyScreenStateFixture(string repoRoot, string fixtureName
             && combinedOutput.Contains("pty-cmd-output", StringComparison.Ordinal)
             && combinedOutput.Contains("after pty", StringComparison.Ordinal)
             && !combinedOutput.Contains("\u001b[2J", StringComparison.Ordinal);
+    }
+    finally
+    {
+        foreach (var path in new[] { outputStem + ".cast", outputStem + ".svg" })
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+}
+
+static bool IntegrationPtyRedrawKeepsRow(string repoRoot)
+{
+    // ConPTY assumes its cursor starts on row 1 of an empty screen, so it redrew a `\r` progress line with
+    // a cursor address for row 1 (ESC[H), which covered the earlier output in the recording. Started at the
+    // recording's cursor (InheritCursor), it redraws with `\r`, as a Unix PTY does. Its cursor position
+    // query (ESC[6n) is answered by scenetake and must not reach the cast.
+    if (!IntegrationTestsEnabled(repoRoot))
+        return true;
+
+    var fixturePath = Path.Combine(repoRoot, "tests", "fixtures", "pty-redraw-keeps-row.yaml");
+    var outputStem = Path.Combine(Path.GetTempPath(), $"scenetake-pty-redraw-{Guid.NewGuid():N}");
+    try
+    {
+        if (!RunScenetake(repoRoot, fixturePath, outputStem, out var exitCode) || exitCode != 0)
+            return false;
+
+        var output = ReadCastOutput(outputStem + ".cast");
+        var cursorAddress = System.Text.RegularExpressions.Regex.Match(output, @"\u001b\[[0-9;]*[Hf]");
+        var ok = output.Contains("before 1", StringComparison.Ordinal)
+            && output.Contains("\rredraw 100%", StringComparison.Ordinal)
+            && output.Contains("after pty", StringComparison.Ordinal)
+            && !cursorAddress.Success
+            && !output.Contains("\u001b[6n", StringComparison.Ordinal);
+        if (!ok)
+            Console.Error.WriteLine($"  cast output: {output.Replace("\u001b", "\\e", StringComparison.Ordinal).Replace("\r", "\\r", StringComparison.Ordinal).Replace("\n", "\\n", StringComparison.Ordinal)}");
+        return ok;
     }
     finally
     {

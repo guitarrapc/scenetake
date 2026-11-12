@@ -1,0 +1,16 @@
+title: pipe encoding pwsh
+width: 60
+height: 8
+shell: pwsh
+
+settings:
+  typing-speed: 0.001
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+
+# pwsh and the cmd it starts write the console's code page unless told to write UTF-8. An emoji is in no
+# legacy code page, so it shows whether the output went through UTF-8.
+steps:
+  - Write-Output 'SCENETAKE_PWSH 絵文字 🎉'
+  - cmd /c "echo SCENETAKE_CMD 漢字 ✓"

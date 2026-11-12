@@ -35,6 +35,7 @@ try
     failures += Run("PostRunsAndStaleMp4GoesWhenEncodeFails", () => PostRunsAndStaleMp4GoesWhenEncodeFails(scenetake, repoRoot, work));
     failures += Run("StaleMp4GoesWhenCastIsBad", () => StaleMp4GoesWhenCastIsBad(scenetake, repoRoot, work));
     failures += Run("CliRulesForValuesAndFormats", () => CliRulesForValuesAndFormats(scenetake, repoRoot, work));
+    failures += Run("InitWritesStepsForItsShell", () => InitWritesStepsForItsShell(scenetake, work));
     failures += Run("SubcommandsNeverReplaceTheirInput", () => SubcommandsNeverReplaceTheirInput(scenetake, repoRoot, work));
     failures += Run("ScenarioChecksOutputPaths", () => ScenarioChecksOutputPaths(scenetake, repoRoot, work));
     failures += Run("ScenarioErrorsStopBeforePre", () => ScenarioErrorsStopBeforePre(scenetake, repoRoot, work));
@@ -58,6 +59,9 @@ try
         Console.Error.WriteLine("skip UnixShellStartsAsNamed: Unix only");
     else
         failures += Run("UnixShellStartsAsNamed", () => UnixShellStartsAsNamed(scenetake, repoRoot, work));
+
+    if (!OperatingSystem.IsWindows())
+        failures += Run("UnixPowerShellRunsCommands", () => UnixPowerShellRunsCommands(scenetake, repoRoot, work));
 
     // Only Windows looks pwsh, powershell, cmd and bash up by name, so only there could a path to one of
     // them start another file.
@@ -537,6 +541,86 @@ static bool StaleMp4GoesWhenCastIsBad(string scenetake, string repoRoot, string 
     return exit == 1 && stderr.Contains("cast header is missing terminal size", StringComparison.Ordinal) && !File.Exists(stale);
 }
 
+static bool InitWritesStepsForItsShell(string scenetake, string work)
+{
+    // init writes its steps for one shell. --shell picks it and sets shell: in the file, so the steps never
+    // run in another shell; without --shell they are written for the OS default shell, and shell: stays
+    // unset. Before, the template was written for bash only, and its stderr step recorded a pwsh
+    // ParserError on Windows. Each template whose shell is here must record with no step failing.
+    var directory = Directory.CreateDirectory(Path.Combine(work, "init")).FullName;
+    const string bashStderr = "run: echo \"stderr sample\" 1>&2";
+    const string pwshStderr = "run: \"[Console]::Error.WriteLine('stderr sample')\"";
+    var templates = new (string Name, string[] Options, string? ShellLine, string StderrStep)[]
+    {
+        ("bash", ["--shell", "bash"], "shell: bash ", bashStderr),
+        ("pwsh", ["--shell=pwsh"], "shell: pwsh ", pwshStderr),
+        ("default", [], null, OperatingSystem.IsWindows() ? pwshStderr : bashStderr),
+    };
+
+    var written = true;
+    var runnable = new List<(string Name, string Path)>();
+    foreach (var (name, options, shellLine, stderrStep) in templates)
+    {
+        var path = Path.Combine(directory, $"{name}.yaml");
+        var (exit, stderr) = Exec(scenetake, directory, ["init", .. options, path]);
+        var lines = exit == 0 ? File.ReadAllLines(path) : [];
+        var shellOk = shellLine is null
+            ? !lines.Any(line => line.StartsWith("shell:", StringComparison.Ordinal))
+            : lines.Any(line => line.StartsWith(shellLine, StringComparison.Ordinal));
+        if (exit != 0 || !shellOk || !lines.Any(line => line.Trim() == stderrStep || line.Trim().StartsWith(stderrStep + " ", StringComparison.Ordinal)))
+        {
+            Console.Error.WriteLine($"  {name}: exit {exit}{Environment.NewLine}{stderr}{string.Join(Environment.NewLine, lines)}");
+            written = false;
+            continue;
+        }
+
+        // Windows finds bash in the Git folders, not on PATH, so only Unix checks PATH first. A missing
+        // bash on Windows shows up as "could not be resolved" below.
+        if (!OperatingSystem.IsWindows() && name != "default" && FindOnPath(name) is null)
+        {
+            Console.Error.WriteLine($"  {name}: not on PATH, template not recorded");
+            continue;
+        }
+
+        runnable.Add((name, path));
+    }
+
+    // The templates type at the default speed for about 16 seconds each, so they record in parallel.
+    var runs = runnable
+        .Select(template => Task.Run(() => (template.Name, Result: Exec(scenetake, directory, [template.Path, Path.Combine(directory, template.Name)]))))
+        .ToArray();
+    Task.WaitAll(runs);
+    var recorded = true;
+    foreach (var (name, (exit, stderr)) in runs.Select(run => run.Result))
+    {
+        if (OperatingSystem.IsWindows() && name == "bash" && stderr.Contains("could not be resolved", StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine("  bash: Git Bash not found, template not recorded");
+            continue;
+        }
+
+        if (exit != 0 || stderr.Contains("Warning: step exited", StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine($"  {name}: exit {exit}{Environment.NewLine}{stderr}");
+            recorded = false;
+        }
+    }
+
+    // A shell init has no template for, a missing value, and a second --shell are errors that write nothing.
+    var refused = Path.Combine(directory, "refused.yaml");
+    var (unknownExit, unknownStderr) = Exec(scenetake, directory, ["init", "--shell", "zsh", refused]);
+    var (missingExit, missingStderr) = Exec(scenetake, directory, ["init", "--shell="]);
+    var (twiceExit, twiceStderr) = Exec(scenetake, directory, ["init", "--shell", "bash", "--shell", "pwsh", refused]);
+    var errorsOk = unknownExit == 1 && unknownStderr.Contains("--shell must be bash, pwsh, or powershell: zsh", StringComparison.Ordinal)
+        && missingExit == 1 && missingStderr.Contains("--shell requires a value", StringComparison.Ordinal)
+        && twiceExit == 1 && twiceStderr.Contains("duplicate option: --shell", StringComparison.Ordinal)
+        && !File.Exists(refused);
+    if (!errorsOk)
+        Console.Error.WriteLine($"  errors:{Environment.NewLine}{unknownStderr}{missingStderr}{twiceStderr}");
+
+    return written && recorded && errorsOk;
+}
+
 static bool CliRulesForValuesAndFormats(string scenetake, string repoRoot, string work)
 {
     // --max-fps only applies to SVG. A value that is another option means the value is missing. Range errors
@@ -545,9 +629,12 @@ static bool CliRulesForValuesAndFormats(string scenetake, string repoRoot, strin
     var (maxFpsExit, maxFpsStderr) = Exec(scenetake, repoRoot, ["--max-fps", "10", scenario]);
     var (fontExit, fontStderr) = Exec(scenetake, repoRoot, ["--format", "mp4", "--font-file", "--fps", "30", scenario]);
     var (fpsExit, fpsStderr) = Exec(scenetake, repoRoot, ["mp4", "--fps", "99", "samples/basic.cast"]);
+    // svg takes a cast. Given a scenario, the JSON error is followed by the command that records it.
+    var (yamlExit, yamlStderr) = Exec(scenetake, repoRoot, ["svg", scenario, Path.Combine(work, "rules-from-yaml.svg")]);
     return maxFpsExit == 1 && maxFpsStderr.Contains("--max-fps requires --format svg", StringComparison.Ordinal)
         && fontExit == 1 && fontStderr.Contains("--font-file requires a value", StringComparison.Ordinal)
-        && fpsExit == 1 && fpsStderr.Contains("--fps must be between 1 and 60: 99", StringComparison.Ordinal);
+        && fpsExit == 1 && fpsStderr.Contains("--fps must be between 1 and 60: 99", StringComparison.Ordinal)
+        && yamlExit == 1 && yamlStderr.Contains("svg converts a cast file. To record this scenario, run: scenetake --format svg ", StringComparison.Ordinal);
 }
 
 static bool SubcommandsNeverReplaceTheirInput(string scenetake, string repoRoot, string work)
@@ -776,12 +863,12 @@ static bool ScenarioErrorsAfterPreRunPost(string scenetake, string repoRoot, str
         Console.Error.WriteLine(removedStderr);
     var removedRanPost = File.Exists(Path.Combine(directory, "post-ran.txt"));
 
-    // Steps that fail while the recording runs, each in its own way: an interactive step whose output
-    // is redirected, as it is here, and a PTY command that holds a NUL, which the PTY refuses to start.
+    // A step that fails while the recording runs: a PTY command that holds a NUL, which the PTY refuses
+    // to start. An interactive step whose output is redirected is refused before pre instead
+    // (ScenarioErrorsStopBeforePre).
     var failures = new List<(int Exit, string Stderr, bool RanPost)>();
     foreach (var (name, step) in new[]
     {
-        ("interactive", "  - run: echo two\n    pty: true\n    interactive: true"),
         ("nul", "  - run: \"echo a\\0b\"\n    pty: true"),
     })
     {
@@ -819,8 +906,10 @@ static bool ScenarioErrorsStopBeforePre(string scenetake, string repoRoot, strin
 {
     // Each scenario must end with an error before anything runs, not with an unhandled exception: YAML the
     // parser rejects in different ways (a broken token, a value of the wrong type, a key given twice in a
-    // step), a shell that does not exist, a shell or a cwd with a NUL, and a run that is a list. Without
-    // their refusal the NUL and list cases would run pre, so the pre marker shows the order.
+    // step), a shell that does not exist, a shell or a cwd with a NUL, a run that is a list, a cwd that does
+    // not exist, no steps, a step without run (an unquoted command with ": " is a mapping), a step that is
+    // a list, and an interactive step while output is redirected, as it is here. Without their refusal
+    // pre would run, so the pre marker shows the order.
     var directory = Directory.CreateDirectory(Path.Combine(work, "before-pre")).FullName;
     var cwd = directory.Replace('\\', '/');
     var missingShell = OperatingSystem.IsWindows() ? $"{cwd}/no-such-shell.exe" : "/no/such/shell";
@@ -840,6 +929,12 @@ static bool ScenarioErrorsStopBeforePre(string scenetake, string repoRoot, strin
         ("nulname", $"shell: \"{nulName}\"\nsteps:\n  - run: echo hi\n", "a shell cannot contain a NUL character"),
         ("nulcwd", $"cwd: \"{nulCwd}\"\nsteps:\n  - run: echo hi\n", "cwd cannot contain a NUL character"),
         ("list", "steps:\n  - run: [echo, hi]\n", "Error: Step key 'run' must be a command string"),
+        ("nocwd", $"cwd: '{cwd}/no-such-folder'\nsteps:\n  - run: echo hi\n", "Error: cwd folder does not exist"),
+        ("nosteps", "step:\n  - run: echo hi\n", "Error: The scenario has no steps to record"),
+        ("emptysteps", "steps:\n  - \"\"\n", "Error: The scenario has no steps to record"),
+        ("colon", "steps:\n  - echo hi\n  - echo key: value\n", "Error: Step 2 has no 'run' key (keys: echo key)"),
+        ("liststep", "steps:\n  - [echo, hi]\n", "Error: Step 1 must be a command string or a mapping with 'run', not a list"),
+        ("interactive", "steps:\n  - run: echo hi\n  - run: echo two\n    pty: true\n    interactive: true\n", "Error: Interactive PTY steps require a real terminal"),
     };
     var refused = true;
     foreach (var (name, body, error) in cases)
@@ -857,6 +952,57 @@ static bool ScenarioErrorsStopBeforePre(string scenetake, string repoRoot, strin
     }
 
     return refused;
+}
+
+static bool UnixPowerShellRunsCommands(string scenetake, string repoRoot, string work)
+{
+    var pwsh = FindOnPath("pwsh") ?? throw new SkipTestException("pwsh is not on PATH");
+    var directory = Directory.CreateDirectory(Path.Combine(work, "unix pwsh")).FullName;
+    File.CreateSymbolicLink(Path.Combine(directory, "powershell"), pwsh);
+    var passed = true;
+    foreach (var (name, shell, fromEnvironment) in new[]
+    {
+        ("name", "pwsh", false),
+        ("absolute", pwsh, false),
+        ("relative", Path.GetRelativePath(repoRoot, pwsh), false),
+        ("environment-name", "pwsh", true),
+        ("environment-path", pwsh, true),
+        ("powershell-path", Path.Combine(directory, "powershell"), false),
+    })
+    {
+        var scenario = Path.Combine(directory, name + ".yaml");
+        // Pipe and PTY starts can resolve a relative executable from different working directories.
+        // Use the same directory for this case so it tests PowerShell's arguments alone.
+        var cwd = name == "relative" ? repoRoot : directory;
+        var shellKey = fromEnvironment ? "" : $"shell: '{shell.Replace("'", "''", StringComparison.Ordinal)}'\n";
+        File.WriteAllText(scenario, shellKey + $$"""
+            cwd: '{{cwd.Replace("'", "''", StringComparison.Ordinal)}}'
+            settings:
+              typing-speed: 0
+              typing-jitter: 0
+              pre-delay: 0
+              post-delay: 0
+            pre:
+              - Set-Content '{{directory.Replace("'", "''", StringComparison.Ordinal)}}/{{name}}-pre.txt' 'PRE_OK'
+            steps:
+              - run: "[Console]::WriteLine([string]::Concat('PIPE_', 'OK'))"
+              - run: "[Console]::WriteLine([string]::Concat('PTY_', 'OK'))"
+                pty: true
+            post:
+              - Set-Content '{{directory.Replace("'", "''", StringComparison.Ordinal)}}/{{name}}-post.txt' 'POST_OK'
+            """);
+        var (exit, stderr) = Exec(scenetake, repoRoot, [scenario, Path.Combine(directory, name)],
+            fromEnvironment ? new() { ["SHELL"] = shell } : null);
+        var cast = exit == 0 ? File.ReadAllText(Path.Combine(directory, name + ".cast")) : "";
+        if (exit != 0 || stderr.Contains("Warning:", StringComparison.Ordinal)
+            || !cast.Contains("PIPE_OK", StringComparison.Ordinal) || !cast.Contains("PTY_OK", StringComparison.Ordinal)
+            || !File.Exists(Path.Combine(directory, name + "-pre.txt")) || !File.Exists(Path.Combine(directory, name + "-post.txt")))
+        {
+            Console.Error.WriteLine($"  {name}: exit {exit}{Environment.NewLine}{stderr}{cast}");
+            passed = false;
+        }
+    }
+    return passed;
 }
 
 static bool UnixShellStartsAsNamed(string scenetake, string repoRoot, string work)

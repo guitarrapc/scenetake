@@ -97,6 +97,9 @@ chmod +x ./scenetake
 # Create a starter scenario file in the current directory
 scenetake init
 
+# Write the starter steps for bash instead of the OS default shell (pwsh on Windows, $SHELL elsewhere)
+scenetake init --shell bash
+
 # Run the scenario to generate a cast file
 scenetake scenario.yaml
 
@@ -145,7 +148,7 @@ docker rm $id
 
 ```bash
 # Initialize a new scenario file
-scenetake init [scenario.yaml]
+scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
 # Run scenario to generate cast (default), cast + SVG, or cast + mp4
 scenetake [--verbose] [--format cast|svg|mp4]
