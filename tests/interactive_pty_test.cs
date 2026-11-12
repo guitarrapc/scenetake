@@ -4,9 +4,9 @@
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
 #:package VYaml@1.6.1
-#:package MiniPty@1.5.0
-#:package MiniPty.Capture@1.5.0
-#:package MiniPty.Console@1.5.0
+#:package MiniPty@1.6.0
+#:package MiniPty.Capture@1.6.0
+#:package MiniPty.Console@1.6.0
 
 using System.Diagnostics;
 

@@ -5,9 +5,9 @@
 #:property AllowUnsafeBlocks=true
 #:property InvariantGlobalization=true
 #:package VYaml@1.6.1
-#:package MiniPty@1.5.0
-#:package MiniPty.Capture@1.5.0
-#:package MiniPty.Console@1.5.0
+#:package MiniPty@1.6.0
+#:package MiniPty.Capture@1.6.0
+#:package MiniPty.Console@1.6.0
 #:package StbTrueTypeSharp@1.26.13
 #:include Terminal.cs
 #:include Svg.cs
