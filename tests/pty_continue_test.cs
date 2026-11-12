@@ -21,6 +21,7 @@ failures += Run("KeepLargePassthroughChunk", KeepLargePassthroughChunk);
 failures += Run("StripCopilotStyleAlternateScreenExit", StripCopilotStyleAlternateScreenExit);
 failures += Run("StripCopilotBannerTeardownAfterAlternateScreenExit", StripCopilotBannerTeardownAfterAlternateScreenExit);
 failures += Run("FastPathOutputIsBufferIndependent", FastPathOutputIsBufferIndependent);
+failures += Run("StripLeadingCursorPositionQuery", StripLeadingCursorPositionQuery);
 
 return failures == 0 ? 0 : 1;
 
@@ -62,6 +63,16 @@ static bool StripClearHomeAndText()
 {
     var output = Filter("\u001b[?25l\u001b[2J\u001b[m\u001b[Htext");
     return output == "text";
+}
+
+static bool StripLeadingCursorPositionQuery()
+{
+    // ConPTY started at the recording's cursor (InheritCursor) opens with a cursor position query, which
+    // scenetake answers itself. It is dropped there, like the other startup controls. A query a program
+    // sends after its first output stays, as every control in the output does.
+    var leading = Filter("\u001b[6n\u001b[?9001h\u001b[?1004h\u001b[m\u001b]0;bash\u0007\u001b[?25htext");
+    var later = Filter("text\u001b[6nmore");
+    return leading == "text" && later == "text\u001b[6nmore";
 }
 
 static bool SplitCsiAcrossChunks()

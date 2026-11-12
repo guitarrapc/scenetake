@@ -1060,6 +1060,7 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
     var events = new List<CastEvent>();
     var rng    = new Random(deterministicSeed);
     double t   = 0.5;
+    CastCursorTracker? cursorTracker = null;
 
     var steps = scenario.Steps ?? [];
     for (var i = 0; i < steps.Count; i++)
@@ -1096,9 +1097,15 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
         Console.Error.WriteLine($"  running: {command.Cmd}");
         var width = scenario.Width ?? 120;
         var height = scenario.Height ?? 24;
+        // ConPTY addresses rows from where it believes its cursor starts. Telling it where the recording's
+        // cursor is keeps a redrawn line on its own row instead of row 1. A Unix PTY has no screen model and
+        // passes `\r` through. An interactive step draws on the host terminal too, whose cursor is elsewhere.
+        var ptyStartCursor = usePty && !useInteractive && OperatingSystem.IsWindows()
+            ? (cursorTracker ??= new CastCursorTracker(width, height)).Advance(events)
+            : ((int Row, int Column)?)null;
         var execution = useInteractive
             ? await RunInteractivePtyAsync(command.Cmd, scenario.Cwd, shell, width, height, verbose)
-            : await RunCommandCoreAsync(command.Cmd, scenario.Cwd, shell, usePty, width, height, verbose);
+            : await RunCommandCoreAsync(command.Cmd, scenario.Cwd, shell, usePty, width, height, verbose, ptyStartCursor);
         if (execution.ExitCode != 0)
             WarnStepExitCode(command.Name, command.Cmd, execution.ExitCode);
         var commandStart = t;
@@ -1747,7 +1754,11 @@ static CommandEntry ParseCommand(object? item)
 static Task<CommandExecution> RunCommand(string cmd, string? cwd, ShellLaunch shell) =>
     RunCommandCoreAsync(cmd, cwd, shell, false, 120, 24);
 
-static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd, ShellLaunch shell, bool usePty, int width, int height, bool verbose = false)
+/// <param name="ptyStartCursor">
+/// For a PTY step on Windows, the recording's cursor as a 1-based row and column. ConPTY then starts drawing
+/// there (<see cref="PtyStartInfo.InheritCursor"/>) instead of on an empty screen of its own. Null elsewhere.
+/// </param>
+static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd, ShellLaunch shell, bool usePty, int width, int height, bool verbose = false, (int Row, int Column)? ptyStartCursor = null)
 {
     if (usePty)
     {
@@ -1758,7 +1769,18 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
             WorkingDirectory = cwd,
             Size = new(width, height),
             Environment = CreateChildEnvironmentOverlay(),
-        }, new PtyCaptureOptions { Completion = new PtyCompleteOptions { DecodeOutput = false } });
+            // ConPTY asks for the cursor position (ESC[6n) and holds the child's output until a report comes.
+            // The report is written up front, so nothing waits, and ConPTY consumes it before the child reads.
+            InheritCursor = ptyStartCursor is not null,
+        }, new PtyCaptureOptions
+        {
+            Completion = new PtyCompleteOptions
+            {
+                DecodeOutput = false,
+                Input = ptyStartCursor is { } cursor ? $"\u001b[{cursor.Row};{cursor.Column}R" : null,
+                SendEofAfterInput = false,
+            },
+        });
         if (verbose)
             Console.Error.WriteLine($"scenetake: pty verbose: chunks={result.Chunks.Count} bytes={result.Output.Length}");
         return CommandExecution.FromCapture(result);

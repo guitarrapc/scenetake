@@ -379,6 +379,11 @@ internal sealed class PtyLeadingInitFilter
         if (finalByte == (byte)'m' && IsOneOf(parameters, ""u8, "0"u8))
             return true;
 
+        // A cursor position query. ConPTY sends it first when it starts at the recording's cursor
+        // (InheritCursor); scenetake has already answered it, and a player has nothing to answer.
+        if (finalByte == (byte)'n' && parameters.SequenceEqual("6"u8))
+            return true;
+
         return IsStripPrivateMode(finalByte, parameters);
     }
 

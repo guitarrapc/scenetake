@@ -1,0 +1,19 @@
+title: "PTY redraw keeps its row"
+width: 40
+height: 8
+shell: bash
+
+settings:
+  typing-speed: 0.005
+  typing-jitter: 0
+  pre-delay: 0.05
+  post-delay: 0.05
+
+# A progress line redrawn with \r after earlier output. ConPTY used to redraw it with a cursor address
+# for its own row 1 (ESC[H), which covered "before 1" in the recording.
+steps:
+  - run: printf 'before 1\nbefore 2\nbefore 3\n'
+  - name: "pty redraw"
+    run: for i in 0 50 100; do printf '\rredraw %3d%%' $i; sleep 0.1; done; echo
+    pty: true
+  - echo after pty
