@@ -15,8 +15,55 @@ failures += Run("IntegrationInstantMergeOrder", () => IntegrationInstantMergeOrd
 failures += Run("IntegrationInstantProgressBar", () => IntegrationInstantProgressBar(repoRoot));
 failures += Run("IntegrationDockerBuildStream", () => IntegrationDockerBuildStream(repoRoot));
 failures += Run("IntegrationTypingKeepsGraphemes", () => IntegrationTypingKeepsGraphemes(repoRoot));
+if (OperatingSystem.IsWindows())
+    failures += Run("IntegrationPipeOutputIsUtf8OnWindows", () => IntegrationPipeOutputIsUtf8OnWindows(repoRoot));
 
 return failures == 0 ? 0 : 1;
+
+static bool IntegrationPipeOutputIsUtf8OnWindows(string repoRoot)
+{
+    // Pipe output used to be decoded in the code page of the terminal that started scenetake, while each
+    // child writes either UTF-8 (Git Bash, git) or the code page of its own console (pwsh, cmd). Under code
+    // page 932 Git Bash's output was garbled; under 65001 pwsh's was, and pwsh turned an emoji into "?" under
+    // both. scenetake starts here in a console of its own, as its children do, so the terminal code page is
+    // the OEM code page (437 or 932, not UTF-8). The recording must hold the text exactly.
+    if (!IntegrationTestsEnabled())
+        return true;
+
+    var ok = true;
+    foreach (var (fixture, expected) in new[]
+    {
+        ("pipe-encoding-pwsh.yaml", new[] { "SCENETAKE_PWSH 絵文字 🎉\r\n", "SCENETAKE_CMD 漢字 ✓\r\n" }),
+        // The cast writes Git Bash's "\n" as "\r\n".
+        ("pipe-encoding-bash.yaml", new[] { "SCENETAKE_BASH 絵文字 🎉\r\n" }),
+    })
+    {
+        var outputStem = Path.Combine(Path.GetTempPath(), $"scenetake-encoding-{Guid.NewGuid():N}");
+        try
+        {
+            var psi = new ProcessStartInfo(Environment.GetEnvironmentVariable("SCENETAKE_BIN")!, [Path.Combine(repoRoot, "tests", "fixtures", fixture), outputStem])
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+            using var process = Process.Start(psi)!;
+            process.WaitForExit();
+            var output = process.ExitCode == 0 ? string.Concat(ReadCastTimedOutputEvents(outputStem + ".cast").Select(ev => ev.Text)) : "";
+            var missing = expected.Where(text => !output.Contains(text, StringComparison.Ordinal)).ToList();
+            if (process.ExitCode != 0 || missing.Count > 0)
+            {
+                Console.Error.WriteLine($"  {fixture}: exit {process.ExitCode}, missing [{string.Join(" | ", missing)}] in: {output.Replace("\r", "\\r", StringComparison.Ordinal).Replace("\n", "\\n", StringComparison.Ordinal)}");
+                ok = false;
+            }
+        }
+        finally
+        {
+            Cleanup(outputStem);
+        }
+    }
+
+    return ok;
+}
 
 static int Run(string name, Func<bool> test)
 {

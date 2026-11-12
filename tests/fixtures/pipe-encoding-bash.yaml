@@ -1,0 +1,14 @@
+title: pipe encoding bash
+width: 60
+height: 8
+shell: bash
+
+settings:
+  typing-speed: 0.001
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+
+# Git Bash writes UTF-8 whatever the console's code page is.
+steps:
+  - echo 'SCENETAKE_BASH 絵文字 🎉'

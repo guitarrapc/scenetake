@@ -172,6 +172,7 @@ jobs:
           dotnet run tests/svg_render_test.cs
           dotnet run tests/window_chrome_test.cs
           dotnet run tests/mp4_render_test.cs
+          dotnet run tests/pipe_output_decoder_test.cs
 
       - name: Upload macOS binary
         if: ${{ startsWith(matrix.rid, 'osx-') }}

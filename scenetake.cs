@@ -44,6 +44,13 @@ const double DefaultMaxIdle = 0.2;
 const double DefaultBurstThreshold = 0.05;
 const string DefaultStderrColorSpec = "red";
 const string SgrReset = "\u001b[0m";
+// On Windows a pipe child gets a console of its own, whose code page is the OEM code page (932 on Japanese
+// Windows). pwsh writes redirected output in that code page, so a character it lacks, such as an emoji,
+// became "?", and native commands started from it (cmd's echo, ping) wrote that code page too. Setting the
+// console's output encoding to UTF-8 first makes pwsh and those commands write UTF-8, which the pipe reader
+// decodes. It runs in the child's own console, never in the terminal that started scenetake, and it is not
+// part of the typed command or the logs. A failure, which only a child with no console could have, is ignored.
+const string PowerShellUtf8OutputPrefix = "try { [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new() } catch { }; ";
 const string InteractiveNeedsTerminalError = "Interactive PTY steps require a real terminal (stdin and stdout must not be redirected).";
 
 if (args.Length < 1)
@@ -1795,7 +1802,7 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
     };
     foreach (var arg in shell.Arguments)
         psi.ArgumentList.Add(arg);
-    psi.ArgumentList.Add(cmd);
+    psi.ArgumentList.Add(OperatingSystem.IsWindows() && IsPowerShellLaunch(shell) ? PowerShellUtf8OutputPrefix + cmd : cmd);
     if (!string.IsNullOrWhiteSpace(cwd)) psi.WorkingDirectory = cwd;
     foreach (var (name, value) in CreateChildEnvironmentOverlay())
         psi.Environment[name] = value;
@@ -1807,6 +1814,9 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
     var (stdout, stderr) = CollectPipeOutputs(pipeChunks);
     return CommandExecution.FromPipeStream(stdout, stderr, proc.ExitCode, pipeChunks);
 }
+
+static bool IsPowerShellLaunch(ShellLaunch shell) =>
+    shell.Arguments.Length > 0 && string.Equals(shell.Arguments[^1], "-Command", StringComparison.OrdinalIgnoreCase);
 
 static async Task<CommandExecution> RunInteractivePtyAsync(
     string cmd,
