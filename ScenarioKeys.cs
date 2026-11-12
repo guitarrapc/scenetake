@@ -17,7 +17,7 @@ internal static class ScenarioKeys
         "typing-speed", "typing-jitter", "pre-delay", "post-delay", "execution-duration",
         "stream-output", "max-duration", "silence-threshold", "max-idle",
         "run-highlight", "highlight", "stderr-color",
-        "pty", "interactive", "normalize-typing",
+        "pty", "interactive", "normalize-typing", "allow-failure",
     ];
 
     /// <summary>The keys a <c>highlight</c> entry reads.</summary>

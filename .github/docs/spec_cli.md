@@ -18,7 +18,7 @@ scenetake exposes a small command-line surface: record scenarios to cast (and op
 | `scenetake --version` | Print version |
 
 ```bash
-scenetake [--verbose] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]
+scenetake [--verbose] [--strict] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]
 scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output]
 scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output]
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
@@ -44,6 +44,7 @@ Subcommands accept `-h` / `--help` for subcommand-specific usage.
 | Option | Commands | Behavior |
 |---|---|---|
 | `--verbose` | scenario path only | Show successful `pre`/`post` labels and phase markers, and the exception type and stack when an error stops the recording. See [spec_pre_post.md](spec_pre_post.md). |
+| `--strict` | scenario path only | Exit `1` when a recorded step exited non-zero and does not set `allow-failure: true`. The run still finishes first: the cast (and SVG or mp4) is written and `post` runs. For CI, where a broken demo should fail the job. The `svg` and `mp4` subcommands report it as an unknown option. See [spec_scenario.md](spec_scenario.md) → Step exit codes. |
 | `--format cast\|svg\|mp4` | scenario path only | Default `cast`. `svg` also writes `.svg`, and `mp4` also writes `.mp4`. See [spec_svg.md](spec_svg.md) and [spec_mp4.md](spec_mp4.md). |
 | `--font-size N` | scenario, `svg` | `1`–`128`. Scenario path: overrides `render.font-size` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default `16`). See [spec_cast.md](spec_cast.md). |
 | `--font-family FAMILIES` | scenario, `svg` | CSS `font-family` string (`1`–`16` families, `256` characters max). Scenario path: overrides `render.font-family` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default stack). See [spec_cast.md](spec_cast.md) and [spec_svg.md](spec_svg.md). |
@@ -99,7 +100,14 @@ Warning: SVG is 17.0MB (over 10MB). Heavy output such as full-screen TUIs is muc
 - `Warning: step exited <code>: <run>`
 - `Warning: step exited <code> (<name>): <run>` when the step has a `name`
 
-Semantics (recording continues, process exit code stays `0`): [spec_scenario.md](spec_scenario.md) → Step exit codes.
+A step with `allow-failure: true` prints nothing. With `--strict`, the run ends with:
+
+```
+Error: 1 step(s) exited non-zero, which --strict does not allow. A step that is meant to fail can set 'allow-failure: true'.
+  step 2 exited 3: exit 3
+```
+
+Semantics (recording continues, process exit code stays `0` unless `--strict`): [spec_scenario.md](spec_scenario.md) → Step exit codes.
 
 **Errors.** Fatal issues print `Error: …` to stderr and exit non-zero.
 
@@ -112,8 +120,9 @@ Semantics (recording continues, process exit code stays `0`): [spec_scenario.md]
 | Success | `0` |
 | Parse / validation error, missing file, cast/SVG/mp4 write failure, ffmpeg missing or without libx264 | `1` (or command-specific for `pre`/`post`) |
 | Failed `pre` or `post` command | Failed command's exit code |
+| `--strict` and a recorded step exited non-zero without `allow-failure: true` | `1`, after the outputs are written and `post` has run (a failing `post` keeps its own code) |
 
-Recorded step exit codes do not affect the process exit code. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
+Without `--strict`, recorded step exit codes do not affect the process exit code. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
 
 ## Init
 

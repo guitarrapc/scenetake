@@ -151,7 +151,7 @@ docker rm $id
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
 # シナリオを実行して cast（既定）、cast + SVG、または cast + mp4 を生成
-scenetake [--verbose] [--format cast|svg|mp4]
+scenetake [--verbose] [--strict] [--format cast|svg|mp4]
   [--font-size N] [--font-family FAMILIES] [--theme dark|light]
   [--window none|macos|windows] [--max-fps N]
   [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH]
@@ -169,6 +169,8 @@ scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--the
 ```
 
 `--max-fps` は SVG アニメーションのフレームレート上限です（`0` = オフ、cast のタイミングをそのまま使用）。`--format svg` 時と `svg` サブコマンドで有効です。
+
+`--strict` は CI 向けです。録画したステップが 0 以外で終了すると、scenetake は終了コード `1` で終わります。それでもステップはすべて実行し、出力の書き込みと `post` の実行を済ませてから終わるので、失敗した回の内容を確認できます。エラーのデモのように失敗するのが正しいステップには `allow-failure: true` を付けます。
 
 mp4 用のオプションは `--format mp4` 時と `mp4` サブコマンドで有効です。
 
@@ -243,6 +245,7 @@ mp4 は手元にインストールされたフォントで描画します。`fon
   - ターミナルを必要とするコマンドは `pty: true` で pseudo-terminal capture を有効化できます。詳細は [PTY 録画](#pty-録画)。
   - 実行時間が長いコマンドは `execution-duration` で見やすく調整できます
   - 長い出力を自然にリプレイしたい場合（`docker build` や `sleep` を挟むステップなど）は、その step に `stream-output: true` と必要なら `max-duration` を指定します。デフォルトの pipe emit はタイピング演出のため一括表示のままです
+  - 0 以外で終了したステップは警告を出し、録画はそのまま続きます。失敗するのが正しいステップには `allow-failure: true` を付けます。それ以外の失敗は `--strict` で終了コード `1` になります
 
 **GIF で日本語などの CJK 文字を使う**
 

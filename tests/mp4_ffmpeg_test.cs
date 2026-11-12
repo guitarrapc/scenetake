@@ -42,6 +42,7 @@ try
     failures += Run("RelativeCwdFollowsScenarioFolder", () => RelativeCwdFollowsScenarioFolder(scenetake, repoRoot, work));
     failures += Run("UnknownKeysWarnWithHints", () => UnknownKeysWarnWithHints(scenetake, repoRoot, work));
     failures += Run("KnownKeysDoNotWarn", () => KnownKeysDoNotWarn(scenetake, repoRoot, work));
+    failures += Run("StrictFailsOnStepFailure", () => StrictFailsOnStepFailure(scenetake, repoRoot, work));
     failures += Run("ScenarioErrorsAfterPreRunPost", () => ScenarioErrorsAfterPreRunPost(scenetake, repoRoot, work));
     failures += Run("SvgFailureWithAnOpenOutputIsReported", () => SvgFailureWithAnOpenOutputIsReported(scenetake, repoRoot, work));
     failures += Run("ScenarioChecksFrameSizeBeforePre", () => ScenarioChecksFrameSizeBeforePre(scenetake, repoRoot, work));
@@ -1054,6 +1055,40 @@ static bool UnknownKeysWarnWithHints(string scenetake, string repoRoot, string w
     return ok;
 }
 
+static bool StrictFailsOnStepFailure(string scenetake, string repoRoot, string work)
+{
+    // A failing step is demo content by default: a warning, exit 0. --strict makes it fail the run, after
+    // the cast is written and post has run, so CI can tell a broken demo. A step that is meant to fail
+    // says so with allow-failure, which is neither a warning nor a --strict failure. Other subcommands
+    // have no steps and refuse the option.
+    var directory = Directory.CreateDirectory(Path.Combine(work, "strict")).FullName;
+    var cwd = directory.Replace('\\', '/');
+    var failing = Path.Combine(directory, "failing.yaml");
+    File.WriteAllText(failing, $"width: 40\nheight: 6\ncwd: '{cwd}'\nsteps:\n  - echo ok\n  - exit 3\n  - run: exit 4\n    allow-failure: true\npost:\n  - echo ran > post-ran.txt\n");
+    var allowed = Path.Combine(directory, "allowed.yaml");
+    File.WriteAllText(allowed, $"width: 40\nheight: 6\ncwd: '{cwd}'\nsteps:\n  - echo ok\n  - run: exit 4\n    allow-failure: true\n");
+    var postRan = Path.Combine(directory, "post-ran.txt");
+
+    var (plainExit, plainStderr) = Exec(scenetake, repoRoot, [failing, Path.Combine(directory, "plain")]);
+    File.Delete(postRan);
+    var (strictExit, strictStderr) = Exec(scenetake, repoRoot, ["--strict", failing, Path.Combine(directory, "strict")]);
+    var strictWroteAndCleaned = File.Exists(Path.Combine(directory, "strict.cast")) && File.Exists(postRan);
+    var (allowedExit, allowedStderr) = Exec(scenetake, repoRoot, ["--strict", allowed, Path.Combine(directory, "allowed")]);
+    var (svgExit, svgStderr) = Exec(scenetake, repoRoot, ["svg", "--strict", "samples/basic.cast", Path.Combine(directory, "basic.svg")]);
+
+    var ok = plainExit == 0 && plainStderr.Contains("Warning: step exited 3: exit 3", StringComparison.Ordinal)
+        && !plainStderr.Contains("exited 4", StringComparison.Ordinal)
+        && strictExit == 1 && strictWroteAndCleaned
+        && strictStderr.Contains("Error: 1 step(s) exited non-zero, which --strict does not allow", StringComparison.Ordinal)
+        && strictStderr.Contains("  step 2 exited 3: exit 3", StringComparison.Ordinal)
+        && !strictStderr.Contains("step 3", StringComparison.Ordinal)
+        && allowedExit == 0 && !allowedStderr.Contains("Warning", StringComparison.Ordinal)
+        && svgExit == 1 && svgStderr.Contains("unknown option: --strict", StringComparison.Ordinal);
+    if (!ok)
+        Console.Error.WriteLine($"  plain {plainExit}, strict {strictExit} (cast and post: {strictWroteAndCleaned}), allowed {allowedExit}, svg {svgExit}{Environment.NewLine}{plainStderr}{strictStderr}{allowedStderr}{svgStderr}");
+    return ok;
+}
+
 static bool KnownKeysDoNotWarn(string scenetake, string repoRoot, string work)
 {
     // No key scenetake reads may be reported: every key in spec_scenario.md, the samples, the test
@@ -1108,6 +1143,7 @@ static bool KnownKeysDoNotWarn(string scenetake, string repoRoot, string work)
               - color: green
                 at: "1"
             stderr-color: yellow
+            allow-failure: true
           - run: echo tty
             pty: true
             interactive: true

@@ -151,7 +151,7 @@ docker rm $id
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
 # Run scenario to generate cast (default), cast + SVG, or cast + mp4
-scenetake [--verbose] [--format cast|svg|mp4]
+scenetake [--verbose] [--strict] [--format cast|svg|mp4]
   [--font-size N] [--font-family FAMILIES] [--theme dark|light]
   [--window none|macos|windows] [--max-fps N]
   [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH]
@@ -169,6 +169,8 @@ scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--the
 ```
 
 `--max-fps` caps SVG animation frame rate (`0` = off, use full cast timing). It applies when `--format svg` is set or on the `svg` subcommand.
+
+`--strict` is for CI: scenetake exits `1` when a recorded step exits non-zero. It still records every step, writes the outputs, and runs `post` first, so the broken run can be inspected. A step that is meant to fail, such as a demo of an error, sets `allow-failure: true`.
 
 mp4 options apply with `--format mp4` or on the `mp4` subcommand: `--fps` sets the frame rate (default `30`, max `60`), `--crf` sets quality (default `23`; higher is smaller), `--max-size` downscales to fit (for example `1280x1024` for X), `--size` makes the video exactly that size (for example `1920x1080`; see Terminal size and resolution below), and `--font-file` picks the font file. `--size` and `--max-size` cannot be used together.
 
@@ -229,6 +231,7 @@ To fill a video resolution, use the largest `width` × `height` that fits. At `f
   - Commands that need a terminal can opt into pseudo-terminal capture with `pty: true`. See [PTY recording](#pty-recording).
   - For long-running commands, use `execution-duration` to keep playback readable.
   - For natural replay of long output (`docker build`, staged `sleep`, …), set `stream-output: true` and optionally `max-duration` on that step. Default pipe emit stays instant for typing and short demos.
+  - A step that exits non-zero prints a warning and the recording continues. Set `allow-failure: true` on a step that is meant to fail; `--strict` turns the other failures into exit `1`.
 
 **CJK text in GIFs**
 

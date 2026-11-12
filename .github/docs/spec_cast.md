@@ -80,7 +80,7 @@ Codes not written: `i` (keyboard input).
 
 ### Event time
 
-- **v3 (write):** events use relative intervals (seconds since the previous event). Intervals are quantized to millisecond precision; rounding error is carried forward so long recordings do not drift.
+- **v3 (write):** events use relative intervals (seconds since the previous event). Intervals are quantized to millisecond precision; rounding error is carried forward so long recordings do not drift. With the error carried, the sum of the written intervals up to an event is that event's absolute time rounded to a millisecond, so each interval is the difference of two rounded absolute times, and a shift of the absolute times by a fraction of a millisecond can change intervals by 1ms ([spec_scenario.md](spec_scenario.md) → Determinism).
 - **v2 (read):** timestamps are absolute (seconds from session start).
 - **v3 (read):** intervals are accumulated to absolute time for internal consumers.
 

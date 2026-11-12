@@ -249,7 +249,7 @@ if (args[0] is "-h" or "--help")
     return 0;
 }
 
-if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runError))
+if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runError))
 {
     Console.Error.WriteLine($"Error: {runError}");
     PrintUsage();
@@ -449,9 +449,10 @@ if (verbose)
 
 Console.Error.WriteLine("Generating cast...");
 List<CastEvent> events;
+var failedSteps = new List<FailedStep>();
 try
 {
-    events = await GenerateAsync(scenario, shell, deterministicSeed, verbose);
+    events = await GenerateAsync(scenario, shell, deterministicSeed, verbose, failedSteps);
 }
 catch (Exception ex)
 {
@@ -525,6 +526,17 @@ if (postExitCode != 0)
 
 if (exitCode != 0)
     return exitCode;
+
+// A recorded step that fails is demo content by default, and the exit code stays 0, so CI could not tell
+// a broken demo from a good one. With --strict it fails the run, after the outputs are written and post
+// has run, so the cast of the broken run is there to look at.
+if (strict && failedSteps.Count > 0)
+{
+    Console.Error.WriteLine($"Error: {failedSteps.Count} step(s) exited non-zero, which --strict does not allow. A step that is meant to fail can set 'allow-failure: true'.");
+    foreach (var failed in failedSteps)
+        Console.Error.WriteLine($"  step {failed.Number} exited {failed.ExitCode}: {failed.Cmd}");
+    return 1;
+}
 
 if (outputFormat == OutputFormat.Svg)
     Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(svgPath!)}");
@@ -697,6 +709,7 @@ static bool TryParseRunArgs(
     out string? outputPath,
     out OutputFormat outputFormat,
     out bool verbose,
+    out bool strict,
     out int? fontSizeOverride,
     out string? fontFamilyOverride,
     out string? themePresetOverride,
@@ -709,6 +722,7 @@ static bool TryParseRunArgs(
     outputPath = null;
     outputFormat = OutputFormat.Cast;
     verbose = false;
+    strict = false;
     fontSizeOverride = null;
     fontFamilyOverride = null;
     themePresetOverride = null;
@@ -723,6 +737,12 @@ static bool TryParseRunArgs(
         if (arg == "--verbose")
         {
             verbose = true;
+            continue;
+        }
+
+        if (arg == "--strict")
+        {
+            strict = true;
             continue;
         }
 
@@ -1115,7 +1135,7 @@ static List<string> FindUnknownScenarioKeys(string yaml)
             : throw new InvalidOperationException($"no keys for {typeof(T).Name}");
 }
 
-static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch shell, int deterministicSeed, bool verbose)
+static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch shell, int deterministicSeed, bool verbose, List<FailedStep> failedSteps)
 {
     var settings = scenario.Settings ?? new ScenarioSettings();
     var prompt    = settings.Prompt ?? DefaultPrompt;
@@ -1148,6 +1168,7 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
         var usePty = GetBool(command.Extra, false, "pty");
         var useInteractive = GetBool(command.Extra, false, "interactive");
         var normalizeTyping = GetBool(command.Extra, false, "normalize-typing");
+        var allowFailure = GetBool(command.Extra, false, "allow-failure");
 
         if (events.Count == 0)
             t += preDelay;
@@ -1174,8 +1195,14 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
         var execution = useInteractive
             ? await RunInteractivePtyAsync(command.Cmd, scenario.Cwd, shell, width, height, verbose)
             : await RunCommandCoreAsync(command.Cmd, scenario.Cwd, shell, usePty, width, height, verbose, ptyStartCursor);
-        if (execution.ExitCode != 0)
+        // A step that is meant to fail (a demo of an error) says so with allow-failure, which keeps it out of
+        // the warnings and out of --strict.
+        if (execution.ExitCode != 0 && !allowFailure)
+        {
             WarnStepExitCode(command.Name, command.Cmd, execution.ExitCode);
+            failedSteps.Add(new FailedStep(i + 1, command.Cmd, execution.ExitCode));
+        }
+
         var commandStart = t;
         if (execution.IsPty)
         {
@@ -1212,6 +1239,14 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
                 cmdCastTiming);
         }
 
+        // Output timed by the wall clock (PTY, interactive, stream emit) ends at a time whose fraction of a
+        // millisecond differs from run to run. The cast stores each interval as the difference of absolute
+        // times rounded to milliseconds, so that fraction moved later typed intervals by 1ms, and a cast
+        // regenerated from the same scenario differed on lines after the step. Going on from a whole
+        // millisecond keeps them the same; only the output and the first interval after it still differ.
+        if (execution.IsPty || cmdCastTiming.UsesStreamEmission())
+            t = CeilingToMillisecond(t);
+
         t += cmdPost;
         t += cmdPre;
     }
@@ -1221,6 +1256,13 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
 
     return events;
 }
+
+/// <summary>
+/// The next whole millisecond at or after <paramref name="seconds"/>. Rounding to a microsecond first keeps
+/// a value such as 12.345, which is 12345.000000000002 ms as a double, at 12.345.
+/// </summary>
+static double CeilingToMillisecond(double seconds) =>
+    Math.Ceiling(Math.Round(seconds * 1000, 3)) / 1000;
 
 static CastTimingSettings ResolveCastTiming(ScenarioSettings settings, Dictionary<string, object?>? stepExtra)
 {
@@ -3380,7 +3422,7 @@ static string CreateInitialScenarioYaml(string? shell)
 
 static void PrintUsage()
 {
-    Console.Error.WriteLine("Usage: scenetake [--verbose] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
+    Console.Error.WriteLine("Usage: scenetake [--verbose] [--strict] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
     Console.Error.WriteLine("       scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
     Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
     Console.Error.WriteLine("       scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]");
@@ -3851,6 +3893,9 @@ readonly record struct CommandExecution(
 }
 
 record ShellLaunch(string FileName, string[] Arguments, string DisplayName);
+
+/// <summary>A recorded step that exited non-zero without <c>allow-failure</c>. <paramref name="Number"/> is 1-based, as in other step messages.</summary>
+record FailedStep(int Number, string Cmd, int ExitCode);
 
 [YamlObject(NamingConvention.KebabCase)]
 public partial class Scenario
