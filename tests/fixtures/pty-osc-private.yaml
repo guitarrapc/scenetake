@@ -1,0 +1,24 @@
+title: "OSC titles and paths stay out of the cast"
+width: 60
+height: 8
+shell: bash
+
+settings:
+  typing-speed: 0.005
+  typing-jitter: 0
+  pre-delay: 0.05
+  post-delay: 0.05
+
+# Titles (OSC 0, which ConPTY also sets to the shell's full path), the working directory (OSC 7), and
+# hyperlink targets (OSC 8) are left out of the cast; the text a terminal draws and color OSCs stay.
+# The word "hidden" is built by the shell, so it never appears in the typed commands. The color OSC is
+# a pipe step: ConPTY applies a color OSC itself and does not pass it on.
+steps:
+  - run: |-
+      s=hid; printf "pipe \033]0;/${s}den/pipe-title\007visible-pipe\n"
+  - name: "pty title"
+    run: |-
+      s=hid; printf "\033]0;/${s}den/pty-title\007\033]7;file://host/${s}den/cwd\007\033]8;;file://host/${s}den/link\007link-text\033]8;;\007 visible-pty\n"
+    pty: true
+  - run: |-
+      printf '\033]11;#102030\007colors-kept\n'

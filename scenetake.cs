@@ -438,6 +438,10 @@ catch (Exception ex)
     return await StopAfterPreAsync(verbose ? ex.ToString() : ex.Message);
 }
 
+// OSC titles and similar sequences are never drawn, but a committed cast handed them to every reader:
+// ConPTY sets the title to the shell's full path, often under C:\Users\<name>.
+events = CastOscFilter.RemovePrivateSequences(events);
+
 try
 {
     WriteCast(scenario, events, outputPath, shell, deterministicTimestamp, renderSettings);
@@ -2836,6 +2840,17 @@ static void WarnStepExitCode(string? name, string cmd, int exitCode)
         Console.Error.WriteLine($"Warning: step exited {exitCode} ({name}): {cmd}");
 }
 
+/// <summary>
+/// The shell for the cast header's env.SHELL: its file name, without the folder and without ".exe". The
+/// full path told every viewer of a committed cast where the shell was installed, which on Windows is
+/// often under C:\Users\&lt;name&gt; (scoop, winget user installs). A player does not use the value.
+/// </summary>
+static string ShellEnvName(string fileName)
+{
+    var name = Path.GetFileName(fileName);
+    return name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? name[..^4] : name;
+}
+
 static void WriteCast(
     Scenario scenario,
     List<CastEvent> events,
@@ -2865,7 +2880,7 @@ static void WriteCast(
         $",\"type\":\"xterm-256color\"" +
         $",\"theme\":{{\"fg\":{JsonEscape.JsonString(renderSettings.Theme.Fg)},\"bg\":{JsonEscape.JsonString(renderSettings.Theme.Bg)},\"palette\":{JsonEscape.JsonString(renderSettings.Theme.Palette)}}}}}" +
         $",\"timestamp\":{timestamp},\"title\":{JsonEscape.JsonString(title)}" +
-        $",\"env\":{{\"SHELL\":{JsonEscape.JsonString(shell.EnvValue)}}}" +
+        $",\"env\":{{\"SHELL\":{JsonEscape.JsonString(ShellEnvName(shell.FileName))}}}" +
         $",\"tags\":[{tagsJson}]}}");
 
     var intervalError = 0.0;
@@ -3002,7 +3017,7 @@ static ShellLaunch ResolveShell(Scenario scenario)
     var arguments = Path.GetFileName(requested) is "pwsh" or "powershell"
         ? new[] { "-NoLogo", "-NoProfile", "-Command" }
         : new[] { "-lc" };
-    return new ShellLaunch(requested, arguments, requested, requested);
+    return new ShellLaunch(requested, arguments, requested);
 }
 
 static bool CurrentDirectoryHasFile(string name)
@@ -3024,10 +3039,10 @@ static ShellLaunch ResolveWindowsShell(string? requested)
     if (string.IsNullOrWhiteSpace(requested))
     {
         if (TryResolveExecutableOnWindows("pwsh", out var pwsh))
-            return new ShellLaunch(pwsh, ["-NoLogo", "-NoProfile", "-Command"], pwsh, "pwsh");
+            return new ShellLaunch(pwsh, ["-NoLogo", "-NoProfile", "-Command"], "pwsh");
 
         if (TryResolveExecutableOnWindows("powershell", out var powershell))
-            return new ShellLaunch(powershell, ["-NoLogo", "-NoProfile", "-Command"], powershell, "powershell");
+            return new ShellLaunch(powershell, ["-NoLogo", "-NoProfile", "-Command"], "powershell");
 
         throw new InvalidOperationException("No supported shell was found on Windows. Install pwsh or powershell, or set the scenario's shell to a Git Bash or MSYS bash.exe path.");
     }
@@ -3039,7 +3054,7 @@ static ShellLaunch ResolveWindowsShell(string? requested)
     {
         var exeName = NormalizeWindowsShellName(requested);
         if (TryResolveExecutableOnWindows(exeName, out var resolved))
-            return new ShellLaunch(resolved, ["-NoLogo", "-NoProfile", "-Command"], resolved, exeName);
+            return new ShellLaunch(resolved, ["-NoLogo", "-NoProfile", "-Command"], exeName);
 
         throw new InvalidOperationException($"Shell '{requested}' was requested, but '{exeName}' could not be found on Windows.");
     }
@@ -3047,7 +3062,7 @@ static ShellLaunch ResolveWindowsShell(string? requested)
     if (string.Equals(NormalizeWindowsShellName(requested), "cmd", StringComparison.OrdinalIgnoreCase))
     {
         if (TryResolveExecutableOnWindows("cmd", out var resolved))
-            return new ShellLaunch(resolved, ["/c"], resolved, "cmd");
+            return new ShellLaunch(resolved, ["/c"], "cmd");
 
         throw new InvalidOperationException("Shell 'cmd' was requested, but cmd.exe could not be found on Windows.");
     }
@@ -3055,13 +3070,13 @@ static ShellLaunch ResolveWindowsShell(string? requested)
     if (string.Equals(NormalizeWindowsShellName(requested), "bash", StringComparison.OrdinalIgnoreCase))
     {
         if (TryResolveWindowsBash(out var resolved))
-            return new ShellLaunch(resolved, ["-lc"], resolved, "bash");
+            return new ShellLaunch(resolved, ["-lc"], "bash");
 
         throw new InvalidOperationException("Shell 'bash' was requested, but a Git Bash or MSYS bash.exe could not be found. WSL bash is intentionally not used.");
     }
 
     if (TryResolveExecutableOnWindows(requested, out var resolvedExecutable))
-        return new ShellLaunch(resolvedExecutable, ["-c"], resolvedExecutable, requested);
+        return new ShellLaunch(resolvedExecutable, ["-c"], requested);
 
     throw new InvalidOperationException($"Shell '{requested}' could not be resolved on Windows.");
 }
@@ -3096,11 +3111,11 @@ static ShellLaunch ResolveWindowsShellPath(string requested)
     {
         // Any other shell starts as written, as it always has.
         if (File.Exists(requested))
-            return new ShellLaunch(requested, ["-c"], requested, requested);
+            return new ShellLaunch(requested, ["-c"], requested);
     }
     else if (File.Exists(fullPath))
     {
-        return new ShellLaunch(fullPath, arguments, fullPath, fullPath);
+        return new ShellLaunch(fullPath, arguments, fullPath);
     }
 
     throw new InvalidOperationException($"Shell '{requested}' was requested, but the path does not exist.");
@@ -3779,7 +3794,7 @@ readonly record struct CommandExecution(
         new(exitCode, false, stdout, stderr, null, null, []);
 }
 
-record ShellLaunch(string FileName, string[] Arguments, string EnvValue, string DisplayName);
+record ShellLaunch(string FileName, string[] Arguments, string DisplayName);
 
 [YamlObject(NamingConvention.KebabCase)]
 public partial class Scenario

@@ -47,7 +47,7 @@ Every cast file written by the scenario path includes render metadata in the hea
   },
   "timestamp": 1701960613,
   "title": "My Demo",
-  "env": { "SHELL": "/bin/bash" },
+  "env": { "SHELL": "bash" },
   "tags": ["st:font-size=16", "st:font-family=ui-monospace, \"Cascadia Mono\", monospace"]
 }
 ```
@@ -60,7 +60,7 @@ Every cast file written by the scenario path includes render metadata in the hea
 | `term.theme` | scenario `render.theme` (+ CLI preset override) | Resolved hex; follows asciicast v3 `term.theme`. |
 | `timestamp` | deterministic from YAML | See [spec_scenario.md](spec_scenario.md) → Determinism. |
 | `title` | scenario `title` | May be empty. |
-| `env.SHELL` | resolved shell | `TERM` is represented by `term.type`. |
+| `env.SHELL` | resolved shell's file name | Name only, without its folder and without `.exe`: `bash`, `pwsh`, `cmd`, also when the scenario gives a path. A cast is shared, and the folder is often under the user's home (`C:\Users\<name>\scoop\...`). `TERM` is represented by `term.type`. |
 | `tags` | `st:font-size=N`, `st:font-family=…`, `st:window=macos\|windows` | SVG render metadata. `st:window` is omitted when window chrome is off. Unknown tags are ignored by external tools. |
 
 On read, v2 headers use top-level `width`, `height`, and `theme` only. Render metadata defaults apply unless overridden by CLI: v3 `st:font-size` / `st:font-family` / `st:window` in `tags`. Invalid `st:` render tags warn once each and fall back to defaults. An invalid `theme` color, or a palette that is not 16 colors, falls back to the defaults without a warning. A missing or out-of-range terminal size is an error. This holds wherever a cast is read: the `svg` and `mp4` subcommands, and the scenario path's SVG and mp4 output.
@@ -85,6 +85,20 @@ Codes not written: `i` (keyboard input).
 - **v3 (read):** intervals are accumulated to absolute time for internal consumers.
 
 v3 comment lines (`# ...`) are ignored on read.
+
+### Sequences left out
+
+`o` events do not keep OSC sequences (`ESC ]` … `BEL` or `ESC \`) except color ones. Terminals draw none of them, and neither does scenetake's SVG or mp4 renderer, but several carry where the recording was made:
+
+| OSC | Carries |
+|---|---|
+| `0`, `1`, `2` (titles) | ConPTY sets the title to the shell's full path; vim puts the edited file's folder in it. |
+| `7`, `9;9` (working directory) | Host name and folder, from shells set up for Windows Terminal, VS Code, and others. |
+| `133`, `633` (shell integration) | Prompt marks, and in VS Code's form the working directory. |
+| `8` (hyperlinks) | The link target, such as `file://host/home/user/…` from `ls --hyperlink`. The link text stays. |
+| `52` (clipboard) | Clipboard content. |
+
+Color OSCs stay: `4`, `5`, `10`–`19`, `104`, `105`, `110`–`119`. Any other OSC, and an OSC with no number, is left out. A sequence split across several PTY reads is followed from one event to the next. An event that holds nothing else is dropped, except the recording's last event, which stays empty so the recording keeps its length. Only 7-bit sequences are recognized. Text that a command prints, such as `pwd` or a prompt that shows the folder, is drawn and stays as recorded.
 
 ### Recording boundary
 
@@ -120,4 +134,5 @@ Adding v2-only header fields (such as top-level `width` / `height`) to v3 files 
 - v3 adoption in downstream tools is not uniform; documenting minimum agg version prevents false "invalid cast" reports when the file is valid v3.
 - Top-level v2 compatibility fields on a v3 file parse in old agg but produce broken GIFs because event timing semantics differ.
 - **A broken GIF is not always the cast or agg.** On Windows with Docker Desktop (28.5.1, WSL2 backend), agg writing its GIF straight to a bind-mounted Windows folder sometimes left a few ~4 KiB runs of unrelated bytes in the file. Viewers then showed noise bands and stale glyphs that neither the SVG nor a single-frame agg render had. agg's output was byte-identical across runs when written inside the container and copied out with `docker cp`, so the README's Windows agg commands do that.
+- **A cast leaked the recording machine's paths in places nobody sees.** On Windows the header's `env.SHELL` was the resolved shell's full path, and every PTY step carried ConPTY's title, which is the same path: with pwsh installed by scoop, both were `C:\Users\<name>\scoop\...`, in a file meant to be committed and shared. Neither shows in a player or a rendered SVG or mp4, so nobody noticed. On Linux the header held the shell as written (`bash`), and bash in a PTY sets no title, so only Windows showed it. Writing the name only, and leaving out OSC sequences other than colors, removes them without changing what any renderer draws. Rewriting the paths instead (for example relative to the scenario's folder) was not needed: nothing drawn shows them, and the paths in a title are not always the working directory (ConPTY's is the shell's install folder).
 - **Validation limits must accept what scenetake writes.** The default `font-family` stack has 11 families and is recorded in every cast header, but the family limit was 10. Every cast scenetake wrote was therefore read back as "invalid font-family" (and fell back to the same default), printing a warning on each `svg` or `mp4` conversion. The limit is now 16, and a test checks that the default stack passes validation.

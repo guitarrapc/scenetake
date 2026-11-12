@@ -1833,6 +1833,225 @@ internal readonly record struct CastEvent(
 }
 
 /// <summary>
+/// Removes OSC sequences that a recording never shows but that can carry local paths, host names, or
+/// other private text: window titles (OSC 0/1/2), which ConPTY sets to the started shell's full path and
+/// vim to the edited file's folder, the working directory (OSC 7, ConEmu OSC 9;9), shell integration
+/// marks (OSC 133, 633), hyperlink targets (OSC 8, whose link text stays), the clipboard (OSC 52), and
+/// every other OSC. Color changes (OSC 4, 5, 10–19, 104, 105, 110–119) are kept. No renderer of
+/// scenetake draws an OSC, so the SVG and mp4 do not change.
+/// </summary>
+/// <remarks>
+/// The output events are one terminal stream, and a PTY read can end inside a sequence, so the scan
+/// carries its state from one event to the next. Only 7-bit sequences (ESC ], ended by BEL or ESC \) are
+/// recognized.
+/// </remarks>
+internal static class CastOscFilter
+{
+    private enum State
+    {
+        Ground,
+        Escape,     // ESC seen; held until the next byte says whether an OSC starts.
+        Code,       // ESC ] and digits so far; held until the code decides keep or drop.
+        Keep,
+        KeepEscape, // ESC inside a kept OSC; held until the next byte.
+        Drop,
+        DropEscape, // ESC inside a dropped OSC.
+    }
+
+    internal static List<CastEvent> RemovePrivateSequences(List<CastEvent> events)
+    {
+        var state = State.Ground;
+        var pending = new List<byte>(16);
+        var output = new ArrayBufferWriter<byte>();
+        var result = new List<CastEvent>(events.Count);
+        for (var index = 0; index < events.Count; index++)
+        {
+            var ev = events[index];
+            if (ev.Kind != CastEventKind.Output)
+            {
+                result.Add(ev);
+                continue;
+            }
+
+            // Most events hold no OSC: keep them as they are, without encoding typed characters.
+            if (state == State.Ground && !MayHoldOsc(ev))
+            {
+                result.Add(ev);
+                continue;
+            }
+
+            ReadOnlySpan<byte> input = ev.HasUtf8Output ? ev.Utf8Output.Span : Encoding.UTF8.GetBytes(ev.Data);
+            output.Clear();
+            Scan(input, ref state, pending, output);
+            if (output.WrittenSpan.SequenceEqual(input))
+            {
+                result.Add(ev);
+            }
+            else if (output.WrittenCount > 0)
+            {
+                result.Add(CastEvent.OutputUtf8(ev.Time, output.WrittenSpan.ToArray()));
+            }
+            else if (index == events.Count - 1)
+            {
+                // The last event sets the recording's length, so it stays, empty.
+                result.Add(CastEvent.Output(ev.Time, ""));
+            }
+        }
+
+        // An ESC or an OSC still open when the recording ends shows nothing, so it is dropped.
+        return result;
+    }
+
+    /// <summary>Whether the event holds ESC ], or ends with an ESC that the next event may continue.</summary>
+    private static bool MayHoldOsc(CastEvent ev)
+    {
+        if (ev.HasUtf8Output)
+        {
+            var bytes = ev.Utf8Output.Span;
+            return bytes.IndexOf("\u001b]"u8) >= 0 || bytes[^1] == 0x1B;
+        }
+
+        return ev.Data.Contains("\u001b]", StringComparison.Ordinal) || ev.Data.EndsWith('\u001b');
+    }
+
+    private static void Scan(ReadOnlySpan<byte> input, ref State state, List<byte> pending, ArrayBufferWriter<byte> output)
+    {
+        for (var i = 0; i < input.Length; i++)
+        {
+            var b = input[i];
+            switch (state)
+            {
+                case State.Ground:
+                    if (b == 0x1B)
+                    {
+                        pending.Add(b);
+                        state = State.Escape;
+                    }
+                    else
+                    {
+                        Write(output, b);
+                    }
+
+                    break;
+
+                case State.Escape:
+                    if (b == (byte)']')
+                    {
+                        pending.Add(b);
+                        state = State.Code;
+                    }
+                    else
+                    {
+                        Flush(pending, output);
+                        state = State.Ground;
+                        i--; // b may start another escape.
+                    }
+
+                    break;
+
+                case State.Code:
+                    if (b is >= (byte)'0' and <= (byte)'9' && pending.Count < 2 + 6)
+                    {
+                        pending.Add(b);
+                        break;
+                    }
+
+                    if (IsKept(pending))
+                    {
+                        Flush(pending, output);
+                        state = State.Keep;
+                    }
+                    else
+                    {
+                        pending.Clear();
+                        state = State.Drop;
+                    }
+
+                    i--; // b belongs to the OSC body or ends it.
+                    break;
+
+                case State.Keep:
+                    if (b == 0x1B)
+                    {
+                        pending.Add(b);
+                        state = State.KeepEscape;
+                    }
+                    else
+                    {
+                        Write(output, b);
+                        if (b is 0x07 or 0x18 or 0x1A)
+                            state = State.Ground;
+                    }
+
+                    break;
+
+                case State.KeepEscape:
+                    if (b == (byte)'\\')
+                    {
+                        Flush(pending, output);
+                        Write(output, b);
+                        state = State.Ground;
+                    }
+                    else
+                    {
+                        // ESC ends the OSC and starts another sequence; the held ESC is decided as such.
+                        state = State.Escape;
+                        i--;
+                    }
+
+                    break;
+
+                case State.Drop:
+                    if (b == 0x1B)
+                        state = State.DropEscape;
+                    else if (b is 0x07 or 0x18 or 0x1A)
+                        state = State.Ground;
+                    break;
+
+                case State.DropEscape:
+                    if (b == (byte)'\\')
+                    {
+                        state = State.Ground;
+                    }
+                    else
+                    {
+                        pending.Add(0x1B);
+                        state = State.Escape;
+                        i--;
+                    }
+
+                    break;
+            }
+        }
+    }
+
+    /// <summary>Whether the held ESC ] and digits name a color OSC, which is kept.</summary>
+    private static bool IsKept(List<byte> pending)
+    {
+        if (pending.Count <= 2)
+            return false;
+
+        var code = 0;
+        for (var i = 2; i < pending.Count; i++)
+            code = code * 10 + (pending[i] - '0');
+        return code is 4 or 5 or (>= 10 and <= 19) or 104 or 105 or (>= 110 and <= 119);
+    }
+
+    private static void Write(ArrayBufferWriter<byte> output, byte b)
+    {
+        output.GetSpan(1)[0] = b;
+        output.Advance(1);
+    }
+
+    private static void Flush(List<byte> pending, ArrayBufferWriter<byte> output)
+    {
+        foreach (var b in pending)
+            Write(output, b);
+        pending.Clear();
+    }
+}
+
+/// <summary>
 /// Plays a recording's events, as they are added, on a screen of the recording's size and reports where the
 /// cursor is. A Windows PTY step starts ConPTY at that position: ConPTY otherwise assumes an empty screen with
 /// its cursor on row 1 and redraws a line (`\r` in a progress bar) with a cursor address for that row, which
