@@ -5,13 +5,18 @@
 #:package MiniPty.Console@1.6.0
 #:include ../Terminal.cs
 #:include ../CastTimingPipeline.cs
+#:include ../InteractivePtyInput.cs
 
 using System.Diagnostics;
 using System.Text;
+using MiniPty;
 
 var failures = 0;
 failures += Run("OnForwardedInput_RecordsElapsedAndBytes", OnForwardedInput_RecordsElapsedAndBytes);
 failures += Run("OnForwardedInput_IgnoresEmptySpan", OnForwardedInput_IgnoresEmptySpan);
+failures += Run("OnForwardedInput_SkipsKeysWhileChildReadsPassword", OnForwardedInput_SkipsKeysWhileChildReadsPassword);
+failures += Run("OnForwardedInput_RecordsKeysInOtherInputModes", OnForwardedInput_RecordsKeysInOtherInputModes);
+failures += Run("NormalizeOutput_KeepsEchoAfterPasswordPrompt", NormalizeOutput_KeepsEchoAfterPasswordPrompt);
 failures += Run("BuildInputWindows_MergesBurst", BuildInputWindows_MergesBurst);
 failures += Run("NormalizeOutput_StripsBackspaceCorrections", NormalizeOutput_StripsBackspaceCorrections);
 failures += Run("NormalizeOutput_PreservesWallClockOutsideInput", NormalizeOutput_PreservesWallClockOutsideInput);
@@ -74,6 +79,66 @@ static bool OnForwardedInput_IgnoresEmptySpan()
     recorder.OnForwardedInput(TimeSpan.Zero, ReadOnlySpan<byte>.Empty);
 
     return chunks.Count == 0;
+}
+
+// sudo, ssh and `read -s` turn echo off and keep canonical mode on while they read a password.
+static bool OnForwardedInput_SkipsKeysWhileChildReadsPassword()
+{
+    var chunks = new List<PtyInputChunk>();
+    PtyInputMode? mode = new PtyInputMode(Echo: false, Canonical: true);
+    var recorder = new InteractivePtyInputRecorder(Stopwatch.StartNew(), chunks, () => mode);
+
+    recorder.OnForwardedInput(TimeSpan.Zero, "secret"u8);
+    recorder.OnForwardedInput(TimeSpan.Zero, "\x7f"u8);
+    recorder.OnForwardedInput(TimeSpan.Zero, "\r"u8);
+    mode = new PtyInputMode(Echo: true, Canonical: true);
+    recorder.OnForwardedInput(TimeSpan.Zero, "ls"u8);
+
+    return chunks.Count == 1 && Encoding.UTF8.GetString(chunks[0].Data.Span) == "ls";
+}
+
+// Echo off alone is not a password read: vim and a shell's line editor turn echo and canonical mode off and draw the
+// keys themselves. Windows (and an exited child) reports no mode.
+static bool OnForwardedInput_RecordsKeysInOtherInputModes()
+{
+    var chunks = new List<PtyInputChunk>();
+    PtyInputMode? mode = null;
+    var recorder = new InteractivePtyInputRecorder(Stopwatch.StartNew(), chunks, () => mode);
+
+    recorder.OnForwardedInput(TimeSpan.Zero, "a"u8);
+    mode = new PtyInputMode(Echo: false, Canonical: false);
+    recorder.OnForwardedInput(TimeSpan.Zero, "b"u8);
+    mode = new PtyInputMode(Echo: true, Canonical: false);
+    recorder.OnForwardedInput(TimeSpan.Zero, "c"u8);
+    mode = new PtyInputMode(Echo: true, Canonical: true);
+    recorder.OnForwardedInput(TimeSpan.Zero, "d"u8);
+
+    return string.Concat(chunks.Select(c => Encoding.UTF8.GetString(c.Data.Span))) == "abcd";
+}
+
+// The input log the recorder leaves after `read -s`: the password keys are absent. Had they been recorded, the echo
+// matching would wait for the never-echoed "secret" and drop the "$ " prompt and the later "ls" echo.
+static bool NormalizeOutput_KeepsEchoAfterPasswordPrompt()
+{
+    var inputs = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (5.0, "l"u8.ToArray().AsMemory()),
+        (5.1, "s"u8.ToArray().AsMemory()),
+    };
+    var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (0.5, "Password: "u8.ToArray().AsMemory()),
+        (1.35, "\r\n"u8.ToArray().AsMemory()),
+        (1.5, "$ "u8.ToArray().AsMemory()),
+        (5.02, "l"u8.ToArray().AsMemory()),
+        (5.12, "s"u8.ToArray().AsMemory()),
+    };
+
+    var windows = InteractivePtyCastEmit.BuildInputEchoWindows(inputs.Select(static i => i.Time).ToArray());
+    var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24, inputs);
+    var text = string.Concat(normalized.Select(c => Encoding.UTF8.GetString(c.Data.Span)));
+
+    return text == "Password: \r\n$ ls";
 }
 
 static bool BuildInputWindows_MergesBurst()
@@ -286,20 +351,5 @@ static bool CollapseIdle_PreservesNormalizedEmitSpacing()
         return false;
     return Math.Abs(chunks[3].Time - 0.50) < 0.001;
 }
-
-// Mirrors scenetake.cs — isolated here so this test does not pull in the full CLI entry point.
-sealed class InteractivePtyInputRecorder(Stopwatch stopwatch, List<PtyInputChunk> chunks) : MiniPty.Console.IPtyConsoleInputObserver
-{
-    public void OnForwardedInput(TimeSpan elapsed, ReadOnlySpan<byte> data)
-    {
-        _ = elapsed;
-        if (data.IsEmpty)
-            return;
-
-        chunks.Add(new PtyInputChunk(stopwatch.Elapsed, data.ToArray().AsMemory()));
-    }
-}
-
-readonly record struct PtyInputChunk(TimeSpan Time, ReadOnlyMemory<byte> Data);
 
 internal readonly record struct ResolvedTheme(string Fg, string Bg, string Palette);

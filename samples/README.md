@@ -15,6 +15,7 @@ Sample scenarios for scenetake. Use this page to quickly see each scenario’s *
 | [highlight](#highlight) | Comment, stdout, and stderr coloring | [highlight.yaml](highlight.yaml) | [cast](highlight.cast) · [gif](highlight.gif) · [svg](highlight.svg) |
 | [pty](#pty) | TTY-dependent command with `pty: true` (`matrix`) | [pty.yaml](pty.yaml) | [cast](pty.cast) · [gif](pty.gif) · [svg](pty.svg) |
 | [interactive-pty](#interactive-pty) | Host-terminal interactive session (`interactive: true`) | [interactive-pty.yaml](interactive-pty.yaml) | [cast](interactive-pty.cast) · [gif](interactive-pty.gif) · [svg](interactive-pty.svg) |
+| [password-prompt](#password-prompt) | Typing a sudo password in an interactive step (Linux / macOS) | [password-prompt.yaml](password-prompt.yaml) | [cast](password-prompt.cast) · [gif](password-prompt.gif) · [svg](password-prompt.svg) |
 | [theme](#theme) | Light theme, 16 / 256 colors | [theme.yaml](theme.yaml) | [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
 | [theme-macos](#theme-macos) | macOS window chrome | [theme-macos.yaml](theme-macos.yaml) | [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
 | [theme-windows](#theme-windows) | Windows window chrome | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
@@ -156,6 +157,25 @@ scenetake --format svg samples/pty.yaml
 
 ```bash
 scenetake --format svg samples/interactive-pty.yaml out/interactive-pty
+```
+
+---
+
+## password-prompt
+
+**Purpose:** Type a `sudo` password during an interactive step and keep it out of the recording (Linux / macOS).
+
+- `sudo -k whoami` asks for the password every run; type it, then type a name at the `Your name:` prompt
+- sudo turns terminal echo off, so the password never reaches the PTY output, and the cast holds only PTY output
+- Keys typed at a password prompt are left out of scenetake's input log, so `normalize-typing` still re-times the name typed after it
+- Reference `.cast` / `.svg` / `.gif` were recorded in a disposable container as a throwaway user `demo`; **regeneration is manual** — requires a real stdin/stdout TTY and an account that may use `sudo`
+
+| GIF | SVG |
+|-----|-----|
+| ![](password-prompt.gif) | ![](password-prompt.svg) |
+
+```bash
+scenetake --format svg samples/password-prompt.yaml out/password-prompt
 ```
 
 ---

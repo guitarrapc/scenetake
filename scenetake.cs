@@ -18,6 +18,7 @@
 #:include PtyLeadingInitFilter.cs
 #:include CastTimingPipeline.cs
 #:include PipeStreamCapture.cs
+#:include InteractivePtyInput.cs
 
 using MiniPty;
 using MiniPty.Capture;
@@ -1715,7 +1716,7 @@ static async Task<CommandExecution> RunInteractivePtyAsync(
     var stopwatch = Stopwatch.StartNew();
     var chunks = new List<PtyCaptureChunk>();
     var inputChunks = new List<PtyInputChunk>();
-    var inputRecorder = new InteractivePtyInputRecorder(stopwatch, inputChunks);
+    var inputRecorder = new InteractivePtyInputRecorder(stopwatch, inputChunks, () => session.InputMode);
     var pumpTask = PumpInteractiveOutputAsync(session, chunks, stopwatch, verbose);
 
     Console.Error.WriteLine("  attaching host terminal for interactive PTY input...");
@@ -3606,26 +3607,6 @@ static class TypingChars
 }
 
 record HighlightSpec(string ColorOpen, List<string> At);
-
-/// <summary>
-/// Records host keyboard bytes forwarded by <see cref="PtyConsoleInput.Attach"/> during an interactive PTY step.
-/// </summary>
-sealed class InteractivePtyInputRecorder(Stopwatch stopwatch, List<PtyInputChunk> chunks) : IPtyConsoleInputObserver
-{
-    public void OnForwardedInput(TimeSpan elapsed, ReadOnlySpan<byte> data)
-    {
-        _ = elapsed;
-        if (data.IsEmpty)
-            return;
-
-        chunks.Add(new PtyInputChunk(stopwatch.Elapsed, data.ToArray().AsMemory()));
-    }
-}
-
-/// <summary>
-/// Timestamped host→PTY input bytes captured during an interactive step (same clock as <see cref="PtyCaptureChunk"/> output).
-/// </summary>
-readonly record struct PtyInputChunk(TimeSpan Time, ReadOnlyMemory<byte> Data);
 
 readonly record struct CommandExecution(
     int ExitCode,

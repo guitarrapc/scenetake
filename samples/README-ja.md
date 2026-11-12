@@ -15,6 +15,7 @@ scenetake のサンプル集です。各シナリオの**目的**と**生成物*
 | [highlight](#highlight) | コメント・stdout / stderr の色指定 | [highlight.yaml](highlight.yaml) | [cast](highlight.cast) · [gif](highlight.gif) · [svg](highlight.svg) |
 | [pty](#pty) | `pty: true` で TTY 依存コマンド（`matrix`）を録画 | [pty.yaml](pty.yaml) | [cast](pty.cast) · [gif](pty.gif) · [svg](pty.svg) |
 | [interactive-pty](#interactive-pty) | ホスト端末での対話録画（`interactive: true`） | [interactive-pty.yaml](interactive-pty.yaml) | [cast](interactive-pty.cast) · [gif](interactive-pty.gif) · [svg](interactive-pty.svg) |
+| [password-prompt](#password-prompt) | 対話ステップで sudo のパスワードを入力（Linux / macOS） | [password-prompt.yaml](password-prompt.yaml) | [cast](password-prompt.cast) · [gif](password-prompt.gif) · [svg](password-prompt.svg) |
 | [theme](#theme) | light テーマ・16 / 256 色 | [theme.yaml](theme.yaml) | [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
 | [theme-macos](#theme-macos) | macOS ウィンドウ chrome | [theme-macos.yaml](theme-macos.yaml) | [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
 | [theme-windows](#theme-windows) | Windows ウィンドウ chrome | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
@@ -156,6 +157,25 @@ scenetake --format svg samples/pty.yaml
 
 ```bash
 scenetake --format svg samples/interactive-pty.yaml out/interactive-pty
+```
+
+---
+
+## password-prompt
+
+**目的:** 対話ステップで `sudo` のパスワードを入力し、録画に残さない（Linux / macOS）。
+
+- `sudo -k whoami` は毎回パスワードを求める。入力したら、続く `Your name:` に名前を入力する
+- sudo が端末のエコーを切るのでパスワードは PTY の出力に出ず、cast には PTY の出力しか記録されない
+- パスワード入力中のキーは scenetake の入力ログに残さないので、その後に入力した名前も `normalize-typing` でタイミングが整う
+- 参照用 `.cast` / `.svg` / `.gif` は使い捨てコンテナで、使い捨てユーザー `demo` として録画したもの。**再生成は手動** — 実ターミナル（stdin/stdout TTY）と `sudo` を使えるアカウントが必要
+
+| GIF | SVG |
+|-----|-----|
+| ![](password-prompt.gif) | ![](password-prompt.svg) |
+
+```bash
+scenetake --format svg samples/password-prompt.yaml out/password-prompt
 ```
 
 ---
