@@ -1,4 +1,4 @@
-{"version":3,"term":{"cols":80,"rows":24,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":1727184939,"title":"Scenario Format Demo","env":{"SHELL":"C:\\Program Files\\Git\\bin\\bash.exe"},"tags":["st:font-size=16","st:font-family=ui-monospace, monospace","st:window=macos"]}
+{"version":3,"term":{"cols":80,"rows":24,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":1727184939,"title":"Scenario Format Demo","env":{"SHELL":"bash"},"tags":["st:font-size=16","st:font-family=ui-monospace, monospace","st:window=macos"]}
 [1.000,"o","$ "]
 [0.050,"o","e"]
 [0.042,"o","c"]
@@ -473,7 +473,7 @@
 [0.034,"o","."]
 [0.045,"o","\""]
 [0.031,"o","\r\n"]
-[0.250,"o","This command runs in a PTY, so output appears immediately and can include interactive features like colors and progress bars.\r\n\u001b]0;C:\\Program Files\\Git\\bin\\bash.exe\u0007\u001b[?25h"]
+[0.250,"o","This command runs in a PTY, so output appears immediately and can include interactive features like colors and progress bars.\r\n\u001b[?25h"]
 [0.008,"o","\u001b[?9001l\u001b[?1004l"]
 [1.500,"m","run-highlight colors the typed command"]
 [0.000,"o","\u001b[36m# run-highlight colors the typed command\u001b[0m\r\n"]
