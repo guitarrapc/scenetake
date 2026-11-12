@@ -44,7 +44,7 @@ Subcommands accept `-h` / `--help` for subcommand-specific usage.
 | Option | Commands | Behavior |
 |---|---|---|
 | `--verbose` | scenario path only | Show successful `pre`/`post` labels and phase markers, and the exception type and stack when an error stops the recording. See [spec_pre_post.md](spec_pre_post.md). |
-| `--strict` | scenario path only | Exit `1` when a recorded step exited non-zero and does not set `allow-failure: true`. The run still finishes first: the cast (and SVG or mp4) is written and `post` runs. For CI, where a broken demo should fail the job. The `svg` and `mp4` subcommands report it as an unknown option. See [spec_scenario.md](spec_scenario.md) → Step exit codes. |
+| `--strict` | scenario path only | Stop at the first recorded step that exits non-zero without `continue-on-error: true`, as an error stops the recording: later steps do not run, no cast, SVG or mp4 is written (outputs of an earlier run stay), `post` runs, and the exit code is `1`. For CI, where a broken demo should fail the job. The `svg` and `mp4` subcommands report it as an unknown option. See [spec_scenario.md](spec_scenario.md) → Step exit codes. |
 | `--format cast\|svg\|mp4` | scenario path only | Default `cast`. `svg` also writes `.svg`, and `mp4` also writes `.mp4`. See [spec_svg.md](spec_svg.md) and [spec_mp4.md](spec_mp4.md). |
 | `--font-size N` | scenario, `svg` | `1`–`128`. Scenario path: overrides `render.font-size` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default `16`). See [spec_cast.md](spec_cast.md). |
 | `--font-family FAMILIES` | scenario, `svg` | CSS `font-family` string (`1`–`16` families, `256` characters max). Scenario path: overrides `render.font-family` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default stack). See [spec_cast.md](spec_cast.md) and [spec_svg.md](spec_svg.md). |
@@ -100,14 +100,15 @@ Warning: SVG is 17.0MB (over 10MB). Heavy output such as full-screen TUIs is muc
 - `Warning: step exited <code>: <run>`
 - `Warning: step exited <code> (<name>): <run>` when the step has a `name`
 
-A step with `allow-failure: true` prints nothing. With `--strict`, the run ends with:
+A step with `continue-on-error: true` prints nothing. With `--strict`, the failing step stops the run with an error instead of the warning, followed by the last 20 lines it printed as plain text (escape sequences removed, a line redrawn with `\r` shown as drawn last), since no cast is written to show them:
 
 ```
-Error: 1 step(s) exited non-zero, which --strict does not allow. A step that is meant to fail can set 'allow-failure: true'.
-  step 2 exited 3: exit 3
+Error: --strict stopped at step 3, which exited 2: make build
+  | make: *** No rule to make target 'build'.  Stop.
+Nothing was written. Set 'continue-on-error: true' on a step that is meant to fail.
 ```
 
-Semantics (recording continues, process exit code stays `0` unless `--strict`): [spec_scenario.md](spec_scenario.md) → Step exit codes.
+Semantics (without `--strict` the recording continues and the process exit code stays `0`): [spec_scenario.md](spec_scenario.md) → Step exit codes.
 
 **Errors.** Fatal issues print `Error: …` to stderr and exit non-zero.
 
@@ -120,7 +121,7 @@ Semantics (recording continues, process exit code stays `0` unless `--strict`): 
 | Success | `0` |
 | Parse / validation error, missing file, cast/SVG/mp4 write failure, ffmpeg missing or without libx264 | `1` (or command-specific for `pre`/`post`) |
 | Failed `pre` or `post` command | Failed command's exit code |
-| `--strict` and a recorded step exited non-zero without `allow-failure: true` | `1`, after the outputs are written and `post` has run (a failing `post` keeps its own code) |
+| `--strict` and a recorded step exited non-zero without `continue-on-error: true` | `1`, with nothing written, after `post` has run (a failing `post` returns its own code) |
 
 Without `--strict`, recorded step exit codes do not affect the process exit code. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
 

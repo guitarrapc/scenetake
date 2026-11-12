@@ -42,7 +42,7 @@ try
     failures += Run("RelativeCwdFollowsScenarioFolder", () => RelativeCwdFollowsScenarioFolder(scenetake, repoRoot, work));
     failures += Run("UnknownKeysWarnWithHints", () => UnknownKeysWarnWithHints(scenetake, repoRoot, work));
     failures += Run("KnownKeysDoNotWarn", () => KnownKeysDoNotWarn(scenetake, repoRoot, work));
-    failures += Run("StrictFailsOnStepFailure", () => StrictFailsOnStepFailure(scenetake, repoRoot, work));
+    failures += Run("StrictStopsAtFirstFailure", () => StrictStopsAtFirstFailure(scenetake, repoRoot, work));
     failures += Run("ScenarioErrorsAfterPreRunPost", () => ScenarioErrorsAfterPreRunPost(scenetake, repoRoot, work));
     failures += Run("SvgFailureWithAnOpenOutputIsReported", () => SvgFailureWithAnOpenOutputIsReported(scenetake, repoRoot, work));
     failures += Run("ScenarioChecksFrameSizeBeforePre", () => ScenarioChecksFrameSizeBeforePre(scenetake, repoRoot, work));
@@ -1055,37 +1055,68 @@ static bool UnknownKeysWarnWithHints(string scenetake, string repoRoot, string w
     return ok;
 }
 
-static bool StrictFailsOnStepFailure(string scenetake, string repoRoot, string work)
+static bool StrictStopsAtFirstFailure(string scenetake, string repoRoot, string work)
 {
-    // A failing step is demo content by default: a warning, exit 0. --strict makes it fail the run, after
-    // the cast is written and post has run, so CI can tell a broken demo. A step that is meant to fail
-    // says so with allow-failure, which is neither a warning nor a --strict failure. Other subcommands
-    // have no steps and refuse the option.
+    // A failing step is demo content by default: a warning, and the recording goes on to exit 0. With
+    // --strict the first failing step ends the recording, as an error does: later steps do not run (they
+    // may depend on it, and they run real commands), nothing is written, so the cast of an earlier run
+    // stays, and post runs. With no cast to look at, the end of the step's output is in the error, as
+    // plain text. A step with continue-on-error is neither a warning nor a stop. A PTY step's output is
+    // shown too. Other subcommands have no steps and refuse the option.
     var directory = Directory.CreateDirectory(Path.Combine(work, "strict")).FullName;
     var cwd = directory.Replace('\\', '/');
     var failing = Path.Combine(directory, "failing.yaml");
-    File.WriteAllText(failing, $"width: 40\nheight: 6\ncwd: '{cwd}'\nsteps:\n  - echo ok\n  - exit 3\n  - run: exit 4\n    allow-failure: true\npost:\n  - echo ran > post-ran.txt\n");
-    var allowed = Path.Combine(directory, "allowed.yaml");
-    File.WriteAllText(allowed, $"width: 40\nheight: 6\ncwd: '{cwd}'\nsteps:\n  - echo ok\n  - run: exit 4\n    allow-failure: true\n");
+    File.WriteAllText(failing, $"""
+        width: 40
+        height: 6
+        shell: bash
+        cwd: '{cwd}'
+        steps:
+          - echo ok
+          - run: exit 4
+            continue-on-error: true
+          - run: |-
+              printf '\033[31mcompiling\033[0m\n50%%\r100%%\n'; echo 'build failed here' >&2; exit 3
+          - echo after > after-ran.txt
+        post:
+          - echo ran > post-ran.txt
+        """);
+    var pty = Path.Combine(directory, "pty.yaml");
+    File.WriteAllText(pty, $"width: 40\nheight: 6\nshell: bash\ncwd: '{cwd}'\nsteps:\n  - run: echo pty-boom; exit 5\n    pty: true\n");
+    var afterRan = Path.Combine(directory, "after-ran.txt");
     var postRan = Path.Combine(directory, "post-ran.txt");
 
     var (plainExit, plainStderr) = Exec(scenetake, repoRoot, [failing, Path.Combine(directory, "plain")]);
+    var plainRanAll = File.Exists(afterRan) && File.Exists(Path.Combine(directory, "plain.cast"));
+
+    File.Delete(afterRan);
     File.Delete(postRan);
+    var earlierCast = Path.Combine(directory, "strict.cast");
+    File.WriteAllText(earlierCast, "cast of an earlier run");
     var (strictExit, strictStderr) = Exec(scenetake, repoRoot, ["--strict", failing, Path.Combine(directory, "strict")]);
-    var strictWroteAndCleaned = File.Exists(Path.Combine(directory, "strict.cast")) && File.Exists(postRan);
-    var (allowedExit, allowedStderr) = Exec(scenetake, repoRoot, ["--strict", allowed, Path.Combine(directory, "allowed")]);
+    var strictStopped = !File.Exists(afterRan) && File.Exists(postRan) && File.ReadAllText(earlierCast) == "cast of an earlier run";
+
+    var (ptyExit, ptyStderr) = Exec(scenetake, repoRoot, ["--strict", pty, Path.Combine(directory, "pty")]);
     var (svgExit, svgStderr) = Exec(scenetake, repoRoot, ["svg", "--strict", "samples/basic.cast", Path.Combine(directory, "basic.svg")]);
 
-    var ok = plainExit == 0 && plainStderr.Contains("Warning: step exited 3: exit 3", StringComparison.Ordinal)
+    var ok = plainExit == 0 && plainRanAll
+        && plainStderr.Contains("Warning: step exited 3: printf", StringComparison.Ordinal)
         && !plainStderr.Contains("exited 4", StringComparison.Ordinal)
-        && strictExit == 1 && strictWroteAndCleaned
-        && strictStderr.Contains("Error: 1 step(s) exited non-zero, which --strict does not allow", StringComparison.Ordinal)
-        && strictStderr.Contains("  step 2 exited 3: exit 3", StringComparison.Ordinal)
-        && !strictStderr.Contains("step 3", StringComparison.Ordinal)
-        && allowedExit == 0 && !allowedStderr.Contains("Warning", StringComparison.Ordinal)
+        && strictExit == 1 && strictStopped
+        && strictStderr.Contains("Error: --strict stopped at step 3, which exited 3: printf", StringComparison.Ordinal)
+        && strictStderr.Contains("  | compiling", StringComparison.Ordinal)
+        && strictStderr.Contains("  | 100%", StringComparison.Ordinal)
+        && !strictStderr.Contains("  | 50%", StringComparison.Ordinal)
+        && strictStderr.Contains("  | build failed here", StringComparison.Ordinal)
+        && strictStderr.Contains("Nothing was written. Set 'continue-on-error: true' on a step that is meant to fail.", StringComparison.Ordinal)
+        && !strictStderr.Contains('\u001b')
+        && !strictStderr.Contains("Warning: step exited", StringComparison.Ordinal)
+        && ptyExit == 1
+        && ptyStderr.Contains("Error: --strict stopped at step 1, which exited 5: echo pty-boom; exit 5", StringComparison.Ordinal)
+        && ptyStderr.Contains("  | pty-boom", StringComparison.Ordinal)
         && svgExit == 1 && svgStderr.Contains("unknown option: --strict", StringComparison.Ordinal);
     if (!ok)
-        Console.Error.WriteLine($"  plain {plainExit}, strict {strictExit} (cast and post: {strictWroteAndCleaned}), allowed {allowedExit}, svg {svgExit}{Environment.NewLine}{plainStderr}{strictStderr}{allowedStderr}{svgStderr}");
+        Console.Error.WriteLine($"  plain {plainExit} (ran all: {plainRanAll}), strict {strictExit} (stopped: {strictStopped}), pty {ptyExit}, svg {svgExit}{Environment.NewLine}{plainStderr}{strictStderr}{ptyStderr}{svgStderr}");
     return ok;
 }
 
@@ -1143,7 +1174,7 @@ static bool KnownKeysDoNotWarn(string scenetake, string repoRoot, string work)
               - color: green
                 at: "1"
             stderr-color: yellow
-            allow-failure: true
+            continue-on-error: true
           - run: echo tty
             pty: true
             interactive: true

@@ -449,10 +449,10 @@ if (verbose)
 
 Console.Error.WriteLine("Generating cast...");
 List<CastEvent> events;
-var failedSteps = new List<FailedStep>();
+FailedStep? strictFailure;
 try
 {
-    events = await GenerateAsync(scenario, shell, deterministicSeed, verbose, failedSteps);
+    (events, strictFailure) = await GenerateAsync(scenario, shell, deterministicSeed, verbose, strict);
 }
 catch (Exception ex)
 {
@@ -461,6 +461,12 @@ catch (Exception ex)
     // and stack, which an unexpected exception needs.
     return await StopAfterPreAsync(verbose ? ex.ToString() : ex.Message);
 }
+
+// --strict stopped at a failing step. Nothing is written, as for any error that stops the recording, so
+// the outputs of an earlier run stay as they were, and post runs. The cast is not there to show why the
+// step failed, so the end of its output is part of the error.
+if (strictFailure is not null)
+    return await StopAfterPreAsync(FormatStrictFailure(strictFailure));
 
 // OSC titles and similar sequences are never drawn, but a committed cast handed them to every reader:
 // ConPTY sets the title to the shell's full path, often under C:\Users\<name>.
@@ -526,17 +532,6 @@ if (postExitCode != 0)
 
 if (exitCode != 0)
     return exitCode;
-
-// A recorded step that fails is demo content by default, and the exit code stays 0, so CI could not tell
-// a broken demo from a good one. With --strict it fails the run, after the outputs are written and post
-// has run, so the cast of the broken run is there to look at.
-if (strict && failedSteps.Count > 0)
-{
-    Console.Error.WriteLine($"Error: {failedSteps.Count} step(s) exited non-zero, which --strict does not allow. A step that is meant to fail can set 'allow-failure: true'.");
-    foreach (var failed in failedSteps)
-        Console.Error.WriteLine($"  step {failed.Number} exited {failed.ExitCode}: {failed.Cmd}");
-    return 1;
-}
 
 if (outputFormat == OutputFormat.Svg)
     Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(svgPath!)}");
@@ -1135,7 +1130,7 @@ static List<string> FindUnknownScenarioKeys(string yaml)
             : throw new InvalidOperationException($"no keys for {typeof(T).Name}");
 }
 
-static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch shell, int deterministicSeed, bool verbose, List<FailedStep> failedSteps)
+static async Task<(List<CastEvent> Events, FailedStep? StrictFailure)> GenerateAsync(Scenario scenario, ShellLaunch shell, int deterministicSeed, bool verbose, bool strict)
 {
     var settings = scenario.Settings ?? new ScenarioSettings();
     var prompt    = settings.Prompt ?? DefaultPrompt;
@@ -1168,7 +1163,7 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
         var usePty = GetBool(command.Extra, false, "pty");
         var useInteractive = GetBool(command.Extra, false, "interactive");
         var normalizeTyping = GetBool(command.Extra, false, "normalize-typing");
-        var allowFailure = GetBool(command.Extra, false, "allow-failure");
+        var continueOnError = GetBool(command.Extra, false, "continue-on-error");
 
         if (events.Count == 0)
             t += preDelay;
@@ -1195,12 +1190,14 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
         var execution = useInteractive
             ? await RunInteractivePtyAsync(command.Cmd, scenario.Cwd, shell, width, height, verbose)
             : await RunCommandCoreAsync(command.Cmd, scenario.Cwd, shell, usePty, width, height, verbose, ptyStartCursor);
-        // A step that is meant to fail (a demo of an error) says so with allow-failure, which keeps it out of
-        // the warnings and out of --strict.
-        if (execution.ExitCode != 0 && !allowFailure)
+        // A step that is meant to fail (a demo of an error) says so with continue-on-error: no warning, and
+        // --strict goes on. Any other failure is a warning, or with --strict the end of the recording: later
+        // steps may depend on this one, and they run real commands.
+        if (execution.ExitCode != 0 && !continueOnError)
         {
+            if (strict)
+                return (events, new FailedStep(i + 1, command.Cmd, execution.ExitCode, FailureOutputTail(execution)));
             WarnStepExitCode(command.Name, command.Cmd, execution.ExitCode);
-            failedSteps.Add(new FailedStep(i + 1, command.Cmd, execution.ExitCode));
         }
 
         var commandStart = t;
@@ -1254,7 +1251,7 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
     if (events.Count > 0)
         events.Add(CastEvent.Output(Math.Round(t, 6), prompt));
 
-    return events;
+    return (events, null);
 }
 
 /// <summary>
@@ -2938,6 +2935,100 @@ static void WarnStepExitCode(string? name, string cmd, int exitCode)
         Console.Error.WriteLine($"Warning: step exited {exitCode} ({name}): {cmd}");
 }
 
+/// <summary>The error for a --strict run that stopped at <paramref name="failure"/>, without the "Error: " prefix.</summary>
+static string FormatStrictFailure(FailedStep failure)
+{
+    var builder = new StringBuilder($"--strict stopped at step {failure.Number}, which exited {failure.ExitCode}: {failure.Cmd}");
+    foreach (var line in failure.OutputTail)
+        builder.Append(Environment.NewLine).Append("  | ").Append(line);
+    builder.Append(Environment.NewLine).Append("Nothing was written. Set 'continue-on-error: true' on a step that is meant to fail.");
+    return builder.ToString();
+}
+
+/// <summary>
+/// The last <paramref name="maxLines"/> lines a step printed, as plain text: escape sequences and other
+/// control characters removed, and a line redrawn with <c>\r</c> reduced to what was drawn last. PTY
+/// output is the terminal byte stream, so this is only an approximation of its screen.
+/// </summary>
+static IReadOnlyList<string> FailureOutputTail(CommandExecution execution, int maxLines = 20)
+{
+    string text;
+    if (execution.IsPty && execution.PtyByteChunks is { } chunks)
+    {
+        var bytes = new ArrayBufferWriter<byte>();
+        foreach (var chunk in chunks)
+            bytes.Write(chunk.Data.Span);
+        text = Encoding.UTF8.GetString(bytes.WrittenSpan);
+    }
+    else
+    {
+        text = execution.Output.Length == 0 || execution.Output.EndsWith('\n')
+            ? execution.Output + execution.Stderr
+            : execution.Output + "\n" + execution.Stderr;
+    }
+
+    var lines = new List<string>();
+    foreach (var rawLine in StripTerminalControls(text).Split('\n'))
+    {
+        var line = rawLine.TrimEnd('\r');
+        lines.Add(line[(line.LastIndexOf('\r') + 1)..].TrimEnd());
+    }
+
+    while (lines.Count > 0 && lines[^1].Length == 0)
+        lines.RemoveAt(lines.Count - 1);
+    var start = Math.Max(0, lines.Count - maxLines);
+    while (start < lines.Count && lines[start].Length == 0)
+        start++;
+    return lines.GetRange(start, lines.Count - start);
+}
+
+/// <summary>Text without escape sequences (CSI, OSC and other strings, two-character escapes) and without control characters other than tab and line breaks.</summary>
+static string StripTerminalControls(string text)
+{
+    var builder = new StringBuilder(text.Length);
+    for (var i = 0; i < text.Length; i++)
+    {
+        var c = text[i];
+        if (c == '\u001b' && i + 1 < text.Length)
+        {
+            var next = text[i + 1];
+            i += 2;
+            if (next == '[')
+            {
+                // Parameters and intermediates, then the final byte, which the loop's i++ steps over.
+                while (i < text.Length && text[i] is < '@' or > '~')
+                    i++;
+            }
+            else if (next is ']' or 'P' or 'X' or '^' or '_')
+            {
+                // A string ended by BEL or ESC \.
+                while (i < text.Length && text[i] != '\a' && !(text[i] == '\u001b' && i + 1 < text.Length && text[i + 1] == '\\'))
+                    i++;
+                if (i < text.Length && text[i] == '\u001b')
+                    i++;
+            }
+            else if (next is >= ' ' and <= '/')
+            {
+                // Intermediates, then the final byte: ESC ( B.
+                while (i < text.Length && text[i] is >= ' ' and <= '/')
+                    i++;
+            }
+            else
+            {
+                // A two-character escape such as ESC 7: the loop's i++ moves past the next character.
+                i -= 1;
+            }
+
+            continue;
+        }
+
+        if (c is '\n' or '\r' or '\t' || (c >= ' ' && c != '\u007f'))
+            builder.Append(c);
+    }
+
+    return builder.ToString();
+}
+
 /// <summary>
 /// The shell for the cast header's env.SHELL: its file name, without the folder and without ".exe". The
 /// full path told every viewer of a committed cast where the shell was installed, which on Windows is
@@ -3894,8 +3985,11 @@ readonly record struct CommandExecution(
 
 record ShellLaunch(string FileName, string[] Arguments, string DisplayName);
 
-/// <summary>A recorded step that exited non-zero without <c>allow-failure</c>. <paramref name="Number"/> is 1-based, as in other step messages.</summary>
-record FailedStep(int Number, string Cmd, int ExitCode);
+/// <summary>
+/// The step that stopped a --strict run: it exited non-zero without <c>continue-on-error</c>. <paramref name="Number"/>
+/// is 1-based, as in other step messages; <paramref name="OutputTail"/> holds its last output lines as plain text.
+/// </summary>
+record FailedStep(int Number, string Cmd, int ExitCode, IReadOnlyList<string> OutputTail);
 
 [YamlObject(NamingConvention.KebabCase)]
 public partial class Scenario
