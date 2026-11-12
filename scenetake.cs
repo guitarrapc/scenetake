@@ -20,6 +20,7 @@
 #:include PipeStreamCapture.cs
 #:include InteractivePtyInput.cs
 #:include Kernel32.cs
+#:include ScenarioKeys.cs
 
 using MiniPty;
 using MiniPty.Capture;
@@ -283,6 +284,12 @@ catch (Exception ex)
     Console.Error.WriteLine($"Error: cannot read {FormatDisplayPath(scenarioPath)}: {ex.Message}");
     return 1;
 }
+
+// A key scenetake does not read used to be ignored without a word, so a typo such as `hightlight` or
+// `ptty` turned its feature off and the recording looked right otherwise. These are warnings, before the
+// errors below: `step:` for `steps:` is named before "no steps to record".
+foreach (var unknownKey in FindUnknownScenarioKeys(yaml))
+    Console.Error.WriteLine($"Warning: {unknownKey}");
 
 if (!RenderSettingsResolver.TryResolve(scenario, runThemePreset, out var renderSettings, out var themeError))
 {
@@ -1073,6 +1080,39 @@ static Scenario ParseScenario(string yaml)
 {
     var bytes = Encoding.UTF8.GetBytes(yaml);
     return YamlSerializer.Deserialize<Scenario>(bytes) ?? new Scenario();
+}
+
+/// <summary>Keys the scenario sets that scenetake does not read, one message each (see <see cref="ScenarioKeys"/>).</summary>
+static List<string> FindUnknownScenarioKeys(string yaml)
+{
+    // Maps are read as object: Native AOT has VYaml's formatter for object, which makes each map a
+    // Dictionary<object, object?>, but none for Dictionary<object, object?> itself (JIT builds that one
+    // by reflection, so only the published binary showed it).
+    ScenarioKeys.Known known;
+    Dictionary<object, object?> root;
+    try
+    {
+        if (YamlSerializer.Deserialize<object>(Encoding.UTF8.GetBytes(yaml)) is not Dictionary<object, object?> map)
+            return [];
+        root = map;
+
+        // The section keys come from the classes that read them: VYaml writes every member of an empty
+        // instance as "key: null", so a key added to a class is known here without a second list.
+        known = new(KeysOf<Scenario>(), KeysOf<ScenarioSettings>(), KeysOf<ScenarioRender>(), KeysOf<ScenarioTheme>());
+    }
+    catch (Exception)
+    {
+        // The typed parse already accepted the file. A failure here only loses the warnings; it must never
+        // report every key as unknown.
+        return [];
+    }
+
+    return ScenarioKeys.FindUnknown(root, known);
+
+    static string[] KeysOf<T>() where T : new() =>
+        YamlSerializer.Deserialize<object>(YamlSerializer.Serialize(new T())) is Dictionary<object, object?> { Count: > 0 } map
+            ? [.. map.Keys.Select(key => key.ToString()!)]
+            : throw new InvalidOperationException($"no keys for {typeof(T).Name}");
 }
 
 static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch shell, int deterministicSeed, bool verbose)

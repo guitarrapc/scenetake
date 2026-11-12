@@ -22,5 +22,5 @@ steps:
   - run: MSYS_NO_PATHCONV=1 docker run --rm -v "//${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif
     execution-duration: 1.0
 
-Post:
+post:
   - rm -f scenario.*

@@ -8,7 +8,22 @@ A scenario file is the single declarative input for scenetake: terminal dimensio
 
 ## File Structure
 
-Top-level keys use kebab-case. Recommended order for readability: metadata → `settings` → `render` → `pre` → `steps` → `post`. Key order does not affect behavior. Keys scenetake does not know, at any level, are ignored without a warning.
+Top-level keys use kebab-case. Recommended order for readability: metadata → `settings` → `render` → `pre` → `steps` → `post`. Key order does not affect behavior.
+
+### Unknown keys
+
+A key scenetake does not read is reported as a warning right after the file is read, before any other check, and the run continues. Keys are checked at the top level, in `settings`, `render`, `render.theme`, each map-form step, and each `highlight` entry. The warning says where the key is and, when one fits, what was meant:
+
+| Key | Warning |
+|---|---|
+| Another spelling of a key of the same map (`typing_speed`, `TypingSpeed`, `Settings`) | `did you mean 'typing-speed'?` |
+| A key of another map (`pty` under `settings`, `font-size` at the top level, `cwd` in a step) | `it belongs in a step`, `it belongs under render`, `it belongs at the top level` |
+| A typo of a key of the same map (`hightlight`, `ptty`, `setting`, `preest`): at most 1 edit for keys under 5 characters, 2 otherwise, a swap of neighbors counting as 1 | `did you mean 'highlight'?` |
+| `<<` (YAML merge key) | `YAML merge keys are not supported, so nothing is merged` |
+
+For example: `Warning: unknown key 'hightlight' in step 3 (did you mean 'highlight'?)`. The exit code does not change. The keys of the top level, `settings`, `render`, and `render.theme` come from the classes that read them, so a new key there is known without a second list; step and `highlight` keys are a list next to the check.
+
+There is no exemption such as compose's `x-` keys: VYaml does not register an anchor under a key it skips, so an alias to it fails to parse, and such a key could hold only text that scenetake ignores.
 
 ```yaml
 title: "Demo"
@@ -175,7 +190,7 @@ PTY steps need none of this: ConPTY translates everything to UTF-8. On Linux and
 
 ## Execution Order
 
-1. Read the YAML file and resolve the render settings.
+1. Read the YAML file, warn about keys scenetake does not read (File Structure → Unknown keys), and resolve the render settings.
 2. Check the terminal size, a scenario with no command to record, a step that is a list or has no `run`, a step `run` given as a list or a mapping, step keys that contradict each other, an `interactive: true` step while scenetake's stdin or stdout is redirected ([spec_pty.md](spec_pty.md) → Interactive PTY), a `cwd` with a NUL character (the OS would read the folder before it), a `cwd` that does not exist, the outputs (their folder too when there are no `pre` commands), and for `--format mp4` ffmpeg, a usable font, and the frame size ([spec_cli.md](spec_cli.md) → Output Paths, [spec_mp4.md](spec_mp4.md)). Any failure stops the run before anything executes.
 3. Derive the deterministic seed and timestamp, and resolve the shell. A shell that cannot be found stops the run before anything executes: on Windows any shell, on Unix one given by an absolute path with no `..` in it. A shell with a NUL character is refused too, on every platform and whether it is a name or a path, because the OS reads it only up to the NUL and would start a different file. On Unix a shell given by name or by a relative path is started as written, so `$0` and the shell's own messages in the recording keep that name. A missing one fails at the first command. A shell given by name stops the run when the current directory has a file of that name: .NET would start that file before the one on PATH (see Lessons Learned). On Windows a shell given as a path starts that file, and its file name picks the arguments: pwsh and powershell `-Command`, cmd `/c`, bash `-lc`, any other `-c`. For those four names the full path is started, with a trailing dot or space dropped as Windows does. A shell given by name alone is looked up: pwsh, powershell and cmd on PATH, bash in the Git and MSYS folders under Program Files and the user's local app data, and then on PATH. The lookup never uses the current directory or ProgramData. WSL bash is never used, not even by path.
 4. Execute `pre` commands.
@@ -220,6 +235,8 @@ Every step in the template must run in the shell it is written for. That shell i
 - **Steps used to be dropped without a word.** YAML reads `- echo key: value` as a mapping with the key `echo key`. With no `run`, scenetake skipped that step, so the command was missing from the recording and nothing said why. A misspelled `step:` recorded an empty cast and exited `0`. Both are now errors before anything runs, and the missing-`run` error lists the step's keys, which shows how YAML read the line.
 - **Typing went one UTF-16 code unit at a time.** An emoji outside the Basic Multilingual Plane was split into its two surrogates, and the cast writer stored each as U+FFFD, on every OS. Typing by extended grapheme cluster also keeps skin tone modifiers, ZWJ sequences, and combining marks on the character they belong to. Commands without such characters type exactly as before, so their casts do not change.
 - **A missing `cwd` failed with the OS message.** `pre` runs in `cwd`, so a scenario whose `pre` was meant to create `cwd` failed on its first command with "The directory name is invalid" (Windows) or "No such file or directory" (Unix), which names neither `cwd` nor the folder a relative `cwd` is resolved against. The check before `pre` names both.
+- **Unknown keys used to be ignored without a word, and the repository's own samples showed the cost.** A misspelled key turns its feature off while the recording still looks fine, so nothing points at the cause. When the warnings were added, they found `Post:` in `samples/demo.yaml`, whose cleanup had never run, and two steps of each theme sample (`- printf '16-color: …'`) that YAML read as mappings because of the `: `. Those steps were dropped from every recording, so the samples never showed the 16- and 256-color lines they describe, until the step-without-`run` error stopped them. Warnings, not errors, because a scenario written for a newer scenetake should still run on an older one.
+- **Native AOT needs VYaml's `object` formatter for plain maps.** Reading the file as `Dictionary<object, object?>` worked under `dotnet run` and failed in the published binary: VYaml builds that formatter by reflection, which AOT does not keep. Reading as `object` gives the same maps through a formatter AOT has. A test runs the published binary, so the warnings cannot silently vanish again.
 - **A relative `cwd` used to follow the folder scenetake was started from.** The same scenario then ran in different folders: `scenetake scenario.yaml` from its own folder found `cwd: work/repo`, and `scenetake demo/scenario.yaml` from the parent looked for `work/repo` under the parent and failed. Paths a scenario names usually belong to the scenario, as a compose file's do, so a relative `cwd` is now resolved against the scenario file's folder. This changes only scenarios that set a relative `cwd` and were started from another folder. Without `cwd` nothing changes: commands still run where scenetake is started, which the samples rely on (`vim README.md` in `samples/interactive-pty.yaml` edits the README of the folder it is run from).
 - **The init template only ran in bash.** Windows starts pwsh by default, where `echo "stderr sample" 1>&2` is a ParserError, so the first recording a Windows user made showed a red error, and the `printf` step needed a `printf` on PATH, which Windows does not have. The template now picks commands the OS's default shell runs. Choosing by OS alone left out a Windows user who records with Git Bash and a Linux or macOS user who records with pwsh, so `--shell` picks the syntax, and the file names that shell because the template's steps only run there.
 - **Unix PowerShell needs its own command arguments.** `init --shell pwsh` wrote a valid PowerShell scenario, but Unix shell launches passed `-lc` to every shell. PowerShell rejects that switch with exit code 64, so both pipe and PTY steps failed on Linux and macOS. PowerShell now receives `-NoLogo -NoProfile -Command` on Unix too.

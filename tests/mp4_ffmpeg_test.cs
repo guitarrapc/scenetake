@@ -40,6 +40,8 @@ try
     failures += Run("ScenarioChecksOutputPaths", () => ScenarioChecksOutputPaths(scenetake, repoRoot, work));
     failures += Run("ScenarioErrorsStopBeforePre", () => ScenarioErrorsStopBeforePre(scenetake, repoRoot, work));
     failures += Run("RelativeCwdFollowsScenarioFolder", () => RelativeCwdFollowsScenarioFolder(scenetake, repoRoot, work));
+    failures += Run("UnknownKeysWarnWithHints", () => UnknownKeysWarnWithHints(scenetake, repoRoot, work));
+    failures += Run("KnownKeysDoNotWarn", () => KnownKeysDoNotWarn(scenetake, repoRoot, work));
     failures += Run("ScenarioErrorsAfterPreRunPost", () => ScenarioErrorsAfterPreRunPost(scenetake, repoRoot, work));
     failures += Run("SvgFailureWithAnOpenOutputIsReported", () => SvgFailureWithAnOpenOutputIsReported(scenetake, repoRoot, work));
     failures += Run("ScenarioChecksFrameSizeBeforePre", () => ScenarioChecksFrameSizeBeforePre(scenetake, repoRoot, work));
@@ -989,6 +991,162 @@ static bool RelativeCwdFollowsScenarioFolder(string scenetake, string repoRoot, 
     if (exit != 0 || parentExit != 0 || !marked)
         Console.Error.WriteLine($"  exit {exit}, parent exit {parentExit}{Environment.NewLine}{stderr}{parentStderr}");
     return exit == 0 && parentExit == 0 && marked;
+}
+
+static bool UnknownKeysWarnWithHints(string scenetake, string repoRoot, string work)
+{
+    // A key scenetake does not read used to be ignored without a word, so `hightlight` or `ptty` turned
+    // the feature off silently. Each is a warning with where it is and what was likely meant, and the
+    // recording still runs. The published binary matters here: under Native AOT the YAML map reading
+    // needs VYaml's object formatter, and a failure there would drop every warning.
+    var directory = Directory.CreateDirectory(Path.Combine(work, "unknown-keys")).FullName;
+    var scenario = Path.Combine(directory, "typos.yaml");
+    File.WriteAllText(scenario, """
+        width: 40
+        height: 6
+        setting:
+          typing-speed: 0.01
+        settings:
+          typing_speed: 0.01
+          pty: true
+        render:
+          fontsize: 16
+          theme:
+            preest: dark
+        font-size: 16
+        steps:
+          - &base
+            run: echo hi
+            hightlight:
+              - color: green
+                at: "1"
+            ptty: true
+          - run: echo two
+            highlight:
+              - colour: green
+                at: "1"
+          - <<: *base
+            run: echo three
+            cwd: x
+            TypingSpeed: 0.1
+        """);
+    var (exit, stderr) = Exec(scenetake, repoRoot, [scenario]);
+    string[] expected =
+    [
+        "Warning: unknown key 'setting' at the top level (did you mean 'settings'?)",
+        "Warning: unknown key 'font-size' at the top level (it belongs under render)",
+        "Warning: unknown key 'typing_speed' in settings (did you mean 'typing-speed'?)",
+        "Warning: unknown key 'pty' in settings (it belongs in a step)",
+        "Warning: unknown key 'fontsize' in render (did you mean 'font-size'?)",
+        "Warning: unknown key 'preest' in render.theme (did you mean 'preset'?)",
+        "Warning: unknown key 'hightlight' in step 1 (did you mean 'highlight'?)",
+        "Warning: unknown key 'ptty' in step 1 (did you mean 'pty'?)",
+        "Warning: unknown key 'colour' in step 2 highlight 1 (did you mean 'color'?)",
+        "Warning: unknown key '<<' in step 3 (YAML merge keys are not supported, so nothing is merged)",
+        "Warning: unknown key 'cwd' in step 3 (it belongs at the top level)",
+        "Warning: unknown key 'TypingSpeed' in step 3 (did you mean 'typing-speed'?)",
+    ];
+    var missing = expected.Where(line => !stderr.Contains(line, StringComparison.Ordinal)).ToList();
+    var warnings = stderr.Split('\n').Count(line => line.Contains("unknown key", StringComparison.Ordinal));
+    var ok = exit == 0 && missing.Count == 0 && warnings == expected.Length && File.Exists(Path.Combine(directory, "typos.cast"));
+    if (!ok)
+        Console.Error.WriteLine($"  exit {exit}, {warnings} warnings, missing:{Environment.NewLine}  {string.Join(Environment.NewLine + "  ", missing)}{Environment.NewLine}{stderr}");
+    return ok;
+}
+
+static bool KnownKeysDoNotWarn(string scenetake, string repoRoot, string work)
+{
+    // No key scenetake reads may be reported: every key in spec_scenario.md, the samples, the test
+    // fixtures, and what init writes for each shell. --format mp4 with an ffmpeg that does not exist
+    // stops each run before anything executes, after the key check has printed.
+    var directory = Directory.CreateDirectory(Path.Combine(work, "known-keys")).FullName;
+    var everyKey = Path.Combine(directory, "every-key.yaml");
+    File.WriteAllText(everyKey, """
+        title: "every key"
+        width: 40
+        height: 6
+        cwd: .
+        shell: bash
+        settings:
+          prompt: "$ "
+          typing-speed: 0.01
+          typing-jitter: 0.01
+          pre-delay: 0.1
+          post-delay: 0.1
+          execution-duration: 0.1
+          stderr-color: red
+          stream-output: false
+          max-duration: 10
+          silence-threshold: 2
+          max-idle: 0.2
+        render:
+          font-size: 16
+          font-family: monospace
+          window: macos
+          theme:
+            preset: dark
+            fg: "#ffffff"
+            bg: "#000000"
+            palette: "#000:#111:#222:#333:#444:#555:#666:#777:#888:#999:#aaa:#bbb:#ccc:#ddd:#eee:#fff"
+        pre:
+          - echo pre
+        steps:
+          - echo string form
+          - name: "[cyan]map form"
+            run: echo map form
+            typing-speed: 0.01
+            typing-jitter: 0.01
+            pre-delay: 0.1
+            post-delay: 0.1
+            execution-duration: 0.1
+            stream-output: true
+            max-duration: 5
+            silence-threshold: 1
+            max-idle: 0.1
+            run-highlight: bold
+            highlight:
+              - color: green
+                at: "1"
+            stderr-color: yellow
+          - run: echo tty
+            pty: true
+            interactive: true
+            normalize-typing: true
+        post:
+          - echo post
+        """);
+
+    var files = new List<string> { everyKey };
+    files.AddRange(Directory.EnumerateFiles(Path.Combine(repoRoot, "samples"), "*.yaml"));
+    files.AddRange(Directory.EnumerateFiles(Path.Combine(repoRoot, "tests", "fixtures"), "*.yaml"));
+    foreach (var shell in new[] { "", "bash", "pwsh", "powershell" })
+    {
+        var init = Path.Combine(directory, $"init-{(shell.Length == 0 ? "default" : shell)}.yaml");
+        File.Delete(init);
+        Exec(scenetake, repoRoot, shell.Length == 0 ? ["init", init] : ["init", "--shell", shell, init]);
+        files.Add(init);
+    }
+
+    var missingFfmpeg = new Dictionary<string, string> { ["SCENETAKE_FFMPEG"] = Path.Combine(directory, "no-such-ffmpeg") };
+    var clean = true;
+    foreach (var file in files)
+    {
+        if (!File.Exists(file))
+        {
+            Console.Error.WriteLine($"  missing {file}");
+            clean = false;
+            continue;
+        }
+
+        var (_, stderr) = Exec(scenetake, repoRoot, ["--format", "mp4", file, Path.Combine(directory, "out")], missingFfmpeg);
+        if (stderr.Contains("unknown key", StringComparison.Ordinal) || stderr.Contains("has no 'run' key", StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine($"  {Path.GetFileName(file)}:{Environment.NewLine}{stderr}");
+            clean = false;
+        }
+    }
+
+    return clean;
 }
 
 static bool UnixPowerShellRunsCommands(string scenetake, string repoRoot, string work)
