@@ -146,6 +146,8 @@ docker rm $id
 
 **Usage**
 
+`scenetake --help` lists every command and option with its range and default; `scenetake svg --help`, `scenetake mp4 --help` and `scenetake init --help` show the options of that command.
+
 ```bash
 # Initialize a new scenario file
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]

@@ -35,6 +35,7 @@ try
     failures += Run("PostRunsAndStaleMp4GoesWhenEncodeFails", () => PostRunsAndStaleMp4GoesWhenEncodeFails(scenetake, repoRoot, work));
     failures += Run("StaleMp4GoesWhenCastIsBad", () => StaleMp4GoesWhenCastIsBad(scenetake, repoRoot, work));
     failures += Run("CliRulesForValuesAndFormats", () => CliRulesForValuesAndFormats(scenetake, repoRoot, work));
+    failures += Run("HelpDescribesEveryOption", () => HelpDescribesEveryOption(scenetake, repoRoot, work));
     failures += Run("InitWritesStepsForItsShell", () => InitWritesStepsForItsShell(scenetake, work));
     failures += Run("SubcommandsNeverReplaceTheirInput", () => SubcommandsNeverReplaceTheirInput(scenetake, repoRoot, work));
     failures += Run("ScenarioChecksOutputPaths", () => ScenarioChecksOutputPaths(scenetake, repoRoot, work));
@@ -633,12 +634,103 @@ static bool CliRulesForValuesAndFormats(string scenetake, string repoRoot, strin
     var (maxFpsExit, maxFpsStderr) = Exec(scenetake, repoRoot, ["--max-fps", "10", scenario]);
     var (fontExit, fontStderr) = Exec(scenetake, repoRoot, ["--format", "mp4", "--font-file", "--fps", "30", scenario]);
     var (fpsExit, fpsStderr) = Exec(scenetake, repoRoot, ["mp4", "--fps", "99", "samples/basic.cast"]);
-    // svg takes a cast. Given a scenario, the JSON error is followed by the command that records it.
-    var (yamlExit, yamlStderr) = Exec(scenetake, repoRoot, ["svg", scenario, Path.Combine(work, "rules-from-yaml.svg")]);
-    return maxFpsExit == 1 && maxFpsStderr.Contains("--max-fps requires --format svg", StringComparison.Ordinal)
+    // svg and mp4 take a cast. Given a scenario, they say so and give the command that records it, instead
+    // of the JSON parser's error about the first YAML line. mp4 says it before looking for ffmpeg. The
+    // default output is the scenario's own SVG or mp4 (what --format svg wrote), and a cast read that
+    // fails deletes its output, so the slip used to delete that file: it must be left as it was. A .yaml
+    // file that holds a cast (its first character is "{") still converts.
+    var ownSvg = Path.ChangeExtension(scenario, ".svg");
+    var ownMp4 = Path.ChangeExtension(scenario, ".mp4");
+    File.WriteAllText(ownSvg, "svg of the scenario");
+    File.WriteAllText(ownMp4, "mp4 of the scenario");
+    var (yamlExit, yamlStderr) = Exec(scenetake, repoRoot, ["svg", scenario]);
+    var (mp4YamlExit, mp4YamlStderr) = Exec(scenetake, repoRoot, ["mp4", scenario],
+        new() { ["SCENETAKE_FFMPEG"] = Path.Combine(work, "no-such-ffmpeg") });
+    var ownOutputsKept = File.Exists(ownSvg) && File.ReadAllText(ownSvg) == "svg of the scenario"
+        && File.Exists(ownMp4) && File.ReadAllText(ownMp4) == "mp4 of the scenario";
+    var castAsYaml = Path.Combine(work, "cast-named.yaml");
+    File.Copy(Path.Combine(repoRoot, "samples", "basic.cast"), castAsYaml, overwrite: true);
+    var (castYamlExit, castYamlStderr) = Exec(scenetake, repoRoot, ["svg", castAsYaml, Path.Combine(work, "cast-named.svg")]);
+    var ok = maxFpsExit == 1 && maxFpsStderr.Contains("--max-fps requires --format svg", StringComparison.Ordinal)
         && fontExit == 1 && fontStderr.Contains("--font-file requires a value", StringComparison.Ordinal)
         && fpsExit == 1 && fpsStderr.Contains("--fps must be between 1 and 60: 99", StringComparison.Ordinal)
-        && yamlExit == 1 && yamlStderr.Contains("svg converts a cast file. To record this scenario, run: scenetake --format svg ", StringComparison.Ordinal);
+        && yamlExit == 1 && yamlStderr.Contains("is a scenario, and svg converts a cast file. To record the scenario with an SVG, run: scenetake --format svg ", StringComparison.Ordinal)
+        && !yamlStderr.Contains("JSON", StringComparison.Ordinal)
+        && mp4YamlExit == 1 && mp4YamlStderr.Contains("is a scenario, and mp4 converts a cast file. To record the scenario with an mp4, run: scenetake --format mp4 ", StringComparison.Ordinal)
+        && !mp4YamlStderr.Contains("ffmpeg", StringComparison.Ordinal)
+        && ownOutputsKept
+        && castYamlExit == 0;
+    if (!ok)
+        Console.Error.WriteLine($"{maxFpsStderr}{fontStderr}{fpsStderr}{yamlStderr}{mp4YamlStderr}{castYamlStderr}");
+    return ok;
+}
+
+static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string work)
+{
+    // --help prints, on stdout, what every option of that command does; usage after an error stays short,
+    // on stderr, and points to --help. The option lists here follow the parsers, so an option added there
+    // and left out of the help fails this test.
+    string[] render = ["--font-size N", "--font-family FAMILIES", "--theme dark|light", "--window none|macos|windows"];
+    string[] mp4 = ["--fps N", "--crf N", "--max-size WxH", "--size WxH", "--font-file PATH", "SCENETAKE_FFMPEG"];
+    var commands = new (string[] Args, string[] Options)[]
+    {
+        (["--help"], ["--format cast|svg|mp4", "--strict", "--verbose", .. render, "--max-fps N", .. mp4, "scenetake svg", "scenetake mp4", "scenetake init", "--version"]),
+        (["-h"], ["--format cast|svg|mp4", "--strict", "--verbose"]),
+        (["svg", "--help"], [.. render, "--max-fps N"]),
+        (["mp4", "--help"], [.. render, .. mp4]),
+        (["init", "--help"], ["--shell bash|pwsh|powershell"]),
+    };
+
+    var ok = true;
+    foreach (var (args, options) in commands)
+    {
+        var (exit, stdout, stderr) = ExecCapture(scenetake, repoRoot, args);
+        var missing = options.Where(option => !stdout.Contains(option, StringComparison.Ordinal)).ToList();
+        var notAscii = stdout.Any(c => c > '~' && c is not ('\r' or '\n'));
+        if (exit != 0 || stderr.Length != 0 || missing.Count != 0 || notAscii)
+        {
+            Console.Error.WriteLine($"  {string.Join(' ', args)}: exit {exit}, stderr '{stderr}', non-ASCII {notAscii}, missing: {string.Join(", ", missing)}");
+            ok = false;
+        }
+    }
+
+    // After an error the usage goes to stderr, with the pointer to --help, and stdout stays empty.
+    foreach (var (args, pointer) in new (string[] Args, string Pointer)[]
+    {
+        (["--formt", "svg", "x.yaml"], "Run 'scenetake --help'"),
+        (["svg", "--fps", "30", "x.cast"], "Run 'scenetake svg --help'"),
+        (["mp4", "--max-fps", "30", "x.cast"], "Run 'scenetake mp4 --help'"),
+        (["init", "--shell", "zsh"], "Run 'scenetake init --help'"),
+    })
+    {
+        var (exit, stdout, stderr) = ExecCapture(scenetake, repoRoot, args);
+        if (exit != 1 || stdout.Length != 0 || !stderr.Contains(pointer, StringComparison.Ordinal) || !stderr.Contains("Usage:", StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine($"  {string.Join(' ', args)}: exit {exit}, stdout '{stdout}', stderr:{Environment.NewLine}{stderr}");
+            ok = false;
+        }
+    }
+
+    return ok;
+}
+
+static (int ExitCode, string Stdout, string Stderr) ExecCapture(string file, string workingDirectory, string[] arguments)
+{
+    var startInfo = new ProcessStartInfo(file)
+    {
+        WorkingDirectory = workingDirectory,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+    };
+    foreach (var argument in arguments)
+        startInfo.ArgumentList.Add(argument);
+
+    using var process = Process.Start(startInfo)!;
+    var stdout = process.StandardOutput.ReadToEndAsync();
+    var stderr = process.StandardError.ReadToEnd();
+    process.WaitForExit();
+    return (process.ExitCode, stdout.Result, stderr);
 }
 
 static bool SubcommandsNeverReplaceTheirInput(string scenetake, string repoRoot, string work)

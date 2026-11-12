@@ -14,7 +14,7 @@ scenetake exposes a small command-line surface: record scenarios to cast (and op
 | `scenetake svg <input.cast> [output]` | Convert an existing cast to SVG |
 | `scenetake mp4 <input.cast> [output]` | Convert an existing cast to mp4 (needs ffmpeg; see [spec_mp4.md](spec_mp4.md)) |
 | `scenetake init [--shell bash\|pwsh\|powershell] [scenario.yaml]` | Create a commented starter scenario file |
-| `scenetake --help` | Print usage |
+| `scenetake --help` | Print every command and option, with its range and default |
 | `scenetake --version` | Print version |
 
 ```bash
@@ -24,7 +24,7 @@ scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--the
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 ```
 
-Subcommands accept `-h` / `--help` for subcommand-specific usage.
+`--help` (or `-h`) prints to stdout what each option does, its range and its default, and exits `0`; `svg --help`, `mp4 --help` and `init --help` print that command's options. On the scenario path the rendering options are described as overriding the scenario's `render` settings, and on `svg` and `mp4` as replacing what the cast header stores. After an error the usage stays short and goes to stderr, with a line pointing to the command's `--help`. The help is ASCII only, as error messages are.
 
 ## Parsing
 
@@ -112,7 +112,9 @@ Semantics (without `--strict` the recording continues and the process exit code 
 
 **Errors.** Fatal issues print `Error: …` to stderr and exit non-zero.
 
-**Cast read errors.** A cast line that is not JSON is reported as `invalid JSON at line <n>: <reason>`. The position suffix System.Text.Json adds (`LineNumber: 0 | BytePositionInLine: …`) is left out: it counts within the one line it was given, so it contradicted `<n>`. When the input of `svg` or `mp4` ends in `.yaml` or `.yml`, a second line says that the subcommand converts a cast file and gives the command that records the scenario (`scenetake --format svg <file>`).
+**Cast read errors.** A cast line that is not JSON is reported as `invalid JSON at line <n>: <reason>`. The position suffix System.Text.Json adds (`LineNumber: 0 | BytePositionInLine: …`) is left out: it counts within the one line it was given, so it contradicted `<n>`.
+
+**A scenario given to `svg` or `mp4`.** An input ending in `.yaml` or `.yml` whose first non-blank character is not `{` (a cast starts with its JSON header) is refused before it is read as a cast, and before `mp4` looks for ffmpeg: `Error: demo.yaml is a scenario, and svg converts a cast file. To record the scenario with an SVG, run: scenetake --format svg demo.yaml`. It used to reach the cast reader, whose first words were a JSON error about the YAML's first line, with the hint only on a second line. Worse, the default output of `scenetake svg demo.yaml` is `demo.svg`, the file `scenetake --format svg demo.yaml` writes, and a cast that cannot be read removes its output, so the slip deleted the scenario's own SVG (or mp4). The check runs before any output is touched. A cast saved with a `.yaml` name still converts.
 
 ## Exit Codes
 
@@ -152,3 +154,4 @@ Without `--strict`, recorded step exit codes do not affect the process exit code
 - On Windows, opening a file to read its file index fails while another process holds it without read sharing, and the check then fell back to the paths alone. It opens the file with no access rights, which sharing does not block. The WSL file share reports serial number 0 for every file and uses the Linux inode as the index, so two files on different Linux file systems looked like one.
 - The `\\?\` prefix that lets the file index lookup take long paths was also put in front of a path in the `\??\` device form, which made it invalid. The lookup failed, and a failed render deleted the input through that spelling. Every device form is now used as it is.
 - Windows links are not walked by hand. Windows resolves a relative link target against the path as it was opened, so through a junction it names another file than a walk from the junction's target does, and the walk refused outputs that were not the input. A target that starts with a separator, resolved against the current drive, did the same. The file index finds every link without a walk, except on the WSL file share, which reports serial number 0. Comparing only the paths as written there let a Windows link to a file on the share overwrite the input, so on such a volume the final paths Windows gives the two open files are compared.
+- **`--help` used to print only the usage lines, on stderr.** Nothing said what an option did, what values it took or what it defaulted to, so the README was the only reference, and the help could not be piped to a pager. It now goes to stdout and describes every option. The `--theme` text differs between the scenario path, where the scenario's own colors still apply over the preset, and `svg`/`mp4`, where it replaces the cast's colors: one shared sentence would be wrong for one of them. A test lists each command's options as its parser accepts them, so an option added without help text fails.

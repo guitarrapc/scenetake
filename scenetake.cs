@@ -65,7 +65,7 @@ if (args[0] is "init")
 {
     if (args.Length == 2 && args[1] is "-h" or "--help")
     {
-        PrintInitUsage();
+        PrintInitHelp();
         return 0;
     }
 
@@ -96,7 +96,7 @@ if (args[0] is "svg")
 {
     if (args.Length == 2 && args[1] is "-h" or "--help")
     {
-        PrintSvgUsage();
+        PrintSvgHelp();
         return 0;
     }
 
@@ -111,6 +111,12 @@ if (args[0] is "svg")
     if (!File.Exists(castPath))
     {
         Console.Error.WriteLine($"Error: {FormatDisplayPath(castPath)} not found");
+        return 1;
+    }
+
+    if (ScenarioGivenForCast(castPath, "svg") is { } svgScenarioError)
+    {
+        Console.Error.WriteLine($"Error: {svgScenarioError}");
         return 1;
     }
 
@@ -150,7 +156,7 @@ if (args[0] is "svg")
     catch (CastReadException ex)
     {
         DeleteFileIfExists(svgOutputPath);
-        Console.Error.WriteLine($"Error: {ex.Message}{ScenarioInputHint(castPath, "svg")}");
+        Console.Error.WriteLine($"Error: {ex.Message}");
         return 1;
     }
     catch (Exception ex)
@@ -165,7 +171,7 @@ if (args[0] is "mp4")
 {
     if (args.Length == 2 && args[1] is "-h" or "--help")
     {
-        PrintMp4Usage();
+        PrintMp4Help();
         return 0;
     }
 
@@ -180,6 +186,12 @@ if (args[0] is "mp4")
     if (!File.Exists(mp4CastPath))
     {
         Console.Error.WriteLine($"Error: {FormatDisplayPath(mp4CastPath)} not found");
+        return 1;
+    }
+
+    if (ScenarioGivenForCast(mp4CastPath, "mp4") is { } mp4ScenarioError)
+    {
+        Console.Error.WriteLine($"Error: {mp4ScenarioError}");
         return 1;
     }
 
@@ -229,7 +241,7 @@ if (args[0] is "mp4")
             DeleteFileIfExists(mp4OutputPath);
         Console.Error.WriteLine(ex switch
         {
-            CastReadException => $"Error: {ex.Message}{ScenarioInputHint(mp4CastPath, "mp4")}",
+            CastReadException => $"Error: {ex.Message}",
             FontNotFoundException or FrameTooLargeException => $"Error: {ex.Message}",
             _ => $"Error: mp4 render failed: {ex.Message}",
         });
@@ -245,7 +257,7 @@ if (args[0] is "--version")
 
 if (args[0] is "-h" or "--help")
 {
-    PrintUsage();
+    PrintHelp();
     return 0;
 }
 
@@ -3517,14 +3529,13 @@ static void PrintUsage()
     Console.Error.WriteLine("       scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
     Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
     Console.Error.WriteLine("       scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]");
-    Console.Error.WriteLine("       scenetake --help");
+    Console.Error.WriteLine("Run 'scenetake --help' for what each option does.");
 }
 
 static void PrintMp4Usage()
 {
     Console.Error.WriteLine("Usage: scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
-    Console.Error.WriteLine("Converts an existing asciinema v2/v3 cast file to H.264 mp4. Requires ffmpeg with libx264 on PATH,");
-    Console.Error.WriteLine($"or set {Ffmpeg.PathVariable} to its path. --max-size 1280x1024 fits X (Twitter) uploads; --size 1920x1080 pads to exactly that size.");
+    Console.Error.WriteLine("Run 'scenetake mp4 --help' for what each option does.");
 }
 
 static void PrintMp4Written(string path, Mp4Result result) =>
@@ -3532,13 +3543,36 @@ static void PrintMp4Written(string path, Mp4Result result) =>
         $"Written: {FormatDisplayPath(path)}  ({result.Width}x{result.Height}, {result.Fps}fps, {result.Frames} frames, {FormatBytes(result.Bytes)}, font: {result.Font.Family})");
 
 /// <summary>
-/// A second line for a cast read error when the input is a scenario file: `scenetake svg demo.yaml` is an
-/// easy slip, and the JSON error alone does not say that svg and mp4 take a cast.
+/// The error for <c>svg</c> or <c>mp4</c> given a scenario instead of a cast, or null. <c>scenetake svg
+/// demo.yaml</c> is an easy slip, and the JSON parser's error ("'title: …' is an invalid JSON literal") came
+/// first and did not say what was wrong. A .yaml or .yml file is a scenario unless its first non-blank
+/// character is "{", which starts a cast's JSON header.
 /// </summary>
-static string ScenarioInputHint(string inputPath, string format) =>
-    Path.GetExtension(inputPath).ToLowerInvariant() is ".yaml" or ".yml"
-        ? $"{Environment.NewLine}{format} converts a cast file. To record this scenario, run: scenetake --format {format} {FormatDisplayPath(inputPath)}"
-        : "";
+static string? ScenarioGivenForCast(string inputPath, string format)
+{
+    var extension = Path.GetExtension(inputPath);
+    if (!extension.Equals(".yaml", StringComparison.OrdinalIgnoreCase) && !extension.Equals(".yml", StringComparison.OrdinalIgnoreCase))
+        return null;
+
+    try
+    {
+        using var reader = new StreamReader(inputPath);
+        int c;
+        do
+            c = reader.Read();
+        while (c != -1 && char.IsWhiteSpace((char)c));
+        if (c == '{')
+            return null;
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+    {
+        // The cast read reports a file that cannot be read.
+        return null;
+    }
+
+    var display = FormatDisplayPath(inputPath);
+    return $"{display} is a scenario, and {format} converts a cast file. To record the scenario with {(format == "svg" ? "an SVG" : "an mp4")}, run: scenetake --format {format} {display}";
+}
 
 // Decimal units (1MB = 1,000,000 bytes), the same as the SVG size warning. Sizes just under 1MB
 // that round up to "1000.0KB" print as 1.0MB instead.
@@ -3874,18 +3908,46 @@ static bool TryParseMp4Args(
     return false;
 }
 
+// Usage after an error goes to stderr and stays short; --help goes to stdout and says what each option
+// does, with its range and default (HelpText).
 static void PrintInitUsage()
 {
     Console.Error.WriteLine("Usage: scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]");
-    Console.Error.WriteLine("Creates a commented starter YAML scenario file. Its steps are written for the OS default shell");
-    Console.Error.WriteLine("(pwsh on Windows, $SHELL elsewhere); --shell writes them for that shell and sets 'shell:' in the file.");
+    Console.Error.WriteLine("Run 'scenetake init --help' for what each option does.");
 }
 
 static void PrintSvgUsage()
 {
     Console.Error.WriteLine("Usage: scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
-    Console.Error.WriteLine("Converts an existing asciinema v2/v3 cast file to animated SVG.");
+    Console.Error.WriteLine("Run 'scenetake svg --help' for what each option does.");
 }
+
+static void PrintHelp() =>
+    Console.Out.Write(
+        $"scenetake {GetAppVersion()}\n" +
+        HelpText.Intro + "\n" +
+        HelpText.Commands + "\n" +
+        HelpText.Recording + "\n" +
+        HelpText.Render(scenario: true) + "\n" +
+        HelpText.SvgOptions + "\n" +
+        HelpText.Mp4Options + "\n" +
+        HelpText.Environment + "\n" +
+        HelpText.More);
+
+static void PrintSvgHelp() =>
+    Console.Out.Write(
+        HelpText.SvgIntro + "\n" +
+        HelpText.Render(scenario: false) + "\n" +
+        HelpText.SvgOptions);
+
+static void PrintMp4Help() =>
+    Console.Out.Write(
+        HelpText.Mp4Intro + "\n" +
+        HelpText.Render(scenario: false) + "\n" +
+        HelpText.Mp4Options + "\n" +
+        HelpText.Environment);
+
+static void PrintInitHelp() => Console.Out.Write(HelpText.Init);
 
 static void PrintVersion()
 {
@@ -4045,4 +4107,134 @@ public class CommandEntry
     public string Cmd { get; set; } = "";
     public string? Name { get; set; }
     public Dictionary<string, object?> Extra { get; set; } = new();
+}
+
+/// <summary>
+/// The text of --help for the scenario path and the svg, mp4 and init commands. Each option says what it
+/// does, its range and its default, so the README is not needed to use one. ASCII only, as error messages
+/// are, so every console code page shows it.
+/// </summary>
+static class HelpText
+{
+    internal const string Intro = """
+        Records a YAML scenario as an asciinema v3 cast, and optionally as an animated SVG or an mp4.
+        The steps run for real: ordinary steps are shown with simulated typing, pty steps run in a
+        pseudo-terminal.
+
+        """;
+
+    internal const string Commands = """
+        Usage:
+          scenetake [options] <scenario.yaml> [output]   Run a scenario and record it
+          scenetake svg [options] <input.cast> [output]  Convert a cast file to an animated SVG
+          scenetake mp4 [options] <input.cast> [output]  Convert a cast file to an mp4 (needs ffmpeg)
+          scenetake init [--shell NAME] [scenario.yaml]  Write a commented starter scenario
+          scenetake --version                            Print the version
+          scenetake svg|mp4|init --help                  Show the options of that command
+
+        [output] names the files without an extension: 'out' writes out.cast and out.svg, and an
+        extension given is replaced. Without it, the files are named after the scenario, next to it.
+
+        """;
+
+    internal const string Recording = """
+        Recording:
+          --format cast|svg|mp4    Write only the cast (cast, the default), or the cast and an SVG or
+                                   an mp4 rendered from it
+          --strict                 Stop at the first step that exits non-zero: write nothing, run post,
+                                   and exit 1. A step with 'continue-on-error: true' does not stop it.
+          --verbose                Show pre and post labels and phase markers, and the type and stack
+                                   of an error that stops the run
+
+        """;
+
+    /// <summary>
+    /// The rendering options. On a scenario they override its <c>render</c> settings, the theme only as a
+    /// preset under the scenario's own colors; on a cast they replace what the cast header stores.
+    /// </summary>
+    internal static string Render(bool scenario) =>
+        (scenario
+            ? "Rendering (SVG and mp4; overrides the scenario's render settings, and is stored in the cast):\n"
+            : "Rendering (overrides what the cast header stores; the default applies when neither sets it):\n")
+        + """
+              --font-size N            Font size, 1-128 (default 16)
+              --font-family FAMILIES   CSS font-family list, such as "'JetBrains Mono', monospace"
+
+            """
+        + (scenario
+            ? """
+                  --theme dark|light       Color theme preset (default dark). The scenario's render.theme fg,
+                                           bg and palette still apply on top of it.
+
+                """
+            : """
+                  --theme dark|light       Color theme, replacing the colors the cast stores (default dark)
+
+                """)
+        + """
+              --window none|macos|windows
+                                       Draw a window title bar around the terminal (default none)
+
+            """;
+
+    internal const string SvgOptions = """
+        SVG (--format svg, or the svg command):
+          --max-fps N              Cap the animation frame rate, 1-120. 0 keeps every frame (default).
+
+        """;
+
+    internal const string Mp4Options = """
+        mp4 (--format mp4, or the mp4 command; needs ffmpeg with libx264):
+          --fps N                  Frame rate, 1-60 (default 30)
+          --crf N                  H.264 quality, 1-51; a higher value makes a smaller file (default 23)
+          --max-size WxH           Scale down to fit in WxH, keeping the shape; never scales up.
+                                   1280x1024 fits X (Twitter) uploads.
+          --size WxH               Make the video exactly WxH (both even): the terminal is centered on
+                                   the theme background, and a larger one is scaled down to fit.
+                                   Not with --max-size.
+          --font-file PATH         A font file (TTF, OTF, TTC) to use before the --font-family fonts
+
+        """;
+
+    internal const string Environment = """
+        Environment:
+          SCENETAKE_FFMPEG         The ffmpeg to use for mp4, instead of the one on PATH
+
+        """;
+
+    internal const string More = """
+        Scenario format, samples and output modes: https://github.com/guitarrapc/scenetake
+
+        """;
+
+    internal const string SvgIntro = """
+        Usage: scenetake svg [options] <input.cast> [output]
+
+        Converts an asciinema v2 or v3 cast file to an animated SVG. [output] names the SVG; without
+        it, the SVG is written next to the cast with the same name and .svg.
+
+        """;
+
+    internal const string Mp4Intro = """
+        Usage: scenetake mp4 [options] <input.cast> [output]
+
+        Converts an asciinema v2 or v3 cast file to an H.264 mp4 with ffmpeg (libx264). [output]
+        names the mp4; without it, the mp4 is written next to the cast with the same name and .mp4.
+        Install ffmpeg with 'winget install Gyan.FFmpeg' or 'scoop install ffmpeg' (Windows),
+        'brew install ffmpeg' (macOS), or 'sudo apt install ffmpeg' (Debian, Ubuntu).
+
+        """;
+
+    internal const string Init = """
+        Usage: scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
+
+        Writes a commented starter scenario to scenario.yaml in the current folder, or to the path
+        given. An existing file is not overwritten.
+
+          --shell bash|pwsh|powershell
+                                   Write the steps for this shell and set 'shell:' in the file.
+                                   Without it, the steps suit the default shell: pwsh on Windows,
+                                   $SHELL elsewhere.
+
+        """;
 }

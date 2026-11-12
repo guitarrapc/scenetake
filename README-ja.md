@@ -146,6 +146,8 @@ docker rm $id
 
 **Usage**
 
+`scenetake --help` で、すべてのコマンドとオプションを、値の範囲と既定値つきで表示します。`scenetake svg --help`、`scenetake mp4 --help`、`scenetake init --help` では、そのコマンドのオプションを表示します。
+
 ```bash
 # 新しいシナリオファイルを初期化
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
