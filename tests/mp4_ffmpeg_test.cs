@@ -35,6 +35,7 @@ try
     failures += Run("PostRunsAndStaleMp4GoesWhenEncodeFails", () => PostRunsAndStaleMp4GoesWhenEncodeFails(scenetake, repoRoot, work));
     failures += Run("StaleMp4GoesWhenCastIsBad", () => StaleMp4GoesWhenCastIsBad(scenetake, repoRoot, work));
     failures += Run("CliRulesForValuesAndFormats", () => CliRulesForValuesAndFormats(scenetake, repoRoot, work));
+    failures += Run("InitWritesStepsForItsShell", () => InitWritesStepsForItsShell(scenetake, work));
     failures += Run("SubcommandsNeverReplaceTheirInput", () => SubcommandsNeverReplaceTheirInput(scenetake, repoRoot, work));
     failures += Run("ScenarioChecksOutputPaths", () => ScenarioChecksOutputPaths(scenetake, repoRoot, work));
     failures += Run("ScenarioErrorsStopBeforePre", () => ScenarioErrorsStopBeforePre(scenetake, repoRoot, work));
@@ -535,6 +536,86 @@ static bool StaleMp4GoesWhenCastIsBad(string scenetake, string repoRoot, string 
     File.WriteAllText(stale, "from an earlier run");
     var (exit, stderr) = Exec(scenetake, repoRoot, ["mp4", cast], new() { ["SCENETAKE_FFMPEG"] = fake });
     return exit == 1 && stderr.Contains("cast header is missing terminal size", StringComparison.Ordinal) && !File.Exists(stale);
+}
+
+static bool InitWritesStepsForItsShell(string scenetake, string work)
+{
+    // init writes its steps for one shell. --shell picks it and sets shell: in the file, so the steps never
+    // run in another shell; without --shell they are written for the OS default shell, and shell: stays
+    // unset. Before, the template was written for bash only, and its stderr step recorded a pwsh
+    // ParserError on Windows. Each template whose shell is here must record with no step failing.
+    var directory = Directory.CreateDirectory(Path.Combine(work, "init")).FullName;
+    const string bashStderr = "run: echo \"stderr sample\" 1>&2";
+    const string pwshStderr = "run: \"[Console]::Error.WriteLine('stderr sample')\"";
+    var templates = new (string Name, string[] Options, string? ShellLine, string StderrStep)[]
+    {
+        ("bash", ["--shell", "bash"], "shell: bash ", bashStderr),
+        ("pwsh", ["--shell=pwsh"], "shell: pwsh ", pwshStderr),
+        ("default", [], null, OperatingSystem.IsWindows() ? pwshStderr : bashStderr),
+    };
+
+    var written = true;
+    var runnable = new List<(string Name, string Path)>();
+    foreach (var (name, options, shellLine, stderrStep) in templates)
+    {
+        var path = Path.Combine(directory, $"{name}.yaml");
+        var (exit, stderr) = Exec(scenetake, directory, ["init", .. options, path]);
+        var lines = exit == 0 ? File.ReadAllLines(path) : [];
+        var shellOk = shellLine is null
+            ? !lines.Any(line => line.StartsWith("shell:", StringComparison.Ordinal))
+            : lines.Any(line => line.StartsWith(shellLine, StringComparison.Ordinal));
+        if (exit != 0 || !shellOk || !lines.Any(line => line.Trim() == stderrStep || line.Trim().StartsWith(stderrStep + " ", StringComparison.Ordinal)))
+        {
+            Console.Error.WriteLine($"  {name}: exit {exit}{Environment.NewLine}{stderr}{string.Join(Environment.NewLine, lines)}");
+            written = false;
+            continue;
+        }
+
+        // Windows finds bash in the Git folders, not on PATH, so only Unix checks PATH first. A missing
+        // bash on Windows shows up as "could not be resolved" below.
+        if (!OperatingSystem.IsWindows() && name != "default" && FindOnPath(name) is null)
+        {
+            Console.Error.WriteLine($"  {name}: not on PATH, template not recorded");
+            continue;
+        }
+
+        runnable.Add((name, path));
+    }
+
+    // The templates type at the default speed for about 16 seconds each, so they record in parallel.
+    var runs = runnable
+        .Select(template => Task.Run(() => (template.Name, Result: Exec(scenetake, directory, [template.Path, Path.Combine(directory, template.Name)]))))
+        .ToArray();
+    Task.WaitAll(runs);
+    var recorded = true;
+    foreach (var (name, (exit, stderr)) in runs.Select(run => run.Result))
+    {
+        if (OperatingSystem.IsWindows() && name == "bash" && stderr.Contains("could not be resolved", StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine("  bash: Git Bash not found, template not recorded");
+            continue;
+        }
+
+        if (exit != 0 || stderr.Contains("Warning: step exited", StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine($"  {name}: exit {exit}{Environment.NewLine}{stderr}");
+            recorded = false;
+        }
+    }
+
+    // A shell init has no template for, a missing value, and a second --shell are errors that write nothing.
+    var refused = Path.Combine(directory, "refused.yaml");
+    var (unknownExit, unknownStderr) = Exec(scenetake, directory, ["init", "--shell", "zsh", refused]);
+    var (missingExit, missingStderr) = Exec(scenetake, directory, ["init", "--shell="]);
+    var (twiceExit, twiceStderr) = Exec(scenetake, directory, ["init", "--shell", "bash", "--shell", "pwsh", refused]);
+    var errorsOk = unknownExit == 1 && unknownStderr.Contains("--shell must be bash, pwsh, or powershell: zsh", StringComparison.Ordinal)
+        && missingExit == 1 && missingStderr.Contains("--shell requires a value", StringComparison.Ordinal)
+        && twiceExit == 1 && twiceStderr.Contains("duplicate option: --shell", StringComparison.Ordinal)
+        && !File.Exists(refused);
+    if (!errorsOk)
+        Console.Error.WriteLine($"  errors:{Environment.NewLine}{unknownStderr}{missingStderr}{twiceStderr}");
+
+    return written && recorded && errorsOk;
 }
 
 static bool CliRulesForValuesAndFormats(string scenetake, string repoRoot, string work)

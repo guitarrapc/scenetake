@@ -97,6 +97,9 @@ chmod +x ./scenetake
 # 現在のディレクトリにスターターシナリオを作成
 scenetake init
 
+# OS 既定のシェル (Windows は pwsh、それ以外は $SHELL) ではなく bash 向けにスターターを作成
+scenetake init --shell bash
+
 # シナリオを実行して cast ファイルを生成
 scenetake scenario.yaml
 
@@ -145,7 +148,7 @@ docker rm $id
 
 ```bash
 # 新しいシナリオファイルを初期化
-scenetake init [scenario.yaml]
+scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
 # シナリオを実行して cast（既定）、cast + SVG、または cast + mp4 を生成
 scenetake [--verbose] [--format cast|svg|mp4]

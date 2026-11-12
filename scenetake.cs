@@ -60,7 +60,7 @@ if (args[0] is "init")
         return 0;
     }
 
-    if (!TryParseInitArgs(args, out var initPathArg, out var initError))
+    if (!TryParseInitArgs(args, out var initPathArg, out var initShell, out var initError))
     {
         Console.Error.WriteLine($"Error: {initError}");
         PrintInitUsage();
@@ -78,7 +78,7 @@ if (args[0] is "init")
     }
 
     Directory.CreateDirectory(Path.GetDirectoryName(initPath) ?? ".");
-    File.WriteAllText(initPath, CreateInitialScenarioYaml(), Encoding.UTF8);
+    File.WriteAllText(initPath, CreateInitialScenarioYaml(initShell), Encoding.UTF8);
     Console.Error.WriteLine($"Created: {FormatDisplayPath(initPath)}");
     return 0;
 }
@@ -502,13 +502,55 @@ return 0;
 static string FormatDisplayPath(string fullPath) =>
     Path.GetRelativePath(Directory.GetCurrentDirectory(), fullPath).Replace('\\', '/');
 
-static bool TryParseInitArgs(string[] args, out string? path, out string error)
+static bool TryParseInitArgs(string[] args, out string? path, out string? shell, out string error)
 {
     path = null;
+    shell = null;
     error = "";
     for (var i = 1; i < args.Length; i++)
     {
         var arg = args[i];
+        if (arg == "--shell" || arg.StartsWith("--shell=", StringComparison.Ordinal))
+        {
+            string value;
+            if (arg == "--shell")
+            {
+                if (i + 1 >= args.Length)
+                {
+                    error = "--shell requires a value";
+                    return false;
+                }
+
+                value = args[++i];
+            }
+            else
+            {
+                value = arg["--shell=".Length..];
+                if (value.Length == 0)
+                {
+                    error = "--shell requires a value";
+                    return false;
+                }
+            }
+
+            if (shell is not null)
+            {
+                error = "duplicate option: --shell";
+                return false;
+            }
+
+            // The names a scenario's shell key takes. Each picks the syntax of the template's steps;
+            // powershell (Windows PowerShell) runs the same steps as pwsh.
+            if (value is not ("bash" or "pwsh" or "powershell"))
+            {
+                error = $"--shell must be bash, pwsh, or powershell: {value}";
+                return false;
+            }
+
+            shell = value;
+            continue;
+        }
+
         if (arg.StartsWith('-'))
         {
             error = $"unknown option: {arg}";
@@ -3134,12 +3176,25 @@ static long ComputeDeterministicTimestamp(int seed)
     return baseUnixTime + (uint)seed % spanSeconds;
 }
 
-static string CreateInitialScenarioYaml()
+/// <summary>
+/// The starter scenario. Its steps are written for <paramref name="shell"/> (bash, pwsh or powershell) and
+/// the file sets that shell; with no shell they are written for the OS default shell, which the file
+/// leaves unset.
+/// </summary>
+static string CreateInitialScenarioYaml(string? shell)
 {
     // The default shell is pwsh on Windows and $SHELL elsewhere. pwsh has no `1>&2`, so the stderr step
     // written for bash recorded a pwsh ParserError in the first demo a Windows user made. The other steps
-    // use commands that pwsh and POSIX shells both run.
-    var stderrStep = OperatingSystem.IsWindows()
+    // use commands that pwsh and POSIX shells both run. A Windows user who records with Git Bash, or a
+    // Linux user who records with pwsh, picks the syntax with --shell, and the file then names that shell
+    // so the steps never run in the other one.
+    var powerShellSyntax = shell is null ? OperatingSystem.IsWindows() : shell is "pwsh" or "powershell";
+    var shellLine = shell is not null
+        ? $"shell: {shell}".PadRight(29) + "# The steps below are written for this shell. Values: bash, pwsh, powershell, or a path"
+        : powerShellSyntax
+            ? "# shell: pwsh                # Default on Windows. The steps below are written for pwsh; scenetake init --shell bash writes them for bash"
+            : "# shell: bash                # Default: $SHELL. The steps below are written for POSIX shells; scenetake init --shell pwsh writes them for pwsh";
+    var stderrStep = powerShellSyntax
         ? """
             run: "[Console]::Error.WriteLine('stderr sample')"   # pwsh. With shell: bash, use: echo "stderr sample" 1>&2
         """
@@ -3152,7 +3207,7 @@ static string CreateInitialScenarioYaml()
     # width: 120                 # Default: 120
     # height: 24                 # Default: 24
     # cwd: /your/path            # Optional working directory for all steps
-    # shell: bash                # Optional shell override: bash, pwsh, powershell, or a path
+    {shellLine}
 
     # Optional SVG rendering metadata. Written to the cast header (v3 tags / term.theme) and used by --format svg.
     # render:
@@ -3219,7 +3274,7 @@ static void PrintUsage()
     Console.Error.WriteLine("Usage: scenetake [--verbose] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
     Console.Error.WriteLine("       scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
     Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
-    Console.Error.WriteLine("       scenetake init [scenario.yaml]");
+    Console.Error.WriteLine("       scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]");
     Console.Error.WriteLine("       scenetake --help");
 }
 
@@ -3590,8 +3645,9 @@ static bool TryParseMp4Args(
 
 static void PrintInitUsage()
 {
-    Console.Error.WriteLine("Usage: scenetake init [scenario.yaml]");
-    Console.Error.WriteLine("Creates a commented starter YAML scenario file.");
+    Console.Error.WriteLine("Usage: scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]");
+    Console.Error.WriteLine("Creates a commented starter YAML scenario file. Its steps are written for the OS default shell");
+    Console.Error.WriteLine("(pwsh on Windows, $SHELL elsewhere); --shell writes them for that shell and sets 'shell:' in the file.");
 }
 
 static void PrintSvgUsage()

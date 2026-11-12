@@ -13,7 +13,7 @@ scenetake exposes a small command-line surface: record scenarios to cast (and op
 | `scenetake <scenario.yaml> [output]` | Run a scenario; write `.cast` (default), `.cast` + `.svg`, or `.cast` + `.mp4` |
 | `scenetake svg <input.cast> [output]` | Convert an existing cast to SVG |
 | `scenetake mp4 <input.cast> [output]` | Convert an existing cast to mp4 (needs ffmpeg; see [spec_mp4.md](spec_mp4.md)) |
-| `scenetake init [scenario.yaml]` | Create a commented starter scenario file |
+| `scenetake init [--shell bash\|pwsh\|powershell] [scenario.yaml]` | Create a commented starter scenario file |
 | `scenetake --help` | Print usage |
 | `scenetake --version` | Print version |
 
@@ -21,7 +21,7 @@ scenetake exposes a small command-line surface: record scenarios to cast (and op
 scenetake [--verbose] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]
 scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output]
 scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output]
-scenetake init [scenario.yaml]
+scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 ```
 
 Subcommands accept `-h` / `--help` for subcommand-specific usage.
@@ -60,7 +60,7 @@ Subcommands accept `-h` / `--help` for subcommand-specific usage.
 
 **Environment.** `SCENETAKE_FFMPEG` names the ffmpeg binary for mp4 output; otherwise `ffmpeg` on `PATH` is used.
 
-`init` accepts only an optional output path positional; no other flags.
+`init` accepts `--shell bash|pwsh|powershell` (`--shell value` or `--shell=value`, once) and an optional output path positional; no other flags. Another shell value, a missing value, or a second `--shell` is an error that writes nothing.
 
 ## Output Paths
 
@@ -119,7 +119,8 @@ Recorded step exit codes do not affect the process exit code. See [spec_scenario
 
 - Default output path: `scenario.yaml` in the current directory.
 - Fails if the target file already exists.
-- Generated template follows [spec_scenario.md](spec_scenario.md). Its steps run in the default shell of the OS that writes it (spec_scenario.md → Init Template).
+- Generated template follows [spec_scenario.md](spec_scenario.md).
+- `--shell` picks the shell the template's steps are written for, and the file sets `shell:` to it. Without `--shell` they are written for the OS default shell (pwsh on Windows, `$SHELL` elsewhere), and `shell:` stays commented out. See spec_scenario.md → Init Template.
 
 ## Cross-Document Notes
 
