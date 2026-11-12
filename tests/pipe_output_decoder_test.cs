@@ -2,7 +2,9 @@
 #:property TargetFramework=net10.0
 #:property Nullable=enable
 #:property ImplicitUsings=enable
+#:property AllowUnsafeBlocks=true
 #:include ../PipeStreamCapture.cs
+#:include ../Kernel32.cs
 
 // PipeOutputDecoder reads a Windows child's redirected output: a line that is valid UTF-8 as UTF-8, any
 // other line in the console's legacy code page. The cross-platform cases use Latin-1 as the legacy code

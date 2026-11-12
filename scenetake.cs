@@ -19,6 +19,7 @@
 #:include CastTimingPipeline.cs
 #:include PipeStreamCapture.cs
 #:include InteractivePtyInput.cs
+#:include Kernel32.cs
 
 using MiniPty;
 using MiniPty.Capture;
@@ -3467,7 +3468,7 @@ static string FollowLinksWithin(string full, ref int linksLeft)
 }
 
 /// <summary>The volume serial number, file index and final path of an existing file, or null when the file cannot be opened.</summary>
-static unsafe (uint Volume, ulong Index, uint Links, string? FinalPath)? WindowsFileId(string path)
+static (uint Volume, ulong Index, uint Links, string? FinalPath)? WindowsFileId(string path)
 {
     // A handle that asks for no access opens even when another process denies sharing, which a read handle
     // would not. The \\?\ form is not limited to 260 characters. A path already in a device form is used
@@ -3477,8 +3478,8 @@ static unsafe (uint Volume, ulong Index, uint Links, string? FinalPath)? Windows
     var name = full.StartsWith(@"\\?\", StringComparison.Ordinal) || full.StartsWith(@"\\.\", StringComparison.Ordinal) || full.StartsWith(@"\??\", StringComparison.Ordinal) ? full
         : full.StartsWith(@"\\", StringComparison.Ordinal) ? @"\\?\UNC\" + full[2..]
         : @"\\?\" + full;
-    using var handle = CreateFileW(name, 0, FileShareReadWriteDelete, IntPtr.Zero, OpenExisting, 0, IntPtr.Zero);
-    if (handle.IsInvalid || !GetFileInformationByHandle(handle, out var info))
+    using var handle = Kernel32.CreateFile(name, 0, FileShareReadWriteDelete, OpenExisting, 0);
+    if (handle.IsInvalid || !Kernel32.GetFileInformationByHandle(handle, out var info))
         return null;
 
     // Some network file systems report serial number 0 for every file, and repeat indexes across the
@@ -3488,9 +3489,7 @@ static unsafe (uint Volume, ulong Index, uint Links, string? FinalPath)? Windows
     var buffer = new char[1024];
     for (var attempt = 0; attempt < 2 && finalPath is null; attempt++)
     {
-        uint length;
-        fixed (char* chars = buffer)
-            length = GetFinalPathNameByHandleW(handle, chars, (uint)buffer.Length, 0);
+        var length = Kernel32.GetFinalPathNameByHandle(handle, buffer, 0);
         if (length == 0)
             break;
         if (length < buffer.Length)
@@ -3500,15 +3499,6 @@ static unsafe (uint Volume, ulong Index, uint Links, string? FinalPath)? Windows
     }
 
     return (info.VolumeSerialNumber, ((ulong)info.FileIndexHigh << 32) | info.FileIndexLow, info.NumberOfLinks, finalPath);
-
-    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode, ExactSpelling = true)]
-    static extern Microsoft.Win32.SafeHandles.SafeFileHandle CreateFileW(string fileName, uint desiredAccess, uint shareMode, IntPtr securityAttributes, uint creationDisposition, uint flagsAndAttributes, IntPtr templateFile);
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    static extern bool GetFileInformationByHandle(Microsoft.Win32.SafeHandles.SafeFileHandle file, out WindowsFileInformation information);
-
-    [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
-    static extern uint GetFinalPathNameByHandleW(Microsoft.Win32.SafeHandles.SafeFileHandle file, char* path, uint length, uint flags);
 }
 
 static void DeleteFileIfExists(string path)
@@ -3697,22 +3687,6 @@ static string GetAppVersion()
 {
     var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
     return version?.ToString(3) ?? "0.0.0";
-}
-
-/// <summary>The BY_HANDLE_FILE_INFORMATION that GetFileInformationByHandle fills. Each FILETIME is two 32-bit halves, so the 64-bit fields are packed to 4 bytes.</summary>
-[StructLayout(LayoutKind.Sequential, Pack = 4)]
-internal struct WindowsFileInformation
-{
-    public uint FileAttributes;
-    public long CreationTime;
-    public long LastAccessTime;
-    public long LastWriteTime;
-    public uint VolumeSerialNumber;
-    public uint FileSizeHigh;
-    public uint FileSizeLow;
-    public uint NumberOfLinks;
-    public uint FileIndexHigh;
-    public uint FileIndexLow;
 }
 
 enum OutputFormat

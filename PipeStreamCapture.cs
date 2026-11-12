@@ -1,6 +1,5 @@
 using System.Buffers;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Text;
 
 internal readonly record struct PipeStreamChunk(TimeSpan Time, bool IsStderr, string Text);
@@ -224,7 +223,7 @@ internal sealed class WindowsCodePageDecoder(uint codePage) : ILegacyTextDecoder
     private char[] _chars = [];
 
     /// <summary>The code page a new console starts with, which a child of scenetake gets.</summary>
-    internal static uint OemCodePage() => GetOEMCP();
+    internal static uint OemCodePage() => Kernel32.GetOEMCP();
 
     public int Decode(ReadOnlySpan<byte> bytes, bool final, StringBuilder text)
     {
@@ -235,7 +234,7 @@ internal sealed class WindowsCodePageDecoder(uint codePage) : ILegacyTextDecoder
             // whether the last byte is a lead byte whose trail byte has not arrived.
             var index = 0;
             while (index < bytes.Length)
-                index += IsDBCSLeadByteEx(codePage, bytes[index]) ? 2 : 1;
+                index += Kernel32.IsDBCSLeadByteEx(codePage, bytes[index]) ? 2 : 1;
             if (index > bytes.Length)
                 length--;
         }
@@ -246,20 +245,8 @@ internal sealed class WindowsCodePageDecoder(uint codePage) : ILegacyTextDecoder
         // No Windows code page gives more UTF-16 chars than it has bytes.
         if (_chars.Length < length)
             _chars = new char[Math.Max(length, 256)];
-        var written = MultiByteToWideChar(codePage, 0, ref MemoryMarshal.GetReference(bytes), length, ref _chars[0], _chars.Length);
+        var written = Kernel32.MultiByteToWideChar(codePage, bytes[..length], _chars);
         text.Append(_chars, 0, written);
         return length;
     }
-
-    [DllImport("kernel32.dll", ExactSpelling = true)]
-    private static extern uint GetOEMCP();
-
-    [DllImport("kernel32.dll", ExactSpelling = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool IsDBCSLeadByteEx(uint codePage, byte testChar);
-
-    // CharSet.Unicode makes char the 2-byte UTF-16 unit it is, so the buffer is passed as it is. With the
-    // default (Ansi) a char is marshaled as one byte and the converted text never reaches the buffer.
-    [DllImport("kernel32.dll", ExactSpelling = true, CharSet = CharSet.Unicode)]
-    private static extern int MultiByteToWideChar(uint codePage, uint flags, ref byte multiByte, int multiByteCount, ref char wideChar, int wideCharCount);
 }
