@@ -44,6 +44,7 @@ const double DefaultMaxIdle = 0.2;
 const double DefaultBurstThreshold = 0.05;
 const string DefaultStderrColorSpec = "red";
 const string SgrReset = "\u001b[0m";
+const string InteractiveNeedsTerminalError = "Interactive PTY steps require a real terminal (stdin and stdout must not be redirected).";
 
 if (args.Length < 1)
 {
@@ -140,7 +141,7 @@ if (args[0] is "svg")
     catch (CastReadException ex)
     {
         DeleteFileIfExists(svgOutputPath);
-        Console.Error.WriteLine($"Error: {ex.Message}");
+        Console.Error.WriteLine($"Error: {ex.Message}{ScenarioInputHint(castPath, "svg")}");
         return 1;
     }
     catch (Exception ex)
@@ -217,7 +218,12 @@ if (args[0] is "mp4")
         // them before pre. WriteMp4 removes it once encoding starts.
         if (ex is not (FontNotFoundException or FrameTooLargeException))
             DeleteFileIfExists(mp4OutputPath);
-        Console.Error.WriteLine(ex is CastReadException or FontNotFoundException or FrameTooLargeException ? $"Error: {ex.Message}" : $"Error: mp4 render failed: {ex.Message}");
+        Console.Error.WriteLine(ex switch
+        {
+            CastReadException => $"Error: {ex.Message}{ScenarioInputHint(mp4CastPath, "mp4")}",
+            FontNotFoundException or FrameTooLargeException => $"Error: {ex.Message}",
+            _ => $"Error: mp4 render failed: {ex.Message}",
+        });
         return 1;
     }
 }
@@ -297,11 +303,30 @@ if (FindStepKeyError(scenario) is { } stepKeyError)
     return 1;
 }
 
+// An interactive step needs scenetake's own stdin and stdout to be a terminal. Checking it here stops
+// the run before pre and the steps before it, which otherwise ran only to be thrown away.
+if ((Console.IsInputRedirected || Console.IsOutputRedirected) && HasInteractiveStep(scenario))
+{
+    Console.Error.WriteLine($"Error: {InteractiveNeedsTerminalError}");
+    return 1;
+}
+
 // The OS reads a path only up to a NUL, so pre, post and the pipe steps would run in the folder named
 // before it. A PTY step refuses the NUL itself, but only after pre has run.
 if (scenario.Cwd is not null && scenario.Cwd.Contains('\0'))
 {
     Console.Error.WriteLine($"Error: cwd cannot contain a NUL character: {scenario.Cwd}");
+    return 1;
+}
+
+// pre runs in cwd too, so cwd must exist before anything runs. Without this check the first command
+// failed with the OS message "The directory name is invalid", which names neither cwd nor the folder
+// a relative cwd is resolved against (the current directory, not the scenario's folder).
+if (!string.IsNullOrWhiteSpace(scenario.Cwd) && !Directory.Exists(scenario.Cwd))
+{
+    var fullCwd = Path.GetFullPath(scenario.Cwd);
+    var resolvedCwd = Path.IsPathFullyQualified(scenario.Cwd) ? "" : $" (resolved against the current directory: {fullCwd})";
+    Console.Error.WriteLine($"Error: cwd folder does not exist: {scenario.Cwd}{resolvedCwd}. pre runs in cwd too, so create the folder before running scenetake.");
     return 1;
 }
 
@@ -1573,11 +1598,15 @@ static void EmitTypedCommand(
     if (hasRunHighlight && !string.IsNullOrEmpty(runHighlightStyle))
         events.Add(CastEvent.Output(Math.Round(t, 6), runHighlightStyle));
 
-    foreach (var ch in cmd)
+    // One keystroke per user-perceived character (extended grapheme cluster). Typing UTF-16 code units
+    // split an emoji's surrogate pair into two events, which the cast writer stores as two U+FFFD.
+    for (var i = 0; i < cmd.Length;)
     {
-        events.Add(CastEvent.Output(Math.Round(t, 6), TypingChars.Get(ch)));
+        var length = StringInfo.GetNextTextElementLength(cmd.AsSpan(i));
+        events.Add(CastEvent.Output(Math.Round(t, 6), length == 1 ? TypingChars.Get(cmd[i]) : cmd.Substring(i, length)));
         var delay = speed + rng.NextDouble() * 2 * jitter - jitter;
         t += Math.Max(delay, 0.005);
+        i += length;
     }
 
     if (hasRunHighlight && !string.IsNullOrEmpty(runHighlightStyle))
@@ -1587,33 +1616,61 @@ static void EmitTypedCommand(
     t += 0.15;
 }
 
-/// <summary>The error for the first step whose run is a list or a mapping or whose keys contradict each other, or null when none is.</summary>
+/// <summary>
+/// The error for the first step that is a list, has no run, has a run that is a list or a mapping, or has
+/// keys that contradict each other, or for a scenario with no command to record; null when there is none.
+/// </summary>
 static string? FindStepKeyError(Scenario scenario)
 {
-    foreach (var step in scenario.Steps ?? [])
+    var steps = scenario.Steps ?? [];
+    var recorded = 0;
+    for (var index = 0; index < steps.Count; index++)
     {
-        // A list or a mapping under run would otherwise be run as its type name.
-        if (step is Dictionary<object, object?> map && map.TryGetValue("run", out var run) && run is System.Collections.IEnumerable and not string)
-            return "Step key 'run' must be a command string, not a list or a mapping.";
+        var step = steps[index];
+        if (step is Dictionary<object, object?> map)
+        {
+            // YAML reads an unquoted command that holds ": ", such as `- echo key: value`, as a mapping.
+            // Without run it used to be skipped with no message, so the recording lost that command.
+            if (!map.TryGetValue("run", out var run))
+                return $"Step {index + 1} has no 'run' key (keys: {string.Join(", ", map.Keys)}). Quote a command that contains \": \", or write it under 'run:'.";
+
+            // A list or a mapping under run would otherwise be run as its type name.
+            if (run is System.Collections.IEnumerable and not string)
+                return "Step key 'run' must be a command string, not a list or a mapping.";
+        }
+        else if (step is System.Collections.IEnumerable and not string)
+        {
+            // `- [echo, hi]` is a YAML list, which used to be skipped with no message.
+            return $"Step {index + 1} must be a command string or a mapping with 'run', not a list.";
+        }
 
         var command = ParseCommand(step);
         if (string.IsNullOrWhiteSpace(command.Cmd))
             continue;
+        recorded++;
 
         // GetBool warns about a value it cannot read, and the recording reads these keys again.
-        var usePty = IsTrue(command.Extra, "pty");
-        var useInteractive = IsTrue(command.Extra, "interactive");
+        var usePty = IsStepFlagSet(command.Extra, "pty");
+        var useInteractive = IsStepFlagSet(command.Extra, "interactive");
         if (useInteractive && !usePty)
             return "Step key 'interactive: true' requires 'pty: true'.";
-        if (IsTrue(command.Extra, "normalize-typing") && !useInteractive)
+        if (IsStepFlagSet(command.Extra, "normalize-typing") && !useInteractive)
             return "Step key 'normalize-typing: true' requires 'interactive: true'.";
     }
 
-    return null;
+    // A missing or misspelled steps key (`step:`) used to write an empty cast and exit 0.
+    if (recorded == 0)
+        return "The scenario has no steps to record. Add commands under 'steps:'.";
 
-    static bool IsTrue(Dictionary<string, object?> extra, string key) =>
-        extra.TryGetValue(key, out var value) && (value is true || (bool.TryParse(value?.ToString(), out var parsed) && parsed));
+    return null;
 }
+
+/// <summary>Whether a step that will be recorded sets <c>interactive: true</c>.</summary>
+static bool HasInteractiveStep(Scenario scenario) =>
+    (scenario.Steps ?? []).Select(ParseCommand).Any(command => !string.IsNullOrWhiteSpace(command.Cmd) && IsStepFlagSet(command.Extra, "interactive"));
+
+static bool IsStepFlagSet(Dictionary<string, object?> extra, string key) =>
+    extra.TryGetValue(key, out var value) && (value is true || (bool.TryParse(value?.ToString(), out var parsed) && parsed));
 
 static CommandEntry ParseCommand(object? item)
 {
@@ -1700,8 +1757,7 @@ static async Task<CommandExecution> RunInteractivePtyAsync(
 
     if (Console.IsInputRedirected || Console.IsOutputRedirected)
     {
-        throw new InvalidOperationException(
-            "Interactive PTY steps require a real terminal (stdin and stdout must not be redirected).");
+        throw new InvalidOperationException(InteractiveNeedsTerminalError);
     }
 
     using var session = Pty.Start(new PtyStartInfo
@@ -3080,6 +3136,16 @@ static long ComputeDeterministicTimestamp(int seed)
 
 static string CreateInitialScenarioYaml()
 {
+    // The default shell is pwsh on Windows and $SHELL elsewhere. pwsh has no `1>&2`, so the stderr step
+    // written for bash recorded a pwsh ParserError in the first demo a Windows user made. The other steps
+    // use commands that pwsh and POSIX shells both run.
+    var stderrStep = OperatingSystem.IsWindows()
+        ? """
+            run: "[Console]::Error.WriteLine('stderr sample')"   # pwsh. With shell: bash, use: echo "stderr sample" 1>&2
+        """
+        : """
+            run: echo "stderr sample" 1>&2   # With shell: pwsh, use: "[Console]::Error.WriteLine('stderr sample')"
+        """;
     return $"""
     # scenetake starter scenario. Edit the values below and add commands under steps.
     title: "My App"            # Optional cast title
@@ -3105,7 +3171,7 @@ static string CreateInitialScenarioYaml()
       pre-delay: {DefaultPreDelay}           # Pause before typing each step.
       post-delay: {DefaultPostDelay}          # Pause after output before the next step.
       execution-duration: {DefaultExecutionDuration} # Optional cast wait after command execution.
-      stderr-color: {DefaultStderrColorSpec}       # Applied only when stderr has no ANSI SGR.
+      stderr-color: {DefaultStderrColorSpec}       # Applied only when stderr has no ANSI SGR. "none" keeps it plain (git and many tools print progress to stderr).
       # stream-output: false         # When true, replay captured chunk times in the cast.
       # max-duration: 15             # Cap step output timeline; also enables stream emit.
       # silence-threshold: {DefaultSilenceThreshold}       # Stream mode: collapse idle gaps longer than this (seconds).
@@ -3121,7 +3187,7 @@ static string CreateInitialScenarioYaml()
       - run: pwd
         post-delay: 1.5
       - name: "[cyan]Styled command typing + output highlight"
-        run: printf 'line1 alpha\nline2 beta gamma\nline3\nline4 delta\n'
+        run: echo 'line1 alpha'; echo 'line2 beta gamma'; echo 'line3'; echo 'line4 delta'
         run-highlight: "bold fg:bright-cyan"
         highlight:
           - at: "1"
@@ -3135,7 +3201,7 @@ static string CreateInitialScenarioYaml()
           - at: "4"
             color: "fg:black bg:114"
       - name: "[bright-yellow]stderr color override"
-        run: echo "stderr sample" 1>&2
+    {stderrStep}
         stderr-color: "bold fg:red"
       - name: "run in a PTY"
         run: echo "Running in a PTY, which is useful for TUI app and tty-based output"
@@ -3167,6 +3233,15 @@ static void PrintMp4Usage()
 static void PrintMp4Written(string path, Mp4Result result) =>
     Console.Error.WriteLine(
         $"Written: {FormatDisplayPath(path)}  ({result.Width}x{result.Height}, {result.Fps}fps, {result.Frames} frames, {FormatBytes(result.Bytes)}, font: {result.Font.Family})");
+
+/// <summary>
+/// A second line for a cast read error when the input is a scenario file: `scenetake svg demo.yaml` is an
+/// easy slip, and the JSON error alone does not say that svg and mp4 take a cast.
+/// </summary>
+static string ScenarioInputHint(string inputPath, string format) =>
+    Path.GetExtension(inputPath).ToLowerInvariant() is ".yaml" or ".yml"
+        ? $"{Environment.NewLine}{format} converts a cast file. To record this scenario, run: scenetake --format {format} {FormatDisplayPath(inputPath)}"
+        : "";
 
 // Decimal units (1MB = 1,000,000 bytes), the same as the SVG size warning. Sizes just under 1MB
 // that round up to "1000.0KB" print as 1.0MB instead.

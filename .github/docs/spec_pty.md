@@ -58,7 +58,7 @@ PTY capture records bytes from the child session. Terminal rendering (ANSI parsi
 
 When a map-form step has `pty: true` and `interactive: true` (default `false`):
 
-- **Host terminal required** — stdin and stdout on the scenetake process must not be redirected. scenetake attaches the host console to the PTY child via **MiniPty.Console** until the child exits.
+- **Host terminal required** — stdin and stdout on the scenetake process must not be redirected. scenetake checks this before `pre` runs when any step is interactive, so `pre` and the steps before it do not run only to be thrown away. scenetake attaches the host console to the PTY child via **MiniPty.Console** until the child exits.
 - **Simulated typing first** — the same prompt, per-character command typing, and synthetic Enter used by other steps are emitted on the cast timeline **before** the interactive session begins. Typing is a recording effect; keystrokes during the session go to the PTY through the host terminal, not through the pre-recorded typing.
 - **Live output on host** — PTY output is pumped to the host stdout while the session runs so the author can see the TUI.
 - **Wall-clock cast times (default)** — buffered PTY chunks keep measured arrival times. cast `o` events use `command_start + chunk_time`. **No** startup-offset compress, burst merge, idle collapse, or `stream-output` pipeline for interactive steps.
@@ -76,7 +76,7 @@ When a map-form step has `pty: true` and `interactive: true` (default `false`):
 |---|---|
 | `interactive: true` without `pty: true` | Scenario error, reported before `pre` runs |
 | `normalize-typing: true` without `interactive: true` | Scenario error, reported before `pre` runs |
-| Host stdin or stdout redirected | Fatal error at step entry |
+| Host stdin or stdout redirected | Scenario error, reported before `pre` runs |
 | `Pty.IsSupported` false | Fatal error (same as other PTY steps) |
 
 Non-interactive `pty: true` behavior is unchanged. See cast timing contrast in [spec_scenario.md](spec_scenario.md) → Output timing.
@@ -139,6 +139,7 @@ Integration tests require `SCENETAKE_BIN` pointing at a published scenetake bina
 - **Host resize sync breaks vim/svg replay**: `PtyConsoleInput.Attach` defaults to resizing the PTY to the host console. vim then emits cursor addresses for the larger height (for example row 44 on a 44-row host) while the cast header stays at scenario `height` (24). SVG replay clamps out-of-range rows and corrupts the session. scenetake uses `PtyConsoleAttachOptions.SyncHostSize = false` so the PTY keeps scenario geometry.
 - On Unix, scenetake writes `\r\n` to host stdout after detach so the parent shell prompt realigns after raw-mode interactive output.
 - **`normalize-typing` matches echo to logged keys in order, so a logged password broke the rest of the step.** `sudo`, `ssh`, and `read -s` turn echo off and keep canonical mode on, so their password keys never come back as output. With those keys in the log, the matching waited for them and dropped later echoes that did not match. Driven through a PTY on Linux (2026-11-13), `read -s` followed by `read -p '> '` with `ls` typed recorded `> s` instead of `> ls`; the `s` survived only because it matched the password's first letter. With the password keys left out of the log, the same drive recorded `> ls` in 3 of 3 runs. MiniPty 1.6.0's `InputMode` reports the mode. MiniPty.Console calls the observer before it writes the key, so the Enter that ends the password still sees echo off. Echo off alone does not mean a password: vim and a shell's line editor turn off echo and canonical mode and draw the keys themselves.
+- **The terminal check for interactive steps used to wait for the step.** A redirected stdin or stdout was found only when the interactive step began, after `pre` and every step before it had run, and the recording was then thrown away. Whether output is redirected does not change during a run, so the check now runs before `pre` with the other scenario checks.
 - Recorded step failures belong in the cast as demo content; only infrastructure failures (spawn, drain timeout) should stop the recording. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
 - A TUI behind ConPTY cannot detect Windows Terminal; it can only read `WT_SESSION` inherited from the shell that started scenetake. A pwsh without `WT_SESSION` made `matrix` fall back to 16 colors even though the recording renders 24-bit color. scenetake now sets `COLORTERM=truecolor` for PTY children instead of relying on host hints ([spec_scenario.md](spec_scenario.md) → Lessons Learned).
 - **The ConPTY changes what a soft font looks like on the wire.** The in-box ConPTY passes a DECDLD soft font through, but renames it, moves it to G1, and wraps its characters in SO/SI. It also answers the device attributes query itself, and lists soft fonts. On Unix nothing answers that query in scenetake's PTY. The renderer handles both byte streams, but whether a TUI sends a soft font at all depends on what it detects ([spec_svg.md](spec_svg.md) → Soft fonts).

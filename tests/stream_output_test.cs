@@ -14,6 +14,7 @@ failures += Run("IntegrationInstantDefault", () => IntegrationInstantDefault(rep
 failures += Run("IntegrationInstantMergeOrder", () => IntegrationInstantMergeOrder(repoRoot));
 failures += Run("IntegrationInstantProgressBar", () => IntegrationInstantProgressBar(repoRoot));
 failures += Run("IntegrationDockerBuildStream", () => IntegrationDockerBuildStream(repoRoot));
+failures += Run("IntegrationTypingKeepsGraphemes", () => IntegrationTypingKeepsGraphemes(repoRoot));
 
 return failures == 0 ? 0 : 1;
 
@@ -216,6 +217,41 @@ static bool DockerEnabled()
     catch
     {
         return false;
+    }
+}
+
+static bool IntegrationTypingKeepsGraphemes(string repoRoot)
+{
+    // Typing one UTF-16 code unit at a time split an emoji's surrogate pair into two events, which the
+    // cast stores as two U+FFFD. Each user-perceived character must be one typing event.
+    if (!IntegrationTestsEnabled())
+        return true;
+
+    var fixturePath = Path.Combine(repoRoot, "tests", "fixtures", "typing-graphemes.yaml");
+    var outputStem = Path.Combine(Path.GetTempPath(), $"scenetake-graphemes-{Guid.NewGuid():N}");
+    try
+    {
+        if (!RunScenetake(fixturePath, outputStem, out var exitCode) || exitCode != 0)
+            return false;
+
+        // The typed command ends at the first "\r\n" event after the prompt; the command's own output
+        // comes later and is not checked here.
+        var typed = ReadCastTimedOutputEvents(outputStem + ".cast")
+            .Select(ev => ev.Text)
+            .SkipWhile(text => text != "$ ")
+            .Skip(1)
+            .TakeWhile(text => text != "\r\n")
+            .ToList();
+        // The whole command comes back unchanged (no U+FFFD), and each character is a single event.
+        string[] expected = ["🎉", "👍🏽", "👨‍👩‍👧", "か゚"];
+        var ok = string.Concat(typed) == "echo \"🎉 👍🏽 👨‍👩‍👧 か゚\"" && expected.All(typed.Contains);
+        if (!ok)
+            Console.Error.WriteLine($"  typed events: {string.Join(" | ", typed)}");
+        return ok;
+    }
+    finally
+    {
+        Cleanup(outputStem);
     }
 }
 

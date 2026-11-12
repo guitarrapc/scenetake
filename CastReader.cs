@@ -230,7 +230,16 @@ internal static class CastReader
         }
         catch (JsonException ex)
         {
-            throw new CastReadException($"invalid JSON at line {lineNumber}: {ex.Message}");
+            // System.Text.Json ends its message with "LineNumber: 0 | BytePositionInLine: N." for the one
+            // line it was given, which contradicted the cast line number in front of it.
+            var message = ex.Message;
+            var path = message.IndexOf(" Path:", StringComparison.Ordinal);
+            var position = message.IndexOf(" LineNumber:", StringComparison.Ordinal);
+            if (path > 0 && (position < 0 || path < position))
+                position = path;
+            if (position > 0)
+                message = message[..position];
+            throw new CastReadException($"invalid JSON at line {lineNumber}: {message}");
         }
     }
 

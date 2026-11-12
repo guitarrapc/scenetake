@@ -545,9 +545,12 @@ static bool CliRulesForValuesAndFormats(string scenetake, string repoRoot, strin
     var (maxFpsExit, maxFpsStderr) = Exec(scenetake, repoRoot, ["--max-fps", "10", scenario]);
     var (fontExit, fontStderr) = Exec(scenetake, repoRoot, ["--format", "mp4", "--font-file", "--fps", "30", scenario]);
     var (fpsExit, fpsStderr) = Exec(scenetake, repoRoot, ["mp4", "--fps", "99", "samples/basic.cast"]);
+    // svg takes a cast. Given a scenario, the JSON error is followed by the command that records it.
+    var (yamlExit, yamlStderr) = Exec(scenetake, repoRoot, ["svg", scenario, Path.Combine(work, "rules-from-yaml.svg")]);
     return maxFpsExit == 1 && maxFpsStderr.Contains("--max-fps requires --format svg", StringComparison.Ordinal)
         && fontExit == 1 && fontStderr.Contains("--font-file requires a value", StringComparison.Ordinal)
-        && fpsExit == 1 && fpsStderr.Contains("--fps must be between 1 and 60: 99", StringComparison.Ordinal);
+        && fpsExit == 1 && fpsStderr.Contains("--fps must be between 1 and 60: 99", StringComparison.Ordinal)
+        && yamlExit == 1 && yamlStderr.Contains("svg converts a cast file. To record this scenario, run: scenetake --format svg ", StringComparison.Ordinal);
 }
 
 static bool SubcommandsNeverReplaceTheirInput(string scenetake, string repoRoot, string work)
@@ -776,12 +779,12 @@ static bool ScenarioErrorsAfterPreRunPost(string scenetake, string repoRoot, str
         Console.Error.WriteLine(removedStderr);
     var removedRanPost = File.Exists(Path.Combine(directory, "post-ran.txt"));
 
-    // Steps that fail while the recording runs, each in its own way: an interactive step whose output
-    // is redirected, as it is here, and a PTY command that holds a NUL, which the PTY refuses to start.
+    // A step that fails while the recording runs: a PTY command that holds a NUL, which the PTY refuses
+    // to start. An interactive step whose output is redirected is refused before pre instead
+    // (ScenarioErrorsStopBeforePre).
     var failures = new List<(int Exit, string Stderr, bool RanPost)>();
     foreach (var (name, step) in new[]
     {
-        ("interactive", "  - run: echo two\n    pty: true\n    interactive: true"),
         ("nul", "  - run: \"echo a\\0b\"\n    pty: true"),
     })
     {
@@ -819,8 +822,10 @@ static bool ScenarioErrorsStopBeforePre(string scenetake, string repoRoot, strin
 {
     // Each scenario must end with an error before anything runs, not with an unhandled exception: YAML the
     // parser rejects in different ways (a broken token, a value of the wrong type, a key given twice in a
-    // step), a shell that does not exist, a shell or a cwd with a NUL, and a run that is a list. Without
-    // their refusal the NUL and list cases would run pre, so the pre marker shows the order.
+    // step), a shell that does not exist, a shell or a cwd with a NUL, a run that is a list, a cwd that does
+    // not exist, no steps, a step without run (an unquoted command with ": " is a mapping), a step that is
+    // a list, and an interactive step while output is redirected, as it is here. Without their refusal
+    // pre would run, so the pre marker shows the order.
     var directory = Directory.CreateDirectory(Path.Combine(work, "before-pre")).FullName;
     var cwd = directory.Replace('\\', '/');
     var missingShell = OperatingSystem.IsWindows() ? $"{cwd}/no-such-shell.exe" : "/no/such/shell";
@@ -840,6 +845,12 @@ static bool ScenarioErrorsStopBeforePre(string scenetake, string repoRoot, strin
         ("nulname", $"shell: \"{nulName}\"\nsteps:\n  - run: echo hi\n", "a shell cannot contain a NUL character"),
         ("nulcwd", $"cwd: \"{nulCwd}\"\nsteps:\n  - run: echo hi\n", "cwd cannot contain a NUL character"),
         ("list", "steps:\n  - run: [echo, hi]\n", "Error: Step key 'run' must be a command string"),
+        ("nocwd", $"cwd: '{cwd}/no-such-folder'\nsteps:\n  - run: echo hi\n", "Error: cwd folder does not exist"),
+        ("nosteps", "step:\n  - run: echo hi\n", "Error: The scenario has no steps to record"),
+        ("emptysteps", "steps:\n  - \"\"\n", "Error: The scenario has no steps to record"),
+        ("colon", "steps:\n  - echo hi\n  - echo key: value\n", "Error: Step 2 has no 'run' key (keys: echo key)"),
+        ("liststep", "steps:\n  - [echo, hi]\n", "Error: Step 1 must be a command string or a mapping with 'run', not a list"),
+        ("interactive", "steps:\n  - run: echo hi\n  - run: echo two\n    pty: true\n    interactive: true\n", "Error: Interactive PTY steps require a real terminal"),
     };
     var refused = true;
     foreach (var (name, body, error) in cases)

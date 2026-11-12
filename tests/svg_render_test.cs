@@ -49,6 +49,7 @@ failures += Run("BlockOnlyRowsDecodeToTheirRow", BlockOnlyRowsDecodeToTheirRow);
 failures += Run("XmlInvalidCharactersAreReplaced", XmlInvalidCharactersAreReplaced);
 failures += Run("ScenarioThemeColorsAreValidated", ScenarioThemeColorsAreValidated);
 failures += Run("CastWarningsSayCast", CastWarningsSayCast);
+failures += Run("InvalidJsonNamesOnlyTheCastLine", InvalidJsonNamesOnlyTheCastLine);
 failures += Run("CombiningMarkDoesNotFailRender", CombiningMarkDoesNotFailRender);
 failures += Run("LargeSvgWarnsWithAlternatives", LargeSvgWarnsWithAlternatives);
 failures += Run("DefaultFontFamilyPassesValidation", DefaultFontFamilyPassesValidation);
@@ -1054,6 +1055,33 @@ static bool CastWarningsSayCast()
         var (_, warnings) = ReadCastCapturingWarnings(path);
         return warnings.Contains("Warning: cast: unsupported cast event code 'z'", StringComparison.Ordinal)
             && !warnings.Contains("svg:", StringComparison.Ordinal);
+    }
+    finally
+    {
+        File.Delete(path);
+    }
+}
+
+static bool InvalidJsonNamesOnlyTheCastLine()
+{
+    // System.Text.Json ends its message with "LineNumber: 0 | BytePositionInLine: N." for the single line
+    // it parses, which contradicted the cast line number. Only the cast line number is kept.
+    var path = Path.Combine(Path.GetTempPath(), $"scenetake-cast-json-{Guid.NewGuid():N}.cast");
+    try
+    {
+        File.WriteAllText(path, "{\"version\":3,\"term\":{\"cols\":10,\"rows\":2}}\n[0.5, \"o\", \"ok\"]\n[oops\n");
+        try
+        {
+            CastReader.Read(path);
+            return false;
+        }
+        catch (CastReadException ex)
+        {
+            if (ex.Message == "invalid JSON at line 3: 'o' is an invalid start of a value.")
+                return true;
+            Console.Error.WriteLine($"  message: {ex.Message}");
+            return false;
+        }
     }
     finally
     {

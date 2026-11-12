@@ -103,6 +103,8 @@ Semantics (recording continues, process exit code stays `0`): [spec_scenario.md]
 
 **Errors.** Fatal issues print `Error: …` to stderr and exit non-zero.
 
+**Cast read errors.** A cast line that is not JSON is reported as `invalid JSON at line <n>: <reason>`. The position suffix System.Text.Json adds (`LineNumber: 0 | BytePositionInLine: …`) is left out: it counts within the one line it was given, so it contradicted `<n>`. When the input of `svg` or `mp4` ends in `.yaml` or `.yml`, a second line says that the subcommand converts a cast file and gives the command that records the scenario (`scenetake --format svg <file>`).
+
 ## Exit Codes
 
 | Outcome | Code |
@@ -117,7 +119,7 @@ Recorded step exit codes do not affect the process exit code. See [spec_scenario
 
 - Default output path: `scenario.yaml` in the current directory.
 - Fails if the target file already exists.
-- Generated template follows [spec_scenario.md](spec_scenario.md).
+- Generated template follows [spec_scenario.md](spec_scenario.md). Its steps run in the default shell of the OS that writes it (spec_scenario.md → Init Template).
 
 ## Cross-Document Notes
 
