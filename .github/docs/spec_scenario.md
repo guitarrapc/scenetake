@@ -51,6 +51,8 @@ post:
 | `cwd` | process cwd | Working directory for `pre`, `steps`, and `post`. A relative path is resolved against the current directory, not the scenario file's folder. The folder must exist before anything runs, because `pre` runs in it too; a missing one is an error found before `pre` runs. |
 | `shell` | `$SHELL` / `pwsh` | Shell for all commands. Values: `bash`, `pwsh`, `powershell`, or a path |
 
+On Linux and macOS, `pwsh` and `powershell` use PowerShell command arguments, including when selected by a path or by `$SHELL`. Other Unix shells use `-lc`. The requested executable name or path is preserved for both pipe and PTY commands, including `pre` and `post`.
+
 ## `settings`
 
 Defaults for all steps. Map-form steps may override individual keys.
@@ -219,3 +221,4 @@ Every step in the template must run in the shell it is written for. That shell i
 - **Typing went one UTF-16 code unit at a time.** An emoji outside the Basic Multilingual Plane was split into its two surrogates, and the cast writer stored each as U+FFFD, on every OS. Typing by extended grapheme cluster also keeps skin tone modifiers, ZWJ sequences, and combining marks on the character they belong to. Commands without such characters type exactly as before, so their casts do not change.
 - **A missing `cwd` failed with the OS message.** `pre` runs in `cwd`, so a scenario whose `pre` was meant to create `cwd` failed on its first command with "The directory name is invalid" (Windows) or "No such file or directory" (Unix), which names neither `cwd` nor the folder a relative `cwd` is resolved against. The check before `pre` names both.
 - **The init template only ran in bash.** Windows starts pwsh by default, where `echo "stderr sample" 1>&2` is a ParserError, so the first recording a Windows user made showed a red error, and the `printf` step needed a `printf` on PATH, which Windows does not have. The template now picks commands the OS's default shell runs. Choosing by OS alone left out a Windows user who records with Git Bash and a Linux or macOS user who records with pwsh, so `--shell` picks the syntax, and the file names that shell because the template's steps only run there.
+- **Unix PowerShell needs its own command arguments.** `init --shell pwsh` wrote a valid PowerShell scenario, but Unix shell launches passed `-lc` to every shell. PowerShell rejects that switch with exit code 64, so both pipe and PTY steps failed on Linux and macOS. PowerShell now receives `-NoLogo -NoProfile -Command` on Unix too.

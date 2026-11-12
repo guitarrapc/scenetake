@@ -2997,7 +2997,12 @@ static ShellLaunch ResolveShell(Scenario scenario)
     if (!requested.Contains('/') && CurrentDirectoryHasFile(requested))
         throw new InvalidOperationException($"Shell '{requested}' was requested, but the current directory has a file named '{requested}', which would start instead of the one on PATH. Run scenetake from another directory, or set the shell to a full path.");
 
-    return new ShellLaunch(requested, ["-lc"], requested, requested);
+    // PowerShell is also available on Unix; it does not accept POSIX shells' combined -lc switch.
+    // Keep the executable as requested so names, relative paths and symlink traversal are preserved.
+    var arguments = Path.GetFileName(requested) is "pwsh" or "powershell"
+        ? new[] { "-NoLogo", "-NoProfile", "-Command" }
+        : new[] { "-lc" };
+    return new ShellLaunch(requested, arguments, requested, requested);
 }
 
 static bool CurrentDirectoryHasFile(string name)

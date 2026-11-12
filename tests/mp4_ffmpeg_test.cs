@@ -60,6 +60,9 @@ try
     else
         failures += Run("UnixShellStartsAsNamed", () => UnixShellStartsAsNamed(scenetake, repoRoot, work));
 
+    if (!OperatingSystem.IsWindows())
+        failures += Run("UnixPowerShellRunsCommands", () => UnixPowerShellRunsCommands(scenetake, repoRoot, work));
+
     // Only Windows looks pwsh, powershell, cmd and bash up by name, so only there could a path to one of
     // them start another file.
     if (OperatingSystem.IsWindows())
@@ -949,6 +952,57 @@ static bool ScenarioErrorsStopBeforePre(string scenetake, string repoRoot, strin
     }
 
     return refused;
+}
+
+static bool UnixPowerShellRunsCommands(string scenetake, string repoRoot, string work)
+{
+    var pwsh = FindOnPath("pwsh") ?? throw new SkipTestException("pwsh is not on PATH");
+    var directory = Directory.CreateDirectory(Path.Combine(work, "unix pwsh")).FullName;
+    File.CreateSymbolicLink(Path.Combine(directory, "powershell"), pwsh);
+    var passed = true;
+    foreach (var (name, shell, fromEnvironment) in new[]
+    {
+        ("name", "pwsh", false),
+        ("absolute", pwsh, false),
+        ("relative", Path.GetRelativePath(repoRoot, pwsh), false),
+        ("environment-name", "pwsh", true),
+        ("environment-path", pwsh, true),
+        ("powershell-path", Path.Combine(directory, "powershell"), false),
+    })
+    {
+        var scenario = Path.Combine(directory, name + ".yaml");
+        // Pipe and PTY starts can resolve a relative executable from different working directories.
+        // Use the same directory for this case so it tests PowerShell's arguments alone.
+        var cwd = name == "relative" ? repoRoot : directory;
+        var shellKey = fromEnvironment ? "" : $"shell: '{shell.Replace("'", "''", StringComparison.Ordinal)}'\n";
+        File.WriteAllText(scenario, shellKey + $$"""
+            cwd: '{{cwd.Replace("'", "''", StringComparison.Ordinal)}}'
+            settings:
+              typing-speed: 0
+              typing-jitter: 0
+              pre-delay: 0
+              post-delay: 0
+            pre:
+              - Set-Content '{{directory.Replace("'", "''", StringComparison.Ordinal)}}/{{name}}-pre.txt' 'PRE_OK'
+            steps:
+              - run: "[Console]::WriteLine([string]::Concat('PIPE_', 'OK'))"
+              - run: "[Console]::WriteLine([string]::Concat('PTY_', 'OK'))"
+                pty: true
+            post:
+              - Set-Content '{{directory.Replace("'", "''", StringComparison.Ordinal)}}/{{name}}-post.txt' 'POST_OK'
+            """);
+        var (exit, stderr) = Exec(scenetake, repoRoot, [scenario, Path.Combine(directory, name)],
+            fromEnvironment ? new() { ["SHELL"] = shell } : null);
+        var cast = exit == 0 ? File.ReadAllText(Path.Combine(directory, name + ".cast")) : "";
+        if (exit != 0 || stderr.Contains("Warning:", StringComparison.Ordinal)
+            || !cast.Contains("PIPE_OK", StringComparison.Ordinal) || !cast.Contains("PTY_OK", StringComparison.Ordinal)
+            || !File.Exists(Path.Combine(directory, name + "-pre.txt")) || !File.Exists(Path.Combine(directory, name + "-post.txt")))
+        {
+            Console.Error.WriteLine($"  {name}: exit {exit}{Environment.NewLine}{stderr}{cast}");
+            passed = false;
+        }
+    }
+    return passed;
 }
 
 static bool UnixShellStartsAsNamed(string scenetake, string repoRoot, string work)
