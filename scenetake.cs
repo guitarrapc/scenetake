@@ -327,15 +327,31 @@ if (scenario.Cwd is not null && scenario.Cwd.Contains('\0'))
     return 1;
 }
 
-// pre runs in cwd too, so cwd must exist before anything runs. Without this check the first command
-// failed with the OS message "The directory name is invalid", which names neither cwd nor the folder
-// a relative cwd is resolved against (the current directory, not the scenario's folder).
-if (!string.IsNullOrWhiteSpace(scenario.Cwd) && !Directory.Exists(scenario.Cwd))
+if (!string.IsNullOrWhiteSpace(scenario.Cwd))
 {
-    var fullCwd = Path.GetFullPath(scenario.Cwd);
-    var resolvedCwd = Path.IsPathFullyQualified(scenario.Cwd) ? "" : $" (resolved against the current directory: {fullCwd})";
-    Console.Error.WriteLine($"Error: cwd folder does not exist: {scenario.Cwd}{resolvedCwd}. pre runs in cwd too, so create the folder before running scenetake.");
-    return 1;
+    // A relative cwd is resolved against the scenario file's folder, so a scenario runs in the same
+    // folder wherever scenetake is started from. It used to follow the current directory, and
+    // `scenetake demo/scenario.yaml` started from the parent folder looked for cwd under the parent.
+    var writtenCwd = scenario.Cwd;
+    try
+    {
+        scenario.Cwd = Path.GetFullPath(writtenCwd, Path.GetDirectoryName(scenarioPath)!);
+    }
+    catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+    {
+        Console.Error.WriteLine($"Error: cwd is not a valid path: {writtenCwd} ({ex.Message})");
+        return 1;
+    }
+
+    // pre runs in cwd too, so cwd must exist before anything runs. Without this check the first command
+    // failed with the OS message "The directory name is invalid", which names neither cwd nor the folder
+    // it was resolved to.
+    if (!Directory.Exists(scenario.Cwd))
+    {
+        var resolvedCwd = Path.IsPathFullyQualified(writtenCwd) ? "" : $" (resolved against the scenario's folder: {scenario.Cwd})";
+        Console.Error.WriteLine($"Error: cwd folder does not exist: {writtenCwd}{resolvedCwd}. pre runs in cwd too, so create the folder before running scenetake.");
+        return 1;
+    }
 }
 
 // The cast is written only after pre and the recording, so the outputs are checked first. When pre
@@ -3259,7 +3275,7 @@ static string CreateInitialScenarioYaml(string? shell)
     title: "My App"            # Optional cast title
     # width: 120                 # Default: 120
     # height: 24                 # Default: 24
-    # cwd: /your/path            # Optional working directory for all steps
+    # cwd: /your/path            # Optional working directory for pre, steps, and post; a relative path is relative to this file
     {shellLine}
 
     # Optional SVG rendering metadata. Written to the cast header (v3 tags / term.theme) and used by --format svg.

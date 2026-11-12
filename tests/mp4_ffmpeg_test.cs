@@ -39,6 +39,7 @@ try
     failures += Run("SubcommandsNeverReplaceTheirInput", () => SubcommandsNeverReplaceTheirInput(scenetake, repoRoot, work));
     failures += Run("ScenarioChecksOutputPaths", () => ScenarioChecksOutputPaths(scenetake, repoRoot, work));
     failures += Run("ScenarioErrorsStopBeforePre", () => ScenarioErrorsStopBeforePre(scenetake, repoRoot, work));
+    failures += Run("RelativeCwdFollowsScenarioFolder", () => RelativeCwdFollowsScenarioFolder(scenetake, repoRoot, work));
     failures += Run("ScenarioErrorsAfterPreRunPost", () => ScenarioErrorsAfterPreRunPost(scenetake, repoRoot, work));
     failures += Run("SvgFailureWithAnOpenOutputIsReported", () => SvgFailureWithAnOpenOutputIsReported(scenetake, repoRoot, work));
     failures += Run("ScenarioChecksFrameSizeBeforePre", () => ScenarioChecksFrameSizeBeforePre(scenetake, repoRoot, work));
@@ -930,6 +931,7 @@ static bool ScenarioErrorsStopBeforePre(string scenetake, string repoRoot, strin
         ("nulcwd", $"cwd: \"{nulCwd}\"\nsteps:\n  - run: echo hi\n", "cwd cannot contain a NUL character"),
         ("list", "steps:\n  - run: [echo, hi]\n", "Error: Step key 'run' must be a command string"),
         ("nocwd", $"cwd: '{cwd}/no-such-folder'\nsteps:\n  - run: echo hi\n", "Error: cwd folder does not exist"),
+        ("norelcwd", "cwd: no-such-folder\nsteps:\n  - run: echo hi\n", $"(resolved against the scenario's folder: {Path.Combine(directory, "no-such-folder")})"),
         ("nosteps", "step:\n  - run: echo hi\n", "Error: The scenario has no steps to record"),
         ("emptysteps", "steps:\n  - \"\"\n", "Error: The scenario has no steps to record"),
         ("colon", "steps:\n  - echo hi\n  - echo key: value\n", "Error: Step 2 has no 'run' key (keys: echo key)"),
@@ -952,6 +954,41 @@ static bool ScenarioErrorsStopBeforePre(string scenetake, string repoRoot, strin
     }
 
     return refused;
+}
+
+static bool RelativeCwdFollowsScenarioFolder(string scenetake, string repoRoot, string work)
+{
+    // A relative cwd is resolved against the scenario file's folder, not the folder scenetake is started
+    // from: the same scenario runs in the same folder from anywhere. scenetake starts in the repository
+    // here, and pre, a pipe step, a PTY step and post must all write their marker in <scenario folder>/inner.
+    var directory = Directory.CreateDirectory(Path.Combine(work, "relative-cwd", "scenario")).FullName;
+    var inner = Directory.CreateDirectory(Path.Combine(directory, "inner")).FullName;
+    var sibling = Directory.CreateDirectory(Path.Combine(work, "relative-cwd", "sibling")).FullName;
+    var scenario = Path.Combine(directory, "relative.yaml");
+    File.WriteAllText(scenario, """
+        width: 40
+        height: 6
+        cwd: inner
+        pre:
+          - echo pre > pre.txt
+        steps:
+          - run: echo step > step.txt
+          - run: echo pty > pty.txt
+            pty: true
+        post:
+          - echo post > post.txt
+        """);
+    var parent = Path.Combine(directory, "parent.yaml");
+    File.WriteAllText(parent, "width: 40\nheight: 6\ncwd: ../sibling\nsteps:\n  - run: echo up > up.txt\n");
+
+    var (exit, stderr) = Exec(scenetake, repoRoot, [scenario]);
+    var (parentExit, parentStderr) = Exec(scenetake, repoRoot, [parent]);
+    var marked = new[] { "pre.txt", "step.txt", "pty.txt", "post.txt" }.All(name => File.Exists(Path.Combine(inner, name)))
+        && File.Exists(Path.Combine(sibling, "up.txt"))
+        && !File.Exists(Path.Combine(repoRoot, "step.txt")) && !File.Exists(Path.Combine(repoRoot, "up.txt"));
+    if (exit != 0 || parentExit != 0 || !marked)
+        Console.Error.WriteLine($"  exit {exit}, parent exit {parentExit}{Environment.NewLine}{stderr}{parentStderr}");
+    return exit == 0 && parentExit == 0 && marked;
 }
 
 static bool UnixPowerShellRunsCommands(string scenetake, string repoRoot, string work)
