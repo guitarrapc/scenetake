@@ -274,6 +274,8 @@ docker rm $id
 
 通常のstepは、コマンドの stdout/stderr をキャプチャしてタイピング演出付きで記録します。このモードは単発出力のコマンドや、TTYを必要としないコマンドに適しています。出力に色がついていなくても、`highlight` や `stderr-color` で色を付けることができます。出力は、実際の出力に関わらず、一瞬で表示されます。
 
+色の付いていない stderr は、既定では赤で表示します。ただし、エラー以外の普通のメッセージを stderr に出すツールは少なくありません。git（`Switched to a new branch 'feature'`）、curl の進捗表示、`docker build` などです。通常の文字色のままにしたいときは、`settings` か個別のステップに `stderr-color: none` を指定してください。
+
 ```yaml
 steps:
   - name: comment color is cyan

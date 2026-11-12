@@ -260,6 +260,8 @@ There are four output modes: ordinary output, stream output, TUI output, and int
 
 Ordinary steps capture command stdout/stderr and record them with simulated typing. This mode is suitable for one-shot commands and commands that do not require a TTY. Even if output has no color, you can apply color with `highlight` and `stderr-color`. Output appears instantly regardless of how long the real command took to print.
 
+stderr without its own colors is red by default. Many tools print ordinary messages there, not only errors: git (`Switched to a new branch 'feature'`), curl's progress, `docker build`. Set `stderr-color: none` under `settings`, or on one step, to keep them in the normal text color.
+
 ```yaml
 steps:
   - name: comment color is cyan

@@ -143,6 +143,8 @@ Behavior:
 
 Priority: explicit ANSI in stderr > resolved `stderr-color`.
 
+`none` (or `off`, `default`, `reset`) records stderr in the normal text color. Many tools print ordinary messages on stderr, not only errors: git (`Switched to a new branch 'feature'`), curl's progress, `docker build`. With the red default those look like failures in a demo, so the `init` template's comment on `stderr-color` and the README point to `none`.
+
 ### `name` color prefix
 
 - Default comment color: `cyan`.
