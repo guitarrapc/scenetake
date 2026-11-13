@@ -9,7 +9,7 @@ scenetake behavior is split into focused specs under `.github/docs/`. Each spec 
 | [spec_scenario.md](spec_scenario.md) | Scenario YAML structure — keys, defaults, `steps` forms, command environment, execution order, determinism |
 | [spec_cast.md](spec_cast.md) | Cast file format — v3 write / v2–v3 read, header, event stream, recording boundary, tool compatibility |
 | [spec_cli.md](spec_cli.md) | Commands, flags, output paths, logging, exit codes, `init` |
-| [spec_install.md](spec_install.md) | Install channels — NuGet dotnet tool, npm optionalDependencies, Scoop, GitHub Releases |
+| [spec_install.md](spec_install.md) | Install channels — NuGet dotnet tool, npm optionalDependencies, Scoop, GitHub Releases; platform minimums and binary size |
 | [spec_highlight.md](spec_highlight.md) | Coloring — `highlight`, `run-highlight`, `stderr-color`, `name` prefix, style strings, `at` ranges |
 | [spec_pre_post.md](spec_pre_post.md) | `pre` / `post` — recording exclusion, fail-fast, exit-code semantics |
 | [spec_svg.md](spec_svg.md) | SVG output — renderer, `svg` subcommand consumption of cast events |
