@@ -172,7 +172,9 @@ scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--the
 
 `--max-fps` caps SVG animation frame rate (`0` = off, use full cast timing). It applies when `--format svg` is set or on the `svg` subcommand.
 
-`--strict` is for CI: scenetake stops at the first recorded step that exits non-zero and exits `1`. Later steps do not run, no output is written (the files of an earlier run stay), `post` runs, and the error shows the last lines the step printed. A step that is meant to fail, such as a demo of an error, sets `continue-on-error: true`.
+`--strict` is for CI. Unless a step sets `continue-on-error: true`, scenetake stops at the first recorded step that exits non-zero. Later steps do not run, and scenetake writes no output. Existing output files stay, and `post` runs. Scenetake exits `1` unless a `post` command fails, in which case it returns that command's exit code.
+
+The error shows the last lines the step printed. Set `continue-on-error: true` on a step that is meant to fail, such as an error demo.
 
 mp4 options apply with `--format mp4` or on the `mp4` subcommand: `--fps` sets the frame rate (default `30`, max `60`), `--crf` sets quality (default `23`; higher is smaller), `--max-size` downscales to fit (for example `1280x1024` for X), `--size` makes the video exactly that size (for example `1920x1080`; see Terminal size and resolution below), and `--font-file` picks the font file. `--size` and `--max-size` cannot be used together.
 
@@ -233,7 +235,7 @@ To fill a video resolution, use the largest `width` × `height` that fits. At `f
   - Commands that need a terminal can opt into pseudo-terminal capture with `pty: true`. See [PTY recording](#pty-recording).
   - For long-running commands, use `execution-duration` to keep playback readable.
   - For natural replay of long output (`docker build`, staged `sleep`, …), set `stream-output: true` and optionally `max-duration` on that step. Default pipe emit stays instant for typing and short demos.
-  - A step that exits non-zero prints a warning and the recording continues. Set `continue-on-error: true` on a step that is meant to fail; with `--strict`, any other failing step stops the run with exit `1`.
+  - A step that exits non-zero prints a warning and the recording continues. Set `continue-on-error: true` on a step that is meant to fail. With `--strict`, any other failing step stops the recording and runs `post`. Scenetake exits `1` unless a `post` command fails, in which case it returns that command's exit code.
 
 **CJK text in GIFs**
 

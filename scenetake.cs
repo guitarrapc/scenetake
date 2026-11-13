@@ -4141,8 +4141,9 @@ static class HelpText
         Recording:
           --format cast|svg|mp4    Write only the cast (cast, the default), or the cast and an SVG or
                                    an mp4 rendered from it
-          --strict                 Stop at the first step that exits non-zero: write nothing, run post,
-                                   and exit 1. A step with 'continue-on-error: true' does not stop it.
+          --strict                 Stop at the first step that exits non-zero unless it sets
+                                   'continue-on-error: true'. Write no output and run post.
+                                   Exit 1. If a post command fails, return that command's exit code.
           --verbose                Show pre and post labels and phase markers, and the type and stack
                                    of an error that stops the run
 
