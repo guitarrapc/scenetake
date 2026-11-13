@@ -120,7 +120,7 @@ jobs:
         if: ${{ !startsWith(matrix.rid, 'linux-') }}
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 11.0.x
 
       # Linked in a container at the release's C library floor (glibc 2.28, musl 1.2.3), which checks the floor and
       # runs smoke-binary.sh there.
@@ -330,7 +330,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 11.0.x
 
       - name: Pack global tool
         shell: bash

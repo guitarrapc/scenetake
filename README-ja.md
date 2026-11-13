@@ -73,11 +73,11 @@ GitHub の Releases ページから利用 OS 向けアセットをダウンロ�
 |---|---|
 | `scenetake-linux-amd64.tar.gz`, `scenetake-linux-arm64.tar.gz` | glibc 2.28 以降の Linux（RHEL 8、Debian 10、Ubuntu 20.04 以降） |
 | `scenetake-linux-musl-amd64.tar.gz`, `scenetake-linux-musl-arm64.tar.gz` | musl 1.2.3 以降の Linux（Alpine 3.17 以降） |
-| `scenetake-osx-amd64.tar.gz`, `scenetake-osx-arm64.tar.gz` | macOS 12.0 以降 |
+| `scenetake-osx-amd64.tar.gz`, `scenetake-osx-arm64.tar.gz` | macOS 14.0 以降 |
 | `scenetake-win-amd64.zip`, `scenetake-win-arm64.zip` | Windows 10 1809 以降 |
 
 ```sh
-# .NET グローバルツール（インストールには .NET 10 SDK が必要。実行には .NET 10 ランタイムが必要）
+# .NET グローバルツール（インストールには .NET 11 SDK が必要。実行には .NET 11 ランタイムが必要）
 dotnet tool install -g scenetake
 
 # npm
@@ -471,7 +471,7 @@ post:
 
 `dotnet` を使ってローカル実行・ビルドする場合は以下を利用します。
 
-- .NET 10 SDK（C# file-based app 実行のため）
+- .NET 11 SDK（C# file-based app 実行のため）
 
 ```bash
 # ローカル実行

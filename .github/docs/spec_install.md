@@ -38,23 +38,23 @@ Users download one archive, extract it, and run the binary directly. No installe
 |---|---|---|
 | Linux, glibc | glibc 2.28: RHEL 8 and its rebuilds, Debian 10, Ubuntu 20.04, and later | Linked in AlmaLinux 8 (glibc 2.28) |
 | Linux, musl | musl 1.2.3: Alpine 3.17 and later | Linked in Alpine 3.17 (musl 1.2.3) |
-| macOS | macOS 12.0 | NativeAOT links for 12.0; MiniPty builds `minipty_spawn_helper` for 12.0 |
+| macOS | macOS 14.0 | NativeAOT (.NET 11) links for 14.0; MiniPty builds `minipty_spawn_helper` for 12.0 |
 | Windows | Windows 10 1809 for PTY steps, MiniPty's ConPTY minimum | Not checked here |
 
-glibc 2.28 is the oldest glibc .NET 10 supports, and MiniPty's files are built for glibc 2.27 and musl 1.2.3, so the floors are those of the runtime and the PTY library, not of scenetake.
+glibc 2.28 is the oldest glibc .NET 11 supports, and MiniPty's files are built for glibc 2.27 and musl 1.2.3, so the floors are those of the runtime and the PTY library, not of scenetake.
 
-**Symbol versions follow the glibc the binary is linked against.** The linker binds each libc symbol to the newest version the link-time glibc has. Up to 1.4.2, the Linux binaries were linked on the runner (Ubuntu 24.04, glibc 2.39) and required `GLIBC_2.38`: `pthread_*`, `dlopen`, and `__libc_start_main` bound to 2.34, and MiniPty 1.4's archive referenced glibc 2.38's `__isoc23_*` names. They did not start on RHEL 8 or 9, Debian 12, or Ubuntu 22.04. Linked in AlmaLinux 8, every symbol binds to a version glibc 2.28 already has (the x64 binary needs `GLIBC_2.17` at most). Linking on a newer host cannot be made safe by editing calls; the link has to see the old glibc.
+**Symbol versions follow the glibc the binary is linked against.** The linker binds each libc symbol to the newest version the link-time glibc has. Up to 1.4.2, the Linux binaries were linked on the runner (Ubuntu 24.04, glibc 2.39) and required `GLIBC_2.38`: `pthread_*`, `dlopen`, and `__libc_start_main` bound to 2.34, and MiniPty 1.4's archive referenced glibc 2.38's `__isoc23_*` names. They did not start on RHEL 8 or 9, Debian 12, or Ubuntu 22.04. Linked in AlmaLinux 8, every symbol binds to a version glibc 2.28 already has (the x64 binary needs `GLIBC_2.25` at most, for `getrandom` and `getentropy`, which the .NET 11 runtime calls; with .NET 10 it needed `GLIBC_2.17`). Linking on a newer host cannot be made safe by editing calls; the link has to see the old glibc.
 
 **The binaries do not need ICU.** scenetake builds with `InvariantGlobalization`. It formats with the invariant culture and compares ordinally, so no output depends on culture data. Up to 1.4.2 the binary loaded ICU at start and aborted where libicu was missing, which is the default on Alpine and in minimal container images.
 
-**macOS 12.0 is declared, not run.** Hosted runners go back only to macOS 15, so CI checks the `minos` each Mach-O file declares and runs the binaries built on macOS 26 on macOS 15. In 1.4.2, `minipty_spawn_helper` declared macOS 26.0, because MiniPty up to 1.4 built it on macOS 26 without a deployment target; MiniPty 1.5.0 builds it for 12.0.
+**macOS 14.0 is declared, not run.** Hosted runners go back only to macOS 15, so CI checks the `minos` each Mach-O file declares and runs the binaries built on macOS 26 on macOS 15. In 1.4.2, `minipty_spawn_helper` declared macOS 26.0, because MiniPty up to 1.4 built it on macOS 26 without a deployment target; MiniPty 1.5.0 builds it for 12.0. Up to .NET 10, NativeAOT linked `scenetake` for macOS 12.0 and the floor was 12.0. .NET 11 links for 14.0 by default and supports macOS 15 and later, so moving to .NET 11 raised the floor to 14.0. Linking for 12.0 with `AppleMinOSVersion` would only change the declared version: the .NET 11 runtime is not built or tested for macOS 12 or 13.
 
 ### Verification
 
 Build and release CI hold the minimums for the binary that ships:
 
 - `scripts/publish-linux.sh` links each Linux binary in a container of the floor's distribution, on a runner of its own architecture. The images have no ICU.
-- `scripts/check-binary-floor.sh` fails a binary that requires a glibc version above 2.28, links a library outside the C library (Linux) or outside `/usr/lib` and `/System/Library` (macOS), declares a macOS other than 12.0, or has MiniPty's shim beside it instead of linked in.
+- `scripts/check-binary-floor.sh` fails a binary that requires a glibc version above 2.28, links a library outside the C library (Linux) or outside `/usr/lib` and `/System/Library` (macOS), declares a macOS above 14.0, or has MiniPty's shim beside it instead of linked in.
 - `scripts/smoke-binary.sh` records scenarios, renders SVG, and runs the integration tests that start the binary. It runs in the floor container, so at glibc 2.28 and musl 1.2.3; on the runners, where the glibc binary also meets glibc 2.39; and on macOS 15 for the binaries built on macOS 26. The musl binaries run only in their container.
 
 The containers have no `matrix`, `ffmpeg`, or `docker`, so the cases that need them skip there and run on the runners. They do get a font, because mp4 rendering stops before it starts ffmpeg when no font is installed, and four `mp4_ffmpeg_test` cases that expect the encoder to fail fail instead.
@@ -65,7 +65,7 @@ The containers have no `matrix`, `ffmpeg`, or `docker`, so the cases that need t
 
 ### Motivation
 
-.NET developers often prefer `dotnet tool install -g scenetake`. Unlike GitHub Releases and npm (which ship **NativeAOT** binaries), the NuGet package is a **framework-dependent** global tool: it installs via the standard `dotnet tool` workflow (requires the .NET 10 SDK) and requires the [.NET 10 runtime](https://dotnet.microsoft.com/download) to run.
+.NET developers often prefer `dotnet tool install -g scenetake`. Unlike GitHub Releases and npm (which ship **NativeAOT** binaries), the NuGet package is a **framework-dependent** global tool: it installs via the standard `dotnet tool` workflow (requires the .NET 11 SDK) and requires the [.NET 11 runtime](https://dotnet.microsoft.com/download) to run.
 MiniPty native assets are resolved at install time for the host RID, same as any other .NET app with native dependencies.
 
 ### Install
@@ -116,7 +116,7 @@ Unlike npm staged publishing, NuGet push from CI is immediate once trusted publi
 | | NuGet tool | GitHub Release / npm |
 |---|---|---|
 | Deployment | Framework-dependent | NativeAOT self-contained |
-| .NET runtime | Required (.NET 10) | Not required |
+| .NET runtime | Required (.NET 11) | Not required |
 | Binary source | Built from source in CI | Prebuilt per-RID NativeAOT archives |
 | Best for | .NET developers already on SDK/runtime | Standalone CLI, no runtime install |
 

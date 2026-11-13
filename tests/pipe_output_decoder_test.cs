@@ -1,5 +1,5 @@
 #:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
+#:property TargetFramework=net11.0
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true

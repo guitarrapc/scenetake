@@ -2,7 +2,7 @@
 # Publishes scenetake as a NativeAOT binary for a Linux runtime identifier inside a container that has the oldest C
 # library the release supports, then checks the binary and runs smoke-binary.sh in that same container:
 #
-#   linux-x64, linux-arm64             AlmaLinux 8, glibc 2.28: the oldest glibc .NET 10 supports (RHEL 8)
+#   linux-x64, linux-arm64             AlmaLinux 8, glibc 2.28: the oldest glibc .NET 11 supports (RHEL 8)
 #   linux-musl-x64, linux-musl-arm64   Alpine 3.17, musl 1.2.3: the floor MiniPty builds its musl files at
 #
 # The linker binds each glibc symbol to the newest version that the glibc it links against has. Linked on the runner
@@ -76,7 +76,7 @@ curl -sSfL --retry 4 --retry-all-errors --connect-timeout 30 --max-time 120 --re
 cid="$(docker create "$image" sh -c "
   set -e
   $setup
-  bash /src/dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet
+  bash /src/dotnet-install.sh --channel 11.0 --install-dir /usr/share/dotnet
   export PATH=/usr/share/dotnet:\$PATH DOTNET_ROOT=/usr/share/dotnet DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
   export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
   cd /src

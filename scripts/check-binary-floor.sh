@@ -3,7 +3,7 @@
 #
 #   linux-x64, linux-arm64             glibc 2.28: no symbol version above GLIBC_2.28
 #   linux-musl-x64, linux-musl-arm64   musl: links musl's libc, never glibc
-#   osx-x64, osx-arm64                 macOS 12.0: scenetake and minipty_spawn_helper both declare minos 12.0
+#   osx-x64, osx-arm64                 macOS 14.0: neither scenetake nor minipty_spawn_helper declares a minos above 14.0
 #
 # Each binary must also link only what every installation of its OS has: the C library on Linux, and libraries under
 # /usr/lib and /System/Library on macOS. A library from a package manager is a dependency the archive does not carry.
@@ -13,7 +13,7 @@
 set -euo pipefail
 
 glibc_floor=2.28
-macos_floor=12.0
+macos_floor=14.0
 
 usage="Usage: check-binary-floor.sh <rid> <publish-dir>"
 rid="${1:?$usage}"
@@ -64,15 +64,29 @@ check_linux() {
   esac
 }
 
+# Succeeds when version $1 is at or below version $2, comparing up to three numeric parts.
+version_at_most() {
+  awk -v a="$1" -v b="$2" 'BEGIN {
+    split(a, x, "."); split(b, y, ".")
+    for (i = 1; i <= 3; i++) { if (x[i] + 0 < y[i] + 0) exit 0; if (x[i] + 0 > y[i] + 0) exit 1 }
+    exit 0
+  }'
+}
+
+# NativeAOT links scenetake for the .NET SDK's default (14.0 in .NET 11), and MiniPty builds minipty_spawn_helper for
+# its own, lower one. The archive runs where both run, so neither may declare a version above the floor.
 check_macos() {
-  local file path minos libs lib
+  local file path minos libs lib declared=""
   [[ ! -e "$dir/libminipty_unix.dylib" ]] || fail "$dir has libminipty_unix.dylib, so MiniPty's shim was not linked in"
   for file in scenetake minipty_spawn_helper; do
     path="$dir/$file"
     [[ -f "$path" ]] || fail "$path not found"
     # otool prints one LC_BUILD_VERSION per Mach-O file.
-    minos="$(otool -l "$path" | awk '$1 == "minos" { print $2 }' | sort -u | tr '\n' ' ')"
-    [[ "$minos" == "$macos_floor " ]] || fail "$file declares minos ${minos:-none}, expected $macos_floor"
+    minos="$(otool -l "$path" | awk '$1 == "minos" { print $2 }' | sort -u)"
+    minos="${minos//$'\n'/ }"
+    [[ "$minos" =~ ^[0-9]+(\.[0-9]+)*$ ]] || fail "$file declares minos ${minos:-none}, expected one version"
+    version_at_most "$minos" "$macos_floor" || fail "$file declares minos $minos, above the floor $macos_floor"
+    declared+="$file $minos, "
     # The first line names the file itself; the rest are the libraries it loads.
     libs="$(otool -L "$path" | tail -n +2 | awk '{ print $1 }')"
     for lib in $libs; do
@@ -82,7 +96,7 @@ check_macos() {
       esac
     done
   done
-  echo "ok $rid: scenetake and minipty_spawn_helper declare minos $macos_floor and load only system libraries"
+  echo "ok $rid: minos ${declared%, } (floor $macos_floor); both load only system libraries"
 }
 
 case "$rid" in

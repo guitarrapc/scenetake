@@ -4,7 +4,7 @@
 # workflow instead.
 #
 # CI runs it on every runner that publishes a binary, inside the containers that build the Linux binaries at their
-# C library floors (publish-linux.sh), and on the oldest hosted macOS. It needs bash, curl, and the .NET 10 SDK.
+# C library floors (publish-linux.sh), and on the oldest hosted macOS. It needs bash, curl, and the .NET 11 SDK.
 # An integration test skips a case whose tool (matrix, ffmpeg, pwsh) is not on PATH.
 #
 # Output goes to smoke/ beside the binary. The release packages name their files, so it never reaches an archive.

@@ -73,11 +73,11 @@ Download the asset for your OS from GitHub Releases. Place `scenetake` (`sceneta
 |---|---|
 | `scenetake-linux-amd64.tar.gz`, `scenetake-linux-arm64.tar.gz` | Linux with glibc 2.28+ (RHEL 8, Debian 10, Ubuntu 20.04, and later) |
 | `scenetake-linux-musl-amd64.tar.gz`, `scenetake-linux-musl-arm64.tar.gz` | Linux with musl 1.2.3+ (Alpine 3.17 and later) |
-| `scenetake-osx-amd64.tar.gz`, `scenetake-osx-arm64.tar.gz` | macOS 12.0+ |
+| `scenetake-osx-amd64.tar.gz`, `scenetake-osx-arm64.tar.gz` | macOS 14.0+ |
 | `scenetake-win-amd64.zip`, `scenetake-win-arm64.zip` | Windows 10 1809+ |
 
 ```sh
-# .NET global tool (.NET 10 SDK required; .NET 10 runtime required to run)
+# .NET global tool (.NET 11 SDK required; .NET 11 runtime required to run)
 dotnet tool install -g scenetake
 
 # npm
@@ -468,7 +468,7 @@ post:
 
 Use `dotnet` for local development, debugging, or publishing.
 
-- .NET 10 SDK (file-based C# app)
+- .NET 11 SDK (file-based C# app)
 
 ```bash
 # Local run
