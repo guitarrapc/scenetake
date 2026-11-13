@@ -59,6 +59,37 @@ Build and release CI hold the minimums for the binary that ships:
 
 The containers have no `matrix`, `ffmpeg`, or `docker`, so the cases that need them skip there and run on the runners. They do get a font, because mp4 rendering stops before it starts ffmpeg when no font is installed, and four `mp4_ffmpeg_test` cases that expect the encoder to fail fail instead.
 
+### Binary size
+
+The binary is kept small only in ways that do not slow it down. `scenetake.cs` sets two Native AOT properties, so every publish command uses them without extra flags:
+
+| Setting | What it does |
+|---|---|
+| `OptimizationPreference=Size` | Compiles for size. On Windows it also dehydrates runtime data, which ILCompiler does by default only off Windows. |
+| `IlcFoldIdenticalMethodBodies=true` | Folds every set of identical method bodies into one, not only generic instantiations. |
+
+The unknown-key check reads the key names from the schema VYaml's source generator emits, not by serializing an empty instance. Nothing else in scenetake serializes YAML, so the binary no longer contains VYaml's serializer and emitter.
+
+Measured in 1.4.2 (7950X3D, NativeAOT 10.0.x, interleaved runs):
+
+| | Before | After |
+|---|---|---|
+| win-x64 | 5,062,144 B (gzip 2,259,716) | 4,076,032 B, −19.5% (gzip 2,025,864, −10.3%) |
+| linux-x64 | 5,392,992 B (gzip 2,543,268) | 4,802,624 B, −10.9% (gzip 2,316,750, −8.9%) |
+
+Linux gains less because its binaries were already dehydrated.
+
+Speed was unchanged within run-to-run noise (±1–2%), and every output was byte-identical. Windows was checked with SVG from 200×60 and 384×108 matrix casts and with scenetake's own CPU cycles while rendering mp4 frames. Linux was checked with the 200×60 SVG (2.11 s against 2.12 s). arm64 was not measured. On Windows, `--version` takes about 0.6 ms longer (21.5 ms instead of 20.9 ms) and uses 1 MB more working set, because the runtime data is rehydrated at start.
+
+**Lessons learned and alternatives not chosen** (win-x64):
+
+- One `YamlSerializer.Serialize` call, used only to list keys, kept 333 KB (6.6% of the binary). As long as anything serializes, the serialize side of every built-in formatter, the emitter, and the CoreLib code only they use stay in the binary.
+- Dehydration alone saves 9.4% on disk but only 1.9% after gzip, because it is a form of compression. It shrinks the installed binary more than the download.
+- `StackTraceSupport=false` would save another 275 KB (6.8% of the chosen build) with no speed cost. Not chosen: exceptions lose their method names, and `--verbose` prints the stack of an error that stops the run.
+- `UseSystemResourceKeys=true` saves 13 KB. Not chosen: scenetake prints framework exception messages after `Error:`, and they would become resource keys.
+- `IlcScanReflection=false` saves 26 KB. Not chosen: little gain, and it can drop members that are found by reflection.
+- A narrower VYaml resolver saves 15 KB. VYaml's built-in resolver keeps every formatter it knows, including `Uri`, `BigInteger`, and `Type`. But the `YamlSerializerOptions` constructor references that resolver, so the formatters stay even when a parse never uses them. Avoiding that needs a change in VYaml.
+
 ---
 
 ## NuGet (dotnet global tool)

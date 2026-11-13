@@ -4,6 +4,8 @@
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
 #:property InvariantGlobalization=true
+#:property OptimizationPreference=Size
+#:property IlcFoldIdenticalMethodBodies=true
 #:package VYaml@1.6.1
 #:package MiniPty@1.6.0
 #:package MiniPty.Capture@1.6.0
@@ -1123,8 +1125,10 @@ static List<string> FindUnknownScenarioKeys(string yaml)
             return [];
         root = map;
 
-        // The section keys come from the classes that read them: VYaml writes every member of an empty
-        // instance as "key: null", so a key added to a class is known here without a second list.
+        // The section keys come from the classes that read them: VYaml's source generator lists each member's
+        // key in the schema of the formatter it generates, so a key added to a class is known here without a
+        // second list. Serializing an empty instance gives the same keys, but no other code serializes, and
+        // that call alone kept VYaml's serializer and emitter in the Native AOT binary (about 330 KB of 5 MB).
         known = new(KeysOf<Scenario>(), KeysOf<ScenarioSettings>(), KeysOf<ScenarioRender>(), KeysOf<ScenarioTheme>());
     }
     catch (Exception)
@@ -1136,9 +1140,10 @@ static List<string> FindUnknownScenarioKeys(string yaml)
 
     return ScenarioKeys.FindUnknown(root, known);
 
-    static string[] KeysOf<T>() where T : new() =>
-        YamlSerializer.Deserialize<object>(YamlSerializer.Serialize(new T())) is Dictionary<object, object?> { Count: > 0 } map
-            ? [.. map.Keys.Select(key => key.ToString()!)]
+    static string[] KeysOf<T>() =>
+        GeneratedResolver.Instance.GetFormatter<T>() is IYamlSchemaInfoProvider provider
+            && provider.GetSchemaInfo().Members is { Length: > 0 } members
+            ? [.. members.Select(member => member.KeyName)]
             : throw new InvalidOperationException($"no keys for {typeof(T).Name}");
 }
 

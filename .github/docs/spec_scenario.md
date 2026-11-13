@@ -21,7 +21,7 @@ scenetake warns about unknown keys immediately after reading the file, before ot
 | Typo in the same map: `hightlight`, `ptty`, `setting`, `preest`. Allow 1 edit for keys shorter than 5 characters, otherwise 2. Adjacent transpositions count as 1 edit. | `did you mean 'highlight'?` |
 | `<<` (YAML merge key) | `YAML merge keys are not supported, so nothing is merged` |
 
-Example: `Warning: unknown key 'hightlight' in step 3 (did you mean 'highlight'?)`. Top-level, `settings`, `render`, and `render.theme` keys follow the classes that read them. Adding a key to those classes requires no separate list. Step and `highlight` keys use explicit lists.
+Example: `Warning: unknown key 'hightlight' in step 3 (did you mean 'highlight'?)`. Top-level, `settings`, `render`, and `render.theme` keys follow the classes that read them, through the schema VYaml's source generator emits for each class. Adding a key to those classes requires no separate list. Listing the keys by serializing an empty instance gives the same result but keeps VYaml's serializer in the binary ([spec_install.md](spec_install.md) → Binary size). Step and `highlight` keys use explicit lists.
 
 Unknown keys have no exemption, including compose-style `x-` keys. VYaml skips anchors under unknown keys, so aliases to those anchors fail to parse. Such keys can only contain data that scenetake ignores.
 
