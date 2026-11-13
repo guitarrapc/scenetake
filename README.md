@@ -8,9 +8,9 @@
 
 English | [日本語](README-ja.md)
 
-Run a YAML **scenario** and record a terminal scene take [asciinema v3 `.cast`](https://docs.asciinema.org/manual/asciicast/v3/), animated `.svg`. You do not need to install or launch `asciinema` to record. Write a YAML scenario with steps, and this tool executes those steps and records the output as `.cast` (and optionally `.svg`)—ordinary steps get simulated typing; steps with `pty: true` capture the terminal stream in real time.
+Run commands from a YAML **scenario** and record their output as [asciinema v3 `.cast`](https://docs.asciinema.org/manual/asciicast/v3/). Optionally generate animated SVG or mp4. No asciinema installation is required. Ordinary steps use simulated typing. Steps with `pty: true` record terminal output in real time.
 
-Sample scenario `samples/basic.yaml` generates `.cast` and `.svg` output like below. You don't have to struggle with typing, and since the commands are actually executed, you can easily create realistic terminal recordings.
+The scenario in `samples/basic.yaml` runs real commands and generates the `.cast` and `.svg` recordings below. You do not need to type the commands during recording.
 
 ```yaml
 title: "Basic Demo"
@@ -57,17 +57,17 @@ SVG output supports custom font, light/dark theme, and optional window chrome (`
 
 ## Motivation
 
-I wanted a tool that could capture commands without making me type them all out by hand, and that is the motivation behind scenetake. There are many tools around asciinema, but they often miss the mark: some are tied to shell scripts, some assume asciinema itself as a dependency, some leak execution paths into the cast output, and some only fake the output instead of running real commands. What I want is something I can describe in a straightforward scenario, have the listed commands actually executed, and generate a cast file directly from the results.
+I wanted to record real commands from a scenario without typing each command by hand. Other tools depend on shell scripts or asciinema, expose execution paths, or simulate output without running commands.
 
-scenetake is a cross-platform tool that records those scenarios as `.cast` files, optionally with `.svg`, without going through asciinema at all.
+scenetake runs on multiple platforms and writes `.cast` files directly, with optional SVG output.
 
-1. Write the commands to run in the scenario.
-2. For ordinary steps, generate cast events as if the commands were typed at a steady pace; for `pty: true` steps, record the terminal byte stream as it runs.
-3. Execute the commands for real and write their output into the cast.
+1. Write the commands in a YAML scenario.
+2. Use ordinary steps for simulated typing or `pty: true` for terminal output with real timing.
+3. Run the scenario to execute the commands and record their output.
 
 ## Quick Start
 
-Download the asset for your OS from GitHub Releases, then place `scenetake` (or `scenetake.exe` on Windows) where you want. The binaries need no .NET runtime and no ICU.
+Download the asset for your OS from GitHub Releases. Place `scenetake` (`scenetake.exe` on Windows) in your preferred folder. The binaries require neither a .NET runtime nor ICU.
 
 | Asset | Runs on |
 |---|---|
@@ -146,7 +146,7 @@ docker rm $id
 
 **Usage**
 
-`scenetake --help` lists every command and option with its range and default; `scenetake svg --help`, `scenetake mp4 --help` and `scenetake init --help` show the options of that command.
+`scenetake --help` lists all commands and options, including ranges and defaults. Use `scenetake svg --help`, `scenetake mp4 --help`, or `scenetake init --help` for command-specific options.
 
 ```bash
 # Initialize a new scenario file
@@ -176,13 +176,23 @@ scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--the
 
 The error shows the last lines the step printed. Set `continue-on-error: true` on a step that is meant to fail, such as an error demo.
 
-mp4 options apply with `--format mp4` or on the `mp4` subcommand: `--fps` sets the frame rate (default `30`, max `60`), `--crf` sets quality (default `23`; higher is smaller), `--max-size` downscales to fit (for example `1280x1024` for X), `--size` makes the video exactly that size (for example `1920x1080`; see Terminal size and resolution below), and `--font-file` picks the font file. `--size` and `--max-size` cannot be used together.
+mp4 options apply with `--format mp4` or the `mp4` subcommand:
+
+- `--fps` sets the frame rate (default `30`, maximum `60`).
+- `--crf` sets quality (default `23`). Higher values produce smaller files.
+- `--max-size` reduces the video to fit a limit, such as `1280x1024` for X.
+- `--size` sets exact dimensions, such as `1920x1080`. See Terminal size and resolution below.
+- `--font-file` selects a font file.
+
+`--size` and `--max-size` cannot be used together.
 
 **SVG or mp4**
 
-SVG is usually the smallest for typing and short output (often half the size of mp4), embeds in a README, and stays sharp at any zoom. Full-screen TUIs that redraw every frame (`matrix`, `btop`, …) make SVG and GIF very large; use mp4 for those, and for sharing on X or Slack. For example, `matrix --fps 60` at 200×60 for 7.5 seconds is 17.0MB as SVG and 4.4MB as mp4 (2.8MB with `--max-size 1280x1024`). scenetake warns when an SVG is over 10MB.
+SVG is usually smallest for typing and short output, often half the size of mp4. It embeds in a README and stays sharp at any zoom. Full-screen TUIs that redraw each frame (`matrix`, `btop`) produce large SVG and GIF files. Use mp4 for these recordings and for sharing on X or Slack.
 
-mp4 output runs [ffmpeg](https://ffmpeg.org/) with libx264 as a separate program. Install it with `winget install Gyan.FFmpeg` or `scoop install ffmpeg` (Windows), `brew install ffmpeg` (macOS), or `sudo apt install ffmpeg` (Debian/Ubuntu). Set `SCENETAKE_FFMPEG` to use a specific binary. mp4 uses fonts installed on your machine: the `font-family` list first, then CJK and symbol fonts. Pass `--font-file` to pin one. `--window` adds the same title bar as SVG, without the outer margin and shadow.
+For example, `matrix --fps 60` at 200×60 for 7.5 seconds produces 17.0MB of SVG or 4.4MB of mp4. With `--max-size 1280x1024`, the mp4 is 2.8MB. Scenetake warns when an SVG exceeds 10MB.
+
+mp4 output runs [ffmpeg](https://ffmpeg.org/) with libx264 as a separate program. Install it with `winget install Gyan.FFmpeg` or `scoop install ffmpeg` (Windows), `brew install ffmpeg` (macOS), or `sudo apt install ffmpeg` (Debian/Ubuntu). Set `SCENETAKE_FFMPEG` to use a specific binary. Mp4 uses fonts installed on your machine: the `font-family` list first, then CJK and symbol fonts. Pass `--font-file` to pin one. `--window` adds the same title bar as SVG, without the outer margin and shadow.
 
 **Terminal size and resolution**
 
@@ -213,11 +223,11 @@ To fill a video resolution, use the largest `width` × `height` that fits. At `f
 - SVG does not blur when scaled, so its pixel size only sets the size it is first shown at.
 - A recording that resizes uses its largest size.
 
-`--size WxH` makes the mp4 exactly `W×H`. Both sides must be even. The recorded terminal does not change; only the video frame around it does.
+`--size WxH` makes the mp4 exactly `W×H`. Both sides must be even. The recorded terminal does not change. Only the video frame around it does.
 
 - A terminal that fits is centered, and the rest is the theme background. 190 × 53 at `--size 1920x1080` gets 6 pixels above and 6 below. The `--window` title bar stays at the top edge.
 - A larger terminal is padded to that shape, then scaled down. 200 × 60 (2020×1208) becomes 1920×1080 with about 57 pixels on each side, its text scaled to 89%.
-- A smaller terminal is not enlarged. 80 × 24 sits in the middle of the frame; use a larger `--font-size` for larger text.
+- A smaller terminal is not enlarged. 80 × 24 sits in the middle of the frame. Use a larger `--font-size` for larger text.
 
 **Notes**
 
@@ -235,11 +245,13 @@ To fill a video resolution, use the largest `width` × `height` that fits. At `f
   - Commands that need a terminal can opt into pseudo-terminal capture with `pty: true`. See [PTY recording](#pty-recording).
   - For long-running commands, use `execution-duration` to keep playback readable.
   - For natural replay of long output (`docker build`, staged `sleep`, …), set `stream-output: true` and optionally `max-duration` on that step. Default pipe emit stays instant for typing and short demos.
-  - A step that exits non-zero prints a warning and the recording continues. Set `continue-on-error: true` on a step that is meant to fail. With `--strict`, any other failing step stops the recording and runs `post`. Scenetake exits `1` unless a `post` command fails, in which case it returns that command's exit code.
+  - Non-zero step exits warn and recording continues. `continue-on-error: true` suppresses the warning for expected failures. For CI, use `--strict` as described above.
 
 **CJK text in GIFs**
 
-The `ghcr.io/asciinema/agg` image has no CJK font, and agg draws nothing for a character that none of its fonts has, so Japanese, Chinese, and Korean text (for example full-width katakana) comes out as empty cells. Put a CJK font in a folder such as `fonts/`, pass it with `--font-dir`, and add its family name after the Latin monospace font in `--text-font-family`. The first family sets the cell width.
+The `ghcr.io/asciinema/agg` image has no CJK font. Characters absent from all available fonts appear as empty cells, including Japanese, Chinese, and Korean text.
+
+Place a CJK font in a folder such as `fonts/`. Pass the folder with `--font-dir`. Add the font family after the Latin monospace font in `--text-font-family`. The first family sets the cell width.
 
 ```bash
 # Linux/macOS
@@ -264,7 +276,7 @@ There are four output modes: ordinary output, stream output, TUI output, and int
 
 Ordinary steps capture command stdout/stderr and record them with simulated typing. This mode is suitable for one-shot commands and commands that do not require a TTY. Even if output has no color, you can apply color with `highlight` and `stderr-color`. Output appears instantly regardless of how long the real command took to print.
 
-stderr without its own colors is red by default. Many tools print ordinary messages there, not only errors: git (`Switched to a new branch 'feature'`), curl's progress, `docker build`. Set `stderr-color: none` under `settings`, or on one step, to keep them in the normal text color.
+stderr without ANSI colors is red by default. Tools also use stderr for ordinary messages, such as git branch changes, curl progress, and `docker build` output. Set `stderr-color: none` under `settings` or on a step to use the normal text color.
 
 ```yaml
 steps:
@@ -285,7 +297,7 @@ steps:
 
 ### Stream output
 
-For commands that emit output intermittently, set `stream-output: true` to replay output at captured timing. If you set `max-duration`, the step output timeline is capped and long idle gaps can be compressed by stream emit.
+Set `stream-output: true` to replay intermittent output at its recorded timing. `max-duration` limits the output timeline. Stream output can also compress long idle gaps.
 
 ```yaml
 steps:
@@ -320,7 +332,7 @@ Recordings also draw DECDLD soft fonts, but a program behind the PTY cannot dete
 
 ### Interactive application output
 
-For interactive applications (`vim`, `copilot`, etc.), set both `pty: true` and `interactive: true`. PTY is enabled and interactive child-process input becomes possible. If you set `normalize-typing: true`, banners/help output keeps real timing while only user typing is re-timed for readability.
+For interactive applications (`vim`, `copilot`), set `pty: true` and `interactive: true`. This lets you send input to the child process. Add `normalize-typing: true` to adjust typing speed while banners and help output retain their original timing.
 
 ```yaml
 steps:
@@ -344,7 +356,14 @@ steps:
 
 ## Scenario Format
 
-Only `steps` is required; all other top-level keys are optional. A key scenetake does not read, such as a misspelled `hightlight`, prints a warning that names the key it likely meant. The example below is a runnable scenario — source of truth: [samples/scenario_format.yaml](samples/scenario_format.yaml). For full field definitions see [.github/docs/spec_scenario.md](.github/docs/spec_scenario.md). Coloring and style syntax: [spec_highlight.md](.github/docs/spec_highlight.md). Pre/post behavior: [spec_pre_post.md](.github/docs/spec_pre_post.md). More color examples: [samples/highlight.yaml](samples/highlight.yaml).
+Only `steps` is required. All other top-level keys are optional. Unknown keys, such as `hightlight`, produce a warning with a suggested key when available.
+
+The example below runs as a scenario. Its source is [samples/scenario_format.yaml](samples/scenario_format.yaml).
+
+- Field definitions: [spec_scenario.md](.github/docs/spec_scenario.md).
+- Color and style syntax: [spec_highlight.md](.github/docs/spec_highlight.md).
+- Setup and cleanup: [spec_pre_post.md](.github/docs/spec_pre_post.md).
+- More color examples: [samples/highlight.yaml](samples/highlight.yaml).
 
 ![](samples/scenario_format.svg)
 
@@ -477,7 +496,7 @@ foreach ($file in Get-ChildItem samples/*.cast) {
 
 ### Release
 
-Before tagging, bump `Directory.Build.props` and all npm packages under `npm/packages/` together. The script uses the latest `v*` git tag as the base version (falls back to the current files when no tags exist).
+Before tagging, update `Directory.Build.props` and all npm packages under `npm/packages/` to the same version. The script calculates the version from the latest `v*` git tag. If no tag exists, it uses the current files.
 
 ```bash
 dotnet run scripts/set_version.cs -- patch   # e.g. v1.3.0 -> 1.3.1
@@ -485,7 +504,7 @@ dotnet run scripts/set_version.cs -- minor   # e.g. v1.3.0 -> 1.4.0
 dotnet run scripts/set_version.cs -- major   # e.g. v1.3.0 -> 2.0.0
 ```
 
-Commit the version bump, then create and push a tag matching the new version (for example `v1.4.0`). Pushing the tag starts the release workflow, which builds native binaries, creates a GitHub Release, and stages npm packages (`scenetake` plus `@scenetake/*` platform binaries).
+Commit the version change. Create a matching tag, such as `v1.4.0`. Push the tag to start the release workflow. The workflow builds native binaries, creates a GitHub Release, and stages `scenetake` and `@scenetake/*` npm packages.
 
 After the workflow finishes, approve the staged npm packages locally with 2FA:
 
@@ -494,4 +513,4 @@ npm stage list
 npm stage approve <stage-id>
 ```
 
-The first npm release must be published manually (`npm publish`), because staged publishing requires the package to already exist on the registry. That also holds for a platform package added later, such as `@scenetake/linux-x64-musl` and `@scenetake/linux-arm64-musl`. Platform packages (`@scenetake/linux-x64`, etc.) must be approved before the main `scenetake` package.
+Publish each npm package manually with `npm publish` for its first release. Staged publishing requires an existing package. This also applies to platform packages added later, such as `@scenetake/linux-x64-musl` and `@scenetake/linux-arm64-musl`. Approve platform packages before the main `scenetake` package.
