@@ -68,22 +68,15 @@ trap cleanup EXIT
   cp -R samples tests scripts "$stage/"
 )
 
+# Fetch the installer with the host's current curl, rather than AlmaLinux 8's curl 7.61.
+# Use the distribution URL directly: requests via dot.net returned empty replies repeatedly in CI.
+curl -sSfL --retry 4 --retry-all-errors --connect-timeout 30 --max-time 120 --retry-max-time 300 \
+  https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.sh -o "$stage/dotnet-install.sh"
+
 cid="$(docker create "$image" sh -c "
   set -e
   $setup
-  # AlmaLinux 8 has curl 7.61: --retry-all-errors needs 7.71, and --retry alone does not retry error 52 (empty reply).
-  # Retry the download explicitly, with a fresh output file on each attempt, and never execute a failed download.
-  attempt=1
-  until curl -sSfL --connect-timeout 30 --max-time 120 https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh; do
-    if [ \"\$attempt\" -ge 5 ]; then
-      echo 'publish-linux: failed to download dotnet-install.sh after 5 attempts' >&2
-      exit 1
-    fi
-    echo \"publish-linux: dotnet-install.sh download failed (attempt \$attempt/5); retrying\" >&2
-    sleep \"\$((attempt * 2))\"
-    attempt=\$((attempt + 1))
-  done
-  bash /tmp/dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet
+  bash /src/dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet
   export PATH=/usr/share/dotnet:\$PATH DOTNET_ROOT=/usr/share/dotnet DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
   export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
   cd /src
