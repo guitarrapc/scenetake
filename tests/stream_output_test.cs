@@ -15,6 +15,7 @@ failures += Run("IntegrationInstantMergeOrder", () => IntegrationInstantMergeOrd
 failures += Run("IntegrationInstantProgressBar", () => IntegrationInstantProgressBar(repoRoot));
 failures += Run("IntegrationDockerBuildStream", () => IntegrationDockerBuildStream(repoRoot));
 failures += Run("IntegrationTypingKeepsGraphemes", () => IntegrationTypingKeepsGraphemes(repoRoot));
+failures += Run("IntegrationTypingAfterVariableStepsRepeats", () => IntegrationTypingAfterVariableStepsRepeats(repoRoot));
 if (OperatingSystem.IsWindows())
     failures += Run("IntegrationPipeOutputIsUtf8OnWindows", () => IntegrationPipeOutputIsUtf8OnWindows(repoRoot));
 
@@ -300,6 +301,81 @@ static bool IntegrationTypingKeepsGraphemes(string repoRoot)
     {
         Cleanup(outputStem);
     }
+}
+
+static bool IntegrationTypingAfterVariableStepsRepeats(string repoRoot)
+{
+    // Stream emit and PTY output keep wall-clock times, so where they end differs between runs below a
+    // millisecond. The cast stores each interval as the difference of absolute times rounded to
+    // milliseconds, so that fraction used to move the typed intervals after the step by 1ms, and a cast
+    // regenerated from an unchanged scenario differed on dozens of lines. The typed commands after both
+    // steps must now have the same intervals, as written, on every run.
+    if (!IntegrationTestsEnabled())
+        return true;
+
+    var fixturePath = Path.Combine(repoRoot, "tests", "fixtures", "timing-after-variable-steps.yaml");
+    var runs = new List<List<(string Interval, string Text)>>();
+    for (var run = 0; run < 3; run++)
+    {
+        var outputStem = Path.Combine(Path.GetTempPath(), $"scenetake-repeat-{Guid.NewGuid():N}");
+        try
+        {
+            if (!RunScenetake(fixturePath, outputStem, out var exitCode) || exitCode != 0)
+                return false;
+            runs.Add(ReadCastRawOutputEvents(outputStem + ".cast"));
+        }
+        finally
+        {
+            Cleanup(outputStem);
+        }
+    }
+
+    var ok = true;
+    foreach (var command in new[] { "echo after stream typed text", "echo after pty typed text" })
+    {
+        var typed = runs.Select(events => TypedIntervals(events, command)).ToList();
+        if (typed.Any(intervals => intervals is null) || typed.Skip(1).Any(intervals => !intervals!.SequenceEqual(typed[0]!)))
+        {
+            Console.Error.WriteLine($"  {command}:{Environment.NewLine}    {string.Join(Environment.NewLine + "    ", typed.Select(intervals => intervals is null ? "(not found)" : string.Join(",", intervals)))}");
+            ok = false;
+        }
+    }
+
+    return ok;
+
+    // The intervals of the typed characters and the Enter after the prompt that starts this command. The
+    // prompt's own interval follows the variable output and is not compared.
+    static List<string>? TypedIntervals(List<(string Interval, string Text)> events, string command)
+    {
+        for (var i = 0; i + command.Length + 1 < events.Count; i++)
+        {
+            if (events[i].Text != "$ ")
+                continue;
+            var typed = events.Skip(i + 1).Take(command.Length).ToList();
+            if (string.Concat(typed.Select(e => e.Text)) == command && events[i + command.Length + 1].Text == "\r\n")
+                return [.. events.Skip(i + 1).Take(command.Length + 1).Select(e => e.Interval)];
+        }
+
+        return null;
+    }
+}
+
+static List<(string Interval, string Text)> ReadCastRawOutputEvents(string castPath)
+{
+    // Intervals as written in the cast, not summed, so a 1ms change shows.
+    var results = new List<(string Interval, string Text)>();
+    foreach (var line in File.ReadAllLines(castPath))
+    {
+        if (line.Length == 0 || line[0] != '[')
+            continue;
+
+        using var doc = JsonDocument.Parse(line);
+        var root = doc.RootElement;
+        if (root.GetArrayLength() >= 3 && root[1].GetString() == "o")
+            results.Add((root[0].GetRawText(), root[2].GetString() ?? ""));
+    }
+
+    return results;
 }
 
 static bool RunScenetake(string fixturePath, string outputStem, out int exitCode)

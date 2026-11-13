@@ -20,6 +20,7 @@
 #:include PipeStreamCapture.cs
 #:include InteractivePtyInput.cs
 #:include Kernel32.cs
+#:include ScenarioKeys.cs
 
 using MiniPty;
 using MiniPty.Capture;
@@ -64,7 +65,7 @@ if (args[0] is "init")
 {
     if (args.Length == 2 && args[1] is "-h" or "--help")
     {
-        PrintInitUsage();
+        PrintInitHelp();
         return 0;
     }
 
@@ -95,7 +96,7 @@ if (args[0] is "svg")
 {
     if (args.Length == 2 && args[1] is "-h" or "--help")
     {
-        PrintSvgUsage();
+        PrintSvgHelp();
         return 0;
     }
 
@@ -110,6 +111,12 @@ if (args[0] is "svg")
     if (!File.Exists(castPath))
     {
         Console.Error.WriteLine($"Error: {FormatDisplayPath(castPath)} not found");
+        return 1;
+    }
+
+    if (ScenarioGivenForCast(castPath, "svg") is { } svgScenarioError)
+    {
+        Console.Error.WriteLine($"Error: {svgScenarioError}");
         return 1;
     }
 
@@ -149,7 +156,7 @@ if (args[0] is "svg")
     catch (CastReadException ex)
     {
         DeleteFileIfExists(svgOutputPath);
-        Console.Error.WriteLine($"Error: {ex.Message}{ScenarioInputHint(castPath, "svg")}");
+        Console.Error.WriteLine($"Error: {ex.Message}");
         return 1;
     }
     catch (Exception ex)
@@ -164,7 +171,7 @@ if (args[0] is "mp4")
 {
     if (args.Length == 2 && args[1] is "-h" or "--help")
     {
-        PrintMp4Usage();
+        PrintMp4Help();
         return 0;
     }
 
@@ -179,6 +186,12 @@ if (args[0] is "mp4")
     if (!File.Exists(mp4CastPath))
     {
         Console.Error.WriteLine($"Error: {FormatDisplayPath(mp4CastPath)} not found");
+        return 1;
+    }
+
+    if (ScenarioGivenForCast(mp4CastPath, "mp4") is { } mp4ScenarioError)
+    {
+        Console.Error.WriteLine($"Error: {mp4ScenarioError}");
         return 1;
     }
 
@@ -228,7 +241,7 @@ if (args[0] is "mp4")
             DeleteFileIfExists(mp4OutputPath);
         Console.Error.WriteLine(ex switch
         {
-            CastReadException => $"Error: {ex.Message}{ScenarioInputHint(mp4CastPath, "mp4")}",
+            CastReadException => $"Error: {ex.Message}",
             FontNotFoundException or FrameTooLargeException => $"Error: {ex.Message}",
             _ => $"Error: mp4 render failed: {ex.Message}",
         });
@@ -244,11 +257,11 @@ if (args[0] is "--version")
 
 if (args[0] is "-h" or "--help")
 {
-    PrintUsage();
+    PrintHelp();
     return 0;
 }
 
-if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runError))
+if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runError))
 {
     Console.Error.WriteLine($"Error: {runError}");
     PrintUsage();
@@ -283,6 +296,12 @@ catch (Exception ex)
     Console.Error.WriteLine($"Error: cannot read {FormatDisplayPath(scenarioPath)}: {ex.Message}");
     return 1;
 }
+
+// A key scenetake does not read used to be ignored without a word, so a typo such as `hightlight` or
+// `ptty` turned its feature off and the recording looked right otherwise. These are warnings, before the
+// errors below: `step:` for `steps:` is named before "no steps to record".
+foreach (var unknownKey in FindUnknownScenarioKeys(yaml))
+    Console.Error.WriteLine($"Warning: {unknownKey}");
 
 if (!RenderSettingsResolver.TryResolve(scenario, runThemePreset, out var renderSettings, out var themeError))
 {
@@ -327,15 +346,31 @@ if (scenario.Cwd is not null && scenario.Cwd.Contains('\0'))
     return 1;
 }
 
-// pre runs in cwd too, so cwd must exist before anything runs. Without this check the first command
-// failed with the OS message "The directory name is invalid", which names neither cwd nor the folder
-// a relative cwd is resolved against (the current directory, not the scenario's folder).
-if (!string.IsNullOrWhiteSpace(scenario.Cwd) && !Directory.Exists(scenario.Cwd))
+if (!string.IsNullOrWhiteSpace(scenario.Cwd))
 {
-    var fullCwd = Path.GetFullPath(scenario.Cwd);
-    var resolvedCwd = Path.IsPathFullyQualified(scenario.Cwd) ? "" : $" (resolved against the current directory: {fullCwd})";
-    Console.Error.WriteLine($"Error: cwd folder does not exist: {scenario.Cwd}{resolvedCwd}. pre runs in cwd too, so create the folder before running scenetake.");
-    return 1;
+    // A relative cwd is resolved against the scenario file's folder, so a scenario runs in the same
+    // folder wherever scenetake is started from. It used to follow the current directory, and
+    // `scenetake demo/scenario.yaml` started from the parent folder looked for cwd under the parent.
+    var writtenCwd = scenario.Cwd;
+    try
+    {
+        scenario.Cwd = Path.GetFullPath(writtenCwd, Path.GetDirectoryName(scenarioPath)!);
+    }
+    catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+    {
+        Console.Error.WriteLine($"Error: cwd is not a valid path: {writtenCwd} ({ex.Message})");
+        return 1;
+    }
+
+    // pre runs in cwd too, so cwd must exist before anything runs. Without this check the first command
+    // failed with the OS message "The directory name is invalid", which names neither cwd nor the folder
+    // it was resolved to.
+    if (!Directory.Exists(scenario.Cwd))
+    {
+        var resolvedCwd = Path.IsPathFullyQualified(writtenCwd) ? "" : $" (resolved against the scenario's folder: {scenario.Cwd})";
+        Console.Error.WriteLine($"Error: cwd folder does not exist: {writtenCwd}{resolvedCwd}. pre runs in cwd too, so create the folder before running scenetake.");
+        return 1;
+    }
 }
 
 // The cast is written only after pre and the recording, so the outputs are checked first. When pre
@@ -426,9 +461,10 @@ if (verbose)
 
 Console.Error.WriteLine("Generating cast...");
 List<CastEvent> events;
+FailedStep? strictFailure;
 try
 {
-    events = await GenerateAsync(scenario, shell, deterministicSeed, verbose);
+    (events, strictFailure) = await GenerateAsync(scenario, shell, deterministicSeed, verbose, strict);
 }
 catch (Exception ex)
 {
@@ -437,6 +473,16 @@ catch (Exception ex)
     // and stack, which an unexpected exception needs.
     return await StopAfterPreAsync(verbose ? ex.ToString() : ex.Message);
 }
+
+// --strict stopped at a failing step. Nothing is written, as for any error that stops the recording, so
+// the outputs of an earlier run stay as they were, and post runs. The cast is not there to show why the
+// step failed, so the end of its output is part of the error.
+if (strictFailure is not null)
+    return await StopAfterPreAsync(FormatStrictFailure(strictFailure));
+
+// OSC titles and similar sequences are never drawn, but a committed cast handed them to every reader:
+// ConPTY sets the title to the shell's full path, often under C:\Users\<name>.
+events = CastOscFilter.RemovePrivateSequences(events);
 
 try
 {
@@ -670,6 +716,7 @@ static bool TryParseRunArgs(
     out string? outputPath,
     out OutputFormat outputFormat,
     out bool verbose,
+    out bool strict,
     out int? fontSizeOverride,
     out string? fontFamilyOverride,
     out string? themePresetOverride,
@@ -682,6 +729,7 @@ static bool TryParseRunArgs(
     outputPath = null;
     outputFormat = OutputFormat.Cast;
     verbose = false;
+    strict = false;
     fontSizeOverride = null;
     fontFamilyOverride = null;
     themePresetOverride = null;
@@ -696,6 +744,12 @@ static bool TryParseRunArgs(
         if (arg == "--verbose")
         {
             verbose = true;
+            continue;
+        }
+
+        if (arg == "--strict")
+        {
+            strict = true;
             continue;
         }
 
@@ -1055,7 +1109,40 @@ static Scenario ParseScenario(string yaml)
     return YamlSerializer.Deserialize<Scenario>(bytes) ?? new Scenario();
 }
 
-static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch shell, int deterministicSeed, bool verbose)
+/// <summary>Keys the scenario sets that scenetake does not read, one message each (see <see cref="ScenarioKeys"/>).</summary>
+static List<string> FindUnknownScenarioKeys(string yaml)
+{
+    // Maps are read as object: Native AOT has VYaml's formatter for object, which makes each map a
+    // Dictionary<object, object?>, but none for Dictionary<object, object?> itself (JIT builds that one
+    // by reflection, so only the published binary showed it).
+    ScenarioKeys.Known known;
+    Dictionary<object, object?> root;
+    try
+    {
+        if (YamlSerializer.Deserialize<object>(Encoding.UTF8.GetBytes(yaml)) is not Dictionary<object, object?> map)
+            return [];
+        root = map;
+
+        // The section keys come from the classes that read them: VYaml writes every member of an empty
+        // instance as "key: null", so a key added to a class is known here without a second list.
+        known = new(KeysOf<Scenario>(), KeysOf<ScenarioSettings>(), KeysOf<ScenarioRender>(), KeysOf<ScenarioTheme>());
+    }
+    catch (Exception)
+    {
+        // The typed parse already accepted the file. A failure here only loses the warnings; it must never
+        // report every key as unknown.
+        return [];
+    }
+
+    return ScenarioKeys.FindUnknown(root, known);
+
+    static string[] KeysOf<T>() where T : new() =>
+        YamlSerializer.Deserialize<object>(YamlSerializer.Serialize(new T())) is Dictionary<object, object?> { Count: > 0 } map
+            ? [.. map.Keys.Select(key => key.ToString()!)]
+            : throw new InvalidOperationException($"no keys for {typeof(T).Name}");
+}
+
+static async Task<(List<CastEvent> Events, FailedStep? StrictFailure)> GenerateAsync(Scenario scenario, ShellLaunch shell, int deterministicSeed, bool verbose, bool strict)
 {
     var settings = scenario.Settings ?? new ScenarioSettings();
     var prompt    = settings.Prompt ?? DefaultPrompt;
@@ -1088,6 +1175,7 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
         var usePty = GetBool(command.Extra, false, "pty");
         var useInteractive = GetBool(command.Extra, false, "interactive");
         var normalizeTyping = GetBool(command.Extra, false, "normalize-typing");
+        var continueOnError = GetBool(command.Extra, false, "continue-on-error");
 
         if (events.Count == 0)
             t += preDelay;
@@ -1114,8 +1202,16 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
         var execution = useInteractive
             ? await RunInteractivePtyAsync(command.Cmd, scenario.Cwd, shell, width, height, verbose)
             : await RunCommandCoreAsync(command.Cmd, scenario.Cwd, shell, usePty, width, height, verbose, ptyStartCursor);
-        if (execution.ExitCode != 0)
+        // A step that is meant to fail (a demo of an error) says so with continue-on-error: no warning, and
+        // --strict goes on. Any other failure is a warning, or with --strict the end of the recording: later
+        // steps may depend on this one, and they run real commands.
+        if (execution.ExitCode != 0 && !continueOnError)
+        {
+            if (strict)
+                return (events, new FailedStep(i + 1, command.Cmd, execution.ExitCode, FailureOutputTail(execution)));
             WarnStepExitCode(command.Name, command.Cmd, execution.ExitCode);
+        }
+
         var commandStart = t;
         if (execution.IsPty)
         {
@@ -1152,6 +1248,14 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
                 cmdCastTiming);
         }
 
+        // Output timed by the wall clock (PTY, interactive, stream emit) ends at a time whose fraction of a
+        // millisecond differs from run to run. The cast stores each interval as the difference of absolute
+        // times rounded to milliseconds, so that fraction moved later typed intervals by 1ms, and a cast
+        // regenerated from the same scenario differed on lines after the step. Going on from a whole
+        // millisecond keeps them the same; only the output and the first interval after it still differ.
+        if (execution.IsPty || cmdCastTiming.UsesStreamEmission())
+            t = CeilingToMillisecond(t);
+
         t += cmdPost;
         t += cmdPre;
     }
@@ -1159,8 +1263,15 @@ static async Task<List<CastEvent>> GenerateAsync(Scenario scenario, ShellLaunch 
     if (events.Count > 0)
         events.Add(CastEvent.Output(Math.Round(t, 6), prompt));
 
-    return events;
+    return (events, null);
 }
+
+/// <summary>
+/// The next whole millisecond at or after <paramref name="seconds"/>. Rounding to a microsecond first keeps
+/// a value such as 12.345, which is 12345.000000000002 ms as a double, at 12.345.
+/// </summary>
+static double CeilingToMillisecond(double seconds) =>
+    Math.Ceiling(Math.Round(seconds * 1000, 3)) / 1000;
 
 static CastTimingSettings ResolveCastTiming(ScenarioSettings settings, Dictionary<string, object?>? stepExtra)
 {
@@ -2836,6 +2947,111 @@ static void WarnStepExitCode(string? name, string cmd, int exitCode)
         Console.Error.WriteLine($"Warning: step exited {exitCode} ({name}): {cmd}");
 }
 
+/// <summary>The error for a --strict run that stopped at <paramref name="failure"/>, without the "Error: " prefix.</summary>
+static string FormatStrictFailure(FailedStep failure)
+{
+    var builder = new StringBuilder($"--strict stopped at step {failure.Number}, which exited {failure.ExitCode}: {failure.Cmd}");
+    foreach (var line in failure.OutputTail)
+        builder.Append(Environment.NewLine).Append("  | ").Append(line);
+    builder.Append(Environment.NewLine).Append("Nothing was written. Set 'continue-on-error: true' on a step that is meant to fail.");
+    return builder.ToString();
+}
+
+/// <summary>
+/// The last <paramref name="maxLines"/> lines a step printed, as plain text: escape sequences and other
+/// control characters removed, and a line redrawn with <c>\r</c> reduced to what was drawn last. PTY
+/// output is the terminal byte stream, so this is only an approximation of its screen.
+/// </summary>
+static IReadOnlyList<string> FailureOutputTail(CommandExecution execution, int maxLines = 20)
+{
+    string text;
+    if (execution.IsPty && execution.PtyByteChunks is { } chunks)
+    {
+        var bytes = new ArrayBufferWriter<byte>();
+        foreach (var chunk in chunks)
+            bytes.Write(chunk.Data.Span);
+        text = Encoding.UTF8.GetString(bytes.WrittenSpan);
+    }
+    else
+    {
+        text = execution.Output.Length == 0 || execution.Output.EndsWith('\n')
+            ? execution.Output + execution.Stderr
+            : execution.Output + "\n" + execution.Stderr;
+    }
+
+    var lines = new List<string>();
+    foreach (var rawLine in StripTerminalControls(text).Split('\n'))
+    {
+        var line = rawLine.TrimEnd('\r');
+        lines.Add(line[(line.LastIndexOf('\r') + 1)..].TrimEnd());
+    }
+
+    while (lines.Count > 0 && lines[^1].Length == 0)
+        lines.RemoveAt(lines.Count - 1);
+    var start = Math.Max(0, lines.Count - maxLines);
+    while (start < lines.Count && lines[start].Length == 0)
+        start++;
+    return lines.GetRange(start, lines.Count - start);
+}
+
+/// <summary>Text without escape sequences (CSI, OSC and other strings, two-character escapes) and without control characters other than tab and line breaks.</summary>
+static string StripTerminalControls(string text)
+{
+    var builder = new StringBuilder(text.Length);
+    for (var i = 0; i < text.Length; i++)
+    {
+        var c = text[i];
+        if (c == '\u001b' && i + 1 < text.Length)
+        {
+            var next = text[i + 1];
+            i += 2;
+            if (next == '[')
+            {
+                // Parameters and intermediates, then the final byte, which the loop's i++ steps over.
+                while (i < text.Length && text[i] is < '@' or > '~')
+                    i++;
+            }
+            else if (next is ']' or 'P' or 'X' or '^' or '_')
+            {
+                // A string ended by BEL or ESC \.
+                while (i < text.Length && text[i] != '\a' && !(text[i] == '\u001b' && i + 1 < text.Length && text[i + 1] == '\\'))
+                    i++;
+                if (i < text.Length && text[i] == '\u001b')
+                    i++;
+            }
+            else if (next is >= ' ' and <= '/')
+            {
+                // Intermediates, then the final byte: ESC ( B.
+                while (i < text.Length && text[i] is >= ' ' and <= '/')
+                    i++;
+            }
+            else
+            {
+                // A two-character escape such as ESC 7: the loop's i++ moves past the next character.
+                i -= 1;
+            }
+
+            continue;
+        }
+
+        if (c is '\n' or '\r' or '\t' || (c >= ' ' && c != '\u007f'))
+            builder.Append(c);
+    }
+
+    return builder.ToString();
+}
+
+/// <summary>
+/// The shell for the cast header's env.SHELL: its file name, without the folder and without ".exe". The
+/// full path told every viewer of a committed cast where the shell was installed, which on Windows is
+/// often under C:\Users\&lt;name&gt; (scoop, winget user installs). A player does not use the value.
+/// </summary>
+static string ShellEnvName(string fileName)
+{
+    var name = Path.GetFileName(fileName);
+    return name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? name[..^4] : name;
+}
+
 static void WriteCast(
     Scenario scenario,
     List<CastEvent> events,
@@ -2865,7 +3081,7 @@ static void WriteCast(
         $",\"type\":\"xterm-256color\"" +
         $",\"theme\":{{\"fg\":{JsonEscape.JsonString(renderSettings.Theme.Fg)},\"bg\":{JsonEscape.JsonString(renderSettings.Theme.Bg)},\"palette\":{JsonEscape.JsonString(renderSettings.Theme.Palette)}}}}}" +
         $",\"timestamp\":{timestamp},\"title\":{JsonEscape.JsonString(title)}" +
-        $",\"env\":{{\"SHELL\":{JsonEscape.JsonString(shell.EnvValue)}}}" +
+        $",\"env\":{{\"SHELL\":{JsonEscape.JsonString(ShellEnvName(shell.FileName))}}}" +
         $",\"tags\":[{tagsJson}]}}");
 
     var intervalError = 0.0;
@@ -3002,7 +3218,7 @@ static ShellLaunch ResolveShell(Scenario scenario)
     var arguments = Path.GetFileName(requested) is "pwsh" or "powershell"
         ? new[] { "-NoLogo", "-NoProfile", "-Command" }
         : new[] { "-lc" };
-    return new ShellLaunch(requested, arguments, requested, requested);
+    return new ShellLaunch(requested, arguments, requested);
 }
 
 static bool CurrentDirectoryHasFile(string name)
@@ -3024,10 +3240,10 @@ static ShellLaunch ResolveWindowsShell(string? requested)
     if (string.IsNullOrWhiteSpace(requested))
     {
         if (TryResolveExecutableOnWindows("pwsh", out var pwsh))
-            return new ShellLaunch(pwsh, ["-NoLogo", "-NoProfile", "-Command"], pwsh, "pwsh");
+            return new ShellLaunch(pwsh, ["-NoLogo", "-NoProfile", "-Command"], "pwsh");
 
         if (TryResolveExecutableOnWindows("powershell", out var powershell))
-            return new ShellLaunch(powershell, ["-NoLogo", "-NoProfile", "-Command"], powershell, "powershell");
+            return new ShellLaunch(powershell, ["-NoLogo", "-NoProfile", "-Command"], "powershell");
 
         throw new InvalidOperationException("No supported shell was found on Windows. Install pwsh or powershell, or set the scenario's shell to a Git Bash or MSYS bash.exe path.");
     }
@@ -3039,7 +3255,7 @@ static ShellLaunch ResolveWindowsShell(string? requested)
     {
         var exeName = NormalizeWindowsShellName(requested);
         if (TryResolveExecutableOnWindows(exeName, out var resolved))
-            return new ShellLaunch(resolved, ["-NoLogo", "-NoProfile", "-Command"], resolved, exeName);
+            return new ShellLaunch(resolved, ["-NoLogo", "-NoProfile", "-Command"], exeName);
 
         throw new InvalidOperationException($"Shell '{requested}' was requested, but '{exeName}' could not be found on Windows.");
     }
@@ -3047,7 +3263,7 @@ static ShellLaunch ResolveWindowsShell(string? requested)
     if (string.Equals(NormalizeWindowsShellName(requested), "cmd", StringComparison.OrdinalIgnoreCase))
     {
         if (TryResolveExecutableOnWindows("cmd", out var resolved))
-            return new ShellLaunch(resolved, ["/c"], resolved, "cmd");
+            return new ShellLaunch(resolved, ["/c"], "cmd");
 
         throw new InvalidOperationException("Shell 'cmd' was requested, but cmd.exe could not be found on Windows.");
     }
@@ -3055,13 +3271,13 @@ static ShellLaunch ResolveWindowsShell(string? requested)
     if (string.Equals(NormalizeWindowsShellName(requested), "bash", StringComparison.OrdinalIgnoreCase))
     {
         if (TryResolveWindowsBash(out var resolved))
-            return new ShellLaunch(resolved, ["-lc"], resolved, "bash");
+            return new ShellLaunch(resolved, ["-lc"], "bash");
 
         throw new InvalidOperationException("Shell 'bash' was requested, but a Git Bash or MSYS bash.exe could not be found. WSL bash is intentionally not used.");
     }
 
     if (TryResolveExecutableOnWindows(requested, out var resolvedExecutable))
-        return new ShellLaunch(resolvedExecutable, ["-c"], resolvedExecutable, requested);
+        return new ShellLaunch(resolvedExecutable, ["-c"], requested);
 
     throw new InvalidOperationException($"Shell '{requested}' could not be resolved on Windows.");
 }
@@ -3096,11 +3312,11 @@ static ShellLaunch ResolveWindowsShellPath(string requested)
     {
         // Any other shell starts as written, as it always has.
         if (File.Exists(requested))
-            return new ShellLaunch(requested, ["-c"], requested, requested);
+            return new ShellLaunch(requested, ["-c"], requested);
     }
     else if (File.Exists(fullPath))
     {
-        return new ShellLaunch(fullPath, arguments, fullPath, fullPath);
+        return new ShellLaunch(fullPath, arguments, fullPath);
     }
 
     throw new InvalidOperationException($"Shell '{requested}' was requested, but the path does not exist.");
@@ -3244,7 +3460,7 @@ static string CreateInitialScenarioYaml(string? shell)
     title: "My App"            # Optional cast title
     # width: 120                 # Default: 120
     # height: 24                 # Default: 24
-    # cwd: /your/path            # Optional working directory for all steps
+    # cwd: /your/path            # Optional working directory for pre, steps, and post; a relative path is relative to this file
     {shellLine}
 
     # Optional SVG rendering metadata. Written to the cast header (v3 tags / term.theme) and used by --format svg.
@@ -3309,18 +3525,17 @@ static string CreateInitialScenarioYaml(string? shell)
 
 static void PrintUsage()
 {
-    Console.Error.WriteLine("Usage: scenetake [--verbose] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
+    Console.Error.WriteLine("Usage: scenetake [--verbose] [--strict] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
     Console.Error.WriteLine("       scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
     Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
     Console.Error.WriteLine("       scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]");
-    Console.Error.WriteLine("       scenetake --help");
+    Console.Error.WriteLine("Run 'scenetake --help' for what each option does.");
 }
 
 static void PrintMp4Usage()
 {
     Console.Error.WriteLine("Usage: scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
-    Console.Error.WriteLine("Converts an existing asciinema v2/v3 cast file to H.264 mp4. Requires ffmpeg with libx264 on PATH,");
-    Console.Error.WriteLine($"or set {Ffmpeg.PathVariable} to its path. --max-size 1280x1024 fits X (Twitter) uploads; --size 1920x1080 pads to exactly that size.");
+    Console.Error.WriteLine("Run 'scenetake mp4 --help' for what each option does.");
 }
 
 static void PrintMp4Written(string path, Mp4Result result) =>
@@ -3328,13 +3543,36 @@ static void PrintMp4Written(string path, Mp4Result result) =>
         $"Written: {FormatDisplayPath(path)}  ({result.Width}x{result.Height}, {result.Fps}fps, {result.Frames} frames, {FormatBytes(result.Bytes)}, font: {result.Font.Family})");
 
 /// <summary>
-/// A second line for a cast read error when the input is a scenario file: `scenetake svg demo.yaml` is an
-/// easy slip, and the JSON error alone does not say that svg and mp4 take a cast.
+/// The error for <c>svg</c> or <c>mp4</c> given a scenario instead of a cast, or null. <c>scenetake svg
+/// demo.yaml</c> is an easy slip, and the JSON parser's error ("'title: …' is an invalid JSON literal") came
+/// first and did not say what was wrong. A .yaml or .yml file is a scenario unless its first non-blank
+/// character is "{", which starts a cast's JSON header.
 /// </summary>
-static string ScenarioInputHint(string inputPath, string format) =>
-    Path.GetExtension(inputPath).ToLowerInvariant() is ".yaml" or ".yml"
-        ? $"{Environment.NewLine}{format} converts a cast file. To record this scenario, run: scenetake --format {format} {FormatDisplayPath(inputPath)}"
-        : "";
+static string? ScenarioGivenForCast(string inputPath, string format)
+{
+    var extension = Path.GetExtension(inputPath);
+    if (!extension.Equals(".yaml", StringComparison.OrdinalIgnoreCase) && !extension.Equals(".yml", StringComparison.OrdinalIgnoreCase))
+        return null;
+
+    try
+    {
+        using var reader = new StreamReader(inputPath);
+        int c;
+        do
+            c = reader.Read();
+        while (c != -1 && char.IsWhiteSpace((char)c));
+        if (c == '{')
+            return null;
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+    {
+        // The cast read reports a file that cannot be read.
+        return null;
+    }
+
+    var display = FormatDisplayPath(inputPath);
+    return $"{display} is a scenario, and {format} converts a cast file. To record the scenario with {(format == "svg" ? "an SVG" : "an mp4")}, run: scenetake --format {format} {display}";
+}
 
 // Decimal units (1MB = 1,000,000 bytes), the same as the SVG size warning. Sizes just under 1MB
 // that round up to "1000.0KB" print as 1.0MB instead.
@@ -3670,18 +3908,46 @@ static bool TryParseMp4Args(
     return false;
 }
 
+// Usage after an error goes to stderr and stays short; --help goes to stdout and says what each option
+// does, with its range and default (HelpText).
 static void PrintInitUsage()
 {
     Console.Error.WriteLine("Usage: scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]");
-    Console.Error.WriteLine("Creates a commented starter YAML scenario file. Its steps are written for the OS default shell");
-    Console.Error.WriteLine("(pwsh on Windows, $SHELL elsewhere); --shell writes them for that shell and sets 'shell:' in the file.");
+    Console.Error.WriteLine("Run 'scenetake init --help' for what each option does.");
 }
 
 static void PrintSvgUsage()
 {
     Console.Error.WriteLine("Usage: scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
-    Console.Error.WriteLine("Converts an existing asciinema v2/v3 cast file to animated SVG.");
+    Console.Error.WriteLine("Run 'scenetake svg --help' for what each option does.");
 }
+
+static void PrintHelp() =>
+    Console.Out.Write(
+        $"scenetake {GetAppVersion()}\n" +
+        HelpText.Intro + "\n" +
+        HelpText.Commands + "\n" +
+        HelpText.Recording + "\n" +
+        HelpText.Render(scenario: true) + "\n" +
+        HelpText.SvgOptions + "\n" +
+        HelpText.Mp4Options + "\n" +
+        HelpText.Environment + "\n" +
+        HelpText.More);
+
+static void PrintSvgHelp() =>
+    Console.Out.Write(
+        HelpText.SvgIntro + "\n" +
+        HelpText.Render(scenario: false) + "\n" +
+        HelpText.SvgOptions);
+
+static void PrintMp4Help() =>
+    Console.Out.Write(
+        HelpText.Mp4Intro + "\n" +
+        HelpText.Render(scenario: false) + "\n" +
+        HelpText.Mp4Options + "\n" +
+        HelpText.Environment);
+
+static void PrintInitHelp() => Console.Out.Write(HelpText.Init);
 
 static void PrintVersion()
 {
@@ -3779,7 +4045,13 @@ readonly record struct CommandExecution(
         new(exitCode, false, stdout, stderr, null, null, []);
 }
 
-record ShellLaunch(string FileName, string[] Arguments, string EnvValue, string DisplayName);
+record ShellLaunch(string FileName, string[] Arguments, string DisplayName);
+
+/// <summary>
+/// The step that stopped a --strict run: it exited non-zero without <c>continue-on-error</c>. <paramref name="Number"/>
+/// is 1-based, as in other step messages; <paramref name="OutputTail"/> holds its last output lines as plain text.
+/// </summary>
+record FailedStep(int Number, string Cmd, int ExitCode, IReadOnlyList<string> OutputTail);
 
 [YamlObject(NamingConvention.KebabCase)]
 public partial class Scenario
@@ -3835,4 +4107,135 @@ public class CommandEntry
     public string Cmd { get; set; } = "";
     public string? Name { get; set; }
     public Dictionary<string, object?> Extra { get; set; } = new();
+}
+
+/// <summary>
+/// The text of --help for the scenario path and the svg, mp4 and init commands. Each option says what it
+/// does, its range and its default, so the README is not needed to use one. ASCII only, as error messages
+/// are, so every console code page shows it.
+/// </summary>
+static class HelpText
+{
+    internal const string Intro = """
+        Records a YAML scenario as an asciinema v3 cast, and optionally as an animated SVG or an mp4.
+        The steps run for real: ordinary steps are shown with simulated typing, pty steps run in a
+        pseudo-terminal.
+
+        """;
+
+    internal const string Commands = """
+        Usage:
+          scenetake [options] <scenario.yaml> [output]   Run a scenario and record it
+          scenetake svg [options] <input.cast> [output]  Convert a cast file to an animated SVG
+          scenetake mp4 [options] <input.cast> [output]  Convert a cast file to an mp4 (needs ffmpeg)
+          scenetake init [--shell NAME] [scenario.yaml]  Write a commented starter scenario
+          scenetake --version                            Print the version
+          scenetake svg|mp4|init --help                  Show the options of that command
+
+        [output] names the files without an extension: 'out' writes out.cast and out.svg, and an
+        extension given is replaced. Without it, the files are named after the scenario, next to it.
+
+        """;
+
+    internal const string Recording = """
+        Recording:
+          --format cast|svg|mp4    Write only the cast (cast, the default), or the cast and an SVG or
+                                   an mp4 rendered from it
+          --strict                 Stop at the first step that exits non-zero unless it sets
+                                   'continue-on-error: true'. Write no output and run post.
+                                   Exit 1. If a post command fails, return that command's exit code.
+          --verbose                Show pre and post labels and phase markers, and the type and stack
+                                   of an error that stops the run
+
+        """;
+
+    /// <summary>
+    /// The rendering options. On a scenario they override its <c>render</c> settings, the theme only as a
+    /// preset under the scenario's own colors; on a cast they replace what the cast header stores.
+    /// </summary>
+    internal static string Render(bool scenario) =>
+        (scenario
+            ? "Rendering (SVG and mp4; overrides the scenario's render settings, and is stored in the cast):\n"
+            : "Rendering (overrides what the cast header stores; the default applies when neither sets it):\n")
+        + """
+              --font-size N            Font size, 1-128 (default 16)
+              --font-family FAMILIES   CSS font-family list, such as "'JetBrains Mono', monospace"
+
+            """
+        + (scenario
+            ? """
+                  --theme dark|light       Color theme preset (default dark). The scenario's render.theme fg,
+                                           bg and palette still apply on top of it.
+
+                """
+            : """
+                  --theme dark|light       Color theme, replacing the colors the cast stores (default dark)
+
+                """)
+        + """
+              --window none|macos|windows
+                                       Draw a window title bar around the terminal (default none)
+
+            """;
+
+    internal const string SvgOptions = """
+        SVG (--format svg, or the svg command):
+          --max-fps N              Cap the animation frame rate, 1-120. 0 keeps every frame (default).
+
+        """;
+
+    internal const string Mp4Options = """
+        mp4 (--format mp4, or the mp4 command; needs ffmpeg with libx264):
+          --fps N                  Frame rate, 1-60 (default 30)
+          --crf N                  H.264 quality, 1-51; a higher value makes a smaller file (default 23)
+          --max-size WxH           Scale down to fit in WxH, keeping the shape; never scales up.
+                                   1280x1024 fits X (Twitter) uploads.
+          --size WxH               Make the video exactly WxH (both even): the terminal is centered on
+                                   the theme background, and a larger one is scaled down to fit.
+                                   Not with --max-size.
+          --font-file PATH         A font file (TTF, OTF, TTC) to use before the --font-family fonts
+
+        """;
+
+    internal const string Environment = """
+        Environment:
+          SCENETAKE_FFMPEG         The ffmpeg to use for mp4, instead of the one on PATH
+
+        """;
+
+    internal const string More = """
+        Scenario format, samples and output modes: https://github.com/guitarrapc/scenetake
+
+        """;
+
+    internal const string SvgIntro = """
+        Usage: scenetake svg [options] <input.cast> [output]
+
+        Converts an asciinema v2 or v3 cast file to an animated SVG. [output] names the SVG; without
+        it, the SVG is written next to the cast with the same name and .svg.
+
+        """;
+
+    internal const string Mp4Intro = """
+        Usage: scenetake mp4 [options] <input.cast> [output]
+
+        Converts an asciinema v2 or v3 cast file to an H.264 mp4 with ffmpeg (libx264). [output]
+        names the mp4; without it, the mp4 is written next to the cast with the same name and .mp4.
+        Install ffmpeg with 'winget install Gyan.FFmpeg' or 'scoop install ffmpeg' (Windows),
+        'brew install ffmpeg' (macOS), or 'sudo apt install ffmpeg' (Debian, Ubuntu).
+
+        """;
+
+    internal const string Init = """
+        Usage: scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
+
+        Writes a commented starter scenario to scenario.yaml in the current folder, or to the path
+        given. An existing file is not overwritten.
+
+          --shell bash|pwsh|powershell
+                                   Write the steps for this shell and set 'shell:' in the file.
+                                   Without it, the steps suit the default shell: pwsh on Windows,
+                                   $SHELL elsewhere.
+
+        """;
 }

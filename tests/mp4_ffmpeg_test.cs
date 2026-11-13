@@ -35,10 +35,15 @@ try
     failures += Run("PostRunsAndStaleMp4GoesWhenEncodeFails", () => PostRunsAndStaleMp4GoesWhenEncodeFails(scenetake, repoRoot, work));
     failures += Run("StaleMp4GoesWhenCastIsBad", () => StaleMp4GoesWhenCastIsBad(scenetake, repoRoot, work));
     failures += Run("CliRulesForValuesAndFormats", () => CliRulesForValuesAndFormats(scenetake, repoRoot, work));
+    failures += Run("HelpDescribesEveryOption", () => HelpDescribesEveryOption(scenetake, repoRoot, work));
     failures += Run("InitWritesStepsForItsShell", () => InitWritesStepsForItsShell(scenetake, work));
     failures += Run("SubcommandsNeverReplaceTheirInput", () => SubcommandsNeverReplaceTheirInput(scenetake, repoRoot, work));
     failures += Run("ScenarioChecksOutputPaths", () => ScenarioChecksOutputPaths(scenetake, repoRoot, work));
     failures += Run("ScenarioErrorsStopBeforePre", () => ScenarioErrorsStopBeforePre(scenetake, repoRoot, work));
+    failures += Run("RelativeCwdFollowsScenarioFolder", () => RelativeCwdFollowsScenarioFolder(scenetake, repoRoot, work));
+    failures += Run("UnknownKeysWarnWithHints", () => UnknownKeysWarnWithHints(scenetake, repoRoot, work));
+    failures += Run("KnownKeysDoNotWarn", () => KnownKeysDoNotWarn(scenetake, repoRoot, work));
+    failures += Run("StrictStopsAtFirstFailure", () => StrictStopsAtFirstFailure(scenetake, repoRoot, work));
     failures += Run("ScenarioErrorsAfterPreRunPost", () => ScenarioErrorsAfterPreRunPost(scenetake, repoRoot, work));
     failures += Run("SvgFailureWithAnOpenOutputIsReported", () => SvgFailureWithAnOpenOutputIsReported(scenetake, repoRoot, work));
     failures += Run("ScenarioChecksFrameSizeBeforePre", () => ScenarioChecksFrameSizeBeforePre(scenetake, repoRoot, work));
@@ -629,12 +634,103 @@ static bool CliRulesForValuesAndFormats(string scenetake, string repoRoot, strin
     var (maxFpsExit, maxFpsStderr) = Exec(scenetake, repoRoot, ["--max-fps", "10", scenario]);
     var (fontExit, fontStderr) = Exec(scenetake, repoRoot, ["--format", "mp4", "--font-file", "--fps", "30", scenario]);
     var (fpsExit, fpsStderr) = Exec(scenetake, repoRoot, ["mp4", "--fps", "99", "samples/basic.cast"]);
-    // svg takes a cast. Given a scenario, the JSON error is followed by the command that records it.
-    var (yamlExit, yamlStderr) = Exec(scenetake, repoRoot, ["svg", scenario, Path.Combine(work, "rules-from-yaml.svg")]);
-    return maxFpsExit == 1 && maxFpsStderr.Contains("--max-fps requires --format svg", StringComparison.Ordinal)
+    // svg and mp4 take a cast. Given a scenario, they say so and give the command that records it, instead
+    // of the JSON parser's error about the first YAML line. mp4 says it before looking for ffmpeg. The
+    // default output is the scenario's own SVG or mp4 (what --format svg wrote), and a cast read that
+    // fails deletes its output, so the slip used to delete that file: it must be left as it was. A .yaml
+    // file that holds a cast (its first character is "{") still converts.
+    var ownSvg = Path.ChangeExtension(scenario, ".svg");
+    var ownMp4 = Path.ChangeExtension(scenario, ".mp4");
+    File.WriteAllText(ownSvg, "svg of the scenario");
+    File.WriteAllText(ownMp4, "mp4 of the scenario");
+    var (yamlExit, yamlStderr) = Exec(scenetake, repoRoot, ["svg", scenario]);
+    var (mp4YamlExit, mp4YamlStderr) = Exec(scenetake, repoRoot, ["mp4", scenario],
+        new() { ["SCENETAKE_FFMPEG"] = Path.Combine(work, "no-such-ffmpeg") });
+    var ownOutputsKept = File.Exists(ownSvg) && File.ReadAllText(ownSvg) == "svg of the scenario"
+        && File.Exists(ownMp4) && File.ReadAllText(ownMp4) == "mp4 of the scenario";
+    var castAsYaml = Path.Combine(work, "cast-named.yaml");
+    File.Copy(Path.Combine(repoRoot, "samples", "basic.cast"), castAsYaml, overwrite: true);
+    var (castYamlExit, castYamlStderr) = Exec(scenetake, repoRoot, ["svg", castAsYaml, Path.Combine(work, "cast-named.svg")]);
+    var ok = maxFpsExit == 1 && maxFpsStderr.Contains("--max-fps requires --format svg", StringComparison.Ordinal)
         && fontExit == 1 && fontStderr.Contains("--font-file requires a value", StringComparison.Ordinal)
         && fpsExit == 1 && fpsStderr.Contains("--fps must be between 1 and 60: 99", StringComparison.Ordinal)
-        && yamlExit == 1 && yamlStderr.Contains("svg converts a cast file. To record this scenario, run: scenetake --format svg ", StringComparison.Ordinal);
+        && yamlExit == 1 && yamlStderr.Contains("is a scenario, and svg converts a cast file. To record the scenario with an SVG, run: scenetake --format svg ", StringComparison.Ordinal)
+        && !yamlStderr.Contains("JSON", StringComparison.Ordinal)
+        && mp4YamlExit == 1 && mp4YamlStderr.Contains("is a scenario, and mp4 converts a cast file. To record the scenario with an mp4, run: scenetake --format mp4 ", StringComparison.Ordinal)
+        && !mp4YamlStderr.Contains("ffmpeg", StringComparison.Ordinal)
+        && ownOutputsKept
+        && castYamlExit == 0;
+    if (!ok)
+        Console.Error.WriteLine($"{maxFpsStderr}{fontStderr}{fpsStderr}{yamlStderr}{mp4YamlStderr}{castYamlStderr}");
+    return ok;
+}
+
+static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string work)
+{
+    // --help prints, on stdout, what every option of that command does; usage after an error stays short,
+    // on stderr, and points to --help. The option lists here follow the parsers, so an option added there
+    // and left out of the help fails this test.
+    string[] render = ["--font-size N", "--font-family FAMILIES", "--theme dark|light", "--window none|macos|windows"];
+    string[] mp4 = ["--fps N", "--crf N", "--max-size WxH", "--size WxH", "--font-file PATH", "SCENETAKE_FFMPEG"];
+    var commands = new (string[] Args, string[] Options)[]
+    {
+        (["--help"], ["--format cast|svg|mp4", "--strict", "--verbose", .. render, "--max-fps N", .. mp4, "scenetake svg", "scenetake mp4", "scenetake init", "--version"]),
+        (["-h"], ["--format cast|svg|mp4", "--strict", "--verbose"]),
+        (["svg", "--help"], [.. render, "--max-fps N"]),
+        (["mp4", "--help"], [.. render, .. mp4]),
+        (["init", "--help"], ["--shell bash|pwsh|powershell"]),
+    };
+
+    var ok = true;
+    foreach (var (args, options) in commands)
+    {
+        var (exit, stdout, stderr) = ExecCapture(scenetake, repoRoot, args);
+        var missing = options.Where(option => !stdout.Contains(option, StringComparison.Ordinal)).ToList();
+        var notAscii = stdout.Any(c => c > '~' && c is not ('\r' or '\n'));
+        if (exit != 0 || stderr.Length != 0 || missing.Count != 0 || notAscii)
+        {
+            Console.Error.WriteLine($"  {string.Join(' ', args)}: exit {exit}, stderr '{stderr}', non-ASCII {notAscii}, missing: {string.Join(", ", missing)}");
+            ok = false;
+        }
+    }
+
+    // After an error the usage goes to stderr, with the pointer to --help, and stdout stays empty.
+    foreach (var (args, pointer) in new (string[] Args, string Pointer)[]
+    {
+        (["--formt", "svg", "x.yaml"], "Run 'scenetake --help'"),
+        (["svg", "--fps", "30", "x.cast"], "Run 'scenetake svg --help'"),
+        (["mp4", "--max-fps", "30", "x.cast"], "Run 'scenetake mp4 --help'"),
+        (["init", "--shell", "zsh"], "Run 'scenetake init --help'"),
+    })
+    {
+        var (exit, stdout, stderr) = ExecCapture(scenetake, repoRoot, args);
+        if (exit != 1 || stdout.Length != 0 || !stderr.Contains(pointer, StringComparison.Ordinal) || !stderr.Contains("Usage:", StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine($"  {string.Join(' ', args)}: exit {exit}, stdout '{stdout}', stderr:{Environment.NewLine}{stderr}");
+            ok = false;
+        }
+    }
+
+    return ok;
+}
+
+static (int ExitCode, string Stdout, string Stderr) ExecCapture(string file, string workingDirectory, string[] arguments)
+{
+    var startInfo = new ProcessStartInfo(file)
+    {
+        WorkingDirectory = workingDirectory,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+    };
+    foreach (var argument in arguments)
+        startInfo.ArgumentList.Add(argument);
+
+    using var process = Process.Start(startInfo)!;
+    var stdout = process.StandardOutput.ReadToEndAsync();
+    var stderr = process.StandardError.ReadToEnd();
+    process.WaitForExit();
+    return (process.ExitCode, stdout.Result, stderr);
 }
 
 static bool SubcommandsNeverReplaceTheirInput(string scenetake, string repoRoot, string work)
@@ -930,6 +1026,7 @@ static bool ScenarioErrorsStopBeforePre(string scenetake, string repoRoot, strin
         ("nulcwd", $"cwd: \"{nulCwd}\"\nsteps:\n  - run: echo hi\n", "cwd cannot contain a NUL character"),
         ("list", "steps:\n  - run: [echo, hi]\n", "Error: Step key 'run' must be a command string"),
         ("nocwd", $"cwd: '{cwd}/no-such-folder'\nsteps:\n  - run: echo hi\n", "Error: cwd folder does not exist"),
+        ("norelcwd", "cwd: no-such-folder\nsteps:\n  - run: echo hi\n", $"(resolved against the scenario's folder: {Path.Combine(directory, "no-such-folder")})"),
         ("nosteps", "step:\n  - run: echo hi\n", "Error: The scenario has no steps to record"),
         ("emptysteps", "steps:\n  - \"\"\n", "Error: The scenario has no steps to record"),
         ("colon", "steps:\n  - echo hi\n  - echo key: value\n", "Error: Step 2 has no 'run' key (keys: echo key)"),
@@ -952,6 +1049,263 @@ static bool ScenarioErrorsStopBeforePre(string scenetake, string repoRoot, strin
     }
 
     return refused;
+}
+
+static bool RelativeCwdFollowsScenarioFolder(string scenetake, string repoRoot, string work)
+{
+    // A relative cwd is resolved against the scenario file's folder, not the folder scenetake is started
+    // from: the same scenario runs in the same folder from anywhere. scenetake starts in the repository
+    // here, and pre, a pipe step, a PTY step and post must all write their marker in <scenario folder>/inner.
+    var directory = Directory.CreateDirectory(Path.Combine(work, "relative-cwd", "scenario")).FullName;
+    var inner = Directory.CreateDirectory(Path.Combine(directory, "inner")).FullName;
+    var sibling = Directory.CreateDirectory(Path.Combine(work, "relative-cwd", "sibling")).FullName;
+    var scenario = Path.Combine(directory, "relative.yaml");
+    File.WriteAllText(scenario, """
+        width: 40
+        height: 6
+        cwd: inner
+        pre:
+          - echo pre > pre.txt
+        steps:
+          - run: echo step > step.txt
+          - run: echo pty > pty.txt
+            pty: true
+        post:
+          - echo post > post.txt
+        """);
+    var parent = Path.Combine(directory, "parent.yaml");
+    File.WriteAllText(parent, "width: 40\nheight: 6\ncwd: ../sibling\nsteps:\n  - run: echo up > up.txt\n");
+
+    var (exit, stderr) = Exec(scenetake, repoRoot, [scenario]);
+    var (parentExit, parentStderr) = Exec(scenetake, repoRoot, [parent]);
+    var marked = new[] { "pre.txt", "step.txt", "pty.txt", "post.txt" }.All(name => File.Exists(Path.Combine(inner, name)))
+        && File.Exists(Path.Combine(sibling, "up.txt"))
+        && !File.Exists(Path.Combine(repoRoot, "step.txt")) && !File.Exists(Path.Combine(repoRoot, "up.txt"));
+    if (exit != 0 || parentExit != 0 || !marked)
+        Console.Error.WriteLine($"  exit {exit}, parent exit {parentExit}{Environment.NewLine}{stderr}{parentStderr}");
+    return exit == 0 && parentExit == 0 && marked;
+}
+
+static bool UnknownKeysWarnWithHints(string scenetake, string repoRoot, string work)
+{
+    // A key scenetake does not read used to be ignored without a word, so `hightlight` or `ptty` turned
+    // the feature off silently. Each is a warning with where it is and what was likely meant, and the
+    // recording still runs. The published binary matters here: under Native AOT the YAML map reading
+    // needs VYaml's object formatter, and a failure there would drop every warning.
+    var directory = Directory.CreateDirectory(Path.Combine(work, "unknown-keys")).FullName;
+    var scenario = Path.Combine(directory, "typos.yaml");
+    File.WriteAllText(scenario, """
+        width: 40
+        height: 6
+        setting:
+          typing-speed: 0.01
+        settings:
+          typing_speed: 0.01
+          pty: true
+        render:
+          fontsize: 16
+          theme:
+            preest: dark
+        font-size: 16
+        steps:
+          - &base
+            run: echo hi
+            hightlight:
+              - color: green
+                at: "1"
+            ptty: true
+          - run: echo two
+            highlight:
+              - colour: green
+                at: "1"
+          - <<: *base
+            run: echo three
+            cwd: x
+            TypingSpeed: 0.1
+        """);
+    var (exit, stderr) = Exec(scenetake, repoRoot, [scenario]);
+    string[] expected =
+    [
+        "Warning: unknown key 'setting' at the top level (did you mean 'settings'?)",
+        "Warning: unknown key 'font-size' at the top level (it belongs under render)",
+        "Warning: unknown key 'typing_speed' in settings (did you mean 'typing-speed'?)",
+        "Warning: unknown key 'pty' in settings (it belongs in a step)",
+        "Warning: unknown key 'fontsize' in render (did you mean 'font-size'?)",
+        "Warning: unknown key 'preest' in render.theme (did you mean 'preset'?)",
+        "Warning: unknown key 'hightlight' in step 1 (did you mean 'highlight'?)",
+        "Warning: unknown key 'ptty' in step 1 (did you mean 'pty'?)",
+        "Warning: unknown key 'colour' in step 2 highlight 1 (did you mean 'color'?)",
+        "Warning: unknown key '<<' in step 3 (YAML merge keys are not supported, so nothing is merged)",
+        "Warning: unknown key 'cwd' in step 3 (it belongs at the top level)",
+        "Warning: unknown key 'TypingSpeed' in step 3 (did you mean 'typing-speed'?)",
+    ];
+    var missing = expected.Where(line => !stderr.Contains(line, StringComparison.Ordinal)).ToList();
+    var warnings = stderr.Split('\n').Count(line => line.Contains("unknown key", StringComparison.Ordinal));
+    var ok = exit == 0 && missing.Count == 0 && warnings == expected.Length && File.Exists(Path.Combine(directory, "typos.cast"));
+    if (!ok)
+        Console.Error.WriteLine($"  exit {exit}, {warnings} warnings, missing:{Environment.NewLine}  {string.Join(Environment.NewLine + "  ", missing)}{Environment.NewLine}{stderr}");
+    return ok;
+}
+
+static bool StrictStopsAtFirstFailure(string scenetake, string repoRoot, string work)
+{
+    // A failing step is demo content by default: a warning, and the recording goes on to exit 0. With
+    // --strict the first failing step ends the recording, as an error does: later steps do not run (they
+    // may depend on it, and they run real commands), nothing is written, so the cast of an earlier run
+    // stays, and post runs. With no cast to look at, the end of the step's output is in the error, as
+    // plain text. A step with continue-on-error is neither a warning nor a stop. A PTY step's output is
+    // shown too. Other subcommands have no steps and refuse the option.
+    var directory = Directory.CreateDirectory(Path.Combine(work, "strict")).FullName;
+    var cwd = directory.Replace('\\', '/');
+    var failing = Path.Combine(directory, "failing.yaml");
+    File.WriteAllText(failing, $"""
+        width: 40
+        height: 6
+        shell: bash
+        cwd: '{cwd}'
+        steps:
+          - echo ok
+          - run: exit 4
+            continue-on-error: true
+          - run: |-
+              printf '\033[31mcompiling\033[0m\n50%%\r100%%\n'; echo 'build failed here' >&2; exit 3
+          - echo after > after-ran.txt
+        post:
+          - echo ran > post-ran.txt
+        """);
+    var pty = Path.Combine(directory, "pty.yaml");
+    File.WriteAllText(pty, $"width: 40\nheight: 6\nshell: bash\ncwd: '{cwd}'\nsteps:\n  - run: echo pty-boom; exit 5\n    pty: true\n");
+    var afterRan = Path.Combine(directory, "after-ran.txt");
+    var postRan = Path.Combine(directory, "post-ran.txt");
+
+    var (plainExit, plainStderr) = Exec(scenetake, repoRoot, [failing, Path.Combine(directory, "plain")]);
+    var plainRanAll = File.Exists(afterRan) && File.Exists(Path.Combine(directory, "plain.cast"));
+
+    File.Delete(afterRan);
+    File.Delete(postRan);
+    var earlierCast = Path.Combine(directory, "strict.cast");
+    File.WriteAllText(earlierCast, "cast of an earlier run");
+    var (strictExit, strictStderr) = Exec(scenetake, repoRoot, ["--strict", failing, Path.Combine(directory, "strict")]);
+    var strictStopped = !File.Exists(afterRan) && File.Exists(postRan) && File.ReadAllText(earlierCast) == "cast of an earlier run";
+
+    var (ptyExit, ptyStderr) = Exec(scenetake, repoRoot, ["--strict", pty, Path.Combine(directory, "pty")]);
+    var (svgExit, svgStderr) = Exec(scenetake, repoRoot, ["svg", "--strict", "samples/basic.cast", Path.Combine(directory, "basic.svg")]);
+
+    var ok = plainExit == 0 && plainRanAll
+        && plainStderr.Contains("Warning: step exited 3: printf", StringComparison.Ordinal)
+        && !plainStderr.Contains("exited 4", StringComparison.Ordinal)
+        && strictExit == 1 && strictStopped
+        && strictStderr.Contains("Error: --strict stopped at step 3, which exited 3: printf", StringComparison.Ordinal)
+        && strictStderr.Contains("  | compiling", StringComparison.Ordinal)
+        && strictStderr.Contains("  | 100%", StringComparison.Ordinal)
+        && !strictStderr.Contains("  | 50%", StringComparison.Ordinal)
+        && strictStderr.Contains("  | build failed here", StringComparison.Ordinal)
+        && strictStderr.Contains("Nothing was written. Set 'continue-on-error: true' on a step that is meant to fail.", StringComparison.Ordinal)
+        && !strictStderr.Contains('\u001b')
+        && !strictStderr.Contains("Warning: step exited", StringComparison.Ordinal)
+        && ptyExit == 1
+        && ptyStderr.Contains("Error: --strict stopped at step 1, which exited 5: echo pty-boom; exit 5", StringComparison.Ordinal)
+        && ptyStderr.Contains("  | pty-boom", StringComparison.Ordinal)
+        && svgExit == 1 && svgStderr.Contains("unknown option: --strict", StringComparison.Ordinal);
+    if (!ok)
+        Console.Error.WriteLine($"  plain {plainExit} (ran all: {plainRanAll}), strict {strictExit} (stopped: {strictStopped}), pty {ptyExit}, svg {svgExit}{Environment.NewLine}{plainStderr}{strictStderr}{ptyStderr}{svgStderr}");
+    return ok;
+}
+
+static bool KnownKeysDoNotWarn(string scenetake, string repoRoot, string work)
+{
+    // No key scenetake reads may be reported: every key in spec_scenario.md, the samples, the test
+    // fixtures, and what init writes for each shell. --format mp4 with an ffmpeg that does not exist
+    // stops each run before anything executes, after the key check has printed.
+    var directory = Directory.CreateDirectory(Path.Combine(work, "known-keys")).FullName;
+    var everyKey = Path.Combine(directory, "every-key.yaml");
+    File.WriteAllText(everyKey, """
+        title: "every key"
+        width: 40
+        height: 6
+        cwd: .
+        shell: bash
+        settings:
+          prompt: "$ "
+          typing-speed: 0.01
+          typing-jitter: 0.01
+          pre-delay: 0.1
+          post-delay: 0.1
+          execution-duration: 0.1
+          stderr-color: red
+          stream-output: false
+          max-duration: 10
+          silence-threshold: 2
+          max-idle: 0.2
+        render:
+          font-size: 16
+          font-family: monospace
+          window: macos
+          theme:
+            preset: dark
+            fg: "#ffffff"
+            bg: "#000000"
+            palette: "#000:#111:#222:#333:#444:#555:#666:#777:#888:#999:#aaa:#bbb:#ccc:#ddd:#eee:#fff"
+        pre:
+          - echo pre
+        steps:
+          - echo string form
+          - name: "[cyan]map form"
+            run: echo map form
+            typing-speed: 0.01
+            typing-jitter: 0.01
+            pre-delay: 0.1
+            post-delay: 0.1
+            execution-duration: 0.1
+            stream-output: true
+            max-duration: 5
+            silence-threshold: 1
+            max-idle: 0.1
+            run-highlight: bold
+            highlight:
+              - color: green
+                at: "1"
+            stderr-color: yellow
+            continue-on-error: true
+          - run: echo tty
+            pty: true
+            interactive: true
+            normalize-typing: true
+        post:
+          - echo post
+        """);
+
+    var files = new List<string> { everyKey };
+    files.AddRange(Directory.EnumerateFiles(Path.Combine(repoRoot, "samples"), "*.yaml"));
+    files.AddRange(Directory.EnumerateFiles(Path.Combine(repoRoot, "tests", "fixtures"), "*.yaml"));
+    foreach (var shell in new[] { "", "bash", "pwsh", "powershell" })
+    {
+        var init = Path.Combine(directory, $"init-{(shell.Length == 0 ? "default" : shell)}.yaml");
+        File.Delete(init);
+        Exec(scenetake, repoRoot, shell.Length == 0 ? ["init", init] : ["init", "--shell", shell, init]);
+        files.Add(init);
+    }
+
+    var missingFfmpeg = new Dictionary<string, string> { ["SCENETAKE_FFMPEG"] = Path.Combine(directory, "no-such-ffmpeg") };
+    var clean = true;
+    foreach (var file in files)
+    {
+        if (!File.Exists(file))
+        {
+            Console.Error.WriteLine($"  missing {file}");
+            clean = false;
+            continue;
+        }
+
+        var (_, stderr) = Exec(scenetake, repoRoot, ["--format", "mp4", file, Path.Combine(directory, "out")], missingFfmpeg);
+        if (stderr.Contains("unknown key", StringComparison.Ordinal) || stderr.Contains("has no 'run' key", StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine($"  {Path.GetFileName(file)}:{Environment.NewLine}{stderr}");
+            clean = false;
+        }
+    }
+
+    return clean;
 }
 
 static bool UnixPowerShellRunsCommands(string scenetake, string repoRoot, string work)

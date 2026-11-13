@@ -43,6 +43,10 @@ failures += Run("SaveRestoreKeepsCharsets", SaveRestoreKeepsCharsets);
 failures += Run("ResetDropsSoftFonts", ResetDropsSoftFonts);
 failures += Run("SingleShiftMapsOneCharacter", SingleShiftMapsOneCharacter);
 failures += Run("CastCursorTrackerFollowsEvents", CastCursorTrackerFollowsEvents);
+failures += Run("OscFilterDropsTitlesAndPaths", OscFilterDropsTitlesAndPaths);
+failures += Run("OscFilterFollowsSequencesAcrossEvents", OscFilterFollowsSequencesAcrossEvents);
+failures += Run("OscFilterKeepsColorsAndOtherEscapes", OscFilterKeepsColorsAndOtherEscapes);
+failures += Run("OscFilterKeepsEventsWithoutOsc", OscFilterKeepsEventsWithoutOsc);
 
 return failures == 0 ? 0 : 1;
 
@@ -556,6 +560,81 @@ static bool SoftFontEraseControl()
 
     return GlyphIs(buffer.GetCell(0, 0), Diagonal()) && GlyphIs(buffer.GetCell(0, 1), TopBar())
         && buffer.GetCell(0, 2) is { Text: " ", Glyph: null } && GlyphIs(buffer.GetCell(0, 3), TopBar());
+}
+
+static string OscFilterText(List<CastEvent> events) =>
+    string.Concat(events.Where(e => e.Kind == CastEventKind.Output)
+        .Select(e => e.HasUtf8Output ? Encoding.UTF8.GetString(e.Utf8Output.Span) : e.Data));
+
+static bool OscFilterDropsTitlesAndPaths()
+{
+    // ConPTY's title is the shell's full path. vim, shells and ls put folders, host names and file URLs in
+    // OSC 0/2, 7, 9;9, 133, 633 and 8; OSC 52 carries the clipboard. Only what a terminal draws is left.
+    var events = new List<CastEvent>
+    {
+        CastEvent.OutputUtf8(0, Encoding.UTF8.GetBytes("out 日本\r\n\u001b]0;C:\\Users\\me\\scoop\\shims\\pwsh.EXE\a\u001b[?25h")),
+        CastEvent.Output(0.1, "\u001b]2;README.md (D:\\work\\secret) - VIM\u001b\\vim"),
+        CastEvent.Output(0.2, "\u001b]7;file://host/home/me\a\u001b]9;9;C:\\Users\\me\a\u001b]133;A\a\u001b]633;P;Cwd=/home/me\a$ "),
+        CastEvent.Output(0.3, "\u001b]8;;file://host/home/me/a.txt\aa.txt\u001b]8;;\a \u001b]52;c;c2VjcmV0\a\u001b]l old-style title\u001b\\"),
+    };
+    var filtered = CastOscFilter.RemovePrivateSequences(events);
+    var text = OscFilterText(filtered);
+    var ok = text == "out 日本\r\n\u001b[?25hvim$ a.txt " && filtered.Count == 4;
+    if (!ok)
+        Console.Error.WriteLine($"  text: {text.Replace("\u001b", "\\e")} ({filtered.Count} events)");
+    return ok;
+}
+
+static bool OscFilterFollowsSequencesAcrossEvents()
+{
+    // A PTY read can end anywhere in a sequence: after ESC, inside the code, inside the body, or between
+    // the ESC and backslash of ST. An event left with nothing is dropped, except the last one, which
+    // sets the recording's length and stays empty.
+    var events = new List<CastEvent>
+    {
+        CastEvent.OutputUtf8(0.0, "a\u001b"u8.ToArray()),
+        CastEvent.OutputUtf8(0.1, "]"u8.ToArray()),
+        CastEvent.OutputUtf8(0.2, "0;C:\\Users\\me"u8.ToArray()),
+        CastEvent.OutputUtf8(0.3, "\\pwsh.EXE\u001b"u8.ToArray()),
+        CastEvent.OutputUtf8(0.4, "\\b\u001b"u8.ToArray()),
+        CastEvent.Marker(0.45, "step"),
+        CastEvent.OutputUtf8(0.5, "[1mc\u001b]2"u8.ToArray()),
+        CastEvent.OutputUtf8(0.6, ";title\a"u8.ToArray()),
+    };
+    var filtered = CastOscFilter.RemovePrivateSequences(events);
+    var text = OscFilterText(filtered);
+    var times = string.Join(",", filtered.Select(e => e.Time.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)));
+    var ok = text == "ab\u001b[1mc"
+        && times == "0,0.4,0.45,0.5,0.6"
+        && filtered[^1].Kind == CastEventKind.Output && OscFilterText([filtered[^1]]) == ""
+        && filtered[2].Kind == CastEventKind.Marker;
+    if (!ok)
+        Console.Error.WriteLine($"  text: {text.Replace("\u001b", "\\e")} times: {times}");
+    return ok;
+}
+
+static bool OscFilterKeepsColorsAndOtherEscapes()
+{
+    // Color OSCs set the palette and stay. CSI, DCS (soft fonts) and a bare ESC are not OSCs. An ESC inside
+    // a dropped OSC that is not ST ends it, and the sequence it starts is kept.
+    var input = "\u001b]4;1;rgb:ff/00/00\a\u001b]11;#000000\u001b\\\u001b]104\a\u001b[31mred\u001b[0m\u001bP1;1{ @\u001b\\\u001b7\u001b]0;t\u001b[2Kx";
+    var filtered = CastOscFilter.RemovePrivateSequences([CastEvent.Output(0, input)]);
+    var text = OscFilterText(filtered);
+    var expected = "\u001b]4;1;rgb:ff/00/00\a\u001b]11;#000000\u001b\\\u001b]104\a\u001b[31mred\u001b[0m\u001bP1;1{ @\u001b\\\u001b7\u001b[2Kx";
+    if (text != expected)
+        Console.Error.WriteLine($"  text: {text.Replace("\u001b", "\\e")}");
+    return text == expected;
+}
+
+static bool OscFilterKeepsEventsWithoutOsc()
+{
+    // Events without an OSC are passed on as they are: same instance data, string events stay strings.
+    var typed = CastEvent.Output(0, "🎉");
+    var sgr = CastEvent.Output(0.1, "\u001b[1;96m");
+    var bytes = CastEvent.OutputUtf8(0.2, "\u001b[?25lplain\r\n"u8.ToArray());
+    var filtered = CastOscFilter.RemovePrivateSequences([typed, sgr, bytes]);
+    return filtered.Count == 3 && filtered[0] == typed && filtered[1] == sgr
+        && filtered[2].Utf8Output.Equals(bytes.Utf8Output);
 }
 
 static bool OtherDcsStaySkipped()

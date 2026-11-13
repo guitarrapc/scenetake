@@ -53,6 +53,7 @@ else
 }
 
 failures += await RunAsync("IntegrationPtyRedrawKeepsRow", () => Task.FromResult(IntegrationPtyRedrawKeepsRow(repoRoot)));
+failures += await RunAsync("IntegrationCastKeepsPathsOut", () => Task.FromResult(IntegrationCastKeepsPathsOut(repoRoot)));
 
 return failures == 0 ? 0 : 1;
 
@@ -434,6 +435,45 @@ static bool IntegrationPtyRedrawKeepsRow(string repoRoot)
             && !output.Contains("\u001b[6n", StringComparison.Ordinal);
         if (!ok)
             Console.Error.WriteLine($"  cast output: {output.Replace("\u001b", "\\e", StringComparison.Ordinal).Replace("\r", "\\r", StringComparison.Ordinal).Replace("\n", "\\n", StringComparison.Ordinal)}");
+        return ok;
+    }
+    finally
+    {
+        foreach (var path in new[] { outputStem + ".cast", outputStem + ".svg" })
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+}
+
+static bool IntegrationCastKeepsPathsOut(string repoRoot)
+{
+    // A committed cast must not tell its readers where things are on the recording machine. The header
+    // used to hold the shell's full path (C:\Users\<name>\... for a scoop or winget pwsh), and PTY output
+    // held ConPTY's title, which is that path too, and the titles, folders, and links programs set.
+    if (!IntegrationTestsEnabled(repoRoot))
+        return true;
+
+    var fixturePath = Path.Combine(repoRoot, "tests", "fixtures", "pty-osc-private.yaml");
+    var outputStem = Path.Combine(Path.GetTempPath(), $"scenetake-pty-osc-{Guid.NewGuid():N}");
+    try
+    {
+        if (!RunScenetake(repoRoot, fixturePath, outputStem, out var exitCode) || exitCode != 0)
+            return false;
+
+        var cast = File.ReadAllText(outputStem + ".cast");
+        var header = cast[..cast.IndexOf('\n')];
+        var output = ReadCastOutput(outputStem + ".cast");
+        var ok = header.Contains("\"env\":{\"SHELL\":\"bash\"}", StringComparison.Ordinal)
+            && output.Contains("visible-pipe", StringComparison.Ordinal)
+            && output.Contains("link-text visible-pty", StringComparison.Ordinal)
+            && output.Contains("\u001b]11;#102030\acolors-kept", StringComparison.Ordinal)
+            && !cast.Contains("hidden", StringComparison.Ordinal)
+            // The color OSC is the only one left: no title (ConPTY's included), folder, or link.
+            && output.Split("\u001b]").Length == 2;
+        if (!ok)
+            Console.Error.WriteLine($"  header: {header}{Environment.NewLine}  cast output: {output.Replace("\u001b", "\\e", StringComparison.Ordinal).Replace("\r", "\\r", StringComparison.Ordinal).Replace("\n", "\\n", StringComparison.Ordinal)}");
         return ok;
     }
     finally

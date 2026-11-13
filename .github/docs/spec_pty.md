@@ -4,7 +4,7 @@ Status: **Implemented**
 
 ## Motivation
 
-Some CLI tools and terminal UIs behave differently when stdout is not a TTY: they disable color, skip animations, or refuse to run. scenetake records demos as asciinema casts; for commands that need a real terminal session, a step can opt into pseudo-terminal capture without changing the rest of the scenario format.
+Some tools disable color or animation, or refuse to run, when stdout is not a TTY. A scenario step can enable pseudo-terminal capture for commands that need a terminal session. Other steps retain pipe capture.
 
 PTY mode stays opt-in so ordinary steps keep predictable pipe-based stdout/stderr capture and declarative highlighting. YAML keys (`pty`, `width`, `height`): [spec_scenario.md](spec_scenario.md).
 
@@ -16,7 +16,7 @@ PTY mode stays opt-in so ordinary steps keep predictable pipe-based stdout/stder
 |---|---|
 | **MiniPty** / **MiniPty.Capture** | Spawn child in PTY, timestamped byte capture ([MiniPty spec](https://github.com/guitarrapc/MiniPty/blob/main/.github/docs/spec.md)) |
 | **MiniPty.Console** | Host-terminal attach for interactive `pty: true` steps ([MiniPty Console spec](https://github.com/guitarrapc/MiniPty/blob/main/.github/docs/spec_console.md)) |
-| **scenetake** | Map capture chunks to cast `o` events; shell launch; failure handling |
+| **scenetake** | Map capture chunks to cast `o` events. Shell launch. Failure handling |
 
 ### Out of scope (v1)
 
@@ -28,25 +28,38 @@ PTY mode stays opt-in so ordinary steps keep predictable pipe-based stdout/stder
 
 When a map-form step has `pty: true` (default `false`):
 
-- **Simulated typing** — scenetake emits the same prompt, per-character typed command, optional `run-highlight`, and synthetic Enter used by non-PTY steps before the PTY output begins. The command is still executed as a PTY shell command; typing is a recording effect, not PTY stdin.
+- **Simulated typing** — scenetake emits the same prompt, per-character typed command, optional `run-highlight`, and synthetic Enter used by non-PTY steps before the PTY output begins. The command is still executed as a PTY shell command. Typing is a recording effect, not PTY stdin.
 - **PTY geometry** — uses scenario `width` × `height` (same as cast header terminal size).
 - **Shell interpretation** — the `run` string is passed to the scenario `shell` the same way as non-PTY execution (`pwsh -Command`, `cmd /c`, `bash -lc`, etc.). PTY does not bypass the shell.
 - **Color environment** — the PTY child gets `COLORTERM=truecolor` like every scenario command, replacing any host value ([spec_scenario.md](spec_scenario.md) → Command Environment). The child sees scenetake's PTY, not the host terminal, so host hints such as `WT_SESSION` say nothing about what the recording can show.
 - **Merged output** — stdout and stderr are one byte stream. `stderr-color` and pipe-style `highlight` do not apply to PTY output for that step.
-- **Timestamped chunks** — output is read while the child runs; cast `o` events use `command_start + chunk_time` on the scenario timeline when stream emit is enabled (see [spec_scenario.md](spec_scenario.md) → Output timing). When stream emit is off, PTY bytes are still timestamped internally but merged according to the existing startup-offset rules before write.
+- **Timestamped chunks** — output is read while the child runs. Cast `o` events use `command_start + chunk_time` on the scenario timeline when stream emit is enabled (see [spec_scenario.md](spec_scenario.md) → Output timing). When stream emit is off, PTY bytes are still timestamped internally but merged according to the existing startup-offset rules before write.
 - **Startup timing** — after `PtyLeadingInitFilter` produces the first cast `o` event, scenetake may shift all chunk times earlier so that output appears no later than non-PTY steps (`execution-duration` after `command_start`). When the first emitted chunk is already faster than that threshold, times are unchanged. Inter-chunk spacing (for example TUI frame intervals) is not scaled unless stream emit and `max-duration` are set.
-- **Raw byte stream with startup cleanup** — no newline normalization; ANSI sequences may span chunk boundaries. Shell-startup cleanup and immediate alternate-screen exit cleanup are filtered before cast events are written so PTY steps compose with surrounding pipe-recorded steps.
-- **No PTY fallback** — if a PTY cannot be created, the run fails fatally. scenetake does not fall back to pipe redirect execution.
+- **Raw byte stream with startup cleanup** — no newline normalization. ANSI sequences may span chunk boundaries. Shell-startup cleanup and immediate alternate-screen exit cleanup are filtered before cast events are written so PTY steps compose with surrounding pipe-recorded steps.
+- **No PTY fallback** — if a PTY cannot be created, the run fails fatally. Scenetake does not fall back to pipe redirect execution.
 
 ### Screen-state continuity
 
-For every `pty: true` step, scenetake removes shell initialization sequences from the beginning of that PTY capture before writing cast `o` events. This supports mixed scenarios where an ordinary step is followed by a PTY command and the PTY shell startup would otherwise clear the accumulated terminal state. It applies both to lightweight commands such as `echo` and alternate-screen TUI commands such as `matrix`, where the TUI should run full-screen and then return to the previous main-screen history. It is also valid on the first step; in that case there may simply be no prior screen state to preserve.
+scenetake removes leading shell initialization controls from every `pty: true` capture before writing cast events. This prevents shell startup from clearing output recorded by earlier steps. It applies to ordinary PTY commands and alternate-screen TUIs, which should restore the previous main-screen history. It also applies to the first step, even without earlier output.
 
-The filter applies first to the leading initialization phase, before the first meaningful user output. It strips common shell startup controls such as full-screen erase (`CSI 2 J`), erase-to-screen-end (`CSI J`, `CSI 0 J`, `CSI 1 J`), cursor home / position (`CSI H`, `CSI row;col H`, `CSI row;col f`), the cursor position query (`CSI 6 n`), cursor visibility toggles, SGR reset, OSC title updates, and platform mode toggles such as ConPTY/focus/bracketed-paste private modes.
+Before the first meaningful output, the filter removes these shell startup controls:
 
-**ConPTY starts at the recording's cursor.** On Windows a non-interactive `pty: true` step starts ConPTY with `PSEUDOCONSOLE_INHERIT_CURSOR` (MiniPty `InheritCursor`) and writes a cursor position report (`ESC[row;colR`) to its input before the child runs. scenetake gets that position by playing the events recorded so far on a screen of the scenario's size, the same terminal model the SVG and mp4 renderers use. ConPTY then treats the rows above as already in use: it continues on the recording's row, redraws a line with `\r`, and scrolls in step with the recording, as a Unix PTY does. Without it ConPTY assumes an empty screen with its cursor on row 1 and addresses rows from there, so a progress bar redrawn with `\r` was written as `ESC[H` and covered the earlier output. ConPTY consumes the report, so the child never reads it, and the query it sends (`CSI 6 n`) is in the leading phase, where the filter drops it. A Unix PTY has no screen model and is started as before. An interactive step is started as before too: its output is drawn on the host terminal as well, whose cursor is not the recording's.
+- Screen erase: `CSI 2 J`, `CSI J`, `CSI 0 J`, and `CSI 1 J`.
+- Cursor home and position: `CSI H`, `CSI row;col H`, and `CSI row;col f`.
+- Cursor position queries: `CSI 6 n`.
+- Cursor visibility changes and SGR reset.
+- OSC title updates.
+- ConPTY, focus, and bracketed-paste private modes.
 
-The leading phase ends as soon as printable output appears, an alternate-screen mode (`?1049`, `?1047`, or `?47`) appears, or a 4096-byte safety limit is reached. Alternate-screen enter/exit sequences are not stripped, so TUI commands retain their own terminal behavior. When an alternate-screen exit is followed immediately by main-screen cleanup controls such as cursor home, line erase, blank-line advancement, cursor visibility toggles, SGR reset, or platform private-mode toggles, those cleanup controls are stripped so the restored main-screen history remains visible. Other bytes after the leading phase are recorded unchanged.
+Cast writing also removes later non-color OSC sequences, including in interactive steps ([spec_cast.md](spec_cast.md) → Sequences left out). ConPTY can send the shell's full path as a title after the first output.
+
+**ConPTY starts at the recording's cursor.** Non-interactive Windows PTY steps use `PSEUDOCONSOLE_INHERIT_CURSOR` (MiniPty `InheritCursor`). Before the child starts, scenetake sends a cursor position report (`ESC[row;colR`). The position comes from replaying existing events with the same terminal model used by SVG and mp4.
+
+ConPTY then preserves preceding rows, redraws lines with `\r`, and scrolls with the recording. Without this position, ConPTY starts at row 1 and can overwrite earlier output. ConPTY consumes the report before the child reads input. Its `CSI 6 n` query is removed during startup filtering.
+
+Unix PTY startup is unchanged because Unix PTYs have no screen model. Interactive startup is also unchanged because output uses the host terminal, whose cursor can differ from the recording's.
+
+The leading phase ends at printable output, alternate-screen entry (`?1049`, `?1047`, or `?47`), or the 4096-byte safety limit. Alternate-screen entry and exit remain intact. Immediately after exit, the filter removes main-screen cleanup controls to preserve restored history. These include cursor home, line erase, blank-line advancement, cursor visibility, SGR reset, and private-mode changes. Other bytes remain unchanged.
 
 When `pty: false` (default):
 
@@ -60,19 +73,19 @@ PTY capture records bytes from the child session. Terminal rendering (ANSI parsi
 
 When a map-form step has `pty: true` and `interactive: true` (default `false`):
 
-- **Host terminal required** — stdin and stdout on the scenetake process must not be redirected. scenetake checks this before `pre` runs when any step is interactive, so `pre` and the steps before it do not run only to be thrown away. scenetake attaches the host console to the PTY child via **MiniPty.Console** until the child exits.
-- **Simulated typing first** — the same prompt, per-character command typing, and synthetic Enter used by other steps are emitted on the cast timeline **before** the interactive session begins. Typing is a recording effect; keystrokes during the session go to the PTY through the host terminal, not through the pre-recorded typing.
+- **Host terminal required** — stdin and stdout on the scenetake process must not be redirected. Scenetake checks this before `pre` runs when any step is interactive, so `pre` and the steps before it do not run only to be thrown away. Scenetake attaches the host console to the PTY child via **MiniPty.Console** until the child exits.
+- **Simulated typing first** — scenetake records the prompt, typed command, and synthetic Enter before the interactive session, as with other steps. Typing is a recording effect. Keystrokes during the session go to the PTY through the host terminal, not through the pre-recorded typing.
 - **Live output on host** — PTY output is pumped to the host stdout while the session runs so the author can see the TUI.
-- **Wall-clock cast times (default)** — buffered PTY chunks keep measured arrival times. cast `o` events use `command_start + chunk_time`. **No** startup-offset compress, burst merge, idle collapse, or `stream-output` pipeline for interactive steps.
-- **`normalize-typing: true` (opt-in)** — requires `interactive: true`. Each host keystroke opens a short **echo window** (~450ms). PTY output **outside** those windows (banner, streamed AI, redraws) stays wall-clock. **Inside** echo windows: chunks with ANSI/ESC pass through unchanged; multi-byte or long chunks pass through (banner box-drawing); short printable echo bytes are **retimed** at `typing-speed` while preserving raw PTY bytes (cursor layout intact). Input log filters out echo for characters later erased by Backspace before they reach the cast. After normalization, long **idle gaps** between output bursts (measured on original wall-clock times) collapse using scenario `silence-threshold` (default `2.0`s) and `max-idle` (default `0.2`s) — banner frame intervals under the threshold stay real-time; think-time pauses shrink.
-- **Parallel input log** — host keystrokes are recorded as `PtyInputChunks` via `IPtyConsoleInputObserver` (required for `normalize-typing`). The log only times and matches echo; the cast holds PTY output, never typed keys.
-- **Password keys are not logged** — on Unix, keys typed while the child reads a password (terminal echo off, canonical mode on, as `PtySession.InputMode` reports when each key is forwarded) are left out of the input log. They open no echo window, and `normalize-typing` does not wait for an echo that never comes. A prompt that echoes a mask character per key reads in raw mode and is not recognized. Windows reports no input mode, so every key is logged there.
-- **Startup cleanup only** — `PtyLeadingInitFilter` runs on the buffered bytes (same screen-state continuity rules as non-interactive PTY).
-- **Fixed PTY geometry** — `SyncHostSize = false` so the child uses scenario `width` × `height`.
-- **Step ends on child exit** — for example `:wq` in vim or command completion.
-- **Status on stderr** — attach progress and verbose chunk logs (output + input event counts) go to stderr so they do not mix with the PTY byte stream on Unix.
-- **`normalize-typing` scope** — insert-mode end-of-line typing with Backspace correction stripping; normal-mode cursor motion (`hjkl`) does not add extra cast events. Normal-mode destructive edits (`x`, `dd`, `dw`) are not normalized yet.
-- **No stream pipeline or forced kill** — `stream-output`, `max-duration`, and per-step timeline compression do not apply to interactive steps. There is no `max-duration` forced kill of a running interactive session.
+- **Wall-clock cast times (default)** — buffered PTY chunks keep measured arrival times. Cast `o` events use `command_start + chunk_time`. **No** startup-offset compress, burst merge, idle collapse, or `stream-output` pipeline for interactive steps.
+- **`normalize-typing: true` (opt-in)** — requires `interactive: true`. Each host keystroke opens a short **echo window** (~450ms). PTY output **outside** those windows (banner, streamed AI, redraws) stays wall-clock. **Inside** echo windows: chunks with ANSI/ESC pass through unchanged. Multi-byte or long chunks pass through (banner box-drawing). Short printable echo bytes are **retimed** at `typing-speed` while preserving raw PTY bytes (cursor layout intact). Input log filters out echo for characters later erased by Backspace before they reach the cast. After normalization, idle gaps use the original wall-clock times. Gaps exceeding `silence-threshold` (default `2.0`s) shrink to `max-idle` (default `0.2`s). Banner frame intervals below the threshold retain their timing. Think-time pauses shrink.
+- **Parallel input log** — host keystrokes are recorded as `PtyInputChunks` via `IPtyConsoleInputObserver` (required for `normalize-typing`). The log only times and matches echo. The cast holds PTY output, never typed keys.
+- **Password keys are not logged** — Unix excludes keys when terminal echo is off and canonical mode is on. `PtySession.InputMode` reports the mode when each key is forwarded. These keys open no echo window, so normalization does not wait for absent echoes. Masked prompts that use raw mode are not recognized. Windows reports no input mode and logs every key.
+- **Startup cleanup only** — `PtyLeadingInitFilter` applies the same screen continuity rules as non-interactive PTY steps.
+- **Fixed PTY geometry** — `SyncHostSize = false` keeps scenario `width` × `height`.
+- **Step ends on child exit** — for example, `:wq` in vim or command completion.
+- **Status on stderr** — attach progress and verbose output/input counts use stderr, separate from the Unix PTY stream.
+- **`normalize-typing` scope** — supports insert-mode typing at line end and Backspace corrections. Normal-mode cursor motion (`hjkl`) adds no cast events. Destructive normal-mode edits (`x`, `dd`, `dw`) are not normalized.
+- **No interactive duration limit** — `stream-output`, `max-duration`, and per-step compression do not apply. `max-duration` does not terminate an interactive session.
 
 | Condition | Behavior |
 |---|---|
@@ -100,11 +113,11 @@ PTY steps follow the same **recorded step** exit-code rules as pipe steps. See [
 
 | Condition | Behavior |
 |---|---|
-| Child non-zero exit | Warning on stderr; recording continues; scenetake exits `0` (same as pipe `steps`) |
-| PTY spawn / ConPTY / `openpty` failure | Fatal error; the recording stops |
+| Child non-zero exit | Warning on stderr. Recording continues. Scenetake exits `0` (same as pipe `steps`) |
+| PTY spawn / ConPTY / `openpty` failure | Fatal error. The recording stops |
 | Output drain timeout | Fatal error (`TimeoutException` from capture) |
 | Interactive step on non-TTY host | Fatal error at step entry |
-| Cancel during interactive attach | Host terminal restored on dispose; scenario aborts if the run is interrupted |
+| Cancel during interactive attach | Host terminal restored on dispose. Scenario aborts if the run is interrupted |
 
 Each fatal error stops the recording: no cast is written, `post` runs, and scenetake exits `1`, or with the failing `post` command's code ([spec_pre_post.md](spec_pre_post.md)).
 
@@ -131,18 +144,18 @@ Integration tests require `SCENETAKE_BIN` pointing at a published scenetake bina
 
 ## Lessons Learned
 
-- Pipe redirect is not a PTY; ConPTY is required on Windows for TUI tools.
+- Pipe redirect is not a PTY. ConPTY is required on Windows for TUI tools.
 - Keeping `pty` opt-in preserves simpler pipe behavior for ordinary commands.
-- Treating screen-state continuity as the default PTY behavior matches user expectations: `pty: true` means a command needs a terminal, not that shell startup clears should become visible demo content.
-- PTY command typing should be emitted by default for visual continuity with pipe steps, but it remains a recording effect. The command still runs through the configured shell in the PTY; scenetake does not inject the typed characters into PTY stdin.
-- Alternate-screen TUI tools may restore the main screen and then emit extra cleanup controls. Preserving the alternate-screen enter/exit while filtering that immediate main-screen cleanup keeps the TUI behavior intact and returns the viewer to the previous history. The cleanup phase must not end early on private-mode toggles such as `?12h` (cursor blink) between `?1049l` and the erase-to-end-of-line / cursor-home sequences; Copilot CLI exhibits this pattern.
-- Interactive PTY steps need the output pump running **before** `PtyConsoleInput.Attach` on Windows ConPTY; reversing that order can stall the session.
+- PTY startup should preserve earlier output. `pty: true` requests a terminal, so shell initialization should not clear the recording.
+- PTY command typing should be emitted by default for visual continuity with pipe steps, but it remains a recording effect. The command still runs through the configured shell in the PTY. Scenetake does not inject the typed characters into PTY stdin.
+- Alternate-screen TUI tools may restore the main screen and then emit extra cleanup controls. Preserving the alternate-screen enter/exit while filtering that immediate main-screen cleanup keeps the TUI behavior intact and returns the viewer to the previous history. The cleanup phase must not end early on private-mode toggles such as `?12h` (cursor blink) between `?1049l` and the erase-to-end-of-line / cursor-home sequences. Copilot CLI exhibits this pattern.
+- Interactive PTY steps need the output pump running **before** `PtyConsoleInput.Attach` on Windows ConPTY. Reversing that order can stall the session.
 - Interactive steps record wall-clock chunk times so TUI motion (banner animations, spinner frames) replays at real speed in cast/SVG. Startup-offset compress applies only to non-interactive PTY.
-- **Host resize sync breaks vim/svg replay**: `PtyConsoleInput.Attach` defaults to resizing the PTY to the host console. vim then emits cursor addresses for the larger height (for example row 44 on a 44-row host) while the cast header stays at scenario `height` (24). SVG replay clamps out-of-range rows and corrupts the session. scenetake uses `PtyConsoleAttachOptions.SyncHostSize = false` so the PTY keeps scenario geometry.
+- **Host resize sync breaks vim/svg replay**: `PtyConsoleInput.Attach` defaults to resizing the PTY to the host console. Vim then emits cursor addresses for the larger height (for example row 44 on a 44-row host) while the cast header stays at scenario `height` (24). SVG replay clamps out-of-range rows and corrupts the session. Scenetake uses `PtyConsoleAttachOptions.SyncHostSize = false` so the PTY keeps scenario geometry.
 - On Unix, scenetake writes `\r\n` to host stdout after detach so the parent shell prompt realigns after raw-mode interactive output.
-- **`normalize-typing` matches echo to logged keys in order, so a logged password broke the rest of the step.** `sudo`, `ssh`, and `read -s` turn echo off and keep canonical mode on, so their password keys never come back as output. With those keys in the log, the matching waited for them and dropped later echoes that did not match. Driven through a PTY on Linux (2026-11-13), `read -s` followed by `read -p '> '` with `ls` typed recorded `> s` instead of `> ls`; the `s` survived only because it matched the password's first letter. With the password keys left out of the log, the same drive recorded `> ls` in 3 of 3 runs. MiniPty 1.6.0's `InputMode` reports the mode. MiniPty.Console calls the observer before it writes the key, so the Enter that ends the password still sees echo off. Echo off alone does not mean a password: vim and a shell's line editor turn off echo and canonical mode and draw the keys themselves.
-- **ConPTY drew a redrawn line on row 1.** In a scenario with output before a `pty: true` step, a progress bar redrawn with `\r` (`printf '\r[###] 50%'` in a loop) recorded each redraw as `ESC[?25l ESC[H ... ESC[?25h` on Windows: ConPTY renders from its own screen model, which started empty with the cursor on row 1. The bar covered the first rows of the recording, and the steps after it continued from there, so the final frame was scrambled. The same scenario in a Linux container recorded plain `\r` and rendered correctly. Starting ConPTY with `InheritCursor` and a cursor position report written up front fixes it (2026-11-13, Windows 11 26200): the redraws became `\r`, the startup `ESC[2J ESC[H` went away, the child did not read the report, a stdin-reading child got no extra input, and the run took no longer, because ConPTY holds output only until the report arrives and it is already there. Starting at row 29 of 30 scrolled in step with the recording. A full-screen TUI (`matrix`) rendered the same as before. As a side effect the OSC title ConPTY sets (the shell's path) now comes before the first output, where the filter drops it, instead of after it.
-- **The terminal check for interactive steps used to wait for the step.** A redirected stdin or stdout was found only when the interactive step began, after `pre` and every step before it had run, and the recording was then thrown away. Whether output is redirected does not change during a run, so the check now runs before `pre` with the other scenario checks.
-- Recorded step failures belong in the cast as demo content; only infrastructure failures (spawn, drain timeout) should stop the recording. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
-- A TUI behind ConPTY cannot detect Windows Terminal; it can only read `WT_SESSION` inherited from the shell that started scenetake. A pwsh without `WT_SESSION` made `matrix` fall back to 16 colors even though the recording renders 24-bit color. scenetake now sets `COLORTERM=truecolor` for PTY children instead of relying on host hints ([spec_scenario.md](spec_scenario.md) → Lessons Learned).
-- **The ConPTY changes what a soft font looks like on the wire.** The in-box ConPTY passes a DECDLD soft font through, but renames it, moves it to G1, and wraps its characters in SO/SI. It also answers the device attributes query itself, and lists soft fonts. On Unix nothing answers that query in scenetake's PTY. The renderer handles both byte streams, but whether a TUI sends a soft font at all depends on what it detects ([spec_svg.md](spec_svg.md) → Soft fonts).
+- **Password keys blocked later echo matching.** Normalization matches output to logged keys in order. Unix password input disables echo but keeps canonical mode, so those keys never appear in output. With password keys logged, matching discarded later echoes. A Linux PTY test on 2026-11-13 used `read -s`, then `read -p '> '` with `ls`. It recorded `> s` because `s` matched the password's first letter. Excluding password keys produced `> ls` in all three repeats. MiniPty 1.6.0 reports the input mode before forwarding each key, including the Enter that ends password entry. Echo alone cannot identify passwords: vim and shell editors disable echo and canonical mode, then draw characters themselves.
+- **ConPTY redraws overwrote earlier output.** Windows progress bars using `\r` became cursor-home sequences because ConPTY started with an empty screen at row 1. This overwrote preceding steps and disrupted later output. The same Linux scenario retained `\r` and rendered correctly. Tests on Windows 11 26200 (2026-11-13) confirmed that `InheritCursor` plus an initial position report preserved `\r` and removed startup clears. The child received no extra input, and runtime did not increase. ConPTY already had the report when it needed it. Starting at row 29 of 30 scrolled correctly, and `matrix` rendering was unchanged. The ConPTY title also arrived before the first output, where startup filtering removed it.
+- **Interactive terminal checks must precede `pre`.** Previously, redirected stdin or stdout failed only when the interactive step began. Setup and earlier steps ran before the recording was discarded. Redirection does not change during a run, so validation now checks it before `pre`.
+- Recorded failures normally remain demo content. `--strict` stops unexpected non-zero exits. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
+- ConPTY cannot identify Windows Terminal directly. Inherited `WT_SESSION` caused `matrix` to select 16 colors when absent, despite renderer support for 24-bit color. Setting `COLORTERM=truecolor` removes this dependency ([spec_scenario.md](spec_scenario.md) → Lessons Learned).
+- **ConPTY transforms soft-font sequences.** The Windows ConPTY renames DECDLD fonts, assigns them to G1, and surrounds characters with SO/SI. It answers device queries with soft-font support. Unix PTYs do not answer those queries. The renderer accepts both streams, but application detection controls whether a font is sent ([spec_svg.md](spec_svg.md) → Soft fonts).

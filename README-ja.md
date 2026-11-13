@@ -146,12 +146,14 @@ docker rm $id
 
 **Usage**
 
+`scenetake --help` は全コマンドとオプションの値の範囲・既定値を表示します。各コマンドのオプションは `scenetake svg --help`、`scenetake mp4 --help`、`scenetake init --help` で確認できます。
+
 ```bash
 # 新しいシナリオファイルを初期化
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
 # シナリオを実行して cast（既定）、cast + SVG、または cast + mp4 を生成
-scenetake [--verbose] [--format cast|svg|mp4]
+scenetake [--verbose] [--strict] [--format cast|svg|mp4]
   [--font-size N] [--font-family FAMILIES] [--theme dark|light]
   [--window none|macos|windows] [--max-fps N]
   [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH]
@@ -169,6 +171,10 @@ scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--the
 ```
 
 `--max-fps` は SVG アニメーションのフレームレート上限です（`0` = オフ、cast のタイミングをそのまま使用）。`--format svg` 時と `svg` サブコマンドで有効です。
+
+`--strict` は CI 向けです。`continue-on-error: true` を指定していない録画ステップが 0 以外で終了すると、録画を停止します。後続のステップは実行せず、出力も書きません。前回の出力ファイルはそのまま残し、`post` を実行します。終了コードは通常 `1` です。`post` のコマンドが失敗した場合は、そのコマンドの終了コードを返します。
+
+エラーには、そのステップが最後に出力した数行を表示します。エラーのデモのように失敗するのが正しいステップには `continue-on-error: true` を付けます。
 
 mp4 用のオプションは `--format mp4` 時と `mp4` サブコマンドで有効です。
 
@@ -234,6 +240,7 @@ mp4 は手元にインストールされたフォントで描画します。`fon
   - Windows の既定シェルは `pwsh`、なければ `powershell`、Windows で `shell: bash` を指定した場合は Git Bash / MSYS の `bash` を使います
   - Windows で `C:/tools/pwsh-preview/pwsh.exe` のようにパスを書くと、そのファイルを起動します。WSL の `bash` はパスで指定しても使いません
   - 名前で指定したシェルは、カレントディレクトリにある同名ファイルを起動しません。Windows ではそのファイルを無視します。Linux/macOS ではエラーで停止するので、別のディレクトリから実行するか、シェルをフルパスで指定してください
+- `cwd` は `pre`、`steps`、`post` の作業フォルダです。相対パスは scenario ファイルのフォルダからの相対で、scenetake をどこから実行しても同じフォルダで動きます。`cwd` を書かなければ、scenetake を実行したフォルダで動きます。フォルダは実行前に存在している必要があります
 - `settings` でpromptとtiming の既定値を設定できます
 - `render` は cast ヘッダーの表示メタデータ（`st:font-size` タグ、`term.theme`）と SVG 出力を制御します。詳細は [.github/docs/spec_cast.md](.github/docs/spec_cast.md) と [.github/docs/spec_svg.md](.github/docs/spec_svg.md)
 - `pre` / `post` は録画フロー外で setup / teardown コマンドを実行します。stdout/stderr は CLI に表示されますが、cast ファイルには一切書き込まれません。
@@ -242,6 +249,7 @@ mp4 は手元にインストールされたフォントで描画します。`fon
   - ターミナルを必要とするコマンドは `pty: true` で pseudo-terminal capture を有効化できます。詳細は [PTY 録画](#pty-録画)。
   - 実行時間が長いコマンドは `execution-duration` で見やすく調整できます
   - 長い出力を自然にリプレイしたい場合（`docker build` や `sleep` を挟むステップなど）は、その step に `stream-output: true` と必要なら `max-duration` を指定します。デフォルトの pipe emit はタイピング演出のため一括表示のままです
+  - 0 以外で終了したステップは警告を出し、録画を続けます。想定した失敗には `continue-on-error: true` で警告を抑制できます。CI では前述の `--strict` を使います。
 
 **GIF で日本語などの CJK 文字を使う**
 
@@ -269,6 +277,8 @@ docker rm $id
 ### 通常出力
 
 通常のstepは、コマンドの stdout/stderr をキャプチャしてタイピング演出付きで記録します。このモードは単発出力のコマンドや、TTYを必要としないコマンドに適しています。出力に色がついていなくても、`highlight` や `stderr-color` で色を付けることができます。出力は、実際の出力に関わらず、一瞬で表示されます。
+
+ANSI 色指定のない stderr は既定で赤く表示します。git のブランチ変更、curl の進捗、`docker build` など、通常のメッセージを stderr に出すツールもあります。通常の文字色にするには、`settings` またはステップに `stderr-color: none` を指定してください。
 
 ```yaml
 steps:
@@ -349,7 +359,14 @@ steps:
 
 ## シナリオファイル形式
 
-必須なのは `steps` のみで、他の top-level キーはすべて任意です。以下は実行可能なサンプルです。正本は [samples/scenario_format.yaml](samples/scenario_format.yaml)。フィールド定義の詳細は [.github/docs/spec_scenario.md](.github/docs/spec_scenario.md)。色・スタイル構文は [spec_highlight.md](.github/docs/spec_highlight.md)。pre/post の挙動は [spec_pre_post.md](.github/docs/spec_pre_post.md)。色の追加例は [samples/highlight.yaml](samples/highlight.yaml)。
+必須キーは `steps` だけです。他のトップレベルキーは任意です。不明なキー（`hightlight` など）には警告を出し、候補があれば正しいキー名を示します。
+
+以下は実行可能なサンプルです。正本は [samples/scenario_format.yaml](samples/scenario_format.yaml) です。
+
+- フィールド定義: [spec_scenario.md](.github/docs/spec_scenario.md)
+- 色・スタイル構文: [spec_highlight.md](.github/docs/spec_highlight.md)
+- `pre` / `post` の挙動: [spec_pre_post.md](.github/docs/spec_pre_post.md)
+- 色の追加例: [samples/highlight.yaml](samples/highlight.yaml)
 
 ![](samples/scenario_format.svg)
 

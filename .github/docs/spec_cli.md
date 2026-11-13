@@ -4,27 +4,27 @@ Status: **Implemented**
 
 ## Motivation
 
-scenetake exposes a small command-line surface: record scenarios to cast (and optionally SVG or mp4), convert existing casts to SVG or mp4, and scaffold starter YAML. Centralizing CLI behavior here keeps feature specs focused on runtime semantics.
+scenetake records scenarios, converts casts to SVG or mp4, and creates starter YAML files. This document defines the CLI behavior shared by feature specifications.
 
 ## Commands
 
 | Command | Purpose |
 |---|---|
-| `scenetake <scenario.yaml> [output]` | Run a scenario; write `.cast` (default), `.cast` + `.svg`, or `.cast` + `.mp4` |
+| `scenetake <scenario.yaml> [output]` | Run a scenario. Write `.cast` (default), `.cast` + `.svg`, or `.cast` + `.mp4` |
 | `scenetake svg <input.cast> [output]` | Convert an existing cast to SVG |
-| `scenetake mp4 <input.cast> [output]` | Convert an existing cast to mp4 (needs ffmpeg; see [spec_mp4.md](spec_mp4.md)) |
+| `scenetake mp4 <input.cast> [output]` | Convert an existing cast to mp4 (needs ffmpeg. See [spec_mp4.md](spec_mp4.md)) |
 | `scenetake init [--shell bash\|pwsh\|powershell] [scenario.yaml]` | Create a commented starter scenario file |
-| `scenetake --help` | Print usage |
+| `scenetake --help` | Print every command and option, with its range and default |
 | `scenetake --version` | Print version |
 
 ```bash
-scenetake [--verbose] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]
+scenetake [--verbose] [--strict] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]
 scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output]
 scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output]
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 ```
 
-Subcommands accept `-h` / `--help` for subcommand-specific usage.
+`--help` (or `-h`) describes each option, its range, and its default on stdout, then exits `0`. `svg --help`, `mp4 --help`, and `init --help` list command-specific options. Scenario help explains overrides of YAML `render` settings. Conversion help explains overrides of cast metadata. After an error, stderr shows short usage text and a reference to the command's `--help`. Help and error messages use ASCII only.
 
 ## Parsing
 
@@ -44,44 +44,52 @@ Subcommands accept `-h` / `--help` for subcommand-specific usage.
 | Option | Commands | Behavior |
 |---|---|---|
 | `--verbose` | scenario path only | Show successful `pre`/`post` labels and phase markers, and the exception type and stack when an error stops the recording. See [spec_pre_post.md](spec_pre_post.md). |
+| `--strict` | scenario path only | For CI. Stop at the first recorded step that exits non-zero without `continue-on-error: true`. Skip later steps, preserve existing output files, and write no cast, SVG or mp4. Run `post`. Exit `1`. If a `post` command fails, return that command's exit code. The `svg` and `mp4` subcommands report it as an unknown option. See [spec_scenario.md](spec_scenario.md) → Step exit codes. |
 | `--format cast\|svg\|mp4` | scenario path only | Default `cast`. `svg` also writes `.svg`, and `mp4` also writes `.mp4`. See [spec_svg.md](spec_svg.md) and [spec_mp4.md](spec_mp4.md). |
 | `--font-size N` | scenario, `svg` | `1`–`128`. Scenario path: overrides `render.font-size` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default `16`). See [spec_cast.md](spec_cast.md). |
 | `--font-family FAMILIES` | scenario, `svg` | CSS `font-family` string (`1`–`16` families, `256` characters max). Scenario path: overrides `render.font-family` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default stack). See [spec_cast.md](spec_cast.md) and [spec_svg.md](spec_svg.md). |
-| `--theme dark\|light` | scenario, `svg` | Scenario path: overrides `render.theme.preset`; YAML `fg` / `bg` / `palette` still merge; cast header stores resolved hex. `svg`: render-only override (CLI > cast header > default `dark`). See [spec_cast.md](spec_cast.md). |
+| `--theme dark\|light` | scenario, `svg` | Scenario path: overrides `render.theme.preset`. YAML `fg` / `bg` / `palette` still merge. Cast header stores resolved hex. `svg`: render-only override (CLI > cast header > default `dark`). See [spec_cast.md](spec_cast.md). |
 | `--window none\|macos\|windows` | scenario, `svg` | Scenario path: overrides `render.window` in the written cast header (and in the SVG when `--format svg`). `svg`: render-only override (CLI > cast header > default `none`). See [spec_cast.md](spec_cast.md) and [spec_svg.md](spec_svg.md). |
 | `--max-fps N` | scenario (`--format svg` only), `svg` | Optional frame sampling cap for SVG animation. `0` (default) = off (full cast timing). `1`–`120` enables sampling. See [spec_svg.md](spec_svg.md). |
 | `--fps N` | scenario (`--format mp4`), `mp4` | Constant mp4 frame rate, `1`–`60`. Default `30`. |
 | `--crf N` | scenario (`--format mp4`), `mp4` | H.264 quality, `1`–`51`. Default `23`. Higher values make smaller files. `0` (lossless) is not accepted, because x264 then writes the High 4:4:4 Predictive profile, which X and many players reject. |
-| `--max-size WxH` | scenario (`--format mp4`), `mp4` | Downscale to fit within `W×H` (each side `16`–`16384`), keeping the aspect ratio; never upscales. `1280x1024` fits X video uploads. |
-| `--size WxH` | scenario (`--format mp4`), `mp4` | Make the video exactly `W×H` (each side `16`–`16384` and even): pad with the theme background, and scale down a larger terminal; never upscales. Render only: the terminal's columns and rows are unchanged. Not with `--max-size`. See [spec_mp4.md](spec_mp4.md) → Exact size. |
+| `--max-size WxH` | scenario (`--format mp4`), `mp4` | Downscale to fit within `W×H` (each side `16`–`16384`), keeping the aspect ratio. Never upscales. `1280x1024` fits X video uploads. |
+| `--size WxH` | scenario (`--format mp4`), `mp4` | Make the video exactly `W×H` (each side `16`–`16384` and even): pad with the theme background, and scale down a larger terminal. Never upscales. Render only: the terminal's columns and rows are unchanged. Not with `--max-size`. See [spec_mp4.md](spec_mp4.md) → Exact size. |
 | `--font-file PATH` | scenario (`--format mp4`), `mp4` | Primary font file (TTF, OTF, TTC) for mp4, before the `font-family` lookup. See [spec_mp4.md](spec_mp4.md). |
 
 `--format mp4` and the `mp4` subcommand also accept `--font-size`, `--font-family`, `--theme`, and `--window` with the same priority as SVG (CLI > cast header > default). `--window` draws the title bar and buttons without the SVG margin and shadow (see [spec_mp4.md](spec_mp4.md) → Window chrome).
 
-**Environment.** `SCENETAKE_FFMPEG` names the ffmpeg binary for mp4 output; otherwise `ffmpeg` on `PATH` is used.
+**Environment.** `SCENETAKE_FFMPEG` names the ffmpeg binary for mp4 output. Otherwise `ffmpeg` on `PATH` is used.
 
-`init` accepts `--shell bash|pwsh|powershell` (`--shell value` or `--shell=value`, once) and an optional output path positional; no other flags. Another shell value, a missing value, or a second `--shell` is an error that writes nothing.
+`init` accepts `--shell bash|pwsh|powershell` (`--shell value` or `--shell=value`, once) and an optional output path positional. No other flags. Another shell value, a missing value, or a second `--shell` is an error that writes nothing.
 
 ## Output Paths
 
-**Scenario path.** `[output]` sets a shared stem; extensions differ (`.cast`, plus `.svg` with `--format svg` or `.mp4` with `--format mp4`). With no `[output]`, stem matches the scenario path without extension. Passing `out.cast`, `out.svg`, or `out.mp4` yields the same stem.
+**Scenario path.** `[output]` sets a shared stem. Extensions differ (`.cast`, plus `.svg` with `--format svg` or `.mp4` with `--format mp4`). With no `[output]`, stem matches the scenario path without extension. Passing `out.cast`, `out.svg`, or `out.mp4` yields the same stem.
 
 **`svg` and `mp4` subcommands.** With no `[output]`, writes alongside the input as `<stem>.svg` or `<stem>.mp4`. With `[output]`, uses that path's stem and directory (extension optional).
 
-**Checks.** Every output is checked before anything runs, on the scenario path before `pre`:
+**Checks.** Before commands run, scenetake rejects output paths that are directories or refer to the input file. The scenario path checks these before `pre`. For example, `scenetake mp4 clip.mp4` would overwrite its input, and failed rendering deletes the output.
 
-- it must not be a directory;
-- it must not be the input file. `scenetake mp4 clip.mp4` would otherwise name the input as its own output, and a failed render deletes its output. Paths are compared ignoring case, because a volume can ignore case on any OS. On Windows two existing files with the same volume serial number and file index are the same file, which catches symbolic links, junctions, hard links, mapped and subst drives, and `\\?\`, `\??\` and UNC spellings, also while another process holds the file open. On a volume that reports serial number 0 for every file, such as the WSL file share, the final paths Windows gives the two open files are compared instead, with the share's two server names (`wsl$` and `wsl.localhost`) counted as one. Two names in one folder with the same file index there, both reporting more than one link, are one file, a hard link. A hard link in another folder on such a volume is not detected. On Unix links on each path are followed, including links inside a link's target, so a symbolic link to the input counts as the input, and a `..` in a target is applied after the links before it. A hard link is not detected there.
+Path comparison ignores case because any OS can use a volume that ignores case. Additional checks depend on the platform:
+
+| Platform | Same-file checks and limits |
+|---|---|
+| Windows | Compare volume serial numbers and file indices, even while another process holds a file open. This detects symbolic links, junctions, hard links, mapped drives, subst drives, and device or UNC paths (`\\?\`, `\??\`). |
+| Windows volumes with serial number `0`, including WSL shares | Compare the final paths from opened files. Treat `wsl$` and `wsl.localhost` as the same server. Matching indices in one folder identify hard links when both names report multiple links. Hard links across folders are not detected. |
+| Unix | Follow symbolic links, including links within targets. Apply `..` after preceding links. Hard links are not detected. |
+
+
 
 The output folder must exist as well. When the scenario has `pre` commands, the folder is checked after `pre`, which may create it. Every other check runs again then, because `pre` may also put a directory, or a link to the input, where an output goes. A failure then stops the run before the recording, and `post` runs because `pre` succeeded. Without `pre` commands the folder is checked before anything runs.
 
 ## Logging
 
-Progress and status go to stderr (`Loading:`, `Written:`, `Done:`). File paths in these messages are shown relative to the current working directory, using `/` separators; when a path cannot be relativized (for example, another drive on Windows), the full path is shown instead. Step `running:` lines are always shown on the scenario path.
+Progress and status use stderr (`Loading:`, `Written:`, `Done:`). Paths use `/` separators and are relative to the current directory where possible. Paths on another Windows drive, for example, remain absolute. Scenario runs always show step `running:` lines.
 
 **`pre` / `post`.** stdout and stderr are forwarded after each command exits (live streaming not required in v1). Failure prints phase, full command text, and exit code unconditionally. See [spec_pre_post.md](spec_pre_post.md).
 
-**Warnings.** Non-fatal issues print `Warning: …` to stderr and execution continues. Feature-specific warn-and-continue rules: [spec_highlight.md](spec_highlight.md), [spec_svg.md](spec_svg.md), [spec_scenario.md](spec_scenario.md) → Step exit codes.
+**Warnings.** Non-fatal issues print `Warning: …` to stderr and execution continues. Feature-specific warn-and-continue rules: [spec_highlight.md](spec_highlight.md), [spec_svg.md](spec_svg.md), [spec_scenario.md](spec_scenario.md) → Step exit codes and → Unknown keys.
 
 **Large SVG.** After writing an SVG over 10MB, scenetake prints the warning below. The file is kept and the exit code does not change. 10MB is GitHub's limit for image attachments, and browsers slow down on SVGs that large.
 
@@ -99,11 +107,29 @@ Warning: SVG is 17.0MB (over 10MB). Heavy output such as full-screen TUIs is muc
 - `Warning: step exited <code>: <run>`
 - `Warning: step exited <code> (<name>): <run>` when the step has a `name`
 
-Semantics (recording continues, process exit code stays `0`): [spec_scenario.md](spec_scenario.md) → Step exit codes.
+A step with `continue-on-error: true` prints no exit warning. With `--strict`, an unexpected non-zero exit produces an error and stops recording. The error includes the last 20 output lines because no cast is written. Escape sequences are removed, and lines redrawn with `\r` show their final text:
+
+```
+Error: --strict stopped at step 3, which exited 2: make build
+  | make: *** No rule to make target 'build'.  Stop.
+Nothing was written. Set 'continue-on-error: true' on a step that is meant to fail.
+```
+
+Semantics (without `--strict` the recording continues and the process exit code stays `0`): [spec_scenario.md](spec_scenario.md) → Step exit codes.
 
 **Errors.** Fatal issues print `Error: …` to stderr and exit non-zero.
 
-**Cast read errors.** A cast line that is not JSON is reported as `invalid JSON at line <n>: <reason>`. The position suffix System.Text.Json adds (`LineNumber: 0 | BytePositionInLine: …`) is left out: it counts within the one line it was given, so it contradicted `<n>`. When the input of `svg` or `mp4` ends in `.yaml` or `.yml`, a second line says that the subcommand converts a cast file and gives the command that records the scenario (`scenetake --format svg <file>`).
+**Cast read errors.** A cast line that is not JSON is reported as `invalid JSON at line <n>: <reason>`. The position suffix System.Text.Json adds (`LineNumber: 0 | BytePositionInLine: …`) is left out: it counts within the one line it was given, so it contradicted `<n>`.
+
+**A scenario given to `svg` or `mp4`.** The command rejects `.yaml` or `.yml` input whose first non-blank character is not `{`. This check precedes cast parsing, ffmpeg lookup, and any output changes. A cast saved with a `.yaml` extension still converts.
+
+The error identifies the input as a scenario and gives the recording command:
+
+```text
+Error: demo.yaml is a scenario, and svg converts a cast file. To record the scenario with an SVG, run: scenetake --format svg demo.yaml
+```
+
+Previously, cast parsing reported a JSON error before the hint. Failed conversion could also delete `demo.svg` or `demo.mp4` from an earlier scenario recording.
 
 ## Exit Codes
 
@@ -112,8 +138,9 @@ Semantics (recording continues, process exit code stays `0`): [spec_scenario.md]
 | Success | `0` |
 | Parse / validation error, missing file, cast/SVG/mp4 write failure, ffmpeg missing or without libx264 | `1` (or command-specific for `pre`/`post`) |
 | Failed `pre` or `post` command | Failed command's exit code |
+| `--strict` and a recorded step exited non-zero without `continue-on-error: true` | `1`, with nothing written, after `post` has run (a failing `post` returns its own code) |
 
-Recorded step exit codes do not affect the process exit code. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
+Without `--strict`, recorded step exit codes do not affect the process exit code. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
 
 ## Init
 
@@ -133,12 +160,13 @@ Recorded step exit codes do not affect the process exit code. See [spec_scenario
 
 ## Lessons Learned
 
-- Unknown options should fail explicitly; otherwise mistyped flags are misread as file paths.
-- Default logs should stay focused on cast content; `--verbose` is the right place for successful `pre`/`post` labels.
-- Options that only affect another output format should fail rather than be ignored, so `--fps` on an SVG run or `--max-fps` on an mp4 run is caught immediately.
-- Requiring the output folder before `pre` broke scenarios whose `pre` creates it, so with `pre` commands the folder is checked after `pre`. ffmpeg, a usable font (the `--font-file`, or an installed family or fallback), and the frame size are still checked before `pre`, so a long recording does not fail at the end. So `pre` cannot be what installs ffmpeg or the only font.
-- Following a link to its target is not enough on Unix. The target comes back as the link wrote it, may pass through another link, and may hold a `..` that Unix applies after the links before it. macOS temporary folders sit behind such a link (`/var` to `/private/var`), so the same-file check walks the target again part by part.
-- One count of 40 links covers the whole walk. A depth limit per link let a crafted chain, whose links each pass through the one before twice, double the work at each level: 9 s for a chain 22 deep (Linux in WSL).
-- On Windows, opening a file to read its file index fails while another process holds it without read sharing, and the check then fell back to the paths alone. It opens the file with no access rights, which sharing does not block. The WSL file share reports serial number 0 for every file and uses the Linux inode as the index, so two files on different Linux file systems looked like one.
-- The `\\?\` prefix that lets the file index lookup take long paths was also put in front of a path in the `\??\` device form, which made it invalid. The lookup failed, and a failed render deleted the input through that spelling. Every device form is now used as it is.
-- Windows links are not walked by hand. Windows resolves a relative link target against the path as it was opened, so through a junction it names another file than a walk from the junction's target does, and the walk refused outputs that were not the input. A target that starts with a separator, resolved against the current drive, did the same. The file index finds every link without a walk, except on the WSL file share, which reports serial number 0. Comparing only the paths as written there let a Windows link to a file on the share overwrite the input, so on such a volume the final paths Windows gives the two open files are compared.
+- Unknown options should fail explicitly. Otherwise mistyped flags are misread as file paths.
+- Default logs should stay focused on cast content. `--verbose` is the right place for successful `pre`/`post` labels.
+- Reject options for another output format. This catches `--fps` on SVG runs and `--max-fps` on mp4 runs immediately.
+- **Setup may create the output folder.** Check that folder after `pre` when setup commands exist. Check ffmpeg, fonts, and frame size before `pre` to avoid failures after a long recording. Setup therefore cannot install ffmpeg or the only usable font.
+- **Unix link targets need full resolution.** A target may contain further links and `..`. Unix applies `..` after resolving preceding links. This matters for macOS paths such as `/var`, which links to `/private/var`.
+- **Link limits must cover the whole path.** A per-link depth limit allowed repeated traversal to double work at each level. A chain 22 links deep took 9 seconds in Linux under WSL. A shared limit of 40 links bounds the walk.
+- **Windows identity checks need no read access.** Opening files for reading failed when another process denied read sharing. Opening with no access rights still permits identity checks. WSL shares report volume serial number `0` and use Linux inodes as indices. Files on different Linux filesystems can therefore have matching indices.
+- **Device paths must retain their prefix.** Adding `\\?\` to a `\??\` path made it invalid. Identity lookup failed, and failed rendering deleted the input through that spelling. Device paths now remain unchanged.
+- **Windows must resolve its own links.** Relative targets through junctions resolve against the opened path, rather than the junction target. Targets starting with a separator resolve against the current drive. Manual traversal therefore rejected valid outputs. File indices handle normal volumes. WSL shares need final paths from opened files because their serial number is `0`. Comparing only written paths missed Windows links to WSL inputs and allowed overwrites.
+- **Help must describe command-specific behavior.** Previously, `--help` printed only usage lines on stderr, leaving option details in the README. Help now describes each option on stdout, which supports pagers. Scenario `--theme` retains YAML color overrides. Conversion `--theme` replaces cast colors, so the commands need different descriptions. A test checks help coverage against each parser's accepted options.

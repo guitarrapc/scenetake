@@ -1,0 +1,21 @@
+title: later typing stays the same
+width: 60
+height: 10
+shell: bash
+
+settings:
+  prompt: "$ "
+  typing-speed: 0.05
+  typing-jitter: 0.02
+  pre-delay: 0.2
+  post-delay: 0.3
+
+# Stream emit and PTY output keep wall-clock times, which differ from run to run below a millisecond.
+# The typed commands after them must still get the same intervals on every run.
+steps:
+  - run: for i in 1 2 3; do echo stream $i; sleep 0.11; done
+    stream-output: true
+  - echo after stream typed text
+  - run: printf 'pty-out\n'
+    pty: true
+  - echo after pty typed text

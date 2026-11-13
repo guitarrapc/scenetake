@@ -143,11 +143,13 @@ Behavior:
 
 Priority: explicit ANSI in stderr > resolved `stderr-color`.
 
+`none`, `off`, `default`, and `reset` use the normal text color. Tools also print ordinary messages on stderr, including git branch changes, curl progress, and `docker build` output. Red can make these messages look like failures. The README and starter template explain `stderr-color: none`.
+
 ### `name` color prefix
 
 - Default comment color: `cyan`.
 - Prefix form: `"[style] text"`.
-- One prefix at start is parsed; additional bracket text is literal display text.
+- One prefix at start is parsed. Additional bracket text is literal display text.
 - Prefix style format: [Style Value Formats](#style-value-formats).
 - Unknown style falls back to `cyan` with warning.
 
@@ -182,12 +184,12 @@ col_part  ::= positive_integer
 
 ## Validation and Warnings
 
-Coloring errors do not fail the step; behavior is warn-and-continue. Warnings are printed to stderr per [spec_cli.md](spec_cli.md).
+Coloring errors do not fail the step. Behavior is warn-and-continue. Warnings are printed to stderr per [spec_cli.md](spec_cli.md).
 
 - Unknown color/style string: warn and skip that color application path.
 - Invalid `at` syntax: warn and skip that `at`.
 - Out-of-range start: warn and skip that `at`.
-- Partially out-of-range end: apply to available text; warn only when lines are missing.
+- Partially out-of-range end: apply to available text. Warn only when lines are missing.
 - Empty `name` display text after removing valid prefix: warn and skip comment line.
 
 ## Examples
@@ -243,7 +245,7 @@ steps:
 ## Lessons Learned
 
 - Post-hoc coloring is a practical replacement for TTY-dependent CLI color output in reproducible demos.
-- Position-based output highlighting is useful but fragile for unstable command layouts; deterministic fixture output helps.
+- Position-based output highlighting is useful but fragile for unstable command layouts. Deterministic fixture output helps.
 - A unified color palette across output/input/comment/stderr reduces cognitive load.
 - Allowing style composition and raw SGR gives advanced users full ANSI control while preserving simple color-name defaults.
 - Treating existing stderr ANSI as authoritative avoids clobbering tool-provided intent.
