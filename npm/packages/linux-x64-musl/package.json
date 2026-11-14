@@ -1,6 +1,6 @@
 {
   "name": "@scenetake/linux-x64-musl",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "description": "Linux x64 (musl) binary for scenetake",
   "license": "MIT",
   "repository": {

@@ -1,6 +1,6 @@
 {
   "name": "@scenetake/linux-arm64",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "description": "Linux arm64 (glibc) binary for scenetake",
   "license": "MIT",
   "repository": {
