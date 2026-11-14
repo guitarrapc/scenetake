@@ -7,9 +7,9 @@
 #:property OptimizationPreference=Size
 #:property IlcFoldIdenticalMethodBodies=true
 #:package VYaml@1.6.1
-#:package MiniPty@1.6.0
-#:package MiniPty.Capture@1.6.0
-#:package MiniPty.Console@1.6.0
+#:package MiniPty@1.7.0
+#:package MiniPty.Capture@1.7.0
+#:package MiniPty.Console@1.7.0
 #:package StbTrueTypeSharp@1.26.13
 #:include Terminal.cs
 #:include Svg.cs
