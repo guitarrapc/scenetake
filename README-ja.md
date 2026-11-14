@@ -516,4 +516,13 @@ npm stage list
 npm stage approve <stage-id>
 ```
 
-初回の npm リリースだけは手動の `npm publish` が必要です。staged publishing は registry 上にパッケージが既に存在していることが前提です。後から追加したプラットフォームパッケージ（`@scenetake/linux-x64-musl`、`@scenetake/linux-arm64-musl`）も同様です。メインの `scenetake` より先に、プラットフォームパッケージ（`@scenetake/linux-x64` など）を approve してください。
+staged publishing は registry 上にパッケージが既に存在していることが前提なので、各 npm パッケージの初回リリースだけは手動の `npm publish` が必要です。後から追加したプラットフォームパッケージ（`@scenetake/linux-x64-musl`、`@scenetake/linux-arm64-musl`）も同様です。workflow はこのようなパッケージを stage せずに pack し、tarball を `npm-first-publish` artifact としてアップロードします。実行するコマンドは run の summary に出ます。
+
+```bash
+gh run download <run-id> --repo guitarrapc/scenetake --name npm-first-publish --dir npm-first-publish
+npm publish --access public npm-first-publish/scenetake-linux-x64-musl-<version>.tgz
+```
+
+そのあと npmjs.com で新しいパッケージの trusted publishing を設定してください。次のリリースから stage できるようになります。
+
+メインの `scenetake` より先に、プラットフォームパッケージ（`@scenetake/linux-x64` など）を approve または publish してください。

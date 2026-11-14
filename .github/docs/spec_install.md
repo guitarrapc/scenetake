@@ -255,13 +255,15 @@ On tag push, the release workflow:
 
 1. Builds and uploads the eight GitHub Release archives (see above).
 2. Assembles nine npm package directories from those archives (`npm/scripts/assemble-packages.sh`).
-3. Runs `npm stage publish` for each platform package, then the meta package (`npm/scripts/stage-all.sh`).
+3. Runs `npm stage publish` for each platform package, then the meta package (`npm/scripts/stage-all.sh`). A package that is not on the registry yet is packed with `npm pack` instead, and the tarball is uploaded as the `npm-first-publish` workflow artifact.
 
 Staged publishing defers 2FA to a human maintainer: CI stages tarballs on the registry in a non-public state; the maintainer runs `npm stage approve <stage-id>` locally with 2FA to publish.
 
 **Approve platform packages before the meta package** — the meta package's `optionalDependencies` point at registry versions that must already exist (or be staged and approved in order).
 
-**First release of a package** requires a one-time manual `npm publish --access public`, because staged publishing expects the package to already exist on the registry. That held for all packages on the new scope, and holds again for `@scenetake/linux-x64-musl` and `@scenetake/linux-arm64-musl`, which were added later: publish them by hand before the first release that includes them, or `stage-all.sh` fails on them. Subsequent versions use stage + approve.
+**First release of a package** requires a one-time manual `npm publish --access public`, because staged publishing expects the package to already exist on the registry. That held for all packages on the new scope, and holds again for `@scenetake/linux-x64-musl` and `@scenetake/linux-arm64-musl`, which were added later. `stage-all.sh` checks each package with `npm view` first. On a 404 it packs the package and goes on, so the other packages are still staged. Before this check, the first such package stopped the script and left every package after it unstaged. Any other `npm view` failure stops the script, so a registry outage cannot drop a package from the release. The maintainer publishes the packed tarball, then approves the meta package, then sets up trusted publishing for the new package so that the next release can stage it. Subsequent versions use stage + approve.
+
+The tarball is packed in CI rather than on the maintainer's machine because the package carries a Linux binary, and Windows file systems have no executable bit: packed there, the binary would ship without it, and the wrapper spawns it directly. `npm publish <tarball>` uploads the tarball as packed, so publishing it from any OS keeps the mode.
 
 Trusted publishing on the `@scenetake` org should allow `npm stage publish` from GitHub Actions while keeping direct `npm publish` off for automation tokens.
 

@@ -305,13 +305,31 @@ jobs:
         run: |
           set -euo pipefail
           packages_dir="$(bash npm/scripts/assemble-packages.sh "$GITHUB_WORKSPACE/release")"
-          bash npm/scripts/stage-all.sh "$packages_dir" | tee "$RUNNER_TEMP/staged.log"
+          first_publish_dir="$RUNNER_TEMP/npm-first-publish"
+          bash npm/scripts/stage-all.sh "$packages_dir" "$first_publish_dir" | tee "$RUNNER_TEMP/staged.log"
+          if compgen -G "$first_publish_dir/*.tgz" > /dev/null; then
+            echo "### npm first publish" >> "$GITHUB_STEP_SUMMARY"
+            echo 'These packages are not on the registry, so they were packed instead of staged. Publish each by hand with 2FA before you approve `scenetake`, then set up trusted publishing for it:' >> "$GITHUB_STEP_SUMMARY"
+            echo '```sh' >> "$GITHUB_STEP_SUMMARY"
+            echo "gh run download $GITHUB_RUN_ID --repo $GITHUB_REPOSITORY --name npm-first-publish --dir npm-first-publish" >> "$GITHUB_STEP_SUMMARY"
+            for tarball in "$first_publish_dir"/*.tgz; do
+              echo "npm publish --access public npm-first-publish/$(basename "$tarball")" >> "$GITHUB_STEP_SUMMARY"
+            done
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
           echo "### npm staged" >> "$GITHUB_STEP_SUMMARY"
           echo 'Approve locally with 2FA to publish:' >> "$GITHUB_STEP_SUMMARY"
           echo '```sh' >> "$GITHUB_STEP_SUMMARY"
           echo "npm stage list" >> "$GITHUB_STEP_SUMMARY"
           echo "npm stage approve <stage-id>" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload packages for first publish
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: npm-first-publish
+          path: ${{ runner.temp }}/npm-first-publish/*.tgz
+          if-no-files-found: ignore
 
   nuget-publish:
     name: Publish NuGet tool package

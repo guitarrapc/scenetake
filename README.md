@@ -513,4 +513,13 @@ npm stage list
 npm stage approve <stage-id>
 ```
 
-Publish each npm package manually with `npm publish` for its first release. Staged publishing requires an existing package. This also applies to platform packages added later, such as `@scenetake/linux-x64-musl` and `@scenetake/linux-arm64-musl`. Approve platform packages before the main `scenetake` package.
+Staged publishing requires an existing package, so each npm package needs one manual `npm publish` for its first release. This also applies to platform packages added later, such as `@scenetake/linux-x64-musl` and `@scenetake/linux-arm64-musl`. The workflow packs such a package instead of staging it and uploads the tarball as the `npm-first-publish` artifact. The run summary lists the commands:
+
+```bash
+gh run download <run-id> --repo guitarrapc/scenetake --name npm-first-publish --dir npm-first-publish
+npm publish --access public npm-first-publish/scenetake-linux-x64-musl-<version>.tgz
+```
+
+Then set up trusted publishing for the new package on npmjs.com, so that the next release can stage it.
+
+Approve or publish platform packages before the main `scenetake` package.

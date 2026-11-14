@@ -19,6 +19,6 @@ scripts/
   test-wrapper.sh     # checks the wrapper picks the glibc or musl package
 ```
 
-Release CI assembles binaries into `packages/*` and runs `npm stage publish` for each package.
+Release CI assembles binaries into `packages/*` and runs `npm stage publish` for each package. A package that is not on the registry yet cannot be staged: `stage-all.sh` packs it instead, and the workflow uploads the tarball as the `npm-first-publish` artifact for a first publish by hand.
 
 The Linux packages declare `libc`, so npm installs the one for the host's C library. An npm that ignores `libc` installs both, and the wrapper starts the one that matches the host.
