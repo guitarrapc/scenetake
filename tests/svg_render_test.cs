@@ -15,6 +15,8 @@ failures += Run("MarkerDelayAdvancesTiming", MarkerDelayAdvancesTiming);
 failures += Run("SvgLoopsWithCastDuration", SvgLoopsWithCastDuration);
 failures += Run("LoopDurationMatchesAggGifCycle", LoopDurationMatchesAggGifCycle);
 failures += Run("MaxFpsDoesNotChangeLoopDuration", MaxFpsDoesNotChangeLoopDuration);
+failures += Run("EndHoldAndFadeOutSetTheLoop", EndHoldAndFadeOutSetTheLoop);
+failures += Run("NoLoopPlaysOnceWithoutFade", NoLoopPlaysOnceWithoutFade);
 failures += Run("MatrixTintWhiteNearGreen", MatrixTintWhiteNearGreen);
 failures += Run("MatrixTintIgnoresVerticalNeighbors", MatrixTintIgnoresVerticalNeighbors);
 failures += Run("CopilotBannerBlockGlyphs", CopilotBannerBlockGlyphs);
@@ -650,6 +652,48 @@ static bool SvgLoopsWithCastDuration()
     var durationText = recording.LoopDuration.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
     return svg.Contains($".l {{ visibility: hidden; animation: {durationText}s step-start infinite; }}", StringComparison.Ordinal)
         && SvgRenderTestPatterns.KeyframePattern.IsMatch(svg);
+}
+
+// end-hold replaces the default hold after the last event, and fade-out adds its seconds after it. The fade group
+// holds the rows and the cursor; the terminal's background stays outside it, so it does not fade.
+static bool EndHoldAndFadeOutSetTheLoop()
+{
+    var recording = CastReader.Read("samples/basic.cast");
+    var loop = recording.Events[^1].Time + 2 + 0.5;
+    var svg = SvgRender.RenderToString(recording.Events, recording.Width, recording.Height,
+        recording.RenderSettings with { EndHold = 2, FadeOut = 0.5 }, recording.LoopDuration);
+    var loopText = loop.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
+    var fadeStart = ((loop - 0.5) / loop * 100).ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
+    var background = svg.IndexOf("class=\"bg l ", StringComparison.Ordinal);
+    var group = svg.IndexOf("<g class=\"fade\">", StringComparison.Ordinal);
+    var firstRow = svg.IndexOf("<g class=\"l ", StringComparison.Ordinal);
+    var ok = svg.Contains($".l {{ visibility: hidden; animation: {loopText}s step-start infinite; }}", StringComparison.Ordinal)
+        && svg.Contains($"@keyframes fade{{0%,{fadeStart}%{{opacity:1}}to{{opacity:0}}}}", StringComparison.Ordinal)
+        && svg.Contains($".fade{{animation:{loopText}s linear infinite fade}}", StringComparison.Ordinal)
+        && background >= 0 && background < group && group < firstRow
+        && VisibleRowsAt(svg, loop - 0.25).Values.Any(text => text.Contains("Done!", StringComparison.Ordinal));
+    if (!ok)
+        Console.Error.WriteLine($"  loop {loopText}, fade from {fadeStart}%: background {background}, group {group}, first row {firstRow}");
+    return ok;
+}
+
+// Played once, the SVG is the looping one but for the iteration: each element keeps its value at the end of the
+// loop, which shows the final screen. A fade-out is left out, as it would fade that screen for good.
+static bool NoLoopPlaysOnceWithoutFade()
+{
+    var recording = CastReader.Read("samples/basic.cast");
+    var looping = SvgRender.RenderToString(recording.Events, recording.Width, recording.Height, recording.RenderSettings, recording.LoopDuration);
+    var once = SvgRender.RenderToString(recording.Events, recording.Width, recording.Height,
+        recording.RenderSettings with { Loop = false }, recording.LoopDuration);
+    var onceWithFade = SvgRender.RenderToString(recording.Events, recording.Width, recording.Height,
+        recording.RenderSettings with { Loop = false, FadeOut = 1 }, recording.LoopDuration);
+    return once.Contains("step-start forwards; }", StringComparison.Ordinal)
+        && once.Replace("step-start forwards; }", "step-start infinite; }", StringComparison.Ordinal) == looping
+        && !onceWithFade.Contains("@keyframes fade", StringComparison.Ordinal)
+        && !onceWithFade.Contains("<g class=\"fade\">", StringComparison.Ordinal)
+        && RenderSettingsResolver.FindIneffectiveStyle(recording.RenderSettings with { Loop = false, FadeOut = 1 })
+            .Any(note => note.StartsWith("fade-out has no effect on an SVG that plays once", StringComparison.Ordinal))
+        && RenderSettingsResolver.FindIneffectiveStyle(recording.RenderSettings with { Loop = false, FadeOut = 1 }, svg: false).Count == 0;
 }
 
 static bool MatrixTintWhiteNearGreen()

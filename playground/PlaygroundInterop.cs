@@ -158,7 +158,17 @@ public static partial class PlaygroundInterop
             Padding: Int(root, "padding"),
             Images: s_images,
             Opacity: Double(root, "opacity"),
-            Blur: Int(root, "blur"));
+            Blur: Int(root, "blur"),
+            Loop: Bool(root, "loop"),
+            EndHold: Double(root, "endHold"),
+            FadeOut: Double(root, "fadeOut"));
+
+        // The page's loop select sends "true" or "false"; a share URL may hold either form.
+        static bool? Bool(JsonElement root, string name) =>
+            !root.TryGetProperty(name, out var value) ? null
+            : value.ValueKind is JsonValueKind.True or JsonValueKind.False ? value.GetBoolean()
+            : value.ValueKind == JsonValueKind.String && bool.TryParse(value.GetString(), out var parsed) ? parsed
+            : null;
 
         static string? String(JsonElement root, string name) =>
             root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString() is { Length: > 0 } text ? text : null;

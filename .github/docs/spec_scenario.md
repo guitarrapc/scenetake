@@ -142,8 +142,11 @@ Display metadata for the cast header. Written on every run. Header mapping: [spe
 | `padding` | from `font-size` | Pixels between the terminal's edge and its text, `0`–`100` |
 | `opacity` | `1` | How much of the terminal's default background and the title bar covers `background`, `0`–`1`. Text and cells with their own background stay opaque. Without `background`, a warning, and the window stays opaque. |
 | `blur` | `0` | Pixels of Gaussian blur on the background seen through a window with `opacity` below 1, `0`–`50` |
+| `loop` | `true` | `false` plays the SVG once and stops on its final screen. An mp4 has no loop: the player decides. |
+| `end-hold` | the pause before the last output | Seconds the final screen stays before the SVG starts again or the mp4 ends, `0`–`60` |
+| `fade-out` | `0` | Seconds over which the terminal's contents fade out after `end-hold`, `0`–`10`. The terminal's background, the window, and `background` stay. An SVG that does not loop has no fade, with a warning. |
 
-`settings` controls recording. `render` controls presentation. CLI may override `font-size`, `font-family`, `window`, and theme preset. See [spec_cli.md](spec_cli.md).
+`settings` controls recording. `render` controls presentation. The CLI may override each key, the theme only as a preset. See [spec_cli.md](spec_cli.md).
 
 ## `pre` and `post`
 

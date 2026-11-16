@@ -457,8 +457,17 @@ static bool CastTabAppliesOverrides(string repoRoot)
     var light = PlaygroundRender.RenderCast(castText, new PlaygroundOptions(Theme: "light", Window: "macos"));
     var recording = CastReader.ReadText(castText);
     var expected = SvgRender.RenderToUtf8(recording.Events, recording.Width, recording.Height, recording.RenderSettings, recording.LoopDuration);
+    // The ending options act as --no-loop, --end-hold, and --fade-out do on the svg command, with their ranges.
+    var ending = PlaygroundRender.RenderCast(castText, new PlaygroundOptions(Loop: false, EndHold: 3, FadeOut: 1));
+    var endingSettings = recording.RenderSettings with { Loop = false, EndHold = 3, FadeOut = 1 };
+    var expectedEnding = SvgRender.RenderToUtf8(recording.Events, recording.Width, recording.Height, endingSettings, recording.LoopDuration);
+    var tooLong = PlaygroundRender.RenderCast(castText, new PlaygroundOptions(EndHold: 61));
     return Expect(plain.Error is null && plain.Svg!.AsSpan().SequenceEqual(expected), "no option gives the svg command's output")
-        & Expect(light.Error is null && !light.Svg!.AsSpan().SequenceEqual(expected), "options change the SVG");
+        & Expect(light.Error is null && !light.Svg!.AsSpan().SequenceEqual(expected), "options change the SVG")
+        & Expect(ending.Error is null && ending.Svg!.AsSpan().SequenceEqual(expectedEnding)
+            && ending.Warnings.Any(w => w.StartsWith("fade-out has no effect on an SVG that plays once", StringComparison.Ordinal)),
+            $"the ending options act as the CLI's: {ending.Error} {string.Join("; ", ending.Warnings)}")
+        & Expect(tooLong.Error == "end-hold must be between 0 and 60 seconds: 61", $"end-hold out of range: {tooLong.Error}");
 }
 
 // The playground has no files: the page gives it each image with a name. A background in the YAML or the option

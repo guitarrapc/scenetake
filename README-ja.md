@@ -71,6 +71,14 @@ README の本文に並べるデモは、たいてい背景なしで十分です�
 
 画像の背景では、`opacity` で背景が透けるターミナルのようにウィンドウ越しに画像を見せ、`blur` で透けた部分をぼかせます。半透明になるのはターミナルの背景とタイトルバーだけで、文字とプログラムが色を付けたセルは透けません。明るい画像なら 0.85 以上、暗い画像なら 0.7 程度が目安です。
 
+デモの終わり方も同じように指定できます。
+
+| `render` キー | フラグ | 設定する内容 |
+| --- | --- | --- |
+| `loop` | `--no-loop` / `--loop` | `false` で SVG を 1 回だけ再生し、最後の画面で止めます。既定は `true`。mp4 にループはなく、再生するプレイヤーが決めます |
+| `end-hold` | `--end-hold` | 最後の画面を表示し続ける秒数（0〜60）。その後 SVG は最初に戻り、mp4 は終わります。既定は最後の出力の前の間と同じ長さ |
+| `fade-out` | `--fade-out` | `end-hold` の後に文字を消していく秒数（0〜10）。ループが空のターミナルから始まり直します。ウィンドウと背景は残ります |
+
 | --- | --- |
 | ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
 
@@ -149,6 +157,9 @@ scenetake --format svg scenario.yaml --window macos --window-title "my-cli demo"
 
 # 画像の上に半透明のウィンドウを置き、文字の後ろの画像をぼかす
 scenetake --format svg scenario.yaml --window macos --background wallpaper.webp --opacity 0.85 --blur 8
+
+# 最後の画面を 3 秒表示し、1 秒かけて文字を消してからループの最初に戻る
+scenetake --format svg scenario.yaml --end-hold 3 --fade-out 1
 
 # 既存の cast ファイルを SVG に変換（v2 / v3 対応）
 scenetake svg scenario.cast

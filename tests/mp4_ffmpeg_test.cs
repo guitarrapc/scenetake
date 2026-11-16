@@ -36,6 +36,7 @@ try
     failures += Run("StaleMp4GoesWhenCastIsBad", () => StaleMp4GoesWhenCastIsBad(scenetake, repoRoot, work));
     failures += Run("CliRulesForValuesAndFormats", () => CliRulesForValuesAndFormats(scenetake, repoRoot, work));
     failures += Run("CliRulesForWindowStyle", () => CliRulesForWindowStyle(scenetake, repoRoot, work));
+    failures += Run("CliRulesForLoopAndEnd", () => CliRulesForLoopAndEnd(scenetake, repoRoot, work));
     failures += Run("HelpDescribesEveryOption", () => HelpDescribesEveryOption(scenetake, repoRoot, work));
     failures += Run("InitWritesStepsForItsShell", () => InitWritesStepsForItsShell(scenetake, work));
     failures += Run("SubcommandsNeverReplaceTheirInput", () => SubcommandsNeverReplaceTheirInput(scenetake, repoRoot, work));
@@ -740,19 +741,97 @@ static bool CliRulesForWindowStyle(string scenetake, string repoRoot, string wor
     }
 }
 
+// --loop / --no-loop, --end-hold, and --fade-out: ranges, duplicates, mp4 refusing the loop flags, the note on a fade
+// that an SVG played once leaves out, and render keys that the cast keeps for a later conversion.
+static bool CliRulesForLoopAndEnd(string scenetake, string repoRoot, string work)
+{
+    var cases = new (string[] Args, string Expected)[]
+    {
+        (["svg", "--end-hold", "61", "samples/basic.cast"], "end-hold must be between 0 and 60 seconds: 61"),
+        (["svg", "--end-hold", "2s", "samples/basic.cast"], "invalid end-hold value: 2s"),
+        (["svg", "--fade-out", "11", "samples/basic.cast"], "fade-out must be between 0 and 10 seconds: 11"),
+        (["svg", "--fade-out", "1", "--fade-out", "2", "samples/basic.cast"], "duplicate option: --fade-out"),
+        (["svg", "--loop", "--no-loop", "samples/basic.cast"], "duplicate option: --loop and --no-loop"),
+        (["mp4", "--no-loop", "samples/basic.cast"], "--no-loop applies to SVG"),
+        (["mp4", "--loop", "samples/basic.cast"], "--loop applies to SVG"),
+    };
+
+    var ok = true;
+    foreach (var (args, expected) in cases)
+    {
+        var (exit, stderr) = Exec(scenetake, repoRoot, args);
+        if (exit != 1 || !stderr.Contains(expected, StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine($"  {string.Join(' ', args)}: exit {exit}, expected \"{expected}\" in:{Environment.NewLine}{stderr}");
+            ok = false;
+        }
+    }
+
+    var svg = Path.Combine(work, "loop.svg");
+    var (onceExit, onceStderr) = Exec(scenetake, repoRoot, ["svg", "--no-loop", "--fade-out", "1", "samples/basic.cast", svg]);
+    var once = onceExit == 0 ? File.ReadAllText(svg) : "";
+    ok &= Check(onceExit == 0 && once.Contains("step-start forwards", StringComparison.Ordinal) && !once.Contains("@keyframes fade", StringComparison.Ordinal)
+        && onceStderr.Contains("Warning: fade-out has no effect on an SVG that plays once", StringComparison.Ordinal),
+        $"--no-loop --fade-out: exit {onceExit}: {onceStderr}");
+
+    // The scenario's keys go into the cast; --loop on the svg command undoes its loop: false.
+    var scenario = Path.Combine(work, "ending.yaml");
+    File.WriteAllText(scenario, """
+        title: "ending"
+        width: 40
+        height: 6
+        render:
+          loop: false
+          end-hold: 2.5
+          fade-out: 0.75
+        steps:
+          - run: echo hello
+        """);
+    var cast = Path.Combine(work, "ending.cast");
+    var (castExit, castStderr) = Exec(scenetake, work, [scenario, cast]);
+    var header = castExit == 0 ? File.ReadLines(cast).First() : "";
+    ok &= Check(castExit == 0 && header.Contains("\"st:loop=false\",\"st:end-hold=2.5\",\"st:fade-out=0.75\"", StringComparison.Ordinal),
+        $"scenario cast: exit {castExit}: {castStderr}{header}");
+    var (loopExit, loopStderr) = Exec(scenetake, work, ["svg", "--loop", cast, svg]);
+    var looped = loopExit == 0 ? File.ReadAllText(svg) : "";
+    ok &= Check(loopExit == 0 && looped.Contains("step-start infinite", StringComparison.Ordinal) && looped.Contains("<g class=\"fade\">", StringComparison.Ordinal),
+        $"svg --loop on a cast with loop false: exit {loopExit}: {loopStderr}");
+
+    // A value out of range in the YAML stops before anything runs.
+    File.WriteAllText(scenario, """
+        render:
+          end-hold: 61
+        steps:
+          - run: echo hello
+        """);
+    var (rangeExit, rangeStderr) = Exec(scenetake, work, [scenario, cast]);
+    ok &= Check(rangeExit == 1 && rangeStderr.Contains("invalid render.end-hold: must be between 0 and 60 seconds: 61", StringComparison.Ordinal),
+        $"render.end-hold 61: exit {rangeExit}: {rangeStderr}");
+    return ok;
+
+    static bool Check(bool condition, string message)
+    {
+        if (!condition)
+            Console.Error.WriteLine($"  {message}");
+        return condition;
+    }
+}
+
 static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string work)
 {
     // --help prints, on stdout, what every option of that command does; usage after an error stays short,
     // on stderr, and points to --help. The option lists here follow the parsers, so an option added there
     // and left out of the help fails this test.
     string[] render = ["--font-size N", "--font-family FAMILIES", "--theme dark|light", "--window none|macos|windows",
-        "--window-title TEXT", "--background VALUE", "--margin N", "--padding N", "--opacity N", "--blur N"];
+        "--window-title TEXT", "--background VALUE", "--margin N", "--padding N", "--opacity N", "--blur N",
+        "--end-hold N", "--fade-out N"];
+    string[] svg = ["--max-fps N", "--no-loop", "--loop "];
     string[] mp4 = ["--fps N", "--crf N", "--max-size WxH", "--size WxH", "--font-file PATH", "SCENETAKE_FFMPEG"];
     var commands = new (string[] Args, string[] Options)[]
     {
-        (["--help"], ["--format cast|svg|mp4", "--strict", "--verbose", .. render, "--max-fps N", .. mp4, "scenetake svg", "scenetake mp4", "scenetake init", "--version"]),
+        (["--help"], ["--format cast|svg|mp4", "--strict", "--verbose", .. render, .. svg, .. mp4, "scenetake svg", "scenetake mp4", "scenetake init", "--version"]),
         (["-h"], ["--format cast|svg|mp4", "--strict", "--verbose"]),
-        (["svg", "--help"], [.. render, "--max-fps N"]),
+        (["svg", "--help"], [.. render, .. svg]),
         (["mp4", "--help"], [.. render, .. mp4]),
         (["init", "--help"], ["--shell bash|pwsh|powershell"]),
     };

@@ -143,7 +143,8 @@ if (args[0] is "svg")
         foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(svgRenderSettings))
             Console.Error.WriteLine($"Warning: {note}");
         SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath, recording.LoopDuration);
-        Console.Error.WriteLine($"Written: {FormatDisplayPath(svgOutputPath)}  ({recording.Events.Count} events, {recording.LoopDuration:F1}s)");
+        var svgLoop = RenderSettingsResolver.ResolveLoopDuration(recording.LoopDuration, recording.Events, svgRenderSettings);
+        Console.Error.WriteLine($"Written: {FormatDisplayPath(svgOutputPath)}  ({recording.Events.Count} events, {svgLoop:F1}s)");
         if (SvgRender.SizeWarning(new FileInfo(svgOutputPath).Length, svgRenderSettings.MaxFps, fromCast: true) is { } svgSizeWarning)
             Console.Error.WriteLine($"Warning: {svgSizeWarning}");
         Console.Error.WriteLine($"Done: {FormatDisplayPath(svgOutputPath)}");
@@ -223,7 +224,7 @@ if (args[0] is "mp4")
         }
 
         mp4RenderSettings = mp4Style.ToOverrides().Apply(mp4RenderSettings);
-        foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(mp4RenderSettings))
+        foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(mp4RenderSettings, svg: false))
             Console.Error.WriteLine($"Warning: {note}");
         var result = Mp4Render.WriteMp4(recording.Events, recording.Width, recording.Height, mp4RenderSettings, mp4Options.ToSettings(), mp4OutputPath, mp4Ffmpeg, recording.LoopDuration);
         PrintMp4Written(mp4OutputPath, result);
@@ -390,7 +391,8 @@ if (runWindow is WindowStyle runWindowValue)
 if (runMaxFps is int runMaxFpsValue)
     renderSettings = renderSettings with { MaxFps = runMaxFpsValue };
 renderSettings = runStyle.ToOverrides().Apply(renderSettings);
-foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(renderSettings))
+// The cast keeps the settings for a later `scenetake svg`, so only mp4 output skips the SVG's notes.
+foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(renderSettings, svg: outputFormat != OutputFormat.Mp4))
     Console.Error.WriteLine($"Warning: {note}");
 
 // A YAML background image needs SVG or mp4 output: the cast keeps background colors only.
@@ -2276,6 +2278,38 @@ static bool TryConsumeStyleArg(string[] args, ref int i, StyleOptions style, out
         return true;
     }
 
+    // --loop undoes a cast's st:loop=false, so both forms exist; either one once.
+    if (arg is "--loop" or "--no-loop")
+    {
+        if (style.Loop is not null)
+            error = $"duplicate option: {(style.Loop.Value ? "--loop" : "--no-loop")} and {arg}";
+        else
+            style.Loop = arg == "--loop";
+        return true;
+    }
+
+    if (TryTakeOptionValue(args, ref i, "--end-hold", out var endHold, out error))
+    {
+        if (error.Length != 0)
+            return true;
+        if (style.EndHold is not null)
+            error = "duplicate option: --end-hold";
+        else if (RenderSettingsResolver.TryParseEndHold(endHold, out var parsed, out error))
+            style.EndHold = parsed;
+        return true;
+    }
+
+    if (TryTakeOptionValue(args, ref i, "--fade-out", out var fadeOut, out error))
+    {
+        if (error.Length != 0)
+            return true;
+        if (style.FadeOut is not null)
+            error = "duplicate option: --fade-out";
+        else if (RenderSettingsResolver.TryParseFadeOut(fadeOut, out var parsed, out error))
+            style.FadeOut = parsed;
+        return true;
+    }
+
     return false;
 }
 
@@ -2385,6 +2419,18 @@ static bool TryParseMp4Args(
     for (var i = 1; i < args.Length; i++)
     {
         var arg = args[i];
+        if (IsMaxFpsArg(arg))
+        {
+            error = "--max-fps applies to SVG; use --fps for mp4";
+            return false;
+        }
+
+        if (arg is "--loop" or "--no-loop")
+        {
+            error = $"{arg} applies to SVG; the player decides whether an mp4 plays again";
+            return false;
+        }
+
         if (TryConsumeFontSizeArg(args, ref i, ref fontSizeOverride, out error)
             || TryConsumeFontFamilyArg(args, ref i, ref fontFamilyOverride, out error)
             || TryConsumeThemeArg(args, ref i, ref themePresetOverride, out error)
@@ -2395,12 +2441,6 @@ static bool TryParseMp4Args(
             if (error.Length != 0)
                 return false;
             continue;
-        }
-
-        if (IsMaxFpsArg(arg))
-        {
-            error = "--max-fps applies to SVG; use --fps for mp4";
-            return false;
         }
 
         if (arg.StartsWith('-'))
@@ -2514,8 +2554,11 @@ sealed class StyleOptions
     internal int? Padding { get; set; }
     internal double? Opacity { get; set; }
     internal int? Blur { get; set; }
+    internal bool? Loop { get; set; }
+    internal double? EndHold { get; set; }
+    internal double? FadeOut { get; set; }
 
-    internal RenderStyleOverrides ToOverrides() => new(WindowTitle, Background, Margin, Padding, Opacity, Blur);
+    internal RenderStyleOverrides ToOverrides() => new(WindowTitle, Background, Margin, Padding, Opacity, Blur, Loop, EndHold, FadeOut);
 }
 
 sealed class Mp4Options
@@ -2621,12 +2664,18 @@ static class HelpText
                                        --background.
               --blur N                 Blur the background seen through a translucent window, 0-50 pixels
                                        (default 0). Needs --opacity below 1.
+              --end-hold N             Seconds the final screen stays before the SVG starts again or the
+                                       mp4 ends, 0-60 (default: as long as the pause before the last output)
+              --fade-out N             Fade the terminal's contents out over N seconds after the end hold,
+                                       0-10 (default 0). The window and the background stay.
 
             """;
 
     internal const string SvgOptions = """
         SVG (--format svg, or the svg command):
           --max-fps N              Cap the animation frame rate, 1-120. 0 keeps every frame (default).
+          --no-loop                Play the animation once and stop on the final screen (default: loop)
+          --loop                   Loop, also when the scenario or the cast says not to
 
         """;
 

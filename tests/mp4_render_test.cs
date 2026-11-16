@@ -44,6 +44,7 @@ failures += Run("CursorBlendsHalfForeground", CursorBlendsHalfForeground);
 failures += Run("NothingShownBeforeFirstEvent", NothingShownBeforeFirstEvent);
 failures += Run("FrameShowsEventsUpToItsTime", FrameShowsEventsUpToItsTime);
 failures += Run("TrailingBlankRestoreIsTrimmed", TrailingBlankRestoreIsTrimmed);
+failures += Run("EndHoldAndFadeOutEndOnTheEmptyTerminal", EndHoldAndFadeOutEndOnTheEmptyTerminal);
 failures += Run("ScreenSwitchesBecomeKeyframes", ScreenSwitchesBecomeKeyframes);
 failures += Run("TrimmedRestoreForcesNoKeyframe", TrimmedRestoreForcesNoKeyframe);
 failures += Run("ForcedKeyframesAreSpacedAndCapped", ForcedKeyframesAreSpacedAndCapped);
@@ -546,6 +547,35 @@ static bool FrameShowsEventsUpToItsTime()
         && CellPixel(frames[5], layout, 0, 1) == (0xd0, 0xd0, 0xd0);
 }
 
+static bool EndHoldAndFadeOutEndOnTheEmptyTerminal()
+{
+    // The last event is at 0.5s. end-hold 0.5 and fade-out 0.5 make the video 1.5s: 15 frames at 10fps. Frame k
+    // stands for the time up to (k + 1) / 10, so the fade starts after frame 9 and frame 14 is fully faded: the
+    // block cell has the theme's background, and the padding around the cells never changes.
+    var (frames, layout) = Render(
+        """
+        [0.0,"o","\u001b[?25l█"]
+        [0.5,"o","█"]
+        """, fps: 10, tags: ["st:end-hold=0.5", "st:fade-out=0.5"]);
+    if (frames.Count != 15)
+    {
+        Console.Error.WriteLine($"  {frames.Count} frames");
+        return false;
+    }
+
+    var held = CellPixel(frames[9], layout, 0, 0);
+    var fading = CellPixel(frames[12], layout, 0, 0);
+    var faded = CellPixel(frames[14], layout, 0, 1);
+    // Frame 12 is 60% of the way from the foreground #d0d0d0 to the background #282c34.
+    var ok = held == (0xd0, 0xd0, 0xd0)
+        && Math.Abs(fading.Item1 - 107.2) < 2 && Math.Abs(fading.Item2 - 109.6) < 2 && Math.Abs(fading.Item3 - 114.4) < 2
+        && faded == (40, 44, 52)
+        && Pixel(frames[14], layout, 0, 0) == Pixel(frames[0], layout, 0, 0);
+    if (!ok)
+        Console.Error.WriteLine($"  held {held}, fading {fading}, faded {faded}");
+    return ok;
+}
+
 static bool TrailingBlankRestoreIsTrimmed()
 {
     // A full-screen app exits to a blank main screen. Like the SVG, the video ends on the app's last screen.
@@ -671,7 +701,8 @@ static (List<byte[]> Frames, RasterLayout Layout) Render(string events, int fps,
         File.WriteAllText(path, "{\"version\":3,\"term\":{\"cols\":8,\"rows\":3,\"type\":\"xterm-256color\"}" + tagsJson + "}\n" + events + "\n");
         var recording = CastReader.Read(path);
         var renderer = new Mp4FrameRenderer(recording.Events, recording.Width, recording.Height, recording.RenderSettings,
-            Mp4Settings.Default with { Fps = fps, FrameWidth = size?.Width ?? 0, FrameHeight = size?.Height ?? 0 }, recording.LoopDuration);
+            Mp4Settings.Default with { Fps = fps, FrameWidth = size?.Width ?? 0, FrameHeight = size?.Height ?? 0 },
+            RenderSettingsResolver.ResolveLoopDuration(recording.LoopDuration, recording.Events, recording.RenderSettings));
         var frames = new List<byte[]>();
         renderer.Render(pixels => frames.Add((byte[])pixels.Clone()));
         return (frames, renderer.Layout);

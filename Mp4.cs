@@ -94,8 +94,11 @@ internal sealed class Mp4FrameRenderer
     private readonly ResolvedRenderSettings _render;
     private readonly string? _fontFile;
     private readonly string? _ffmpegPath;
+    private readonly double _fadeOut;
+    private readonly double _fadeStart;
     private FixedRatePlan? _plan;
 
+    /// <param name="loopDuration">The video's length, with the end hold and the fade-out (<see cref="RenderSettingsResolver.ResolveLoopDuration"/>).</param>
     /// <param name="ffmpegPath">ffmpeg, which decodes a background image. Needed only when the background is an image.</param>
     internal Mp4FrameRenderer(
         IReadOnlyList<CastEvent> events,
@@ -118,6 +121,8 @@ internal sealed class Mp4FrameRenderer
         Layout = Mp4Render.CreateLayout(render, cols, rows, settings);
         Glyphs = GlyphSource.Create(render.FontFamily, settings.FontFile, Layout);
         FrameCount = CountFrames(loopDuration, settings.Fps);
+        _fadeOut = render.FadeOut ?? 0;
+        _fadeStart = loopDuration - _fadeOut;
     }
 
     /// <summary>Frames in a loop of <paramref name="loopDuration"/> seconds, at least one.</summary>
@@ -168,12 +173,49 @@ internal sealed class Mp4FrameRenderer
 
         var raster = new FrameRasterizer(Layout, _theme, Glyphs, desktop, titleGlyphs, _render.WindowTitle, _render.WindowOpacity, _render.WindowBlur);
         var stepper = new ReplayStepper(_events, _initialWidth, _initialHeight, Layout.Cols, Layout.Rows, _theme, Plan.StopIndex);
+        byte[]? empty = null;
+        byte[]? faded = null;
         for (var frame = 0; frame < FrameCount; frame++)
         {
             if (stepper.AdvanceTo(frame / (double)_fps))
                 raster.Draw(stepper.View);
-            sink(raster.Pixels);
+
+            // The fade-out comes after the last event, so the screen no longer changes. A frame stands for the time up
+            // to the next one, so the last frame of the video is fully faded.
+            var fade = _fadeOut > 0 ? Math.Clamp(((frame + 1) / (double)_fps - _fadeStart) / _fadeOut, 0, 1) : 0;
+            if (fade <= 0)
+            {
+                sink(raster.Pixels);
+                continue;
+            }
+
+            if (empty is null)
+            {
+                (empty, faded) = (DrawEmpty(raster, stepper.View), new byte[raster.Pixels.Length]);
+                raster.Draw(stepper.View);
+            }
+
+            Blend(raster.Pixels, empty, fade, faded!);
+            sink(faded!);
         }
+    }
+
+    /// <summary>
+    /// The frame without the terminal's contents: its background, the window, and the background around it, which a
+    /// fade-out does not touch. Leaves <paramref name="raster"/> drawn empty.
+    /// </summary>
+    private byte[] DrawEmpty(FrameRasterizer raster, ScreenBuffer view)
+    {
+        raster.Draw(new ScreenBuffer(view.Width, view.Height, _theme) { CursorVisible = false });
+        return raster.Pixels.ToArray();
+    }
+
+    /// <summary>Writes <paramref name="frame"/> moved toward <paramref name="empty"/> by <paramref name="amount"/>, 0 to 1.</summary>
+    internal static void Blend(byte[] frame, byte[] empty, double amount, byte[] destination)
+    {
+        var weight = (int)Math.Round(amount * 256);
+        for (var i = 0; i < frame.Length; i++)
+            destination[i] = (byte)(frame[i] + (((empty[i] - frame[i]) * weight + 128) >> 8));
     }
 }
 
@@ -223,7 +265,8 @@ internal static class Mp4Render
         if (Directory.Exists(fullOutputPath))
             throw new Mp4Exception($"output path is a directory: {fullOutputPath}");
 
-        var loopDuration = loopDurationOverride ?? TerminalReplay.ComputeLoopDuration(events);
+        var loopDuration = RenderSettingsResolver.ResolveLoopDuration(
+            loopDurationOverride ?? TerminalReplay.ComputeLoopDuration(events), events, render);
         var renderer = new Mp4FrameRenderer(events, width, height, render, settings, loopDuration, ffmpegPath);
         var layout = renderer.Layout;
         var (outputWidth, outputHeight) = OutputSize(layout, settings);

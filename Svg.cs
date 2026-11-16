@@ -76,7 +76,8 @@ internal static class SvgRender
         var theme = TerminalTheme.FromResolved(render.Theme);
         // Without --max-fps only the last of frames that share a time is drawn (DropZeroLengthFrames).
         var frames = TerminalReplay.BuildFrames(events, width, height, canvasWidth, canvasHeight, theme, lastOfSameTime: render.MaxFps <= 0);
-        var loopDuration = loopDurationOverride ?? TerminalReplay.ComputeLoopDuration(events);
+        var loopDuration = RenderSettingsResolver.ResolveLoopDuration(
+            loopDurationOverride ?? TerminalReplay.ComputeLoopDuration(events), events, render);
         return SvgFrameRenderer.Render(events, width, height, frames, render, canvasWidth, canvasHeight, loopDuration);
     }
 }
@@ -254,6 +255,23 @@ internal readonly record struct ResolvedRenderSettings(
 
     /// <summary>The blur drawn: the set one when the window lets the background through, else 0.</summary>
     internal int WindowBlur => WindowOpacity < 1 ? Blur ?? 0 : 0;
+
+    /// <summary>Whether the SVG starts again after its end, or null for yes. An mp4 does not loop: a player decides.</summary>
+    internal bool? Loop { get; init; }
+
+    /// <summary>
+    /// Seconds the final screen stays before the SVG starts again or the mp4 ends, or null for the gap before the
+    /// last output (<see cref="TerminalReplay.ComputeLoopDuration"/>).
+    /// </summary>
+    internal double? EndHold { get; init; }
+
+    /// <summary>Seconds over which the terminal's contents fade out after <see cref="EndHold"/>, or null for none.</summary>
+    internal double? FadeOut { get; init; }
+
+    internal bool Loops => Loop ?? true;
+
+    /// <summary>The fade an SVG draws: none when it plays once, because it stops on its final screen.</summary>
+    internal double SvgFadeOut => Loops ? FadeOut ?? 0 : 0;
 }
 
 /// <summary>
@@ -362,8 +380,8 @@ internal sealed class BackgroundImageSource
 }
 
 /// <summary>
-/// Window title, background, margin, padding, opacity, and blur from the command line or the playground: each set
-/// one replaces the cast's or the scenario's.
+/// Window title, background, margin, padding, opacity, blur, loop, end hold, and fade-out from the command line or
+/// the playground: each set one replaces the cast's or the scenario's.
 /// </summary>
 internal sealed record RenderStyleOverrides(
     string? WindowTitle,
@@ -371,7 +389,10 @@ internal sealed record RenderStyleOverrides(
     int? Margin,
     int? Padding,
     double? Opacity = null,
-    int? Blur = null)
+    int? Blur = null,
+    bool? Loop = null,
+    double? EndHold = null,
+    double? FadeOut = null)
 {
     internal static readonly RenderStyleOverrides None = new(null, null, null, null);
 
@@ -383,6 +404,9 @@ internal sealed record RenderStyleOverrides(
         Padding = Padding ?? settings.Padding,
         Opacity = Opacity ?? settings.Opacity,
         Blur = Blur ?? settings.Blur,
+        Loop = Loop ?? settings.Loop,
+        EndHold = EndHold ?? settings.EndHold,
+        FadeOut = FadeOut ?? settings.FadeOut,
     };
 }
 
@@ -408,10 +432,15 @@ internal static class RenderSettingsResolver
     internal const string PaddingTagPrefix = "st:padding=";
     internal const string OpacityTagPrefix = "st:opacity=";
     internal const string BlurTagPrefix = "st:blur=";
+    internal const string LoopTagPrefix = "st:loop=";
+    internal const string EndHoldTagPrefix = "st:end-hold=";
+    internal const string FadeOutTagPrefix = "st:fade-out=";
     internal const int MinMargin = 0, MaxMargin = 200;
     internal const int MinPadding = 0, MaxPadding = 100;
     internal const double MinOpacity = 0, MaxOpacity = 1;
     internal const int MinBlur = 0, MaxBlur = 50;
+    internal const double MinEndHold = 0, MaxEndHold = 60;
+    internal const double MinFadeOut = 0, MaxFadeOut = 10;
 
     /// <summary>The margin when a background is set and no margin is: enough of the background to show around the window.</summary>
     internal const int DefaultBackgroundMargin = 32;
@@ -528,11 +557,70 @@ internal static class RenderSettingsResolver
     /// <summary>An opacity as it is written in a cast tag and an SVG attribute: up to three decimals, no exponent.</summary>
     internal static string FormatOpacity(double opacity) => opacity.ToString("0.###", CultureInfo.InvariantCulture);
 
+    /// <summary>Reads <c>true</c> or <c>false</c>, as a cast's <c>st:loop</c> tag holds it.</summary>
+    internal static bool TryParseLoop(string text, out bool loop, out string error)
+    {
+        error = "";
+        if (bool.TryParse(text.Trim(), out loop))
+            return true;
+
+        error = $"invalid loop value: {text} (expected true or false)";
+        return false;
+    }
+
+    internal static bool TryParseEndHold(string text, out double seconds, out string error) =>
+        TryParseSeconds(text, "end-hold", MinEndHold, MaxEndHold, out seconds, out error);
+
+    internal static bool TryParseFadeOut(string text, out double seconds, out string error) =>
+        TryParseSeconds(text, "fade-out", MinFadeOut, MaxFadeOut, out seconds, out error);
+
+    internal static bool IsValidEndHold(double seconds) => double.IsFinite(seconds) && seconds is >= MinEndHold and <= MaxEndHold;
+
+    internal static bool IsValidFadeOut(double seconds) => double.IsFinite(seconds) && seconds is >= MinFadeOut and <= MaxFadeOut;
+
+    /// <summary>Seconds as a cast tag holds them: up to three decimals, no exponent.</summary>
+    internal static string FormatSeconds(double seconds) => seconds.ToString("0.###", CultureInfo.InvariantCulture);
+
+    private static bool TryParseSeconds(string text, string name, double min, double max, out double seconds, out string error)
+    {
+        error = "";
+        if (!double.TryParse(text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out seconds) || !double.IsFinite(seconds))
+        {
+            error = $"invalid {name} value: {text} (expected seconds from {FormatSeconds(min)} to {FormatSeconds(max)}, such as 1.5)";
+            return false;
+        }
+
+        if (seconds < min || seconds > max)
+        {
+            error = $"{name} must be between {FormatSeconds(min)} and {FormatSeconds(max)} seconds: {text.Trim()}";
+            return false;
+        }
+
+        return true;
+    }
+
     /// <summary>
-    /// Settings that are set but have no effect, one message each: opacity or blur without a background, and blur
-    /// on an opaque window. Both the CLI and the playground show them as warnings.
+    /// The loop of a recording with its render settings: the playback to the last event, then <c>end-hold</c> (or
+    /// the default hold already in <paramref name="loopDuration"/>), then <c>fade-out</c>. The SVG's loop and the
+    /// mp4's length.
     /// </summary>
-    internal static List<string> FindIneffectiveStyle(ResolvedRenderSettings settings)
+    /// <param name="loopDuration">The loop with the default hold, <see cref="TerminalReplay.ComputeLoopDuration"/>.</param>
+    internal static double ResolveLoopDuration(double loopDuration, IReadOnlyList<CastEvent> events, ResolvedRenderSettings settings)
+    {
+        if (events.Count == 0)
+            return loopDuration;
+
+        var end = settings.EndHold is double hold ? events[^1].Time + hold : loopDuration;
+        return end + (settings.FadeOut ?? 0);
+    }
+
+    /// <summary>
+    /// Settings that are set but have no effect, one message each: opacity or blur without a background, blur on an
+    /// opaque window, and, for an SVG, a fade-out on one that plays once. Both the CLI and the playground show them
+    /// as warnings.
+    /// </summary>
+    /// <param name="svg">Whether an SVG is written, where a fade-out needs the loop.</param>
+    internal static List<string> FindIneffectiveStyle(ResolvedRenderSettings settings, bool svg = true)
     {
         var notes = new List<string>();
         var translucent = settings.Opacity is double opacity && opacity < 1;
@@ -541,6 +629,8 @@ internal static class RenderSettingsResolver
             notes.Add($"{(translucent && blurred ? "opacity and blur have" : translucent ? "opacity has" : "blur has")} no effect without a background: the window stays opaque");
         else if (blurred && !translucent)
             notes.Add("blur has no effect on an opaque window: set an opacity below 1, such as 0.85");
+        if (svg && !settings.Loops && settings.FadeOut is > 0)
+            notes.Add("fade-out has no effect on an SVG that plays once: it stops on its final screen (an mp4 still fades)");
         return notes;
     }
 
@@ -817,6 +907,31 @@ internal static class RenderSettingsResolver
             settings = settings with { Blur = blurValue };
         }
 
+        if (render?.Loop is bool loop)
+            settings = settings with { Loop = loop };
+
+        if (render?.EndHold is double endHold)
+        {
+            if (!IsValidEndHold(endHold))
+            {
+                error = $"invalid render.end-hold: must be between {FormatSeconds(MinEndHold)} and {FormatSeconds(MaxEndHold)} seconds: {endHold.ToString(CultureInfo.InvariantCulture)}";
+                return false;
+            }
+
+            settings = settings with { EndHold = endHold };
+        }
+
+        if (render?.FadeOut is double fadeOut)
+        {
+            if (!IsValidFadeOut(fadeOut))
+            {
+                error = $"invalid render.fade-out: must be between {FormatSeconds(MinFadeOut)} and {FormatSeconds(MaxFadeOut)} seconds: {fadeOut.ToString(CultureInfo.InvariantCulture)}";
+                return false;
+            }
+
+            settings = settings with { FadeOut = fadeOut };
+        }
+
         return true;
     }
 
@@ -959,6 +1074,9 @@ internal static class SvgFrameRenderer
     private const double InnerPaddingVerticalMax = 8.0;
     private const double LayerFadeSeconds = 0.001;
     private const double CursorBlockOpacity = 0.5;
+
+    /// <summary>The class and keyframes of the group that fades the terminal's contents out; <see cref="ClassNamePool"/> never gives it.</summary>
+    private const string FadeClass = "fade";
 
     // A <use> plus the id it needs costs about this much. Shorter rows are cheaper to repeat.
     private const int MinReusableRowChars = 48;
@@ -1517,8 +1635,20 @@ internal static class SvgFrameRenderer
         sb.AppendLf("text { dominant-baseline: alphabetic; }");
         // Background and block rects in rows carry no class, also inside reused <use> content. This rule gives them crisp edges.
         sb.AppendLf(".bg,rect:not([class]) { shape-rendering: crispEdges; }");
-        // Every animated element: hidden by default, switched at its window's offsets, looping.
-        sb.AppendLf(CultureInfo.InvariantCulture, $".l {{ visibility: hidden; animation: {loopDurationText}s step-start infinite; }}");
+        // Every animated element: hidden by default, switched at its window's offsets, looping. Played once, each keeps
+        // its value at the end of the loop: the elements of the final screen show from there on, and no others.
+        sb.AppendLf(CultureInfo.InvariantCulture,
+            $".l {{ visibility: hidden; animation: {loopDurationText}s step-start {(render.Loops ? "infinite" : "forwards")}; }}");
+        var fadeOut = render.SvgFadeOut;
+        if (fadeOut > 0 && loopDuration > 0)
+        {
+            // The terminal's contents fade out at the end of each loop; its background, the window, and the
+            // background around it stay. The loop starts again at full opacity.
+            var fadeStart = Math.Max(0, (loopDuration - fadeOut) / loopDuration * 100);
+            sb.AppendLf(CultureInfo.InvariantCulture,
+                $"@keyframes {FadeClass}{{0%,{fadeStart:0.######}%{{opacity:1}}to{{opacity:0}}}}");
+            sb.AppendLf(CultureInfo.InvariantCulture, $".{FadeClass}{{animation:{loopDurationText}s linear infinite {FadeClass}}}");
+        }
         sb.AppendLf(CultureInfo.InvariantCulture,
             $".c {{ fill: {theme.Foreground}; fill-opacity: {cursorOpacityText}; }}");
         for (var row = 0; row < context.RowClasses.Length; row++)
@@ -1599,6 +1729,11 @@ internal static class SvgFrameRenderer
                 $"<rect class=\"bg l {keyframes.Name(viewportKeyframeIds[i])} viewport-bg-{i}\" x=\"{metrics.TerminalOriginX:0.##}\" y=\"{metrics.TerminalOriginY:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"{render.Theme.Bg}\"{fillOpacity}{(clipsWindow && metrics.HasChrome ? $" clip-path=\"url(#window-clip-{i})\"" : "")}/>");
         }
 
+        // The rows and cursors go in the fade group, over the terminal's background, which does not fade.
+        var fades = fadeOut > 0 && loopDuration > 0;
+        if (fades)
+            sb.AppendLf(CultureInfo.InvariantCulture, $"<g class=\"{FadeClass}\">");
+
         var head = sb.ToString();
         sb.Clear();
 
@@ -1610,6 +1745,8 @@ internal static class SvgFrameRenderer
                 $"<use href=\"#c\" x=\"{origin.X + layer.P1 * metrics.CharWidth:0.##}\" y=\"{origin.Y + layer.P0 * metrics.LineHeight:0.##}\" class=\"l {keyframes.Name(cursorKeyframeIds[i])}\"/>");
         }
 
+        if (fades)
+            sb.AppendLf("</g>");
         sb.AppendLf("</g>");
 
         // Over the terminal, whose background reaches the window's edge.
@@ -1814,8 +1951,8 @@ internal static class SvgFrameRenderer
     /// <summary>
     /// Short class names, shared by rows, colors, and keyframes so they never collide: a–z, then a
     /// letter followed by letters or digits. Lowercase only, because an SVG inlined in an HTML page
-    /// without a doctype matches class names regardless of case. Skips <c>l</c>, <c>c</c>, and
-    /// <c>bg</c>, which the SVG uses itself, and words CSS reserves for <c>animation-name</c>.
+    /// without a doctype matches class names regardless of case. Skips <c>l</c>, <c>c</c>, <c>bg</c>,
+    /// and <c>fade</c>, which the SVG uses itself, and words CSS reserves for <c>animation-name</c>.
     /// </summary>
     private sealed class ClassNamePool
     {
@@ -1841,7 +1978,7 @@ internal static class SvgFrameRenderer
         }
 
         private static bool IsReserved(string name) =>
-            name is "l" or "c" or "bg"
+            name is "l" or "c" or "bg" or FadeClass
             || (name.Length >= 4 && (name.Equals("none", StringComparison.OrdinalIgnoreCase)
                 || name.Equals("unset", StringComparison.OrdinalIgnoreCase)
                 || name.Equals("revert", StringComparison.OrdinalIgnoreCase)

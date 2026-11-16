@@ -4,8 +4,8 @@ using static ScenarioCast;
 /// <summary>
 /// The render options of the playground. They are the CLI flags <c>--theme</c>, <c>--window</c>, <c>--font-size</c>,
 /// <c>--font-family</c>, <c>--max-fps</c>, <c>--window-title</c>, <c>--background</c>, <c>--margin</c>,
-/// <c>--padding</c>, <c>--opacity</c>, and <c>--blur</c>, with the same values and ranges. Null leaves a setting as
-/// the scenario or the cast sets it.
+/// <c>--padding</c>, <c>--opacity</c>, <c>--blur</c>, <c>--loop</c> / <c>--no-loop</c>, <c>--end-hold</c>, and
+/// <c>--fade-out</c>, with the same values and ranges. Null leaves a setting as the scenario or the cast sets it.
 /// </summary>
 /// <param name="Images">
 /// The images that a background, in the YAML or in <paramref name="Background"/>, names. The playground reads no
@@ -23,7 +23,10 @@ internal sealed record PlaygroundOptions(
     int? Padding = null,
     IReadOnlyDictionary<string, byte[]>? Images = null,
     double? Opacity = null,
-    int? Blur = null)
+    int? Blur = null,
+    bool? Loop = null,
+    double? EndHold = null,
+    double? FadeOut = null)
 {
     internal BackgroundImageSource ImageSource => BackgroundImageSource.FromImages(Images ?? new Dictionary<string, byte[]>());
 }
@@ -304,13 +307,30 @@ internal static class PlaygroundRender
             return false;
         }
 
+        if (options.EndHold is double endHold
+            && !RenderSettingsResolver.TryParseEndHold(endHold.ToString(System.Globalization.CultureInfo.InvariantCulture), out _, out message))
+        {
+            error = message;
+            return false;
+        }
+
+        if (options.FadeOut is double fadeOut
+            && !RenderSettingsResolver.TryParseFadeOut(fadeOut.ToString(System.Globalization.CultureInfo.InvariantCulture), out _, out message))
+        {
+            error = message;
+            return false;
+        }
+
         style = new RenderStyleOverrides(
             options.WindowTitle is null ? null : RenderSettingsResolver.NormalizeWindowTitle(options.WindowTitle),
             background,
             options.Margin,
             options.Padding,
             options.Opacity,
-            options.Blur);
+            options.Blur,
+            options.Loop,
+            options.EndHold,
+            options.FadeOut);
         return true;
     }
 

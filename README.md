@@ -71,6 +71,14 @@ Demos inside README text usually need none: the page color fits, and the file st
 
 With an image, `opacity` lets it show through the window, as a terminal with a transparent background does, and `blur` softens what shows. Only the terminal's background and the title bar become translucent; text and cells the program colored stay opaque. Recommended `opacity` stay at 0.85 or more, while a dark one allows about 0.7.
 
+How the demo ends is set the same way:
+
+| `render` key | Flag | What it sets |
+| --- | --- | --- |
+| `loop` | `--no-loop` / `--loop` | `false` plays the SVG once and stops on the final screen. Default `true`. An mp4 has no loop: the player decides. |
+| `end-hold` | `--end-hold` | Seconds the final screen stays before the SVG starts again or the mp4 ends, 0–60. Default: as long as the pause before the last output. |
+| `fade-out` | `--fade-out` | Seconds over which the text fades out after `end-hold`, 0–10, so the loop starts again from a clear terminal. The window and the background stay. |
+
 | --- | --- |
 | ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
 
@@ -149,6 +157,9 @@ scenetake --format svg scenario.yaml --window macos --window-title "my-cli demo"
 
 # A translucent window over an image, with the image blurred behind the text
 scenetake --format svg scenario.yaml --window macos --background wallpaper.webp --opacity 0.85 --blur 8
+
+# Keep the final screen for 3 seconds, then fade the text out over 1 second before the loop starts again
+scenetake --format svg scenario.yaml --end-hold 3 --fade-out 1
 
 # Convert an existing cast file to SVG (v2 or v3)
 scenetake svg scenario.cast

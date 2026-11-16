@@ -749,6 +749,12 @@ internal static partial class ScenarioCast
             tags.Add(RenderSettingsResolver.OpacityTagPrefix + RenderSettingsResolver.FormatOpacity(opacity));
         if (renderSettings.Blur is int blur)
             tags.Add(RenderSettingsResolver.BlurTagPrefix + blur.ToString(CultureInfo.InvariantCulture));
+        if (renderSettings.Loop is bool loop)
+            tags.Add(RenderSettingsResolver.LoopTagPrefix + (loop ? "true" : "false"));
+        if (renderSettings.EndHold is double endHold)
+            tags.Add(RenderSettingsResolver.EndHoldTagPrefix + RenderSettingsResolver.FormatSeconds(endHold));
+        if (renderSettings.FadeOut is double fadeOut)
+            tags.Add(RenderSettingsResolver.FadeOutTagPrefix + RenderSettingsResolver.FormatSeconds(fadeOut));
         var tagsJson = string.Join(",", tags.ConvertAll(static tag => JsonEscape.JsonString(tag)));
         writer.WriteLine(
             $"{{\"version\":3,\"term\":{{\"cols\":{width},\"rows\":{height}" +

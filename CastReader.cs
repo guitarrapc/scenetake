@@ -111,6 +111,9 @@ internal static class CastReader
             Padding = style.Padding,
             Opacity = style.Opacity,
             Blur = style.Blur,
+            Loop = style.Loop,
+            EndHold = style.EndHold,
+            FadeOut = style.FadeOut,
         };
         var events = new List<CastEvent>();
         var warnedCodes = new HashSet<string>(StringComparer.Ordinal);
@@ -140,7 +143,10 @@ internal static class CastReader
         return new CastRecording(width, height, renderSettings, events, loopDuration);
     }
 
-    /// <summary>The window title, background, margin, padding, opacity, and blur a cast's tags set; null for each it does not.</summary>
+    /// <summary>
+    /// The window title, background, margin, padding, opacity, blur, loop, end hold, and fade-out a cast's tags set;
+    /// null for each it does not.
+    /// </summary>
     private sealed class CastStyle
     {
         internal string? WindowTitle;
@@ -149,6 +155,9 @@ internal static class CastReader
         internal int? Padding;
         internal double? Opacity;
         internal int? Blur;
+        internal bool? Loop;
+        internal double? EndHold;
+        internal double? FadeOut;
     }
 
     private static void ReadRenderTags(JsonElement tags, ref int fontSize, ref string fontFamily, ref WindowStyle window, CastStyle style)
@@ -198,6 +207,21 @@ internal static class CastReader
             {
                 if (ReadTag<int>(value, RenderSettingsResolver.BlurTagPrefix, "blur", "no blur", RenderSettingsResolver.TryParseBlur, out var blur))
                     style.Blur = blur;
+            }
+            else if (value.StartsWith(RenderSettingsResolver.LoopTagPrefix, StringComparison.Ordinal))
+            {
+                if (ReadTag<bool>(value, RenderSettingsResolver.LoopTagPrefix, "loop", "a looping SVG", RenderSettingsResolver.TryParseLoop, out var loop))
+                    style.Loop = loop;
+            }
+            else if (value.StartsWith(RenderSettingsResolver.EndHoldTagPrefix, StringComparison.Ordinal))
+            {
+                if (ReadTag<double>(value, RenderSettingsResolver.EndHoldTagPrefix, "end-hold", "the default hold", RenderSettingsResolver.TryParseEndHold, out var endHold))
+                    style.EndHold = endHold;
+            }
+            else if (value.StartsWith(RenderSettingsResolver.FadeOutTagPrefix, StringComparison.Ordinal))
+            {
+                if (ReadTag<double>(value, RenderSettingsResolver.FadeOutTagPrefix, "fade-out", "no fade", RenderSettingsResolver.TryParseFadeOut, out var fadeOut))
+                    style.FadeOut = fadeOut;
             }
         }
     }

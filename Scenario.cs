@@ -512,6 +512,9 @@ public partial class ScenarioRender
     public int? Padding { get; set; }
     public double? Opacity { get; set; }
     public int? Blur { get; set; }
+    public bool? Loop { get; set; }
+    public double? EndHold { get; set; }
+    public double? FadeOut { get; set; }
     public ScenarioTheme? Theme { get; set; }
 }
 

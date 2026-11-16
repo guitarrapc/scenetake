@@ -44,7 +44,8 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
 ### Timing
 
 - Frame `k` shows the screen after every event with time ≤ `k / fps`. States shorter than one frame are not shown.
-- The video length is the SVG loop period, so it includes the final hold.
+- The video length is the SVG loop period, so it includes the final hold, `end-hold` when set, and `fade-out`.
+- `fade-out` blends each frame after the hold toward the same frame without the terminal's contents: its background, the window, and `background`, drawn once when the fade starts. A frame stands for the time up to the next one, so the last frame is fully faded. The screen does not change during the fade, because it follows the last event. `loop` does not apply: whether an mp4 plays again is the player's choice.
 - Like the SVG, `--format mp4` renders the cast it just wrote, so it gives the same file as `scenetake mp4` on that cast with the same options.
 - Like the SVG, nothing is shown before the first event, not even the cursor. A cast with no events differs: its SVG shows the cursor throughout, while the mp4 shows only the background.
 - Like the SVG, a trailing blank alternate-screen restore is dropped, so a TUI recording ends on the app's last screen.
