@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "scenetake": "1.5.0",
+  "os": "windows",
+  "shell": "bash",
+  "width": 80,
+  "height": 24,
+  "steps": [
+    {
+      "run": "printf '\\033[1;34mDark theme with macOS window chrome\\033[0m\\n'",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 4981254,
+          "out": "\u001B[1;34mDark theme with macOS window chrome\u001B[0m\n"
+        }
+      ]
+    },
+    {
+      "run": "printf '16-color: \\033[31mred\\033[0m \\033[32mgreen\\033[0m \\033[33myellow\\033[0m \\033[34mblue\\033[0m\\n'",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 5146591,
+          "out": "16-color: \u001B[31mred\u001B[0m \u001B[32mgreen\u001B[0m \u001B[33myellow\u001B[0m \u001B[34mblue\u001B[0m\n"
+        }
+      ]
+    },
+    {
+      "run": "printf '256-color: \\033[38;5;196m196\\033[0m \\033[38;5;46m46\\033[0m \\033[38;5;27m27\\033[0m\\n'",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 5382045,
+          "out": "256-color: \u001B[38;5;196m196\u001B[0m \u001B[38;5;46m46\u001B[0m \u001B[38;5;27m27\u001B[0m\n"
+        }
+      ]
+    },
+    {
+      "run": "echo \"Done!\"",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 5180593,
+          "out": "Done!\n"
+        }
+      ]
+    }
+  ]
+}

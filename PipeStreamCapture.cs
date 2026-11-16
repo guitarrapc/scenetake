@@ -2,8 +2,6 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Text;
 
-internal readonly record struct PipeStreamChunk(TimeSpan Time, bool IsStderr, string Text);
-
 internal static class PipeStreamCapture
 {
     internal static async Task<IReadOnlyList<PipeStreamChunk>> ReadAsync(Process process, CancellationToken cancellationToken = default)

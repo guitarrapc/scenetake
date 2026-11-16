@@ -447,7 +447,7 @@ text { dominant-baseline: alphabetic; }
 <g class="l dg"><text x="18 37.84 47.76" y="164.8">$da</text><use href="#c" x="57.68" y="152"/></g>
 <g class="l dh"><text x="18 37.84 47.76 57.68" y="164.8">$dat</text><use href="#c" x="67.6" y="152"/></g>
 <text class="l dj f" x="18" textLength="59.52">$ date</text>
-<g class="l dl"><g id="r30"><text x="18" y="184.8" textLength="287.68">Fri, Jul  3, 2026  6:47:25 PM</text></g></g>
+<g class="l dl"><g id="r30"><text x="18" y="184.8" textLength="198.4">15 Nov 2026 09:12:22</text></g></g>
 <g class="l dn"><g id="r31"><text class="a" x="18" y="204.8" textLength="198.4"># run color override</text></g></g>
 <g class="l do"><text x="18" y="224.8">$</text><use href="#c" x="37.84" y="212"/></g>
 <g class="l dp"><text x="18" y="224.8" textLength="9.92">$</text><text class="g" x="37.84" y="224.8" font-weight="bold" text-decoration="underline" textLength="9.92">d</text><use href="#c" x="47.76" y="212"/></g>

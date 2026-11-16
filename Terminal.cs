@@ -2034,8 +2034,12 @@ internal static class CastOscFilter
         var code = 0;
         for (var i = 2; i < pending.Count; i++)
             code = code * 10 + (pending[i] - '0');
-        return code is 4 or 5 or (>= 10 and <= 19) or 104 or 105 or (>= 110 and <= 119);
+        return IsColorCode(code);
     }
+
+    /// <summary>Whether an OSC with this number changes a color, which the filter keeps.</summary>
+    internal static bool IsColorCode(int code) =>
+        code is 4 or 5 or (>= 10 and <= 19) or 104 or 105 or (>= 110 and <= 119);
 
     private static void Write(ArrayBufferWriter<byte> output, byte b)
     {

@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "scenetake": "1.5.0",
+  "os": "windows",
+  "shell": "bash",
+  "width": 80,
+  "height": 24,
+  "steps": [
+    {
+      "run": "ping -n 4 127.0.0.1",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3718130,
+          "out": "\r\nPinging 127.0.0.1 "
+        },
+        {
+          "ticks": 3723547,
+          "out": "with 32 bytes of data:\r\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128\r\n"
+        },
+        {
+          "ticks": 13717747,
+          "out": "Reply from 127.0.0.1: "
+        },
+        {
+          "ticks": 13718523,
+          "out": "bytes=32 time<1ms TTL=128\r\n"
+        },
+        {
+          "ticks": 23753798,
+          "out": "Reply from 127.0.0.1: "
+        },
+        {
+          "ticks": 23754261,
+          "out": "bytes=32 time<1ms TTL=128\r\n"
+        },
+        {
+          "ticks": 33780293,
+          "out": "Reply from 127.0.0.1: "
+        },
+        {
+          "ticks": 33780780,
+          "out": "bytes=32 time<1ms TTL=128\r\n\r\nPing statistics for 127.0.0.1:\r\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),\r\nApproximate round trip times in milli-seconds:\r\n    Minimum = 0ms, Maximum = 0ms, Average = 0ms\r\n"
+        }
+      ]
+    },
+    {
+      "run": "ping -n 4 127.0.0.1",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3693613,
+          "out": "\r\nPinging 127.0.0.1 "
+        },
+        {
+          "ticks": 3693967,
+          "out": "with 32 bytes of data:\r\n"
+        },
+        {
+          "ticks": 3696574,
+          "out": "Reply from 127.0.0.1: "
+        },
+        {
+          "ticks": 3696707,
+          "out": "bytes=32 time<1ms TTL=128\r\n"
+        },
+        {
+          "ticks": 13838582,
+          "out": "Reply from 127.0.0.1: "
+        },
+        {
+          "ticks": 13839250,
+          "out": "bytes=32 time<1ms TTL=128\r\n"
+        },
+        {
+          "ticks": 23979909,
+          "out": "Reply from 127.0.0.1: "
+        },
+        {
+          "ticks": 23980491,
+          "out": "bytes=32 time<1ms TTL=128\r\n"
+        },
+        {
+          "ticks": 33993661,
+          "out": "Reply from 127.0.0.1: "
+        },
+        {
+          "ticks": 33994454,
+          "out": "bytes=32 time<1ms TTL=128\r\n\r\nPing statistics for 127.0.0.1:\r\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),\r\nApproximate round trip times in milli-seconds:\r\n    Minimum = 0ms, Maximum = 0ms, Average = 0ms\r\n"
+        }
+      ]
+    }
+  ]
+}

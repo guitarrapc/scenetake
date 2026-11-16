@@ -16,9 +16,21 @@ internal readonly record struct CastRecording(
 
 internal static class CastReader
 {
-    internal static CastRecording Read(string castPath)
+    internal static CastRecording Read(string castPath) =>
+        ReadLines(File.ReadAllLines(castPath, Encoding.UTF8));
+
+    /// <summary>Reads a cast held in memory, split into lines as <see cref="File.ReadAllLines(string)"/> splits a file.</summary>
+    internal static CastRecording ReadText(string text)
     {
-        var lines = File.ReadAllLines(castPath, Encoding.UTF8);
+        var lines = new List<string>();
+        using var reader = new StringReader(text.Length > 0 && text[0] == '﻿' ? text[1..] : text);
+        while (reader.ReadLine() is { } line)
+            lines.Add(line);
+        return ReadLines([.. lines]);
+    }
+
+    private static CastRecording ReadLines(string[] lines)
+    {
         if (lines.Length == 0)
             throw new CastReadException("cast file is empty");
 

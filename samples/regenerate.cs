@@ -3,7 +3,8 @@
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 
-// Regenerate sample .cast and .svg files from every *.yaml in this directory.
+// Regenerate sample .cast and .svg files from every *.yaml in this directory, with the .outputs.json file that
+// the playground replays.
 //
 // Usage (from repository root):
 //   dotnet run samples/regenerate.cs
@@ -94,6 +95,11 @@ static int RunScenario(string repoRoot, string toolPath, string scenarioPath)
     psi.ArgumentList.Add("--format");
     psi.ArgumentList.Add("svg");
     psi.ArgumentList.Add(relativeScenario);
+    // The playground replays what each step printed in this run (.github/docs/spec_playground.md). The outputs
+    // file comes from the same run as the cast, so a replay of the unmodified YAML gives the same cast.
+    psi.Environment["SCENETAKE_OUTPUTS"] = Path.Combine(
+        Path.GetDirectoryName(scenarioPath)!,
+        Path.GetFileNameWithoutExtension(scenarioPath) + ".outputs.json");
 
     using var process = Process.Start(psi);
     if (process is null)

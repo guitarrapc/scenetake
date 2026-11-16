@@ -1,0 +1,225 @@
+{
+  "version": 1,
+  "scenetake": "1.5.0",
+  "os": "windows",
+  "shell": "bash",
+  "width": 80,
+  "height": 24,
+  "steps": [
+    {
+      "run": "echo \"Hello, World!\"",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3891439,
+          "out": "Hello, World!\n"
+        }
+      ]
+    },
+    {
+      "run": "printf 'name\\tversion\\nscenetake\\t1.0\\n'",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3672297,
+          "out": "name\tversion\n"
+        },
+        {
+          "ticks": 3672754,
+          "out": "scenetake\t1.0\n"
+        }
+      ]
+    },
+    {
+      "run": "printf 'typing slowly...\\n'",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3895740,
+          "out": "typing slowly...\n"
+        }
+      ]
+    },
+    {
+      "run": "sleep 1",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": []
+    },
+    {
+      "run": "bash -c 'case \"$(uname -s)\" in MINGW*|MSYS*|CYGWIN*) ping -n 4 127.0.0.1 ;; *) ping -c 4 127.0.0.1 ;; esac'",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 4096687,
+          "out": "\r\nPinging 127.0.0.1 "
+        },
+        {
+          "ticks": 4097167,
+          "out": "with 32 bytes of data:\r\n"
+        },
+        {
+          "ticks": 4099804,
+          "out": "Reply from 127.0.0.1: "
+        },
+        {
+          "ticks": 4100006,
+          "out": "bytes=32 time<1ms TTL=128\r\n"
+        },
+        {
+          "ticks": 14242517,
+          "out": "Reply from 127.0.0.1: "
+        },
+        {
+          "ticks": 14243000,
+          "out": "bytes=32 time<1ms TTL=128\r\n"
+        },
+        {
+          "ticks": 24378005,
+          "out": "Reply from 127.0.0.1: "
+        },
+        {
+          "ticks": 24378452,
+          "out": "bytes=32 time<1ms TTL=128\r\n"
+        },
+        {
+          "ticks": 34522384,
+          "out": "Reply from 127.0.0.1: "
+        },
+        {
+          "ticks": 34522889,
+          "out": "bytes=32 time<1ms TTL=128\r\n\r\nPing statistics for 127.0.0.1:\r\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),\r\nApproximate round trip times in milli-seconds:\r\n    Minimum = 0ms, Maximum = 0ms, Average = 0ms\r\n"
+        }
+      ]
+    },
+    {
+      "run": "bash -c 'case \"$(uname -s)\" in MINGW*|MSYS*|CYGWIN*) ping -n 4 127.0.0.1 ;; *) ping -c 4 127.0.0.1 ;; esac'",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 4529534,
+          "out": "\r\nPinging 127.0.0.1 "
+        },
+        {
+          "ticks": 4529875,
+          "out": "with 32 bytes of data:\r\n"
+        },
+        {
+          "ticks": 4532504,
+          "out": "Reply from 127.0.0.1: "
+        },
+        {
+          "ticks": 4533087,
+          "out": "bytes=32 time<1ms TTL=128\r\n"
+        },
+        {
+          "ticks": 14553399,
+          "out": "Reply from 127.0.0.1: "
+        },
+        {
+          "ticks": 14554298,
+          "out": "bytes=32 time<1ms TTL=128\r\n"
+        },
+        {
+          "ticks": 24579771,
+          "out": "Reply from 127.0.0.1: "
+        },
+        {
+          "ticks": 24580159,
+          "out": "bytes=32 time<1ms TTL=128\r\n"
+        },
+        {
+          "ticks": 34672328,
+          "out": "Reply from 127.0.0.1: "
+        },
+        {
+          "ticks": 34672825,
+          "out": "bytes=32 time<1ms TTL=128\r\n\r\nPing statistics for 127.0.0.1:\r\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),\r\nApproximate round trip times in milli-seconds:\r\n    Minimum = 0ms, Maximum = 0ms, Average = 0ms\r\n"
+        }
+      ]
+    },
+    {
+      "run": "echo \"This command runs in a PTY, so output appears immediately and can include interactive features like colors and progress bars.\"",
+      "kind": "pty",
+      "exitCode": 0,
+      "cursor": {
+        "row": 24,
+        "column": 1
+      },
+      "chunks": [
+        {
+          "ticks": 3692045,
+          "data": "VGhpcyBjb21tYW5kIHJ1bnMgaW4gYSBQVFksIHNvIG91dHB1dCBhcHBlYXJzIGltbWVkaWF0ZWx5IGFuZCBjYW4gaW5jbHVkZSBpbnRlcmENChtbMjM7ODBIYWN0aXZlIGZlYXR1cmVzIGxpa2UgY29sb3JzIGFuZCBwcm9ncmVzcyBiYXJzLg0K"
+        },
+        {
+          "ticks": 4104858,
+          "data": "G1s/OTAwMWwbWz8xMDA0bA=="
+        }
+      ]
+    },
+    {
+      "run": "printf 'done\\n'",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3437594,
+          "out": "done\n"
+        }
+      ]
+    },
+    {
+      "run": "printf 'line1 alpha\\nline2 beta gamma\\nline3\\n'",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3765793,
+          "out": "line1 alpha\n"
+        },
+        {
+          "ticks": 3766055,
+          "out": "line2 beta gamma\nline3\n"
+        }
+      ]
+    },
+    {
+      "run": "echo \"plain stderr\" 1>&2",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3813959,
+          "err": "plain stderr\n"
+        }
+      ]
+    },
+    {
+      "run": "echo \"bright yellow stderr\" 1>&2",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3513265,
+          "err": "bright yellow stderr\n"
+        }
+      ]
+    },
+    {
+      "run": "echo \"Done!\"",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3743882,
+          "out": "Done!\n"
+        }
+      ]
+    }
+  ]
+}

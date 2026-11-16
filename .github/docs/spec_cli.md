@@ -61,6 +61,8 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
 **Environment.** `SCENETAKE_FFMPEG` names the ffmpeg binary for mp4 output. Otherwise `ffmpeg` on `PATH` is used.
 
+`SCENETAKE_OUTPUTS` names a file for the scenario path to write the outputs file to, after the cast and from the same run: what each step printed, which the browser playground replays ([spec_playground.md](spec_playground.md) → Outputs File). A relative path is resolved against the current folder. A failed write is an error, as for the cast, and `post` runs. The variable is for maintainers: `samples/regenerate.cs` sets it, and `--help` does not list it.
+
 `init` accepts `--shell bash|pwsh|powershell` (`--shell value` or `--shell=value`, once) and an optional output path positional. No other flags. Another shell value, a missing value, or a second `--shell` is an error that writes nothing.
 
 ## Output Paths

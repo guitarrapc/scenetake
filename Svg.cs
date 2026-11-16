@@ -39,6 +39,19 @@ internal static class SvgRender
         return $"SVG is {size}MB (over 10MB). Heavy output such as full-screen TUIs is much smaller as mp4 ({mp4}) or as SVG with {sampling}";
     }
 
+    /// <summary>Renders the SVG as UTF-8 bytes, which the playground hands to the browser without a string.</summary>
+    internal static byte[] RenderToUtf8(
+        IReadOnlyList<CastEvent> events,
+        int width,
+        int height,
+        ResolvedRenderSettings render,
+        double? loopDurationOverride = null)
+    {
+        using var stream = new MemoryStream();
+        Render(events, width, height, render, loopDurationOverride).WriteTo(stream);
+        return stream.ToArray();
+    }
+
     /// <summary>Renders the SVG as a string. <see cref="WriteSvg"/> streams to disk instead.</summary>
     internal static string RenderToString(
         IReadOnlyList<CastEvent> events,
