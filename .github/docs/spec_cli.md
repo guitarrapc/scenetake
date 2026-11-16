@@ -31,7 +31,7 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 - Options may appear in any order before positional arguments on the scenario, `svg`, and `mp4` paths.
 - Unknown `-` / `--` options are explicit errors (avoids typos becoming path-not-found errors).
 - `--format`, `--font-size`, `--font-family`, `--theme`, `--window`, `--max-fps`, `--fps`, `--crf`, `--max-size`, `--size`, and `--font-file` accept `--name=value` or `--name value`.
-- Duplicate `--font-size`, `--font-family`, `--theme`, `--window`, `--window-title`, `--background`, `--margin`, `--padding`, `--max-fps`, `--fps`, `--crf`, `--max-size`, `--size`, or `--font-file` is an error. `--size` with `--max-size` is an error too: `--size` already sets the output size.
+- Duplicate `--font-size`, `--font-family`, `--theme`, `--window`, `--window-title`, `--background`, `--margin`, `--padding`, `--opacity`, `--blur`, `--max-fps`, `--fps`, `--crf`, `--max-size`, `--size`, or `--font-file` is an error. `--size` with `--max-size` is an error too: `--size` already sets the output size.
 - Options for the other output format are errors, not ignored:
   - On the scenario path, `--fps`, `--crf`, `--max-size`, `--size`, and `--font-file` without `--format mp4` fail with `<option> requires --format mp4`. The `svg` subcommand reports them as unknown options.
   - `--max-fps` with mp4 output fails with `--max-fps applies to SVG; use --fps for mp4`.
@@ -54,6 +54,8 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 | `--background VALUE` | scenario, `svg`, `mp4` | One color, 2–4 colors for a gradient (separated by spaces or commas), or a `.png`, `.jpg`, `.gif`, or `.webp` file relative to the current folder. Colors are stored in the cast header; an image is not, so an image with cast output (no `--format svg` or `mp4`) is an error. |
 | `--margin N` | scenario, `svg`, `mp4` | `0`–`200` px around the terminal or window. Default 8, 12 with a window, 32 with a background. mp4 has a margin only with a background. |
 | `--padding N` | scenario, `svg`, `mp4` | `0`–`100` px between the terminal's edge and its text. Default from the font size. |
+| `--opacity N` | scenario, `svg`, `mp4` | `0`–`1`, how much of the terminal's default background and the title bar covers the background. Default `1`. Below 1 without a background, a warning, and the window stays opaque. See [spec_svg.md](spec_svg.md) → Translucent window: opacity and blur. |
+| `--blur N` | scenario, `svg`, `mp4` | `0`–`50` px of Gaussian blur on the background seen through a translucent window. Default `0`. Without an opacity below 1, a warning, and no blur. |
 | `--max-fps N` | scenario (`--format svg` only), `svg` | Optional frame sampling cap for SVG animation. `0` (default) = off (full cast timing). `1`–`120` enables sampling. See [spec_svg.md](spec_svg.md). |
 | `--fps N` | scenario (`--format mp4`), `mp4` | Constant mp4 frame rate, `1`–`60`. Default `30`. |
 | `--crf N` | scenario (`--format mp4`), `mp4` | H.264 quality, `1`–`51`. Default `23`. Higher values make smaller files. `0` (lossless) is not accepted, because x264 then writes the High 4:4:4 Predictive profile, which X and many players reject. |

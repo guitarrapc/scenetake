@@ -148,7 +148,7 @@ The UI lists these keys as not applied when the scenario sets them.
 
 ### Render options
 
-A panel under the active tab's preview sets `--theme`, `--window`, `--font-size`, `--max-fps`, `--font-family`, `--window-title`, `--background`, `--margin`, and `--padding`. `--background` takes colors or an image, as on the CLI; images are under Background images below. One set of controls serves both tabs and moves with the tab. Each control is empty by default, which keeps the value that the scenario or the cast sets. An empty control says where that value comes from: "from YAML" on the Scenario tab and "from cast" on the Cast tab. `--max-fps` is the exception: neither the YAML nor the cast sets it, so its empty value is the default, 0. The labels used to say "scenario" on both tabs, and the number fields showed the defaults (`16`), which differ from the result when the YAML sets its own size. On the Scenario tab the values are stored in the cast header, as on the scenario path. On the Cast tab a value overrides the cast header, and the header overrides the default, as with the `svg` command ([spec_cli.md](spec_cli.md)).
+A panel under the active tab's preview sets `--theme`, `--window`, `--font-size`, `--max-fps`, `--font-family`, `--window-title`, `--background`, `--margin`, `--padding`, `--opacity`, and `--blur`. `--background` takes colors or an image, as on the CLI; images are under Background images below. `--opacity` and `--blur` sit after it, because they act only on a background, with a line on what they do. One set of controls serves both tabs and moves with the tab. Each control is empty by default, which keeps the value that the scenario or the cast sets. An empty control says where that value comes from: "from YAML" on the Scenario tab and "from cast" on the Cast tab. `--max-fps` is the exception: neither the YAML nor the cast sets it, so its empty value is the default, 0. The labels used to say "scenario" on both tabs, and the number fields showed the defaults (`16`), which differ from the result when the YAML sets its own size. On the Scenario tab the values are stored in the cast header, as on the scenario path. On the Cast tab a value overrides the cast header, and the header overrides the default, as with the `svg` command ([spec_cli.md](spec_cli.md)).
 
 Below 960 px the panel comes after the editor and starts closed, unless a share URL sets an option.
 
@@ -237,7 +237,7 @@ A link to the page shows a large image on X, Slack, Discord, and other sites, as
 | `GetProductVersion` | none | The version string, or `unknown` |
 
 - No exported function throws. An exception that crosses the WASM boundary stops the runtime until the page is reloaded ([Lessons Learned](#lessons-learned)). Errors are returned as values. If the runtime stops anyway, the page says so and asks for a reload.
-- The keys of the options JSON match the CLI flags: `theme`, `window`, `fontSize`, `fontFamily`, `maxFps`, `windowTitle`, `background`, `margin`, and `padding`. An invalid value is an error. The valid ranges are the same as in the CLI ([spec_cli.md](spec_cli.md) → Options).
+- The keys of the options JSON match the CLI flags: `theme`, `window`, `fontSize`, `fontFamily`, `maxFps`, `windowTitle`, `background`, `margin`, `padding`, `opacity`, and `blur`. An invalid value is an error. The valid ranges are the same as in the CLI ([spec_cli.md](spec_cli.md) → Options).
 
 ## Share URL
 

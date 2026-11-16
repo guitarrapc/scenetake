@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "scenetake": "1.5.0",
+  "os": "windows",
+  "shell": "bash",
+  "width": 72,
+  "height": 16,
+  "steps": [
+    {
+      "run": "echo \"opacity 0.7, blur 6\"",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 4632372,
+          "out": "opacity 0.7, blur 6\n"
+        }
+      ]
+    },
+    {
+      "run": "printf ' PASS  render svg\\n PASS  render mp4\\n WARN  bright image\\n'",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3913097,
+          "out": " PASS  render svg\n"
+        },
+        {
+          "ticks": 3913631,
+          "out": " PASS  render mp4\n WARN  bright image\n"
+        }
+      ]
+    },
+    {
+      "run": "echo \"Done!\"",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 4480907,
+          "out": "Done!\n"
+        }
+      ]
+    }
+  ]
+}

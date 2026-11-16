@@ -140,6 +140,8 @@ Display metadata for the cast header. Written on every run. Header mapping: [spe
 | `background` | omitted (transparent) | One color, 2–4 colors for a gradient, or a `.png`, `.jpg`, `.gif`, or `.webp` file relative to the scenario file's folder. An image needs `--format svg` or `mp4`. |
 | `margin` | 8; 12 with `window`; 32 with `background` | Pixels around the terminal or window, `0`–`200` |
 | `padding` | from `font-size` | Pixels between the terminal's edge and its text, `0`–`100` |
+| `opacity` | `1` | How much of the terminal's default background and the title bar covers `background`, `0`–`1`. Text and cells with their own background stay opaque. Without `background`, a warning, and the window stays opaque. |
+| `blur` | `0` | Pixels of Gaussian blur on the background seen through a window with `opacity` below 1, `0`–`50` |
 
 `settings` controls recording. `render` controls presentation. CLI may override `font-size`, `font-family`, `window`, and theme preset. See [spec_cli.md](spec_cli.md).
 

@@ -14,6 +14,10 @@ render:
   # An image behind the window. A path starts from this file's folder: the image is samples/background.webp.
   background: ../background.webp
   margin: 64
+  # The image shows through the terminal's background and the title bar, blurred; the text stays opaque. A dark
+  # image keeps the text readable at 0.8. Over a bright one, stay at 0.85 or more.
+  opacity: 0.8
+  blur: 8
 
 steps:
   # keys edits the file with no one at the keyboard: find render, add a line below it, save, and quit. The

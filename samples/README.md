@@ -19,6 +19,7 @@ Sample scenarios for scenetake. Use this page to quickly see each scenario’s *
 | [theme](#theme) | Light theme, 16 / 256 colors, gradient background | [theme.yaml](theme.yaml) | [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
 | [theme-macos](#theme-macos) | macOS window chrome on a gradient | [theme-macos.yaml](theme-macos.yaml) | [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
 | [theme-windows](#theme-windows) | Windows window chrome on a gradient | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
+| [translucent](#translucent) | A translucent, blurred window over an image | [translucent.yaml](translucent.yaml) | [cast](translucent.cast) · [svg](translucent.svg) |
 | [resize](#resize) | Terminal resize events (cast only) | [resize.cast](resize.cast) | [gif](resize.gif) · [svg](resize.svg) |
 
 ### Showcase
@@ -244,6 +245,18 @@ scenetake --format svg samples/theme-macos.yaml
 
 ```bash
 scenetake --format svg samples/theme-windows.yaml
+```
+
+---
+
+## translucent
+
+**Purpose:** a **`render.opacity`** window over a **`render.background`** image, with **`render.blur`**. The image shows through the terminal's background and the title bar, blurred, while the text and the badges that the output colors stay opaque. A gradient changes little: under a translucent window it only shifts the color, and a blur has no detail to soften, so an image shows the effect best. There is no GIF, because agg draws no window or background.
+
+![](translucent.svg)
+
+```bash
+scenetake --format svg samples/translucent.yaml
 ```
 
 ---

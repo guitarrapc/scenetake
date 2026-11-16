@@ -19,6 +19,7 @@ scenetake のサンプル集です。各シナリオの**目的**と**生成物*
 | [theme](#theme) | light テーマ・16 / 256 色・グラデーション背景 | [theme.yaml](theme.yaml) | [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
 | [theme-macos](#theme-macos) | macOS ウィンドウ chrome とグラデーション背景 | [theme-macos.yaml](theme-macos.yaml) | [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
 | [theme-windows](#theme-windows) | Windows ウィンドウ chrome とグラデーション背景 | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
+| [translucent](#translucent) | 画像の上の半透明でぼかしたウィンドウ | [translucent.yaml](translucent.yaml) | [cast](translucent.cast) · [svg](translucent.svg) |
 | [resize](#resize) | ターミナル resize イベント（cast のみ） | [resize.cast](resize.cast) | [gif](resize.gif) · [svg](resize.svg) |
 
 ### ショーケース
@@ -244,6 +245,18 @@ scenetake --format svg samples/theme-macos.yaml
 
 ```bash
 scenetake --format svg samples/theme-windows.yaml
+```
+
+---
+
+## translucent
+
+**目的:** **`render.background`** の画像の上に、**`render.opacity`** で半透明にし **`render.blur`** でぼかしたウィンドウを置く。ターミナルの背景とタイトルバー越しに画像がぼけて透け、文字と出力が色を付けたバッジは透けない。グラデーションでは変化が小さい。半透明にしても色が少し変わるだけで、ぼかす細部もないので、効果は画像で一番よく見える。agg はウィンドウ枠も背景も描かないので GIF はない。
+
+![](translucent.svg)
+
+```bash
+scenetake --format svg samples/translucent.yaml
 ```
 
 ---

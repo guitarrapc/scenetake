@@ -58,6 +58,8 @@ SVG と mp4 の出力では、フォント、ライト/ダークテーマのほ�
 | `background` | `--background` | ウィンドウの周りを埋めるもの。1 色（`"#1e3c72"`）、左上から右下へのグラデーションになる 2〜4 色（`"#1e3c72 #2a5298"`）、または `.png`、`.jpg`、`.gif`、`.webp` の画像ファイル |
 | `margin` | `--margin` | ウィンドウの周りの余白（ピクセル、0〜200）。背景があるときの既定は 32 |
 | `padding` | `--padding` | ターミナルの端と文字の間の余白（ピクセル、0〜100） |
+| `opacity` | `--opacity` | ターミナルの背景とタイトルバーが背景をどれだけ覆うか（0〜1）。既定は 1。文字は透けません |
+| `blur` | `--blur` | `opacity` が 1 未満のウィンドウ越しに見える背景のぼかし（ピクセル、0〜50） |
 
 `background` を指定しなければ、見えるのはウィンドウだけです。SVG の余白は透明で、mp4 はウィンドウだけの映像になります。背景は、作ったページの外へ持ち出すときに役立ちます。
 
@@ -66,6 +68,9 @@ SVG と mp4 の出力では、フォント、ライト/ダークテーマのほ�
 - **置き先の色がわからないページ。** GitHub の README は、読む人の設定でライトにもダークにもなります。背景を付ければ、どちらでも同じ見た目になります。
 
 README の本文に並べるデモは、たいてい背景なしで十分です。ページの色になじみ、ファイルも小さく済みます。画像の背景は SVG ごとに埋め込まれるので、横幅 1000〜1600 ピクセル程度の WebP か JPEG を使ってください。
+
+画像の背景では、`opacity` で背景が透けるターミナルのようにウィンドウ越しに画像を見せ、`blur` で透けた部分をぼかせます。半透明になるのはターミナルの背景とタイトルバーだけで、文字とプログラムが色を付けたセルは透けません。明るい画像なら 0.85 以上、暗い画像なら 0.7 程度が目安です。
+
 | --- | --- |
 | ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
 
@@ -141,6 +146,9 @@ scenetake --format svg scenario.yaml --font-size 20 --font-family "'Noto Sans Mo
 
 # タイトル付きのウィンドウをグラデーションの上に置き、文字の周りの余白を広げる
 scenetake --format svg scenario.yaml --window macos --window-title "my-cli demo" --background "#1e3c72 #2a5298" --padding 16
+
+# 画像の上に半透明のウィンドウを置き、文字の後ろの画像をぼかす
+scenetake --format svg scenario.yaml --window macos --background wallpaper.webp --opacity 0.85 --blur 8
 
 # 既存の cast ファイルを SVG に変換（v2 / v3 対応）
 scenetake svg scenario.cast

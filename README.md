@@ -58,6 +58,8 @@ SVG and mp4 output support a custom font, a light or dark theme, and these setti
 | `background` | `--background` | What fills the space around the window: a color (`"#1e3c72"`), 2–4 colors for a gradient from the top-left corner (`"#1e3c72 #2a5298"`), or a `.png`, `.jpg`, `.gif`, or `.webp` file |
 | `margin` | `--margin` | Pixels around the window, 0–200. Default 32 with a background. |
 | `padding` | `--padding` | Pixels between the terminal's edge and its text, 0–100 |
+| `opacity` | `--opacity` | How much of the terminal's background and title bar covers the background, 0–1. Default 1. Text stays opaque. |
+| `blur` | `--blur` | Pixels of blur on the background seen through a window with `opacity` below 1, 0–50 |
 
 Without `background`, only the window shows: the SVG's margin is transparent, and an mp4 is the window alone. A background helps when the output leaves the page it was made for:
 
@@ -66,6 +68,9 @@ Without `background`, only the window shows: the SVG's margin is transparent, an
 - **Pages whose color you do not know.** A GitHub README is light or dark depending on the reader. A background looks the same in both.
 
 Demos inside README text usually need none: the page color fits, and the file stays small. An image background is embedded in every SVG, so prefer a WebP or JPEG about 1000–1600 pixels wide.
+
+With an image, `opacity` lets it show through the window, as a terminal with a transparent background does, and `blur` softens what shows. Only the terminal's background and the title bar become translucent; text and cells the program colored stay opaque. Recommended `opacity` stay at 0.85 or more, while a dark one allows about 0.7.
+
 | --- | --- |
 | ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
 
@@ -141,6 +146,9 @@ scenetake --format svg scenario.yaml --font-size 20 --font-family "'Noto Sans Mo
 
 # A titled window on a gradient, with more room around the text
 scenetake --format svg scenario.yaml --window macos --window-title "my-cli demo" --background "#1e3c72 #2a5298" --padding 16
+
+# A translucent window over an image, with the image blurred behind the text
+scenetake --format svg scenario.yaml --window macos --background wallpaper.webp --opacity 0.85 --blur 8
 
 # Convert an existing cast file to SVG (v2 or v3)
 scenetake svg scenario.cast

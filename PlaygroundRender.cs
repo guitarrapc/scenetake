@@ -3,8 +3,9 @@ using static ScenarioCast;
 
 /// <summary>
 /// The render options of the playground. They are the CLI flags <c>--theme</c>, <c>--window</c>, <c>--font-size</c>,
-/// <c>--font-family</c>, <c>--max-fps</c>, <c>--window-title</c>, <c>--background</c>, <c>--margin</c>, and
-/// <c>--padding</c>, with the same values and ranges. Null leaves a setting as the scenario or the cast sets it.
+/// <c>--font-family</c>, <c>--max-fps</c>, <c>--window-title</c>, <c>--background</c>, <c>--margin</c>,
+/// <c>--padding</c>, <c>--opacity</c>, and <c>--blur</c>, with the same values and ranges. Null leaves a setting as
+/// the scenario or the cast sets it.
 /// </summary>
 /// <param name="Images">
 /// The images that a background, in the YAML or in <paramref name="Background"/>, names. The playground reads no
@@ -20,7 +21,9 @@ internal sealed record PlaygroundOptions(
     string? Background = null,
     int? Margin = null,
     int? Padding = null,
-    IReadOnlyDictionary<string, byte[]>? Images = null)
+    IReadOnlyDictionary<string, byte[]>? Images = null,
+    double? Opacity = null,
+    int? Blur = null)
 {
     internal BackgroundImageSource ImageSource => BackgroundImageSource.FromImages(Images ?? new Dictionary<string, byte[]>());
 }
@@ -104,6 +107,8 @@ internal static class PlaygroundRender
             if (maxFps is int maxFpsValue)
                 renderSettings = renderSettings with { MaxFps = maxFpsValue };
             renderSettings = style.Apply(renderSettings);
+            foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(renderSettings))
+                Console.Error.WriteLine($"Warning: {note}");
 
             var seed = ComputeDeterministicSeed(yaml);
             var timestamp = ComputeDeterministicTimestamp(seed);
@@ -165,6 +170,8 @@ internal static class PlaygroundRender
             }
 
             settings = style.Apply(settings);
+            foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(settings))
+                Console.Error.WriteLine($"Warning: {note}");
             svg = SvgRender.RenderToUtf8(recording.Events, recording.Width, recording.Height, settings, recording.LoopDuration);
             if (SvgRender.SizeWarning(svg.LongLength, settings.MaxFps, fromCast: true) is { } sizeWarning)
                 Console.Error.WriteLine($"Warning: {sizeWarning}");
@@ -285,11 +292,25 @@ internal static class PlaygroundRender
             return false;
         }
 
+        if (options.Opacity is double opacity && !RenderSettingsResolver.IsValidOpacity(opacity))
+        {
+            error = $"opacity must be between {RenderSettingsResolver.MinOpacity} and {RenderSettingsResolver.MaxOpacity}: {RenderSettingsResolver.FormatOpacity(opacity)}";
+            return false;
+        }
+
+        if (options.Blur is int blur && !RenderSettingsResolver.IsValidBlur(blur))
+        {
+            error = $"blur must be between {RenderSettingsResolver.MinBlur} and {RenderSettingsResolver.MaxBlur} pixels: {blur}";
+            return false;
+        }
+
         style = new RenderStyleOverrides(
             options.WindowTitle is null ? null : RenderSettingsResolver.NormalizeWindowTitle(options.WindowTitle),
             background,
             options.Margin,
-            options.Padding);
+            options.Padding,
+            options.Opacity,
+            options.Blur);
         return true;
     }
 

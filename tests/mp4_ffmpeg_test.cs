@@ -686,6 +686,11 @@ static bool CliRulesForWindowStyle(string scenetake, string repoRoot, string wor
         (["svg", "--background", "notes.txt", "samples/basic.cast"], "or a .png, .jpg, .gif, or .webp file: notes.txt"),
         (["--background", image, scenario], "--background with an image file requires --format svg or mp4"),
         (["svg", "--window-title", "a", "--window-title", "b", "samples/basic.cast"], "duplicate option: --window-title"),
+        (["svg", "--opacity", "1.5", "samples/basic.cast"], "opacity must be between 0 and 1: 1.5"),
+        (["svg", "--opacity", "85%", "samples/basic.cast"], "invalid opacity value: 85%"),
+        (["svg", "--opacity", "0.5", "--opacity", "0.6", "samples/basic.cast"], "duplicate option: --opacity"),
+        (["svg", "--blur", "51", "samples/basic.cast"], "blur must be between 0 and 50 pixels: 51"),
+        (["svg", "--blur", "4", "--blur", "5", "samples/basic.cast"], "duplicate option: --blur"),
     };
 
     var ok = true;
@@ -713,6 +718,15 @@ static bool CliRulesForWindowStyle(string scenetake, string repoRoot, string wor
     var (shownExit, _) = Exec(scenetake, repoRoot, ["svg", "--window", "macos", "samples/basic.cast", svg]);
     ok &= Check(shownExit == 0 && File.ReadAllText(svg).Contains(">Basic Demo</text>", StringComparison.Ordinal), "the cast's title is not in the title bar");
 
+    // Opacity and blur act on a background; without one they warn and leave the window opaque.
+    var (frostExit, frostStderr) = Exec(scenetake, repoRoot, ["svg", "--background", "#1e3c72", "--opacity", "0.8", "--blur", "6", "samples/basic.cast", svg]);
+    var frost = frostExit == 0 ? File.ReadAllText(svg) : "";
+    ok &= Check(frostExit == 0 && frost.Contains("fill-opacity=\"0.8\"", StringComparison.Ordinal) && frost.Contains("stdDeviation=\"6\"", StringComparison.Ordinal)
+        && !frostStderr.Contains("Warning", StringComparison.Ordinal), $"frosted svg: exit {frostExit}: {frostStderr}");
+    var (bareExit, bareStderr) = Exec(scenetake, repoRoot, ["svg", "--opacity", "0.8", "samples/basic.cast", svg]);
+    ok &= Check(bareExit == 0 && bareStderr.Contains("Warning: opacity has no effect without a background", StringComparison.Ordinal)
+        && !File.ReadAllText(svg).Contains("fill-opacity=\"", StringComparison.Ordinal), $"opacity without a background: exit {bareExit}: {bareStderr}");
+
     // An image path is relative to the current folder, and the SVG embeds it.
     var (imageExit, imageStderr) = Exec(scenetake, work, ["svg", "--background", "wallpaper.png", Path.Combine(repoRoot, "samples", "basic.cast"), svg]);
     ok &= Check(imageExit == 0 && File.ReadAllText(svg).Contains("href=\"data:image/png;base64,", StringComparison.Ordinal), $"image background: exit {imageExit}: {imageStderr}");
@@ -732,7 +746,7 @@ static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string w
     // on stderr, and points to --help. The option lists here follow the parsers, so an option added there
     // and left out of the help fails this test.
     string[] render = ["--font-size N", "--font-family FAMILIES", "--theme dark|light", "--window none|macos|windows",
-        "--window-title TEXT", "--background VALUE", "--margin N", "--padding N"];
+        "--window-title TEXT", "--background VALUE", "--margin N", "--padding N", "--opacity N", "--blur N"];
     string[] mp4 = ["--fps N", "--crf N", "--max-size WxH", "--size WxH", "--font-file PATH", "SCENETAKE_FFMPEG"];
     var commands = new (string[] Args, string[] Options)[]
     {

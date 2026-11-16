@@ -156,13 +156,18 @@ public static partial class PlaygroundInterop
             Background: String(root, "background"),
             Margin: Int(root, "margin"),
             Padding: Int(root, "padding"),
-            Images: s_images);
+            Images: s_images,
+            Opacity: Double(root, "opacity"),
+            Blur: Int(root, "blur"));
 
         static string? String(JsonElement root, string name) =>
             root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString() is { Length: > 0 } text ? text : null;
 
         static int? Int(JsonElement root, string name) =>
             root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number) ? number : null;
+
+        static double? Double(JsonElement root, string name) =>
+            root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var number) ? number : null;
     }
 
     private static string ResultJson(PlaygroundResult result) => WriteJson(writer =>

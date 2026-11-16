@@ -205,8 +205,9 @@ Does **not** scale with `font-size` (matches real OS window chrome). Tuned at de
 - `samples/theme-macos.yaml` — `window: macos`, `preset: dark`, on a gradient.
 - `samples/theme-windows.yaml` — `window: windows`, `preset: dark`, on a gradient.
 - `samples/showcase/fetch.yaml` — `window: macos` on a three-color gradient, with the scenario's title in the bar.
-- `samples/showcase/vim.yaml` — `window: macos` on an image, `../background.webp` (`samples/background.webp`), with `margin: 64`.
-- `samples/scenario_format.yaml` — every setting below.
+- `samples/showcase/vim.yaml` — `window: macos` on an image, `../background.webp` (`samples/background.webp`), with `margin: 64`, and a translucent window over it: `opacity: 0.8`, `blur: 8`.
+- `samples/translucent.yaml` — `window: macos` on the same image, with `opacity: 0.7` and `blur: 6`, and output badges that stay opaque.
+- `samples/scenario_format.yaml` — every setting below except opacity and blur.
 
 ### Window title, background, margin, and padding
 
@@ -252,6 +253,21 @@ An unknown value is an error on the scenario path and the CLI. An invalid cast t
 - **Margin** sets the outer margin, which with chrome also holds the shadow. Below 12 px with chrome, the shadow is cut at the canvas edge.
 - **Padding** replaces both inner paddings with one value. The terminal background and the mask grow with it, so text keeps its distance from the window's edge.
 
+### Translucent window: opacity and blur
+
+A background shows only around the window. A translucent window lets it show through the terminal too, as a desktop terminal with a transparent background does. The text is what a recording is for, so only the window's own fill becomes translucent. These settings follow the others: **CLI > cast header > default**.
+
+| Setting | Scenario | CLI | Cast header (v3 `tags`) | Default | Values |
+|---|---|---|---|---|---|
+| Opacity | `render.opacity` | `--opacity N` | `st:opacity=N` | 1: opaque | 0–1, how much of the window's fill covers the background |
+| Blur | `render.blur` | `--blur N` | `st:blur=N` | 0: none | 0–50 px, the standard deviation of a Gaussian blur on the background seen through the window |
+
+- **What becomes translucent:** the terminal's default background and the title bar. Text, the cursor, the border, the buttons, the title, and every cell whose background the program set stay opaque, so highlighted lines, status bars, and selections keep their colors.
+- **Needs a background.** Without one, the window stays opaque, and a warning says so. The canvas outside the terminal is transparent, so a translucent window would show whatever page the SVG is on, which scenetake cannot know. A blur on an opaque window warns too: nothing shows through to blur.
+- **With chrome** the terminal's fill is cut to the window's rounded corners, so no translucent corner shows outside them.
+- **Blur** draws the background twice: sharp over the canvas, and blurred and cut to the window's shape under the window's fill. The background is defined once and referenced, so an image is embedded once. The blur repeats the canvas's edge pixels outward (`edgeMode="duplicate"`), so a window near the edge does not blur in transparent black, and it works on sRGB values, as the mp4 renderer does.
+- **Contrast.** The text keeps its color, but what is behind it changes. The dark theme's text (`#d0d0d0` on `#282c34`) has 9.1:1. Over white it has 5.6:1 at 0.85, 4.8:1 at 0.8, and 3.5:1 at 0.7, below the 4.5:1 that WCAG AA asks of body text. Over mid gray (`#808080`) it keeps 6.2:1 at 0.7. So a bright image wants 0.85 or more, and a dark one allows about 0.7. A blur also takes the image's detail away from behind the text.
+
 ## Failure Behavior
 
 ### Scenario path (`--format svg`)
@@ -287,7 +303,7 @@ The input file is never modified by the `svg` subcommand.
 | `tests/terminal_tests.cs` | VT emulator (CSI, Unicode, alt screen, region scrolls by count, insert/delete lines). Replay timeline: same-time writes keep the last screen, and a blank final screen gives the same frames either way. Soft fonts: both byte streams, a DECDLD split across chunks, a designation before the load, undefined codes, the matrix size from the data, erase control, other DCS strings skipped, glyph cells against text cells, DECSC/DECRC, RIS, single shifts |
 | `tests/svg_render_test.cs` | Row-diff smoke, marker timing, `--max-fps`, matrix rain tint, streamed file output matches in-memory render, row encoding choice (glyph list vs run, underline, multi-unit cells, background spans, shared keyframe rules), combining marks, block and shade rects, LF line endings, inherited foreground and fill classes, single-text layers, row-local content in every layer form, short lowercase class names, unused timing left out, keyframes shared by window length, no gap where a layer replaces another, dropped zero-length frames, run `textLength` in cells, underlined spaces and block elements, plain block elements kept out of run text, block-only rows decoded to their row, XML-invalid characters, scenario theme color validation, cast warning prefix, soft font glyphs as `<use>`s of `<defs>` paths (path pixels, scale, position, color), both soft font byte streams giving the same SVG, underlined glyphs, glyph ids. Text checks decode every layer form back to row text, color, and row, and cursor checks cover cursors inside row layers and with their own timing, so a layer or cursor drawn on the wrong line fails. |
 | `tests/scenario_render_test.cs` | Scenario path (`--format svg` / `--format mp4`) output is byte-identical to `scenetake svg` / `scenetake mp4` on the written cast (default, `--max-fps`, render overrides). Needs `SCENETAKE_BIN`; mp4 also needs ffmpeg. |
-| `tests/window_chrome_test.cs` | `render.window` / cast tag / CLI resolution; chrome SVG structure |
+| `tests/window_chrome_test.cs` | `render.window` / cast tag / CLI resolution; chrome SVG structure; title, background, margin, padding, opacity, and blur: parsing, cast tags, the warnings without a background or on an opaque window, and the translucent and blurred SVG markup (image embedded once) |
 
 Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs all four.
 

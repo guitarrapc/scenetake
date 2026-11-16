@@ -12,6 +12,8 @@ public partial class ScenarioRender
     public string? Background { get; set; }
     public int? Margin { get; set; }
     public int? Padding { get; set; }
+    public double? Opacity { get; set; }
+    public int? Blur { get; set; }
     public ScenarioTheme? Theme { get; set; }
 }
 

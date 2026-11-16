@@ -236,6 +236,24 @@ internal readonly record struct ResolvedRenderSettings(
 
     /// <summary>Pixels between the terminal's edge and its text on every side, or null for the default from the font size.</summary>
     internal int? Padding { get; init; }
+
+    /// <summary>
+    /// How opaque the terminal's own background and the title bar are, 0 to 1, or null for 1. Shown only over a
+    /// background: see <see cref="WindowOpacity"/>.
+    /// </summary>
+    internal double? Opacity { get; init; }
+
+    /// <summary>How far the background under the window is blurred, as a Gaussian's standard deviation in pixels, or null for none.</summary>
+    internal int? Blur { get; init; }
+
+    /// <summary>
+    /// The opacity drawn: the set one over a background, else 1. Without a background the window would show
+    /// whatever is behind the image, such as a page whose color changes with its light or dark mode.
+    /// </summary>
+    internal double WindowOpacity => Background is null ? 1 : Opacity ?? 1;
+
+    /// <summary>The blur drawn: the set one when the window lets the background through, else 0.</summary>
+    internal int WindowBlur => WindowOpacity < 1 ? Blur ?? 0 : 0;
 }
 
 /// <summary>
@@ -343,8 +361,17 @@ internal sealed class BackgroundImageSource
     }
 }
 
-/// <summary>Window title, background, margin, and padding from the command line or the playground: each set one replaces the cast's or the scenario's.</summary>
-internal sealed record RenderStyleOverrides(string? WindowTitle, BackgroundSpec? Background, int? Margin, int? Padding)
+/// <summary>
+/// Window title, background, margin, padding, opacity, and blur from the command line or the playground: each set
+/// one replaces the cast's or the scenario's.
+/// </summary>
+internal sealed record RenderStyleOverrides(
+    string? WindowTitle,
+    BackgroundSpec? Background,
+    int? Margin,
+    int? Padding,
+    double? Opacity = null,
+    int? Blur = null)
 {
     internal static readonly RenderStyleOverrides None = new(null, null, null, null);
 
@@ -354,6 +381,8 @@ internal sealed record RenderStyleOverrides(string? WindowTitle, BackgroundSpec?
         Background = Background ?? settings.Background,
         Margin = Margin ?? settings.Margin,
         Padding = Padding ?? settings.Padding,
+        Opacity = Opacity ?? settings.Opacity,
+        Blur = Blur ?? settings.Blur,
     };
 }
 
@@ -377,8 +406,12 @@ internal static class RenderSettingsResolver
     internal const string BackgroundTagPrefix = "st:background=";
     internal const string MarginTagPrefix = "st:margin=";
     internal const string PaddingTagPrefix = "st:padding=";
+    internal const string OpacityTagPrefix = "st:opacity=";
+    internal const string BlurTagPrefix = "st:blur=";
     internal const int MinMargin = 0, MaxMargin = 200;
     internal const int MinPadding = 0, MaxPadding = 100;
+    internal const double MinOpacity = 0, MaxOpacity = 1;
+    internal const int MinBlur = 0, MaxBlur = 50;
 
     /// <summary>The margin when a background is set and no margin is: enough of the background to show around the window.</summary>
     internal const int DefaultBackgroundMargin = 32;
@@ -466,6 +499,50 @@ internal static class RenderSettingsResolver
     internal static bool IsValidMargin(int margin) => margin is >= MinMargin and <= MaxMargin;
 
     internal static bool IsValidPadding(int padding) => padding is >= MinPadding and <= MaxPadding;
+
+    internal static bool TryParseBlur(string text, out int blur, out string error) =>
+        TryParsePixels(text, "blur", MinBlur, MaxBlur, out blur, out error);
+
+    internal static bool IsValidBlur(int blur) => blur is >= MinBlur and <= MaxBlur;
+
+    internal static bool IsValidOpacity(double opacity) => opacity is >= MinOpacity and <= MaxOpacity;
+
+    internal static bool TryParseOpacity(string text, out double opacity, out string error)
+    {
+        error = "";
+        if (!double.TryParse(text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out opacity) || !double.IsFinite(opacity))
+        {
+            error = $"invalid opacity value: {text} (expected a number from 0 to 1, such as 0.85)";
+            return false;
+        }
+
+        if (!IsValidOpacity(opacity))
+        {
+            error = $"opacity must be between 0 and 1: {text.Trim()}";
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>An opacity as it is written in a cast tag and an SVG attribute: up to three decimals, no exponent.</summary>
+    internal static string FormatOpacity(double opacity) => opacity.ToString("0.###", CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// Settings that are set but have no effect, one message each: opacity or blur without a background, and blur
+    /// on an opaque window. Both the CLI and the playground show them as warnings.
+    /// </summary>
+    internal static List<string> FindIneffectiveStyle(ResolvedRenderSettings settings)
+    {
+        var notes = new List<string>();
+        var translucent = settings.Opacity is double opacity && opacity < 1;
+        var blurred = settings.Blur is int blur && blur > 0;
+        if (settings.Background is null && (translucent || blurred))
+            notes.Add($"{(translucent && blurred ? "opacity and blur have" : translucent ? "opacity has" : "blur has")} no effect without a background: the window stays opaque");
+        else if (blurred && !translucent)
+            notes.Add("blur has no effect on an opaque window: set an opacity below 1, such as 0.85");
+        return notes;
+    }
 
     private static bool TryParsePixels(string text, string name, int min, int max, out int value, out string error)
     {
@@ -716,6 +793,28 @@ internal static class RenderSettingsResolver
             }
 
             settings = settings with { Padding = padding };
+        }
+
+        if (render?.Opacity is double opacityValue)
+        {
+            if (!double.IsFinite(opacityValue) || !IsValidOpacity(opacityValue))
+            {
+                error = $"invalid render.opacity: must be between 0 and 1: {opacityValue.ToString(CultureInfo.InvariantCulture)}";
+                return false;
+            }
+
+            settings = settings with { Opacity = opacityValue };
+        }
+
+        if (render?.Blur is int blurValue)
+        {
+            if (!IsValidBlur(blurValue))
+            {
+                error = $"invalid render.blur: must be between {MinBlur} and {MaxBlur} pixels: {blurValue}";
+                return false;
+            }
+
+            settings = settings with { Blur = blurValue };
         }
 
         return true;
@@ -1295,8 +1394,16 @@ internal static class SvgFrameRenderer
         foreach (var i in standaloneCursors)
             keyframes.Use(cursorKeyframeIds[i]);
 
-        // Mask, background, and the chrome's parts: its frame, bar, line, three buttons, and the title if any.
-        var viewportElements = 2 + (metrics.HasChrome ? 6 : 0) + (metrics.HasChrome && !string.IsNullOrEmpty(render.WindowTitle) ? 1 : 0);
+        var windowOpacity = render.WindowOpacity;
+        var windowBlur = render.WindowBlur;
+        var fillOpacity = FillOpacityAttribute(windowOpacity);
+
+        // A translucent window clips its background, and its blurred copy of the background, to the window's shape.
+        var clipsWindow = windowOpacity < 1 && (metrics.HasChrome || windowBlur > 0);
+
+        // Mask, background, the blurred copy of the background if any, and the chrome's parts: its frame, bar,
+        // line, three buttons, and the title if any.
+        var viewportElements = 2 + (windowBlur > 0 ? 1 : 0) + (metrics.HasChrome ? 6 : 0) + (metrics.HasChrome && !string.IsNullOrEmpty(render.WindowTitle) ? 1 : 0);
         for (var i = 0; i < viewportLayers.Count; i++)
             keyframes.Use(viewportKeyframeIds[i], viewportElements);
 
@@ -1331,7 +1438,12 @@ internal static class SvgFrameRenderer
         if (metrics.HasChrome)
             sb.AppendLf(WindowShadowFilter);
         if (render.Background is { } backgroundDefs)
-            AppendBackgroundDefs(sb, backgroundDefs);
+            AppendBackgroundDefs(sb, metrics, backgroundDefs, windowBlur);
+        if (clipsWindow)
+        {
+            for (var i = 0; i < viewportLayers.Count; i++)
+                AppendWindowClip(sb, metrics, viewportLayers[i].P0, viewportLayers[i].P1, i);
+        }
 
         if (cursorLayers.Count > 0)
         {
@@ -1356,7 +1468,13 @@ internal static class SvgFrameRenderer
         sb.AppendLf("</defs>");
 
         if (render.Background is { } background)
-            AppendBackground(sb, metrics, background);
+            AppendBackground(sb, metrics, background, windowBlur);
+
+        if (windowBlur > 0)
+        {
+            for (var i = 0; i < viewportLayers.Count; i++)
+                AppendFrost(sb, i, keyframes.Name(viewportKeyframeIds[i]));
+        }
 
         if (metrics.HasChrome)
         {
@@ -1364,7 +1482,7 @@ internal static class SvgFrameRenderer
             for (var i = 0; i < viewportLayers.Count; i++)
             {
                 var viewport = viewportLayers[i];
-                AppendWindowChrome(sb, metrics, chrome, render.Window, render.WindowTitle, viewport.P0, viewport.P1, i, keyframes.Name(viewportKeyframeIds[i]));
+                AppendWindowChrome(sb, metrics, chrome, render.Window, render.WindowTitle, viewport.P0, viewport.P1, i, keyframes.Name(viewportKeyframeIds[i]), fillOpacity);
             }
         }
 
@@ -1376,7 +1494,7 @@ internal static class SvgFrameRenderer
             var viewportWidth = metrics.ViewportPixelWidth(viewport.P0);
             var viewportHeight = metrics.ViewportPixelHeight(viewport.P1);
             sb.AppendLf(CultureInfo.InvariantCulture,
-                $"<rect class=\"bg l {keyframes.Name(viewportKeyframeIds[i])} viewport-bg-{i}\" x=\"{metrics.TerminalOriginX:0.##}\" y=\"{metrics.TerminalOriginY:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"{render.Theme.Bg}\"/>");
+                $"<rect class=\"bg l {keyframes.Name(viewportKeyframeIds[i])} viewport-bg-{i}\" x=\"{metrics.TerminalOriginX:0.##}\" y=\"{metrics.TerminalOriginY:0.##}\" width=\"{viewportWidth:0.##}\" height=\"{viewportHeight:0.##}\" fill=\"{render.Theme.Bg}\"{fillOpacity}{(clipsWindow && metrics.HasChrome ? $" clip-path=\"url(#window-clip-{i})\"" : "")}/>");
         }
 
         var head = sb.ToString();
@@ -1781,24 +1899,50 @@ internal static class SvgFrameRenderer
         return (builder.Append('…').ToString(), x, centered);
     }
 
-    private static void AppendBackgroundDefs(StringBuilder sb, BackgroundSpec background)
+    /// <summary>
+    /// The background's gradient, if any. With <paramref name="blur"/>, also the background itself, drawn twice
+    /// by reference: sharp over the canvas, and blurred by the "frost" filter behind the window.
+    /// </summary>
+    private static void AppendBackgroundDefs(StringBuilder sb, SvgMetrics metrics, BackgroundSpec background, int blur)
     {
-        if (background.Colors.Count < 2)
-            return;
-
-        // objectBoundingBox units: the gradient runs from the canvas's top-left corner to its bottom-right one.
-        sb.AppendLf("<linearGradient id=\"desktop\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">");
-        for (var i = 0; i < background.Colors.Count; i++)
+        if (background.Colors.Count >= 2)
         {
-            var offset = i / (double)(background.Colors.Count - 1);
-            sb.AppendLf(CultureInfo.InvariantCulture, $"<stop offset=\"{offset:0.###}\" stop-color=\"{background.Colors[i]}\"/>");
+            // objectBoundingBox units: the gradient runs from the canvas's top-left corner to its bottom-right one.
+            sb.AppendLf("<linearGradient id=\"desktop\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">");
+            for (var i = 0; i < background.Colors.Count; i++)
+            {
+                var offset = i / (double)(background.Colors.Count - 1);
+                sb.AppendLf(CultureInfo.InvariantCulture, $"<stop offset=\"{offset:0.###}\" stop-color=\"{background.Colors[i]}\"/>");
+            }
+
+            sb.AppendLf("</linearGradient>");
         }
 
-        sb.AppendLf("</linearGradient>");
+        if (blur <= 0)
+            return;
+
+        AppendBackgroundPaint(sb, metrics, background, " id=\"desktop-paint\"");
+
+        // The filter region is the canvas. Edge pixels repeat outward, so a window near the canvas's edge does not
+        // blur in transparent black. sRGB matches the mp4 renderer, which blurs the stored pixel values.
+        sb.AppendLf(CultureInfo.InvariantCulture,
+            $"<filter id=\"frost\" x=\"0\" y=\"0\" width=\"1\" height=\"1\" color-interpolation-filters=\"sRGB\"><feGaussianBlur stdDeviation=\"{blur}\" edgeMode=\"duplicate\"/></filter>");
     }
 
-    /// <summary>The background over the whole canvas, behind the window. An image covers the canvas and is cropped to it, centered.</summary>
-    private static void AppendBackground(StringBuilder sb, SvgMetrics metrics, BackgroundSpec background)
+    /// <summary>
+    /// The background over the whole canvas, behind the window. With <paramref name="blur"/>, a reference to the
+    /// copy in the defs, so an image is embedded once.
+    /// </summary>
+    private static void AppendBackground(StringBuilder sb, SvgMetrics metrics, BackgroundSpec background, int blur)
+    {
+        if (blur > 0)
+            sb.AppendLf("<use href=\"#desktop-paint\"/>");
+        else
+            AppendBackgroundPaint(sb, metrics, background, "");
+    }
+
+    /// <summary>The background's element. An image covers the canvas and is cropped to it, centered.</summary>
+    private static void AppendBackgroundPaint(StringBuilder sb, SvgMetrics metrics, BackgroundSpec background, string id)
     {
         if (background.ImagePath is { } path)
         {
@@ -1810,14 +1954,34 @@ internal static class SvgFrameRenderer
                 _ => "image/jpeg",
             };
             sb.AppendLf(CultureInfo.InvariantCulture,
-                $"<image href=\"data:{mime};base64,{Convert.ToBase64String(background.ImageBytes ?? File.ReadAllBytes(path))}\" x=\"0\" y=\"0\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" preserveAspectRatio=\"xMidYMid slice\"/>");
+                $"<image{id} href=\"data:{mime};base64,{Convert.ToBase64String(background.ImageBytes ?? File.ReadAllBytes(path))}\" x=\"0\" y=\"0\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" preserveAspectRatio=\"xMidYMid slice\"/>");
             return;
         }
 
         var fill = background.Colors.Count == 1 ? background.Colors[0] : "url(#desktop)";
         sb.AppendLf(CultureInfo.InvariantCulture,
-            $"<rect x=\"0\" y=\"0\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" fill=\"{fill}\"/>");
+            $"<rect{id} x=\"0\" y=\"0\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" fill=\"{fill}\"/>");
     }
+
+    /// <summary>The shape of a viewport layer's window: the title bar and terminal, with the window's corners.</summary>
+    private static void AppendWindowClip(StringBuilder sb, SvgMetrics metrics, int cols, int rows, int layerIndex)
+    {
+        var rx = metrics.CornerRadius;
+        sb.AppendLf(CultureInfo.InvariantCulture,
+            $"<clipPath id=\"window-clip-{layerIndex}\"><rect x=\"{metrics.OuterMargin:0.##}\" y=\"{metrics.OuterMargin:0.##}\" width=\"{metrics.ViewportPixelWidth(cols):0.##}\" height=\"{metrics.TitleBarHeight + metrics.ViewportPixelHeight(rows):0.##}\" rx=\"{rx:0.##}\" ry=\"{rx:0.##}\"/></clipPath>");
+    }
+
+    /// <summary>The blurred background, cut to a viewport layer's window, under the window's translucent fill.</summary>
+    private static void AppendFrost(StringBuilder sb, int layerIndex, string? keyframe)
+    {
+        var cls = keyframe is null ? "" : $" class=\"l {keyframe}\"";
+        sb.AppendLf(CultureInfo.InvariantCulture,
+            $"<use href=\"#desktop-paint\"{cls} filter=\"url(#frost)\" clip-path=\"url(#window-clip-{layerIndex})\"/>");
+    }
+
+    /// <summary>A fill-opacity attribute for a translucent window's fill; empty for an opaque one.</summary>
+    private static string FillOpacityAttribute(double opacity) =>
+        opacity < 1 ? $" fill-opacity=\"{RenderSettingsResolver.FormatOpacity(opacity)}\"" : "";
 
     private static void AppendWindowChrome(
         StringBuilder sb,
@@ -1828,7 +1992,8 @@ internal static class SvgFrameRenderer
         int cols,
         int rows,
         int layerIndex,
-        string? keyframe)
+        string? keyframe,
+        string fillOpacity)
     {
         var x = metrics.OuterMargin;
         var y = metrics.OuterMargin;
@@ -1844,7 +2009,7 @@ internal static class SvgFrameRenderer
         sb.AppendLf(CultureInfo.InvariantCulture,
             $"<rect class=\"{cls}\" x=\"{x:0.##}\" y=\"{y:0.##}\" width=\"{width:0.##}\" height=\"{totalHeight:0.##}\" rx=\"{rx:0.##}\" ry=\"{rx:0.##}\" fill=\"none\" stroke=\"{chrome.Border}\" stroke-width=\"1\" filter=\"url(#window-shadow)\"/>");
         sb.AppendLf(CultureInfo.InvariantCulture,
-            $"<path class=\"{cls}\" d=\"M {x + rx:0.##},{y:0.##} H {right - rx:0.##} Q {right:0.##},{y:0.##} {right:0.##},{y + rx:0.##} V {barBottom:0.##} H {x:0.##} V {y + rx:0.##} Q {x:0.##},{y:0.##} {x + rx:0.##},{y:0.##} Z\" fill=\"{chrome.TitleBarBg}\"/>");
+            $"<path class=\"{cls}\" d=\"M {x + rx:0.##},{y:0.##} H {right - rx:0.##} Q {right:0.##},{y:0.##} {right:0.##},{y + rx:0.##} V {barBottom:0.##} H {x:0.##} V {y + rx:0.##} Q {x:0.##},{y:0.##} {x + rx:0.##},{y:0.##} Z\" fill=\"{chrome.TitleBarBg}\"{fillOpacity}/>");
         sb.AppendLf(CultureInfo.InvariantCulture,
             $"<line class=\"{cls}\" x1=\"{x:0.##}\" y1=\"{barBottom:0.##}\" x2=\"{right:0.##}\" y2=\"{barBottom:0.##}\" stroke=\"{chrome.Border}\" stroke-width=\"1\"/>");
 
@@ -1885,6 +2050,9 @@ internal static class SvgFrameRenderer
     private static string BuildEmptySvg(ResolvedRenderSettings render, int width, int height)
     {
         var metrics = CreateMetrics(render, width, height);
+        var windowBlur = render.WindowBlur;
+        var fillOpacity = FillOpacityAttribute(render.WindowOpacity);
+        var clipsWindow = render.WindowOpacity < 1 && (metrics.HasChrome || windowBlur > 0);
         var sb = new StringBuilder();
         sb.AppendLf(CultureInfo.InvariantCulture, $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLf(CultureInfo.InvariantCulture,
@@ -1896,26 +2064,30 @@ internal static class SvgFrameRenderer
             if (metrics.HasChrome)
                 sb.AppendLf(WindowShadowFilter);
             if (render.Background is { } backgroundDefs)
-                AppendBackgroundDefs(sb, backgroundDefs);
+                AppendBackgroundDefs(sb, metrics, backgroundDefs, windowBlur);
+            if (clipsWindow)
+                AppendWindowClip(sb, metrics, width, height, 0);
             sb.AppendLf("</defs>");
         }
 
         if (render.Background is { } background)
-            AppendBackground(sb, metrics, background);
+            AppendBackground(sb, metrics, background, windowBlur);
+        if (windowBlur > 0)
+            AppendFrost(sb, 0, keyframe: null);
 
         if (metrics.HasChrome)
         {
             var chrome = ResolveChromePalette(render.Window, render.Theme.Bg);
-            AppendWindowChrome(sb, metrics, chrome, render.Window, render.WindowTitle, width, height, 0, keyframe: null);
+            AppendWindowChrome(sb, metrics, chrome, render.Window, render.WindowTitle, width, height, 0, keyframe: null, fillOpacity);
             var bgRect = metrics.TerminalBackgroundRect(width, height);
             sb.AppendLf(CultureInfo.InvariantCulture,
-                $"<rect x=\"{bgRect.X:0.##}\" y=\"{bgRect.Y:0.##}\" width=\"{bgRect.Width:0.##}\" height=\"{bgRect.Height:0.##}\" fill=\"{render.Theme.Bg}\"/>");
+                $"<rect x=\"{bgRect.X:0.##}\" y=\"{bgRect.Y:0.##}\" width=\"{bgRect.Width:0.##}\" height=\"{bgRect.Height:0.##}\" fill=\"{render.Theme.Bg}\"{fillOpacity}{(clipsWindow ? " clip-path=\"url(#window-clip-0)\"" : "")}/>");
         }
         else
         {
             var bgRect = metrics.BackgroundRect();
             sb.AppendLf(CultureInfo.InvariantCulture,
-                $"<rect x=\"{bgRect.X:0.##}\" y=\"{bgRect.Y:0.##}\" width=\"{bgRect.Width:0.##}\" height=\"{bgRect.Height:0.##}\" fill=\"{render.Theme.Bg}\"/>");
+                $"<rect x=\"{bgRect.X:0.##}\" y=\"{bgRect.Y:0.##}\" width=\"{bgRect.Width:0.##}\" height=\"{bgRect.Height:0.##}\" fill=\"{render.Theme.Bg}\"{fillOpacity}/>");
         }
 
         sb.AppendLf("</svg>");

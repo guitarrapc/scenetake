@@ -109,6 +109,8 @@ internal static class CastReader
             Background = style.Background,
             Margin = style.Margin,
             Padding = style.Padding,
+            Opacity = style.Opacity,
+            Blur = style.Blur,
         };
         var events = new List<CastEvent>();
         var warnedCodes = new HashSet<string>(StringComparer.Ordinal);
@@ -138,13 +140,15 @@ internal static class CastReader
         return new CastRecording(width, height, renderSettings, events, loopDuration);
     }
 
-    /// <summary>The window title, background, margin, and padding a cast's tags set; null for each it does not.</summary>
+    /// <summary>The window title, background, margin, padding, opacity, and blur a cast's tags set; null for each it does not.</summary>
     private sealed class CastStyle
     {
         internal string? WindowTitle;
         internal BackgroundSpec? Background;
         internal int? Margin;
         internal int? Padding;
+        internal double? Opacity;
+        internal int? Blur;
     }
 
     private static void ReadRenderTags(JsonElement tags, ref int fontSize, ref string fontFamily, ref WindowStyle window, CastStyle style)
@@ -184,6 +188,16 @@ internal static class CastReader
             {
                 if (ReadTag<int>(value, RenderSettingsResolver.PaddingTagPrefix, "padding", "the default padding", RenderSettingsResolver.TryParsePadding, out var padding))
                     style.Padding = padding;
+            }
+            else if (value.StartsWith(RenderSettingsResolver.OpacityTagPrefix, StringComparison.Ordinal))
+            {
+                if (ReadTag<double>(value, RenderSettingsResolver.OpacityTagPrefix, "opacity", "an opaque window", RenderSettingsResolver.TryParseOpacity, out var opacity))
+                    style.Opacity = opacity;
+            }
+            else if (value.StartsWith(RenderSettingsResolver.BlurTagPrefix, StringComparison.Ordinal))
+            {
+                if (ReadTag<int>(value, RenderSettingsResolver.BlurTagPrefix, "blur", "no blur", RenderSettingsResolver.TryParseBlur, out var blur))
+                    style.Blur = blur;
             }
         }
     }

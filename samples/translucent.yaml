@@ -1,0 +1,39 @@
+title: "Translucent window"
+width: 72
+height: 16
+shell: bash
+
+settings:
+  prompt: "$ "
+  typing-speed: 0.03
+  typing-jitter: 0.01
+  pre-delay: 0.3
+  post-delay: 1.0
+
+render:
+  window: macos
+  # An image behind the window. A path starts from this file's folder: the image is samples/background.webp.
+  background: background.webp
+  margin: 48
+  # The image shows through the terminal's background and the title bar, and blur softens it. This image is dark,
+  # so the text stays readable at 0.7. Over a bright image, stay at 0.85 or more.
+  opacity: 0.7
+  blur: 6
+
+steps:
+  - name: "[cyan]The image shows through the window, blurred"
+    run: echo "opacity 0.7, blur 6"
+
+  # Text and the cells that output colors stay opaque, so badges and status lines keep their colors.
+  - name: "[cyan]Text and colored cells stay opaque"
+    run: printf ' PASS  render svg\n PASS  render mp4\n WARN  bright image\n'
+    highlight:
+      - color: bold fg:black bg:green
+        at: "1:1-6"
+      - color: bold fg:black bg:green
+        at: "2:1-6"
+      - color: bold fg:black bg:yellow
+        at: "3:1-6"
+
+  - name: "[cyan]Try --opacity and --blur in the render options"
+    run: echo "Done!"

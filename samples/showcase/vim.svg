@@ -4,7 +4,7 @@
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
 .bg,rect:not([class]) { shape-rendering: crispEdges; }
-.l { visibility: hidden; animation: 17.083s step-start infinite; }
+.l { visibility: hidden; animation: 17.052s step-start infinite; }
 .c { fill: #d0d0d0; fill-opacity: 0.5; }
 .a{transform:translate(0,114.8px)}
 .r{transform:translate(0,134.8px)}
@@ -12,13 +12,13 @@ text { dominant-baseline: alphabetic; }
 .s{transform:translate(0,234.8px)}
 .t{transform:translate(0,274.8px)}
 .u{transform:translate(0,294.8px)}
-.m{transform:translate(0,314.8px)}
+.n{transform:translate(0,314.8px)}
 .w{transform:translate(0,334.8px)}
 .g{transform:translate(0,374.8px)}
 .o{transform:translate(0,394.8px)}
 .h{transform:translate(0,414.8px)}
 .p{transform:translate(0,434.8px)}
-.n{transform:translate(0,534.8px)}
+.m{transform:translate(0,534.8px)}
 .b{fill:#9f4e85}
 .d{fill:#7dd6cf}
 .e{fill:#AF5F00}
@@ -27,336 +27,351 @@ text { dominant-baseline: alphabetic; }
 .j{fill:#282c34}
 .q{fill:#fafafa}
 .v{fill:#7e8e50}
-@keyframes ac{0.292689%{visibility:visible}}
-.b5{animation-delay:1.1s;animation-name:ac}
-@keyframes ai{0.228298%{visibility:visible}}
-.b6{animation-delay:1.15s;animation-name:ai}
-@keyframes aa{0.280982%{visibility:visible}}
-.b7{animation-delay:1.189s;animation-name:aa}
-@keyframes b8{0.43318%{visibility:visible}}
-.b9{animation-delay:1.237s;animation-name:b8}
-@keyframes aj{0.269274%{visibility:visible}}
-.ca{animation-delay:1.311s;animation-name:aj}
-.cb{animation-delay:1.357s;animation-name:aa}
-@keyframes ad{0.345373%{visibility:visible}}
-.cc{animation-delay:1.405s;animation-name:ad}
-@keyframes ap{0.357081%{visibility:visible}}
-.cd{animation-delay:1.464s;animation-name:ap}
-@keyframes ce{0.316104%{visibility:visible}}
-.cf{animation-delay:1.525s;animation-name:ce}
-.cg{animation-delay:1.579s;animation-name:aa}
-@keyframes ae{0.210736%{visibility:visible}}
-.ch{animation-delay:1.627s;animation-name:ae}
-@keyframes ci{1.241%{visibility:visible}}
-.cj{animation-delay:1.663s;animation-name:ci}
-@keyframes ck{9.014811%{visibility:visible}}
-.cl{animation-delay:1.875s;animation-name:ck}
-@keyframes cm{39.308085%{visibility:visible}}
-.x{animation-delay:1.875s;animation-name:cm}
-@keyframes cn{9.284084%{visibility:visible}}
-.co{animation-delay:1.875s;animation-name:cn}
-@keyframes cp{9.576773%{visibility:visible}}
-.cq{animation-delay:1.875s;animation-name:cp}
-@keyframes cr{18.088158%{visibility:visible}}
-.af{animation-delay:1.875s;animation-name:cr}
-@keyframes cs{8.792367%{visibility:visible}}
-.aq{animation-delay:1.875s;animation-name:cs}
-@keyframes ct{0.222444%{visibility:visible}}
-.cu{animation-delay:3.377s;animation-name:ct}
-.ar{animation-delay:3.415s;animation-name:aj}
-@keyframes cv{30.024001%{visibility:visible}}
-.cw{animation-delay:3.461s;animation-name:cv}
-.as{animation-delay:3.461s;animation-name:ac}
-@keyframes cx{29.731312%{visibility:visible}}
-.cy{animation-delay:3.511s;animation-name:cx}
-@keyframes ab{0.339519%{visibility:visible}}
-.cz{animation-delay:3.511s;animation-name:ab}
-@keyframes ak{0.333666%{visibility:visible}}
-.c0{animation-delay:3.511s;animation-name:ak}
-.c1{animation-delay:3.568s;animation-name:ad}
-.at{animation-delay:3.569s;animation-name:ab}
-@keyframes al{0.21659%{visibility:visible}}
-.c2{animation-delay:3.627s;animation-name:al}
-.c3{animation-delay:3.627s;animation-name:ae}
-@keyframes au{0.257567%{visibility:visible}}
-.c4{animation-delay:3.663s;animation-name:au}
-@keyframes am{0.251713%{visibility:visible}}
-.av{animation-delay:3.664s;animation-name:am}
-@keyframes c5{7.364047%{visibility:visible}}
-.c6{animation-delay:3.707s;animation-name:c5}
-@keyframes c7{5.034245%{visibility:visible}}
-.aw{animation-delay:3.707s;animation-name:c7}
-@keyframes c8{2.318095%{visibility:visible}}
-.ax{animation-delay:4.567s;animation-name:c8}
-@keyframes c9{0.011708%{visibility:visible}}
-.da{animation-delay:4.963s;animation-name:c9}
-@keyframes db{21.219927%{visibility:visible}}
-.ag{animation-delay:4.965s;animation-name:db}
-@keyframes an{0.304397%{visibility:visible}}
-.ay{animation-delay:4.965s;animation-name:an}
-.az{animation-delay:5.017s;animation-name:aj}
-@keyframes dc{0.240005%{visibility:visible}}
-.a0{animation-delay:5.063s;animation-name:dc}
-.a1{animation-delay:5.104s;animation-name:aa}
-.a2{animation-delay:5.152s;animation-name:ae}
-.a3{animation-delay:5.188s;animation-name:ad}
-.a4{animation-delay:5.247s;animation-name:ak}
-.a5{animation-delay:5.304s;animation-name:am}
-@keyframes dd{0.362934%{visibility:visible}}
-.a6{animation-delay:5.347s;animation-name:dd}
-.a7{animation-delay:5.409s;animation-name:au}
-@keyframes a8{0.321958%{visibility:visible}}
-.a9{animation-delay:5.453s;animation-name:a8}
-.ba{animation-delay:5.508s;animation-name:ak}
-@keyframes de{0.204883%{visibility:visible}}
-.bb{animation-delay:5.565s;animation-name:de}
-@keyframes bc{0.286835%{visibility:visible}}
-.bd{animation-delay:5.6s;animation-name:bc}
-@keyframes df{0.374642%{visibility:visible}}
-.be{animation-delay:5.649s;animation-name:df}
-.bf{animation-delay:5.713s;animation-name:ab}
-.bh{animation-delay:5.771s;animation-name:ac}
-.bi{animation-delay:5.821s;animation-name:ab}
-.bj{animation-delay:5.879s;animation-name:ae}
-.bk{animation-delay:5.915s;animation-name:bc}
-@keyframes ah{0.26342%{visibility:visible}}
-.bl{animation-delay:5.964s;animation-name:ah}
-.bm{animation-delay:6.009s;animation-name:ah}
-@keyframes dg{0.38635%{visibility:visible}}
-.bn{animation-delay:6.054s;animation-name:dg}
-@keyframes dh{0.245859%{visibility:visible}}
-.bo{animation-delay:6.12s;animation-name:dh}
-.bp{animation-delay:6.162s;animation-name:ah}
-@keyframes ao{0.351227%{visibility:visible}}
-.bq{animation-delay:6.207s;animation-name:ao}
-.br{animation-delay:6.267s;animation-name:aa}
-.bs{animation-delay:6.315s;animation-name:an}
-.bt{animation-delay:6.367s;animation-name:ah}
-@keyframes bu{0.31025%{visibility:visible}}
-.bv{animation-delay:6.412s;animation-name:bu}
-@keyframes bw{0.275128%{visibility:visible}}
-.bx{animation-delay:6.465s;animation-name:bw}
-.by{animation-delay:6.512s;animation-name:ai}
-@keyframes di{0.327812%{visibility:visible}}
-.bz{animation-delay:6.551s;animation-name:di}
-.b0{animation-delay:6.607s;animation-name:ap}
-.b1{animation-delay:6.668s;animation-name:am}
-.b2{animation-delay:6.711s;animation-name:bu}
-@keyframes dj{10.68899%{visibility:visible}}
-.dk{animation-delay:6.764s;animation-name:dj}
-@keyframes dl{3.933736%{visibility:visible}}
-.b3{animation-delay:6.764s;animation-name:dl}
-@keyframes dm{0.591232%{visibility:visible}}
-.dn{animation-delay:7.436s;animation-name:dm}
-@keyframes do{5.139613%{visibility:visible}}
-.b4{animation-delay:7.537s;animation-name:do}
-.dp{animation-delay:8.415s;animation-name:an}
-.dq{animation-delay:8.467s;animation-name:ao}
-.dr{animation-delay:8.527s;animation-name:ao}
-@keyframes ds{0.017562%{visibility:visible}}
-.dt{animation-delay:8.587s;animation-name:ds}
-@keyframes du{50.283907%{visibility:hidden}to{visibility:visible}}
-.du{animation-name:du}
-.dv{animation-delay:11.19s;animation-name:ac}
-@keyframes dw{0.298543%{visibility:visible}}
-.dx{animation-delay:11.24s;animation-name:dw}
-.dy{animation-delay:11.291s;animation-name:ai}
-@keyframes dz{0.57367%{visibility:visible}}
-.d0{animation-delay:11.33s;animation-name:dz}
-.d1{animation-delay:11.428s;animation-name:bw}
-.d2{animation-delay:11.475s;animation-name:ab}
-.d3{animation-delay:11.533s;animation-name:a8}
-@keyframes d4{67.833518%{visibility:hidden}to{visibility:visible}}
-.d4{animation-name:d4}
-@keyframes y{69.06281%{visibility:hidden}to{visibility:visible}}
-.y{animation-name:y}
-@keyframes d5{84.534332%{visibility:hidden}to{visibility:visible}}
-.d5{animation-name:d5}
-.d6{animation-delay:1.237s;animation-name:al}
-.d7{animation-delay:1.274s;animation-name:al}
-.d8{animation-delay:1.663s;animation-name:ad}
-@keyframes d9{0.895628%{visibility:visible}}
-.ea{animation-delay:1.722s;animation-name:d9}
-.z{visibility:visible}
+@keyframes an{0.293221%{visibility:visible}}
+.b7{animation-delay:1.1s;animation-name:an}
+@keyframes ao{0.322543%{visibility:visible}}
+.b8{animation-delay:1.15s;animation-name:ao}
+@keyframes ac{0.351865%{visibility:visible}}
+.b9{animation-delay:1.205s;animation-name:ac}
+@keyframes ca{0.510205%{visibility:visible}}
+.cb{animation-delay:1.265s;animation-name:ca}
+@keyframes aa{0.375323%{visibility:visible}}
+.cc{animation-delay:1.352s;animation-name:aa}
+@keyframes aj{0.299086%{visibility:visible}}
+.cd{animation-delay:1.416s;animation-name:aj}
+.ce{animation-delay:1.467s;animation-name:aj}
+@keyframes ap{0.316679%{visibility:visible}}
+.cf{animation-delay:1.518s;animation-name:ap}
+@keyframes aq{0.275628%{visibility:visible}}
+.cg{animation-delay:1.572s;animation-name:aq}
+@keyframes ak{0.222848%{visibility:visible}}
+.ch{animation-delay:1.619s;animation-name:ak}
+@keyframes al{0.310814%{visibility:visible}}
+.ci{animation-delay:1.657s;animation-name:al}
+@keyframes cj{1.20807%{visibility:visible}}
+.ck{animation-delay:1.71s;animation-name:cj}
+@keyframes cl{0.017594%{visibility:visible}}
+.cm{animation-delay:1.916s;animation-name:cl}
+@keyframes cn{9.013606%{visibility:visible}}
+.co{animation-delay:1.919s;animation-name:cn}
+@keyframes cp{39.139104%{visibility:visible}}
+.y{animation-delay:1.919s;animation-name:cp}
+@keyframes cq{9.383064%{visibility:visible}}
+.cr{animation-delay:1.919s;animation-name:cq}
+@keyframes cs{9.588319%{visibility:visible}}
+.ct{animation-delay:1.919s;animation-name:cs}
+@keyframes cu{17.933381%{visibility:visible}}
+.ad{animation-delay:1.919s;animation-name:cu}
+@keyframes cv{8.749707%{visibility:visible}}
+.ar{animation-delay:1.919s;animation-name:cv}
+@keyframes ae{0.258035%{visibility:visible}}
+.cw{animation-delay:3.411s;animation-name:ae}
+.cx{animation-delay:3.455s;animation-name:aa}
+@keyframes as{0.369459%{visibility:visible}}
+.at{animation-delay:3.456s;animation-name:as}
+@keyframes cy{29.756041%{visibility:visible}}
+.cz{animation-delay:3.519s;animation-name:cy}
+@keyframes af{0.205255%{visibility:visible}}
+.c0{animation-delay:3.519s;animation-name:af}
+@keyframes c1{0.199391%{visibility:visible}}
+.c2{animation-delay:3.519s;animation-name:c1}
+@keyframes ag{0.269764%{visibility:visible}}
+.c3{animation-delay:3.553s;animation-name:ag}
+@keyframes c4{29.550786%{visibility:visible}}
+.c5{animation-delay:3.554s;animation-name:c4}
+@keyframes ab{0.263899%{visibility:visible}}
+.au{animation-delay:3.554s;animation-name:ab}
+.av{animation-delay:3.599s;animation-name:ae}
+@keyframes aw{0.287357%{visibility:visible}}
+.c6{animation-delay:3.643s;animation-name:aw}
+@keyframes ah{0.281492%{visibility:visible}}
+.c7{animation-delay:3.643s;animation-name:ah}
+@keyframes c8{0.187662%{visibility:visible}}
+.c9{animation-delay:3.691s;animation-name:c8}
+@keyframes da{0.181797%{visibility:visible}}
+.ax{animation-delay:3.692s;animation-name:da}
+@keyframes db{7.353977%{visibility:visible}}
+.dc{animation-delay:3.723s;animation-name:db}
+@keyframes dd{4.996482%{visibility:visible}}
+.ay{animation-delay:3.723s;animation-name:dd}
+@keyframes de{2.345766%{visibility:visible}}
+.az{animation-delay:4.575s;animation-name:de}
+@keyframes df{0.011729%{visibility:visible}}
+.dg{animation-delay:4.975s;animation-name:df}
+@keyframes dh{21.205724%{visibility:visible}}
+.ai{animation-delay:4.977s;animation-name:dh}
+.a0{animation-delay:4.977s;animation-name:af}
+@keyframes a1{0.240442%{visibility:visible}}
+.a2{animation-delay:5.012s;animation-name:a1}
+@keyframes am{0.346001%{visibility:visible}}
+.a3{animation-delay:5.053s;animation-name:am}
+@keyframes di{0.216984%{visibility:visible}}
+.a4{animation-delay:5.112s;animation-name:di}
+.a5{animation-delay:5.149s;animation-name:as}
+.a6{animation-delay:5.212s;animation-name:ac}
+.a7{animation-delay:5.272s;animation-name:af}
+.a8{animation-delay:5.307s;animation-name:ah}
+@keyframes a9{0.234577%{visibility:visible}}
+.ba{animation-delay:5.355s;animation-name:a9}
+.bb{animation-delay:5.395s;animation-name:ab}
+@keyframes bc{0.35773%{visibility:visible}}
+.bd{animation-delay:5.44s;animation-name:bc}
+.be{animation-delay:5.501s;animation-name:ao}
+.bf{animation-delay:5.556s;animation-name:ag}
+@keyframes dj{0.334272%{visibility:visible}}
+.bh{animation-delay:5.602s;animation-name:dj}
+.bi{animation-delay:5.659s;animation-name:ae}
+.bj{animation-delay:5.703s;animation-name:aw}
+.bk{animation-delay:5.752s;animation-name:ac}
+.bl{animation-delay:5.812s;animation-name:aj}
+.bm{animation-delay:5.863s;animation-name:ap}
+@keyframes dk{0.363594%{visibility:visible}}
+.bn{animation-delay:5.917s;animation-name:dk}
+.bo{animation-delay:5.979s;animation-name:ag}
+.bp{animation-delay:6.025s;animation-name:ah}
+.bq{animation-delay:6.073s;animation-name:ak}
+.br{animation-delay:6.111s;animation-name:al}
+.bs{animation-delay:6.164s;animation-name:al}
+.bt{animation-delay:6.217s;animation-name:am}
+.bu{animation-delay:6.276s;animation-name:aa}
+.bv{animation-delay:6.34s;animation-name:aa}
+@keyframes dl{0.398781%{visibility:visible}}
+.bw{animation-delay:6.404s;animation-name:dl}
+.bx{animation-delay:6.472s;animation-name:aq}
+.by{animation-delay:6.519s;animation-name:ae}
+.bz{animation-delay:6.563s;animation-name:a9}
+.b0{animation-delay:6.603s;animation-name:ac}
+.b1{animation-delay:6.663s;animation-name:bc}
+.b2{animation-delay:6.724s;animation-name:ab}
+@keyframes dm{0.340137%{visibility:visible}}
+.b3{animation-delay:6.769s;animation-name:dm}
+@keyframes dn{10.356557%{visibility:visible}}
+.do{animation-delay:6.827s;animation-name:dn}
+@keyframes dp{3.852921%{visibility:visible}}
+.b4{animation-delay:6.827s;animation-name:dp}
+@keyframes dq{0.586442%{visibility:visible}}
+.dr{animation-delay:7.484s;animation-name:dq}
+@keyframes ds{5.143092%{visibility:visible}}
+.b5{animation-delay:7.585s;animation-name:ds}
+.dt{animation-delay:8.462s;animation-name:ak}
+.du{animation-delay:8.5s;animation-name:ag}
+@keyframes dv{0.25217%{visibility:visible}}
+.dw{animation-delay:8.546s;animation-name:dv}
+@keyframes dx{0.023458%{visibility:visible}}
+.dy{animation-delay:8.589s;animation-name:dx}
+@keyframes dz{50.392915%{visibility:hidden}to{visibility:visible}}
+.dz{animation-name:dz}
+.d0{animation-delay:11.194s;animation-name:an}
+.d1{animation-delay:11.244s;animation-name:a1}
+.d2{animation-delay:11.285s;animation-name:ab}
+@keyframes d3{0.463289%{visibility:visible}}
+.d4{animation-delay:11.33s;animation-name:d3}
+.d5{animation-delay:11.409s;animation-name:af}
+.d6{animation-delay:11.444s;animation-name:aa}
+.d7{animation-delay:11.508s;animation-name:am}
+@keyframes d8{67.833685%{visibility:hidden}to{visibility:visible}}
+.d8{animation-name:d8}
+@keyframes z{69.076941%{visibility:hidden}to{visibility:visible}}
+.z{animation-name:z}
+@keyframes d9{84.541402%{visibility:hidden}to{visibility:visible}}
+.d9{animation-name:d9}
+@keyframes b6{0.246306%{visibility:visible}}
+.ea{animation-delay:1.265s;animation-name:b6}
+.eb{animation-delay:1.307s;animation-name:ab}
+.ec{animation-delay:1.71s;animation-name:ah}
+@keyframes ed{0.926578%{visibility:visible}}
+.ee{animation-delay:1.758s;animation-name:ed}
+.ef{animation-delay:8.546s;animation-name:b6}
+@keyframes eg{0.005865%{visibility:visible}}
+.eh{animation-delay:8.588s;animation-name:eg}
+.x{visibility:visible}
 </style>
 <defs>
 <filter id="window-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.22"/></filter>
+<image id="desktop-paint" href="data:image/webp;base64,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" x="0" y="0" width="941.6" height="610" preserveAspectRatio="xMidYMid slice"/>
+<filter id="frost" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="8" edgeMode="duplicate"/></filter>
+<clipPath id="window-clip-0"><rect x="64" y="64" width="813.6" height="482" rx="8" ry="8"/></clipPath>
 <rect id="c" class="c" width="9.92" height="20"/>
 <mask id="viewport-mask" x="0" y="0" width="941.6" height="610" maskUnits="userSpaceOnUse">
-<rect class="l z viewport-mask-0" x="64" y="98" width="813.6" height="448" fill="white"/>
+<rect class="l x viewport-mask-0" x="64" y="98" width="813.6" height="448" fill="white"/>
 </mask>
 </defs>
-<image href="data:image/webp;base64,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" x="0" y="0" width="941.6" height="610" preserveAspectRatio="xMidYMid slice"/>
-<rect class="l z viewport-chrome-0" x="64" y="64" width="813.6" height="482" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
-<path class="l z viewport-chrome-0" d="M 72,64 H 869.6 Q 877.6,64 877.6,72 V 98 H 64 V 72 Q 64,64 72,64 Z" fill="#323232"/>
-<line class="l z viewport-chrome-0" x1="64" y1="98" x2="877.6" y2="98" stroke="#1a1a1a" stroke-width="1"/>
-<text class="l z viewport-chrome-0" x="470.8" y="85.5" style="font-size:13px" text-anchor="middle" fill="#c8c8c8">vim and git diff</text>
-<circle class="l z viewport-chrome-0" cx="86" cy="81" r="8" fill="#ff5f57"/>
-<circle class="l z viewport-chrome-0" cx="112" cy="81" r="8" fill="#febc2e"/>
-<circle class="l z viewport-chrome-0" cx="138" cy="81" r="8" fill="#28c840"/>
+<use href="#desktop-paint"/>
+<use href="#desktop-paint" class="l x" filter="url(#frost)" clip-path="url(#window-clip-0)"/>
+<rect class="l x viewport-chrome-0" x="64" y="64" width="813.6" height="482" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
+<path class="l x viewport-chrome-0" d="M 72,64 H 869.6 Q 877.6,64 877.6,72 V 98 H 64 V 72 Q 64,64 72,64 Z" fill="#323232" fill-opacity="0.8"/>
+<line class="l x viewport-chrome-0" x1="64" y1="98" x2="877.6" y2="98" stroke="#1a1a1a" stroke-width="1"/>
+<text class="l x viewport-chrome-0" x="470.8" y="85.5" style="font-size:13px" text-anchor="middle" fill="#c8c8c8">vim and git diff</text>
+<circle class="l x viewport-chrome-0" cx="86" cy="81" r="8" fill="#ff5f57"/>
+<circle class="l x viewport-chrome-0" cx="112" cy="81" r="8" fill="#febc2e"/>
+<circle class="l x viewport-chrome-0" cx="138" cy="81" r="8" fill="#28c840"/>
 <g mask="url(#viewport-mask)" fill="#d0d0d0">
-<rect class="bg l z viewport-bg-0" x="64" y="98" width="813.6" height="448" fill="#282c34"/>
-<g class="l b5"><text x="74" y="114.8">$</text><use href="#c" x="93.84" y="102"/></g>
-<g class="l b6"><text x="74 93.84" y="114.8">$v</text><use href="#c" x="103.76" y="102"/></g>
-<g class="l b7"><text x="74 93.84 103.76" y="114.8">$vi</text><use href="#c" x="113.68" y="102"/></g>
-<text class="l b9" x="74" y="114.8" textLength="49.6">$ vim</text>
-<g class="l ca a"><text x="74" textLength="69.44">$ vim g</text><use href="#c" x="143.44" y="-12.8"/></g>
-<g class="l cb a"><text x="74" textLength="79.36">$ vim gr</text><use href="#c" x="153.36" y="-12.8"/></g>
-<g class="l cc a"><text x="74" textLength="89.28">$ vim gre</text><use href="#c" x="163.28" y="-12.8"/></g>
-<g class="l cd a"><text x="74" textLength="99.2">$ vim gree</text><use href="#c" x="173.2" y="-12.8"/></g>
-<g class="l cf a"><text x="74" textLength="109.12">$ vim greet</text><use href="#c" x="183.12" y="-12.8"/></g>
-<g class="l cg a"><text x="74" textLength="119.04">$ vim greet.</text><use href="#c" x="193.04" y="-12.8"/></g>
-<g class="l ch a"><text x="74" textLength="128.96">$ vim greet.p</text><use href="#c" x="202.96" y="-12.8"/></g>
-<g class="l cj a"><g id="r11"><text x="74" textLength="138.88">$ vim greet.py</text></g></g>
-<g class="l cl a"><g id="r12"><text class="b" x="74" textLength="39.68">from</text><text x="123.6" textLength="109.12">dataclasses</text><text class="b" x="242.64" textLength="59.52">import</text><text x="312.08" textLength="89.28">dataclass</text></g></g>
-<g class="l x"><text class="b" x="74" y="174.8" textLength="9.92">@</text><text class="d" x="83.92" y="174.8" textLength="89.28">dataclass</text></g>
-<g class="l co"><g id="r14"><text class="e" x="74" y="194.8" textLength="49.6">class</text><text class="d" x="133.52" y="194.8" textLength="79.36">Greeting</text><text x="212.88" y="194.8" textLength="9.92">:</text></g></g>
-<g class="l x"><text x="113.68" y="214.8" textLength="49.6">name:</text><text class="d" x="173.2" y="214.8" textLength="29.76">str</text></g>
-<g class="l x"><text x="113.68 123.6 133.52 143.44 153.36 163.28 173.2 183.12 252.56" y="234.8">excited:=</text><text class="d" x="202.96 212.88 222.8 232.72 272.4 282.32 292.24 302.16 312.08" y="234.8">boolFalse</text></g>
-<g class="l x"><text class="e" x="113.68 123.6 133.52" y="274.8">def</text><text class="d" x="153.36 163.28 173.2 183.12 193.04 202.96 312.08 322 331.92" y="274.8">renderstr</text><text x="212.88 222.8 232.72 242.64 252.56 262.48 282.32 292.24 341.84" y="274.8">(self)-&gt;:</text></g>
-<g class="l x"><text x="153.36 163.28 173.2 183.12 202.96 292.24 302.16 312.08 322 331.92 341.84 351.76 361.68 371.6 381.52 391.44 401.36" y="294.8">mark=self.excited</text><text class="f" x="222.8 232.72 242.64 470.8 480.72 490.64" y="294.8">&quot;!&quot;&quot;.&quot;</text><text class="e" x="262.48 272.4 421.2 431.12 441.04 450.96" y="294.8">ifelse</text></g>
-<g class="l cq"><g id="r19"><text class="e" x="153.36" y="314.8" textLength="59.52">return</text><text x="222.8" y="314.8" textLength="9.92">f</text><text class="f" x="232.72" y="314.8" textLength="257.92">&quot;Hello, {self.name}{mark}&quot;</text></g></g>
-<g class="l af g"><g id="r20"><text class="e" x="74" textLength="19.84">if</text><text x="103.76" textLength="109.12">__name__ ==</text><text class="f" x="222.8" textLength="99.2">&quot;__main__&quot;</text><text x="322" textLength="9.92">:</text></g></g>
-<g class="l af"><g id="r21"><text class="e" x="113.68 123.6 133.52 202.96 212.88" y="394.8">forin</text><text x="153.36 163.28 173.2 183.12 232.72 351.76 470.8 480.72" y="394.8">name(,):</text><text class="f" x="242.64 252.56 262.48 272.4 282.32 292.24 302.16 312.08 322 331.92 341.84 371.6 381.52 391.44 401.36 411.28 421.2 431.12 441.04 450.96 460.88" y="394.8">&quot;scenetake&quot;&quot;terminal&quot;</text></g></g>
-<g class="l af h"><g id="r22"><text class="d" x="153.36" textLength="49.6">print</text><text x="202.96" textLength="238.08">(Greeting(name, excited=</text><text class="d" x="441.04" textLength="39.68">True</text><text x="480.72" textLength="109.12">).render())</text></g></g>
-<text class="l af i" x="74" y="434.8">~</text>
-<text class="l x i" x="74" y="454.8">~</text>
-<text class="l x i" x="74" y="474.8">~</text>
-<text class="l x i" x="74" y="494.8">~</text>
-<text class="l x i" x="74" y="514.8">~</text>
-<text class="l aq" x="74" y="534.8" textLength="783.68">&quot;greet.py&quot; 16L, 345B                                          1,1           All</text>
-<g class="l cu"><text x="74" y="534.8">/</text><use href="#c" x="83.92" y="522"/></g>
-<g class="l ar a"><rect x="83.92" y="-12.8" width="9.92" height="20" fill="#9f4e85"/><text class="b" x="74 93.84 103.76 242.64 252.56 262.48 272.4 282.32 292.24">fomimport</text><text class="j" x="83.92">r</text><text x="123.6 133.52 143.44 153.36 163.28 173.2 183.12 193.04 202.96 212.88 222.8 312.08 322 331.92 341.84 351.76 361.68 371.6 381.52 391.44">dataclassesdataclass</text></g>
-<g class="l ar"><text x="74 83.92" y="534.8">/r</text><use href="#c" x="93.84" y="522"/></g>
-<use href="#r12" class="l cw a"/>
-<g class="l as k"><rect x="143.44" y="-12.8" width="19.84" height="20" fill="#7dd6cf"/><text class="e" x="74 83.92 93.84 103.76 113.68">class</text><text class="d" x="133.52 163.28 173.2 183.12 193.04 202.96">Geting</text><text class="j" x="143.44 153.36">re</text><text x="212.88">:</text></g>
-<g class="l as"><text x="74 83.92 93.84" y="534.8">/re</text><use href="#c" x="103.76" y="522"/></g>
-<use href="#r14" y="0" class="l cy"/>
-<g class="l cz m"><rect x="153.36" y="-12.8" width="29.76" height="20" fill="#AF5F00"/><text class="j" x="153.36" textLength="29.76">ret</text><text class="e" x="183.12" textLength="29.76">urn</text><text x="222.8" textLength="9.92">f</text><text class="f" x="232.72" textLength="257.92">&quot;Hello, {self.name}{mark}&quot;</text></g>
-<g class="l c0 n"><text x="74" textLength="39.68">/ret</text><use href="#c" x="113.68" y="-12.8"/></g>
-<text class="l c1 n" x="74" textLength="49.6">/retu</text>
-<g class="l at m"><rect x="153.36" y="-12.8" width="39.68" height="20" fill="#AF5F00"/><text class="j" x="153.36" textLength="39.68">retu</text><text class="e" x="193.04" textLength="19.84">rn</text><text x="222.8" textLength="9.92">f</text><text class="f" x="232.72" textLength="257.92">&quot;Hello, {self.name}{mark}&quot;</text></g>
-<g class="l c2 m"><rect x="153.36" y="-12.8" width="49.6" height="20" fill="#AF5F00"/><text class="j" x="153.36" textLength="49.6">retur</text><text class="e" x="202.96" textLength="9.92">n</text><text x="222.8" textLength="9.92">f</text><text class="f" x="232.72" textLength="257.92">&quot;Hello, {self.name}{mark}&quot;</text></g>
-<g class="l c3 n"><text x="74" textLength="59.52">/retur</text><use href="#c" x="133.52" y="-12.8"/></g>
-<text class="l c4 n" x="74" textLength="69.44">/return</text>
-<g class="l av m"><rect x="153.36" y="-12.8" width="59.52" height="20" fill="#AF5F00"/><text class="j" x="153.36" textLength="59.52">return</text><text x="222.8" textLength="9.92">f</text><text class="f" x="232.72" textLength="257.92">&quot;Hello, {self.name}{mark}&quot;</text></g>
-<use href="#r19" y="0" class="l c6"/>
-<text class="l aw n" x="74" textLength="783.68">/return                                                       11,9          All</text>
-<text class="l ax n" x="74" textLength="783.68">/return                                                       11,1          All</text>
-<text class="l da n" x="74" textLength="783.68">/return                                             O         11,1          All</text>
-<use href="#r19" y="20" class="l ag"/>
-<use href="#r20" class="l ag o"/>
-<use href="#r21" y="20" class="l ag"/>
-<use href="#r22" class="l ag p"/>
-<g class="l ay n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,9          All</text></g>
-<g class="l az m"><text class="i" x="153.36">#</text><use href="#c" x="163.28" y="-12.8"/></g>
-<g class="l az n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,10         All</text></g>
-<g class="l a0 m"><text class="i" x="153.36">#</text><use href="#c" x="173.2" y="-12.8"/></g>
-<g class="l a0 n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,11         All</text></g>
-<g class="l a1 m"><text class="i" x="153.36 173.2">#S</text><use href="#c" x="183.12" y="-12.8"/></g>
-<g class="l a1 n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,12         All</text></g>
-<g class="l a2 m"><text class="i" x="153.36 173.2 183.12">#Sa</text><use href="#c" x="193.04" y="-12.8"/></g>
-<g class="l a2 n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,13         All</text></g>
-<g class="l a3 m"><text class="i" x="153.36" textLength="49.6"># Say</text><use href="#c" x="202.96" y="-12.8"/></g>
-<g class="l a3 n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,14         All</text></g>
-<g class="l a4 m"><text class="i" x="153.36" textLength="49.6"># Say</text><use href="#c" x="212.88" y="-12.8"/></g>
-<g class="l a4 n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,15         All</text></g>
-<g class="l a5 m"><text class="i" x="153.36" textLength="69.44"># Say h</text><use href="#c" x="222.8" y="-12.8"/></g>
-<g class="l a5 n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,16         All</text></g>
-<g class="l a6 m"><text class="i" x="153.36" textLength="79.36"># Say he</text><use href="#c" x="232.72" y="-12.8"/></g>
-<g class="l a6 n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,17         All</text></g>
-<g class="l a7 m"><text class="i" x="153.36" textLength="89.28"># Say hel</text><use href="#c" x="242.64" y="-12.8"/></g>
-<g class="l a7 n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,18         All</text></g>
-<g class="l a9 m"><text class="i" x="153.36" textLength="99.2"># Say hell</text><use href="#c" x="252.56" y="-12.8"/></g>
-<g class="l a9 n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,19         All</text></g>
-<g class="l ba m"><text class="i" x="153.36" textLength="109.12"># Say hello</text><use href="#c" x="262.48" y="-12.8"/></g>
-<g class="l ba n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,20         All</text></g>
-<g class="l bb m"><text class="i" x="153.36" textLength="119.04"># Say hello,</text><use href="#c" x="272.4" y="-12.8"/></g>
-<g class="l bb n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,21         All</text></g>
-<g class="l bd m"><text class="i" x="153.36" textLength="119.04"># Say hello,</text><use href="#c" x="282.32" y="-12.8"/></g>
-<g class="l bd n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,22         All</text></g>
-<g class="l be m"><text class="i" x="153.36" textLength="138.88"># Say hello, w</text><use href="#c" x="292.24" y="-12.8"/></g>
-<g class="l be n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,23         All</text></g>
-<g class="l bf m"><text class="i" x="153.36" textLength="148.8"># Say hello, wi</text><use href="#c" x="302.16" y="-12.8"/></g>
-<g class="l bf n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,24         All</text></g>
-<g class="l bh m"><text class="i" x="153.36" textLength="158.72"># Say hello, wit</text><use href="#c" x="312.08" y="-12.8"/></g>
-<g class="l bh n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,25         All</text></g>
-<g class="l bi m"><text class="i" x="153.36" textLength="168.64"># Say hello, with</text><use href="#c" x="322" y="-12.8"/></g>
-<g class="l bi n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,26         All</text></g>
-<g class="l bj m"><text class="i" x="153.36" textLength="168.64"># Say hello, with</text><use href="#c" x="331.92" y="-12.8"/></g>
-<g class="l bj n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,27         All</text></g>
-<g class="l bk m"><text class="i" x="153.36" textLength="188.48"># Say hello, with a</text><use href="#c" x="341.84" y="-12.8"/></g>
-<g class="l bk n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,28         All</text></g>
-<g class="l bl m"><text class="i" x="153.36" textLength="188.48"># Say hello, with a</text><use href="#c" x="351.76" y="-12.8"/></g>
-<g class="l bl n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,29         All</text></g>
-<g class="l bm m"><text class="i" x="153.36" textLength="208.32"># Say hello, with a m</text><use href="#c" x="361.68" y="-12.8"/></g>
-<g class="l bm n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,30         All</text></g>
-<g class="l bn m"><text class="i" x="153.36" textLength="218.24"># Say hello, with a ma</text><use href="#c" x="371.6" y="-12.8"/></g>
-<g class="l bn n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,31         All</text></g>
-<g class="l bo m"><text class="i" x="153.36" textLength="228.16"># Say hello, with a mar</text><use href="#c" x="381.52" y="-12.8"/></g>
-<g class="l bo n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,32         All</text></g>
-<g class="l bp m"><text class="i" x="153.36" textLength="238.08"># Say hello, with a mark</text><use href="#c" x="391.44" y="-12.8"/></g>
-<g class="l bp n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,33         All</text></g>
-<g class="l bq m"><text class="i" x="153.36" textLength="238.08"># Say hello, with a mark</text><use href="#c" x="401.36" y="-12.8"/></g>
-<g class="l bq n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,34         All</text></g>
-<g class="l br m"><text class="i" x="153.36" textLength="257.92"># Say hello, with a mark a</text><use href="#c" x="411.28" y="-12.8"/></g>
-<g class="l br n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,35         All</text></g>
-<g class="l bs m"><text class="i" x="153.36" textLength="267.84"># Say hello, with a mark at</text><use href="#c" x="421.2" y="-12.8"/></g>
-<g class="l bs n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,36         All</text></g>
-<g class="l bt m"><text class="i" x="153.36" textLength="267.84"># Say hello, with a mark at</text><use href="#c" x="431.12" y="-12.8"/></g>
-<g class="l bt n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,37         All</text></g>
-<g class="l bv m"><text class="i" x="153.36" textLength="287.68"># Say hello, with a mark at t</text><use href="#c" x="441.04" y="-12.8"/></g>
-<g class="l bv n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,38         All</text></g>
-<g class="l bx m"><text class="i" x="153.36" textLength="297.6"># Say hello, with a mark at th</text><use href="#c" x="450.96" y="-12.8"/></g>
-<g class="l bx n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,39         All</text></g>
-<g class="l by m"><text class="i" x="153.36" textLength="307.52"># Say hello, with a mark at the</text><use href="#c" x="460.88" y="-12.8"/></g>
-<g class="l by n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,40         All</text></g>
-<g class="l bz m"><text class="i" x="153.36" textLength="307.52"># Say hello, with a mark at the</text><use href="#c" x="470.8" y="-12.8"/></g>
-<g class="l bz n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,41         All</text></g>
-<g class="l b0 m"><text class="i" x="153.36" textLength="327.36"># Say hello, with a mark at the e</text><use href="#c" x="480.72" y="-12.8"/></g>
-<g class="l b0 n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,42         All</text></g>
-<g class="l b1 m"><text class="i" x="153.36" textLength="337.28"># Say hello, with a mark at the en</text><use href="#c" x="490.64" y="-12.8"/></g>
-<g class="l b1 n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,43         All</text></g>
-<g class="l b2 m"><text class="i" x="153.36" textLength="347.2"># Say hello, with a mark at the end</text><use href="#c" x="500.56" y="-12.8"/></g>
-<g class="l b2 n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,44         All</text></g>
-<text class="l dk m i" x="153.36" textLength="357.12"># Say hello, with a mark at the end.</text>
-<g class="l b3 n"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,45         All</text></g>
-<text class="l dn n" x="589.84 599.76">^[</text>
-<text class="l b4 n" x="689.04" textLength="168.64">11,44         All</text>
-<g class="l dp n"><text x="74">:</text><use href="#c" x="83.92" y="-12.8"/></g>
-<g class="l dq n"><text x="74 83.92">:w</text><use href="#c" x="93.84" y="-12.8"/></g>
-<g class="l dr n"><text x="74 83.92 93.84">:wq</text><use href="#c" x="103.76" y="-12.8"/></g>
-<text class="l dt n" x="74" textLength="99.2">&quot;greet.py&quot;</text>
-<use href="#r11" class="l du a"/>
-<text class="l dv" x="74" y="134.8">$</text>
-<text class="l dx" x="74 93.84" y="134.8">$g</text>
-<text class="l dy" x="74 93.84 103.76" y="134.8">$gi</text>
-<text class="l d0" x="74" y="134.8" textLength="49.6">$ git</text>
-<text class="l d1 r" x="74" textLength="69.44">$ git d</text>
-<text class="l d2 r" x="74" textLength="79.36">$ git di</text>
-<text class="l d3 r" x="74" textLength="89.28">$ git dif</text>
-<text class="l d4 r" x="74" textLength="99.2">$ git diff</text>
-<text class="l y q" x="74" y="154.8" font-weight="bold" textLength="317.44">diff --git a/greet.py b/greet.py</text>
-<text class="l y q" x="74" y="174.8" font-weight="bold" textLength="287.68">index a4011bb..eaa7b78 100644</text>
-<text class="l y k q" x="74" font-weight="bold" textLength="138.88">--- a/greet.py</text>
-<text class="l y q" x="74" y="214.8" font-weight="bold" textLength="138.88">+++ b/greet.py</text>
-<g class="l y s"><text class="d" x="74" textLength="148.8">@@ -8,6 +8,7 @@</text><text x="232.72" textLength="148.8">class Greeting:</text></g>
-<text class="l y t" x="123.6" textLength="238.08">def render(self) -&gt; str:</text>
-<text class="l y u" x="163.28" textLength="347.2">mark = &quot;!&quot; if self.excited else &quot;.&quot;</text>
-<text class="l y m v" x="74" textLength="446.4">+        # Say hello, with a mark at the end.</text>
-<text class="l y w" x="163.28" textLength="337.28">return f&quot;Hello, {self.name}{mark}&quot;</text>
-<text class="l d5 o" x="74">$</text>
-<use href="#c" x="123.6" y="102" class="l d6"/>
-<use href="#c" x="133.52" y="102" class="l d7"/>
-<use href="#c" x="212.88" y="102" class="l d8"/>
-<use href="#c" x="74" y="122" class="l ea"/>
-<use href="#c" x="74" y="102" class="l aq"/>
-<use href="#c" x="123.6" y="522" class="l at"/>
-<use href="#c" x="143.44" y="522" class="l av"/>
-<use href="#c" x="153.36" y="302" class="l aw"/>
-<use href="#c" x="74" y="302" class="l ax"/>
+<rect class="bg l x viewport-bg-0" x="64" y="98" width="813.6" height="448" fill="#282c34" fill-opacity="0.8" clip-path="url(#window-clip-0)"/>
+<g class="l b7"><text x="74" y="114.8">$</text><use href="#c" x="93.84" y="102"/></g>
+<g class="l b8"><text x="74 93.84" y="114.8">$v</text><use href="#c" x="103.76" y="102"/></g>
+<g class="l b9"><text x="74 93.84 103.76" y="114.8">$vi</text><use href="#c" x="113.68" y="102"/></g>
+<text class="l cb" x="74" y="114.8" textLength="49.6">$ vim</text>
+<g class="l cc a"><text x="74" textLength="69.44">$ vim g</text><use href="#c" x="143.44" y="-12.8"/></g>
+<g class="l cd a"><text x="74" textLength="79.36">$ vim gr</text><use href="#c" x="153.36" y="-12.8"/></g>
+<g class="l ce a"><text x="74" textLength="89.28">$ vim gre</text><use href="#c" x="163.28" y="-12.8"/></g>
+<g class="l cf a"><text x="74" textLength="99.2">$ vim gree</text><use href="#c" x="173.2" y="-12.8"/></g>
+<g class="l cg a"><text x="74" textLength="109.12">$ vim greet</text><use href="#c" x="183.12" y="-12.8"/></g>
+<g class="l ch a"><text x="74" textLength="119.04">$ vim greet.</text><use href="#c" x="193.04" y="-12.8"/></g>
+<g class="l ci a"><text x="74" textLength="128.96">$ vim greet.p</text><use href="#c" x="202.96" y="-12.8"/></g>
+<g class="l ck a"><g id="r11"><text x="74" textLength="138.88">$ vim greet.py</text></g></g>
+<text class="l cm" x="74" y="534.8" textLength="198.4">&quot;greet.py&quot; 16L, 345B</text>
+<g class="l co a"><g id="r13"><text class="b" x="74" textLength="39.68">from</text><text x="123.6" textLength="109.12">dataclasses</text><text class="b" x="242.64" textLength="59.52">import</text><text x="312.08" textLength="89.28">dataclass</text></g></g>
+<g class="l y"><text class="b" x="74" y="174.8" textLength="9.92">@</text><text class="d" x="83.92" y="174.8" textLength="89.28">dataclass</text></g>
+<g class="l cr"><g id="r15"><text class="e" x="74" y="194.8" textLength="49.6">class</text><text class="d" x="133.52" y="194.8" textLength="79.36">Greeting</text><text x="212.88" y="194.8" textLength="9.92">:</text></g></g>
+<g class="l y"><text x="113.68" y="214.8" textLength="49.6">name:</text><text class="d" x="173.2" y="214.8" textLength="29.76">str</text></g>
+<g class="l y"><text x="113.68 123.6 133.52 143.44 153.36 163.28 173.2 183.12 252.56" y="234.8">excited:=</text><text class="d" x="202.96 212.88 222.8 232.72 272.4 282.32 292.24 302.16 312.08" y="234.8">boolFalse</text></g>
+<g class="l y"><text class="e" x="113.68 123.6 133.52" y="274.8">def</text><text class="d" x="153.36 163.28 173.2 183.12 193.04 202.96 312.08 322 331.92" y="274.8">renderstr</text><text x="212.88 222.8 232.72 242.64 252.56 262.48 282.32 292.24 341.84" y="274.8">(self)-&gt;:</text></g>
+<g class="l y"><text x="153.36 163.28 173.2 183.12 202.96 292.24 302.16 312.08 322 331.92 341.84 351.76 361.68 371.6 381.52 391.44 401.36" y="294.8">mark=self.excited</text><text class="f" x="222.8 232.72 242.64 470.8 480.72 490.64" y="294.8">&quot;!&quot;&quot;.&quot;</text><text class="e" x="262.48 272.4 421.2 431.12 441.04 450.96" y="294.8">ifelse</text></g>
+<g class="l ct"><g id="r20"><text class="e" x="153.36" y="314.8" textLength="59.52">return</text><text x="222.8" y="314.8" textLength="9.92">f</text><text class="f" x="232.72" y="314.8" textLength="257.92">&quot;Hello, {self.name}{mark}&quot;</text></g></g>
+<g class="l ad g"><g id="r21"><text class="e" x="74" textLength="19.84">if</text><text x="103.76" textLength="109.12">__name__ ==</text><text class="f" x="222.8" textLength="99.2">&quot;__main__&quot;</text><text x="322" textLength="9.92">:</text></g></g>
+<g class="l ad"><g id="r22"><text class="e" x="113.68 123.6 133.52 202.96 212.88" y="394.8">forin</text><text x="153.36 163.28 173.2 183.12 232.72 351.76 470.8 480.72" y="394.8">name(,):</text><text class="f" x="242.64 252.56 262.48 272.4 282.32 292.24 302.16 312.08 322 331.92 341.84 371.6 381.52 391.44 401.36 411.28 421.2 431.12 441.04 450.96 460.88" y="394.8">&quot;scenetake&quot;&quot;terminal&quot;</text></g></g>
+<g class="l ad h"><g id="r23"><text class="d" x="153.36" textLength="49.6">print</text><text x="202.96" textLength="238.08">(Greeting(name, excited=</text><text class="d" x="441.04" textLength="39.68">True</text><text x="480.72" textLength="109.12">).render())</text></g></g>
+<text class="l ad i" x="74" y="434.8">~</text>
+<text class="l y i" x="74" y="454.8">~</text>
+<text class="l y i" x="74" y="474.8">~</text>
+<text class="l y i" x="74" y="494.8">~</text>
+<text class="l y i" x="74" y="514.8">~</text>
+<text class="l ar" x="74" y="534.8" textLength="783.68">&quot;greet.py&quot; 16L, 345B                                          1,1           All</text>
+<g class="l cw"><text x="74" y="534.8">/</text><use href="#c" x="83.92" y="522"/></g>
+<text class="l cx" x="74 83.92" y="534.8">/r</text>
+<g class="l at a"><rect x="83.92" y="-12.8" width="9.92" height="20" fill="#9f4e85"/><text class="b" x="74 93.84 103.76 242.64 252.56 262.48 272.4 282.32 292.24">fomimport</text><text class="j" x="83.92">r</text><text x="123.6 133.52 143.44 153.36 163.28 173.2 183.12 193.04 202.96 212.88 222.8 312.08 322 331.92 341.84 351.76 361.68 371.6 381.52 391.44">dataclassesdataclass</text></g>
+<use href="#r13" class="l cz a"/>
+<g class="l c0 k"><rect x="143.44" y="-12.8" width="19.84" height="20" fill="#7dd6cf"/><text class="e" x="74 83.92 93.84 103.76 113.68">class</text><text class="d" x="133.52 163.28 173.2 183.12 193.04 202.96">Geting</text><text class="j" x="143.44 153.36">re</text><text x="212.88">:</text></g>
+<g class="l c2 m"><text x="74 83.92 93.84">/re</text><use href="#c" x="103.76" y="-12.8"/></g>
+<text class="l c3 m" x="74" textLength="39.68">/ret</text>
+<use href="#r15" y="0" class="l c5"/>
+<g class="l au n"><rect x="153.36" y="-12.8" width="29.76" height="20" fill="#AF5F00"/><text class="j" x="153.36" textLength="29.76">ret</text><text class="e" x="183.12" textLength="29.76">urn</text><text x="222.8" textLength="9.92">f</text><text class="f" x="232.72" textLength="257.92">&quot;Hello, {self.name}{mark}&quot;</text></g>
+<g class="l av n"><rect x="153.36" y="-12.8" width="39.68" height="20" fill="#AF5F00"/><text class="j" x="153.36" textLength="39.68">retu</text><text class="e" x="193.04" textLength="19.84">rn</text><text x="222.8" textLength="9.92">f</text><text class="f" x="232.72" textLength="257.92">&quot;Hello, {self.name}{mark}&quot;</text></g>
+<g class="l av m"><text x="74" textLength="49.6">/retu</text><use href="#c" x="123.6" y="-12.8"/></g>
+<g class="l c6 n"><rect x="153.36" y="-12.8" width="49.6" height="20" fill="#AF5F00"/><text class="j" x="153.36" textLength="49.6">retur</text><text class="e" x="202.96" textLength="9.92">n</text><text x="222.8" textLength="9.92">f</text><text class="f" x="232.72" textLength="257.92">&quot;Hello, {self.name}{mark}&quot;</text></g>
+<g class="l c7 m"><text x="74" textLength="59.52">/retur</text><use href="#c" x="133.52" y="-12.8"/></g>
+<text class="l c9 m" x="74" textLength="69.44">/return</text>
+<g class="l ax n"><rect x="153.36" y="-12.8" width="59.52" height="20" fill="#AF5F00"/><text class="j" x="153.36" textLength="59.52">return</text><text x="222.8" textLength="9.92">f</text><text class="f" x="232.72" textLength="257.92">&quot;Hello, {self.name}{mark}&quot;</text></g>
+<use href="#r20" y="0" class="l dc"/>
+<text class="l ay m" x="74" textLength="783.68">/return                                                       11,9          All</text>
+<text class="l az m" x="74" textLength="783.68">/return                                                       11,1          All</text>
+<text class="l dg m" x="74" textLength="783.68">/return                                             O         11,1          All</text>
+<use href="#r20" y="20" class="l ai"/>
+<use href="#r21" class="l ai o"/>
+<use href="#r22" y="20" class="l ai"/>
+<use href="#r23" class="l ai p"/>
+<g class="l a0 m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,9          All</text></g>
+<g class="l a2 n"><text class="i" x="153.36">#</text><use href="#c" x="163.28" y="-12.8"/></g>
+<g class="l a2 m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,10         All</text></g>
+<g class="l a3 n"><text class="i" x="153.36">#</text><use href="#c" x="173.2" y="-12.8"/></g>
+<g class="l a3 m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,11         All</text></g>
+<g class="l a4 n"><text class="i" x="153.36 173.2">#S</text><use href="#c" x="183.12" y="-12.8"/></g>
+<g class="l a4 m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,12         All</text></g>
+<g class="l a5 n"><text class="i" x="153.36 173.2 183.12">#Sa</text><use href="#c" x="193.04" y="-12.8"/></g>
+<g class="l a5 m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,13         All</text></g>
+<g class="l a6 n"><text class="i" x="153.36" textLength="49.6"># Say</text><use href="#c" x="202.96" y="-12.8"/></g>
+<g class="l a6 m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,14         All</text></g>
+<g class="l a7 n"><text class="i" x="153.36" textLength="49.6"># Say</text><use href="#c" x="212.88" y="-12.8"/></g>
+<g class="l a7 m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,15         All</text></g>
+<g class="l a8 n"><text class="i" x="153.36" textLength="69.44"># Say h</text><use href="#c" x="222.8" y="-12.8"/></g>
+<g class="l a8 m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,16         All</text></g>
+<g class="l ba n"><text class="i" x="153.36" textLength="79.36"># Say he</text><use href="#c" x="232.72" y="-12.8"/></g>
+<g class="l ba m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,17         All</text></g>
+<g class="l bb n"><text class="i" x="153.36" textLength="89.28"># Say hel</text><use href="#c" x="242.64" y="-12.8"/></g>
+<g class="l bb m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,18         All</text></g>
+<g class="l bd n"><text class="i" x="153.36" textLength="99.2"># Say hell</text><use href="#c" x="252.56" y="-12.8"/></g>
+<g class="l bd m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,19         All</text></g>
+<g class="l be n"><text class="i" x="153.36" textLength="109.12"># Say hello</text><use href="#c" x="262.48" y="-12.8"/></g>
+<g class="l be m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,20         All</text></g>
+<g class="l bf n"><text class="i" x="153.36" textLength="119.04"># Say hello,</text><use href="#c" x="272.4" y="-12.8"/></g>
+<g class="l bf m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,21         All</text></g>
+<g class="l bh n"><text class="i" x="153.36" textLength="119.04"># Say hello,</text><use href="#c" x="282.32" y="-12.8"/></g>
+<g class="l bh m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,22         All</text></g>
+<g class="l bi n"><text class="i" x="153.36" textLength="138.88"># Say hello, w</text><use href="#c" x="292.24" y="-12.8"/></g>
+<g class="l bi m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,23         All</text></g>
+<g class="l bj n"><text class="i" x="153.36" textLength="148.8"># Say hello, wi</text><use href="#c" x="302.16" y="-12.8"/></g>
+<g class="l bj m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,24         All</text></g>
+<g class="l bk n"><text class="i" x="153.36" textLength="158.72"># Say hello, wit</text><use href="#c" x="312.08" y="-12.8"/></g>
+<g class="l bk m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,25         All</text></g>
+<g class="l bl n"><text class="i" x="153.36" textLength="168.64"># Say hello, with</text><use href="#c" x="322" y="-12.8"/></g>
+<g class="l bl m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,26         All</text></g>
+<g class="l bm n"><text class="i" x="153.36" textLength="168.64"># Say hello, with</text><use href="#c" x="331.92" y="-12.8"/></g>
+<g class="l bm m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,27         All</text></g>
+<g class="l bn n"><text class="i" x="153.36" textLength="188.48"># Say hello, with a</text><use href="#c" x="341.84" y="-12.8"/></g>
+<g class="l bn m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,28         All</text></g>
+<g class="l bo n"><text class="i" x="153.36" textLength="188.48"># Say hello, with a</text><use href="#c" x="351.76" y="-12.8"/></g>
+<g class="l bo m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,29         All</text></g>
+<g class="l bp n"><text class="i" x="153.36" textLength="208.32"># Say hello, with a m</text><use href="#c" x="361.68" y="-12.8"/></g>
+<g class="l bp m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,30         All</text></g>
+<g class="l bq n"><text class="i" x="153.36" textLength="218.24"># Say hello, with a ma</text><use href="#c" x="371.6" y="-12.8"/></g>
+<g class="l bq m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,31         All</text></g>
+<g class="l br n"><text class="i" x="153.36" textLength="228.16"># Say hello, with a mar</text><use href="#c" x="381.52" y="-12.8"/></g>
+<g class="l br m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,32         All</text></g>
+<g class="l bs n"><text class="i" x="153.36" textLength="238.08"># Say hello, with a mark</text><use href="#c" x="391.44" y="-12.8"/></g>
+<g class="l bs m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,33         All</text></g>
+<g class="l bt n"><text class="i" x="153.36" textLength="238.08"># Say hello, with a mark</text><use href="#c" x="401.36" y="-12.8"/></g>
+<g class="l bt m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,34         All</text></g>
+<g class="l bu n"><text class="i" x="153.36" textLength="257.92"># Say hello, with a mark a</text><use href="#c" x="411.28" y="-12.8"/></g>
+<g class="l bu m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,35         All</text></g>
+<g class="l bv n"><text class="i" x="153.36" textLength="267.84"># Say hello, with a mark at</text><use href="#c" x="421.2" y="-12.8"/></g>
+<g class="l bv m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,36         All</text></g>
+<g class="l bw n"><text class="i" x="153.36" textLength="267.84"># Say hello, with a mark at</text><use href="#c" x="431.12" y="-12.8"/></g>
+<g class="l bw m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,37         All</text></g>
+<g class="l bx n"><text class="i" x="153.36" textLength="287.68"># Say hello, with a mark at t</text><use href="#c" x="441.04" y="-12.8"/></g>
+<g class="l bx m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,38         All</text></g>
+<g class="l by n"><text class="i" x="153.36" textLength="297.6"># Say hello, with a mark at th</text><use href="#c" x="450.96" y="-12.8"/></g>
+<g class="l by m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,39         All</text></g>
+<g class="l bz n"><text class="i" x="153.36" textLength="307.52"># Say hello, with a mark at the</text><use href="#c" x="460.88" y="-12.8"/></g>
+<g class="l bz m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,40         All</text></g>
+<g class="l b0 n"><text class="i" x="153.36" textLength="307.52"># Say hello, with a mark at the</text><use href="#c" x="470.8" y="-12.8"/></g>
+<g class="l b0 m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,41         All</text></g>
+<g class="l b1 n"><text class="i" x="153.36" textLength="327.36"># Say hello, with a mark at the e</text><use href="#c" x="480.72" y="-12.8"/></g>
+<g class="l b1 m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,42         All</text></g>
+<g class="l b2 n"><text class="i" x="153.36" textLength="337.28"># Say hello, with a mark at the en</text><use href="#c" x="490.64" y="-12.8"/></g>
+<g class="l b2 m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,43         All</text></g>
+<g class="l b3 n"><text class="i" x="153.36" textLength="347.2"># Say hello, with a mark at the end</text><use href="#c" x="500.56" y="-12.8"/></g>
+<g class="l b3 m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,44         All</text></g>
+<text class="l do n i" x="153.36" textLength="357.12"># Say hello, with a mark at the end.</text>
+<g class="l b4 m"><text class="q" x="74" font-weight="bold" textLength="119.04">-- INSERT --</text><text x="689.04" textLength="168.64">11,45         All</text></g>
+<text class="l dr m" x="589.84 599.76">^[</text>
+<text class="l b5 m" x="689.04" textLength="168.64">11,44         All</text>
+<g class="l dt m"><text x="74">:</text><use href="#c" x="83.92" y="-12.8"/></g>
+<g class="l du m"><text x="74 83.92">:w</text><use href="#c" x="93.84" y="-12.8"/></g>
+<text class="l dw m" x="74 83.92 93.84">:wq</text>
+<text class="l dy m" x="74" textLength="99.2">&quot;greet.py&quot;</text>
+<use href="#r11" class="l dz a"/>
+<text class="l d0" x="74" y="134.8">$</text>
+<text class="l d1" x="74 93.84" y="134.8">$g</text>
+<text class="l d2" x="74 93.84 103.76" y="134.8">$gi</text>
+<text class="l d4" x="74" y="134.8" textLength="49.6">$ git</text>
+<text class="l d5 r" x="74" textLength="69.44">$ git d</text>
+<text class="l d6 r" x="74" textLength="79.36">$ git di</text>
+<text class="l d7 r" x="74" textLength="89.28">$ git dif</text>
+<text class="l d8 r" x="74" textLength="99.2">$ git diff</text>
+<text class="l z q" x="74" y="154.8" font-weight="bold" textLength="317.44">diff --git a/greet.py b/greet.py</text>
+<text class="l z q" x="74" y="174.8" font-weight="bold" textLength="287.68">index a4011bb..eaa7b78 100644</text>
+<text class="l z k q" x="74" font-weight="bold" textLength="138.88">--- a/greet.py</text>
+<text class="l z q" x="74" y="214.8" font-weight="bold" textLength="138.88">+++ b/greet.py</text>
+<g class="l z s"><text class="d" x="74" textLength="148.8">@@ -8,6 +8,7 @@</text><text x="232.72" textLength="148.8">class Greeting:</text></g>
+<text class="l z t" x="123.6" textLength="238.08">def render(self) -&gt; str:</text>
+<text class="l z u" x="163.28" textLength="347.2">mark = &quot;!&quot; if self.excited else &quot;.&quot;</text>
+<text class="l z n v" x="74" textLength="446.4">+        # Say hello, with a mark at the end.</text>
+<text class="l z w" x="163.28" textLength="337.28">return f&quot;Hello, {self.name}{mark}&quot;</text>
+<text class="l d9 o" x="74">$</text>
+<use href="#c" x="123.6" y="102" class="l ea"/>
+<use href="#c" x="133.52" y="102" class="l eb"/>
+<use href="#c" x="212.88" y="102" class="l ec"/>
+<use href="#c" x="74" y="122" class="l ee"/>
+<use href="#c" x="74" y="102" class="l ar"/>
+<use href="#c" x="93.84" y="522" class="l at"/>
+<use href="#c" x="113.68" y="522" class="l au"/>
+<use href="#c" x="143.44" y="522" class="l ax"/>
 <use href="#c" x="153.36" y="302" class="l ay"/>
-<use href="#c" x="510.48" y="302" class="l b3"/>
-<use href="#c" x="500.56" y="302" class="l b4"/>
+<use href="#c" x="74" y="302" class="l az"/>
+<use href="#c" x="153.36" y="302" class="l a0"/>
+<use href="#c" x="510.48" y="302" class="l b4"/>
+<use href="#c" x="500.56" y="302" class="l b5"/>
+<use href="#c" x="103.76" y="522" class="l ef"/>
+<use href="#c" x="74" y="522" class="l eh"/>
 </g>
 </svg>

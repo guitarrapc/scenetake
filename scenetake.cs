@@ -140,6 +140,8 @@ if (args[0] is "svg")
         }
 
         svgRenderSettings = svgStyle.ToOverrides().Apply(svgRenderSettings);
+        foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(svgRenderSettings))
+            Console.Error.WriteLine($"Warning: {note}");
         SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath, recording.LoopDuration);
         Console.Error.WriteLine($"Written: {FormatDisplayPath(svgOutputPath)}  ({recording.Events.Count} events, {recording.LoopDuration:F1}s)");
         if (SvgRender.SizeWarning(new FileInfo(svgOutputPath).Length, svgRenderSettings.MaxFps, fromCast: true) is { } svgSizeWarning)
@@ -221,6 +223,8 @@ if (args[0] is "mp4")
         }
 
         mp4RenderSettings = mp4Style.ToOverrides().Apply(mp4RenderSettings);
+        foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(mp4RenderSettings))
+            Console.Error.WriteLine($"Warning: {note}");
         var result = Mp4Render.WriteMp4(recording.Events, recording.Width, recording.Height, mp4RenderSettings, mp4Options.ToSettings(), mp4OutputPath, mp4Ffmpeg, recording.LoopDuration);
         PrintMp4Written(mp4OutputPath, result);
         Console.Error.WriteLine($"Done: {FormatDisplayPath(mp4OutputPath)}");
@@ -386,6 +390,8 @@ if (runWindow is WindowStyle runWindowValue)
 if (runMaxFps is int runMaxFpsValue)
     renderSettings = renderSettings with { MaxFps = runMaxFpsValue };
 renderSettings = runStyle.ToOverrides().Apply(renderSettings);
+foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(renderSettings))
+    Console.Error.WriteLine($"Warning: {note}");
 
 // A YAML background image needs SVG or mp4 output: the cast keeps background colors only.
 if (outputFormat == OutputFormat.Cast && renderSettings.Background?.ImagePath is not null)
@@ -2248,6 +2254,28 @@ static bool TryConsumeStyleArg(string[] args, ref int i, StyleOptions style, out
         return true;
     }
 
+    if (TryTakeOptionValue(args, ref i, "--opacity", out var opacity, out error))
+    {
+        if (error.Length != 0)
+            return true;
+        if (style.Opacity is not null)
+            error = "duplicate option: --opacity";
+        else if (RenderSettingsResolver.TryParseOpacity(opacity, out var parsed, out error))
+            style.Opacity = parsed;
+        return true;
+    }
+
+    if (TryTakeOptionValue(args, ref i, "--blur", out var blur, out error))
+    {
+        if (error.Length != 0)
+            return true;
+        if (style.Blur is not null)
+            error = "duplicate option: --blur";
+        else if (RenderSettingsResolver.TryParseBlur(blur, out var parsed, out error))
+            style.Blur = parsed;
+        return true;
+    }
+
     return false;
 }
 
@@ -2484,8 +2512,10 @@ sealed class StyleOptions
     internal BackgroundSpec? Background { get; set; }
     internal int? Margin { get; set; }
     internal int? Padding { get; set; }
+    internal double? Opacity { get; set; }
+    internal int? Blur { get; set; }
 
-    internal RenderStyleOverrides ToOverrides() => new(WindowTitle, Background, Margin, Padding);
+    internal RenderStyleOverrides ToOverrides() => new(WindowTitle, Background, Margin, Padding, Opacity, Blur);
 }
 
 sealed class Mp4Options
@@ -2585,6 +2615,12 @@ static class HelpText
                                        window, 32 with a background; mp4 has a margin only with a background)
               --padding N              Pixels between the terminal's edge and its text, 0-100 (default from
                                        the font size)
+              --opacity N              How much of the window's own fill covers the background, 0-1
+                                       (default 1). 0.85 lets the background show through the terminal's
+                                       default background and the title bar; text stays opaque. Needs
+                                       --background.
+              --blur N                 Blur the background seen through a translucent window, 0-50 pixels
+                                       (default 0). Needs --opacity below 1.
 
             """;
 

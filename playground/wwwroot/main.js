@@ -354,6 +354,7 @@ const SAMPLE_NOTES = {
   theme: 'light theme, 16 and 256 colors, gradient background',
   'theme-macos': 'macOS window frame on a gradient',
   'theme-windows': 'Windows window frame on a gradient',
+  translucent: 'a translucent, blurred window over an image',
   welcome: 'the scenetake logo and a git graph, on an image',
 };
 

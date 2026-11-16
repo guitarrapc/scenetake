@@ -150,7 +150,7 @@ internal sealed class Mp4FrameRenderer
         if (Layout.Window != WindowStyle.None && !string.IsNullOrEmpty(_render.WindowTitle))
             titleGlyphs = GlyphSource.Create(_render.FontFamily, _fontFile, titleLayout);
 
-        var raster = new FrameRasterizer(Layout, _theme, Glyphs, desktop, titleGlyphs, titleLayout.CellWidth, _render.WindowTitle);
+        var raster = new FrameRasterizer(Layout, _theme, Glyphs, desktop, titleGlyphs, titleLayout.CellWidth, _render.WindowTitle, _render.WindowOpacity, _render.WindowBlur);
         var stepper = new ReplayStepper(_events, _initialWidth, _initialHeight, Layout.Cols, Layout.Rows, _theme, Plan.StopIndex);
         for (var frame = 0; frame < FrameCount; frame++)
         {

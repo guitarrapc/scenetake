@@ -195,6 +195,16 @@
                     tab, so a shared link names it but does not carry it.</p>
                   <p class="field__hint field__hint--error" id="image-error" role="alert" hidden></p>
                 </div>
+                <!-- Both act only on a background, so they sit after it. -->
+                <label class="field">--opacity
+                  <input data-option="opacity" type="number" min="0" max="1" step="0.05" inputmode="decimal" placeholder="from YAML" data-from-source />
+                </label>
+                <label class="field">--blur
+                  <input data-option="blur" type="number" min="0" max="50" inputmode="numeric" placeholder="from YAML" data-from-source />
+                </label>
+                <p class="field__hint field--full">With a background, <code>--opacity 0.85</code> lets it show through
+                  the terminal's background and the title bar; text stays opaque. <code>--blur 8</code> blurs what
+                  shows through.</p>
               </div>
             </details>
           </div>

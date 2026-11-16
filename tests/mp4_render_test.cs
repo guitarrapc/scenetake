@@ -28,6 +28,8 @@ failures += Run("SizePaddingUsesBackgroundAndFullTitleBar", SizePaddingUsesBackg
 failures += Run("BackgroundPlacesWindowInMargin", BackgroundPlacesWindowInMargin);
 failures += Run("BackgroundGradientRunsCornerToCorner", BackgroundGradientRunsCornerToCorner);
 failures += Run("WindowOnBackgroundHasBorderAndCorners", WindowOnBackgroundHasBorderAndCorners);
+failures += Run("TranslucentWindowShowsBackground", TranslucentWindowShowsBackground);
+failures += Run("BlurSoftensBackgroundUnderWindow", BlurSoftensBackgroundUnderWindow);
 failures += Run("OptionParsing", OptionParsing);
 failures += Run("FfmpegArgumentsUseH264Bt709", FfmpegArgumentsUseH264Bt709);
 failures += Run("FontFamilyListParsing", FontFamilyListParsing);
@@ -165,6 +167,76 @@ static bool WindowOnBackgroundHasBorderAndCorners()
         && At(x + 60, y + 5) == (0x32, 0x32, 0x32)
         && At(x + 60, y + 60) == (0x28, 0x2c, 0x34)
         && At(x + layout.WindowWidth + 5, y + 60) == (255, 0, 0);
+}
+
+static bool TranslucentWindowShowsBackground()
+{
+    // Theme bg #282c34 at opacity 0.5 (alpha 128) over a red background, in the terminal and in a row drawn again
+    // after its text changed: the row comes back with the background showing through, not filled with the theme
+    // color. The macOS title bar #323232 blends the same way; its border #1a1a1a stays opaque.
+    var (frames, layout) = Render("""
+        [0.0,"o","ab"]
+        [0.5,"o","cd\r\nef"]
+        """, fps: 10, window: "macos", tags: ["st:background=#ff0000", "st:opacity=0.5"]);
+    static byte Blend(int under, int over) => (byte)(under + (over - under) * 128 / 255);
+    var terminal = (Blend(255, 0x28), Blend(0, 0x2c), Blend(0, 0x34));
+    var bar = (Blend(255, 0x32), Blend(0, 0x32), Blend(0, 0x32));
+    var last = frames[^1];
+    (byte, byte, byte) At(int x, int y)
+    {
+        var offset = (y * layout.Width + x) * 3;
+        return (last[offset], last[offset + 1], last[offset + 2]);
+    }
+
+    var (x, y) = (layout.WindowX, layout.WindowY);
+    var ok = CellPixel(last, layout, 0, 6) == terminal
+        && CellPixel(last, layout, 2, 6) == terminal
+        && At(x + 60, y + 5) == bar
+        && At(x + 20, y) == (0x1a, 0x1a, 0x1a)
+        && At(0, 0) == (255, 0, 0);
+    if (!ok)
+        Console.Error.WriteLine($"  row 0: {CellPixel(last, layout, 0, 6)}, row 2: {CellPixel(last, layout, 2, 6)}, bar: {At(x + 60, y + 5)}, expected {terminal} and {bar}");
+    return ok;
+}
+
+static bool BlurSoftensBackgroundUnderWindow()
+{
+    // A background red on the left half and blue on the right, under a window with no fill of its own (opacity 0)
+    // and a blur of 4: inside the window the edge is soft, outside it is sharp, and more than 3 deviations from the
+    // edge the colors are pure.
+    var layout = RasterLayout.Create(16, 10, 3, WindowStyle.None, margin: 20, desktop: true);
+    var theme = TerminalTheme.FromResolved(new ResolvedTheme("#d0d0d0", "#282c34", RenderSettingsResolver.DefaultPalette));
+    var split = layout.Width / 2;
+    var desktop = new byte[layout.Width * layout.Height * 3];
+    for (var i = 0; i < desktop.Length; i += 3)
+    {
+        var red = i / 3 % layout.Width < split;
+        desktop[i] = red ? (byte)255 : (byte)0;
+        desktop[i + 2] = red ? (byte)0 : (byte)255;
+    }
+
+    var glyphs = GlyphSource.Create("monospace", null, layout);
+    var blurred = new FrameRasterizer(layout, theme, glyphs, desktop, opacity: 0, blur: 4);
+    var sharp = new FrameRasterizer(layout, theme, glyphs, desktop, opacity: 0);
+    (int R, int G, int B) At(FrameRasterizer raster, int x, int y)
+    {
+        var offset = (y * layout.Width + x) * 3;
+        return (raster.Pixels[offset], raster.Pixels[offset + 1], raster.Pixels[offset + 2]);
+    }
+
+    var inside = layout.WindowY + layout.WindowHeight / 2;
+    var outside = layout.WindowY / 2;
+    var nearEdge = At(blurred, split - 1, inside);
+    var ok = nearEdge.R is > 60 and < 250 && nearEdge.B is > 5 and < 195
+        && At(blurred, split - 13, inside) == (255, 0, 0)
+        && At(blurred, split + 13, inside) == (0, 0, 255)
+        && At(blurred, split - 1, outside) == (255, 0, 0)
+        && At(blurred, split, outside) == (0, 0, 255)
+        && At(sharp, split - 1, inside) == (255, 0, 0)
+        && At(sharp, split, inside) == (0, 0, 255);
+    if (!ok)
+        Console.Error.WriteLine($"  near the edge {nearEdge}, 13 px left {At(blurred, split - 13, inside)}, outside {At(blurred, split - 1, outside)}");
+    return ok;
 }
 
 static bool FitWithinKeepsAspectAndEvenSize() =>
@@ -523,13 +595,14 @@ static bool WindowsChromeDrawsButtons()
         && Pixel(last, layout, layout.Width - 5, 5) == (0x2d, 0x2d, 0x2d);
 }
 
-static (List<byte[]> Frames, RasterLayout Layout) Render(string events, int fps, string? window = null, (int Width, int Height)? size = null)
+static (List<byte[]> Frames, RasterLayout Layout) Render(string events, int fps, string? window = null, (int Width, int Height)? size = null, string[]? tags = null)
 {
     var path = Path.Combine(Path.GetTempPath(), $"scenetake-mp4-{Guid.NewGuid():N}.cast");
     try
     {
-        var tags = window is null ? "" : $",\"tags\":[\"st:window={window}\"]";
-        File.WriteAllText(path, "{\"version\":3,\"term\":{\"cols\":8,\"rows\":3,\"type\":\"xterm-256color\"}" + tags + "}\n" + events + "\n");
+        string[] allTags = [.. window is null ? [] : new[] { $"st:window={window}" }, .. tags ?? []];
+        var tagsJson = allTags.Length == 0 ? "" : $",\"tags\":[{string.Join(',', allTags.Select(static tag => $"\"{tag}\""))}]";
+        File.WriteAllText(path, "{\"version\":3,\"term\":{\"cols\":8,\"rows\":3,\"type\":\"xterm-256color\"}" + tagsJson + "}\n" + events + "\n");
         var recording = CastReader.Read(path);
         var renderer = new Mp4FrameRenderer(recording.Events, recording.Width, recording.Height, recording.RenderSettings,
             Mp4Settings.Default with { Fps = fps, FrameWidth = size?.Width ?? 0, FrameHeight = size?.Height ?? 0 }, recording.LoopDuration);

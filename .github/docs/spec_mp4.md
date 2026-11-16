@@ -113,6 +113,14 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
 
 The background is drawn once per video and copied into each frame before the window.
 
+### Translucent window
+
+`--opacity` and `--blur` (or `render.opacity` and `render.blur`, or `st:opacity` and `st:blur` in the cast header) work as in the SVG ([spec_svg.md](spec_svg.md) → Translucent window: opacity and blur):
+
+- **Blended:** the theme background inside the window and the title bar, over the background at the opacity. The border, buttons, title, text, cursor, and cell backgrounds the program set stay opaque. Without a background the window is opaque.
+- **Blur:** a Gaussian blur of the background inside the window's box, done once per video. Edge pixels repeat outward and values blur as stored (sRGB), as the SVG's filter is set to.
+- **A changed row** is drawn again over the window as it was first drawn, with the background showing through, instead of being filled with the theme background. An opaque window still fills it.
+
 ### Downscaling
 
 `--max-size WxH` fits the video inside `W×H`, keeping the aspect ratio and even sizes, and never enlarges it. Frames are drawn at the normal font size, then scaled down with a lanczos filter.
