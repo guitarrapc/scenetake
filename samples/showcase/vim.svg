@@ -189,6 +189,7 @@ text { dominant-baseline: alphabetic; }
 <rect class="l z viewport-chrome-0" x="12" y="12" width="813.6" height="482" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
 <path class="l z viewport-chrome-0" d="M 20,12 H 817.6 Q 825.6,12 825.6,20 V 46 H 12 V 20 Q 12,12 20,12 Z" fill="#323232"/>
 <line class="l z viewport-chrome-0" x1="12" y1="46" x2="825.6" y2="46" stroke="#1a1a1a" stroke-width="1"/>
+<text class="l z viewport-chrome-0" x="418.8" y="33.5" style="font-size:13px" text-anchor="middle" fill="#c8c8c8">vim and git diff</text>
 <circle class="l z viewport-chrome-0" cx="34" cy="29" r="8" fill="#ff5f57"/>
 <circle class="l z viewport-chrome-0" cx="60" cy="29" r="8" fill="#febc2e"/>
 <circle class="l z viewport-chrome-0" cx="86" cy="29" r="8" fill="#28c840"/>

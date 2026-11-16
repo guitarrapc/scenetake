@@ -735,6 +735,16 @@ internal static partial class ScenarioCast
         };
         if (renderSettings.Window != WindowStyle.None)
             tags.Add(RenderSettingsResolver.WindowTagPrefix + RenderSettingsResolver.WindowToTagValue(renderSettings.Window));
+        // Without window-title the reader takes the cast's title. An image background is left out: a cast names
+        // no file of the computer it was recorded on, so the scenario path passes the image to the renderer.
+        if (renderSettings.WindowTitle is { } windowTitle)
+            tags.Add(RenderSettingsResolver.WindowTitleTagPrefix + windowTitle);
+        if (renderSettings.Background is { Colors.Count: > 0 } background)
+            tags.Add(RenderSettingsResolver.BackgroundTagPrefix + background.TagValue);
+        if (renderSettings.Margin is int margin)
+            tags.Add(RenderSettingsResolver.MarginTagPrefix + margin.ToString(CultureInfo.InvariantCulture));
+        if (renderSettings.Padding is int padding)
+            tags.Add(RenderSettingsResolver.PaddingTagPrefix + padding.ToString(CultureInfo.InvariantCulture));
         var tagsJson = string.Join(",", tags.ConvertAll(static tag => JsonEscape.JsonString(tag)));
         writer.WriteLine(
             $"{{\"version\":3,\"term\":{{\"cols\":{width},\"rows\":{height}" +

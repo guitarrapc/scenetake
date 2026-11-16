@@ -148,6 +148,38 @@
                 <label class="field field--wide">--font-family
                   <input data-option="fontFamily" type="text" spellcheck="false" placeholder="from YAML" data-from-source />
                 </label>
+                <label class="field field--wide">--window-title
+                  <input data-option="windowTitle" type="text" spellcheck="false" placeholder="from YAML" data-from-source />
+                </label>
+                <label class="field">--margin
+                  <input data-option="margin" type="number" min="0" max="200" inputmode="numeric" placeholder="from YAML" data-from-source />
+                </label>
+                <label class="field">--padding
+                  <input data-option="padding" type="number" min="0" max="100" inputmode="numeric" placeholder="from YAML" data-from-source />
+                </label>
+                <!--
+                  The presets fill in the field, so the value they set is there to read and to copy into a scenario.
+                  main.js paints each swatch from its data-background.
+                -->
+                <div class="field field--full">
+                  <label for="background-option">--background</label>
+                  <input id="background-option" data-option="background" type="text" spellcheck="false"
+                    placeholder="from YAML" data-from-source />
+                  <div class="swatches" role="group" aria-label="Background presets">
+                    <button type="button" class="swatch swatch--none" data-background="" title="None: the scenario's or cast's own"></button>
+                    <button type="button" class="swatch" data-background="#0f2027 #203a43 #2c5364" title="Midnight"></button>
+                    <button type="button" class="swatch" data-background="#4b6cb7 #182848" title="Ocean"></button>
+                    <button type="button" class="swatch" data-background="#0a2e6e #1f6fd1" title="Azure"></button>
+                    <button type="button" class="swatch" data-background="#a1c4fd #c2e9fb" title="Sky"></button>
+                    <button type="button" class="swatch" data-background="#43cea2 #185a9d" title="Mint"></button>
+                    <button type="button" class="swatch" data-background="#8e2de2 #4a00e0" title="Grape"></button>
+                    <button type="button" class="swatch" data-background="#ff5f6d #ffc371" title="Sunset"></button>
+                    <button type="button" class="swatch" data-background="#2d3436" title="Graphite"></button>
+                  </div>
+                  <p class="field__hint">One color, <code>#1e3c72</code>, or 2–4 for a gradient from the top left,
+                    <code>#1e3c72 #2a5298</code>. In YAML, quote it: <code>background: "#1e3c72 #2a5298"</code>.
+                    An image file needs the scenetake command.</p>
+                </div>
               </div>
             </details>
           </div>

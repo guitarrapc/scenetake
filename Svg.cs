@@ -221,6 +221,45 @@ internal readonly record struct ResolvedRenderSettings(
     int MaxFps = RenderSettingsResolver.DefaultMaxFps)
 {
     public string DefaultFg => Theme.Fg;
+
+    /// <summary>
+    /// Text in the window's title bar. A scenario's null leaves it to the cast's title. Read from a cast, it is
+    /// <c>st:window-title</c> when the cast has one and the cast's title otherwise. Empty shows no title.
+    /// </summary>
+    internal string? WindowTitle { get; init; }
+
+    /// <summary>What fills the canvas around the terminal, or null for a transparent canvas.</summary>
+    internal BackgroundSpec? Background { get; init; }
+
+    /// <summary>Pixels around the terminal or window, or null for the default.</summary>
+    internal int? Margin { get; init; }
+
+    /// <summary>Pixels between the terminal's edge and its text on every side, or null for the default from the font size.</summary>
+    internal int? Padding { get; init; }
+}
+
+/// <summary>
+/// What fills the canvas around the terminal: one color, a gradient of two to four colors from the top-left
+/// corner to the bottom-right one, or an image file that covers the canvas. A cast header keeps the colors. It
+/// keeps no image: a cast names no file of the computer it was recorded on.
+/// </summary>
+internal sealed record BackgroundSpec(IReadOnlyList<string> Colors, string? ImagePath)
+{
+    internal string TagValue => string.Join(' ', Colors);
+}
+
+/// <summary>Window title, background, margin, and padding from the command line or the playground: each set one replaces the cast's or the scenario's.</summary>
+internal sealed record RenderStyleOverrides(string? WindowTitle, BackgroundSpec? Background, int? Margin, int? Padding)
+{
+    internal static readonly RenderStyleOverrides None = new(null, null, null, null);
+
+    internal ResolvedRenderSettings Apply(ResolvedRenderSettings settings) => settings with
+    {
+        WindowTitle = WindowTitle ?? settings.WindowTitle,
+        Background = Background ?? settings.Background,
+        Margin = Margin ?? settings.Margin,
+        Padding = Padding ?? settings.Padding,
+    };
 }
 
 internal readonly record struct ResolvedTheme(string Fg, string Bg, string Palette);
@@ -239,6 +278,21 @@ internal static class RenderSettingsResolver
     internal const string FontSizeTagPrefix = "st:font-size=";
     internal const string FontFamilyTagPrefix = "st:font-family=";
     internal const string WindowTagPrefix = "st:window=";
+    internal const string WindowTitleTagPrefix = "st:window-title=";
+    internal const string BackgroundTagPrefix = "st:background=";
+    internal const string MarginTagPrefix = "st:margin=";
+    internal const string PaddingTagPrefix = "st:padding=";
+    internal const int MinMargin = 0, MaxMargin = 200;
+    internal const int MinPadding = 0, MaxPadding = 100;
+
+    /// <summary>The margin when a background is set and no margin is: enough of the background to show around the window.</summary>
+    internal const int DefaultBackgroundMargin = 32;
+    internal const int MaxBackgroundColors = 4;
+
+    /// <summary>Every SVG embeds the image, so a large photo makes every recording large.</summary>
+    internal const long MaxBackgroundImageBytes = 8L * 1024 * 1024;
+    internal const int MaxWindowTitleLength = 256;
+    private static readonly string[] BackgroundImageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".webp"];
     internal const string DarkName = "dark", LightName = "light";
     internal const string MacosWindowName = "macos", WindowsWindowName = "windows", NoneWindowName = "none";
     internal static string ExpectedPresetNames => $"{DarkName}|{LightName}";
@@ -307,6 +361,135 @@ internal static class RenderSettingsResolver
         WindowStyle.Windows => WindowsWindowName,
         _ => NoneWindowName,
     };
+
+    internal static bool TryParseMargin(string text, out int margin, out string error) =>
+        TryParsePixels(text, "margin", MinMargin, MaxMargin, out margin, out error);
+
+    internal static bool TryParsePadding(string text, out int padding, out string error) =>
+        TryParsePixels(text, "padding", MinPadding, MaxPadding, out padding, out error);
+
+    internal static bool IsValidMargin(int margin) => margin is >= MinMargin and <= MaxMargin;
+
+    internal static bool IsValidPadding(int padding) => padding is >= MinPadding and <= MaxPadding;
+
+    private static bool TryParsePixels(string text, string name, int min, int max, out int value, out string error)
+    {
+        error = "";
+        if (!int.TryParse(text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out value))
+        {
+            error = $"invalid {name} value: {text} (expected whole pixels from {min} to {max})";
+            return false;
+        }
+
+        if (value < min || value > max)
+        {
+            error = $"{name} must be between {min} and {max} pixels: {value}";
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Reads a background: colors (<c>#rgb</c> or <c>#rrggbb</c>, separated by spaces or commas) or an image file.
+    /// </summary>
+    /// <param name="baseFolder">
+    /// The folder a relative image path starts from, or null where no file can be read: a cast header and the
+    /// playground take colors only.
+    /// </param>
+    internal static bool TryParseBackground(string text, string? baseFolder, out BackgroundSpec background, out string error)
+    {
+        background = null!;
+        error = "";
+        var value = text.Trim();
+        if (value.Length == 0)
+        {
+            error = "background requires a value";
+            return false;
+        }
+
+        var tokens = value.Split([' ', ',', '\t'], StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.All(static token => token.StartsWith('#')))
+        {
+            if (tokens.Length > MaxBackgroundColors)
+            {
+                error = $"background takes at most {MaxBackgroundColors} colors: {value}";
+                return false;
+            }
+
+            var colors = new List<string>(tokens.Length);
+            foreach (var token in tokens)
+            {
+                if (!CastReader.TryParseHexColor(token, out var color))
+                {
+                    error = $"invalid background color (expected #rgb or #rrggbb): {token}";
+                    return false;
+                }
+
+                // #rgb becomes #rrggbb: the mp4 rasterizer reads only the long form.
+                colors.Add((color.Length == 4 ? $"#{color[1]}{color[1]}{color[2]}{color[2]}{color[3]}{color[3]}" : color).ToLowerInvariant());
+            }
+
+            background = new BackgroundSpec(colors, null);
+            return true;
+        }
+
+        if (baseFolder is null)
+        {
+            error = $"background here takes colors only, such as #1e3c72 #2a5298; an image file needs the scenetake command: {value}";
+            return false;
+        }
+
+        string path;
+        try
+        {
+            path = Path.GetFullPath(value, baseFolder);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            error = $"background is neither colors nor a valid path: {value}";
+            return false;
+        }
+
+        if (!BackgroundImageExtensions.Contains(Path.GetExtension(path).ToLowerInvariant()))
+        {
+            error = $"background must be colors such as #1e3c72 #2a5298, or a .png, .jpg, .gif, or .webp file: {value}";
+            return false;
+        }
+
+        var info = new FileInfo(path);
+        if (!info.Exists)
+        {
+            error = Path.IsPathFullyQualified(value)
+                ? $"background image not found: {value}"
+                : $"background image not found: {value} (resolved to {path})";
+            return false;
+        }
+
+        if (info.Length > MaxBackgroundImageBytes)
+        {
+            error = $"background image is larger than {MaxBackgroundImageBytes / (1024 * 1024)} MB, and every SVG embeds it: {value}";
+            return false;
+        }
+
+        background = new BackgroundSpec([], path);
+        return true;
+    }
+
+    /// <summary>A window title without control characters, at most <see cref="MaxWindowTitleLength"/> characters.</summary>
+    internal static string NormalizeWindowTitle(string text)
+    {
+        var builder = new StringBuilder(Math.Min(text.Length, MaxWindowTitleLength));
+        foreach (var c in text)
+        {
+            if (builder.Length == MaxWindowTitleLength)
+                break;
+            if (!char.IsControl(c))
+                builder.Append(c);
+        }
+
+        return builder.ToString().Trim();
+    }
 
     internal static bool TryParseFontFamily(string text, out string fontFamily, out string error)
     {
@@ -398,11 +581,16 @@ internal static class RenderSettingsResolver
         return true;
     }
 
+    /// <param name="scenarioFolder">
+    /// The scenario file's folder, which a relative <c>render.background</c> image path starts from. Null in the
+    /// playground, which reads no files and so takes background colors only.
+    /// </param>
     internal static bool TryResolve(
         Scenario scenario,
         string? cliThemePreset,
         out ResolvedRenderSettings settings,
-        out string error)
+        out string error,
+        string? scenarioFolder = null)
     {
         settings = default;
         error = "";
@@ -431,6 +619,42 @@ internal static class RenderSettingsResolver
         }
 
         settings = new ResolvedRenderSettings(fontSize, fontFamily, theme, window);
+        if (render?.WindowTitle is { } windowTitle)
+            settings = settings with { WindowTitle = NormalizeWindowTitle(windowTitle) };
+
+        if (!string.IsNullOrWhiteSpace(render?.Background))
+        {
+            if (!TryParseBackground(render!.Background!, scenarioFolder, out var background, out error))
+            {
+                error = $"invalid render.background: {error}";
+                return false;
+            }
+
+            settings = settings with { Background = background };
+        }
+
+        if (render?.Margin is int margin)
+        {
+            if (!IsValidMargin(margin))
+            {
+                error = $"invalid render.margin: must be between {MinMargin} and {MaxMargin} pixels: {margin}";
+                return false;
+            }
+
+            settings = settings with { Margin = margin };
+        }
+
+        if (render?.Padding is int padding)
+        {
+            if (!IsValidPadding(padding))
+            {
+                error = $"invalid render.padding: must be between {MinPadding} and {MaxPadding} pixels: {padding}";
+                return false;
+            }
+
+            settings = settings with { Padding = padding };
+        }
+
         return true;
     }
 
@@ -579,8 +803,8 @@ internal static class SvgFrameRenderer
     internal const double ChromeSidePadding = 14.0;
     internal const double ChromeTopPadding = 9.0;
     private const double ChromeOuterMargin = 12.0;
-    private const double ChromeMacCornerRadius = 8.0;
-    private const double ChromeWindowsCornerRadius = 4.0;
+    internal const double ChromeMacCornerRadius = 8.0;
+    internal const double ChromeWindowsCornerRadius = 4.0;
     internal const double MacButtonDiameter = 16.0;
     internal const double MacButtonGap = 10.0;
     internal const double WinButtonSize = 17.0;
@@ -589,12 +813,21 @@ internal static class SvgFrameRenderer
     private const string WindowShadowFilter =
         "<filter id=\"window-shadow\" x=\"-25%\" y=\"-25%\" width=\"150%\" height=\"150%\"><feDropShadow dx=\"0\" dy=\"2\" stdDeviation=\"4\" flood-opacity=\"0.22\"/></filter>";
 
-    private static readonly ChromePalette MacDark = new("#323232", "#1a1a1a", "#8a8a8a");
-    private static readonly ChromePalette MacLight = new("#dcdcdc", "#b0b0b0", "#8a8a8a");
-    private static readonly ChromePalette WinDark = new("#2d2d2d", "#404040", "#8a8a8a");
-    private static readonly ChromePalette WinLight = new("#f3f3f3", "#d0d0d0", "#8a8a8a");
+    // The window title: the terminal's font family at a fixed size, so SVG and mp4 measure it in the same cells.
+    internal const double ChromeTitleFontSize = 13.0;
 
-    internal readonly record struct ChromePalette(string TitleBarBg, string Border, string WinButton);
+    /// <summary>The title's baseline below the window's top edge: a 13 px line centered in the 34 px bar.</summary>
+    internal const double ChromeTitleBaseline = 21.5;
+
+    /// <summary>Room kept between the title and the buttons.</summary>
+    private const double ChromeTitleGap = 10.0;
+
+    private static readonly ChromePalette MacDark = new("#323232", "#1a1a1a", "#8a8a8a", "#c8c8c8");
+    private static readonly ChromePalette MacLight = new("#dcdcdc", "#b0b0b0", "#8a8a8a", "#4a4a4a");
+    private static readonly ChromePalette WinDark = new("#2d2d2d", "#404040", "#8a8a8a", "#d6d6d6");
+    private static readonly ChromePalette WinLight = new("#f3f3f3", "#d0d0d0", "#8a8a8a", "#333333");
+
+    internal readonly record struct ChromePalette(string TitleBarBg, string Border, string WinButton, string TitleText);
 
     /// <summary>macOS close, minimize, and zoom buttons, left to right.</summary>
     internal static readonly string[] MacButtonColors = ["#ff5f57", "#febc2e", "#28c840"];
@@ -626,7 +859,7 @@ internal static class SvgFrameRenderer
 
         frames = OptimizeFrames(frames, render.MaxFps);
         var theme = TerminalTheme.FromResolved(render.Theme);
-        var metrics = CreateMetrics(render.FontSize, canvasWidth, canvasHeight, render.Window);
+        var metrics = CreateMetrics(render, canvasWidth, canvasHeight);
 
         var context = new EncodeContext(metrics, theme, canvasHeight);
         var layers = BuildLayers(events, initialWidth, initialHeight, frames, canvasWidth, canvasHeight, context);
@@ -995,7 +1228,8 @@ internal static class SvgFrameRenderer
         foreach (var i in standaloneCursors)
             keyframes.Use(cursorKeyframeIds[i]);
 
-        var viewportElements = 2 + (metrics.HasChrome ? 6 : 0); // mask, background, and the chrome's parts
+        // Mask, background, and the chrome's parts: its frame, bar, line, three buttons, and the title if any.
+        var viewportElements = 2 + (metrics.HasChrome ? 6 : 0) + (metrics.HasChrome && !string.IsNullOrEmpty(render.WindowTitle) ? 1 : 0);
         for (var i = 0; i < viewportLayers.Count; i++)
             keyframes.Use(viewportKeyframeIds[i], viewportElements);
 
@@ -1029,6 +1263,8 @@ internal static class SvgFrameRenderer
         sb.AppendLf("<defs>");
         if (metrics.HasChrome)
             sb.AppendLf(WindowShadowFilter);
+        if (render.Background is { } backgroundDefs)
+            AppendBackgroundDefs(sb, backgroundDefs);
 
         if (cursorLayers.Count > 0)
         {
@@ -1052,13 +1288,16 @@ internal static class SvgFrameRenderer
         sb.AppendLf("</mask>");
         sb.AppendLf("</defs>");
 
+        if (render.Background is { } background)
+            AppendBackground(sb, metrics, background);
+
         if (metrics.HasChrome)
         {
             var chrome = ResolveChromePalette(render.Window, render.Theme.Bg);
             for (var i = 0; i < viewportLayers.Count; i++)
             {
                 var viewport = viewportLayers[i];
-                AppendWindowChrome(sb, metrics, chrome, render.Window, viewport.P0, viewport.P1, i, keyframes.Name(viewportKeyframeIds[i]));
+                AppendWindowChrome(sb, metrics, chrome, render.Window, render.WindowTitle, viewport.P0, viewport.P1, i, keyframes.Name(viewportKeyframeIds[i]));
             }
         }
 
@@ -1415,11 +1654,110 @@ internal static class SvgFrameRenderer
         return (0.299 * r) + (0.587 * g) + (0.114 * b) > 140;
     }
 
+    /// <summary>
+    /// The title as the bar shows it, with its x relative to the window's left edge: its center on macOS, its
+    /// start on Windows. A title wider than the room the buttons leave is cut and ends in an ellipsis. Null when
+    /// there is no title or no room for two cells. Widths count cells of the terminal's monospace font, a wide
+    /// character as two, so the SVG and the mp4 cut a title at the same place.
+    /// </summary>
+    internal static (string Text, double X, bool Centered)? FitWindowTitle(string? title, WindowStyle window, double windowWidth)
+    {
+        if (window == WindowStyle.None || string.IsNullOrEmpty(title))
+            return null;
+
+        double room, x;
+        bool centered;
+        if (window == WindowStyle.Macos)
+        {
+            // Centered over the whole bar, so the buttons' width is kept clear on both sides.
+            var buttons = ChromeSidePadding + MacButtonDiameter * 3 + MacButtonGap * 2;
+            room = windowWidth - 2 * (buttons + ChromeTitleGap);
+            x = windowWidth / 2;
+            centered = true;
+        }
+        else
+        {
+            var buttons = ChromeSidePadding + WinButtonSize * 3 + WinButtonGap * 2;
+            room = windowWidth - ChromeSidePadding - buttons - ChromeTitleGap;
+            x = ChromeSidePadding;
+            centered = false;
+        }
+
+        var maxCells = (int)Math.Floor(room / (ChromeTitleFontSize * CharWidthFactor));
+        if (maxCells < 2)
+            return null;
+
+        var elements = new List<(string Text, int Cells)>();
+        var total = 0;
+        var enumerator = StringInfo.GetTextElementEnumerator(title);
+        while (enumerator.MoveNext())
+        {
+            var element = enumerator.GetTextElement();
+            var cells = Rune.TryGetRuneAt(element, 0, out var rune) && ScreenBuffer.IsWideCodePoint(rune.Value) ? 2 : 1;
+            elements.Add((element, cells));
+            total += cells;
+        }
+
+        if (total <= maxCells)
+            return (title, x, centered);
+
+        var builder = new StringBuilder();
+        var used = 0;
+        foreach (var (element, cells) in elements)
+        {
+            if (used + cells > maxCells - 1)
+                break;
+            builder.Append(element);
+            used += cells;
+        }
+
+        return (builder.Append('…').ToString(), x, centered);
+    }
+
+    private static void AppendBackgroundDefs(StringBuilder sb, BackgroundSpec background)
+    {
+        if (background.Colors.Count < 2)
+            return;
+
+        // objectBoundingBox units: the gradient runs from the canvas's top-left corner to its bottom-right one.
+        sb.AppendLf("<linearGradient id=\"desktop\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">");
+        for (var i = 0; i < background.Colors.Count; i++)
+        {
+            var offset = i / (double)(background.Colors.Count - 1);
+            sb.AppendLf(CultureInfo.InvariantCulture, $"<stop offset=\"{offset:0.###}\" stop-color=\"{background.Colors[i]}\"/>");
+        }
+
+        sb.AppendLf("</linearGradient>");
+    }
+
+    /// <summary>The background over the whole canvas, behind the window. An image covers the canvas and is cropped to it, centered.</summary>
+    private static void AppendBackground(StringBuilder sb, SvgMetrics metrics, BackgroundSpec background)
+    {
+        if (background.ImagePath is { } path)
+        {
+            var mime = Path.GetExtension(path).ToLowerInvariant() switch
+            {
+                ".png" => "image/png",
+                ".gif" => "image/gif",
+                ".webp" => "image/webp",
+                _ => "image/jpeg",
+            };
+            sb.AppendLf(CultureInfo.InvariantCulture,
+                $"<image href=\"data:{mime};base64,{Convert.ToBase64String(File.ReadAllBytes(path))}\" x=\"0\" y=\"0\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" preserveAspectRatio=\"xMidYMid slice\"/>");
+            return;
+        }
+
+        var fill = background.Colors.Count == 1 ? background.Colors[0] : "url(#desktop)";
+        sb.AppendLf(CultureInfo.InvariantCulture,
+            $"<rect x=\"0\" y=\"0\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" fill=\"{fill}\"/>");
+    }
+
     private static void AppendWindowChrome(
         StringBuilder sb,
         SvgMetrics metrics,
         ChromePalette chrome,
         WindowStyle window,
+        string? title,
         int cols,
         int rows,
         int layerIndex,
@@ -1442,6 +1780,13 @@ internal static class SvgFrameRenderer
             $"<path class=\"{cls}\" d=\"M {x + rx:0.##},{y:0.##} H {right - rx:0.##} Q {right:0.##},{y:0.##} {right:0.##},{y + rx:0.##} V {barBottom:0.##} H {x:0.##} V {y + rx:0.##} Q {x:0.##},{y:0.##} {x + rx:0.##},{y:0.##} Z\" fill=\"{chrome.TitleBarBg}\"/>");
         sb.AppendLf(CultureInfo.InvariantCulture,
             $"<line class=\"{cls}\" x1=\"{x:0.##}\" y1=\"{barBottom:0.##}\" x2=\"{right:0.##}\" y2=\"{barBottom:0.##}\" stroke=\"{chrome.Border}\" stroke-width=\"1\"/>");
+
+        // The style attribute wins over the stylesheet's font-size for terminal text; a font-size attribute would not.
+        if (FitWindowTitle(title, window, width) is { } fitted)
+        {
+            sb.AppendLf(CultureInfo.InvariantCulture,
+                $"<text class=\"{cls}\" x=\"{x + fitted.X:0.##}\" y=\"{y + ChromeTitleBaseline:0.##}\" style=\"font-size:{ChromeTitleFontSize:0.##}px\"{(fitted.Centered ? " text-anchor=\"middle\"" : "")} fill=\"{chrome.TitleText}\">{EscapeXml(fitted.Text)}</text>");
+        }
 
         if (window == WindowStyle.Macos)
         {
@@ -1472,18 +1817,29 @@ internal static class SvgFrameRenderer
 
     private static string BuildEmptySvg(ResolvedRenderSettings render, int width, int height)
     {
-        var metrics = CreateMetrics(render.FontSize, width, height, render.Window);
+        var metrics = CreateMetrics(render, width, height);
         var sb = new StringBuilder();
         sb.AppendLf(CultureInfo.InvariantCulture, $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLf(CultureInfo.InvariantCulture,
             $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" viewBox=\"0 0 {metrics.SvgWidth:0.##} {metrics.SvgHeight:0.##}\">");
+        if (metrics.HasChrome || render.Background is not null)
+        {
+            sb.AppendLf(CultureInfo.InvariantCulture, $"<style>text {{ font-family: {render.FontFamily}; white-space: pre; }}</style>");
+            sb.AppendLf("<defs>");
+            if (metrics.HasChrome)
+                sb.AppendLf(WindowShadowFilter);
+            if (render.Background is { } backgroundDefs)
+                AppendBackgroundDefs(sb, backgroundDefs);
+            sb.AppendLf("</defs>");
+        }
+
+        if (render.Background is { } background)
+            AppendBackground(sb, metrics, background);
+
         if (metrics.HasChrome)
         {
-            sb.AppendLf("<defs>");
-            sb.AppendLf(WindowShadowFilter);
-            sb.AppendLf("</defs>");
             var chrome = ResolveChromePalette(render.Window, render.Theme.Bg);
-            AppendWindowChrome(sb, metrics, chrome, render.Window, width, height, 0, keyframe: null);
+            AppendWindowChrome(sb, metrics, chrome, render.Window, render.WindowTitle, width, height, 0, keyframe: null);
             var bgRect = metrics.TerminalBackgroundRect(width, height);
             sb.AppendLf(CultureInfo.InvariantCulture,
                 $"<rect x=\"{bgRect.X:0.##}\" y=\"{bgRect.Y:0.##}\" width=\"{bgRect.Width:0.##}\" height=\"{bgRect.Height:0.##}\" fill=\"{render.Theme.Bg}\"/>");
@@ -2303,11 +2659,13 @@ internal static class SvgFrameRenderer
         return true;
     }
 
-    private static SvgMetrics CreateMetrics(int fontSize, int cols, int rows, WindowStyle window)
+    private static SvgMetrics CreateMetrics(ResolvedRenderSettings render, int cols, int rows)
     {
+        var fontSize = render.FontSize;
+        var window = render.Window;
         var lineHeight = fontSize * LineHeightFactor;
         var charWidth = fontSize * CharWidthFactor;
-        var (innerPaddingH, innerPaddingV) = ResolveInnerPadding(fontSize);
+        var (innerPaddingH, innerPaddingV) = ResolveInnerPadding(fontSize, render.Padding);
         double outerMargin;
         double titleBarHeight;
         double cornerRadius;
@@ -2323,6 +2681,8 @@ internal static class SvgFrameRenderer
             titleBarHeight = ChromeTitleBarHeight;
             cornerRadius = window == WindowStyle.Macos ? ChromeMacCornerRadius : ChromeWindowsCornerRadius;
         }
+
+        outerMargin = ResolveMargin(render.Margin, render.Background is not null, outerMargin);
 
         var contentOriginX = outerMargin + innerPaddingH;
         var contentOriginY = outerMargin + titleBarHeight + innerPaddingV;
@@ -2349,12 +2709,24 @@ internal static class SvgFrameRenderer
             cornerRadius);
     }
 
-    internal static (double horizontal, double vertical) ResolveInnerPadding(int fontSize)
+    /// <summary>Padding between the terminal's edge and its text: <paramref name="padding"/> on every side when set, else from the font size.</summary>
+    internal static (double horizontal, double vertical) ResolveInnerPadding(int fontSize, int? padding = null)
     {
+        if (padding is int fixedPadding)
+            return (fixedPadding, fixedPadding);
+
         var horizontal = Math.Clamp(fontSize * 10.0 / 16.0, InnerPaddingHorizontalMin, InnerPaddingHorizontalMax);
         var vertical = Math.Clamp(fontSize * 4.0 / 16.0, InnerPaddingVerticalMin, InnerPaddingVerticalMax);
         return (horizontal, vertical);
     }
+
+    /// <summary>
+    /// The margin around the terminal or window: <paramref name="margin"/> when set; with a background,
+    /// <see cref="RenderSettingsResolver.DefaultBackgroundMargin"/>, so some of it shows; else the default of the
+    /// window style, room for the shadow with chrome.
+    /// </summary>
+    internal static double ResolveMargin(int? margin, bool hasBackground, double styleDefault) =>
+        margin ?? (hasBackground ? RenderSettingsResolver.DefaultBackgroundMargin : styleDefault);
 
     private readonly record struct SvgMetrics(
         double CharWidth,

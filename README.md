@@ -49,7 +49,15 @@ steps:
 | --- | --- |
 | ![](samples/basic.gif) | ![](samples/basic.svg) |
 
-SVG output supports custom font, light/dark theme, and optional window chrome (`macos` / `windows`).
+SVG and mp4 output support a custom font, a light or dark theme, and these settings for the window around the terminal. Each is a `render` key in the scenario and a flag on the command line:
+
+| `render` key | Flag | What it sets |
+| --- | --- | --- |
+| `window` | `--window` | A macOS or Windows title bar (`macos` / `windows`) |
+| `window-title` | `--window-title` | Text in the title bar. Default: the scenario's `title`. `""` shows none. |
+| `background` | `--background` | What fills the space around the window: a color (`"#1e3c72"`), 2–4 colors for a gradient from the top-left corner (`"#1e3c72 #2a5298"`), or a `.png`, `.jpg`, `.gif`, or `.webp` file |
+| `margin` | `--margin` | Pixels around the window, 0–200. Default 32 with a background. |
+| `padding` | `--padding` | Pixels between the terminal's edge and its text, 0–100 |
 
 | macOS | Windows |
 | --- | --- |
@@ -124,6 +132,9 @@ scenetake --format svg scenario.yaml
 
 # SVG styling: font, theme, window chrome, frame cap
 scenetake --format svg scenario.yaml --font-size 20 --font-family "'Noto Sans Mono', ui-monospace" --theme light --window macos
+
+# A titled window on a gradient, with more room around the text
+scenetake --format svg scenario.yaml --window macos --window-title "my-cli demo" --background "#1e3c72 #2a5298" --padding 16
 
 # Convert an existing cast file to SVG (v2 or v3)
 scenetake svg scenario.cast
@@ -424,6 +435,10 @@ render:                          # Optional display metadata for cast header and
   theme:
     preset: dark                 # dark | light; optional fg / bg / palette overrides
   window: macos                  # none | macos | windows
+  window-title: "scenario_format.yaml"  # title bar text; default: the top-level title, "" for none
+  background: "#0f2027 #2c5364"  # one color, 2-4 colors for a gradient, or a .png/.jpg/.gif/.webp file
+  margin: 24                     # px around the window (default 8, 12 with a window, 32 with a background)
+  padding: 12                    # px between the terminal edge and its text (default from font-size)
 
 settings:                        # Defaults for all steps; map-form steps can override per key
   prompt: "$ "

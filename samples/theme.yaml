@@ -13,6 +13,7 @@ settings:
 # SVG / cast header display metadata (see .github/docs/spec_cast.md)
 render:
   font-size: 16
+  background: "#a1c4fd #c2e9fb"   # one color, or 2-4 colors for a gradient from the top-left corner
   theme:
     # Built-in presets: dark (default) | light
     preset: light

@@ -63,6 +63,7 @@ internal static class CastReader
         var fontSize = RenderSettingsResolver.DefaultFontSize;
         var fontFamily = RenderSettingsResolver.DefaultFontFamily;
         var window = WindowStyle.None;
+        var style = new CastStyle();
         JsonElement theme = default;
         int width;
         int height;
@@ -78,7 +79,7 @@ internal static class CastReader
 
             term.TryGetProperty("theme", out theme);
             if (header.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Array)
-                ReadRenderTags(tags, ref fontSize, ref fontFamily, ref window);
+                ReadRenderTags(tags, ref fontSize, ref fontFamily, ref window, style);
         }
         else
         {
@@ -98,7 +99,17 @@ internal static class CastReader
         }
 
         var (fg, bg, palette) = ParseTheme(theme);
-        var renderSettings = new ResolvedRenderSettings(fontSize, fontFamily, new ResolvedTheme(fg, bg, palette), window);
+        // The title bar shows st:window-title when the cast has one, and the cast's own title otherwise.
+        var castTitle = header.TryGetProperty("title", out var titleElement) && titleElement.ValueKind == JsonValueKind.String
+            ? RenderSettingsResolver.NormalizeWindowTitle(titleElement.GetString() ?? "")
+            : null;
+        var renderSettings = new ResolvedRenderSettings(fontSize, fontFamily, new ResolvedTheme(fg, bg, palette), window)
+        {
+            WindowTitle = style.WindowTitle ?? castTitle,
+            Background = style.Background,
+            Margin = style.Margin,
+            Padding = style.Padding,
+        };
         var events = new List<CastEvent>();
         var warnedCodes = new HashSet<string>(StringComparer.Ordinal);
         var usesRelativeTime = version == 3;
@@ -127,7 +138,16 @@ internal static class CastReader
         return new CastRecording(width, height, renderSettings, events, loopDuration);
     }
 
-    private static void ReadRenderTags(JsonElement tags, ref int fontSize, ref string fontFamily, ref WindowStyle window)
+    /// <summary>The window title, background, margin, and padding a cast's tags set; null for each it does not.</summary>
+    private sealed class CastStyle
+    {
+        internal string? WindowTitle;
+        internal BackgroundSpec? Background;
+        internal int? Margin;
+        internal int? Padding;
+    }
+
+    private static void ReadRenderTags(JsonElement tags, ref int fontSize, ref string fontFamily, ref WindowStyle window, CastStyle style)
     {
         var warnedSize = false;
         var warnedFamily = false;
@@ -139,13 +159,46 @@ internal static class CastReader
             var value = tag.GetString();
             if (value is null)
                 continue;
+            // st:window-title= is checked before st:window=, which is its prefix.
             if (value.StartsWith(RenderSettingsResolver.FontSizeTagPrefix, StringComparison.Ordinal))
                 ApplyFontSize(ref fontSize, value[RenderSettingsResolver.FontSizeTagPrefix.Length..], ref warnedSize);
             else if (value.StartsWith(RenderSettingsResolver.FontFamilyTagPrefix, StringComparison.Ordinal))
                 ApplyFontFamily(ref fontFamily, value[RenderSettingsResolver.FontFamilyTagPrefix.Length..], ref warnedFamily);
+            else if (value.StartsWith(RenderSettingsResolver.WindowTitleTagPrefix, StringComparison.Ordinal))
+                style.WindowTitle = RenderSettingsResolver.NormalizeWindowTitle(value[RenderSettingsResolver.WindowTitleTagPrefix.Length..]);
             else if (value.StartsWith(RenderSettingsResolver.WindowTagPrefix, StringComparison.Ordinal))
                 ApplyWindow(ref window, value[RenderSettingsResolver.WindowTagPrefix.Length..], ref warnedWindow);
+            else if (value.StartsWith(RenderSettingsResolver.BackgroundTagPrefix, StringComparison.Ordinal))
+            {
+                if (ReadTag(value, RenderSettingsResolver.BackgroundTagPrefix, "background", "no background",
+                    static (string text, out BackgroundSpec parsed, out string error) => RenderSettingsResolver.TryParseBackground(text, baseFolder: null, out parsed, out error),
+                    out var background))
+                    style.Background = background;
+            }
+            else if (value.StartsWith(RenderSettingsResolver.MarginTagPrefix, StringComparison.Ordinal))
+            {
+                if (ReadTag<int>(value, RenderSettingsResolver.MarginTagPrefix, "margin", "the default margin", RenderSettingsResolver.TryParseMargin, out var margin))
+                    style.Margin = margin;
+            }
+            else if (value.StartsWith(RenderSettingsResolver.PaddingTagPrefix, StringComparison.Ordinal))
+            {
+                if (ReadTag<int>(value, RenderSettingsResolver.PaddingTagPrefix, "padding", "the default padding", RenderSettingsResolver.TryParsePadding, out var padding))
+                    style.Padding = padding;
+            }
         }
+    }
+
+    private delegate bool TagParser<T>(string text, out T parsed, out string error);
+
+    /// <summary>Reads a tag's value. One that scenetake does not accept is warned about and left out.</summary>
+    private static bool ReadTag<T>(string tag, string prefix, string name, string fallback, TagParser<T> parse, out T value)
+    {
+        var text = tag[prefix.Length..];
+        if (parse(text, out value, out _))
+            return true;
+
+        Console.Error.WriteLine($"Warning: cast: invalid {name} '{text}'; using {fallback}");
+        return false;
     }
 
     private static void ApplyFontSize(ref int fontSize, string sizeText, ref bool warned)

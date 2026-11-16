@@ -45,6 +45,7 @@ failures += Run("PtySizeMismatchGivesNotice", PtySizeMismatchGivesNotice);
 failures += Run("RecordedExitCodeWarns", RecordedExitCodeWarns);
 failures += Run("ErrorsAreValuesNotExceptions", ErrorsAreValuesNotExceptions);
 failures += Run("NotAppliedKeysAreListed", NotAppliedKeysAreListed);
+failures += Run("UnquotedColorsWarn", UnquotedColorsWarn);
 failures += Run("CastTabAppliesOverrides", () => CastTabAppliesOverrides(repoRoot));
 
 var scenetake = Environment.GetEnvironmentVariable("SCENETAKE_BIN");
@@ -401,6 +402,48 @@ static bool NotAppliedKeysAreListed()
     var sameShell = Render("width: 80\nheight: 24\nshell: bash\nsteps:\n  - echo hi\n", outputs);
     return Expect(result.NotApplied.Count == 3, string.Join("; ", result.NotApplied))
         & Expect(sameShell.NotApplied.Count == 0, "the recording's own shell is no note: " + string.Join("; ", sameShell.NotApplied));
+}
+
+// YAML reads `key: #1e3c72` as a key with no value and a comment, so the color was lost without a word. The CLI and
+// the playground warn the same way: a color key gets the quoted color, a style key the quoted fg: style. A real
+// comment, a quoted color, and a #fff inside a script block draw no warning.
+static bool UnquotedColorsWarn()
+{
+    var yaml = """
+        width: 80
+        height: 24
+        settings:
+          stderr-color: #ff8800
+        render:
+          background: #1e3c72 #2a5298
+          theme:
+            bg: #222
+            fg: "#eeeeee"
+            palette: # 16 colors go here
+        steps:
+          - run: |
+              echo "background: #fff"
+          - run: echo hi
+            highlight:
+              - color: #00ff00
+                at: "1"
+        """;
+    var expected = new[]
+    {
+        "line 4: 'stderr-color' has no value: YAML reads '#ff8800' as a comment. Quote the style: stderr-color: \"fg:#ff8800\"",
+        "line 6: 'background' has no value: YAML reads '#1e3c72 #2a5298' as a comment. Quote the color: background: \"#1e3c72 #2a5298\"",
+        "line 8: 'bg' has no value: YAML reads '#222' as a comment. Quote the color: bg: \"#222\"",
+        "line 16: 'color' has no value: YAML reads '#00ff00' as a comment. Quote the style: color: \"fg:#00ff00\"",
+    };
+    var found = ScenarioCast.FindUnknownScenarioKeys(yaml);
+    var ok = Expect(found.SequenceEqual(expected), "the four unquoted colors, in order; got:\n    " + string.Join("\n    ", found));
+
+    // The playground lists them with its other warnings.
+    var outputs = Outputs(RecordedStep.Pipe("echo hi", 0, [Out("hi\n")]));
+    var result = Render("width: 80\nheight: 24\nrender:\n  background: #1e3c72\nsteps:\n  - echo hi\n", outputs);
+    ok &= Expect(result.Warnings.Contains("line 4: 'background' has no value: YAML reads '#1e3c72' as a comment. Quote the color: background: \"#1e3c72\""),
+        "the playground warning; got: " + string.Join("; ", result.Warnings));
+    return ok;
 }
 
 static bool CastTabAppliesOverrides(string repoRoot)

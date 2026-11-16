@@ -8,6 +8,10 @@ public partial class ScenarioRender
     public int? FontSize { get; set; }
     public string? FontFamily { get; set; }
     public string? Window { get; set; }
+    public string? WindowTitle { get; set; }
+    public string? Background { get; set; }
+    public int? Margin { get; set; }
+    public int? Padding { get; set; }
     public ScenarioTheme? Theme { get; set; }
 }
 

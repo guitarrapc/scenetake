@@ -122,7 +122,11 @@ public static partial class PlaygroundInterop
             Window: String(root, "window"),
             FontSize: Int(root, "fontSize"),
             FontFamily: String(root, "fontFamily"),
-            MaxFps: Int(root, "maxFps"));
+            MaxFps: Int(root, "maxFps"),
+            WindowTitle: String(root, "windowTitle"),
+            Background: String(root, "background"),
+            Margin: Int(root, "margin"),
+            Padding: Int(root, "padding"));
 
         static string? String(JsonElement root, string name) =>
             root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString() is { Length: > 0 } text ? text : null;

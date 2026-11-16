@@ -201,6 +201,49 @@ main {
   grid-column: span 2;
 }
 
+.field--full {
+  grid-column: 1 / -1;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Painted from data-background by main.js. 28 px squares stay easy to tap on a phone. */
+.swatch {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.swatch[aria-pressed="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* None: a diagonal line, as a crossed-out color. */
+.swatch--none {
+  background: linear-gradient(135deg, transparent 46%, var(--muted) 46% 54%, transparent 54%), var(--surface-2);
+}
+
+.field__hint {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.field__hint code {
+  font-family: var(--mono);
+  color: var(--text);
+  user-select: all;
+}
+
 .field {
   display: flex;
   flex-direction: column;

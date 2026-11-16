@@ -25,6 +25,9 @@ failures += Run("SizePadsTerminalIntoFrame", SizePadsTerminalIntoFrame);
 failures += Run("SizeSetsOutputAndScale", SizeSetsOutputAndScale);
 failures += Run("SizeTooFarFromTerminalShapeIsReported", SizeTooFarFromTerminalShapeIsReported);
 failures += Run("SizePaddingUsesBackgroundAndFullTitleBar", SizePaddingUsesBackgroundAndFullTitleBar);
+failures += Run("BackgroundPlacesWindowInMargin", BackgroundPlacesWindowInMargin);
+failures += Run("BackgroundGradientRunsCornerToCorner", BackgroundGradientRunsCornerToCorner);
+failures += Run("WindowOnBackgroundHasBorderAndCorners", WindowOnBackgroundHasBorderAndCorners);
 failures += Run("OptionParsing", OptionParsing);
 failures += Run("FfmpegArgumentsUseH264Bt709", FfmpegArgumentsUseH264Bt709);
 failures += Run("FontFamilyListParsing", FontFamilyListParsing);
@@ -104,6 +107,64 @@ static bool LayoutRoundsSvgMetrics()
         && odd.Width % 2 == 0 && odd.Height % 2 == 0
         && tiny is { CellWidth: 8, CellHeight: 16 } && tiny.Width % 2 == 0
         && chrome is { TitleBarHeight: 34, Height: 102 } && chrome.RowY(0) == 38 && layout.RowY(0) == 4;
+}
+
+static bool BackgroundPlacesWindowInMargin()
+{
+    // 10×3 at 16px with macOS chrome is 120 × 102. On a background the window keeps that size, 32 pixels in.
+    var desktop = RasterLayout.Create(16, 10, 3, WindowStyle.Macos, desktop: true);
+    var margin = RasterLayout.Create(16, 10, 3, WindowStyle.Macos, margin: 0, desktop: true);
+    // Without a background the margin has nothing to show, so it does not apply.
+    var noDesktop = RasterLayout.Create(16, 10, 3, WindowStyle.Macos, margin: 40);
+    // Padding replaces the default 10 × 4.
+    var padded = RasterLayout.Create(16, 10, 3, WindowStyle.None, padding: 12);
+    // --size grows the background, and the window stays centered: (1920 - 184) / 2 = 868, (1080 - 166) / 2 = 457.
+    var sized = desktop.FitFrame(1920, 1080);
+    return desktop is { Width: 184, Height: 166, WindowX: 32, WindowY: 32, WindowWidth: 120, WindowHeight: 102, Desktop: true }
+        && desktop.CellX(0) == 42 && desktop.RowY(0) == 32 + 34 + 4
+        && margin is { Width: 120, Height: 102, WindowX: 0, WindowY: 0 }
+        && noDesktop is { Width: 120, Height: 102, WindowX: 0, WindowWidth: 120, Desktop: false }
+        && padded is { PadX: 12, PadY: 12, Width: 124, Height: 84 }
+        && sized is { Width: 1920, Height: 1080, WindowX: 900, WindowY: 489, WindowWidth: 120 } && sized.CellX(0) == 910;
+}
+
+static bool BackgroundGradientRunsCornerToCorner()
+{
+    var layout = RasterLayout.Create(16, 10, 3, WindowStyle.None, margin: 20, desktop: true);
+    var pixels = DesktopRaster.Render(layout, new BackgroundSpec(["#000000", "#ffffff"], null), static (_, _) => throw new InvalidOperationException("no image"));
+    var (width, height) = (layout.Width, layout.Height);
+    int At(int x, int y) => pixels[(y * width + x) * 3];
+    // Dark at the top-left corner, light at the bottom-right one, and the middle half way, as the SVG's
+    // gradient from (0,0) to (1,1) in bounding-box units.
+    var solid = DesktopRaster.Render(layout, new BackgroundSpec(["#123456"], null), static (_, _) => throw new InvalidOperationException("no image"));
+    var image = DesktopRaster.Render(layout, new BackgroundSpec([], "wall.png"), (w, h) => new byte[w * h * 3]);
+    return At(0, 0) < 5 && At(width - 1, height - 1) > 250 && Math.Abs(At(width / 2, height / 2) - 128) <= 3
+        && solid[0] == 0x12 && solid[1] == 0x34 && solid[2] == 0x56 && solid[^1] == 0x56
+        && image.Length == width * height * 3;
+}
+
+static bool WindowOnBackgroundHasBorderAndCorners()
+{
+    var layout = RasterLayout.Create(16, 10, 3, WindowStyle.Macos, desktop: true);
+    var theme = TerminalTheme.FromResolved(new ResolvedTheme("#d0d0d0", "#282c34", RenderSettingsResolver.DefaultPalette));
+    var desktop = DesktopRaster.Render(layout, new BackgroundSpec(["#ff0000"], null), static (_, _) => throw new InvalidOperationException("no image"));
+    var raster = new FrameRasterizer(layout, theme, GlyphSource.Create("monospace", null, layout), desktop);
+    (int R, int G, int B) At(int x, int y)
+    {
+        var offset = (y * layout.Width + x) * 3;
+        return (raster.Pixels[offset], raster.Pixels[offset + 1], raster.Pixels[offset + 2]);
+    }
+
+    // Outside the window: the background. The window's top-left corner is rounded, so its corner pixel is still
+    // background. Its top edge is the macOS dark border, the bar below is the title bar color, and the terminal
+    // area is the theme background.
+    var (x, y) = (layout.WindowX, layout.WindowY);
+    return At(0, 0) == (255, 0, 0)
+        && At(x, y) == (255, 0, 0)
+        && At(x + 20, y) == (0x1a, 0x1a, 0x1a)
+        && At(x + 60, y + 5) == (0x32, 0x32, 0x32)
+        && At(x + 60, y + 60) == (0x28, 0x2c, 0x34)
+        && At(x + layout.WindowWidth + 5, y + 60) == (255, 0, 0);
 }
 
 static bool FitWithinKeepsAspectAndEvenSize() =>

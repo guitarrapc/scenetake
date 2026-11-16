@@ -349,9 +349,9 @@ const SAMPLE_NOTES = {
   resize: 'a v2 cast that resizes the terminal',
   scenario_format: 'every scenario key in one file',
   'stream-output': 'output replayed with its own timing',
-  theme: 'light theme, 16 and 256 colors',
-  'theme-macos': 'macOS window frame',
-  'theme-windows': 'Windows window frame',
+  theme: 'light theme, 16 and 256 colors, gradient background',
+  'theme-macos': 'macOS window frame on a gradient',
+  'theme-windows': 'Windows window frame on a gradient',
 };
 
 function sampleLabel(name) {
@@ -427,7 +427,36 @@ function writeOptions(options) {
     input.value = value === undefined || value === null ? '' : String(value);
   }
   state.options = readOptions();
+  markBackgroundPreset();
 }
+
+// Background presets. Each swatch shows its colors as the SVG draws them, from the top-left corner, and a click
+// puts them in the --background field, where they can be read and copied into a scenario. The swatch that matches
+// the field is pressed; "none" matches an empty field.
+const backgroundInput = $('background-option');
+const backgroundSwatches = [...document.querySelectorAll('.swatch[data-background]')];
+for (const swatch of backgroundSwatches) {
+  const value = swatch.dataset.background;
+  const colors = value.split(/[\s,]+/).filter(Boolean);
+  if (colors.length === 1) swatch.style.background = colors[0];
+  else if (colors.length > 1) swatch.style.background = `linear-gradient(135deg, ${colors.join(', ')})`;
+  const label = colors.length > 0 ? `${swatch.title}: ${value}` : swatch.title;
+  swatch.title = label;
+  swatch.setAttribute('aria-label', label);
+  swatch.addEventListener('click', () => {
+    backgroundInput.value = value;
+    backgroundInput.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+}
+
+function markBackgroundPreset() {
+  const value = backgroundInput.value.trim().toLowerCase().split(/[\s,]+/).filter(Boolean).join(' ');
+  for (const swatch of backgroundSwatches)
+    swatch.setAttribute('aria-pressed', String(swatch.dataset.background === value));
+}
+
+backgroundInput.addEventListener('input', markBackgroundPreset);
+markBackgroundPreset();
 
 for (const input of optionInputs) {
   input.addEventListener('input', () => {

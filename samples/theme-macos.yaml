@@ -13,6 +13,7 @@ settings:
 render:
   font-size: 16
   window: macos
+  background: "#4b6cb7 #182848"
   theme:
     preset: dark
 
