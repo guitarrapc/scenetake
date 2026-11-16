@@ -292,7 +292,7 @@
     <section class="about">
       <h2>Record your own</h2>
       <p>scenetake runs the commands of a YAML scenario for real and writes an asciinema v3 cast, an animated SVG,
-        or an mp4. Install it, then write a scenario with <code>scenetake init</code> or download the one you
+        an mp4, a GIF, or a PNG of one screen. Install it, then write a scenario with <code>scenetake init</code> or download the one you
         edited here with <strong>.yaml</strong>.</p>
       <pre><code>npm install -g scenetake      # or: dotnet tool install -g scenetake
 scenetake init                  # writes scenario.yaml
@@ -316,17 +316,16 @@ scenetake --format svg scenario.yaml</code></pre>
               <td>X, Reddit</td>
               <td>Video (mp4) or GIF, not SVG</td>
               <td><code>scenetake --format mp4 scenario.yaml</code> (needs ffmpeg). For X:
-                <code>scenetake mp4 scenario.cast --max-size 1280x1024</code></td>
+                <code>scenetake mp4 scenario.cast --max-size 1280x1024</code><br>
+                Or a GIF: <code>scenetake gif scenario.cast</code></td>
             </tr>
             <tr>
               <td>Zenn</td>
               <td>Uploads of PNG, JPEG, GIF, or WebP up to 3 MB, not SVG</td>
               <td>One screen as a PNG, without ffmpeg: <code>scenetake png scenario.cast</code> (the final screen, or
                 <code>--at 2.5</code> for the screen 2.5 seconds in).<br>
-                For motion, a GIF made from the cast with <a href="https://github.com/asciinema/agg">agg</a> in Docker:
-                <code>docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20 --last-frame-duration 0</code><br>
-                On Windows, use the <a href="https://github.com/guitarrapc/scenetake#quick-start">Quick Start</a>
-                command, which copies the GIF out of the container.</td>
+                For motion, a GIF (needs ffmpeg): <code>scenetake gif scenario.cast</code>. Over 3 MB, a smaller
+                <code>--font-size</code> makes it smaller and keeps the text sharp.</td>
             </tr>
           </tbody>
         </table>

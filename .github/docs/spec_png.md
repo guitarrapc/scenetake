@@ -10,7 +10,7 @@ Some places take no SVG: Zenn uploads take PNG, JPEG, GIF, or WebP, and slides, 
 
 - `--format png` on the scenario path writes the cast and `<stem>.png`. The `png` subcommand draws a PNG from an existing cast ([spec_cli.md](spec_cli.md)).
 - One screen per PNG. `--at TIME` picks it, and the final screen is the default.
-- Not in scope: an animated PNG, and scaling (`--size` and `--max-size` are mp4 options). A larger `--font-size` makes a larger PNG, such as 32 for twice the size.
+- Not in scope: an animated PNG, and scaling (`--size` and `--max-size` are options of mp4 and GIF). A larger `--font-size` makes a larger PNG, such as 32 for twice the size.
 
 ## What the PNG Shows
 

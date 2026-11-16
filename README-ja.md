@@ -8,7 +8,7 @@
 
 [English](README.md) | 日本語
 
-YAML **scenario** を実行し、ターミナルの scene take（[asciinema v3 `.cast`](https://docs.asciinema.org/manual/asciicast/v3/)、アニメーション `.svg`）を記録するツールです。`asciinema`をインストール・起動する必要はありません。step を並べた YAML を書くだけで、実際にコマンドを実行し、その出力を `.cast`（任意で `.svg` も）として記録します。通常の step はタイピング演出付き、`pty: true` の step は端末ストリームをリアルタイムで記録します。
+YAML **scenario** を実行し、ターミナルの scene take（[asciinema v3 `.cast`](https://docs.asciinema.org/manual/asciicast/v3/)、アニメーション `.svg`）を記録するツールです。`asciinema`をインストール・起動する必要はありません。step を並べた YAML を書くだけで、実際にコマンドを実行し、その出力を `.cast`（任意で `.svg`、`.mp4`、`.gif`、1 画面の `.png` も）として記録します。通常の step はタイピング演出付き、`pty: true` の step は端末ストリームをリアルタイムで記録します。
 
 サンプルシナリオ `samples/basic.yaml` から `.cast` と `.svg` を生成すると、こんな見た目になります。タイプを頑張る必要もないし、実際にコマンドも走るので、リアルなターミナル記録が簡単に作れます。
 
@@ -63,7 +63,7 @@ SVG と mp4 の出力では、フォント、カラーテーマ（後述）の�
 
 `background` を指定しなければ、見えるのはウィンドウだけです。SVG の余白は透明で、mp4 はウィンドウだけの映像になります。背景は、作ったページの外へ持ち出すときに役立ちます。
 
-- **X や Reddit に投稿する動画。** 背景付きの mp4 は、ターミナルを切り抜いた映像ではなく、デスクトップのスクリーンショットのように見えます（agg で作る GIF にはウィンドウ枠も背景も付きません）。
+- **X や Reddit に投稿する動画。** 背景付きの mp4 や GIF は、ターミナルを切り抜いた映像ではなく、デスクトップのスクリーンショットのように見えます（agg で作る GIF にはウィンドウ枠も背景も付きません）。
 - **サイズを決めた動画。** `--size 1920x1080` では、余った部分をターミナルの背景色ではなく背景で埋め、ウィンドウを中央に置きます。
 - **置き先の色がわからないページ。** GitHub の README は、読む人の設定でライトにもダークにもなります。背景を付ければ、どちらでも同じ見た目になります。
 
@@ -203,16 +203,25 @@ scenetake mp4 scenario.cast --size 1920x1080
 # cast と mp4 を一度に生成
 scenetake --format mp4 scenario.yaml
 
+# cast ファイルを GIF アニメーションに変換（ffmpeg が必要。どのビルドでもよい）。X、Reddit、Zenn に向く
+scenetake gif scenario.cast
+
+# Zenn の 3MB に収める。フォントを小さくすると文字がにじまず、フレームを減らすと全画面 TUI が小さくなる
+scenetake gif scenario.cast --font-size 12 --fps 10
+
+# cast と GIF を一度に生成
+scenetake --format gif scenario.yaml
+
 # cast 生成時に正常な pre/post 実行ログも表示
 scenetake --verbose scenario.yaml
 
 # asciinemaで再生
 asciinema play scenario.cast
 
-# agg で gif に変換 (Linux/macOS) — v3 cast には agg 1.6.0 以降が必要
+# agg で gif に変換することもできる (Linux/macOS) — v3 cast には agg 1.6.0 以降が必要
 docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20 --last-frame-duration 0
 
-# agg で gif に変換 (Windows PowerShell)
+# agg で gif に変換することもできる (Windows PowerShell)
 # GIF はコンテナ内に書き出してから取り出す。Windows の Docker Desktop でバインドマウントに直接書くと GIF が壊れることがある
 $id = docker create -v "$($PWD.Path):/data:ro" ghcr.io/asciinema/agg /data/scenario.cast /tmp/scenario.gif --font-size 20 --last-frame-duration 0
 docker start -a $id
@@ -222,14 +231,14 @@ docker rm $id
 
 **Usage**
 
-`scenetake --help` は全コマンドとオプションの値の範囲・既定値を表示します。各コマンドのオプションは `scenetake svg --help`、`scenetake mp4 --help`、`scenetake png --help`、`scenetake init --help` で確認できます。
+`scenetake --help` は全コマンドとオプションの値の範囲・既定値を表示します。各コマンドのオプションは `scenetake svg --help`、`scenetake mp4 --help`、`scenetake png --help`、`scenetake gif --help`、`scenetake init --help` で確認できます。
 
 ```bash
 # 新しいシナリオファイルを初期化
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
-# シナリオを実行して cast（既定）、cast + SVG、cast + mp4、または cast + PNG を生成
-scenetake [--verbose] [--strict] [--format cast|svg|mp4|png] [--at TIME]
+# シナリオを実行して cast（既定）、cast + SVG、cast + mp4、cast + PNG、または cast + GIF を生成
+scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--at TIME]
   [--font-size N] [--font-family FAMILIES] [--theme NAME]
   [--window none|macos|windows] [--max-fps N]
   [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH]
@@ -249,6 +258,11 @@ scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--the
 scenetake png [--at TIME] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME]
   [--window none|macos|windows]
   <input.cast> [output.png]
+
+# 既存の cast ファイルを GIF アニメーションに変換（ffmpeg が必要）
+scenetake gif [--fps N] [--max-size WxH | --size WxH] [--no-loop] [--font-size N] [--font-family FAMILIES]
+  [--font-file PATH] [--theme NAME] [--window none|macos|windows]
+  <input.cast> [output.gif]
 ```
 
 `--max-fps` は SVG アニメーションのフレームレート上限です（`0` = オフ、cast のタイミングをそのまま使用）。`--format svg` 時と `svg` サブコマンドで有効です。
@@ -508,6 +522,9 @@ settings:                        # Defaults for all steps; map-form steps can ov
   # max-duration: 15             # Cap step output timeline, and also enables stream emit
   # silence-threshold: 2.0       # Stream mode: collapse idle gaps longer than this (seconds)
   # max-idle: 0.2                # Stream mode: collapsed idle gap duration (seconds)
+  # mask:                        # Texts to hide wherever the recording shows them, as *
+  #   - "internal.example.com"
+  # mask-auto: true              # Also hide tokens, secret KEY=value values, URL passwords, secret env values
 
 # Optional setup; runs before steps, not recorded in cast
 pre:
@@ -585,6 +602,21 @@ post:
   - echo "demo complete (not recorded)"
 ```
 
+### 秘密情報のマスク
+
+録画は共有するためのものなので、scenetake は書き出す前に秘密情報を隠します。cast、SVG、mp4、PNG、GIF のどれにも残りません。隠した文字は 1 文字ずつ `*` になるので、行の幅も全画面アプリの画面も崩れません。
+
+```yaml
+settings:
+  mask:
+    - "internal.example.com"   # 出てきた場所すべてで隠す
+  mask-auto: true              # 既定値
+```
+
+- `mask` には、社内のホスト名など隠したい文字列を並べます。
+- `mask-auto`（既定でオン）は、さらに次のものを隠します。既知の形式のトークン（`ghp_…`、`github_pat_…`、`AKIA…`、`sk-…`、`xoxb-…`、`npm_…` など）、キー名が秘密を表すペアの値（`API_KEY=…`、`"password": "…"`、`Authorization: Bearer …`）、URL 中のパスワード、JSON Web Token、秘密鍵のブロック、そして `GITHUB_TOKEN` などの秘密の環境変数の値（コマンドがどこに出力しても）です。
+- scenetake は隠したものを `Masked 2 secrets: 1 GitHub token, 1 key=value secret` のように表示します。`mask-auto: false` にすると、並べた文字列だけを隠します。
+
 ## Development
 
 `dotnet` を使ってローカル実行・ビルドする場合は以下を利用します。
@@ -602,17 +634,13 @@ dotnet publish scenetake.cs --self-contained true -p:PublishAot=true -p:StripSym
 
 各シナリオの目的とプレビュー（GIF / SVG）は [samples/README-ja.md](samples/README-ja.md) を参照してください。
 
-サンプルシナリオを `.cast` と `.gif` に変換するには、以下のようにします。
+サンプルシナリオを `.cast`、`.svg`、`.gif` に変換するには、以下のようにします（GIF は `scenetake gif` で作るため ffmpeg が必要です）。
 
 ```bash
 dotnet run samples/regenerate.cs
-# GIF はコンテナ内に書き出してから取り出す（クイックスタートの Windows 向け agg の注記を参照）
-foreach ($file in Get-ChildItem samples/*.cast) {
-  $id = docker create -v "$($PWD.Path):/data:ro" ghcr.io/asciinema/agg /data/samples/$($file.BaseName).cast /tmp/out.gif --last-frame-duration 0
-  docker start -a $id
-  docker cp "${id}:/tmp/out.gif" samples/$($file.BaseName).gif
-  docker rm $id
-}
+
+# GIF だけを今ある cast から作る
+dotnet run samples/regenerate.cs -- --gifs
 ```
 
 ### Release

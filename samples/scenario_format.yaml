@@ -30,6 +30,9 @@ settings:                        # Defaults for all steps; map-form steps can ov
   # max-duration: 15             # Cap step output timeline, and also enables stream emit
   # silence-threshold: 2.0       # Stream mode: collapse idle gaps longer than this (seconds)
   # max-idle: 0.2                # Stream mode: collapsed idle gap duration (seconds)
+  # mask:                        # Texts to hide wherever the recording shows them, as *
+  #   - "internal.example.com"
+  # mask-auto: true              # Also hide tokens, secret KEY=value values, URL passwords, secret env values
 
 # Optional setup; runs before steps, not recorded in cast
 pre:

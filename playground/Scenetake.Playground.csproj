@@ -67,6 +67,7 @@
     <Compile Include="../Scenario.cs" Link="Shared/Scenario.cs" />
     <Compile Include="../Highlight.cs" Link="Shared/Highlight.cs" />
     <Compile Include="../CastComposer.cs" Link="Shared/CastComposer.cs" />
+    <Compile Include="../SecretMask.cs" Link="Shared/SecretMask.cs" />
     <Compile Include="../StepChunks.cs" Link="Shared/StepChunks.cs" />
     <Compile Include="../StepOutputs.cs" Link="Shared/StepOutputs.cs" />
     <Compile Include="../PlaygroundRender.cs" Link="Shared/PlaygroundRender.cs" />

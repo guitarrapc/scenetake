@@ -19,7 +19,7 @@ scenetake のサンプル集です。各シナリオの**目的**と**生成物*
 | [theme](#theme) | light テーマ・16 / 256 色・グラデーション背景 | [theme.yaml](theme.yaml) | [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
 | [theme-macos](#theme-macos) | macOS ウィンドウ chrome とグラデーション背景 | [theme-macos.yaml](theme-macos.yaml) | [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
 | [theme-windows](#theme-windows) | Windows ウィンドウ chrome とグラデーション背景 | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
-| [translucent](#translucent) | 画像の上の半透明でぼかしたウィンドウ | [translucent.yaml](translucent.yaml) | [cast](translucent.cast) · [svg](translucent.svg) |
+| [translucent](#translucent) | 画像の上の半透明でぼかしたウィンドウ | [translucent.yaml](translucent.yaml) | [cast](translucent.cast) · [gif](translucent.gif) · [svg](translucent.svg) |
 | [resize](#resize) | ターミナル resize イベント（cast のみ） | [resize.cast](resize.cast) | [gif](resize.gif) · [svg](resize.svg) |
 
 ### ショーケース
@@ -41,16 +41,17 @@ scenetake のサンプル集です。各シナリオの**目的**と**生成物*
 リポジトリルートで実行します。
 
 ```bash
-# すべての *.yaml から .cast と .svg を再生成し、続けてカラーテーマの見本も作る
+# すべての *.yaml から .cast と .svg を再生成し、続けてカラーテーマの見本と、すべての cast の .gif も作る
 dotnet run samples/regenerate.cs
 
 # theme-presets/ のカラーテーマの見本だけを作る（palette.cast を各テーマで描画。録画は不要）
 dotnet run samples/regenerate.cs -- --theme-presets
 
-# GIF は agg が必要（Docker 例。v3 cast は ghcr.io/asciinema/agg を使用）
-docker run --rm -v "$PWD:/data" ghcr.io/asciinema/agg \
-  /data/samples/basic.cast /data/samples/basic.gif --last-frame-duration 0
+# GIF だけを今ある cast から作る（scenetake gif。ffmpeg が必要）。手で録画した cast はそのまま
+dotnet run samples/regenerate.cs -- --gifs
 ```
+
+GIF は `scenetake gif` で作るので、SVG と同じウィンドウ枠と背景が付きます。cast は背景の色は持ちますが画像は持たないため、`render.background` が画像のシナリオ（`translucent.yaml`）では、`regenerate.cs` が `--background` で画像を渡し直します。
 
 `regenerate.cs` が読むのはこのフォルダのシナリオだけです。`showcase/` のシナリオは Linux のツールを使うため、`showcase/record.sh` が `showcase/Dockerfile` から作ったコンテナの中で録画します。Linux か、Docker のある WSL で実行してください。引数には linux-x64 の scenetake があるフォルダを渡します。
 
@@ -211,7 +212,7 @@ scenetake --format svg samples/password-prompt.yaml out/password-prompt
 **目的:** SVG / cast ヘッダーの **`render.theme`**（light プリセット）と ANSI 色の見え方。
 
 - `render.font-size` / `theme.preset: light`
-- `render.background`: ターミナルの周りに 2 色のグラデーション（agg の GIF には付かない）
+- `render.background`: ターミナルの周りに 2 色のグラデーション
 - 16 色・256 色の printf 出力
 
 | GIF | SVG |
@@ -226,7 +227,7 @@ scenetake --format svg samples/theme.yaml
 
 ## theme-macos
 
-**目的:** **`render.window: macos`** ウィンドウ chrome + dark テーマを **`render.background`** のグラデーションの上に置き、**`render.opacity: 0.85`** でグラデーションの色をウィンドウに透かし、タイトルバーにシナリオの title を表示。agg の GIF にはウィンドウ枠も背景も付かない。
+**目的:** **`render.window: macos`** ウィンドウ chrome + dark テーマを **`render.background`** のグラデーションの上に置き、**`render.opacity: 0.85`** でグラデーションの色をウィンドウに透かし、タイトルバーにシナリオの title を表示。
 
 | GIF | SVG |
 |-----|-----|
@@ -240,7 +241,7 @@ scenetake --format svg samples/theme-macos.yaml
 
 ## theme-windows
 
-**目的:** **`render.window: windows`** ウィンドウ chrome + dark テーマを **`render.background`** のグラデーションの上に置き、タイトルバーにシナリオの title を表示。agg の GIF にはウィンドウ枠も背景も付かない。
+**目的:** **`render.window: windows`** ウィンドウ chrome + dark テーマを **`render.background`** のグラデーションの上に置き、タイトルバーにシナリオの title を表示。
 
 | GIF | SVG |
 |-----|-----|
@@ -254,9 +255,11 @@ scenetake --format svg samples/theme-windows.yaml
 
 ## translucent
 
-**目的:** **`render.background`** の画像の上に、**`render.opacity`** で半透明にし **`render.blur`** でぼかしたウィンドウを置く。ターミナルの背景とタイトルバー越しに画像がぼけて透け、文字と出力が色を付けたバッジは透けない。グラデーションでは変化が小さい。半透明にしても色が少し変わるだけで、ぼかす細部もないので、効果は画像で一番よく見える。agg はウィンドウ枠も背景も描かないので GIF はない。
+**目的:** **`render.background`** の画像の上に、**`render.opacity`** で半透明にし **`render.blur`** でぼかしたウィンドウを置く。ターミナルの背景とタイトルバー越しに画像がぼけて透け、文字と出力が色を付けたバッジは透けない。グラデーションでは変化が小さい。半透明にしても色が少し変わるだけで、ぼかす細部もないので、効果は画像で一番よく見える。GIF は、ぼかした画像を 256 色でディザなしに描く。
 
-![](translucent.svg)
+| GIF | SVG |
+|-----|-----|
+| ![](translucent.gif) | ![](translucent.svg) |
 
 ```bash
 scenetake --format svg samples/translucent.yaml

@@ -55,15 +55,18 @@ internal static partial class ScenarioCast
             if (events.Count == 0)
                 t += preDelay;
 
+            // Secrets are hidden in everything the recording shows: the comment line, the typed command, and the
+            // output below. The outputs file gets the hidden output too, so a replay never sees the secret.
+            var masker = options.Masker;
             if (TryFormatNameComment(command.Name, command.Cmd, out var nameLine, out var nameDisplayText))
             {
                 var prefix = CastEventLayout.NameCommentPrefixForLastEvent(events);
-                events.Add(CastEvent.Marker(Math.Round(t, 6), nameDisplayText));
-                events.Add(CastEvent.Output(Math.Round(t, 6), prefix + nameLine));
+                events.Add(CastEvent.Marker(Math.Round(t, 6), masker?.MaskText(nameDisplayText) ?? nameDisplayText));
+                events.Add(CastEvent.Output(Math.Round(t, 6), prefix + (masker?.MaskText(nameLine) ?? nameLine)));
                 t += 0.05;
             }
 
-            EmitTypedCommand(events, ref t, prompt, command.Cmd, cmdSpeed, cmdJitter, rng, hasRunHighlight, runHighlightStyle);
+            EmitTypedCommand(events, ref t, prompt, masker?.MaskText(command.Cmd) ?? command.Cmd, cmdSpeed, cmdJitter, rng, hasRunHighlight, runHighlightStyle);
 
             if (options.LogRunning)
                 Console.Error.WriteLine($"  running: {command.Cmd}");
@@ -103,7 +106,7 @@ internal static partial class ScenarioCast
             }
             else if (execution.ComposedOutput is { } replayedOutput)
             {
-                t = EmitComposedPtyOutput(events, commandStart, replayedOutput);
+                t = EmitComposedPtyOutput(events, commandStart, masker?.MaskComposed(replayedOutput) ?? replayedOutput);
             }
             else if (execution.IsPty && useInteractive)
             {
@@ -116,6 +119,7 @@ internal static partial class ScenarioCast
                     width,
                     height,
                     options.Verbose);
+                composed = masker?.MaskComposed(composed) ?? composed;
                 options.Record?.Add(RecordedStep.Interactive(command.Cmd, execution.ExitCode, composed));
                 t = EmitComposedPtyOutput(events, commandStart, composed);
             }
@@ -124,6 +128,7 @@ internal static partial class ScenarioCast
                 var chunks = execution.PtyLeadingInitRemoved
                     ? execution.PtyByteChunks!
                     : RemovePtyLeadingInit(execution.PtyByteChunks!, options.Verbose);
+                chunks = masker?.MaskPty(chunks) ?? chunks;
                 options.Record?.Add(RecordedStep.Pty(command.Cmd, execution.ExitCode, ptyStartCursor, chunks));
                 t = EmitPtyStepOutput(
                     events,
@@ -135,11 +140,12 @@ internal static partial class ScenarioCast
             }
             else
             {
-                options.Record?.Add(RecordedStep.Pipe(command.Cmd, execution.ExitCode, execution.PipeStreamChunks!));
+                var pipeChunks = masker?.MaskPipe(execution.PipeStreamChunks!) ?? execution.PipeStreamChunks!;
+                options.Record?.Add(RecordedStep.Pipe(command.Cmd, execution.ExitCode, pipeChunks));
                 t = EmitPipeStepOutput(
                     events,
                     commandStart,
-                    execution.PipeStreamChunks!,
+                    pipeChunks,
                     cmdStderrStyle,
                     cmdHighlights,
                     command.Cmd,
@@ -942,6 +948,12 @@ internal sealed class GenerateOptions
 
     /// <summary>Receives each step's output for the outputs file. Null records nothing.</summary>
     internal List<RecordedStep>? Record { get; init; }
+
+    /// <summary>
+    /// Hides secrets in each step's typed command, comment line, and output, before they reach the cast or the
+    /// outputs file (<see cref="SecretMasker"/>). Null hides nothing.
+    /// </summary>
+    internal SecretMasker? Masker { get; init; }
 }
 
 /// <summary>Runs one step, or finds its recorded output, and returns what the command printed.</summary>

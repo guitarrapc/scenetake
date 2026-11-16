@@ -4,12 +4,15 @@
 #:property ImplicitUsings=enable
 
 // Regenerate sample .cast and .svg files from every *.yaml in this directory, with the .outputs.json file that
-// the playground replays.
+// the playground replays, then a .gif of every cast with `scenetake gif` (needs ffmpeg).
 //
 // Usage (from repository root):
 //   dotnet run samples/regenerate.cs
+//   dotnet run samples/regenerate.cs -- --gifs            # only the GIFs, from the casts as they are
+//   dotnet run samples/regenerate.cs -- --theme-presets   # only the color theme previews
 
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 var repoRoot = FindRepoRoot(Directory.GetCurrentDirectory());
 var toolPath = Path.Combine(repoRoot, "scenetake.cs");
@@ -27,6 +30,11 @@ if (RunReadmeSync(repoRoot) != 0)
 // The color theme previews need no recording, so `-- --theme-presets` renders them alone.
 if (args.Contains("--theme-presets"))
     return RenderThemePresets(repoRoot, toolPath);
+
+// The GIFs need no recording either, and some casts are recorded by hand (interactive-pty, password-prompt), so
+// `-- --gifs` converts every cast as it is.
+if (args.Contains("--gifs"))
+    return RenderGifs(repoRoot, toolPath, samplesDir);
 
 var scenarios = Directory
     .EnumerateFiles(samplesDir, "*.yaml", SearchOption.TopDirectoryOnly)
@@ -60,9 +68,60 @@ if (failures > 0)
 if (RenderThemePresets(repoRoot, toolPath) != 0)
     return 1;
 
+if (RenderGifs(repoRoot, toolPath, samplesDir) != 0)
+    return 1;
+
 Console.Error.WriteLine();
-Console.Error.WriteLine($"Done: {scenarios.Length} sample(s) and the theme previews");
+Console.Error.WriteLine($"Done: {scenarios.Length} sample(s), the theme previews, and the GIFs");
 return 0;
+
+// samples/<name>.gif: every cast in this folder as a GIF, made by `scenetake gif`, which needs ffmpeg. A cast keeps
+// background colors but no image, so a scenario whose render.background is an image (translucent.yaml) passes it
+// again with --background.
+static int RenderGifs(string repoRoot, string toolPath, string samplesDir)
+{
+    Console.Error.WriteLine();
+    Console.Error.WriteLine("=== GIFs ===");
+    var casts = Directory.EnumerateFiles(samplesDir, "*.cast", SearchOption.TopDirectoryOnly).OrderBy(Path.GetFileName, StringComparer.Ordinal);
+    foreach (var cast in casts)
+    {
+        var psi = new ProcessStartInfo { FileName = "dotnet", WorkingDirectory = repoRoot, UseShellExecute = false };
+        foreach (var arg in new[] { "run", toolPath, "--", "gif" })
+            psi.ArgumentList.Add(arg);
+        if (BackgroundImage(Path.ChangeExtension(cast, ".yaml")) is string image)
+        {
+            psi.ArgumentList.Add("--background");
+            psi.ArgumentList.Add(Path.GetRelativePath(repoRoot, image).Replace('\\', '/'));
+        }
+
+        psi.ArgumentList.Add(Path.GetRelativePath(repoRoot, cast).Replace('\\', '/'));
+        psi.ArgumentList.Add(Path.GetRelativePath(repoRoot, Path.ChangeExtension(cast, ".gif")).Replace('\\', '/'));
+
+        using var process = Process.Start(psi);
+        if (process is null)
+        {
+            Console.Error.WriteLine("Error: failed to start dotnet");
+            return 1;
+        }
+
+        process.WaitForExit();
+        if (process.ExitCode != 0)
+            return process.ExitCode;
+    }
+
+    return 0;
+}
+
+// The image file a scenario's render.background names, from its folder, or null for a color, a gradient, or none.
+static string? BackgroundImage(string scenarioPath)
+{
+    if (!File.Exists(scenarioPath))
+        return null;
+
+    var match = Regex.Match(File.ReadAllText(scenarioPath),
+        @"^\s+background:\s*[""']?([^""'#\s]+\.(?:png|jpe?g|gif|webp))[""']?\s*(?:#.*)?$", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+    return match.Success ? Path.Combine(Path.GetDirectoryName(scenarioPath)!, match.Groups[1].Value) : null;
+}
 
 // samples/theme-presets/<name>.svg: palette.cast in each named color theme, with the name in a macOS title bar.
 // The names are RenderSettingsResolver.Presets in Svg.cs; svg_render_test checks that every theme has a current

@@ -38,6 +38,7 @@ try
     failures += Run("CliRulesForWindowStyle", () => CliRulesForWindowStyle(scenetake, repoRoot, work));
     failures += Run("CliRulesForLoopAndEnd", () => CliRulesForLoopAndEnd(scenetake, repoRoot, work));
     failures += Run("CliRulesForStillImages", () => CliRulesForStillImages(scenetake, repoRoot, work));
+    failures += Run("CliRulesForGif", () => CliRulesForGif(scenetake, repoRoot, work));
     failures += Run("HelpDescribesEveryOption", () => HelpDescribesEveryOption(scenetake, repoRoot, work));
     failures += Run("InitWritesStepsForItsShell", () => InitWritesStepsForItsShell(scenetake, work));
     failures += Run("SubcommandsNeverReplaceTheirInput", () => SubcommandsNeverReplaceTheirInput(scenetake, repoRoot, work));
@@ -98,6 +99,9 @@ try
         failures += Run("SizeEncodesExactFrame", () => SizeEncodesExactFrame(scenetake, repoRoot, work));
         failures += Run("ScreenSwitchesAreKeyframes", () => ScreenSwitchesAreKeyframes(scenetake, repoRoot, work));
         failures += Run("ScenarioFormatMp4", () => ScenarioFormatMp4(scenetake, repoRoot, work));
+        failures += Run("SubcommandWritesGif", () => SubcommandWritesGif(scenetake, repoRoot, work));
+        failures += Run("ScenarioFormatGif", () => ScenarioFormatGif(scenetake, repoRoot, work));
+        failures += Run("LargeGifWarns", () => LargeGifWarns(scenetake, repoRoot, work));
 
         // Windows delivers Ctrl+C per console. Sending one to a child needs a separate console,
         // which is too fragile for CI. The Windows behavior was checked by hand (spec_mp4.md).
@@ -211,6 +215,163 @@ static bool SubcommandWritesH264(string scenetake, string repoRoot, string work)
         && x264Settings.Contains("me_range=128 ", StringComparison.Ordinal)
         && x264Settings.Contains(" scenecut=10 ", StringComparison.Ordinal)
         && stderr.Contains("Written:", StringComparison.Ordinal);
+}
+
+// The gif command: a GIF89a that loops, at 20fps by default, whose frame delays add up to the loop the SVG has,
+// with the end hold. --no-loop leaves the loop extension out, and --fps sets the delays.
+static bool SubcommandWritesGif(string scenetake, string repoRoot, string work)
+{
+    var output = Path.Combine(work, "basic.gif");
+    var (exit, stderr) = Exec(scenetake, repoRoot, ["gif", "samples/basic.cast", output]);
+    var once = Path.Combine(work, "basic-once.gif");
+    var (onceExit, onceStderr) = Exec(scenetake, repoRoot, ["gif", "--no-loop", "--fps", "10", "samples/basic.cast", once]);
+    if (exit != 0 || onceExit != 0)
+    {
+        Console.Error.WriteLine(stderr + onceStderr);
+        return false;
+    }
+
+    var looping = ReadGif(output);
+    var single = ReadGif(once);
+    var svg = Path.Combine(work, "basic-loop.svg");
+    Exec(scenetake, repoRoot, ["svg", "samples/basic.cast", svg]);
+    var loop = double.Parse(System.Text.RegularExpressions.Regex.Match(File.ReadAllText(svg), @"\.l \{ visibility: hidden; animation: ([\d.]+)s").Groups[1].Value,
+        System.Globalization.CultureInfo.InvariantCulture);
+    var ok = looping.Loops && !single.Loops
+        && looping.Delays.All(static d => d == 5) && single.Delays.All(static d => d == 10)
+        && Math.Abs(looping.Delays.Sum() / 100.0 - loop) <= 0.05 && Math.Abs(single.Delays.Sum() / 100.0 - loop) <= 0.1
+        && stderr.Contains("20fps", StringComparison.Ordinal) && onceStderr.Contains("10fps", StringComparison.Ordinal)
+        && !Directory.EnumerateFiles(work, ".basic*").Any();
+    if (!ok)
+        Console.Error.WriteLine($"  loops {looping.Loops}/{single.Loops}, frames {looping.Delays.Count}/{single.Delays.Count}, seconds {looping.Delays.Sum() / 100.0}/{single.Delays.Sum() / 100.0} for a {loop}s loop, delays {string.Join(',', looping.Delays.Distinct())}/{string.Join(',', single.Delays.Distinct())}");
+    return ok;
+}
+
+static bool ScenarioFormatGif(string scenetake, string repoRoot, string work)
+{
+    var scenario = WriteScenario(work, "gif.yaml");
+    var (exit, stderr) = Exec(scenetake, repoRoot, ["--format", "gif", "--window", "macos", scenario]);
+    var gif = Path.ChangeExtension(scenario, ".gif");
+    var ok = exit == 0 && File.Exists(Path.ChangeExtension(scenario, ".cast")) && File.Exists(gif) && ReadGif(gif).Delays.Count > 0
+        && stderr.Contains($"Done: ", StringComparison.Ordinal);
+    if (!ok)
+        Console.Error.WriteLine(stderr);
+    return ok;
+}
+
+// Noise in 256 colors on every cell changes the whole screen each frame, which no GIF compresses well.
+static bool LargeGifWarns(string scenetake, string repoRoot, string work)
+{
+    const string Glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    var random = new Random(7);
+    var events = new System.Text.StringBuilder();
+    for (var frame = 0; frame < 20; frame++)
+    {
+        var screen = new System.Text.StringBuilder("\\u001b[H");
+        for (var cell = 0; cell < 80 * 24; cell++)
+            screen.Append($"\\u001b[38;5;{random.Next(256)};48;5;{random.Next(256)}m{Glyphs[random.Next(Glyphs.Length)]}");
+        events.Append($"[{(frame == 0 ? 0 : 0.1):0.0},\"o\",\"{screen}\"]\n");
+    }
+
+    var cast = Path.Combine(work, "noise.cast");
+    File.WriteAllText(cast, "{\"version\":3,\"term\":{\"cols\":80,\"rows\":24,\"type\":\"xterm-256color\"}}\n" + events);
+    var (exit, stderr) = Exec(scenetake, repoRoot, ["gif", cast, Path.Combine(work, "noise.gif")]);
+    var ok = exit == 0 && stderr.Contains("over the 3MB that Zenn takes. A smaller --font-size makes it smaller", StringComparison.Ordinal)
+        && stderr.Contains("scenetake mp4 <cast>", StringComparison.Ordinal);
+    if (!ok)
+        Console.Error.WriteLine(stderr);
+    return ok;
+}
+
+/// <summary>Walks a GIF's blocks: whether it has the NETSCAPE loop extension, and each frame's delay in hundredths of a second.</summary>
+static (bool Loops, List<int> Delays) ReadGif(string path)
+{
+    var b = File.ReadAllBytes(path);
+    if (System.Text.Encoding.ASCII.GetString(b, 0, 6) != "GIF89a")
+        throw new InvalidDataException("not a GIF89a");
+
+    var p = 13 + ((b[10] & 0x80) != 0 ? 3 << ((b[10] & 7) + 1) : 0);
+    var loops = false;
+    var delays = new List<int>();
+    void SkipSubBlocks()
+    {
+        while (b[p] != 0)
+            p += b[p] + 1;
+        p++;
+    }
+
+    while (b[p] != 0x3B)
+    {
+        if (b[p] == 0x21)
+        {
+            var label = b[p + 1];
+            if (label == 0xF9)
+                delays.Add(b[p + 4] | (b[p + 5] << 8));
+            if (label == 0xFF && System.Text.Encoding.ASCII.GetString(b, p + 3, 11) == "NETSCAPE2.0")
+                loops = true;
+            p += 2;
+            SkipSubBlocks();
+        }
+        else if (b[p] == 0x2C)
+        {
+            var flags = b[p + 9];
+            p += 10 + ((flags & 0x80) != 0 ? 3 << ((flags & 7) + 1) : 0);
+            p++; // LZW minimum code size
+            SkipSubBlocks();
+        }
+        else
+        {
+            throw new InvalidDataException($"unexpected block 0x{b[p]:x2} at {p}");
+        }
+    }
+
+    return (loops, delays);
+}
+
+// --fps, --max-size, --size, --font-file, and the loop options are GIF's too. --crf, --max-fps, and --at are not.
+static bool CliRulesForGif(string scenetake, string repoRoot, string work)
+{
+    var scenario = WriteScenario(work, "gif-rules.yaml");
+    var cases = new (string[] Args, string Expected)[]
+    {
+        (["gif", "--crf", "20", "samples/basic.cast"], "--crf applies to mp4: a GIF has no H.264 quality"),
+        (["gif", "--fps", "51", "samples/basic.cast"], "--fps for a GIF must be between 1 and 50: 51"),
+        (["gif", "--max-fps", "10", "samples/basic.cast"], "--max-fps applies to SVG, use --fps for GIF"),
+        (["gif", "--at", "1", "samples/basic.cast"], "--at applies to SVG and PNG: a GIF plays the whole recording"),
+        (["gif", "--size", "640x480", "--max-size", "640x480", "samples/basic.cast"], "--size and --max-size cannot be used together"),
+        (["gif", scenario], "is a scenario, and gif converts a cast file. To record the scenario with a GIF, run: scenetake --format gif "),
+        (["--format", "gif", "--crf", "20", scenario], "--crf applies to mp4"),
+        (["--format", "gif", "--at", "1", scenario], "--at applies to SVG and PNG: a GIF plays the whole recording"),
+        (["--format", "gif", "--max-fps", "10", scenario], "--max-fps applies to SVG, use --fps for GIF"),
+        (["--format", "gif", "--fps", "60", scenario], "--fps for a GIF must be between 1 and 50: 60"),
+        (["--format", "svg", "--fps", "20", scenario], "--fps requires --format mp4 or gif"),
+        (["--format", "png", "--crf", "20", scenario], "--crf requires --format mp4"),
+    };
+
+    var ok = true;
+    foreach (var (args, expected) in cases)
+    {
+        var (exit, stderr) = Exec(scenetake, repoRoot, args);
+        if (exit != 1 || !stderr.Contains(expected, StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine($"  {string.Join(' ', args)}: exit {exit}, expected \"{expected}\" in:{Environment.NewLine}{stderr}");
+            ok = false;
+        }
+    }
+
+    // Any ffmpeg makes a GIF, so the hint leaves libx264 out. The scenario path says so before recording anything.
+    var noFfmpeg = new Dictionary<string, string> { ["SCENETAKE_FFMPEG"] = "", ["PATH"] = Path.Combine(work, "empty-path") };
+    var (gifExit, gifStderr) = Exec(scenetake, repoRoot, ["gif", "samples/basic.cast", Path.Combine(work, "x.gif")], noFfmpeg);
+    var (runExit, runStderr) = Exec(scenetake, repoRoot, ["--format", "gif", scenario], noFfmpeg);
+    if (gifExit != 1 || !gifStderr.Contains("GIF output needs ffmpeg, which was not found on PATH", StringComparison.Ordinal)
+        || !gifStderr.Contains("Install ffmpeg, or set SCENETAKE_FFMPEG", StringComparison.Ordinal) || gifStderr.Contains("libx264", StringComparison.Ordinal)
+        || runExit != 1 || !runStderr.Contains("GIF output needs ffmpeg", StringComparison.Ordinal) || File.Exists(Path.ChangeExtension(scenario, ".cast")))
+    {
+        Console.Error.WriteLine($"  without ffmpeg: gif exit {gifExit}: {gifStderr}{Environment.NewLine}  --format gif exit {runExit}: {runStderr}");
+        ok = false;
+    }
+
+    return ok;
 }
 
 static bool ScreenSwitchesAreKeyframes(string scenetake, string repoRoot, string work)
@@ -686,7 +847,7 @@ static bool CliRulesForWindowStyle(string scenetake, string repoRoot, string wor
         (["svg", "--background", "#111 #222 #333 #444 #555", "samples/basic.cast"], "background takes at most 4 colors"),
         (["svg", "--background", "no-such.png", "samples/basic.cast"], "background image not found: no-such.png"),
         (["svg", "--background", "notes.txt", "samples/basic.cast"], "or a .png, .jpg, .gif, or .webp file: notes.txt"),
-        (["--background", image, scenario], "--background with an image file requires --format svg, mp4, or png"),
+        (["--background", image, scenario], "--background with an image file requires --format svg, mp4, png, or gif"),
         (["svg", "--window-title", "a", "--window-title", "b", "samples/basic.cast"], "duplicate option: --window-title"),
         (["svg", "--opacity", "1.5", "samples/basic.cast"], "opacity must be between 0 and 1: 1.5"),
         (["svg", "--opacity", "85%", "samples/basic.cast"], "invalid opacity value: 85%"),
@@ -828,12 +989,12 @@ static bool CliRulesForStillImages(string scenetake, string repoRoot, string wor
         (["--format", "mp4", "--at", "1", scenario], "--at applies to SVG and PNG: an mp4 plays the whole recording"),
         (["--format", "png", "--max-fps", "10", scenario], "--max-fps applies to an animated SVG: a PNG is one screen"),
         (["--format", "png", "--fps", "30", scenario], "--fps requires --format mp4"),
-        (["--format", "svg", "--font-file", "x.ttf", scenario], "--font-file requires --format mp4 or png"),
+        (["--format", "svg", "--font-file", "x.ttf", scenario], "--font-file requires --format mp4, png, or gif"),
         (["--format", "svg", "--at", "1", "--max-fps", "10", scenario], "--max-fps has no effect with --at"),
-        (["--format", "gif", scenario], "unknown format: gif (expected cast, svg, mp4, or png)"),
+        (["--format", "webm", scenario], "unknown format: webm (expected cast, svg, mp4, png, or gif)"),
         (["svg", "--at", "1", "--no-loop", "samples/basic.cast"], "--no-loop has no effect with --at: a still SVG does not play"),
         (["svg", "--at", "1", "--fade-out", "1", "samples/basic.cast"], "--fade-out has no effect with --at"),
-        (["png", "--fps", "30", "samples/basic.cast"], "--fps applies to mp4: a PNG is one screen"),
+        (["png", "--fps", "30", "samples/basic.cast"], "--fps applies to mp4 and GIF: a PNG is one screen"),
         (["png", "--size", "640x480", "samples/basic.cast"], "--size applies to mp4"),
         (["png", "--end-hold", "1", "samples/basic.cast"], "--end-hold applies to animation: a PNG is one screen, which --at picks"),
         (["png", "--no-loop", "samples/basic.cast"], "--no-loop applies to animation"),
@@ -909,13 +1070,15 @@ static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string w
     string[] svg = ["--max-fps N", "--no-loop", "--loop ", "--at TIME"];
     string[] mp4 = ["--fps N", "--crf N", "--max-size WxH", "--size WxH", "--font-file PATH", "SCENETAKE_FFMPEG"];
     string[] png = ["--at TIME", "--font-file PATH", "SCENETAKE_FFMPEG"];
+    string[] gif = ["--fps N", "--max-size WxH", "--size WxH", "--no-loop", "--loop ", "--font-file PATH", "SCENETAKE_FFMPEG"];
     var commands = new (string[] Args, string[] Options)[]
     {
-        (["--help"], ["--format cast|svg|mp4|png", "--strict", "--verbose", .. render, .. svg, .. mp4, "scenetake svg", "scenetake mp4", "scenetake png", "scenetake init", "--version"]),
-        (["-h"], ["--format cast|svg|mp4|png", "--strict", "--verbose"]),
+        (["--help"], ["--format cast|svg|mp4|png|gif", "--strict", "--verbose", .. render, .. svg, .. mp4, .. gif, "scenetake svg", "scenetake mp4", "scenetake png", "scenetake gif", "scenetake init", "--version"]),
+        (["-h"], ["--format cast|svg|mp4|png|gif", "--strict", "--verbose"]),
         (["svg", "--help"], [.. render, .. svg]),
         (["mp4", "--help"], [.. render, .. mp4]),
         (["png", "--help"], [.. still, .. png]),
+        (["gif", "--help"], [.. render, .. gif]),
         (["init", "--help"], ["--shell bash|pwsh|powershell"]),
     };
 
@@ -950,6 +1113,7 @@ static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string w
         (["svg", "--fps", "30", "x.cast"], "Run 'scenetake svg --help'"),
         (["mp4", "--max-fps", "30", "x.cast"], "Run 'scenetake mp4 --help'"),
         (["png", "--fps", "30", "x.cast"], "Run 'scenetake png --help'"),
+        (["gif", "--crf", "20", "x.cast"], "Run 'scenetake gif --help'"),
         (["init", "--shell", "zsh"], "Run 'scenetake init --help'"),
     })
     {
@@ -971,7 +1135,7 @@ static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string w
         ok = false;
     }
 
-    foreach (var command in new[] { new[] { "--help" }, ["svg", "--help"], ["mp4", "--help"], ["png", "--help"] })
+    foreach (var command in new[] { new[] { "--help" }, ["svg", "--help"], ["mp4", "--help"], ["png", "--help"], ["gif", "--help"] })
     {
         var (_, help, _) = ExecCapture(scenetake, repoRoot, command);
         var missing = names.Where(name => !System.Text.RegularExpressions.Regex.IsMatch(help, $@"(?<![\w-]){System.Text.RegularExpressions.Regex.Escape(name)}(?![\w-])")).ToList();

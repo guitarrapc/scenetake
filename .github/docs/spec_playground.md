@@ -23,7 +23,7 @@ A browser cannot start processes, so it cannot run a scenario's commands. If the
 ### Out of scope
 
 - Running commands, including `pre` and `post`.
-- mp4, PNG, and GIF output. mp4 needs ffmpeg and system fonts ([spec_mp4.md](spec_mp4.md)), a PNG needs system fonts ([spec_png.md](spec_png.md)), and GIF comes from agg. The page gives the command for each place to share instead ([Both tabs](#both-tabs)).
+- mp4, PNG, and GIF output. mp4 and GIF need ffmpeg and system fonts ([spec_mp4.md](spec_mp4.md), [spec_gif.md](spec_gif.md)), and a PNG needs system fonts ([spec_png.md](spec_png.md)). The page gives the command for each place to share instead ([Both tabs](#both-tabs)).
 - `--strict` and `init`.
 - Recorded outputs of the reader's own scenarios. The outputs file format does not prevent this, so it can be added later.
 
@@ -54,6 +54,7 @@ The playground is a .NET WebAssembly build of the same source files that the CLI
 - The showcase samples in `samples/showcase/` run tools that a Windows maintainer seldom has, such as fastfetch, bat, sl, and nyancat. `samples/showcase/record.sh` records them on Linux in a container built from `samples/showcase/Dockerfile`, with a Linux scenetake and `SCENETAKE_OUTPUTS`. The container sees `samples/` read-only around the showcase folder, so a showcase scenario can name a file there: `vim.yaml` names `../background.webp`. `regenerate.cs` reads only `samples/*.yaml`, so it never tries to run them. The playground publishes both folders into one sample folder, and the publish fails when two samples share a name.
 - **Why a container.** It holds the tools at known versions and a small git project with fixed commit dates, so a new recording differs only where the tools changed. The README gallery shows these samples.
 - **Why the same run.** A cast and an outputs file from two runs can disagree: `curl` headers and `git log` dates change between runs. The playground would then not reproduce the committed sample.
+- **Secrets are hidden before the file is written** ([spec_scenario.md](spec_scenario.md) → Masking secrets): the outputs file holds each step's output as the cast shows it, with `*` for each hidden character, so a secret never reaches the browser. The replay masks again with the scenario's rules, which changes nothing in a recorded step and hides what an edited YAML adds, such as a new `mask` text. The browser has no environment, so values of secret environment variables are hidden only when the CLI records. Each step's `run` text stays as the YAML has it: the replay finds steps by it.
 
 ### Contents
 
@@ -198,10 +199,12 @@ Below 960 px the panel comes after the editor and starts closed, unless a share 
 | Where | What it takes | Command on the page |
 |---|---|---|
 | GitHub README | Animated SVG | `scenetake --format svg` |
-| X, Reddit | mp4 or GIF, not SVG | `scenetake --format mp4`; for X, `scenetake mp4 --max-size 1280x1024` |
-| Zenn | Uploads of PNG, JPEG, GIF, or WebP up to 3 MB, not SVG | One screen as a PNG, `scenetake png scenario.cast`, with `--at` for an earlier screen ([spec_png.md](spec_png.md)). For motion, agg in Docker (`ghcr.io/asciinema/agg`), from the cast, the same command as the README's Quick Start. Windows gets a link to the Quick Start, whose command copies the GIF out of the container. |
+| X, Reddit | mp4 or GIF, not SVG | `scenetake --format mp4`; for X, `scenetake mp4 --max-size 1280x1024`. Or a GIF, `scenetake gif`. |
+| Zenn | Uploads of PNG, JPEG, GIF, or WebP up to 3 MB, not SVG | One screen as a PNG, `scenetake png scenario.cast`, with `--at` for an earlier screen ([spec_png.md](spec_png.md)). For motion, `scenetake gif scenario.cast`, and over 3 MB a smaller `--font-size` ([spec_gif.md](spec_gif.md)). |
 
-The agg command runs agg in Docker, as the README does, so a reader needs no agg install and gets a version that reads v3 casts (1.6.0 or later). Below 600 px each place is a block instead of a table row, so a command takes the screen's width: in three columns the agg command wrapped to 14 lines on a 375 px screen, and as a block it takes 5.
+Below 600 px each place is a block instead of a table row, so a command takes the screen's width: in three columns the agg command that the page showed before `scenetake gif` wrapped to 14 lines on a 375 px screen, and as a block it took 5.
+
+**Why `scenetake gif` and not agg.** The page used to give agg's command in Docker for GIFs. scenetake makes the GIF itself now, from the frames it draws for mp4, smaller than agg's for the samples ([spec_gif.md](spec_gif.md)), so a reader needs one tool. The README keeps the agg commands as another way.
 
 ## Site Layout
 

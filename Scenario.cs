@@ -498,6 +498,8 @@ public partial class ScenarioSettings
     public double? MaxDuration { get; set; }
     public bool? StreamOutput { get; set; }
     public string? StderrColor { get; set; }
+    public List<string>? Mask { get; set; }
+    public bool? MaskAuto { get; set; }
 }
 
 [YamlObject(NamingConvention.KebabCase)]

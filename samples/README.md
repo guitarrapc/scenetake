@@ -19,7 +19,7 @@ Sample scenarios for scenetake. Use this page to quickly see each scenario’s *
 | [theme](#theme) | Light theme, 16 / 256 colors, gradient background | [theme.yaml](theme.yaml) | [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
 | [theme-macos](#theme-macos) | macOS window chrome on a gradient | [theme-macos.yaml](theme-macos.yaml) | [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
 | [theme-windows](#theme-windows) | Windows window chrome on a gradient | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
-| [translucent](#translucent) | A translucent, blurred window over an image | [translucent.yaml](translucent.yaml) | [cast](translucent.cast) · [svg](translucent.svg) |
+| [translucent](#translucent) | A translucent, blurred window over an image | [translucent.yaml](translucent.yaml) | [cast](translucent.cast) · [gif](translucent.gif) · [svg](translucent.svg) |
 | [resize](#resize) | Terminal resize events (cast only) | [resize.cast](resize.cast) | [gif](resize.gif) · [svg](resize.svg) |
 
 ### Showcase
@@ -41,16 +41,17 @@ Demos of popular terminal tools, for the README gallery and the playground. They
 Run from the repository root:
 
 ```bash
-# Regenerate .cast and .svg from every *.yaml, then the color theme previews
+# Regenerate .cast and .svg from every *.yaml, then the color theme previews, then a .gif of every cast
 dotnet run samples/regenerate.cs
 
 # Only the color theme previews in theme-presets/ (palette.cast in each theme), which need no recording
 dotnet run samples/regenerate.cs -- --theme-presets
 
-# GIFs require agg (Docker example; use ghcr.io/asciinema/agg for v3 casts)
-docker run --rm -v "$PWD:/data" ghcr.io/asciinema/agg \
-  /data/samples/basic.cast /data/samples/basic.gif --last-frame-duration 0
+# Only the GIFs, from the casts as they are (scenetake gif, needs ffmpeg). Casts recorded by hand stay as they are.
+dotnet run samples/regenerate.cs -- --gifs
 ```
+
+The GIFs come from `scenetake gif`, so they have the window chrome and the background that the SVGs have. A cast keeps background colors but no image, so for a scenario whose `render.background` is an image (`translucent.yaml`), `regenerate.cs` passes the image again with `--background`.
 
 `regenerate.cs` reads only the scenarios in this folder. The showcase scenarios in `showcase/` need Linux tools, so `showcase/record.sh` records them in a container built from `showcase/Dockerfile`, on Linux or in WSL with Docker. It takes a folder that holds a linux-x64 scenetake:
 
@@ -211,7 +212,7 @@ scenetake --format svg samples/password-prompt.yaml out/password-prompt
 **Purpose:** **`render.theme`** in the SVG / cast header (light preset) and ANSI color rendering.
 
 - `render.font-size` / `theme.preset: light`
-- `render.background`: a two-color gradient around the terminal (the GIF from agg has none)
+- `render.background`: a two-color gradient around the terminal
 - 16-color and 256-color `printf` output
 
 | GIF | SVG |
@@ -226,7 +227,7 @@ scenetake --format svg samples/theme.yaml
 
 ## theme-macos
 
-**Purpose:** **`render.window: macos`** window chrome with the dark theme, on a **`render.background`** gradient that tints the window through **`render.opacity: 0.85`**, with the scenario title in the title bar. The GIF from agg has no chrome or background.
+**Purpose:** **`render.window: macos`** window chrome with the dark theme, on a **`render.background`** gradient that tints the window through **`render.opacity: 0.85`**, with the scenario title in the title bar.
 
 | GIF | SVG |
 |-----|-----|
@@ -240,7 +241,7 @@ scenetake --format svg samples/theme-macos.yaml
 
 ## theme-windows
 
-**Purpose:** **`render.window: windows`** window chrome with the dark theme, on a **`render.background`** gradient, with the scenario title in the title bar. The GIF from agg has no chrome or background.
+**Purpose:** **`render.window: windows`** window chrome with the dark theme, on a **`render.background`** gradient, with the scenario title in the title bar.
 
 | GIF | SVG |
 |-----|-----|
@@ -254,9 +255,11 @@ scenetake --format svg samples/theme-windows.yaml
 
 ## translucent
 
-**Purpose:** a **`render.opacity`** window over a **`render.background`** image, with **`render.blur`**. The image shows through the terminal's background and the title bar, blurred, while the text and the badges that the output colors stay opaque. A gradient changes little: under a translucent window it only shifts the color, and a blur has no detail to soften, so an image shows the effect best. There is no GIF, because agg draws no window or background.
+**Purpose:** a **`render.opacity`** window over a **`render.background`** image, with **`render.blur`**. The image shows through the terminal's background and the title bar, blurred, while the text and the badges that the output colors stay opaque. A gradient changes little: under a translucent window it only shifts the color, and a blur has no detail to soften, so an image shows the effect best. The GIF draws the blurred image with its 256 colors, without dithering.
 
-![](translucent.svg)
+| GIF | SVG |
+|-----|-----|
+| ![](translucent.gif) | ![](translucent.svg) |
 
 ```bash
 scenetake --format svg samples/translucent.yaml

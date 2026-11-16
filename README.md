@@ -8,7 +8,7 @@
 
 English | [日本語](README-ja.md)
 
-Run commands from a YAML **scenario** and record their output as [asciinema v3 `.cast`](https://docs.asciinema.org/manual/asciicast/v3/). Optionally generate animated SVG or mp4. No asciinema installation is required. Ordinary steps use simulated typing. Steps with `pty: true` record terminal output in real time.
+Run commands from a YAML **scenario** and record their output as [asciinema v3 `.cast`](https://docs.asciinema.org/manual/asciicast/v3/). Optionally generate an animated SVG, mp4, or GIF, or a PNG of one screen. No asciinema installation is required. Ordinary steps use simulated typing. Steps with `pty: true` record terminal output in real time.
 
 The scenario in `samples/basic.yaml` runs real commands and generates the `.cast` and `.svg` recordings below. You do not need to type the commands during recording.
 
@@ -63,7 +63,7 @@ SVG and mp4 output support a custom font, a color theme (below), and these setti
 
 Without `background`, only the window shows: the SVG's margin is transparent, and an mp4 is the window alone. A background helps when the output leaves the page it was made for:
 
-- **Videos for X or Reddit.** An mp4 with a background looks like a desktop screenshot instead of a cropped terminal. (A GIF made with agg has no window or background.)
+- **Videos for X or Reddit.** An mp4 or a GIF with a background looks like a desktop screenshot instead of a cropped terminal. (A GIF made with agg has no window or background.)
 - **Fixed-size video.** With `--size 1920x1080`, the background fills the 16:9 frame and the window sits in the middle, instead of padding in the terminal's color.
 - **Pages whose color you do not know.** A GitHub README is light or dark depending on the reader. A background looks the same in both.
 
@@ -203,16 +203,25 @@ scenetake mp4 scenario.cast --size 1920x1080
 # Generate cast and mp4 in one command
 scenetake --format mp4 scenario.yaml
 
+# Convert a cast file to an animated GIF (needs ffmpeg, any build) — for X, Reddit, and Zenn
+scenetake gif scenario.cast
+
+# A smaller GIF for Zenn's 3MB limit: a smaller font keeps text sharp, and fewer frames help full-screen TUIs
+scenetake gif scenario.cast --font-size 12 --fps 10
+
+# Generate cast and GIF in one command
+scenetake --format gif scenario.yaml
+
 # Show normal pre/post execution logs while generating a cast file
 scenetake --verbose scenario.yaml
 
 # Play with asciinema
 asciinema play scenario.cast
 
-# Convert to gif with agg (Linux/macOS) — requires agg 1.6.0+ for v3 cast files
+# Or convert to gif with agg (Linux/macOS) — requires agg 1.6.0+ for v3 cast files
 docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20 --last-frame-duration 0
 
-# Convert to gif with agg (Windows PowerShell)
+# Or convert to gif with agg (Windows PowerShell)
 # Write the GIF inside the container and copy it out: Docker Desktop on Windows can corrupt a GIF written straight to a bind mount
 $id = docker create -v "$($PWD.Path):/data:ro" ghcr.io/asciinema/agg /data/scenario.cast /tmp/scenario.gif --font-size 20 --last-frame-duration 0
 docker start -a $id
@@ -222,14 +231,14 @@ docker rm $id
 
 **Usage**
 
-`scenetake --help` lists all commands and options, including ranges and defaults. Use `scenetake svg --help`, `scenetake mp4 --help`, `scenetake png --help`, or `scenetake init --help` for command-specific options.
+`scenetake --help` lists all commands and options, including ranges and defaults. Use `scenetake svg --help`, `scenetake mp4 --help`, `scenetake png --help`, `scenetake gif --help`, or `scenetake init --help` for command-specific options.
 
 ```bash
 # Initialize a new scenario file
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
-# Run scenario to generate cast (default), cast + SVG, cast + mp4, or cast + PNG
-scenetake [--verbose] [--strict] [--format cast|svg|mp4|png] [--at TIME]
+# Run scenario to generate cast (default), cast + SVG, cast + mp4, cast + PNG, or cast + GIF
+scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--at TIME]
   [--font-size N] [--font-family FAMILIES] [--theme NAME]
   [--window none|macos|windows] [--max-fps N]
   [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH]
@@ -249,6 +258,11 @@ scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--the
 scenetake png [--at TIME] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME]
   [--window none|macos|windows]
   <input.cast> [output.png]
+
+# Convert an existing cast file to an animated GIF (needs ffmpeg)
+scenetake gif [--fps N] [--max-size WxH | --size WxH] [--no-loop] [--font-size N] [--font-family FAMILIES]
+  [--font-file PATH] [--theme NAME] [--window none|macos|windows]
+  <input.cast> [output.gif]
 ```
 
 `--max-fps` caps SVG animation frame rate (`0` = off, use full cast timing). It applies when `--format svg` is set or on the `svg` subcommand.
@@ -511,6 +525,9 @@ settings:                        # Defaults for all steps; map-form steps can ov
   # max-duration: 15             # Cap step output timeline, and also enables stream emit
   # silence-threshold: 2.0       # Stream mode: collapse idle gaps longer than this (seconds)
   # max-idle: 0.2                # Stream mode: collapsed idle gap duration (seconds)
+  # mask:                        # Texts to hide wherever the recording shows them, as *
+  #   - "internal.example.com"
+  # mask-auto: true              # Also hide tokens, secret KEY=value values, URL passwords, secret env values
 
 # Optional setup; runs before steps, not recorded in cast
 pre:
@@ -588,6 +605,21 @@ post:
   - echo "demo complete (not recorded)"
 ```
 
+### Masking secrets
+
+A recording is made to be shared, so scenetake hides secrets before it writes anything: the cast, SVG, mp4, PNG, and GIF never hold them. Each hidden character becomes `*`, so lines keep their width and a full-screen program's screen stays in place.
+
+```yaml
+settings:
+  mask:
+    - "internal.example.com"   # hidden wherever it appears
+  mask-auto: true              # the default
+```
+
+- `mask` lists texts to hide, such as an internal host name.
+- `mask-auto` (on by default) also hides known token formats (`ghp_…`, `github_pat_…`, `AKIA…`, `sk-…`, `xoxb-…`, `npm_…`, and more), the values of pairs whose key names a secret (`API_KEY=…`, `"password": "…"`, `Authorization: Bearer …`), passwords in URLs, JSON Web Tokens, private key blocks, and the values of secret environment variables such as `GITHUB_TOKEN` wherever a command prints them.
+- scenetake prints what it hid, such as `Masked 2 secrets: 1 GitHub token, 1 key=value secret`. `mask-auto: false` hides only the listed texts.
+
 ## Development
 
 Use `dotnet` for local development, debugging, or publishing.
@@ -605,17 +637,13 @@ dotnet publish scenetake.cs --self-contained true -p:PublishAot=true -p:StripSym
 
 See [samples/README.md](samples/README.md) for each scenario’s purpose and preview (GIF / SVG).
 
-Regenerate samples cast/svg files:
+Regenerate samples cast/svg/gif files (the GIFs use `scenetake gif`, which needs ffmpeg):
 
 ```bash
 dotnet run samples/regenerate.cs
-# GIFs are written inside the container and copied out; see the Windows agg note in Quick Start
-foreach ($file in Get-ChildItem samples/*.cast) {
-  $id = docker create -v "$($PWD.Path):/data:ro" ghcr.io/asciinema/agg /data/samples/$($file.BaseName).cast /tmp/out.gif --last-frame-duration 0
-  docker start -a $id
-  docker cp "${id}:/tmp/out.gif" samples/$($file.BaseName).gif
-  docker rm $id
-}
+
+# Only the GIFs, from the casts as they are
+dotnet run samples/regenerate.cs -- --gifs
 ```
 
 ### Release

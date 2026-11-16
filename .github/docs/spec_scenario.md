@@ -106,6 +106,8 @@ Defaults for all steps. Map-form steps may override individual keys.
 | `silence-threshold` | `2.0` | Stream mode only: gaps longer than this between chunks are treated as idle (seconds) |
 | `max-idle` | `0.2` | Stream mode only: collapsed idle gap duration (seconds) |
 | `stderr-color` | `red` | Fallback color when stderr has no ANSI SGR. Value format: [spec_highlight.md](spec_highlight.md) |
+| `mask` | — | A list of texts to hide wherever the recording shows them. See Masking secrets below. |
+| `mask-auto` | `true` | Also hide what looks like a secret: known token formats, secret `KEY=value` pairs, URL passwords, and secret environment values. See Masking secrets below. |
 
 ### Output timing (pipe and PTY)
 
@@ -122,6 +124,42 @@ PTY steps use the same stream pipeline only when stream emit is enabled **and** 
 
 Stream emit suits long-running commands (for example `docker build`) where replay pacing matters. Short demos, nested tool stderr, and progress-bar tools (for example `agg`) should usually keep the default instant emit. See Lessons Learned below.
 
+### Masking secrets
+
+A recording is made to be shared, and a command can print a secret by accident: `cat .env`, `env`, a verbose log, an error that echoes a connection string. scenetake hides secrets before anything is written, so the cast, the SVG, the mp4, the PNG, the GIF, and the playground's outputs file never hold them.
+
+```yaml
+settings:
+  mask:
+    - "internal.example.com"   # hidden wherever it appears
+  mask-auto: true              # the default
+```
+
+- **What is hidden.** Every text in `mask`, and with `mask-auto` (on unless it is `false`):
+
+  | Kind | Example | What is hidden |
+  |---|---|---|
+  | Known token formats | `ghp_…`, `github_pat_…`, `glpat-…`, `xoxb-…`, `AKIA…`, `sk-…`, `sk_live_…`, `AIza…`, `npm_…`, `pypi-…`, `hf_…`, `dckr_pat_…` | The part after the prefix |
+  | A pair whose key names a secret | `API_KEY=…`, `"password": "…"`, `db.password = '…'`, `--password=…`, `Authorization: Bearer …` | The value. After `Bearer`, `Basic`, `Token`, `Bot`, or `Digest`, the credential that follows. |
+  | A password in a URL | `postgres://app:…@db/app` | The password |
+  | A Bearer token | `Bearer eyJ…` (16 or more characters) | The token |
+  | A JSON Web Token | `eyJ….eyJ….…` | The payload and the signature |
+  | A private key | `-----BEGIN … PRIVATE KEY-----` | The lines between BEGIN and END |
+  | A secret environment variable | the value of `GITHUB_TOKEN`, `OPENAI_API_KEY`, `DB_PASSWORD` | Its value, wherever a command prints it, when it has 8 or more characters |
+
+- **A key names a secret** when its last word is `password`, `passwd`, `passphrase`, `secret`, `token`, `apikey`, `credential(s)`, `privatekey`, `accesskey`, `secretkey`, or `authorization`, or it ends in `key` after `api`, `access`, `private`, `secret`, `signing`, `encryption`, `account`, `master`, `client`, or `subscription`. Words split at `_`, `-`, `.`, and camelCase. `token_endpoint`, `PASSWORD_FILE`, `max_tokens`, `PUBLIC_KEY`, and `KEY` do not name a secret.
+- **A value is not a secret** when it is shorter than 4 characters, all digits, already stars, `null`, `true`, `false`, `none`, or `undefined`, or starts with `$`, `%`, `{`, or `<`, as references and placeholders do: `TOKEN=$GITHUB_TOKEN` stays. A quoted value with spaces is a sentence and stays.
+- **How it is hidden.** Each hidden character becomes `*`, two for a wide character, so every line keeps its width and a full-screen program's screen stays in place. A token keeps its prefix and a pair keeps its key, so a reader sees what was hidden: `GITHUB_TOKEN=****`, `ghp_****`.
+- **Where.** The output of every step (pipe, PTY, and interactive), the typed command, and the step's comment line and marker. pre and post are not recorded.
+- **A secret split by color codes or across reads is found.** Each step's output is read as one stream (stdout and stderr each as their own), and color codes and OSC sequences are skipped. Cursor moves and other control sequences end a run of text: words that a full-screen program draws in different places are not joined into one. A cursor move to the right counts as spaces, because ConPTY writes a run of spaces that way.
+- **The CLI says what it hid**, by kind, such as `Masked 3 secrets: 2 key=value secret, 1 GitHub token`, so stars in a recording are never a surprise. With `mask-auto: false`, only the `mask` texts are hidden.
+- **The playground.** The outputs file holds the masked output, so the secret never leaves the recording machine. The playground masks again with the same rules, which hides what an edited YAML adds, such as a new `mask` text. It has no environment, so the masking of environment values happens only when the CLI records. The outputs file keeps each step's `run` text as the YAML has it, because a replay finds the step by that text.
+
+**Why on by default.** Console2Svg masks secrets by default as well. A demo that shows a real token is a leak that cannot be taken back once the SVG is in a README. A false positive costs a few stars, which `mask-auto: false` turns off.
+
+**Tests.** `tests/secret_mask_test.cs` checks each rule, the texts each must leave alone, chunk and color splits, wide characters, and that the cast and outputs file of a recording hold no secret. It puts every fake token together at run time, so no file holds a whole token that a secret scanner would report. `tests/playground_replay_test.cs` replays every committed sample with masking on, which would show a false positive as a changed cast.
+
+**Why no regular expressions.** `mask` takes plain texts, and the automatic rules are hand-written scanners. .NET's regular expression engine would add hundreds of kilobytes to the Native AOT binary, which links none today. A secret that is known before the recording, which a pattern would describe, is usually in the environment or can be listed in `mask`.
 
 ## `render`
 

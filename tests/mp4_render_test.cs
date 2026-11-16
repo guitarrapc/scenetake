@@ -11,6 +11,7 @@
 #:include ../Svg.cs
 #:include ../Raster.cs
 #:include ../Mp4.cs
+#:include ../Gif.cs
 
 // mp4 frame rendering without ffmpeg: layout, colors, procedural glyphs, timing, and options.
 // Tests that draw frames need one installed font. They print "skip" when none is found.
@@ -33,6 +34,8 @@ failures += Run("BlurSoftensBackgroundUnderWindow", BlurSoftensBackgroundUnderWi
 failures += Run("TitleIsSansSerifAtItsOwnWidths", TitleIsSansSerifAtItsOwnWidths);
 failures += Run("OptionParsing", OptionParsing);
 failures += Run("FfmpegArgumentsUseH264Bt709", FfmpegArgumentsUseH264Bt709);
+failures += Run("GifArgumentsUseOnePaletteWithoutDither", GifArgumentsUseOnePaletteWithoutDither);
+failures += Run("GifThatPlaysOnceHasNoFade", GifThatPlaysOnceHasNoFade);
 failures += Run("FontFamilyListParsing", FontFamilyListParsing);
 failures += Run("BlockElementsFillCellEdges", BlockElementsFillCellEdges);
 failures += Run("BoxLinesReachCellEdges", BoxLinesReachCellEdges);
@@ -387,6 +390,32 @@ static bool OptionParsing() =>
     && rangeError == "--size must be WIDTHxHEIGHT with each side between 16 and 16384 (for example 1920x1080): 14x14"
     && !Mp4Settings.TryParseSize("16386x1080", out _, out _, out _)
     && !Mp4Settings.TryParseSize("1920", out _, out _, out _);
+
+static bool GifArgumentsUseOnePaletteWithoutDither()
+{
+    // Pass 1 writes one palette from every frame. Pass 2 maps frames to it without dithering, stores only the changed
+    // rectangle, and loops unless told not to. A scaled GIF scales in both passes, and an unscaled one passes through null.
+    var palette = GifRender.PaletteArguments(820, 488, 20, 820, 488, "p.png");
+    var looping = GifRender.GifArguments(820, 488, 20, 820, 488, "p.png", loops: true, "out.gif");
+    var once = GifRender.GifArguments(820, 488, 20, 410, 244, "p.png", loops: false, "out.gif");
+    var scaledPalette = GifRender.PaletteArguments(820, 488, 20, 410, 244, "p.png");
+    string After(List<string> args, string name) => args[args.IndexOf(name) + 1];
+    return After(palette, "-vf") == "null,palettegen=stats_mode=full" && palette[^1] == "p.png" && After(palette, "-r") == "20"
+        && After(looping, "-lavfi") == "[0:v]null[frames];[frames][1:v]paletteuse=dither=none:diff_mode=rectangle"
+        && After(looping, "-loop") == "0" && After(looping, "-f") is "rawvideo" && looping[^1] == "out.gif" && looping.Contains("gif")
+        && After(once, "-loop") == "-1" && After(once, "-lavfi").StartsWith("[0:v]scale=410:244:flags=lanczos[frames];", StringComparison.Ordinal)
+        && After(scaledPalette, "-vf") == "scale=410:244:flags=lanczos,palettegen=stats_mode=full";
+}
+
+static bool GifThatPlaysOnceHasNoFade()
+{
+    // As an SVG that plays once, a GIF that plays once stops on its final screen, so it has no fade-out. One that loops keeps it.
+    var render = new ResolvedRenderSettings(16, "monospace", default) with { FadeOut = 1.5 };
+    var size = GifRender.OutputSize(RasterLayout.Create(16, 80, 24), Mp4Settings.Default with { MaxWidth = 410, MaxHeight = 1000 });
+    return GifRender.ForGif(render).FadeOut == 1.5 && GifRender.ForGif(render with { Loop = false }).FadeOut is null
+        && size.Width == 410 && size.Height < 488
+        && GifRender.OutputSize(RasterLayout.Create(16, 80, 24), Mp4Settings.Default with { FrameWidth = 640, FrameHeight = 480 }) == (640, 480);
+}
 
 static bool FfmpegArgumentsUseH264Bt709()
 {

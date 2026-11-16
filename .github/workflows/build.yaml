@@ -175,6 +175,7 @@ jobs:
           dotnet run tests/pipe_output_decoder_test.cs
           dotnet run tests/playground_replay_test.cs
           dotnet run tests/step_input_test.cs
+          dotnet run tests/secret_mask_test.cs
 
       - name: Upload macOS binary
         if: ${{ startsWith(matrix.rid, 'osx-') }}

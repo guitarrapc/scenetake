@@ -119,6 +119,9 @@ internal static class PlaygroundRender
             {
                 TrackPtyCursor = replay.TrackPtyCursor,
                 LogRunning = false,
+                // The outputs were masked when they were recorded, with the recording machine's environment, which the
+                // browser does not have. Masking again hides only what the YAML adds, such as a new settings.mask text.
+                Masker = SecretMasker.ForScenario(scenario, environment: null),
             };
 
             // Every step's output is in memory, so the task has already completed.

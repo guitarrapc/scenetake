@@ -463,7 +463,7 @@ internal static class Mp4Render
     /// ffmpeg (behind a launcher such as a Scoop shim, which is the process we wait for). That
     /// ffmpeg may still be finalizing and holding the file open after the launcher has exited.
     /// </summary>
-    private static void TryDelete(string path)
+    internal static void TryDelete(string path)
     {
         var deadline = Environment.TickCount64 + 3_000;
         while (true)
@@ -623,16 +623,34 @@ internal static class Ffmpeg
         return false;
     }
 
-    internal static string InstallHint()
+    /// <summary>
+    /// Resolves ffmpeg for GIF output. palettegen, paletteuse, and the GIF encoder are in every ffmpeg build, so
+    /// libx264 is not checked.
+    /// </summary>
+    internal static bool TryResolveForGif(out string path, out string error)
     {
-        var hint = new StringBuilder("Install ffmpeg with libx264, or set ");
+        if (TryLocate(out path, out error))
+            return true;
+
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(PathVariable)))
+            error = "GIF output needs ffmpeg, which was not found on PATH";
+        error += Environment.NewLine + InstallHint(libx264: false);
+        return false;
+    }
+
+    /// <param name="libx264">Whether the output needs libx264, as mp4 does. A GIF needs any ffmpeg.</param>
+    internal static string InstallHint(bool libx264 = true)
+    {
+        var hint = new StringBuilder(libx264 ? "Install ffmpeg with libx264, or set " : "Install ffmpeg, or set ");
         hint.Append(PathVariable).Append(" to its path:");
         if (OperatingSystem.IsWindows())
             hint.Append(Environment.NewLine).Append("  winget install Gyan.FFmpeg   (or: scoop install ffmpeg)");
         else if (OperatingSystem.IsMacOS())
             hint.Append(Environment.NewLine).Append("  brew install ffmpeg");
-        else
+        else if (libx264)
             hint.Append(Environment.NewLine).Append("  sudo apt install ffmpeg   (Fedora: ffmpeg from RPM Fusion, as ffmpeg-free has no libx264)");
+        else
+            hint.Append(Environment.NewLine).Append("  sudo apt install ffmpeg   (Fedora: sudo dnf install ffmpeg-free)");
         return hint.ToString();
     }
 }

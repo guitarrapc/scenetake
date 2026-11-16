@@ -717,7 +717,9 @@ internal static class RenderSettingsResolver
     /// as warnings.
     /// </summary>
     /// <param name="svg">Whether an SVG is written, where a fade-out needs the loop.</param>
-    internal static List<string> FindIneffectiveStyle(ResolvedRenderSettings settings, bool svg = true)
+    /// <param name="svg">Whether the output is an animated SVG, or a cast that keeps the settings for one.</param>
+    /// <param name="gif">Whether the output is a GIF, which plays once without a fade as an SVG does.</param>
+    internal static List<string> FindIneffectiveStyle(ResolvedRenderSettings settings, bool svg = true, bool gif = false)
     {
         var notes = new List<string>();
         var translucent = settings.Opacity is double opacity && opacity < 1;
@@ -728,6 +730,8 @@ internal static class RenderSettingsResolver
             notes.Add("blur has no effect on an opaque window: set an opacity below 1, such as 0.85");
         if (svg && !settings.Loops && settings.FadeOut is > 0)
             notes.Add("fade-out has no effect on an SVG that plays once: it stops on its final screen (an mp4 still fades)");
+        if (gif && !settings.Loops && settings.FadeOut is > 0)
+            notes.Add("fade-out has no effect on a GIF that plays once: it stops on its final screen");
         return notes;
     }
 
@@ -1142,6 +1146,9 @@ internal static class RenderSettingsResolver
 
     internal static string ResolveCastPngOutputPath(string castPath, string? outputArg) =>
         ResolveOutputPath(castPath, outputArg, ".png");
+
+    internal static string ResolveCastGifOutputPath(string castPath, string? outputArg) =>
+        ResolveOutputPath(castPath, outputArg, ".gif");
 
     /// <summary>
     /// <c>--at</c>: seconds from the start of the recording, 0 or more with decimals, or <c>end</c> for the final

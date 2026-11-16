@@ -16,6 +16,7 @@
 #:include Raster.cs
 #:include Mp4.cs
 #:include Png.cs
+#:include Gif.cs
 #:include CastReader.cs
 #:include JsonEscape.cs
 #:include PtyLeadingInitFilter.cs
@@ -27,6 +28,7 @@
 #:include Scenario.cs
 #:include Highlight.cs
 #:include CastComposer.cs
+#:include SecretMask.cs
 #:include StepChunks.cs
 #:include StepOutputs.cs
 
@@ -249,6 +251,88 @@ if (args[0] is "mp4")
     }
 }
 
+if (args[0] is "gif")
+{
+    if (args.Length == 2 && args[1] is "-h" or "--help")
+    {
+        PrintGifHelp();
+        return 0;
+    }
+
+    if (!TryParseGifArgs(args, out var gifCastArg, out var gifOutputArg, out var gifFontSize, out var gifFontFamily, out var gifThemePreset, out var gifWindow, out var gifOptions, out var gifStyle, out var gifError))
+    {
+        Console.Error.WriteLine($"Error: {gifError}");
+        PrintGifUsage();
+        return 1;
+    }
+
+    var gifCastPath = Path.GetFullPath(gifCastArg);
+    if (!File.Exists(gifCastPath))
+    {
+        Console.Error.WriteLine($"Error: {FormatDisplayPath(gifCastPath)} not found");
+        return 1;
+    }
+
+    if (ScenarioGivenForCast(gifCastPath, "gif") is { } gifScenarioError)
+    {
+        Console.Error.WriteLine($"Error: {gifScenarioError}");
+        return 1;
+    }
+
+    var gifOutputPath = RenderSettingsResolver.ResolveCastGifOutputPath(gifCastPath, gifOutputArg);
+    if (!TryCheckOutputPaths(gifCastPath, [gifOutputPath], out var gifOutputError))
+    {
+        Console.Error.WriteLine($"Error: {gifOutputError}");
+        return 1;
+    }
+
+    if (!Ffmpeg.TryResolveForGif(out var gifFfmpeg, out var gifFfmpegError))
+    {
+        Console.Error.WriteLine($"Error: {gifFfmpegError}");
+        return 1;
+    }
+
+    Console.Error.WriteLine($"Loading: {FormatDisplayPath(gifCastPath)}");
+    try
+    {
+        var recording = CastReader.Read(gifCastPath);
+        var gifRenderSettings = RenderSettingsResolver.ApplySvgOverrides(
+            recording.RenderSettings,
+            gifFontSize,
+            gifFontFamily,
+            gifThemePreset,
+            gifWindow,
+            maxFpsOverride: null,
+            out var gifOverrideError);
+        if (gifOverrideError.Length != 0)
+        {
+            Console.Error.WriteLine($"Error: {gifOverrideError}");
+            return 1;
+        }
+
+        gifRenderSettings = gifStyle.ToOverrides().Apply(gifRenderSettings);
+        foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(gifRenderSettings, svg: false, gif: true))
+            Console.Error.WriteLine($"Warning: {note}");
+        var result = GifRender.WriteGif(recording.Events, recording.Width, recording.Height, gifRenderSettings, gifOptions.ToGifSettings(), gifOutputPath, gifFfmpeg, recording.LoopDuration);
+        PrintGifWritten(gifOutputPath, result, fromCast: true);
+        Console.Error.WriteLine($"Done: {FormatDisplayPath(gifOutputPath)}");
+        return 0;
+    }
+    catch (Exception ex)
+    {
+        // As for mp4: a cast that cannot be read removes a GIF from an earlier run, and font and frame-size errors,
+        // found before anything is drawn, leave it as it was. WriteGif removes it once encoding starts.
+        if (ex is not (FontNotFoundException or FrameTooLargeException))
+            DeleteFileIfExists(gifOutputPath);
+        Console.Error.WriteLine(ex switch
+        {
+            CastReadException or FontNotFoundException or FrameTooLargeException => $"Error: {ex.Message}",
+            _ => $"Error: GIF render failed: {ex.Message}",
+        });
+        return 1;
+    }
+}
+
 if (args[0] is "png")
 {
     if (args.Length == 2 && args[1] is "-h" or "--help")
@@ -370,6 +454,7 @@ var outputPath = outputStem + ".cast";
 var svgPath = outputFormat == OutputFormat.Svg ? outputStem + ".svg" : null;
 var mp4Path = outputFormat == OutputFormat.Mp4 ? outputStem + ".mp4" : null;
 var pngPath = outputFormat == OutputFormat.Png ? outputStem + ".png" : null;
+var gifPath = outputFormat == OutputFormat.Gif ? outputStem + ".gif" : null;
 
 Console.Error.WriteLine($"Loading: {FormatDisplayPath(scenarioPath)}");
 string yaml;
@@ -467,7 +552,7 @@ if (!string.IsNullOrWhiteSpace(scenario.Cwd))
 // The cast is written only after pre and the recording, so the outputs are checked first. When pre
 // has commands, their folder is checked after pre instead, because pre may create it.
 var preHasCommands = scenario.Pre?.Any(command => !string.IsNullOrWhiteSpace(command)) == true;
-if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path, pngPath], out var outputPathError, requireFolder: !preHasCommands))
+if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path, pngPath, gifPath], out var outputPathError, requireFolder: !preHasCommands))
 {
     Console.Error.WriteLine($"Error: {outputPathError}");
     return 1;
@@ -482,14 +567,15 @@ if (runWindow is WindowStyle runWindowValue)
 if (runMaxFps is int runMaxFpsValue)
     renderSettings = renderSettings with { MaxFps = runMaxFpsValue };
 renderSettings = runStyle.ToOverrides().Apply(renderSettings);
-// The cast keeps the settings for a later `scenetake svg`, so only mp4 and still output skip the SVG's notes.
-foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(renderSettings, svg: outputFormat is OutputFormat.Svg or OutputFormat.Cast && runStillAt is null))
+// The cast keeps the settings for a later `scenetake svg`, so only mp4, GIF, and still output skip the SVG's notes.
+foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(renderSettings,
+    svg: outputFormat is OutputFormat.Svg or OutputFormat.Cast && runStillAt is null, gif: outputFormat == OutputFormat.Gif))
     Console.Error.WriteLine($"Warning: {note}");
 
-// A YAML background image needs SVG, mp4, or PNG output: the cast keeps background colors only.
+// A YAML background image needs SVG, mp4, PNG, or GIF output: the cast keeps background colors only.
 if (outputFormat == OutputFormat.Cast && renderSettings.Background?.ImagePath is not null)
 {
-    Console.Error.WriteLine("Error: render.background with an image file requires --format svg, mp4, or png: a cast keeps colors only");
+    Console.Error.WriteLine("Error: render.background with an image file requires --format svg, mp4, png, or gif: a cast keeps colors only");
     return 1;
 }
 
@@ -550,6 +636,33 @@ if (outputFormat == OutputFormat.Png)
     }
 }
 
+// A GIF needs ffmpeg (any build), a font, and a frame it can draw, checked before running anything as for mp4.
+if (outputFormat == OutputFormat.Gif)
+{
+    if (!Ffmpeg.TryResolveForGif(out var gifFfmpeg, out var gifFfmpegError))
+    {
+        Console.Error.WriteLine($"Error: {gifFfmpegError}");
+        return 1;
+    }
+
+    try
+    {
+        var layout = Mp4Render.CreateLayout(renderSettings, scenarioWidth, scenarioHeight, runMp4Options.ToGifSettings());
+        GlyphSource.Create(renderSettings.FontFamily, runMp4Options.FontFile, layout);
+    }
+    catch (Exception ex) when (ex is FontNotFoundException or FrameTooLargeException)
+    {
+        Console.Error.WriteLine($"Error: {ex.Message}");
+        return 1;
+    }
+    finally
+    {
+        LoadedFace.ReleaseAll();
+    }
+
+    ffmpegPath = gifFfmpeg;
+}
+
 var deterministicSeed = ComputeDeterministicSeed(yaml);
 var deterministicTimestamp = ComputeDeterministicTimestamp(deterministicSeed);
 
@@ -581,7 +694,7 @@ async Task<int> StopAfterPreAsync(string error)
 // pre may create the output folder, or put a directory or a link to the input where an output goes, so
 // every output check runs again. Found here, they stop the run before the recording, instead of failing
 // the cast write or overwriting the input.
-if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path, pngPath], out var outputCheckError))
+if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path, pngPath, gifPath], out var outputCheckError))
     return await StopAfterPreAsync(outputCheckError);
 
 // pre or the steps may install fonts. The mp4 render scans again when it starts, instead of using
@@ -596,6 +709,9 @@ if (verbose)
 var outputsFileArg = Environment.GetEnvironmentVariable(StepOutputs.EnvironmentVariable);
 List<RecordedStep>? recordedSteps = string.IsNullOrWhiteSpace(outputsFileArg) ? null : [];
 
+// The commands inherit scenetake's environment, so a secret variable's value is hidden wherever a step prints it.
+var masker = SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment());
+
 Console.Error.WriteLine("Generating cast...");
 List<CastEvent> events;
 FailedStep? strictFailure;
@@ -607,6 +723,7 @@ try
         Strict = strict,
         TrackPtyCursor = OperatingSystem.IsWindows(),
         Record = recordedSteps,
+        Masker = masker,
     };
     (events, strictFailure) = await GenerateAsync(scenario, deterministicSeed, generateOptions, step => step switch
     {
@@ -642,6 +759,10 @@ catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
     // A step may remove the output folder or lock the file.
     return await StopAfterPreAsync($"cannot write the cast: {ex.Message}");
 }
+
+// Said before the files are listed, so a reader who finds stars in the recording knows where they came from.
+if (masker?.Summary() is { } maskSummary)
+    Console.Error.WriteLine($"{maskSummary} (settings.mask-auto: false turns off the automatic ones)");
 
 var duration = events.Count > 0 ? events[^1].Time : 0.0;
 // With the cast as the only output, its line also says how large an SVG or mp4 of it would be.
@@ -732,6 +853,24 @@ if (outputFormat == OutputFormat.Png)
     }
 }
 
+if (outputFormat == OutputFormat.Gif)
+{
+    try
+    {
+        // WriteGif encodes to a temporary file and renames it, as WriteMp4 does.
+        var written = CastReader.Read(outputPath);
+        var result = GifRender.WriteGif(written.Events, written.Width, written.Height, RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings), runMp4Options.ToGifSettings(), gifPath!, ffmpegPath!, written.LoopDuration);
+        PrintGifWritten(gifPath!, result, fromCast: false);
+    }
+    catch (Exception ex)
+    {
+        // A .gif from an earlier run no longer matches the new cast.
+        DeleteFileIfExists(gifPath!);
+        Console.Error.WriteLine($"Error: GIF render failed: {ex.Message}");
+        exitCode = 1;
+    }
+}
+
 var postExitCode = await RunScenarioCommandsAsync(scenario.Post, "post", scenario.Cwd, shell, verbose);
 if (postExitCode != 0)
     return postExitCode;
@@ -745,6 +884,8 @@ else if (outputFormat == OutputFormat.Mp4)
     Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(mp4Path!)}");
 else if (outputFormat == OutputFormat.Png)
     Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(pngPath!)}");
+else if (outputFormat == OutputFormat.Gif)
+    Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(gifPath!)}");
 else
     Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}");
 return 0;
@@ -1087,22 +1228,15 @@ static bool TryParseRunArgs(
         return false;
     }
 
-    // --font-file picks the font a PNG is drawn with too. The other mp4 options shape a video.
-    if (outputFormat == OutputFormat.Png && mp4Options.FirstVideoOption is string videoOption)
+    if (Mp4OptionError(mp4Options, outputFormat) is string mp4OptionError)
     {
-        error = $"{videoOption} requires --format mp4";
+        error = mp4OptionError;
         return false;
     }
 
-    if (outputFormat is not (OutputFormat.Mp4 or OutputFormat.Png) && mp4Options.FirstOption is string mp4Option)
+    if (outputFormat is OutputFormat.Mp4 or OutputFormat.Gif && maxFpsOverride.HasValue)
     {
-        error = mp4Option == "--font-file" ? "--font-file requires --format mp4 or png" : $"{mp4Option} requires --format mp4";
-        return false;
-    }
-
-    if (outputFormat == OutputFormat.Mp4 && maxFpsOverride.HasValue)
-    {
-        error = "--max-fps applies to SVG, use --fps for mp4";
+        error = $"--max-fps applies to SVG, use --fps for {(outputFormat == OutputFormat.Gif ? "GIF" : "mp4")}";
         return false;
     }
 
@@ -1118,12 +1252,15 @@ static bool TryParseRunArgs(
         return false;
     }
 
-    // --at picks one screen, which an SVG or a PNG shows. The cast has every screen and an mp4 plays them all.
-    if (stillAt.HasValue && outputFormat is OutputFormat.Cast or OutputFormat.Mp4)
+    // --at picks one screen, which an SVG or a PNG shows. The cast has every screen, and an mp4 and a GIF play them all.
+    if (stillAt.HasValue && outputFormat is OutputFormat.Cast or OutputFormat.Mp4 or OutputFormat.Gif)
     {
-        error = outputFormat == OutputFormat.Mp4
-            ? "--at applies to SVG and PNG: an mp4 plays the whole recording"
-            : "--at requires --format svg or png";
+        error = outputFormat switch
+        {
+            OutputFormat.Mp4 => "--at applies to SVG and PNG: an mp4 plays the whole recording",
+            OutputFormat.Gif => "--at applies to SVG and PNG: a GIF plays the whole recording",
+            _ => "--at requires --format svg or png",
+        };
         return false;
     }
 
@@ -1136,7 +1273,7 @@ static bool TryParseRunArgs(
     // A cast keeps background colors but names no image file, so an image would be lost without a word.
     if (outputFormat == OutputFormat.Cast && style.Background?.ImagePath is not null)
     {
-        error = "--background with an image file requires --format svg, mp4, or png: a cast keeps colors only";
+        error = "--background with an image file requires --format svg, mp4, png, or gif: a cast keeps colors only";
         return false;
     }
 
@@ -1383,8 +1520,11 @@ static bool TryParseOutputFormat(string value, out OutputFormat format, out stri
         case "png":
             format = OutputFormat.Png;
             return true;
+        case "gif":
+            format = OutputFormat.Gif;
+            return true;
         default:
-            error = $"unknown format: {value} (expected cast, svg, mp4, or png)";
+            error = $"unknown format: {value} (expected cast, svg, mp4, png, or gif)";
             return false;
     }
 }
@@ -2180,12 +2320,19 @@ static string CreateInitialScenarioYaml(string? shell)
 
 static void PrintUsage()
 {
-    Console.Error.WriteLine("Usage: scenetake [--verbose] [--strict] [--format cast|svg|mp4|png] [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
+    Console.Error.WriteLine("Usage: scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
     Console.Error.WriteLine("       scenetake svg [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
     Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
     Console.Error.WriteLine("       scenetake png [--at TIME] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output.png]");
+    Console.Error.WriteLine("       scenetake gif [--fps N] [--max-size WxH | --size WxH] [--no-loop] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output.gif]");
     Console.Error.WriteLine("       scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]");
     Console.Error.WriteLine("Run 'scenetake --help' for what each option does.");
+}
+
+static void PrintGifUsage()
+{
+    Console.Error.WriteLine("Usage: scenetake gif [--fps N] [--max-size WxH | --size WxH] [--no-loop] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output.gif]");
+    Console.Error.WriteLine("Run 'scenetake gif --help' for what each option does.");
 }
 
 static void PrintPngUsage()
@@ -2212,6 +2359,21 @@ static void PrintSvgWritten(string path, CastRecording recording, ResolvedRender
 
     var loop = RenderSettingsResolver.ResolveLoopDuration(recording.LoopDuration, recording.Events, render);
     Console.Error.WriteLine($"Written: {FormatDisplayPath(path)}  ({size}, {loop:F1}s)");
+}
+
+/// <summary>The GIF's line, and a warning when it is larger than Zenn takes, with what makes it smaller.</summary>
+static void PrintGifWritten(string path, GifResult result, bool fromCast)
+{
+    Console.Error.WriteLine(
+        $"Written: {FormatDisplayPath(path)}  ({result.Width}x{result.Height}, {result.Fps}fps, {result.Frames} frames, {FormatBytes(result.Bytes)}, font: {result.Font.Family})");
+    // A smaller font keeps text sharp and shrinks the GIF most. Scaling blurs text, and its blended colors can even
+    // make the GIF larger. A lower frame rate helps full-screen programs, whose screen changes every frame.
+    if (result.Bytes > GifRender.LargeGifBytes)
+    {
+        var fps = result.Fps > 10 ? $", and a lower --fps (now {result.Fps}) helps a full-screen program" : "";
+        var mp4 = fromCast ? "scenetake mp4 <cast>" : "--format mp4";
+        Console.Error.WriteLine($"Warning: GIF is {FormatBytes(result.Bytes)}, over the 3MB that Zenn takes. A smaller --font-size makes it smaller and keeps the text sharp{fps}. X and Reddit take mp4 ({mp4}).");
+    }
 }
 
 static void PrintPngWritten(string path, PngResult result, double at)
@@ -2274,7 +2436,7 @@ static string? ScenarioGivenForCast(string inputPath, string format)
     }
 
     var display = FormatDisplayPath(inputPath);
-    var output = format switch { "svg" => "an SVG", "png" => "a PNG", _ => "an mp4" };
+    var output = format switch { "svg" => "an SVG", "png" => "a PNG", "gif" => "a GIF", _ => "an mp4" };
     return $"{display} is a scenario, and {format} converts a cast file. To record the scenario with {output}, run: scenetake --format {format} {display}";
 }
 
@@ -2666,7 +2828,29 @@ static bool TryConsumeMp4Arg(string[] args, ref int i, Mp4Options options, out s
     options.FirstOption ??= name;
     if (name != "--font-file")
         options.FirstVideoOption ??= name;
+    if (name == "--crf")
+        options.FirstCrfOption ??= name;
+    else if (name != "--font-file")
+        options.FirstFrameOption ??= name;
     return true;
+}
+
+/// <summary>
+/// The error for an mp4 option that <paramref name="format"/> does not take, or null. <c>--fps</c>, <c>--max-size</c>,
+/// and <c>--size</c> shape a video, which a GIF is too. <c>--crf</c> is H.264's quality. <c>--font-file</c> picks the font
+/// of every raster output: mp4, PNG, and GIF.
+/// </summary>
+static string? Mp4OptionError(Mp4Options options, OutputFormat format)
+{
+    if (options.FirstCrfOption is string crf && format != OutputFormat.Mp4)
+        return format == OutputFormat.Gif ? $"{crf} applies to mp4: a GIF has no H.264 quality" : $"{crf} requires --format mp4";
+    if (options.FirstFrameOption is string frame && format is not (OutputFormat.Mp4 or OutputFormat.Gif))
+        return $"{frame} requires --format mp4 or gif";
+    if (options.FontFile is not null && format is not (OutputFormat.Mp4 or OutputFormat.Png or OutputFormat.Gif))
+        return "--font-file requires --format mp4, png, or gif";
+    if (format == OutputFormat.Gif && options.Fps > GifRender.MaxFps)
+        return $"--fps for a GIF must be between 1 and {GifRender.MaxFps}: {options.Fps} (a GIF counts each frame's delay in hundredths of a second)";
+    return null;
 }
 
 static bool IsMaxFpsArg(string arg) => arg == "--max-fps" || arg.StartsWith("--max-fps=", StringComparison.Ordinal);
@@ -2749,6 +2933,90 @@ static bool TryParseMp4Args(
     return false;
 }
 
+static bool TryParseGifArgs(
+    string[] args,
+    out string castPath,
+    out string? outputPath,
+    out int? fontSizeOverride,
+    out string? fontFamilyOverride,
+    out string? themePresetOverride,
+    out WindowStyle? windowOverride,
+    out Mp4Options options,
+    out StyleOptions style,
+    out string error)
+{
+    castPath = "";
+    style = new StyleOptions();
+    outputPath = null;
+    fontSizeOverride = null;
+    fontFamilyOverride = null;
+    themePresetOverride = null;
+    windowOverride = null;
+    options = new Mp4Options();
+    error = "";
+
+    for (var i = 1; i < args.Length; i++)
+    {
+        var arg = args[i];
+        if (IsMaxFpsArg(arg))
+        {
+            error = "--max-fps applies to SVG, use --fps for GIF";
+            return false;
+        }
+
+        if (arg == "--at" || arg.StartsWith("--at=", StringComparison.Ordinal))
+        {
+            error = "--at applies to SVG and PNG: a GIF plays the whole recording";
+            return false;
+        }
+
+        if (TryConsumeFontSizeArg(args, ref i, ref fontSizeOverride, out error)
+            || TryConsumeFontFamilyArg(args, ref i, ref fontFamilyOverride, out error)
+            || TryConsumeThemeArg(args, ref i, ref themePresetOverride, out error)
+            || TryConsumeWindowArg(args, ref i, ref windowOverride, out error)
+            || TryConsumeMp4Arg(args, ref i, options, out error)
+            || TryConsumeStyleArg(args, ref i, style, out error))
+        {
+            if (error.Length != 0)
+                return false;
+            continue;
+        }
+
+        if (arg.StartsWith('-'))
+        {
+            error = $"unknown option: {arg}";
+            return false;
+        }
+
+        if (castPath.Length == 0)
+        {
+            castPath = arg;
+            continue;
+        }
+
+        if (outputPath is null)
+        {
+            outputPath = arg;
+            continue;
+        }
+
+        error = $"unexpected argument: {arg}";
+        return false;
+    }
+
+    if (Mp4OptionError(options, OutputFormat.Gif) is string optionError)
+    {
+        error = optionError;
+        return false;
+    }
+
+    if (castPath.Length != 0)
+        return true;
+
+    error = "cast path is required";
+    return false;
+}
+
 static bool TryParsePngArgs(
     string[] args,
     out string castPath,
@@ -2821,7 +3089,7 @@ static bool TryParsePngArgs(
     // A PNG is one screen at the terminal's own size, so the options of a video or an animation do not apply.
     if (mp4Options.FirstVideoOption is string videoOption)
     {
-        error = $"{videoOption} applies to mp4: a PNG is one screen at the terminal's own size";
+        error = $"{videoOption} applies to {(videoOption == "--crf" ? "mp4" : "mp4 and GIF")}: a PNG is one screen at the terminal's own size";
         return false;
     }
 
@@ -2863,8 +3131,16 @@ static void PrintHelp() =>
         HelpText.SvgOptions + "\n" +
         HelpText.StillOptions + "\n" +
         HelpText.Mp4Options + "\n" +
+        HelpText.GifOptions + "\n" +
         HelpText.Environment + "\n" +
         HelpText.More);
+
+static void PrintGifHelp() =>
+    Console.Out.Write(
+        HelpText.GifIntro + "\n" +
+        HelpText.Render(scenario: false) + "\n" +
+        HelpText.GifOptions + "\n" +
+        HelpText.Environment);
 
 static void PrintSvgHelp() =>
     Console.Out.Write(
@@ -2916,6 +3192,7 @@ enum OutputFormat
     Svg,
     Mp4,
     Png,
+    Gif,
 }
 
 /// <summary>mp4 options from the command line. Unset values take the <see cref="Mp4Settings"/> defaults.</summary>
@@ -2952,6 +3229,15 @@ sealed class Mp4Options
     /// <summary>The first of them that only video takes: every one but <c>--font-file</c>, which a PNG takes too.</summary>
     internal string? FirstVideoOption { get; set; }
 
+    /// <summary><c>--crf</c> when given: H.264's quality, which only mp4 takes.</summary>
+    internal string? FirstCrfOption { get; set; }
+
+    /// <summary>The first of <c>--fps</c>, <c>--max-size</c>, and <c>--size</c>, which mp4 and GIF take.</summary>
+    internal string? FirstFrameOption { get; set; }
+
+    /// <summary>The settings a GIF uses: those of mp4, with the GIF's own default frame rate.</summary>
+    internal Mp4Settings ToGifSettings() => ToSettings() with { Fps = Fps ?? GifRender.DefaultFps };
+
     internal Mp4Settings ToSettings() => new(
         Fps ?? Mp4Settings.DefaultFps,
         Crf ?? Mp4Settings.DefaultCrf,
@@ -2972,8 +3258,8 @@ static class HelpText
 {
     internal const string Intro = """
         Records a YAML scenario as an asciinema v3 cast, and optionally as an animated SVG, an mp4,
-        or a PNG of one screen. The steps run for real: ordinary steps are shown with simulated
-        typing, pty steps run in a pseudo-terminal.
+        a GIF, or a PNG of one screen. The steps run for real: ordinary steps are shown with
+        simulated typing, pty steps run in a pseudo-terminal.
 
         """;
 
@@ -2983,9 +3269,10 @@ static class HelpText
           scenetake svg [options] <input.cast> [output]  Convert a cast file to an animated SVG
           scenetake mp4 [options] <input.cast> [output]  Convert a cast file to an mp4 (needs ffmpeg)
           scenetake png [options] <input.cast> [output]  Draw one screen of a cast file as a PNG
+          scenetake gif [options] <input.cast> [output]  Convert a cast file to a GIF (needs ffmpeg)
           scenetake init [--shell NAME] [scenario.yaml]  Write a commented starter scenario
           scenetake --version                            Print the version
-          scenetake svg|mp4|png|init --help              Show the options of that command
+          scenetake svg|mp4|png|gif|init --help          Show the options of that command
 
         [output] names the files without an extension: 'out' writes out.cast and out.svg, and an
         extension given is replaced. Without it, the files are named after the scenario, next to it.
@@ -2994,9 +3281,9 @@ static class HelpText
 
     internal const string Recording = """
         Recording:
-          --format cast|svg|mp4|png
+          --format cast|svg|mp4|png|gif
                                    Write only the cast (cast, the default), or the cast and an SVG,
-                                   an mp4, or a PNG rendered from it
+                                   an mp4, a PNG, or a GIF rendered from it
           --strict                 Stop at the first step that exits non-zero unless it sets
                                    'continue-on-error: true'. Write no output and run post.
                                    Exit 1. If a post command fails, return that command's exit code.
@@ -3111,13 +3398,38 @@ static class HelpText
                                    the theme background, and a larger one is scaled down to fit.
                                    Not with --max-size.
           --font-file PATH         A font file (TTF, OTF, TTC) to use before the --font-family fonts.
-                                   PNG takes it too.
+                                   PNG and GIF take it too.
+
+        """;
+
+    internal const string GifOptions = """
+        GIF (--format gif or the gif command, needs ffmpeg):
+          --fps N                  Frame rate, 1-50 (default 20). A GIF counts each frame's delay in
+                                   hundredths of a second. A lower rate makes a full-screen program
+                                   smaller, and changes little for typing.
+          --max-size WxH           Scale down to fit in WxH, keeping the shape and never scaling up.
+                                   Scaling blurs text and can make a GIF larger. For a smaller GIF,
+                                   such as Zenn's 3MB, use a smaller --font-size.
+          --size WxH               Make the GIF exactly WxH (both even), as for mp4. Not with --max-size.
+          --no-loop                Play the GIF once and stop on the final screen (default: loop)
+          --loop                   Loop, also when the scenario or the cast says not to
+          --font-file PATH         A font file (TTF, OTF, TTC) to use before the --font-family fonts
+
+        The frames are those of an mp4, with one palette of 256 colors for the whole GIF.
+
+        """;
+
+    internal const string GifIntro = """
+        Usage: scenetake gif [options] <input.cast> [output]
+
+        Converts an asciinema v2 or v3 cast file to an animated GIF with ffmpeg (any build). [output]
+        names the GIF. Without it, the GIF is written next to the cast with the same name and .gif.
 
         """;
 
     internal const string Environment = """
         Environment:
-          SCENETAKE_FFMPEG         The ffmpeg to use for mp4, and for a PNG's background image,
+          SCENETAKE_FFMPEG         The ffmpeg to use for mp4 and GIF, and for a PNG's background image,
                                    instead of the one on PATH
 
         """;
