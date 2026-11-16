@@ -558,7 +558,7 @@ function selectTab(tab) {
   // value from the YAML on the Scenario tab and from the cast header on the Cast tab, and the labels say which.
   $(`panel-${tab}`).querySelector('[data-options-slot]').append(document.querySelector('details.options'));
   const source = tab === 'cast' ? 'cast' : 'YAML';
-  $('options-hint').textContent = `the CLI flags; empty keeps the ${source}'s value`;
+  $('options-hint').textContent = `the CLI flags, empty keeps the ${source}'s value`;
   for (const element of document.querySelectorAll('[data-from-source]')) {
     if (element instanceof HTMLOptionElement) element.textContent = `from ${source}`;
     else element.placeholder = `from ${source}`;

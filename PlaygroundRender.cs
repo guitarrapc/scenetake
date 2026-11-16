@@ -85,8 +85,8 @@ internal static class PlaygroundRender
                 return;
             }
 
-            var width = scenario.Width ?? 120;
-            var height = scenario.Height ?? 24;
+            var width = scenario.Width ?? RenderSettingsResolver.DefaultTerminalCols;
+            var height = scenario.Height ?? RenderSettingsResolver.DefaultTerminalRows;
             if (!RenderSettingsResolver.IsValidTerminalSize(width, height))
             {
                 error = $"width must be between {RenderSettingsResolver.MinTerminalCols} and {RenderSettingsResolver.MaxTerminalCols}, and height between {RenderSettingsResolver.MinTerminalRows} and {RenderSettingsResolver.MaxTerminalRows}: {width}x{height}";

@@ -471,9 +471,9 @@ internal sealed class StepOutputsReplay
 
         var notices = new List<string>();
         if (kind != RecordedStepKind.Pipe && (step.Width != _outputs.Width || step.Height != _outputs.Height))
-            notices.Add($"recorded in a {_outputs.Width}x{_outputs.Height} terminal; this one is {step.Width}x{step.Height}, so the output may not fit");
+            notices.Add($"recorded in a {_outputs.Width}x{_outputs.Height} terminal, but this one is {step.Width}x{step.Height}, so the output may not fit");
         if (kind == RecordedStepKind.Pty && source.Cursor is { } recordedCursor && step.PtyStartCursor is { } cursor && cursor != recordedCursor)
-            notices.Add($"recorded with the cursor at row {recordedCursor.Row}, column {recordedCursor.Column}; here it starts at row {cursor.Row}, column {cursor.Column}, so the output may draw on other rows");
+            notices.Add($"recorded with the cursor at row {recordedCursor.Row}, column {recordedCursor.Column}, but here it starts at row {cursor.Row}, column {cursor.Column}, so the output may draw on other rows");
         Steps.Add(new ReplayedStep(step.Index, step.Command.Cmd, RecordedStep.KindName(kind), true, notices));
 
         return kind switch

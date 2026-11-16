@@ -398,6 +398,16 @@ internal static class Mp4Render
         return settings.FrameWidth > 0 ? layout.FitFrame(settings.FrameWidth, settings.FrameHeight) : layout;
     }
 
+    /// <summary>
+    /// The size an mp4 of the recording would have, without rendering: the scenario path reports it for a cast that
+    /// is not converted yet. Throws as <see cref="OutputSize"/> does for a frame too large to encode.
+    /// </summary>
+    internal static (int Width, int Height) Measure(IReadOnlyList<CastEvent> events, int width, int height, ResolvedRenderSettings render, Mp4Settings settings)
+    {
+        var (cols, rows) = TerminalReplay.ResolveCanvasSize(width, height, events);
+        return OutputSize(CreateLayout(render, cols, rows, settings), settings);
+    }
+
     /// <summary>The encoded size: <c>--size</c>, or the frame fitted within <c>--max-size</c>.</summary>
     internal static (int Width, int Height) OutputSize(RasterLayout layout, Mp4Settings settings)
     {
@@ -411,7 +421,7 @@ internal static class Mp4Render
         if (width > Mp4Settings.MaxSize || height > Mp4Settings.MaxSize)
         {
             throw new FrameTooLargeException(
-                $"an mp4 video of {width}x{height} is too large for x264, which accepts at most {Mp4Settings.MaxSize} on each side; pass --max-size, or use a smaller --font-size or terminal size");
+                $"an mp4 video of {width}x{height} is too large for x264, which accepts at most {Mp4Settings.MaxSize} on each side: pass --max-size, or use a smaller --font-size or terminal size");
         }
 
         return (width, height);
@@ -609,7 +619,7 @@ internal static class Ffmpeg
         else if (OperatingSystem.IsMacOS())
             hint.Append(Environment.NewLine).Append("  brew install ffmpeg");
         else
-            hint.Append(Environment.NewLine).Append("  sudo apt install ffmpeg   (Fedora: ffmpeg from RPM Fusion; ffmpeg-free has no libx264)");
+            hint.Append(Environment.NewLine).Append("  sudo apt install ffmpeg   (Fedora: ffmpeg from RPM Fusion, as ffmpeg-free has no libx264)");
         return hint.ToString();
     }
 }

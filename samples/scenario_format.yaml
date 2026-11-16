@@ -2,7 +2,7 @@
 # Required: steps only. Everything else is optional.
 
 title: "Scenario Format Demo"  # Optional cast title
-width: 80                        # Default: 120
+width: 80                        # Default: 80
 height: 24                       # Default: 24
 # cwd: /your/project             # Optional working directory for all commands
 shell: bash                      # bash | pwsh | powershell | path. Windows: Git Bash when bash
@@ -27,7 +27,7 @@ settings:                        # Defaults for all steps; map-form steps can ov
   execution-duration: 0.1        # Cast wait after command execution
   stderr-color: red              # When stderr has no ANSI SGR sequences
   # stream-output: false         # When true, replay captured chunk times in the cast
-  # max-duration: 15             # Cap step output timeline; also enables stream emit
+  # max-duration: 15             # Cap step output timeline, and also enables stream emit
   # silence-threshold: 2.0       # Stream mode: collapse idle gaps longer than this (seconds)
   # max-idle: 0.2                # Stream mode: collapsed idle gap duration (seconds)
 

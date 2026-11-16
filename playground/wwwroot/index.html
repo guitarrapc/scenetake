@@ -98,9 +98,9 @@
           <div class="toolbar">
             <button type="button" id="replay-btn" class="btn" disabled>Replay</button>
             <button type="button" id="zoom-btn" class="btn btn--quiet" aria-pressed="false" data-zoom="preview" disabled
-              title="Show the SVG at its own size; scroll sideways when it is wider than the page">Actual size</button>
+              title="Show the SVG at its own size, scrolling sideways when it is wider than the page">Actual size</button>
             <button type="button" id="full-btn" class="btn btn--quiet" disabled
-              title="Show the demo on the whole screen; an upright phone shows it sideways">Full screen</button>
+              title="Show the demo on the whole screen, sideways on an upright phone">Full screen</button>
             <span class="spacer"></span>
             <button type="button" id="download-yaml" class="btn btn--quiet" disabled>.yaml</button>
             <button type="button" id="download-cast" class="btn btn--quiet" disabled>.cast</button>
@@ -126,10 +126,10 @@
           <div class="options-slot" data-options-slot>
             <details class="options" open>
               <!--
-                "from YAML" and "from cast" say where an unset option gets its value; selectTab() switches them with
+                "from YAML" and "from cast" say where an unset option gets its value, and selectTab() switches them with
                 the tab. --max-fps has no YAML or cast setting, so its empty value is the default, 0.
               -->
-              <summary>Render options <span class="hint" id="options-hint">the CLI flags; empty keeps the YAML's
+              <summary>Render options <span class="hint" id="options-hint">the CLI flags, empty keeps the YAML's
                   value</span></summary>
               <div class="options__grid" data-options>
                 <label class="field">--theme
@@ -203,7 +203,7 @@
                   <input data-option="blur" type="number" min="0" max="50" inputmode="numeric" placeholder="from YAML" data-from-source />
                 </label>
                 <p class="field__hint field--full">With a background, <code>--opacity 0.85</code> lets it show through
-                  the terminal's background and the title bar; text stays opaque. <code>--blur 8</code> blurs what
+                  the terminal's background and the title bar, and text stays opaque. <code>--blur 8</code> blurs what
                   shows through.</p>
                 <!-- How the demo ends: they act at the end of each loop, so they sit together. -->
                 <label class="field">--loop
@@ -254,9 +254,9 @@
           <div class="toolbar">
             <button type="button" id="cast-replay-btn" class="btn" disabled>Replay</button>
             <button type="button" id="cast-zoom-btn" class="btn btn--quiet" aria-pressed="false" data-zoom="cast-preview" disabled
-              title="Show the SVG at its own size; scroll sideways when it is wider than the page">Actual size</button>
+              title="Show the SVG at its own size, scrolling sideways when it is wider than the page">Actual size</button>
             <button type="button" id="cast-full-btn" class="btn btn--quiet" disabled
-              title="Show the demo on the whole screen; an upright phone shows it sideways">Full screen</button>
+              title="Show the demo on the whole screen, sideways on an upright phone">Full screen</button>
             <span class="spacer"></span>
             <button type="button" id="cast-download-svg" class="btn btn--quiet" disabled>.svg</button>
           </div>
@@ -297,13 +297,13 @@ scenetake --format svg scenario.yaml</code></pre>
             </tr>
             <tr>
               <td>X, Reddit</td>
-              <td>Video (mp4) or GIF; not SVG</td>
+              <td>Video (mp4) or GIF, not SVG</td>
               <td><code>scenetake --format mp4 scenario.yaml</code> (needs ffmpeg). For X:
                 <code>scenetake mp4 scenario.cast --max-size 1280x1024</code></td>
             </tr>
             <tr>
               <td>Zenn</td>
-              <td>Uploads of PNG, JPEG, GIF, or WebP up to 3 MB; not SVG</td>
+              <td>Uploads of PNG, JPEG, GIF, or WebP up to 3 MB, not SVG</td>
               <td>A GIF made from the cast with <a href="https://github.com/asciinema/agg">agg</a> in Docker:
                 <code>docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20 --last-frame-duration 0</code><br>
                 On Windows, use the <a href="https://github.com/guitarrapc/scenetake#quick-start">Quick Start</a>

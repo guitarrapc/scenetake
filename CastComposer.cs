@@ -67,8 +67,8 @@ internal static partial class ScenarioCast
 
             if (options.LogRunning)
                 Console.Error.WriteLine($"  running: {command.Cmd}");
-            var width = scenario.Width ?? 120;
-            var height = scenario.Height ?? 24;
+            var width = scenario.Width ?? RenderSettingsResolver.DefaultTerminalCols;
+            var height = scenario.Height ?? RenderSettingsResolver.DefaultTerminalRows;
             // ConPTY addresses rows from where it believes its cursor starts. Telling it where the recording's
             // cursor is keeps a redrawn line on its own row instead of row 1. A Unix PTY has no screen model and
             // passes `\r` through. An interactive step draws on the host terminal too, whose cursor is elsewhere.
@@ -473,7 +473,7 @@ internal static partial class ScenarioCast
         else
         {
             if (normalizeTyping && verbose)
-                Console.Error.WriteLine("scenetake: normalize-typing: no input chunks; using wall-clock output");
+                Console.Error.WriteLine("scenetake: normalize-typing: no input chunks, using wall-clock output");
             emitChunks = timedChunks;
         }
 
@@ -723,8 +723,8 @@ internal static partial class ScenarioCast
     {
         writer.NewLine = "\n";
 
-        var width = scenario.Width ?? 120;
-        var height = scenario.Height ?? 24;
+        var width = scenario.Width ?? RenderSettingsResolver.DefaultTerminalCols;
+        var height = scenario.Height ?? RenderSettingsResolver.DefaultTerminalRows;
         var title = scenario.Title ?? "";
         var fontSize = renderSettings.FontSize.ToString(CultureInfo.InvariantCulture);
         var fontFamilyTag = RenderSettingsResolver.FontFamilyTagPrefix + renderSettings.FontFamily;

@@ -1358,8 +1358,8 @@ static bool WrongValueTypeNamesTheKey(string scenetake, string repoRoot, string 
     File.WriteAllText(stepScenario, "width: 40\nheight: 6\nsteps:\n  - run: echo hi\n    typing-speed: 50ms\n    max-duration: soon\n");
     var (stepExit, stepStderr) = Exec(scenetake, repoRoot, [stepScenario]);
     if (stepExit != 0
-        || !stepStderr.Contains("Warning: typing-speed: '50ms' is not a number of seconds, such as 0.5; using 0.05", StringComparison.Ordinal)
-        || !stepStderr.Contains("Warning: max-duration: 'soon' is not a number of seconds, such as 0.5; ignoring it", StringComparison.Ordinal))
+        || !stepStderr.Contains("Warning: typing-speed: '50ms' is not a number of seconds (such as 0.5), using 0.05", StringComparison.Ordinal)
+        || !stepStderr.Contains("Warning: max-duration: 'soon' is not a number of seconds (such as 0.5), ignoring it", StringComparison.Ordinal))
         results.Add($"step: exit {stepExit}{Environment.NewLine}{stepStderr}");
 
     if (results.Count > 0)
@@ -1813,7 +1813,7 @@ static bool ScenarioChecksSizeFrameBeforePre(string scenetake, string repoRoot, 
     var fake = WriteFakeFfmpeg(directory, "ffmpeg-ok", hasLibx264: true);
     var scenario = WriteScenarioWithHooks(directory, "s.yaml", width: 512);
     var (exit, stderr) = Exec(scenetake, repoRoot, ["--format", "mp4", "--font-size", "50", "--size", "16x16384", scenario], new() { ["SCENETAKE_FFMPEG"] = fake });
-    return exit == 1 && stderr.Contains("too large for ffmpeg; --size 16x16384 pads the 15904x", StringComparison.Ordinal)
+    return exit == 1 && stderr.Contains("too large for ffmpeg: --size 16x16384 pads the 15904x", StringComparison.Ordinal)
         && !File.Exists(Path.Combine(directory, "s.cast")) && !File.Exists(Path.Combine(directory, "pre-ran.txt"));
 }
 

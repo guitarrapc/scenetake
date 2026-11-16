@@ -268,7 +268,7 @@ internal static partial class ScenarioCast
             // value under settings stops the run (ParseScenario), but a step key is read here, so it warns, as
             // GetBool does.
             var fallback = def is { } number ? $"using {number.ToString(CultureInfo.InvariantCulture)}" : "ignoring it";
-            Warn(key, null, $"{DescribeValue(value)} is not a number of seconds, such as 0.5; {fallback}");
+            Warn(key, null, $"{DescribeValue(value)} is not a number of seconds (such as 0.5), {fallback}");
             return def;
         }
 
@@ -288,7 +288,7 @@ internal static partial class ScenarioCast
             if (bool.TryParse(value?.ToString(), out var parsed))
                 return parsed;
 
-            Warn(key, null, $"invalid boolean value '{value}'; using {def.ToString().ToLowerInvariant()}");
+            Warn(key, null, $"invalid boolean value '{value}', using {def.ToString().ToLowerInvariant()}");
             return def;
         }
 

@@ -89,7 +89,7 @@ internal readonly record struct RasterLayout(
         }
 
         CheckRawFrame(width, height,
-            $"--size {frameWidth}x{frameHeight} pads the {terminalWidth}x{terminalHeight} terminal to its shape before scaling; use a --size closer to the terminal's shape");
+            $"--size {frameWidth}x{frameHeight} pads the {terminalWidth}x{terminalHeight} terminal to its shape before scaling: use a --size closer to the terminal's shape");
         if (Desktop)
         {
             return this with
@@ -120,7 +120,7 @@ internal readonly record struct RasterLayout(
     private static void CheckRawFrame(long width, long height, string advice)
     {
         if ((width + 128) * (height + 128) >= 1L << 28)
-            throw new FrameTooLargeException($"an mp4 frame of {width}x{height} pixels is too large for ffmpeg; {advice}");
+            throw new FrameTooLargeException($"an mp4 frame of {width}x{height} pixels is too large for ffmpeg: {advice}");
     }
 
     internal int CellX(int col) => WindowX + PadX + col * CellWidth;
@@ -740,7 +740,7 @@ internal sealed unsafe class GlyphSource
         if (chain.Count == 0)
         {
             throw new FontNotFoundException(
-                $"no installed font matches font-family '{fontFamily}' or the built-in fallbacks; install a monospace font or pass --font-file");
+                $"no installed font matches font-family '{fontFamily}' or the built-in fallbacks: install a monospace font or pass --font-file");
         }
 
         return new GlyphSource(chain, layout);

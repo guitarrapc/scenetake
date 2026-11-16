@@ -257,7 +257,11 @@ mp4 output runs [ffmpeg](https://ffmpeg.org/) with libx264 as a separate program
 | SVG | `width × 9.92 + 36` | `height × 20 + 24` |
 | SVG with `--window` | `width × 9.92 + 44` | `height × 20 + 66` |
 
-For example, the default 120×24 is 1220×488 as mp4 and 1226.4×504 as SVG.
+Tips for picking a size:
+
+- **README:** keep 80 columns. The SVG is about 830 pixels wide, which GitHub shows at its own size. At 120 columns it is shown at about two thirds, with 11-pixel text.
+- **X, Reddit, and other 16:9 players:** 80 × 23 is 820×468 as mp4, close to 16:9, so the player shows little border.
+- **A 1920×1080 video that people read:** keep the terminal small and raise `--font-size` instead of adding columns. 80 × 22 at `--font-size 36` is 1792×1006, and `--size 1920x1080` centers it in the frame. 190 × 53 at the default size also fills 1920×1080, but its text is as small as on a desktop screen, which is hard to read on a phone.
 
 To fill a video resolution, use the largest `width` × `height` that fits. At `font-size` 16:
 
@@ -269,6 +273,7 @@ To fill a video resolution, use the largest `width` × `height` that fits. At `f
 | 2560×1440 (WQHD) | 254 × 71 → 2560×1428 | 254 × 69 → 2560×1422 |
 | 3840×2160 (4K) | 382 × 107 → 3840×2148 | 382 × 105 → 3840×2142 |
 
+- The default `80×24` is 820×488 as mp4 and 829.6×504 as SVG. For a 1920×1080 video, raise `--font-size` instead of adding columns. 80 × 22 at `--font-size 36` is 1792×1006, almost centered.
 - A row is 20 pixels tall, so the height usually ends a little short of the resolution. `--size` fills the rest (below).
 - Text stays sharper when the recording already fits than when `--max-size` or `--size` scales a larger one down.
 - A larger `font-size` makes each cell larger, so fewer columns and rows fit. A cell is `font-size × 0.62` wide and `font-size × 1.25` tall, rounded to whole pixels in mp4, and the padding also changes with `font-size`. See Layout in [spec_mp4.md](.github/docs/spec_mp4.md#layout).
@@ -449,7 +454,7 @@ The example below runs as a scenario. Its source is [samples/scenario_format.yam
 # Required: steps only. Everything else is optional.
 
 title: "Scenario Format Demo"  # Optional cast title
-width: 80                        # Default: 120
+width: 80                        # Default: 80
 height: 24                       # Default: 24
 # cwd: /your/project             # Optional working directory for all commands
 shell: bash                      # bash | pwsh | powershell | path. Windows: Git Bash when bash
@@ -474,7 +479,7 @@ settings:                        # Defaults for all steps; map-form steps can ov
   execution-duration: 0.1        # Cast wait after command execution
   stderr-color: red              # When stderr has no ANSI SGR sequences
   # stream-output: false         # When true, replay captured chunk times in the cast
-  # max-duration: 15             # Cap step output timeline; also enables stream emit
+  # max-duration: 15             # Cap step output timeline, and also enables stream emit
   # silence-threshold: 2.0       # Stream mode: collapse idle gaps longer than this (seconds)
   # max-idle: 0.2                # Stream mode: collapsed idle gap duration (seconds)
 

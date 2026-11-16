@@ -261,8 +261,6 @@ mp4 は手元にインストールされたフォントで描画します。`fon
 | SVG | `width × 9.92 + 36` | `height × 20 + 24` |
 | SVG（`--window` あり） | `width × 9.92 + 44` | `height × 20 + 66` |
 
-たとえば既定の 120×24 は、mp4 で 1220×488、SVG で 1226.4×504 です。
-
 動画の解像度いっぱいに使うときは、収まる最大の `width` × `height` を指定します。`font-size` 16 での値は次のとおりです。
 
 | 解像度 | `width` × `height` → mp4 のサイズ | `--window` あり |
@@ -273,6 +271,7 @@ mp4 は手元にインストールされたフォントで描画します。`fon
 | 2560×1440（WQHD） | 254 × 71 → 2560×1428 | 254 × 69 → 2560×1422 |
 | 3840×2160（4K） | 382 × 107 → 3840×2148 | 382 × 105 → 3840×2142 |
 
+- デフォルト`80×24`は、mp4で`820×488`、SVGで`829.6×504`です。1920×1080動画を作るときは、列を増やすのではなく`--font-size` を上げます。`80×22`を`--font-size 36` にすると`1792×1006`でほぼ中央になります。
 - 1 行は 20 ピクセルなので、高さはたいてい解像度より少し小さくなります。残りは `--size` で埋められます（後述）。
 - はじめから収まるサイズで録ると、大きく録って `--max-size` や `--size` で縮小するより文字がくっきりします。
 - `font-size` を大きくするとセルも大きくなり、収まる列数と行数は減ります。セルは幅 `font-size × 0.62`、高さ `font-size × 1.25` で、mp4 では整数ピクセルに丸めます。余白も `font-size` に応じて変わります。詳しくは [spec_mp4.md](.github/docs/spec_mp4.md#layout) の Layout を参照してください。
@@ -452,7 +451,7 @@ steps:
 # Required: steps only. Everything else is optional.
 
 title: "Scenario Format Demo"  # Optional cast title
-width: 80                        # Default: 120
+width: 80                        # Default: 80
 height: 24                       # Default: 24
 # cwd: /your/project             # Optional working directory for all commands
 shell: bash                      # bash | pwsh | powershell | path. Windows: Git Bash when bash
@@ -477,7 +476,7 @@ settings:                        # Defaults for all steps; map-form steps can ov
   execution-duration: 0.1        # Cast wait after command execution
   stderr-color: red              # When stderr has no ANSI SGR sequences
   # stream-output: false         # When true, replay captured chunk times in the cast
-  # max-duration: 15             # Cap step output timeline; also enables stream emit
+  # max-duration: 15             # Cap step output timeline, and also enables stream emit
   # silence-threshold: 2.0       # Stream mode: collapse idle gaps longer than this (seconds)
   # max-idle: 0.2                # Stream mode: collapsed idle gap duration (seconds)
 

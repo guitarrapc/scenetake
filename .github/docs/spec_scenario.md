@@ -44,11 +44,11 @@ YAML reads `#` after a space as the start of a comment. `background: #1e3c72` is
 
 A value that cannot be read as the type of its key stops the run before any command runs. The error names the key and the value, for example `'settings.typing-speed' must be a number of seconds, such as 0.5, not '50ms'.` The check covers the top level, `settings`, `render`, and `render.theme`. Each key there takes a number, a whole number, `true` or `false`, text, a list, or a mapping.
 
-A step's timing key that is not a number is a warning. The step then uses the value from `settings`, or the default: `Warning: typing-speed: '50ms' is not a number of seconds, such as 0.5; using 0.05`. A step's flag that is not `true` or `false` also warns.
+A step's timing key that is not a number is a warning. The step then uses the value from `settings`, or the default: `Warning: typing-speed: '50ms' is not a number of seconds (such as 0.5), using 0.05`. A step's flag that is not `true` or `false` also warns.
 
 ```yaml
 title: "Demo"
-width: 120
+width: 80
 height: 24
 cwd: /path/to/dir
 shell: bash
@@ -82,7 +82,7 @@ post:
 | Key | Default | Description |
 |---|---|---|
 | `title` | — | Optional cast title |
-| `width` | `120` | Terminal columns in the cast header and PTY geometry when a step uses `pty: true`. `1`–`512`, the cast's range. Checked before `pre` runs. |
+| `width` | `80` | Terminal columns in the cast header and PTY geometry when a step uses `pty: true`. `1`–`512`, the cast's range. Checked before `pre` runs. |
 | `height` | `24` | Terminal rows in the cast header and PTY geometry when a step uses `pty: true`. `1`–`512`, checked before `pre` runs. |
 | `cwd` | process cwd | Working directory for `pre`, `steps`, and `post`. Relative paths, including `..`, use the scenario file's folder, independent of the caller's location. Without `cwd`, commands use the caller's folder. The directory must exist before `pre`. An error names the resolved directory if it is missing. |
 | `shell` | `$SHELL` / `pwsh` | Shell for all commands. Values: `bash`, `pwsh`, `powershell`, or a path |
@@ -318,3 +318,4 @@ Template commands must run in the selected shell. `scenetake init --shell bash|p
 - **Relative `cwd` must follow the scenario location.** Previously, `cwd: work/repo` referred to different folders when the caller changed directories. Relative paths now use the scenario file's folder. This affects only relative `cwd` values when scenetake starts elsewhere. Without `cwd`, commands still use the caller's folder. The interactive sample relies on this to edit that folder's `README.md`.
 - **The starter template must match its shell.** Bash redirection caused a ParserError in Windows pwsh, and Windows lacked `printf`. The template now uses commands for the default shell. `--shell` supports other choices, including Git Bash on Windows and PowerShell on Unix. The generated file names the selected shell.
 - **Unix PowerShell needs PowerShell arguments.** Unix launches previously passed `-lc`, which PowerShell rejected with exit code 64. Pipe and PTY steps now pass `-NoLogo -NoProfile -Command`.
+- **The default width was too wide for a README.** Without `width`, a scenario got 120 columns: an SVG 1226 pixels wide (2.4 : 1), which a GitHub README of about 830 pixels showed at two thirds, with 11-pixel text. The default is now 80 × 24, the classic terminal size: 830 × 504 as SVG and 820 × 488 as mp4, shown at its own size. Every sample sets its size, so none changed.

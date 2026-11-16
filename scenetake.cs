@@ -143,8 +143,7 @@ if (args[0] is "svg")
         foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(svgRenderSettings))
             Console.Error.WriteLine($"Warning: {note}");
         SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath, recording.LoopDuration);
-        var svgLoop = RenderSettingsResolver.ResolveLoopDuration(recording.LoopDuration, recording.Events, svgRenderSettings);
-        Console.Error.WriteLine($"Written: {FormatDisplayPath(svgOutputPath)}  ({recording.Events.Count} events, {svgLoop:F1}s)");
+        PrintSvgWritten(svgOutputPath, recording, svgRenderSettings);
         if (SvgRender.SizeWarning(new FileInfo(svgOutputPath).Length, svgRenderSettings.MaxFps, fromCast: true) is { } svgSizeWarning)
             Console.Error.WriteLine($"Warning: {svgSizeWarning}");
         Console.Error.WriteLine($"Done: {FormatDisplayPath(svgOutputPath)}");
@@ -312,8 +311,8 @@ if (!RenderSettingsResolver.TryResolve(scenario, runThemePreset, out var renderS
 
 // The cast records width and height as its terminal size. Check them before running anything:
 // a size the cast format does not allow would otherwise fail only when SVG or mp4 reads the cast back.
-var scenarioWidth = scenario.Width ?? 120;
-var scenarioHeight = scenario.Height ?? 24;
+var scenarioWidth = scenario.Width ?? RenderSettingsResolver.DefaultTerminalCols;
+var scenarioHeight = scenario.Height ?? RenderSettingsResolver.DefaultTerminalRows;
 if (!RenderSettingsResolver.IsValidTerminalSize(scenarioWidth, scenarioHeight))
 {
     Console.Error.WriteLine(
@@ -523,7 +522,9 @@ catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 }
 
 var duration = events.Count > 0 ? events[^1].Time : 0.0;
-Console.Error.WriteLine($"Written: {FormatDisplayPath(outputPath)}  ({events.Count} events, {duration:F1}s)");
+// With the cast as the only output, its line also says how large an SVG or mp4 of it would be.
+var convertedSizes = outputFormat == OutputFormat.Cast ? $", {DescribeConvertedSizes(events, scenarioWidth, scenarioHeight, renderSettings)}" : "";
+Console.Error.WriteLine($"Written: {FormatDisplayPath(outputPath)}  ({events.Count} events, {duration:F1}s{convertedSizes})");
 
 if (recordedSteps is not null)
 {
@@ -559,7 +560,7 @@ if (outputFormat == OutputFormat.Svg)
         var written = CastReader.Read(outputPath);
         var svgSettings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings) with { MaxFps = renderSettings.MaxFps };
         SvgRender.WriteSvg(written.Events, written.Width, written.Height, svgSettings, svgPath!, written.LoopDuration);
-        Console.Error.WriteLine($"Written: {FormatDisplayPath(svgPath!)}");
+        PrintSvgWritten(svgPath!, written, svgSettings);
         if (SvgRender.SizeWarning(new FileInfo(svgPath!).Length, svgSettings.MaxFps, fromCast: false) is { } svgSizeWarning)
             Console.Error.WriteLine($"Warning: {svgSizeWarning}");
     }
@@ -916,7 +917,7 @@ static bool TryParseRunArgs(
 
     if (outputFormat == OutputFormat.Mp4 && maxFpsOverride.HasValue)
     {
-        error = "--max-fps applies to SVG; use --fps for mp4";
+        error = "--max-fps applies to SVG, use --fps for mp4";
         return false;
     }
 
@@ -1876,8 +1877,8 @@ static string CreateInitialScenarioYaml(string? shell)
     var shellLine = shell is not null
         ? $"shell: {shell}".PadRight(29) + "# The steps below are written for this shell. Values: bash, pwsh, powershell, or a path"
         : powerShellSyntax
-            ? "# shell: pwsh                # Default on Windows. The steps below are written for pwsh; scenetake init --shell bash writes them for bash"
-            : "# shell: bash                # Default: $SHELL. The steps below are written for POSIX shells; scenetake init --shell pwsh writes them for pwsh";
+            ? "# shell: pwsh                # Default on Windows. The steps below are written for pwsh, and scenetake init --shell bash writes them for bash"
+            : "# shell: bash                # Default: $SHELL. The steps below are written for POSIX shells, and scenetake init --shell pwsh writes them for pwsh";
     var stderrStep = powerShellSyntax
         ? """
             run: "[Console]::Error.WriteLine('stderr sample')"   # pwsh. With shell: bash, use: echo "stderr sample" 1>&2
@@ -1888,9 +1889,9 @@ static string CreateInitialScenarioYaml(string? shell)
     return $"""
     # scenetake starter scenario. Edit the values below and add commands under steps.
     title: "My App"            # Optional cast title
-    # width: 120                 # Default: 120
+    # width: 80                  # Default: 80
     # height: 24                 # Default: 24
-    # cwd: /your/path            # Optional working directory for pre, steps, and post; a relative path is relative to this file
+    # cwd: /your/path            # Optional working directory for pre, steps, and post. A relative path is relative to this file
     {shellLine}
 
     # Optional SVG rendering metadata. Written to the cast header (v3 tags / term.theme) and used by --format svg.
@@ -1912,7 +1913,7 @@ static string CreateInitialScenarioYaml(string? shell)
       execution-duration: {DefaultExecutionDuration} # Optional cast wait after command execution.
       stderr-color: {DefaultStderrColorSpec}       # Applied only when stderr has no ANSI SGR. "none" keeps it plain (git and many tools print progress to stderr).
       # stream-output: false         # When true, replay captured chunk times in the cast.
-      # max-duration: 15             # Cap step output timeline; also enables stream emit.
+      # max-duration: 15             # Cap step output timeline, and also enables stream emit.
       # silence-threshold: {DefaultSilenceThreshold}       # Stream mode: collapse idle gaps longer than this (seconds).
       # max-idle: {DefaultMaxIdle}                # Stream mode: collapsed idle gap duration (seconds).
 
@@ -1966,6 +1967,34 @@ static void PrintMp4Usage()
 {
     Console.Error.WriteLine("Usage: scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
     Console.Error.WriteLine("Run 'scenetake mp4 --help' for what each option does.");
+}
+
+/// <summary>The SVG's line: its size in pixels, as a page first shows it, and its loop.</summary>
+static void PrintSvgWritten(string path, CastRecording recording, ResolvedRenderSettings render)
+{
+    var size = SvgRender.FormatSize(SvgRender.Measure(recording.Events, recording.Width, recording.Height, render));
+    var loop = RenderSettingsResolver.ResolveLoopDuration(recording.LoopDuration, recording.Events, render);
+    Console.Error.WriteLine($"Written: {FormatDisplayPath(path)}  ({size}, {loop:F1}s)");
+}
+
+/// <summary>
+/// How large an SVG and an mp4 of a recording would be, for the cast's line when the cast is the only output: the
+/// size decides what a demo is for, such as a README or a 1920x1080 video, before anything is converted. An mp4
+/// too large to encode is left out, and its conversion reports why.
+/// </summary>
+static string DescribeConvertedSizes(IReadOnlyList<CastEvent> events, int width, int height, ResolvedRenderSettings render)
+{
+    var text = $"as SVG {SvgRender.FormatSize(SvgRender.Measure(events, width, height, render))}";
+    try
+    {
+        var (mp4Width, mp4Height) = Mp4Render.Measure(events, width, height, render, Mp4Settings.Default);
+        text += $", as mp4 {mp4Width}x{mp4Height}";
+    }
+    catch (FrameTooLargeException)
+    {
+    }
+
+    return text;
 }
 
 static void PrintMp4Written(string path, Mp4Result result) =>
@@ -2278,7 +2307,7 @@ static bool TryConsumeStyleArg(string[] args, ref int i, StyleOptions style, out
         return true;
     }
 
-    // --loop undoes a cast's st:loop=false, so both forms exist; either one once.
+    // --loop undoes a cast's st:loop=false, so both forms exist. Either one is given once.
     if (arg is "--loop" or "--no-loop")
     {
         if (style.Loop is not null)
@@ -2421,13 +2450,13 @@ static bool TryParseMp4Args(
         var arg = args[i];
         if (IsMaxFpsArg(arg))
         {
-            error = "--max-fps applies to SVG; use --fps for mp4";
+            error = "--max-fps applies to SVG, use --fps for mp4";
             return false;
         }
 
         if (arg is "--loop" or "--no-loop")
         {
-            error = $"{arg} applies to SVG; the player decides whether an mp4 plays again";
+            error = $"{arg} applies to SVG: the player decides whether an mp4 plays again";
             return false;
         }
 
@@ -2625,12 +2654,12 @@ static class HelpText
 
     /// <summary>
     /// The rendering options. On a scenario they override its <c>render</c> settings, the theme only as a
-    /// preset under the scenario's own colors; on a cast they replace what the cast header stores.
+    /// preset under the scenario's own colors. On a cast they replace what the cast header stores.
     /// </summary>
     internal static string Render(bool scenario) =>
         (scenario
-            ? "Rendering (SVG and mp4; overrides the scenario's render settings, and is stored in the cast):\n"
-            : "Rendering (overrides what the cast header stores; the default applies when neither sets it):\n")
+            ? "Rendering for SVG and mp4 (overrides the scenario's render settings, and is stored in the cast):\n"
+            : "Rendering (overrides what the cast header stores, and the default applies when neither sets it):\n")
         + """
               --font-size N            Font size, 1-128 (default 16)
               --font-family FAMILIES   CSS font-family list, such as "'JetBrains Mono', monospace"
@@ -2655,12 +2684,12 @@ static class HelpText
                                        gradient from the top-left corner ("#1e3c72 #2a5298"), or a .png,
                                        .jpg, .gif or .webp file that covers it. A cast keeps colors only.
               --margin N               Pixels around the terminal or window, 0-200 (default 8, 12 with a
-                                       window, 32 with a background; mp4 has a margin only with a background)
+                                       window, 32 with a background, and mp4 has one only with a background)
               --padding N              Pixels between the terminal's edge and its text, 0-100 (default from
                                        the font size)
               --opacity N              How much of the window's own fill covers the background, 0-1
                                        (default 1). 0.85 lets the background show through the terminal's
-                                       default background and the title bar; text stays opaque. Needs
+                                       default background and the title bar, and text stays opaque. Needs
                                        --background.
               --blur N                 Blur the background seen through a translucent window, 0-50 pixels
                                        (default 0). Needs --opacity below 1.
@@ -2680,10 +2709,10 @@ static class HelpText
         """;
 
     internal const string Mp4Options = """
-        mp4 (--format mp4, or the mp4 command; needs ffmpeg with libx264):
+        mp4 (--format mp4 or the mp4 command, needs ffmpeg with libx264):
           --fps N                  Frame rate, 1-60 (default 30)
-          --crf N                  H.264 quality, 1-51; a higher value makes a smaller file (default 23)
-          --max-size WxH           Scale down to fit in WxH, keeping the shape; never scales up.
+          --crf N                  H.264 quality, 1-51, where a higher value makes a smaller file (default 23)
+          --max-size WxH           Scale down to fit in WxH, keeping the shape and never scaling up.
                                    1280x1024 fits X (Twitter) uploads.
           --size WxH               Make the video exactly WxH (both even): the terminal is centered on
                                    the theme background, and a larger one is scaled down to fit.
@@ -2706,7 +2735,7 @@ static class HelpText
     internal const string SvgIntro = """
         Usage: scenetake svg [options] <input.cast> [output]
 
-        Converts an asciinema v2 or v3 cast file to an animated SVG. [output] names the SVG; without
+        Converts an asciinema v2 or v3 cast file to an animated SVG. [output] names the SVG. Without
         it, the SVG is written next to the cast with the same name and .svg.
 
         """;
@@ -2715,7 +2744,7 @@ static class HelpText
         Usage: scenetake mp4 [options] <input.cast> [output]
 
         Converts an asciinema v2 or v3 cast file to an H.264 mp4 with ffmpeg (libx264). [output]
-        names the mp4; without it, the mp4 is written next to the cast with the same name and .mp4.
+        names the mp4. Without it, the mp4 is written next to the cast with the same name and .mp4.
         Install ffmpeg with 'winget install Gyan.FFmpeg' or 'scoop install ffmpeg' (Windows),
         'brew install ffmpeg' (macOS), or 'sudo apt install ffmpeg' (Debian, Ubuntu).
 

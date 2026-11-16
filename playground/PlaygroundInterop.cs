@@ -163,7 +163,7 @@ public static partial class PlaygroundInterop
             EndHold: Double(root, "endHold"),
             FadeOut: Double(root, "fadeOut"));
 
-        // The page's loop select sends "true" or "false"; a share URL may hold either form.
+        // The page's loop select sends "true" or "false", and a share URL may hold either form.
         static bool? Bool(JsonElement root, string name) =>
             !root.TryGetProperty(name, out var value) ? null
             : value.ValueKind is JsonValueKind.True or JsonValueKind.False ? value.GetBoolean()

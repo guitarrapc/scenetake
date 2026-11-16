@@ -39,6 +39,20 @@ internal static class SvgRender
         return $"SVG is {size}MB (over 10MB). Heavy output such as full-screen TUIs is much smaller as mp4 ({mp4}) or as SVG with {sampling}";
     }
 
+    /// <summary>
+    /// The SVG's size in pixels, as its width and height attributes give it: the size a page first shows it at. It
+    /// needs no rendering, so the scenario path can report it for a cast that is not converted yet.
+    /// </summary>
+    internal static (double Width, double Height) Measure(IReadOnlyList<CastEvent> events, int width, int height, ResolvedRenderSettings render)
+    {
+        var (cols, rows) = TerminalReplay.ResolveCanvasSize(width, height, events);
+        return SvgFrameRenderer.Measure(render, cols, rows);
+    }
+
+    /// <summary>A measured size as the CLI prints it: whole pixels, such as <c>830x504 px</c>.</summary>
+    internal static string FormatSize((double Width, double Height) size) => string.Create(CultureInfo.InvariantCulture,
+        $"{Math.Round(size.Width, MidpointRounding.AwayFromZero):0}x{Math.Round(size.Height, MidpointRounding.AwayFromZero):0} px");
+
     /// <summary>Renders the SVG as UTF-8 bytes, which the playground hands to the browser without a string.</summary>
     internal static byte[] RenderToUtf8(
         IReadOnlyList<CastEvent> events,
@@ -417,6 +431,13 @@ internal static class RenderSettingsResolver
     internal const int MinFontSize = 1, MaxFontSize = 128;
     internal const int MinTerminalCols = 1, MaxTerminalCols = 512;
     internal const int MinTerminalRows = 1, MaxTerminalRows = 512;
+
+    /// <summary>
+    /// The terminal size when a scenario leaves out width or height. 80 columns make an SVG 830 pixels wide at the
+    /// default font size, which a README shows at its own size. 120 columns made it 1226 pixels, shown at about two
+    /// thirds with 11-pixel text.
+    /// </summary>
+    internal const int DefaultTerminalCols = 80, DefaultTerminalRows = 24;
     internal const int DefaultFontSize = 16;
     internal const int DefaultMaxFps = 0;
     internal const int MinMaxFps = 0, MaxMaxFps = 120;
@@ -1642,7 +1663,7 @@ internal static class SvgFrameRenderer
         var fadeOut = render.SvgFadeOut;
         if (fadeOut > 0 && loopDuration > 0)
         {
-            // The terminal's contents fade out at the end of each loop; its background, the window, and the
+            // The terminal's contents fade out at the end of each loop. Its background, the window, and the
             // background around it stay. The loop starts again at full opacity.
             var fadeStart = Math.Max(0, (loopDuration - fadeOut) / loopDuration * 100);
             sb.AppendLf(CultureInfo.InvariantCulture,
@@ -3299,6 +3320,13 @@ internal static class SvgFrameRenderer
 
         codepoint = first.Value;
         return true;
+    }
+
+    /// <summary>The SVG's width and height in pixels for a terminal of <paramref name="cols"/> by <paramref name="rows"/>.</summary>
+    internal static (double Width, double Height) Measure(ResolvedRenderSettings render, int cols, int rows)
+    {
+        var metrics = CreateMetrics(render, cols, rows);
+        return (metrics.SvgWidth, metrics.SvgHeight);
     }
 
     private static SvgMetrics CreateMetrics(ResolvedRenderSettings render, int cols, int rows)

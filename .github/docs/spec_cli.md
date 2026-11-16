@@ -34,7 +34,7 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 - Duplicate `--font-size`, `--font-family`, `--theme`, `--window`, `--window-title`, `--background`, `--margin`, `--padding`, `--opacity`, `--blur`, `--max-fps`, `--fps`, `--crf`, `--max-size`, `--size`, or `--font-file` is an error. `--size` with `--max-size` is an error too: `--size` already sets the output size.
 - Options for the other output format are errors, not ignored:
   - On the scenario path, `--fps`, `--crf`, `--max-size`, `--size`, and `--font-file` without `--format mp4` fail with `<option> requires --format mp4`. The `svg` subcommand reports them as unknown options.
-  - `--max-fps` with mp4 output fails with `--max-fps applies to SVG; use --fps for mp4`.
+  - `--max-fps` with mp4 output fails with `--max-fps applies to SVG, use --fps for mp4`.
   - `--max-fps` with cast output (no `--format svg`) fails with `--max-fps requires --format svg`.
 - For `--fps`, `--crf`, `--max-size`, `--size`, and `--font-file`, a next argument that starts with `--` is not taken as the value: `--font-file --fps 30` fails with `--font-file requires a value`.
 - Range errors use plain ASCII ("between 1 and 60"), so every console code page shows them.
@@ -56,9 +56,9 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 | `--padding N` | scenario, `svg`, `mp4` | `0`–`100` px between the terminal's edge and its text. Default from the font size. |
 | `--opacity N` | scenario, `svg`, `mp4` | `0`–`1`, how much of the terminal's default background and the title bar covers the background. Default `1`. Below 1 without a background, a warning, and the window stays opaque. See [spec_svg.md](spec_svg.md) → Translucent window: opacity and blur. |
 | `--blur N` | scenario, `svg`, `mp4` | `0`–`50` px of Gaussian blur on the background seen through a translucent window. Default `0`. Without an opacity below 1, a warning, and no blur. |
-| `--no-loop`, `--loop` | scenario, `svg` | `--no-loop` plays the SVG once and stops on its final screen; `--loop` loops, also when the scenario's `render.loop` or the cast's `st:loop` is false. One of them, once. `mp4` rejects both: `--no-loop applies to SVG; the player decides whether an mp4 plays again`. On the scenario path the value is stored in the cast with any `--format`. |
+| `--no-loop`, `--loop` | scenario, `svg` | `--no-loop` plays the SVG once and stops on its final screen. `--loop` loops, also when the scenario's `render.loop` or the cast's `st:loop` is false. One of them, once. `mp4` rejects both: `--no-loop applies to SVG: the player decides whether an mp4 plays again`. On the scenario path the value is stored in the cast with any `--format`. |
 | `--end-hold N` | scenario, `svg`, `mp4` | `0`–`60` seconds the final screen stays before the SVG starts again or the mp4 ends. Decimals allowed. Default: as long as the pause before the last output, as agg's GIF with `--last-frame-duration 0` holds it. |
-| `--fade-out N` | scenario, `svg`, `mp4` | `0`–`10` seconds over which the terminal's contents fade out after the end hold. Default `0`. With `--no-loop` (or a cast that does not loop) the SVG has none, with a warning; an mp4 still fades. |
+| `--fade-out N` | scenario, `svg`, `mp4` | `0`–`10` seconds over which the terminal's contents fade out after the end hold. Default `0`. With `--no-loop`, or a cast that does not loop, the SVG has none, with a warning. An mp4 still fades. |
 | `--max-fps N` | scenario (`--format svg` only), `svg` | Optional frame sampling cap for SVG animation. `0` (default) = off (full cast timing). `1`–`120` enables sampling. See [spec_svg.md](spec_svg.md). |
 | `--fps N` | scenario (`--format mp4`), `mp4` | Constant mp4 frame rate, `1`–`60`. Default `30`. |
 | `--crf N` | scenario (`--format mp4`), `mp4` | H.264 quality, `1`–`51`. Default `23`. Higher values make smaller files. `0` (lossless) is not accepted, because x264 then writes the High 4:4:4 Predictive profile, which X and many players reject. |
@@ -97,6 +97,19 @@ The output folder must exist as well. When the scenario has `pre` commands, the 
 ## Logging
 
 Progress and status use stderr (`Loading:`, `Written:`, `Done:`). Paths use `/` separators and are relative to the current directory where possible. Paths on another Windows drive, for example, remain absolute. Scenario runs always show step `running:` lines.
+
+Each `Written:` line gives the file's size in pixels, so a reader can tell what the demo fits, such as a README or a 1920x1080 video, without opening it:
+
+```
+Written: basic.cast  (185 events, 18.1s, as SVG 830x504 px, as mp4 820x488)
+Written: basic.svg  (830x504 px, 18.1s)
+Written: basic.mp4  (820x488, 30fps, 543 frames, 62.7KB, font: Cascadia Mono)
+```
+
+- The SVG's size is its `width` and `height`: the size a page first shows it at, rounded to whole pixels. An SVG scales without blur. The time is its loop.
+- The cast's line gives the SVG and mp4 sizes only when the cast is the only output. They are computed from the font size, the terminal size, the window, the padding, the margin, and the background, without rendering. An mp4 too large to encode is left out, and `scenetake mp4` reports why.
+- The mp4's size is its encoded frame: no margin or shadow, even sides, and `--size` or `--max-size` applied.
+- **Why.** The size decides where a demo fits: a README shows about 830 pixels at its own size, and a video player expects 16:9. It was visible only after opening the file.
 
 **`pre` / `post`.** stdout and stderr are forwarded after each command exits (live streaming not required in v1). Failure prints phase, full command text, and exit code unconditionally. See [spec_pre_post.md](spec_pre_post.md).
 

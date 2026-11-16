@@ -235,7 +235,7 @@ internal static class CastReader
         if (parse(text, out value, out _))
             return true;
 
-        Console.Error.WriteLine($"Warning: cast: invalid {name} '{text}'; using {fallback}");
+        Console.Error.WriteLine($"Warning: cast: invalid {name} '{text}', using {fallback}");
         return false;
     }
 
@@ -250,7 +250,7 @@ internal static class CastReader
         if (!warned)
         {
             warned = true;
-            Console.Error.WriteLine($"Warning: cast: invalid font-size '{sizeText}'; using default font size");
+            Console.Error.WriteLine($"Warning: cast: invalid font-size '{sizeText}', using default font size");
         }
     }
 
@@ -265,7 +265,7 @@ internal static class CastReader
         if (!warned)
         {
             warned = true;
-            Console.Error.WriteLine($"Warning: cast: invalid font-family '{familyText}'; using default font-family");
+            Console.Error.WriteLine($"Warning: cast: invalid font-family '{familyText}', using default font-family");
         }
     }
 
@@ -280,7 +280,7 @@ internal static class CastReader
         if (!warned)
         {
             warned = true;
-            Console.Error.WriteLine($"Warning: cast: invalid window '{windowText}'; using no window chrome");
+            Console.Error.WriteLine($"Warning: cast: invalid window '{windowText}', using no window chrome");
         }
     }
 
@@ -427,7 +427,7 @@ internal static class CastReader
                     if (!TryParseResizeData(data, out var resizeWidth, out var resizeHeight))
                     {
                         if (warnedCodes.Add("invalid-resize"))
-                            Console.Error.WriteLine("Warning: cast: invalid resize event data; skipping");
+                            Console.Error.WriteLine("Warning: cast: invalid resize event data, skipping");
 
                         return true;
                     }
@@ -442,7 +442,7 @@ internal static class CastReader
                 {
                     var unknown = codeText[1].ToString();
                     if (warnedCodes.Add(unknown))
-                        Console.Error.WriteLine($"Warning: cast: unsupported cast event code '{unknown}'; skipping");
+                        Console.Error.WriteLine($"Warning: cast: unsupported cast event code '{unknown}', skipping");
 
                     return true;
                 }
@@ -453,7 +453,7 @@ internal static class CastReader
             ? codeText[1..^1].ToString()
             : root[1].GetString() ?? "";
         if (warnedCodes.Add(code))
-            Console.Error.WriteLine($"Warning: cast: unsupported cast event code '{code}'; skipping");
+            Console.Error.WriteLine($"Warning: cast: unsupported cast event code '{code}', skipping");
 
         return true;
     }
