@@ -596,7 +596,12 @@ function applyColorMode(mode) {
   if (mode === 'system') root.removeAttribute('data-theme');
   else root.setAttribute('data-theme', mode);
   $('meta-color-scheme').setAttribute('content', mode === 'system' ? 'light dark' : mode);
-  $('theme-btn').textContent = `Theme: ${mode}`;
+  // The footer button shows the mode as an icon, as in the seiton playground; the label names it in words.
+  const name = { system: 'System', light: 'Light', dark: 'Dark' }[mode];
+  const button = $('theme-btn');
+  button.dataset.themeMode = mode;
+  button.setAttribute('aria-label', `Color theme: ${name}. Click to cycle: System, Light, Dark.`);
+  button.title = `Color theme: ${name} (System → Light → Dark)`;
   applyEditorTheme();
 }
 

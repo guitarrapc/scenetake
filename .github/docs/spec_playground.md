@@ -186,9 +186,11 @@ Below 960 px the panel comes after the editor and starts closed, unless a share 
 
 ### Both tabs
 
-- Under the title, one sentence says what scenetake is for: a terminal demo of a CLI or library, for a README, X, Zenn, or Reddit. A second sentence, that the page renders in the browser, is left out below 600 px.
-- The page has a version badge that links to the release, a color theme that cycles through system, light, and dark, and **Copy link**, which copies a share URL.
-- Below 960 px the layout has one column: the preview, the editor, the step notes and warnings, then the render options. The notes come after the editor, so a note that appears while the reader types does not move the editor down. Below 600 px the header and the toolbars are tighter, each toolbar fits on one row, and the preview runs to both edges of the screen. On a 375 × 812 screen the preview starts at 173 px and the YAML at 679 px. The `basic` SVG shows its text at 13 px, the editor's size, with 44 of its 80 columns in view (43 on a 360 px screen), and the preview scrolls sideways to the rest, as the editor does.
+- The header and footer follow the [seiton playground](https://guitarrapc.github.io/seiton/)'s. **Why:** the two playgrounds come from the same author, so a reader who knows one finds the same frame in the other.
+- **Header.** A full-width bar centers the title and the version badge, which links to the release. Unlike seiton's, it has no logo: scenetake has none. Under them, one sentence says what scenetake is for: a terminal demo of a CLI or library, for a README, X, Zenn, or Reddit. A second, smaller line, that the page renders in the browser, is left out below 600 px. The tabs sit under the bar.
+- **Footer.** The GitHub mark, the copyright and MIT license, and a theme switch, separated by bars. The switch cycles through system, light, and dark, and shows the mode as an icon. Below 600 px the text comes first and the mark and the switch share a row under it, because the bars ended up at the ends of wrapped lines.
+- **Copy link** copies a share URL.
+- Below 960 px the layout has one column: the preview, the editor, the step notes and warnings, then the render options. The notes come after the editor, so a note that appears while the reader types does not move the editor down. Below 600 px the header and the toolbars are tighter, each toolbar fits on one row, and the preview runs to both edges of the screen. On a 375 × 812 screen the preview starts at 188 px and the YAML at 684 px, 10 px lower than before the header followed seiton's. The `basic` SVG shows its text at 13 px, the editor's size, with 44 of its 80 columns in view (43 on a 360 px screen), and the preview scrolls sideways to the rest, as the editor does.
 - **Full screen** fills the whole screen with the demo, with no margin, and scales it to fit, larger than its own size on a large screen. On an upright phone (portrait, below 600 px) the demo is turned a quarter turn clockwise and takes the screen's long side, so the reader turns the phone to the left, as for a video. There, `basic` shows all 80 columns with its 16 px text at 11.9 px, where the page shows 44 columns at 13 px. A phone already held sideways shows it unturned. A tap, Esc, or Back closes the view and stays on the page. Below 600 px **Full screen** replaces **Actual size**.
 - Below the tabs, the page tells how to install scenetake, and which output and command fit each place to share:
 
@@ -205,11 +207,20 @@ The agg command runs agg in Docker, as the README does, so a reader needs no agg
 | Path | Holds |
 |---|---|
 | `index.html`, `main.js`, `share.js`, `style.css` | The page |
+| `favicon.svg`, `ogp.png` | The icon, and the image that X and other sites show for a shared link to the page |
 | `worker.js` | The Web Worker that runs the .NET runtime |
 | `_framework/` | The .NET runtime and assemblies |
 | `samples/index.json` | `{"scenarios": [...], "casts": [...], "images": [...]}`: the samples that have an outputs file, the sample casts, and the background images. Written at publish. |
 | `samples/<name>.yaml`, `.outputs.json`, `.cast` | Copied from `samples/` and `samples/showcase/` at publish |
 | `samples/<image>` | The `PlaygroundImage` items of the playground project, such as `background.webp`. They are listed one by one, because `samples/` also holds each sample's GIF. |
+
+### Link preview (OGP)
+
+A link to the page shows a large image on X, Slack, Discord, and other sites, as a link to the seiton playground does.
+
+- `ogp.png` is the page itself at 1200 × 670 in the dark theme: the `fetch` sample's whole YAML next to its demo, without the version badge. The image says what the page does without words: a short YAML gives this demo.
+- `playground/take-ogp.mjs` takes it with Playwright from the served page, as seiton's `take-ogp.mjs` does. It pauses every animation of the SVG at one moment (6 s by default), so the same page gives the same image byte for byte. An SVG in an `<img>` plays on its own clock, so without the pause the frame would depend on when the screenshot runs.
+- The meta tags give `summary_large_image`, the image's size, and alt text. The image URL is absolute and has `?v=`, which is raised when the image changes, because sites cache the image by URL.
 
 ## Interop API
 

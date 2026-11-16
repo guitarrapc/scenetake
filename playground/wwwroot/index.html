@@ -11,7 +11,14 @@
   <meta property="og:title" content="scenetake playground | Try in your browser">
   <meta property="og:description" content="Record terminal demos of your CLI or library from a YAML scenario. Edit one in your browser and see the animated SVG">
   <meta property="og:site_name" content="scenetake playground">
-  <meta name="twitter:card" content="summary">
+  <!-- playground/take-ogp.mjs takes ogp.png. Raise ?v= when it changes: X and others cache the image by URL. -->
+  <meta property="og:image" content="https://guitarrapc.github.io/scenetake/ogp.png?v=1">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="670">
+  <meta property="og:image:alt" content="The scenetake playground: a YAML scenario and the terminal demo it records">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://guitarrapc.github.io/scenetake/ogp.png?v=1">
+  <meta name="twitter:image:alt" content="The scenetake playground: a YAML scenario and the terminal demo it records">
   <meta name="twitter:title" content="scenetake playground | Try in your browser">
   <meta name="twitter:description" content="Record terminal demos of your CLI or library from a YAML scenario. Edit one in your browser and see the animated SVG">
   <meta name="color-scheme" id="meta-color-scheme" content="light dark" />
@@ -47,25 +54,26 @@
 </head>
 
 <body>
+  <!-- The header and footer follow the seiton playground's, so the two playgrounds read as one family. -->
   <header class="site-header">
-    <div class="brand">
-      <span class="brand__mark" aria-hidden="true">▶</span>
+    <div class="site-title-row">
       <h1>scenetake playground</h1>
-      <a id="version" class="badge" href="https://github.com/guitarrapc/scenetake/releases" hidden></a>
+      <a id="version" class="version-badge" href="https://github.com/guitarrapc/scenetake/releases" target="_blank"
+        rel="noopener noreferrer" hidden></a>
     </div>
     <p class="tagline">Record a terminal demo of your CLI or library from a YAML scenario, for a README, X, Zenn, or
-      Reddit. <span class="tagline__more">Edit the YAML here and watch the animated SVG. Nothing leaves your
-        browser.</span></p>
-    <nav class="tabs" role="tablist" aria-label="Playground mode">
-      <button type="button" role="tab" id="tab-scenario" aria-controls="panel-scenario" aria-selected="true">Scenario</button>
-      <button type="button" role="tab" id="tab-cast" aria-controls="panel-cast" aria-selected="false">Cast → SVG</button>
-    </nav>
+      Reddit.</p>
+    <p class="tagline-more">Edit the YAML here and watch the animated SVG. Nothing leaves your browser.</p>
   </header>
 
   <div id="loading" class="loading" role="status">Loading the WebAssembly runtime…</div>
   <div id="fatal" class="fatal" role="alert" hidden></div>
 
   <main>
+    <nav class="tabs" role="tablist" aria-label="Playground mode">
+      <button type="button" role="tab" id="tab-scenario" aria-controls="panel-scenario" aria-selected="true">Scenario</button>
+      <button type="button" role="tab" id="tab-cast" aria-controls="panel-cast" aria-selected="false">Cast → SVG</button>
+    </nav>
     <section id="panel-scenario" role="tabpanel" aria-labelledby="tab-scenario" class="panel">
       <div class="workspace">
         <div class="column column--editor">
@@ -291,9 +299,45 @@ scenetake --format svg scenario.yaml</code></pre>
   </dialog>
 
   <footer class="site-footer">
-    <a href="https://github.com/guitarrapc/scenetake">GitHub</a>
-    <span>MIT License</span>
-    <button type="button" id="theme-btn" class="btn btn--quiet" aria-label="Color theme">Theme: system</button>
+    <p class="footer-row">
+      <a class="repo-mark" href="https://github.com/guitarrapc/scenetake" target="_blank" rel="noopener noreferrer"
+        aria-label="scenetake on GitHub">
+        <svg class="repo-mark__icon" viewBox="0 0 98 96" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"
+            d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.235-22.23-5.42-22.23-24.251 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.251 1.75 1.52 3.318 4.491 3.318 9.022 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z" />
+        </svg>
+      </a>
+      <span class="footer-sep" aria-hidden="true">|</span>
+      <span class="footer-text">© 2026 <a href="https://github.com/guitarrapc">guitarrapc</a>. The source code and
+        website content are licensed <a href="https://github.com/guitarrapc/scenetake/blob/main/LICENSE.md">MIT</a>.</span>
+      <span class="footer-sep" aria-hidden="true">|</span>
+      <!-- main.js sets data-theme-mode, which picks the icon, and the label. -->
+      <button type="button" id="theme-btn" class="theme-btn" data-theme-mode="system"
+        title="Color theme: System → Light → Dark" aria-label="Color theme: System. Click to cycle: System, Light, Dark.">
+        <svg class="theme-btn__icon theme-btn__icon--system" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
+        </svg>
+        <svg class="theme-btn__icon theme-btn__icon--light" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="5" />
+          <line x1="12" y1="1" x2="12" y2="3" />
+          <line x1="12" y1="21" x2="12" y2="23" />
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+          <line x1="1" y1="12" x2="3" y2="12" />
+          <line x1="21" y1="12" x2="23" y2="12" />
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+        </svg>
+        <svg class="theme-btn__icon theme-btn__icon--dark" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      </button>
+    </p>
   </footer>
 
   <script type="module" src="main#[.{fingerprint}].js"></script>
