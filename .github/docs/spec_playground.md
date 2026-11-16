@@ -51,7 +51,7 @@ The playground is a .NET WebAssembly build of the same source files that the CLI
 ### Producing
 
 - When the environment variable `SCENETAKE_OUTPUTS` names a file, the scenario path writes the outputs file there, from the same run as the cast. The file is written only when the cast is written. The variable is not listed in `--help`, because it is for maintainers. `samples/regenerate.cs` sets it for every sample. A sample recorded by hand, such as `password-prompt`, sets it by hand.
-- The showcase samples in `samples/showcase/` run tools that a Windows maintainer seldom has, such as fastfetch, bat, sl, and nyancat. `samples/showcase/record.sh` records them on Linux in a container built from `samples/showcase/Dockerfile`, with a Linux scenetake and `SCENETAKE_OUTPUTS`. `regenerate.cs` reads only `samples/*.yaml`, so it never tries to run them. The playground publishes both folders into one sample folder, and the publish fails when two samples share a name.
+- The showcase samples in `samples/showcase/` run tools that a Windows maintainer seldom has, such as fastfetch, bat, sl, and nyancat. `samples/showcase/record.sh` records them on Linux in a container built from `samples/showcase/Dockerfile`, with a Linux scenetake and `SCENETAKE_OUTPUTS`. The container sees `samples/` read-only around the showcase folder, so a showcase scenario can name a file there: `vim.yaml` names `../background.webp`. `regenerate.cs` reads only `samples/*.yaml`, so it never tries to run them. The playground publishes both folders into one sample folder, and the publish fails when two samples share a name.
 - **Why a container.** It holds the tools at known versions and a small git project with fixed commit dates, so a new recording differs only where the tools changed. The README gallery shows these samples.
 - **Why the same run.** A cast and an outputs file from two runs can disagree: `curl` headers and `git log` dates change between runs. The playground would then not reproduce the committed sample.
 
@@ -148,11 +148,17 @@ The UI lists these keys as not applied when the scenario sets them.
 
 ### Render options
 
-A panel under the active tab's preview sets `--theme`, `--window`, `--font-size`, `--max-fps`, `--font-family`, `--window-title`, `--background`, `--margin`, and `--padding`. `--background` takes colors only, as a cast header does: a browser page reads no image file, so an image in the YAML or the panel is an error here. One set of controls serves both tabs and moves with the tab. Each control is empty by default, which keeps the value that the scenario or the cast sets. An empty control says where that value comes from: "from YAML" on the Scenario tab and "from cast" on the Cast tab. `--max-fps` is the exception: neither the YAML nor the cast sets it, so its empty value is the default, 0. The labels used to say "scenario" on both tabs, and the number fields showed the defaults (`16`), which differ from the result when the YAML sets its own size. On the Scenario tab the values are stored in the cast header, as on the scenario path. On the Cast tab a value overrides the cast header, and the header overrides the default, as with the `svg` command ([spec_cli.md](spec_cli.md)).
+A panel under the active tab's preview sets `--theme`, `--window`, `--font-size`, `--max-fps`, `--font-family`, `--window-title`, `--background`, `--margin`, and `--padding`. `--background` takes colors or an image, as on the CLI; images are under Background images below. One set of controls serves both tabs and moves with the tab. Each control is empty by default, which keeps the value that the scenario or the cast sets. An empty control says where that value comes from: "from YAML" on the Scenario tab and "from cast" on the Cast tab. `--max-fps` is the exception: neither the YAML nor the cast sets it, so its empty value is the default, 0. The labels used to say "scenario" on both tabs, and the number fields showed the defaults (`16`), which differ from the result when the YAML sets its own size. On the Scenario tab the values are stored in the cast header, as on the scenario path. On the Cast tab a value overrides the cast header, and the header overrides the default, as with the `svg` command ([spec_cli.md](spec_cli.md)).
 
 Below 960 px the panel comes after the editor and starts closed, unless a share URL sets an option.
 
 **Background presets.** Under `--background`, swatches fill the field with a color or gradient: none, Midnight, Ocean, Azure, Sky, Mint, Grape, Sunset, and Graphite. The value lands in the field, where it can be read and copied, and the swatch that matches the field is pressed. A line under them gives the format with examples, and the YAML form in quotes.
+
+**Background images.** A browser page reads no files, so the page gives the runtime each image with its file name, and a background in the YAML or the panel names one. A path finds an image by its file name: a scenario written for the CLI names `../background.webp` from its own folder, and the same YAML works here unchanged.
+
+- The samples' images, listed under `images` in `samples/index.json`, load before the first render, because the default sample or a shared YAML may name one. Each gets a swatch that shows the image.
+- **Image…** adds a `.png`, `.jpg`, `.gif`, or `.webp` file of at most 8 MB from the reader's computer. It gets a swatch, and its name goes in the field. A file with the name of a loaded image replaces it.
+- An image stays in the browser tab. A share URL names it but does not hold it: an image is far over the URL's 16384 characters, and a local file may be private. A link that names an image the reader has not loaded shows `background image not loaded: night.webp (loaded: background.webp)`, and choosing that file with **Image…** shows the demo.
 
 **Why presets and a format line.** The field takes a format nobody guesses from its name: `#rrggbb` values separated by spaces. In YAML a bare `#` starts a comment, so `background: #1e3c72` reads as no value. That gives a warning ([spec_scenario.md](spec_scenario.md) → Unquoted colors), and the format line shows the quoted form before anyone needs it.
 
@@ -201,8 +207,9 @@ The agg command runs agg in Docker, as the README does, so a reader needs no agg
 | `index.html`, `main.js`, `share.js`, `style.css` | The page |
 | `worker.js` | The Web Worker that runs the .NET runtime |
 | `_framework/` | The .NET runtime and assemblies |
-| `samples/index.json` | `{"scenarios": [...], "casts": [...]}`: the samples that have an outputs file, and the sample casts. Written at publish. |
-| `samples/<name>.yaml`, `.outputs.json`, `.cast` | Copied from `samples/` at publish |
+| `samples/index.json` | `{"scenarios": [...], "casts": [...], "images": [...]}`: the samples that have an outputs file, the sample casts, and the background images. Written at publish. |
+| `samples/<name>.yaml`, `.outputs.json`, `.cast` | Copied from `samples/` and `samples/showcase/` at publish |
+| `samples/<image>` | The `PlaygroundImage` items of the playground project, such as `background.webp`. They are listed one by one, because `samples/` also holds each sample's GIF. |
 
 ## Interop API
 
@@ -213,11 +220,12 @@ The agg command runs agg in Docker, as the README does, so a reader needs no agg
 | `LoadOutputs` | `(outputsJson)` | The outputs file's `scenetake`, `os`, `shell`, `width`, `height`, and step count, or `error`. Later renders replay this file. |
 | `RenderScenario` | `(yaml, optionsJson)` | `steps` (`index`, `run`, `kind`, `recorded`, `notices`), `warnings`, `notApplied`, `castBytes`, `svgBytes`, or `error` |
 | `RenderCast` | `(castText, optionsJson)` | `warnings`, `svgBytes`, or `error` |
+| `SetImage` | `(name, bytes)` | `{}`, or `error` for a name with a folder or without an image extension, an empty image, or one over 8 MB. Keeps the image for later renders under its file name; the same name replaces it. |
 | `TakeCast`, `TakeSvg` | none | The last render's cast or SVG as UTF-8 bytes |
 | `GetProductVersion` | none | The version string, or `unknown` |
 
 - No exported function throws. An exception that crosses the WASM boundary stops the runtime until the page is reloaded ([Lessons Learned](#lessons-learned)). Errors are returned as values. If the runtime stops anyway, the page says so and asks for a reload.
-- The keys of the options JSON match the CLI flags: `theme`, `window`, `fontSize`, `fontFamily`, and `maxFps`. An invalid value is an error. The valid ranges are the same as in the CLI ([spec_cli.md](spec_cli.md) → Options).
+- The keys of the options JSON match the CLI flags: `theme`, `window`, `fontSize`, `fontFamily`, `maxFps`, `windowTitle`, `background`, `margin`, and `padding`. An invalid value is an error. The valid ranges are the same as in the CLI ([spec_cli.md](spec_cli.md) → Options).
 
 ## Share URL
 
@@ -225,6 +233,7 @@ The agg command runs agg in Docker, as the README does, so a reader needs no agg
 - The URL holds only the sample's name, not its outputs file. An outputs file can be large: `pty` records full-screen PTY output. The page fetches the file from the site. A sample that no longer exists falls back to the default sample.
 - A hash over 16384 characters is not written; the page suggests downloading the YAML instead.
 - Cast tab input is not shared. Local cast files can be large, and they can be private.
+- A background image is not shared either, for the same reasons. The options keep its name ([Background images](#render-options)).
 
 ## Deployment
 
@@ -239,12 +248,13 @@ The agg command runs agg in Docker, as the README does, so a reader needs no agg
 
 | Test | Checks |
 |---|---|
-| `SamplesReplayToCommittedCasts` | For each sample with an outputs file, in `samples/` and `samples/showcase/`, the outputs file and the YAML give the committed `.cast` and `.svg` byte for byte, and every step is recorded |
+| `SamplesReplayToCommittedCasts` | For each sample with an outputs file, in `samples/` and `samples/showcase/`, the outputs file and the YAML give the committed `.cast` and `.svg` byte for byte, and every step is recorded. The replay has only the project's `PlaygroundImage` images, as the page does, so a sample that names an image the playground does not publish fails. |
 | `RecordedScenarioReplaysToSameCast` | With `SCENETAKE_BIN`, the CLI records `tests/fixtures/playground-replay.yaml` (instant and streamed pipe output, stderr, highlights, a repeated command, and OSC titles in pipe and PTY output) with `SCENETAKE_OUTPUTS`. The replay gives its cast and SVG byte for byte, and the outputs file holds no OSC text. |
 | `MaskedOscGivesSameFilteredEvents`, `MaskKeepsColorOscAndLength`, `MaskCarriesStateAcrossChunks`, `OutputsFileMasksPrivateOsc` | Masking keeps color OSCs and lengths, follows OSCs split between chunks, and gives the cast's filter the same result as the original bytes |
 | `OutputsFileRoundTripsExactly` | Times, bytes, cursors, and text survive a write and a read exactly; lines end with LF |
 | `NthOccurrenceTakesNthRecording`, `ExtraOccurrenceTakesLastRecording`, `UnrecordedStepGetsPlaceholderLine`, `KindMismatchGetsPlaceholderLine`, `EditsBesidesRunKeepTheMatch`, `PtySizeMismatchGivesNotice` | The matching rules and notices |
 | `RecordedExitCodeWarns`, `ErrorsAreValuesNotExceptions`, `NotAppliedKeysAreListed`, `CastTabAppliesOverrides` | Warnings, errors as values, not-applied keys, and the Cast tab's options |
+| `BackgroundImagesComeFromThePage` | An image named in the YAML or the option, by name or by a Unix or Windows path, is embedded in the SVG and kept out of the cast, on both tabs. A missing image's error names the loaded ones. |
 
 The browser page itself was checked by hand on 2026-11-15: the runtime starts in the worker, `basic` renders in about 140 ms and `pty` in about 60 ms, edits and option changes re-render, a share URL restores the sample, YAML, and options, and the page fits a 375 px screen in dark and light themes.
 

@@ -240,12 +240,107 @@ internal readonly record struct ResolvedRenderSettings(
 
 /// <summary>
 /// What fills the canvas around the terminal: one color, a gradient of two to four colors from the top-left
-/// corner to the bottom-right one, or an image file that covers the canvas. A cast header keeps the colors. It
+/// corner to the bottom-right one, or an image that covers the canvas. A cast header keeps the colors. It
 /// keeps no image: a cast names no file of the computer it was recorded on.
 /// </summary>
-internal sealed record BackgroundSpec(IReadOnlyList<string> Colors, string? ImagePath)
+/// <param name="ImagePath">The image file, or in the playground the name the page gave the image. Its extension gives the image type.</param>
+/// <param name="ImageBytes">The image, when it is held in memory (the playground). Null reads <paramref name="ImagePath"/>.</param>
+internal sealed record BackgroundSpec(IReadOnlyList<string> Colors, string? ImagePath, byte[]? ImageBytes = null)
 {
     internal string TagValue => string.Join(' ', Colors);
+}
+
+/// <summary>
+/// Where a background image comes from: a file relative to a folder (the scenetake command), or an image that the
+/// playground page holds by name, because a browser page reads no files.
+/// </summary>
+internal sealed class BackgroundImageSource
+{
+    private readonly string? _folder;
+    private readonly IReadOnlyDictionary<string, byte[]>? _images;
+
+    private BackgroundImageSource(string? folder, IReadOnlyDictionary<string, byte[]>? images)
+    {
+        _folder = folder;
+        _images = images;
+    }
+
+    /// <summary>Files, with a relative path starting from <paramref name="folder"/>.</summary>
+    internal static BackgroundImageSource FromFolder(string folder) => new(folder, null);
+
+    /// <summary>
+    /// Images in memory, keyed by file name. A path finds the image with its file name: the playground has no
+    /// folders, and so a scenario written for the CLI, with <c>../wall.webp</c>, finds <c>wall.webp</c>.
+    /// </summary>
+    internal static BackgroundImageSource FromImages(IReadOnlyDictionary<string, byte[]> images) => new(null, images);
+
+    internal bool TryFind(string value, out BackgroundSpec background, out string error)
+    {
+        background = null!;
+        error = "";
+        if (_images is not null)
+        {
+            // Both separators: a Windows path is not split by Path.GetFileName on the browser's runtime.
+            var name = value[(value.LastIndexOfAny(['/', '\\']) + 1)..];
+            if (!RenderSettingsResolver.IsBackgroundImageName(name))
+            {
+                error = $"background must be colors such as #1e3c72 #2a5298, or a .png, .jpg, .gif, or .webp image: {value}";
+                return false;
+            }
+
+            if (!_images.TryGetValue(name, out var bytes))
+            {
+                error = _images.Count == 0
+                    ? $"background image not loaded: {name}"
+                    : $"background image not loaded: {name} (loaded: {string.Join(", ", _images.Keys.Order(StringComparer.Ordinal))})";
+                return false;
+            }
+
+            if (bytes.LongLength > RenderSettingsResolver.MaxBackgroundImageBytes)
+            {
+                error = $"background image is larger than {RenderSettingsResolver.MaxBackgroundImageBytes / (1024 * 1024)} MB, and every SVG embeds it: {name}";
+                return false;
+            }
+
+            background = new BackgroundSpec([], name, bytes);
+            return true;
+        }
+
+        string path;
+        try
+        {
+            path = Path.GetFullPath(value, _folder!);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            error = $"background is neither colors nor a valid path: {value}";
+            return false;
+        }
+
+        if (!RenderSettingsResolver.IsBackgroundImageName(path))
+        {
+            error = $"background must be colors such as #1e3c72 #2a5298, or a .png, .jpg, .gif, or .webp file: {value}";
+            return false;
+        }
+
+        var info = new FileInfo(path);
+        if (!info.Exists)
+        {
+            error = Path.IsPathFullyQualified(value)
+                ? $"background image not found: {value}"
+                : $"background image not found: {value} (resolved to {path})";
+            return false;
+        }
+
+        if (info.Length > RenderSettingsResolver.MaxBackgroundImageBytes)
+        {
+            error = $"background image is larger than {RenderSettingsResolver.MaxBackgroundImageBytes / (1024 * 1024)} MB, and every SVG embeds it: {value}";
+            return false;
+        }
+
+        background = new BackgroundSpec([], path);
+        return true;
+    }
 }
 
 /// <summary>Window title, background, margin, and padding from the command line or the playground: each set one replaces the cast's or the scenario's.</summary>
@@ -390,14 +485,15 @@ internal static class RenderSettingsResolver
         return true;
     }
 
+    /// <summary>A name with an image extension that a background takes.</summary>
+    internal static bool IsBackgroundImageName(string name) =>
+        BackgroundImageExtensions.Contains(Path.GetExtension(name).ToLowerInvariant());
+
     /// <summary>
-    /// Reads a background: colors (<c>#rgb</c> or <c>#rrggbb</c>, separated by spaces or commas) or an image file.
+    /// Reads a background: colors (<c>#rgb</c> or <c>#rrggbb</c>, separated by spaces or commas) or an image.
     /// </summary>
-    /// <param name="baseFolder">
-    /// The folder a relative image path starts from, or null where no file can be read: a cast header and the
-    /// playground take colors only.
-    /// </param>
-    internal static bool TryParseBackground(string text, string? baseFolder, out BackgroundSpec background, out string error)
+    /// <param name="images">Where an image is found, or null where a background takes colors only: a cast header.</param>
+    internal static bool TryParseBackground(string text, BackgroundImageSource? images, out BackgroundSpec background, out string error)
     {
         background = null!;
         error = "";
@@ -434,46 +530,13 @@ internal static class RenderSettingsResolver
             return true;
         }
 
-        if (baseFolder is null)
+        if (images is null)
         {
-            error = $"background here takes colors only, such as #1e3c72 #2a5298; an image file needs the scenetake command: {value}";
+            error = $"background here takes colors only, such as #1e3c72 #2a5298: {value}";
             return false;
         }
 
-        string path;
-        try
-        {
-            path = Path.GetFullPath(value, baseFolder);
-        }
-        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
-        {
-            error = $"background is neither colors nor a valid path: {value}";
-            return false;
-        }
-
-        if (!BackgroundImageExtensions.Contains(Path.GetExtension(path).ToLowerInvariant()))
-        {
-            error = $"background must be colors such as #1e3c72 #2a5298, or a .png, .jpg, .gif, or .webp file: {value}";
-            return false;
-        }
-
-        var info = new FileInfo(path);
-        if (!info.Exists)
-        {
-            error = Path.IsPathFullyQualified(value)
-                ? $"background image not found: {value}"
-                : $"background image not found: {value} (resolved to {path})";
-            return false;
-        }
-
-        if (info.Length > MaxBackgroundImageBytes)
-        {
-            error = $"background image is larger than {MaxBackgroundImageBytes / (1024 * 1024)} MB, and every SVG embeds it: {value}";
-            return false;
-        }
-
-        background = new BackgroundSpec([], path);
-        return true;
+        return images.TryFind(value, out background, out error);
     }
 
     /// <summary>A window title without control characters, at most <see cref="MaxWindowTitleLength"/> characters.</summary>
@@ -581,16 +644,16 @@ internal static class RenderSettingsResolver
         return true;
     }
 
-    /// <param name="scenarioFolder">
-    /// The scenario file's folder, which a relative <c>render.background</c> image path starts from. Null in the
-    /// playground, which reads no files and so takes background colors only.
+    /// <param name="images">
+    /// Where a <c>render.background</c> image is found: the scenario file's folder on the scenetake command, the
+    /// page's images in the playground. Null takes background colors only.
     /// </param>
     internal static bool TryResolve(
         Scenario scenario,
         string? cliThemePreset,
         out ResolvedRenderSettings settings,
         out string error,
-        string? scenarioFolder = null)
+        BackgroundImageSource? images = null)
     {
         settings = default;
         error = "";
@@ -624,7 +687,7 @@ internal static class RenderSettingsResolver
 
         if (!string.IsNullOrWhiteSpace(render?.Background))
         {
-            if (!TryParseBackground(render!.Background!, scenarioFolder, out var background, out error))
+            if (!TryParseBackground(render!.Background!, images, out var background, out error))
             {
                 error = $"invalid render.background: {error}";
                 return false;
@@ -700,6 +763,10 @@ internal static class RenderSettingsResolver
         resolved = MergeTheme(baseTheme, theme);
         return true;
     }
+
+    /// <summary>The settings read back from a cast, with the run's background image: the cast keeps background colors only.</summary>
+    internal static ResolvedRenderSettings WithImageBackground(ResolvedRenderSettings fromCast, ResolvedRenderSettings run) =>
+        run.Background?.ImagePath is not null ? fromCast with { Background = run.Background } : fromCast;
 
     internal static ResolvedRenderSettings ApplySvgOverrides(
         ResolvedRenderSettings settings,
@@ -1743,7 +1810,7 @@ internal static class SvgFrameRenderer
                 _ => "image/jpeg",
             };
             sb.AppendLf(CultureInfo.InvariantCulture,
-                $"<image href=\"data:{mime};base64,{Convert.ToBase64String(File.ReadAllBytes(path))}\" x=\"0\" y=\"0\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" preserveAspectRatio=\"xMidYMid slice\"/>");
+                $"<image href=\"data:{mime};base64,{Convert.ToBase64String(background.ImageBytes ?? File.ReadAllBytes(path))}\" x=\"0\" y=\"0\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" preserveAspectRatio=\"xMidYMid slice\"/>");
             return;
         }
 

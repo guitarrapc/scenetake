@@ -159,7 +159,8 @@
                 </label>
                 <!--
                   The presets fill in the field, so the value they set is there to read and to copy into a scenario.
-                  main.js paints each swatch from its data-background.
+                  main.js paints each swatch from its data-background, and adds one per image: the samples' images
+                  at start, and each file chosen with "Image…".
                 -->
                 <div class="field field--full">
                   <label for="background-option">--background</label>
@@ -175,10 +176,16 @@
                     <button type="button" class="swatch" data-background="#8e2de2 #4a00e0" title="Grape"></button>
                     <button type="button" class="swatch" data-background="#ff5f6d #ffc371" title="Sunset"></button>
                     <button type="button" class="swatch" data-background="#2d3436" title="Graphite"></button>
+                    <label class="image-pick" id="image-pick">Image…
+                      <input id="image-file" type="file" accept=".png,.jpg,.jpeg,.gif,.webp" />
+                    </label>
                   </div>
                   <p class="field__hint">One color, <code>#1e3c72</code>, or 2–4 for a gradient from the top left,
                     <code>#1e3c72 #2a5298</code>. In YAML, quote it: <code>background: "#1e3c72 #2a5298"</code>.
-                    An image file needs the scenetake command.</p>
+                    An image is named by its file name, <code>background.webp</code>; a path such as
+                    <code>../background.webp</code> finds the same image. Choose your own with Image…: it stays in this
+                    tab, so a shared link names it but does not carry it.</p>
+                  <p class="field__hint field__hint--error" id="image-error" role="alert" hidden></p>
                 </div>
               </div>
             </details>

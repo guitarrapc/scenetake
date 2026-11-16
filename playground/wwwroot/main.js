@@ -14,6 +14,7 @@ const state = {
   sample: '',
   samples: [],
   casts: [],
+  images: [],
   options: {},
   outputsInfo: null,
   sampleYaml: '',
@@ -344,7 +345,7 @@ const SAMPLE_NOTES = {
   'password-prompt': 'a sudo password kept out of the recording',
   pty: 'a full-screen TUI in a PTY',
   sl: 'the steam locomotive, drawn with curses',
-  vim: 'vim edited by scripted keys, then git diff',
+  vim: 'vim edited by scripted keys, then git diff, on an image',
   quickstart: 'the README quick start',
   resize: 'a v2 cast that resizes the terminal',
   scenario_format: 'every scenario key in one file',
@@ -362,6 +363,7 @@ async function loadIndex() {
   const index = JSON.parse(await fetchText('samples/index.json'));
   state.samples = [...(index.scenarios ?? [])].sort();
   state.casts = [...(index.casts ?? [])].sort();
+  state.images = [...(index.images ?? [])].sort();
   fillSelect($('sample-select'), state.samples, sampleLabel);
   fillSelect($('cast-sample-select'), ['', ...state.casts], (name) => name ? sampleLabel(name) : 'choose…');
 }
@@ -449,11 +451,86 @@ for (const swatch of backgroundSwatches) {
   });
 }
 
+// Colors match in any case and spacing, as the runtime reads them; an image name matches exactly, as it is found.
 function markBackgroundPreset() {
-  const value = backgroundInput.value.trim().toLowerCase().split(/[\s,]+/).filter(Boolean).join(' ');
-  for (const swatch of backgroundSwatches)
-    swatch.setAttribute('aria-pressed', String(swatch.dataset.background === value));
+  const normalize = (text) => text.trim().toLowerCase().split(/[\s,]+/).filter(Boolean).join(' ');
+  const colors = normalize(backgroundInput.value);
+  const name = backgroundInput.value.trim();
+  for (const swatch of backgroundSwatches) {
+    const pressed = swatch.classList.contains('swatch--image')
+      ? swatch.dataset.background === name
+      : normalize(swatch.dataset.background) === colors;
+    swatch.setAttribute('aria-pressed', String(pressed));
+  }
 }
+
+// Background images. The runtime reads no files, so the page gives it each image with its file name, and a
+// background in the YAML or the field names it; a path finds it by its file name. The samples' images load before
+// the first render, and "Image…" adds one from this computer. An image stays in this tab: a shared link names it,
+// and whoever opens the link chooses the file again.
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+const imagePick = $('image-pick');
+const imageFile = $('image-file');
+const imageError = $('image-error');
+
+async function addImage(name, data, url) {
+  const reply = await request('setImage', { name, data });
+  if (reply.meta.error) throw new Error(reply.meta.error);
+  let swatch = backgroundSwatches.find((item) => item.dataset.background === name);
+  if (!swatch) {
+    swatch = document.createElement('button');
+    swatch.type = 'button';
+    swatch.className = 'swatch swatch--image';
+    swatch.dataset.background = name;
+    swatch.title = name;
+    swatch.setAttribute('aria-label', `Image: ${name}`);
+    swatch.addEventListener('click', () => {
+      backgroundInput.value = name;
+      backgroundInput.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    imagePick.before(swatch);
+    backgroundSwatches.push(swatch);
+  } else if (swatch.dataset.url?.startsWith('blob:')) {
+    URL.revokeObjectURL(swatch.dataset.url);
+  }
+  swatch.dataset.url = url;
+  swatch.style.backgroundImage = `url("${url}")`;
+  markBackgroundPreset();
+}
+
+async function loadSampleImages(names) {
+  for (const name of names) {
+    try {
+      const response = await fetch(`samples/${name}`, { cache: 'no-cache' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      await addImage(name, new Uint8Array(await response.arrayBuffer()), `samples/${encodeURIComponent(name)}`);
+    } catch (error) {
+      // A sample that names this image fails with "not loaded"; the rest of the page works.
+      console.warn(`samples/${name}: ${error.message}`);
+    }
+  }
+}
+
+imageFile.addEventListener('change', async () => {
+  const file = imageFile.files?.[0];
+  imageFile.value = '';
+  if (!file) return;
+  imageError.hidden = true;
+  try {
+    if (!IMAGE_EXTENSIONS.some((extension) => file.name.toLowerCase().endsWith(extension)))
+      throw new Error(`${file.name}: choose a .png, .jpg, .gif, or .webp file`);
+    if (file.size > MAX_IMAGE_BYTES)
+      throw new Error(`${file.name} is larger than 8 MB, and every SVG embeds it`);
+    await addImage(file.name, new Uint8Array(await file.arrayBuffer()), URL.createObjectURL(file));
+    // Set again even when the field already names it: the image may be a new file with the same name.
+    backgroundInput.value = file.name;
+    backgroundInput.dispatchEvent(new Event('input', { bubbles: true }));
+  } catch (error) {
+    imageError.textContent = error.message;
+    imageError.hidden = false;
+  }
+});
 
 backgroundInput.addEventListener('input', markBackgroundPreset);
 markBackgroundPreset();
@@ -699,6 +776,8 @@ async function start() {
     version.hidden = false;
     state.ready = true;
     $('loading').hidden = true;
+    // Before the first render: the default sample, or a shared YAML, may name one of these images.
+    await loadSampleImages(state.images);
     writeOptions(shared?.options ?? {});
     // On a narrow screen the options start closed; a shared URL that sets some shows them.
     if (Object.keys(state.options).length > 0) document.querySelector('details.options').open = true;

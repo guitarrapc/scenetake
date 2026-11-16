@@ -75,11 +75,11 @@ static bool BackgroundImagePathFollowsBaseFolder()
     try
     {
         File.WriteAllBytes(Path.Combine(folder, "wall.png"), [0x89, 0x50, 0x4E, 0x47]);
-        var found = RenderSettingsResolver.TryParseBackground("wall.png", folder, out var background, out var error)
+        var found = RenderSettingsResolver.TryParseBackground("wall.png", BackgroundImageSource.FromFolder(folder), out var background, out var error)
             && background.ImagePath == Path.Combine(folder, "wall.png") && background.Colors.Count == 0;
-        var missing = !RenderSettingsResolver.TryParseBackground("gone.png", folder, out _, out var missingError)
+        var missing = !RenderSettingsResolver.TryParseBackground("gone.png", BackgroundImageSource.FromFolder(folder), out _, out var missingError)
             && missingError.Contains("background image not found: gone.png (resolved to ", StringComparison.Ordinal);
-        var wrongType = !RenderSettingsResolver.TryParseBackground("wall.bmp", folder, out _, out var typeError)
+        var wrongType = !RenderSettingsResolver.TryParseBackground("wall.bmp", BackgroundImageSource.FromFolder(folder), out _, out var typeError)
             && typeError.Contains(".png, .jpg, .gif, or .webp", StringComparison.Ordinal);
         if (!found || !missing || !wrongType)
             Console.Error.WriteLine($"  found={found} ({error}) missing={missing} ({missingError}) wrongType={wrongType} ({typeError})");

@@ -4,9 +4,12 @@ using static ScenarioCast;
 /// <summary>
 /// The render options of the playground. They are the CLI flags <c>--theme</c>, <c>--window</c>, <c>--font-size</c>,
 /// <c>--font-family</c>, <c>--max-fps</c>, <c>--window-title</c>, <c>--background</c>, <c>--margin</c>, and
-/// <c>--padding</c>, with the same values and ranges. Null leaves a setting as the scenario or the cast sets it. The
-/// background takes colors only: the playground reads no files.
+/// <c>--padding</c>, with the same values and ranges. Null leaves a setting as the scenario or the cast sets it.
 /// </summary>
+/// <param name="Images">
+/// The images that a background, in the YAML or in <paramref name="Background"/>, names. The playground reads no
+/// files, so the page gives it each image with a name, and a name stands where the CLI takes a path.
+/// </param>
 internal sealed record PlaygroundOptions(
     string? Theme = null,
     string? Window = null,
@@ -16,7 +19,11 @@ internal sealed record PlaygroundOptions(
     string? WindowTitle = null,
     string? Background = null,
     int? Margin = null,
-    int? Padding = null);
+    int? Padding = null,
+    IReadOnlyDictionary<string, byte[]>? Images = null)
+{
+    internal BackgroundImageSource ImageSource => BackgroundImageSource.FromImages(Images ?? new Dictionary<string, byte[]>());
+}
 
 /// <summary>
 /// What a render gives the playground. <see cref="Error"/> is set when the CLI would stop before recording, and then
@@ -66,7 +73,7 @@ internal static class PlaygroundRender
             if (!TryParseOptions(options, out var themePreset, out var window, out var fontSize, out var fontFamily, out var maxFps, out var style, out error))
                 return;
 
-            if (!RenderSettingsResolver.TryResolve(scenario, themePreset, out var renderSettings, out var themeError))
+            if (!RenderSettingsResolver.TryResolve(scenario, themePreset, out var renderSettings, out var themeError, options.ImageSource))
             {
                 error = themeError;
                 return;
@@ -119,7 +126,7 @@ internal static class PlaygroundRender
             {
                 // As on the CLI, the SVG comes from the cast as written, with --max-fps applied again.
                 var written = CastReader.ReadText(castText);
-                svg = SvgRender.RenderToUtf8(written.Events, written.Width, written.Height, written.RenderSettings with { MaxFps = renderSettings.MaxFps }, written.LoopDuration);
+                svg = SvgRender.RenderToUtf8(written.Events, written.Width, written.Height, RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings) with { MaxFps = renderSettings.MaxFps }, written.LoopDuration);
                 if (SvgRender.SizeWarning(svg.LongLength, renderSettings.MaxFps, fromCast: false) is { } sizeWarning)
                     Console.Error.WriteLine($"Warning: {sizeWarning}");
             }
@@ -257,7 +264,7 @@ internal static class PlaygroundRender
         BackgroundSpec? background = null;
         if (!string.IsNullOrWhiteSpace(options.Background))
         {
-            if (!RenderSettingsResolver.TryParseBackground(options.Background, baseFolder: null, out var parsedBackground, out message))
+            if (!RenderSettingsResolver.TryParseBackground(options.Background, options.ImageSource, out var parsedBackground, out message))
             {
                 error = message;
                 return false;

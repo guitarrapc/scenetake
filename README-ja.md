@@ -59,7 +59,13 @@ SVG と mp4 の出力では、フォント、ライト/ダークテーマのほ�
 | `margin` | `--margin` | ウィンドウの周りの余白（ピクセル、0〜200）。背景があるときの既定は 32 |
 | `padding` | `--padding` | ターミナルの端と文字の間の余白（ピクセル、0〜100） |
 
-| macOS | Windows |
+`background` を指定しなければ、見えるのはウィンドウだけです。SVG の余白は透明で、mp4 はウィンドウだけの映像になります。背景は、作ったページの外へ持ち出すときに役立ちます。
+
+- **X や Reddit に投稿する動画。** 背景付きの mp4 は、ターミナルを切り抜いた映像ではなく、デスクトップのスクリーンショットのように見えます（agg で作る GIF にはウィンドウ枠も背景も付きません）。
+- **サイズを決めた動画。** `--size 1920x1080` では、余った部分をターミナルの背景色ではなく背景で埋め、ウィンドウを中央に置きます。
+- **置き先の色がわからないページ。** GitHub の README は、読む人の設定でライトにもダークにもなります。背景を付ければ、どちらでも同じ見た目になります。
+
+README の本文に並べるデモは、たいてい背景なしで十分です。ページの色になじみ、ファイルも小さく済みます。画像の背景は SVG ごとに埋め込まれるので、横幅 1000〜1600 ピクセル程度の WebP か JPEG を使ってください。
 | --- | --- |
 | ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
 
@@ -72,7 +78,7 @@ SVG と mp4 の出力では、フォント、ライト/ダークテーマのほ�
 | ![](samples/showcase/fetch.svg) | ![](samples/showcase/devtools.svg) |
 | [**figlet、lolcat、toilet**](samples/showcase/logo.yaml) | [**sl**](samples/showcase/sl.yaml) |
 | ![](samples/showcase/logo.svg) | ![](samples/showcase/sl.svg) |
-| [**`keys` で操作する vim と git diff**](samples/showcase/vim.yaml) | |
+| [**`keys` で操作する vim と git diff（背景は画像）**](samples/showcase/vim.yaml) | |
 | ![](samples/showcase/vim.svg) | |
 
 [nyancat](samples/showcase/nyancat.yaml)（96 × 26 セルのトゥルーカラーアニメーション、`timeout` で停止）:

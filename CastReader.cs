@@ -171,7 +171,7 @@ internal static class CastReader
             else if (value.StartsWith(RenderSettingsResolver.BackgroundTagPrefix, StringComparison.Ordinal))
             {
                 if (ReadTag(value, RenderSettingsResolver.BackgroundTagPrefix, "background", "no background",
-                    static (string text, out BackgroundSpec parsed, out string error) => RenderSettingsResolver.TryParseBackground(text, baseFolder: null, out parsed, out error),
+                    static (string text, out BackgroundSpec parsed, out string error) => RenderSettingsResolver.TryParseBackground(text, images: null, out parsed, out error),
                     out var background))
                     style.Background = background;
             }

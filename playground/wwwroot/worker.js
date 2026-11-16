@@ -30,6 +30,9 @@ async function handle(message) {
       case 'loadOutputs':
         self.postMessage({ id, type: 'outputs', meta: JSON.parse(interop.LoadOutputs(message.json)) });
         return;
+      case 'setImage':
+        self.postMessage({ id, type: 'image', meta: JSON.parse(interop.SetImage(message.name, message.data)) });
+        return;
       case 'renderScenario':
         reply(id, () => interop.RenderScenario(message.yaml, JSON.stringify(message.options ?? {})));
         return;

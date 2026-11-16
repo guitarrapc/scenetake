@@ -298,7 +298,7 @@ catch (Exception ex)
 foreach (var unknownKey in FindUnknownScenarioKeys(yaml))
     Console.Error.WriteLine($"Warning: {unknownKey}");
 
-if (!RenderSettingsResolver.TryResolve(scenario, runThemePreset, out var renderSettings, out var themeError, Path.GetDirectoryName(scenarioPath)))
+if (!RenderSettingsResolver.TryResolve(scenario, runThemePreset, out var renderSettings, out var themeError, BackgroundImageSource.FromFolder(Path.GetDirectoryName(scenarioPath)!)))
 {
     Console.Error.WriteLine($"Error: {themeError}");
     PrintUsage();
@@ -549,7 +549,7 @@ if (outputFormat == OutputFormat.Svg)
     try
     {
         var written = CastReader.Read(outputPath);
-        var svgSettings = WithImageBackground(written.RenderSettings, renderSettings) with { MaxFps = renderSettings.MaxFps };
+        var svgSettings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings) with { MaxFps = renderSettings.MaxFps };
         SvgRender.WriteSvg(written.Events, written.Width, written.Height, svgSettings, svgPath!, written.LoopDuration);
         Console.Error.WriteLine($"Written: {FormatDisplayPath(svgPath!)}");
         if (SvgRender.SizeWarning(new FileInfo(svgPath!).Length, svgSettings.MaxFps, fromCast: false) is { } svgSizeWarning)
@@ -569,7 +569,7 @@ if (outputFormat == OutputFormat.Mp4)
     {
         // WriteMp4 encodes to a temporary file and renames it, so a failure leaves no partial .mp4.
         var written = CastReader.Read(outputPath);
-        var result = Mp4Render.WriteMp4(written.Events, written.Width, written.Height, WithImageBackground(written.RenderSettings, renderSettings), runMp4Options.ToSettings(), mp4Path!, ffmpegPath!, written.LoopDuration);
+        var result = Mp4Render.WriteMp4(written.Events, written.Width, written.Height, RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings), runMp4Options.ToSettings(), mp4Path!, ffmpegPath!, written.LoopDuration);
         PrintMp4Written(mp4Path!, result);
     }
     catch (Exception ex)
@@ -595,10 +595,6 @@ else if (outputFormat == OutputFormat.Mp4)
 else
     Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}");
 return 0;
-
-// The cast's render settings, with the run's background image: the cast keeps background colors only.
-static ResolvedRenderSettings WithImageBackground(ResolvedRenderSettings fromCast, ResolvedRenderSettings run) =>
-    run.Background?.ImagePath is not null ? fromCast with { Background = run.Background } : fromCast;
 
 static string FormatDisplayPath(string fullPath) =>
     Path.GetRelativePath(Directory.GetCurrentDirectory(), fullPath).Replace('\\', '/');
@@ -2225,7 +2221,7 @@ static bool TryConsumeStyleArg(string[] args, ref int i, StyleOptions style, out
             return true;
         if (style.Background is not null)
             error = "duplicate option: --background";
-        else if (RenderSettingsResolver.TryParseBackground(background, Directory.GetCurrentDirectory(), out var parsed, out error))
+        else if (RenderSettingsResolver.TryParseBackground(background, BackgroundImageSource.FromFolder(Directory.GetCurrentDirectory()), out var parsed, out error))
             style.Background = parsed;
         return true;
     }

@@ -226,6 +226,43 @@ main {
   outline-offset: 1px;
 }
 
+/* An image swatch shows the image, cropped to the square as the SVG crops it to the canvas. */
+.swatch--image {
+  background-size: cover;
+  background-position: center;
+}
+
+/* "Image…" opens the file chooser; the input itself is kept out of sight but stays focusable. */
+.image-pick {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.image-pick:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.image-pick input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.field__hint--error {
+  color: var(--danger);
+}
+
 /* None: a diagonal line, as a crossed-out color. */
 .swatch--none {
   background: linear-gradient(135deg, transparent 46%, var(--muted) 46% 54%, transparent 54%), var(--surface-2);

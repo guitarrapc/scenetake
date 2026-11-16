@@ -59,7 +59,13 @@ SVG and mp4 output support a custom font, a light or dark theme, and these setti
 | `margin` | `--margin` | Pixels around the window, 0–200. Default 32 with a background. |
 | `padding` | `--padding` | Pixels between the terminal's edge and its text, 0–100 |
 
-| macOS | Windows |
+Without `background`, only the window shows: the SVG's margin is transparent, and an mp4 is the window alone. A background helps when the output leaves the page it was made for:
+
+- **Videos for X or Reddit.** An mp4 with a background looks like a desktop screenshot instead of a cropped terminal. (A GIF made with agg has no window or background.)
+- **Fixed-size video.** With `--size 1920x1080`, the background fills the 16:9 frame and the window sits in the middle, instead of padding in the terminal's color.
+- **Pages whose color you do not know.** A GitHub README is light or dark depending on the reader. A background looks the same in both.
+
+Demos inside README text usually need none: the page color fits, and the file stays small. An image background is embedded in every SVG, so prefer a WebP or JPEG about 1000–1600 pixels wide.
 | --- | --- |
 | ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
 
@@ -72,7 +78,7 @@ Each recording below is a scenario in [`samples/showcase`](samples/showcase), ru
 | ![](samples/showcase/fetch.svg) | ![](samples/showcase/devtools.svg) |
 | [**figlet, lolcat, and toilet**](samples/showcase/logo.yaml) | [**sl**](samples/showcase/sl.yaml) |
 | ![](samples/showcase/logo.svg) | ![](samples/showcase/sl.svg) |
-| [**vim and git diff, typed by `keys`**](samples/showcase/vim.yaml) | |
+| [**vim and git diff, typed by `keys`, on an image background**](samples/showcase/vim.yaml) | |
 | ![](samples/showcase/vim.svg) | |
 
 [nyancat](samples/showcase/nyancat.yaml), 96 × 26 cells of truecolor animation, stopped by `timeout`:

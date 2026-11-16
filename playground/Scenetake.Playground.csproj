@@ -79,11 +79,14 @@
   <!--
     The samples the playground offers: each <name>.yaml with a <name>.outputs.json, with its cast for the Cast tab,
     from samples/ and from samples/showcase/ (recorded in a container by samples/showcase/record.sh). They are copied
-    into one folder next to the page, with samples/index.json listing their names.
+    into one folder next to the page, with samples/index.json listing their names. PlaygroundImage lists the
+    background images that samples name: the page loads them, because a browser page reads no files. They are
+    listed one by one, since samples/ also holds the GIFs of the samples.
   -->
   <ItemGroup>
     <PlaygroundOutputs Include="../samples/*.outputs.json;../samples/showcase/*.outputs.json" />
     <PlaygroundCast Include="../samples/*.cast;../samples/showcase/*.cast" />
+    <PlaygroundImage Include="../samples/background.webp" />
   </ItemGroup>
 
   <Target Name="_CopyPlaygroundSamples" AfterTargets="Publish">
@@ -96,14 +99,15 @@
       <Output TaskParameter="Filtered" ItemName="_PlaygroundUniqueSampleName" />
     </RemoveDuplicates>
     <Error Condition="'@(_PlaygroundUniqueSampleName->Count())' != '@(_PlaygroundSampleName->Count())'" Text="Two samples share a name. samples/ and samples/showcase/ are published into one folder, so their names must differ." />
-    <Copy SourceFiles="@(PlaygroundOutputs);@(_PlaygroundSampleYaml);@(PlaygroundCast)" DestinationFolder="$(PublishDir)wwwroot/samples" />
+    <Copy SourceFiles="@(PlaygroundOutputs);@(_PlaygroundSampleYaml);@(PlaygroundCast);@(PlaygroundImage)" DestinationFolder="$(PublishDir)wwwroot/samples" />
     <PropertyGroup>
       <_PlaygroundIndexScenarios>@(_PlaygroundSampleName->'&quot;%(Identity)&quot;', ',')</_PlaygroundIndexScenarios>
       <_PlaygroundIndexCasts>@(PlaygroundCast->'&quot;%(Filename)&quot;', ',')</_PlaygroundIndexCasts>
+      <_PlaygroundIndexImages>@(PlaygroundImage->'&quot;%(Filename)%(Extension)&quot;', ',')</_PlaygroundIndexImages>
     </PropertyGroup>
     <WriteLinesToFile
       File="$(PublishDir)wwwroot/samples/index.json"
-      Lines="{&quot;scenarios&quot;:[$(_PlaygroundIndexScenarios)],&quot;casts&quot;:[$(_PlaygroundIndexCasts)]}"
+      Lines="{&quot;scenarios&quot;:[$(_PlaygroundIndexScenarios)],&quot;casts&quot;:[$(_PlaygroundIndexCasts)],&quot;images&quot;:[$(_PlaygroundIndexImages)]}"
       Overwrite="true" />
   </Target>
 

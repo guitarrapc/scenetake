@@ -205,6 +205,7 @@ Does **not** scale with `font-size` (matches real OS window chrome). Tuned at de
 - `samples/theme-macos.yaml` — `window: macos`, `preset: dark`, on a gradient.
 - `samples/theme-windows.yaml` — `window: windows`, `preset: dark`, on a gradient.
 - `samples/showcase/fetch.yaml` — `window: macos` on a three-color gradient, with the scenario's title in the bar.
+- `samples/showcase/vim.yaml` — `window: macos` on an image, `../background.webp` (`samples/background.webp`), with `margin: 64`.
 - `samples/scenario_format.yaml` — every setting below.
 
 ### Window title, background, margin, and padding
@@ -244,7 +245,7 @@ An unknown value is an error on the scenario path and the CLI. An invalid cast t
 - **An image** is embedded in the SVG as a `data:` URI, scaled to cover the canvas and cropped to it, centered (`preserveAspectRatio="xMidYMid slice"`). A browser shows an `<img>` SVG without loading anything else, so a file reference would show nothing on GitHub. The 8 MB limit keeps one photo from making every recording that large.
 - **An image path** is relative to the scenario file's folder in `render.background`, as `cwd` is, and to the current folder on the CLI.
 - **An image is not stored in the cast**, which names no file of the computer it was recorded on ([spec_cast.md](spec_cast.md)). The scenario path passes it to the SVG and mp4 it renders from the cast. `--format cast` with an image is an error, because the cast alone would lose it.
-- **The playground** takes colors only: a browser page reads no files.
+- **The playground** reads no files. The page gives it each image with a name, and a background finds an image by its file name, so a scenario's `../background.webp` works unchanged ([spec_playground.md](spec_playground.md)).
 
 #### Margin and padding
 
