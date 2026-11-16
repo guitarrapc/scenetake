@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "playground",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["playground/preview.mjs", "5180"],
+      "port": 5180,
+      "url": "http://127.0.0.1:5180"
+    }
+  ]
+}
