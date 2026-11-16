@@ -181,6 +181,16 @@ scenetake svg scenario.cast
 # Same styling flags work on the svg subcommand
 scenetake svg scenario.cast --theme light --window windows --max-fps 30
 
+# One screen as a PNG, without ffmpeg: the final screen, or the one shown 2.5 seconds in
+scenetake png scenario.cast
+scenetake png scenario.cast --at 2.5 --window macos
+
+# Cast and PNG in one command
+scenetake --format png scenario.yaml
+
+# A still SVG of the final screen, without animation
+scenetake svg scenario.cast --at end
+
 # Convert a cast file to mp4 (H.264, needs ffmpeg) — best for full-screen TUIs and sharing
 scenetake mp4 scenario.cast
 
@@ -212,21 +222,21 @@ docker rm $id
 
 **Usage**
 
-`scenetake --help` lists all commands and options, including ranges and defaults. Use `scenetake svg --help`, `scenetake mp4 --help`, or `scenetake init --help` for command-specific options.
+`scenetake --help` lists all commands and options, including ranges and defaults. Use `scenetake svg --help`, `scenetake mp4 --help`, `scenetake png --help`, or `scenetake init --help` for command-specific options.
 
 ```bash
 # Initialize a new scenario file
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
-# Run scenario to generate cast (default), cast + SVG, or cast + mp4
-scenetake [--verbose] [--strict] [--format cast|svg|mp4]
+# Run scenario to generate cast (default), cast + SVG, cast + mp4, or cast + PNG
+scenetake [--verbose] [--strict] [--format cast|svg|mp4|png] [--at TIME]
   [--font-size N] [--font-family FAMILIES] [--theme NAME]
   [--window none|macos|windows] [--max-fps N]
   [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH]
   scenario.yaml [output]
 
-# Convert an existing cast file to SVG
-scenetake svg [--font-size N] [--font-family FAMILIES] [--theme NAME]
+# Convert an existing cast file to SVG (--at TIME makes a still SVG of one screen)
+scenetake svg [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME]
   [--window none|macos|windows] [--max-fps N]
   <input.cast> [output.svg]
 
@@ -234,6 +244,11 @@ scenetake svg [--font-size N] [--font-family FAMILIES] [--theme NAME]
 scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME]
   [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH]
   <input.cast> [output.mp4]
+
+# Draw one screen of an existing cast file as a PNG (the final screen, or the one at --at TIME)
+scenetake png [--at TIME] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME]
+  [--window none|macos|windows]
+  <input.cast> [output.png]
 ```
 
 `--max-fps` caps SVG animation frame rate (`0` = off, use full cast timing). It applies when `--format svg` is set or on the `svg` subcommand.

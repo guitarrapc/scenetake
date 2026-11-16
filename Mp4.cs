@@ -146,16 +146,16 @@ internal sealed class Mp4FrameRenderer
     /// that are installed here, at the title's size. With none of them and no fallback font installed either, the
     /// terminal's font, as the title used before.
     /// </summary>
-    private GlyphSource CreateTitleGlyphs()
+    internal static GlyphSource CreateTitleGlyphs(WindowStyle window, string fontFamily, string? fontFile)
     {
-        var titleLayout = RasterLayout.Create((int)SvgFrameRenderer.TitleFontSize(Layout.Window), 1, 1);
+        var titleLayout = RasterLayout.Create((int)SvgFrameRenderer.TitleFontSize(window), 1, 1);
         try
         {
             return GlyphSource.Create(SvgFrameRenderer.ChromeTitleFontFamily, null, titleLayout);
         }
         catch (FontNotFoundException)
         {
-            return GlyphSource.Create(_render.FontFamily, _fontFile, titleLayout);
+            return GlyphSource.Create(fontFamily, fontFile, titleLayout);
         }
     }
 
@@ -169,7 +169,7 @@ internal sealed class Mp4FrameRenderer
 
         GlyphSource? titleGlyphs = null;
         if (Layout.Window != WindowStyle.None && !string.IsNullOrEmpty(_render.WindowTitle))
-            titleGlyphs = CreateTitleGlyphs();
+            titleGlyphs = CreateTitleGlyphs(Layout.Window, _render.FontFamily, _fontFile);
 
         var raster = new FrameRasterizer(Layout, _theme, Glyphs, desktop, titleGlyphs, _render.WindowTitle, _render.WindowOpacity, _render.WindowBlur);
         var stepper = new ReplayStepper(_events, _initialWidth, _initialHeight, Layout.Cols, Layout.Rows, _theme, Plan.StopIndex);
@@ -608,6 +608,19 @@ internal static class Ffmpeg
             error = $"cannot run ffmpeg at {path}: {ex.Message}";
             return false;
         }
+    }
+
+    /// <summary>
+    /// Resolves the ffmpeg that decodes a background image for a PNG. It encodes nothing, so libx264 is not needed.
+    /// </summary>
+    internal static bool TryResolveImageDecoder(out string path, out string error)
+    {
+        if (TryLocate(out path, out error))
+            return true;
+
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(PathVariable)))
+            error = $"a PNG with a background image needs ffmpeg to decode the image, which was not found on PATH. Install ffmpeg, or set {PathVariable} to its path. A background color or gradient needs no ffmpeg.";
+        return false;
     }
 
     internal static string InstallHint()

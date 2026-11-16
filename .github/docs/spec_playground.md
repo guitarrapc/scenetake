@@ -23,7 +23,7 @@ A browser cannot start processes, so it cannot run a scenario's commands. If the
 ### Out of scope
 
 - Running commands, including `pre` and `post`.
-- mp4 and GIF output. mp4 needs ffmpeg and system fonts ([spec_mp4.md](spec_mp4.md)), and GIF comes from agg. The page gives the command for each place to share instead ([Both tabs](#both-tabs)).
+- mp4, PNG, and GIF output. mp4 needs ffmpeg and system fonts ([spec_mp4.md](spec_mp4.md)), a PNG needs system fonts ([spec_png.md](spec_png.md)), and GIF comes from agg. The page gives the command for each place to share instead ([Both tabs](#both-tabs)).
 - `--strict` and `init`.
 - Recorded outputs of the reader's own scenarios. The outputs file format does not prevent this, so it can be added later.
 
@@ -199,7 +199,7 @@ Below 960 px the panel comes after the editor and starts closed, unless a share 
 |---|---|---|
 | GitHub README | Animated SVG | `scenetake --format svg` |
 | X, Reddit | mp4 or GIF, not SVG | `scenetake --format mp4`; for X, `scenetake mp4 --max-size 1280x1024` |
-| Zenn | Uploads of PNG, JPEG, GIF, or WebP up to 3 MB, not SVG | agg in Docker (`ghcr.io/asciinema/agg`), from the cast, the same command as the README's Quick Start. Windows gets a link to the Quick Start, whose command copies the GIF out of the container. |
+| Zenn | Uploads of PNG, JPEG, GIF, or WebP up to 3 MB, not SVG | One screen as a PNG, `scenetake png scenario.cast`, with `--at` for an earlier screen ([spec_png.md](spec_png.md)). For motion, agg in Docker (`ghcr.io/asciinema/agg`), from the cast, the same command as the README's Quick Start. Windows gets a link to the Quick Start, whose command copies the GIF out of the container. |
 
 The agg command runs agg in Docker, as the README does, so a reader needs no agg install and gets a version that reads v3 casts (1.6.0 or later). Below 600 px each place is a block instead of a table row, so a command takes the screen's width: in three columns the agg command wrapped to 14 lines on a 375 px screen, and as a block it takes 5.
 

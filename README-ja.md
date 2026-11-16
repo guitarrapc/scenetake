@@ -181,6 +181,16 @@ scenetake svg scenario.cast
 # svg サブコマンドでも同じスタイルフラグが使える
 scenetake svg scenario.cast --theme light --window windows --max-fps 30
 
+# 1 画面を PNG にする（ffmpeg 不要）。最後の画面、または開始 2.5 秒後の画面
+scenetake png scenario.cast
+scenetake png scenario.cast --at 2.5 --window macos
+
+# cast と PNG を一度に生成
+scenetake --format png scenario.yaml
+
+# 最後の画面をアニメーションなしの静止 SVG にする
+scenetake svg scenario.cast --at end
+
 # cast ファイルを mp4（H.264、ffmpeg が必要）に変換。全画面 TUI や共有に向く
 scenetake mp4 scenario.cast
 
@@ -212,21 +222,21 @@ docker rm $id
 
 **Usage**
 
-`scenetake --help` は全コマンドとオプションの値の範囲・既定値を表示します。各コマンドのオプションは `scenetake svg --help`、`scenetake mp4 --help`、`scenetake init --help` で確認できます。
+`scenetake --help` は全コマンドとオプションの値の範囲・既定値を表示します。各コマンドのオプションは `scenetake svg --help`、`scenetake mp4 --help`、`scenetake png --help`、`scenetake init --help` で確認できます。
 
 ```bash
 # 新しいシナリオファイルを初期化
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
-# シナリオを実行して cast（既定）、cast + SVG、または cast + mp4 を生成
-scenetake [--verbose] [--strict] [--format cast|svg|mp4]
+# シナリオを実行して cast（既定）、cast + SVG、cast + mp4、または cast + PNG を生成
+scenetake [--verbose] [--strict] [--format cast|svg|mp4|png] [--at TIME]
   [--font-size N] [--font-family FAMILIES] [--theme NAME]
   [--window none|macos|windows] [--max-fps N]
   [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH]
   scenario.yaml [output]
 
-# 既存の cast ファイルを SVG に変換
-scenetake svg [--font-size N] [--font-family FAMILIES] [--theme NAME]
+# 既存の cast ファイルを SVG に変換（--at TIME で 1 画面の静止 SVG になる）
+scenetake svg [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME]
   [--window none|macos|windows] [--max-fps N]
   <input.cast> [output.svg]
 
@@ -234,6 +244,11 @@ scenetake svg [--font-size N] [--font-family FAMILIES] [--theme NAME]
 scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME]
   [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH]
   <input.cast> [output.mp4]
+
+# 既存の cast ファイルの 1 画面を PNG にする（最後の画面、または --at TIME の画面）
+scenetake png [--at TIME] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME]
+  [--window none|macos|windows]
+  <input.cast> [output.png]
 ```
 
 `--max-fps` は SVG アニメーションのフレームレート上限です（`0` = オフ、cast のタイミングをそのまま使用）。`--format svg` 時と `svg` サブコマンドで有効です。

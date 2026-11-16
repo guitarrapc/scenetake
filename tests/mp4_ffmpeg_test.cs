@@ -37,6 +37,7 @@ try
     failures += Run("CliRulesForValuesAndFormats", () => CliRulesForValuesAndFormats(scenetake, repoRoot, work));
     failures += Run("CliRulesForWindowStyle", () => CliRulesForWindowStyle(scenetake, repoRoot, work));
     failures += Run("CliRulesForLoopAndEnd", () => CliRulesForLoopAndEnd(scenetake, repoRoot, work));
+    failures += Run("CliRulesForStillImages", () => CliRulesForStillImages(scenetake, repoRoot, work));
     failures += Run("HelpDescribesEveryOption", () => HelpDescribesEveryOption(scenetake, repoRoot, work));
     failures += Run("InitWritesStepsForItsShell", () => InitWritesStepsForItsShell(scenetake, work));
     failures += Run("SubcommandsNeverReplaceTheirInput", () => SubcommandsNeverReplaceTheirInput(scenetake, repoRoot, work));
@@ -685,7 +686,7 @@ static bool CliRulesForWindowStyle(string scenetake, string repoRoot, string wor
         (["svg", "--background", "#111 #222 #333 #444 #555", "samples/basic.cast"], "background takes at most 4 colors"),
         (["svg", "--background", "no-such.png", "samples/basic.cast"], "background image not found: no-such.png"),
         (["svg", "--background", "notes.txt", "samples/basic.cast"], "or a .png, .jpg, .gif, or .webp file: notes.txt"),
-        (["--background", image, scenario], "--background with an image file requires --format svg or mp4"),
+        (["--background", image, scenario], "--background with an image file requires --format svg, mp4, or png"),
         (["svg", "--window-title", "a", "--window-title", "b", "samples/basic.cast"], "duplicate option: --window-title"),
         (["svg", "--opacity", "1.5", "samples/basic.cast"], "opacity must be between 0 and 1: 1.5"),
         (["svg", "--opacity", "85%", "samples/basic.cast"], "invalid opacity value: 85%"),
@@ -817,22 +818,104 @@ static bool CliRulesForLoopAndEnd(string scenetake, string repoRoot, string work
     }
 }
 
+// --at and PNG output: which formats take them, the options a still has no use for, and real output on both paths.
+static bool CliRulesForStillImages(string scenetake, string repoRoot, string work)
+{
+    var scenario = WriteScenario(work, "still.yaml");
+    var cases = new (string[] Args, string Expected)[]
+    {
+        (["--at", "1", scenario], "--at requires --format svg or png"),
+        (["--format", "mp4", "--at", "1", scenario], "--at applies to SVG and PNG: an mp4 plays the whole recording"),
+        (["--format", "png", "--max-fps", "10", scenario], "--max-fps applies to an animated SVG: a PNG is one screen"),
+        (["--format", "png", "--fps", "30", scenario], "--fps requires --format mp4"),
+        (["--format", "svg", "--font-file", "x.ttf", scenario], "--font-file requires --format mp4 or png"),
+        (["--format", "svg", "--at", "1", "--max-fps", "10", scenario], "--max-fps has no effect with --at"),
+        (["--format", "gif", scenario], "unknown format: gif (expected cast, svg, mp4, or png)"),
+        (["svg", "--at", "1", "--no-loop", "samples/basic.cast"], "--no-loop has no effect with --at: a still SVG does not play"),
+        (["svg", "--at", "1", "--fade-out", "1", "samples/basic.cast"], "--fade-out has no effect with --at"),
+        (["png", "--fps", "30", "samples/basic.cast"], "--fps applies to mp4: a PNG is one screen"),
+        (["png", "--size", "640x480", "samples/basic.cast"], "--size applies to mp4"),
+        (["png", "--end-hold", "1", "samples/basic.cast"], "--end-hold applies to animation: a PNG is one screen, which --at picks"),
+        (["png", "--no-loop", "samples/basic.cast"], "--no-loop applies to animation"),
+        (["png", "--max-fps", "10", "samples/basic.cast"], "--max-fps applies to an animated SVG"),
+        (["png", "--at", "-1", "samples/basic.cast"], "invalid --at value: -1"),
+        (["png", "--at", "soon", "samples/basic.cast"], "invalid --at value: soon (expected seconds from the start, such as 2.5, or end)"),
+        (["png", "--at", "1", "--at", "2", "samples/basic.cast"], "duplicate option: --at"),
+        (["png", "--at", "samples/basic.cast"], "invalid --at value: samples/basic.cast"),
+        (["png", scenario], "is a scenario, and png converts a cast file. To record the scenario with a PNG, run: scenetake --format png "),
+        (["png", "--background", Path.Combine(work, "missing.png"), "samples/basic.cast"], "background image not found"),
+    };
+
+    var ok = true;
+    foreach (var (args, expected) in cases)
+    {
+        var (exit, stderr) = Exec(scenetake, repoRoot, args);
+        if (exit != 1 || !stderr.Contains(expected, StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine($"  {string.Join(' ', args)}: exit {exit}, expected \"{expected}\" in:{Environment.NewLine}{stderr}");
+            ok = false;
+        }
+    }
+
+    static bool IsPng(string path) => File.Exists(path) && File.ReadAllBytes(path).AsSpan(0, 8).SequenceEqual(new byte[] { 0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A });
+
+    static bool Check(bool condition, string message)
+    {
+        if (!condition)
+            Console.Error.WriteLine($"  {message}");
+        return condition;
+    }
+
+    // The png command, the final screen by default and a time with --at. A font file is taken as for mp4.
+    var final = Path.Combine(work, "final.png");
+    var (finalExit, finalStderr) = Exec(scenetake, repoRoot, ["png", "--window", "macos", "samples/basic.cast", final]);
+    ok &= Check(finalExit == 0 && IsPng(final) && finalStderr.Contains("final screen", StringComparison.Ordinal) && finalStderr.Contains("font: ", StringComparison.Ordinal),
+        $"png: exit {finalExit}: {finalStderr}");
+    var early = Path.Combine(work, "early.png");
+    var (earlyExit, earlyStderr) = Exec(scenetake, repoRoot, ["png", "--at", "1.5", "samples/basic.cast", early]);
+    ok &= Check(earlyExit == 0 && IsPng(early) && earlyStderr.Contains("at 1.5s", StringComparison.Ordinal)
+        && !File.ReadAllBytes(early).SequenceEqual(File.ReadAllBytes(final)), $"png --at 1.5: exit {earlyExit}: {earlyStderr}");
+
+    // A still SVG has no animation, and says so in its line.
+    var stillSvg = Path.Combine(work, "still.svg");
+    var (stillExit, stillStderr) = Exec(scenetake, repoRoot, ["svg", "--at", "end", "samples/basic.cast", stillSvg]);
+    var still = stillExit == 0 ? File.ReadAllText(stillSvg) : "";
+    ok &= Check(stillExit == 0 && !still.Contains("animation", StringComparison.Ordinal) && still.Contains("Done!", StringComparison.Ordinal)
+        && stillStderr.Contains("still, final screen", StringComparison.Ordinal), $"svg --at end: exit {stillExit}: {stillStderr}");
+
+    // The scenario path writes the cast and the PNG, and --at picks the screen there too.
+    var (runExit, runStderr) = Exec(scenetake, repoRoot, ["--format", "png", "--at", "end", scenario]);
+    ok &= Check(runExit == 0 && File.Exists(Path.ChangeExtension(scenario, ".cast")) && IsPng(Path.ChangeExtension(scenario, ".png"))
+        && runStderr.Contains("Done: ", StringComparison.Ordinal), $"--format png: exit {runExit}: {runStderr}");
+
+    // A PNG with a background image needs ffmpeg to decode it, and says so before recording anything.
+    var image = Path.Combine(work, "wallpaper-still.png");
+    File.WriteAllBytes(image, Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="));
+    var (noFfmpegExit, noFfmpegStderr) = Exec(scenetake, repoRoot, ["png", "--background", image, "samples/basic.cast", Path.Combine(work, "bg.png")],
+        new() { ["SCENETAKE_FFMPEG"] = "", ["PATH"] = Path.Combine(work, "empty-path") });
+    ok &= Check(noFfmpegExit == 1 && noFfmpegStderr.Contains("a PNG with a background image needs ffmpeg to decode the image", StringComparison.Ordinal),
+        $"png --background image without ffmpeg: exit {noFfmpegExit}: {noFfmpegStderr}");
+    return ok;
+}
+
 static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string work)
 {
     // --help prints, on stdout, what every option of that command does; usage after an error stays short,
     // on stderr, and points to --help. The option lists here follow the parsers, so an option added there
     // and left out of the help fails this test.
-    string[] render = ["--font-size N", "--font-family FAMILIES", "--theme NAME", "--window none|macos|windows",
-        "--window-title TEXT", "--background VALUE", "--margin N", "--padding N", "--opacity N", "--blur N",
-        "--end-hold N", "--fade-out N"];
-    string[] svg = ["--max-fps N", "--no-loop", "--loop "];
+    string[] still = ["--font-size N", "--font-family FAMILIES", "--theme NAME", "--window none|macos|windows",
+        "--window-title TEXT", "--background VALUE", "--margin N", "--padding N", "--opacity N", "--blur N"];
+    string[] render = [.. still, "--end-hold N", "--fade-out N"];
+    string[] svg = ["--max-fps N", "--no-loop", "--loop ", "--at TIME"];
     string[] mp4 = ["--fps N", "--crf N", "--max-size WxH", "--size WxH", "--font-file PATH", "SCENETAKE_FFMPEG"];
+    string[] png = ["--at TIME", "--font-file PATH", "SCENETAKE_FFMPEG"];
     var commands = new (string[] Args, string[] Options)[]
     {
-        (["--help"], ["--format cast|svg|mp4", "--strict", "--verbose", .. render, .. svg, .. mp4, "scenetake svg", "scenetake mp4", "scenetake init", "--version"]),
-        (["-h"], ["--format cast|svg|mp4", "--strict", "--verbose"]),
+        (["--help"], ["--format cast|svg|mp4|png", "--strict", "--verbose", .. render, .. svg, .. mp4, "scenetake svg", "scenetake mp4", "scenetake png", "scenetake init", "--version"]),
+        (["-h"], ["--format cast|svg|mp4|png", "--strict", "--verbose"]),
         (["svg", "--help"], [.. render, .. svg]),
         (["mp4", "--help"], [.. render, .. mp4]),
+        (["png", "--help"], [.. still, .. png]),
         (["init", "--help"], ["--shell bash|pwsh|powershell"]),
     };
 
@@ -849,12 +932,24 @@ static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string w
         }
     }
 
+    // png rejects the options of an animation, so its help leaves them out.
+    var (_, pngHelp, _) = ExecCapture(scenetake, repoRoot, ["png", "--help"]);
+    foreach (var option in new[] { "--end-hold", "--fade-out", "--max-fps", "--no-loop", "--fps N" })
+    {
+        if (pngHelp.Contains(option, StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine($"  png --help lists {option}, which png rejects");
+            ok = false;
+        }
+    }
+
     // After an error the usage goes to stderr, with the pointer to --help, and stdout stays empty.
     foreach (var (args, pointer) in new (string[] Args, string Pointer)[]
     {
         (["--formt", "svg", "x.yaml"], "Run 'scenetake --help'"),
         (["svg", "--fps", "30", "x.cast"], "Run 'scenetake svg --help'"),
         (["mp4", "--max-fps", "30", "x.cast"], "Run 'scenetake mp4 --help'"),
+        (["png", "--fps", "30", "x.cast"], "Run 'scenetake png --help'"),
         (["init", "--shell", "zsh"], "Run 'scenetake init --help'"),
     })
     {
@@ -876,7 +971,7 @@ static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string w
         ok = false;
     }
 
-    foreach (var command in new[] { new[] { "--help" }, ["svg", "--help"], ["mp4", "--help"] })
+    foreach (var command in new[] { new[] { "--help" }, ["svg", "--help"], ["mp4", "--help"], ["png", "--help"] })
     {
         var (_, help, _) = ExecCapture(scenetake, repoRoot, command);
         var missing = names.Where(name => !System.Text.RegularExpressions.Regex.IsMatch(help, $@"(?<![\w-]){System.Text.RegularExpressions.Regex.Escape(name)}(?![\w-])")).ToList();

@@ -15,6 +15,7 @@
 #:include Svg.cs
 #:include Raster.cs
 #:include Mp4.cs
+#:include Png.cs
 #:include CastReader.cs
 #:include JsonEscape.cs
 #:include PtyLeadingInitFilter.cs
@@ -93,7 +94,7 @@ if (args[0] is "svg")
         return 0;
     }
 
-    if (!TryParseSvgArgs(args, out var castArg, out var svgOutputArg, out var svgFontSize, out var svgFontFamily, out var svgThemePreset, out var svgWindow, out var svgMaxFps, out var svgStyle, out var svgError))
+    if (!TryParseSvgArgs(args, out var castArg, out var svgOutputArg, out var svgFontSize, out var svgFontFamily, out var svgThemePreset, out var svgWindow, out var svgMaxFps, out var svgStyle, out var svgStillAt, out var svgError))
     {
         Console.Error.WriteLine($"Error: {svgError}");
         PrintSvgUsage();
@@ -140,10 +141,10 @@ if (args[0] is "svg")
         }
 
         svgRenderSettings = svgStyle.ToOverrides().Apply(svgRenderSettings);
-        foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(svgRenderSettings))
+        foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(svgRenderSettings, svg: svgStillAt is null))
             Console.Error.WriteLine($"Warning: {note}");
-        SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath, recording.LoopDuration);
-        PrintSvgWritten(svgOutputPath, recording, svgRenderSettings);
+        SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath, recording.LoopDuration, svgStillAt);
+        PrintSvgWritten(svgOutputPath, recording, svgRenderSettings, svgStillAt);
         if (SvgRender.SizeWarning(new FileInfo(svgOutputPath).Length, svgRenderSettings.MaxFps, fromCast: true) is { } svgSizeWarning)
             Console.Error.WriteLine($"Warning: {svgSizeWarning}");
         Console.Error.WriteLine($"Done: {FormatDisplayPath(svgOutputPath)}");
@@ -248,6 +249,96 @@ if (args[0] is "mp4")
     }
 }
 
+if (args[0] is "png")
+{
+    if (args.Length == 2 && args[1] is "-h" or "--help")
+    {
+        PrintPngHelp();
+        return 0;
+    }
+
+    if (!TryParsePngArgs(args, out var pngCastArg, out var pngOutputArg, out var pngFontSize, out var pngFontFamily, out var pngThemePreset, out var pngWindow, out var pngFontFile, out var pngStyle, out var pngStillAt, out var pngError))
+    {
+        Console.Error.WriteLine($"Error: {pngError}");
+        PrintPngUsage();
+        return 1;
+    }
+
+    var pngCastPath = Path.GetFullPath(pngCastArg);
+    if (!File.Exists(pngCastPath))
+    {
+        Console.Error.WriteLine($"Error: {FormatDisplayPath(pngCastPath)} not found");
+        return 1;
+    }
+
+    if (ScenarioGivenForCast(pngCastPath, "png") is { } pngScenarioError)
+    {
+        Console.Error.WriteLine($"Error: {pngScenarioError}");
+        return 1;
+    }
+
+    var pngOutputPath = RenderSettingsResolver.ResolveCastPngOutputPath(pngCastPath, pngOutputArg);
+    if (!TryCheckOutputPaths(pngCastPath, [pngOutputPath], out var pngOutputError))
+    {
+        Console.Error.WriteLine($"Error: {pngOutputError}");
+        return 1;
+    }
+
+    // A cast keeps background colors only, so an image comes from --background, and decoding it needs ffmpeg.
+    string? pngFfmpeg = null;
+    if (pngStyle.Background?.ImagePath is not null)
+    {
+        if (!Ffmpeg.TryResolveImageDecoder(out var imageDecoder, out var decoderError))
+        {
+            Console.Error.WriteLine($"Error: {decoderError}");
+            return 1;
+        }
+
+        pngFfmpeg = imageDecoder;
+    }
+
+    Console.Error.WriteLine($"Loading: {FormatDisplayPath(pngCastPath)}");
+    try
+    {
+        var recording = CastReader.Read(pngCastPath);
+        var pngRenderSettings = RenderSettingsResolver.ApplySvgOverrides(
+            recording.RenderSettings,
+            pngFontSize,
+            pngFontFamily,
+            pngThemePreset,
+            pngWindow,
+            maxFpsOverride: null,
+            out var pngOverrideError);
+        if (pngOverrideError.Length != 0)
+        {
+            Console.Error.WriteLine($"Error: {pngOverrideError}");
+            return 1;
+        }
+
+        pngRenderSettings = pngStyle.ToOverrides().Apply(pngRenderSettings);
+        foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(pngRenderSettings, svg: false))
+            Console.Error.WriteLine($"Warning: {note}");
+        var at = pngStillAt ?? double.PositiveInfinity;
+        var result = PngRender.WritePng(recording.Events, recording.Width, recording.Height, pngRenderSettings, at, pngOutputPath, pngFontFile, pngFfmpeg);
+        PrintPngWritten(pngOutputPath, result, at);
+        Console.Error.WriteLine($"Done: {FormatDisplayPath(pngOutputPath)}");
+        return 0;
+    }
+    catch (Exception ex)
+    {
+        // As for mp4: a cast that cannot be read removes a PNG from an earlier run, and font and frame-size errors,
+        // found before anything is drawn, leave it as it was.
+        if (ex is not (FontNotFoundException or FrameTooLargeException))
+            DeleteFileIfExists(pngOutputPath);
+        Console.Error.WriteLine(ex switch
+        {
+            CastReadException or FontNotFoundException or FrameTooLargeException => $"Error: {ex.Message}",
+            _ => $"Error: PNG render failed: {ex.Message}",
+        });
+        return 1;
+    }
+}
+
 if (args[0] is "--version")
 {
     PrintVersion();
@@ -260,7 +351,7 @@ if (args[0] is "-h" or "--help")
     return 0;
 }
 
-if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runStyle, out var runError))
+if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runStyle, out var runStillAt, out var runError))
 {
     Console.Error.WriteLine($"Error: {runError}");
     PrintUsage();
@@ -278,6 +369,7 @@ var outputStem = RenderSettingsResolver.ResolveOutputStem(scenarioPath, outputAr
 var outputPath = outputStem + ".cast";
 var svgPath = outputFormat == OutputFormat.Svg ? outputStem + ".svg" : null;
 var mp4Path = outputFormat == OutputFormat.Mp4 ? outputStem + ".mp4" : null;
+var pngPath = outputFormat == OutputFormat.Png ? outputStem + ".png" : null;
 
 Console.Error.WriteLine($"Loading: {FormatDisplayPath(scenarioPath)}");
 string yaml;
@@ -375,7 +467,7 @@ if (!string.IsNullOrWhiteSpace(scenario.Cwd))
 // The cast is written only after pre and the recording, so the outputs are checked first. When pre
 // has commands, their folder is checked after pre instead, because pre may create it.
 var preHasCommands = scenario.Pre?.Any(command => !string.IsNullOrWhiteSpace(command)) == true;
-if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path], out var outputPathError, requireFolder: !preHasCommands))
+if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path, pngPath], out var outputPathError, requireFolder: !preHasCommands))
 {
     Console.Error.WriteLine($"Error: {outputPathError}");
     return 1;
@@ -390,14 +482,14 @@ if (runWindow is WindowStyle runWindowValue)
 if (runMaxFps is int runMaxFpsValue)
     renderSettings = renderSettings with { MaxFps = runMaxFpsValue };
 renderSettings = runStyle.ToOverrides().Apply(renderSettings);
-// The cast keeps the settings for a later `scenetake svg`, so only mp4 output skips the SVG's notes.
-foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(renderSettings, svg: outputFormat != OutputFormat.Mp4))
+// The cast keeps the settings for a later `scenetake svg`, so only mp4 and still output skip the SVG's notes.
+foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(renderSettings, svg: outputFormat is OutputFormat.Svg or OutputFormat.Cast && runStillAt is null))
     Console.Error.WriteLine($"Warning: {note}");
 
-// A YAML background image needs SVG or mp4 output: the cast keeps background colors only.
+// A YAML background image needs SVG, mp4, or PNG output: the cast keeps background colors only.
 if (outputFormat == OutputFormat.Cast && renderSettings.Background?.ImagePath is not null)
 {
-    Console.Error.WriteLine("Error: render.background with an image file requires --format svg or mp4: a cast keeps colors only");
+    Console.Error.WriteLine("Error: render.background with an image file requires --format svg, mp4, or png: a cast keeps colors only");
     return 1;
 }
 
@@ -426,6 +518,36 @@ if (outputFormat == OutputFormat.Mp4)
     }
 
     ffmpegPath = resolvedFfmpeg;
+}
+
+// A PNG needs a font and a frame it can draw, and ffmpeg only to decode a background image. Checked before running
+// anything, as for mp4.
+if (outputFormat == OutputFormat.Png)
+{
+    if (renderSettings.Background?.ImagePath is not null)
+    {
+        if (!Ffmpeg.TryResolveImageDecoder(out var imageDecoder, out var decoderError))
+        {
+            Console.Error.WriteLine($"Error: {decoderError}");
+            return 1;
+        }
+
+        ffmpegPath = imageDecoder;
+    }
+
+    try
+    {
+        GlyphSource.Create(renderSettings.FontFamily, runMp4Options.FontFile, PngRender.CreateLayout(renderSettings, scenarioWidth, scenarioHeight));
+    }
+    catch (Exception ex) when (ex is FontNotFoundException or FrameTooLargeException)
+    {
+        Console.Error.WriteLine($"Error: {ex.Message}");
+        return 1;
+    }
+    finally
+    {
+        LoadedFace.ReleaseAll();
+    }
 }
 
 var deterministicSeed = ComputeDeterministicSeed(yaml);
@@ -459,7 +581,7 @@ async Task<int> StopAfterPreAsync(string error)
 // pre may create the output folder, or put a directory or a link to the input where an output goes, so
 // every output check runs again. Found here, they stop the run before the recording, instead of failing
 // the cast write or overwriting the input.
-if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path], out var outputCheckError))
+if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path, pngPath], out var outputCheckError))
     return await StopAfterPreAsync(outputCheckError);
 
 // pre or the steps may install fonts. The mp4 render scans again when it starts, instead of using
@@ -559,8 +681,8 @@ if (outputFormat == OutputFormat.Svg)
     {
         var written = CastReader.Read(outputPath);
         var svgSettings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings) with { MaxFps = renderSettings.MaxFps };
-        SvgRender.WriteSvg(written.Events, written.Width, written.Height, svgSettings, svgPath!, written.LoopDuration);
-        PrintSvgWritten(svgPath!, written, svgSettings);
+        SvgRender.WriteSvg(written.Events, written.Width, written.Height, svgSettings, svgPath!, written.LoopDuration, runStillAt);
+        PrintSvgWritten(svgPath!, written, svgSettings, runStillAt);
         if (SvgRender.SizeWarning(new FileInfo(svgPath!).Length, svgSettings.MaxFps, fromCast: false) is { } svgSizeWarning)
             Console.Error.WriteLine($"Warning: {svgSizeWarning}");
     }
@@ -590,6 +712,26 @@ if (outputFormat == OutputFormat.Mp4)
     }
 }
 
+if (outputFormat == OutputFormat.Png)
+{
+    try
+    {
+        // Drawn from the cast as written, as SVG and mp4 are.
+        var written = CastReader.Read(outputPath);
+        var pngSettings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings);
+        var at = runStillAt ?? double.PositiveInfinity;
+        var result = PngRender.WritePng(written.Events, written.Width, written.Height, pngSettings, at, pngPath!, runMp4Options.FontFile, ffmpegPath);
+        PrintPngWritten(pngPath!, result, at);
+    }
+    catch (Exception ex)
+    {
+        // A .png from an earlier run no longer matches the new cast.
+        DeleteFileIfExists(pngPath!);
+        Console.Error.WriteLine($"Error: PNG render failed: {ex.Message}");
+        exitCode = 1;
+    }
+}
+
 var postExitCode = await RunScenarioCommandsAsync(scenario.Post, "post", scenario.Cwd, shell, verbose);
 if (postExitCode != 0)
     return postExitCode;
@@ -601,6 +743,8 @@ if (outputFormat == OutputFormat.Svg)
     Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(svgPath!)}");
 else if (outputFormat == OutputFormat.Mp4)
     Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(mp4Path!)}");
+else if (outputFormat == OutputFormat.Png)
+    Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(pngPath!)}");
 else
     Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}");
 return 0;
@@ -685,6 +829,7 @@ static bool TryParseSvgArgs(
     out WindowStyle? windowOverride,
     out int? maxFpsOverride,
     out StyleOptions style,
+    out double? stillAt,
     out string error)
 {
     castPath = "";
@@ -695,11 +840,19 @@ static bool TryParseSvgArgs(
     themePresetOverride = null;
     windowOverride = null;
     maxFpsOverride = null;
+    stillAt = null;
     error = "";
 
     for (var i = 1; i < args.Length; i++)
     {
         var arg = args[i];
+        if (TryConsumeAtArg(args, ref i, ref stillAt, out error))
+        {
+            if (error.Length != 0)
+                return false;
+            continue;
+        }
+
         if (TryConsumeFontSizeArg(args, ref i, ref fontSizeOverride, out error))
         {
             if (error.Length != 0)
@@ -764,12 +917,28 @@ static bool TryParseSvgArgs(
         return false;
     }
 
+    // A still SVG shows one screen, so the options that shape the animation do nothing. Here they are not stored in a
+    // cast either, so naming one is a mistake.
+    if (stillAt.HasValue && AnimationOption(maxFpsOverride.HasValue, style) is string animationOption)
+    {
+        error = $"{animationOption} has no effect with --at: a still SVG does not play";
+        return false;
+    }
+
     if (castPath.Length != 0)
         return true;
 
     error = "cast path is required";
     return false;
 }
+
+/// <summary>The first option given that only an animation uses, or null.</summary>
+static string? AnimationOption(bool maxFps, StyleOptions style) =>
+    maxFps ? "--max-fps"
+    : style.Loop is bool loop ? (loop ? "--loop" : "--no-loop")
+    : style.EndHold is not null ? "--end-hold"
+    : style.FadeOut is not null ? "--fade-out"
+    : null;
 
 static bool TryParseRunArgs(
     string[] args,
@@ -785,6 +954,7 @@ static bool TryParseRunArgs(
     out int? maxFpsOverride,
     out Mp4Options mp4Options,
     out StyleOptions style,
+    out double? stillAt,
     out string error)
 {
     scenarioPath = "";
@@ -799,6 +969,7 @@ static bool TryParseRunArgs(
     windowOverride = null;
     maxFpsOverride = null;
     mp4Options = new Mp4Options();
+    stillAt = null;
     error = "";
 
     for (var i = 0; i < args.Length; i++)
@@ -865,6 +1036,13 @@ static bool TryParseRunArgs(
             continue;
         }
 
+        if (TryConsumeAtArg(args, ref i, ref stillAt, out error))
+        {
+            if (error.Length != 0)
+                return false;
+            continue;
+        }
+
         if (arg == "--format")
         {
             if (i + 1 >= args.Length)
@@ -909,9 +1087,16 @@ static bool TryParseRunArgs(
         return false;
     }
 
-    if (outputFormat != OutputFormat.Mp4 && mp4Options.FirstOption is string mp4Option)
+    // --font-file picks the font a PNG is drawn with too. The other mp4 options shape a video.
+    if (outputFormat == OutputFormat.Png && mp4Options.FirstVideoOption is string videoOption)
     {
-        error = $"{mp4Option} requires --format mp4";
+        error = $"{videoOption} requires --format mp4";
+        return false;
+    }
+
+    if (outputFormat is not (OutputFormat.Mp4 or OutputFormat.Png) && mp4Options.FirstOption is string mp4Option)
+    {
+        error = mp4Option == "--font-file" ? "--font-file requires --format mp4 or png" : $"{mp4Option} requires --format mp4";
         return false;
     }
 
@@ -921,16 +1106,37 @@ static bool TryParseRunArgs(
         return false;
     }
 
+    if (outputFormat == OutputFormat.Png && maxFpsOverride.HasValue)
+    {
+        error = "--max-fps applies to an animated SVG: a PNG is one screen";
+        return false;
+    }
+
     if (outputFormat == OutputFormat.Cast && maxFpsOverride.HasValue)
     {
         error = "--max-fps requires --format svg";
         return false;
     }
 
+    // --at picks one screen, which an SVG or a PNG shows. The cast has every screen and an mp4 plays them all.
+    if (stillAt.HasValue && outputFormat is OutputFormat.Cast or OutputFormat.Mp4)
+    {
+        error = outputFormat == OutputFormat.Mp4
+            ? "--at applies to SVG and PNG: an mp4 plays the whole recording"
+            : "--at requires --format svg or png";
+        return false;
+    }
+
+    if (stillAt.HasValue && maxFpsOverride.HasValue)
+    {
+        error = "--max-fps has no effect with --at: a still SVG does not play";
+        return false;
+    }
+
     // A cast keeps background colors but names no image file, so an image would be lost without a word.
     if (outputFormat == OutputFormat.Cast && style.Background?.ImagePath is not null)
     {
-        error = "--background with an image file requires --format svg or mp4: a cast keeps colors only";
+        error = "--background with an image file requires --format svg, mp4, or png: a cast keeps colors only";
         return false;
     }
 
@@ -1174,10 +1380,28 @@ static bool TryParseOutputFormat(string value, out OutputFormat format, out stri
         case "mp4":
             format = OutputFormat.Mp4;
             return true;
+        case "png":
+            format = OutputFormat.Png;
+            return true;
         default:
-            error = $"unknown format: {value}";
+            error = $"unknown format: {value} (expected cast, svg, mp4, or png)";
             return false;
     }
+}
+
+/// <summary>Reads <c>--at</c> and its value when <c>args[i]</c> is one, and returns whether it was.</summary>
+static bool TryConsumeAtArg(string[] args, ref int i, ref double? at, out string error)
+{
+    if (!TryTakeOptionValue(args, ref i, "--at", out var value, out error))
+        return false;
+
+    if (error.Length != 0)
+        return true;
+    if (at is not null)
+        error = "duplicate option: --at";
+    else if (RenderSettingsResolver.TryParseStillAt(value, out var parsed, out error))
+        at = parsed;
+    return true;
 }
 
 
@@ -1956,11 +2180,18 @@ static string CreateInitialScenarioYaml(string? shell)
 
 static void PrintUsage()
 {
-    Console.Error.WriteLine("Usage: scenetake [--verbose] [--strict] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
-    Console.Error.WriteLine("       scenetake svg [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
+    Console.Error.WriteLine("Usage: scenetake [--verbose] [--strict] [--format cast|svg|mp4|png] [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
+    Console.Error.WriteLine("       scenetake svg [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
     Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
+    Console.Error.WriteLine("       scenetake png [--at TIME] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output.png]");
     Console.Error.WriteLine("       scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]");
     Console.Error.WriteLine("Run 'scenetake --help' for what each option does.");
+}
+
+static void PrintPngUsage()
+{
+    Console.Error.WriteLine("Usage: scenetake png [--at TIME] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output.png]");
+    Console.Error.WriteLine("Run 'scenetake png --help' for what each option does.");
 }
 
 static void PrintMp4Usage()
@@ -1969,12 +2200,25 @@ static void PrintMp4Usage()
     Console.Error.WriteLine("Run 'scenetake mp4 --help' for what each option does.");
 }
 
-/// <summary>The SVG's line: its size in pixels, as a page first shows it, and its loop.</summary>
-static void PrintSvgWritten(string path, CastRecording recording, ResolvedRenderSettings render)
+/// <summary>The SVG's line: its size in pixels, as a page first shows it, and its loop, or for a still the screen it shows.</summary>
+static void PrintSvgWritten(string path, CastRecording recording, ResolvedRenderSettings render, double? stillAt = null)
 {
     var size = SvgRender.FormatSize(SvgRender.Measure(recording.Events, recording.Width, recording.Height, render));
+    if (stillAt is double at)
+    {
+        Console.Error.WriteLine($"Written: {FormatDisplayPath(path)}  ({size}, still, {RenderSettingsResolver.FormatStillAt(at)})");
+        return;
+    }
+
     var loop = RenderSettingsResolver.ResolveLoopDuration(recording.LoopDuration, recording.Events, render);
     Console.Error.WriteLine($"Written: {FormatDisplayPath(path)}  ({size}, {loop:F1}s)");
+}
+
+static void PrintPngWritten(string path, PngResult result, double at)
+{
+    var colors = result.Colors switch { 0 => "over 256 colors", 1 => "1 color", var n => $"{n} colors" };
+    Console.Error.WriteLine(
+        $"Written: {FormatDisplayPath(path)}  ({result.Width}x{result.Height}, {RenderSettingsResolver.FormatStillAt(at)}, {colors}, {FormatBytes(result.Bytes)}, font: {result.Font.Family})");
 }
 
 /// <summary>
@@ -2030,7 +2274,8 @@ static string? ScenarioGivenForCast(string inputPath, string format)
     }
 
     var display = FormatDisplayPath(inputPath);
-    return $"{display} is a scenario, and {format} converts a cast file. To record the scenario with {(format == "svg" ? "an SVG" : "an mp4")}, run: scenetake --format {format} {display}";
+    var output = format switch { "svg" => "an SVG", "png" => "a PNG", _ => "an mp4" };
+    return $"{display} is a scenario, and {format} converts a cast file. To record the scenario with {output}, run: scenetake --format {format} {display}";
 }
 
 // Decimal units (1MB = 1,000,000 bytes), the same as the SVG size warning. Sizes just under 1MB
@@ -2417,7 +2662,10 @@ static bool TryConsumeMp4Arg(string[] args, ref int i, Mp4Options options, out s
         return false;
     }
 
-    options.FirstOption ??= arg.Split('=')[0];
+    var name = arg.Split('=')[0];
+    options.FirstOption ??= name;
+    if (name != "--font-file")
+        options.FirstVideoOption ??= name;
     return true;
 }
 
@@ -2501,6 +2749,96 @@ static bool TryParseMp4Args(
     return false;
 }
 
+static bool TryParsePngArgs(
+    string[] args,
+    out string castPath,
+    out string? outputPath,
+    out int? fontSizeOverride,
+    out string? fontFamilyOverride,
+    out string? themePresetOverride,
+    out WindowStyle? windowOverride,
+    out string? fontFile,
+    out StyleOptions style,
+    out double? stillAt,
+    out string error)
+{
+    castPath = "";
+    style = new StyleOptions();
+    outputPath = null;
+    fontSizeOverride = null;
+    fontFamilyOverride = null;
+    themePresetOverride = null;
+    windowOverride = null;
+    fontFile = null;
+    stillAt = null;
+    error = "";
+    var mp4Options = new Mp4Options();
+
+    for (var i = 1; i < args.Length; i++)
+    {
+        var arg = args[i];
+        if (IsMaxFpsArg(arg))
+        {
+            error = "--max-fps applies to an animated SVG: a PNG is one screen";
+            return false;
+        }
+
+        if (TryConsumeAtArg(args, ref i, ref stillAt, out error)
+            || TryConsumeFontSizeArg(args, ref i, ref fontSizeOverride, out error)
+            || TryConsumeFontFamilyArg(args, ref i, ref fontFamilyOverride, out error)
+            || TryConsumeThemeArg(args, ref i, ref themePresetOverride, out error)
+            || TryConsumeWindowArg(args, ref i, ref windowOverride, out error)
+            || TryConsumeMp4Arg(args, ref i, mp4Options, out error)
+            || TryConsumeStyleArg(args, ref i, style, out error))
+        {
+            if (error.Length != 0)
+                return false;
+            continue;
+        }
+
+        if (arg.StartsWith('-'))
+        {
+            error = $"unknown option: {arg}";
+            return false;
+        }
+
+        if (castPath.Length == 0)
+        {
+            castPath = arg;
+            continue;
+        }
+
+        if (outputPath is null)
+        {
+            outputPath = arg;
+            continue;
+        }
+
+        error = $"unexpected argument: {arg}";
+        return false;
+    }
+
+    // A PNG is one screen at the terminal's own size, so the options of a video or an animation do not apply.
+    if (mp4Options.FirstVideoOption is string videoOption)
+    {
+        error = $"{videoOption} applies to mp4: a PNG is one screen at the terminal's own size";
+        return false;
+    }
+
+    if (AnimationOption(false, style) is string animationOption)
+    {
+        error = $"{animationOption} applies to animation: a PNG is one screen, which --at picks";
+        return false;
+    }
+
+    fontFile = mp4Options.FontFile;
+    if (castPath.Length != 0)
+        return true;
+
+    error = "cast path is required";
+    return false;
+}
+
 // Usage after an error goes to stderr and stays short; --help goes to stdout and says what each option
 // does, with its range and default (HelpText).
 static void PrintInitUsage()
@@ -2511,7 +2849,7 @@ static void PrintInitUsage()
 
 static void PrintSvgUsage()
 {
-    Console.Error.WriteLine("Usage: scenetake svg [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
+    Console.Error.WriteLine("Usage: scenetake svg [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
     Console.Error.WriteLine("Run 'scenetake svg --help' for what each option does.");
 }
 
@@ -2523,6 +2861,7 @@ static void PrintHelp() =>
         HelpText.Recording + "\n" +
         HelpText.Render(scenario: true) + "\n" +
         HelpText.SvgOptions + "\n" +
+        HelpText.StillOptions + "\n" +
         HelpText.Mp4Options + "\n" +
         HelpText.Environment + "\n" +
         HelpText.More);
@@ -2531,7 +2870,15 @@ static void PrintSvgHelp() =>
     Console.Out.Write(
         HelpText.SvgIntro + "\n" +
         HelpText.Render(scenario: false) + "\n" +
-        HelpText.SvgOptions);
+        HelpText.SvgOptions + "\n" +
+        HelpText.StillOptions);
+
+static void PrintPngHelp() =>
+    Console.Out.Write(
+        HelpText.PngIntro + "\n" +
+        HelpText.Render(scenario: false, animation: false) + "\n" +
+        HelpText.PngOptions + "\n" +
+        HelpText.Environment);
 
 static void PrintMp4Help() =>
     Console.Out.Write(
@@ -2568,6 +2915,7 @@ enum OutputFormat
     Cast,
     Svg,
     Mp4,
+    Png,
 }
 
 /// <summary>mp4 options from the command line. Unset values take the <see cref="Mp4Settings"/> defaults.</summary>
@@ -2601,6 +2949,9 @@ sealed class Mp4Options
     /// <summary>The first mp4 option given, for errors when mp4 output is not selected.</summary>
     internal string? FirstOption { get; set; }
 
+    /// <summary>The first of them that only video takes: every one but <c>--font-file</c>, which a PNG takes too.</summary>
+    internal string? FirstVideoOption { get; set; }
+
     internal Mp4Settings ToSettings() => new(
         Fps ?? Mp4Settings.DefaultFps,
         Crf ?? Mp4Settings.DefaultCrf,
@@ -2620,9 +2971,9 @@ sealed class Mp4Options
 static class HelpText
 {
     internal const string Intro = """
-        Records a YAML scenario as an asciinema v3 cast, and optionally as an animated SVG or an mp4.
-        The steps run for real: ordinary steps are shown with simulated typing, pty steps run in a
-        pseudo-terminal.
+        Records a YAML scenario as an asciinema v3 cast, and optionally as an animated SVG, an mp4,
+        or a PNG of one screen. The steps run for real: ordinary steps are shown with simulated
+        typing, pty steps run in a pseudo-terminal.
 
         """;
 
@@ -2631,9 +2982,10 @@ static class HelpText
           scenetake [options] <scenario.yaml> [output]   Run a scenario and record it
           scenetake svg [options] <input.cast> [output]  Convert a cast file to an animated SVG
           scenetake mp4 [options] <input.cast> [output]  Convert a cast file to an mp4 (needs ffmpeg)
+          scenetake png [options] <input.cast> [output]  Draw one screen of a cast file as a PNG
           scenetake init [--shell NAME] [scenario.yaml]  Write a commented starter scenario
           scenetake --version                            Print the version
-          scenetake svg|mp4|init --help                  Show the options of that command
+          scenetake svg|mp4|png|init --help              Show the options of that command
 
         [output] names the files without an extension: 'out' writes out.cast and out.svg, and an
         extension given is replaced. Without it, the files are named after the scenario, next to it.
@@ -2642,8 +2994,9 @@ static class HelpText
 
     internal const string Recording = """
         Recording:
-          --format cast|svg|mp4    Write only the cast (cast, the default), or the cast and an SVG or
-                                   an mp4 rendered from it
+          --format cast|svg|mp4|png
+                                   Write only the cast (cast, the default), or the cast and an SVG,
+                                   an mp4, or a PNG rendered from it
           --strict                 Stop at the first step that exits non-zero unless it sets
                                    'continue-on-error: true'. Write no output and run post.
                                    Exit 1. If a post command fails, return that command's exit code.
@@ -2656,9 +3009,10 @@ static class HelpText
     /// The rendering options. On a scenario they override its <c>render</c> settings, the theme only as a
     /// preset under the scenario's own colors. On a cast they replace what the cast header stores.
     /// </summary>
-    internal static string Render(bool scenario) =>
+    /// <param name="animation">Whether to list the options of an animation, which a PNG does not take.</param>
+    internal static string Render(bool scenario, bool animation = true) =>
         (scenario
-            ? "Rendering for SVG and mp4 (overrides the scenario's render settings, and is stored in the cast):\n"
+            ? "Rendering for SVG, mp4, and PNG (overrides the scenario's render settings, and is stored in the cast):\n"
             : "Rendering (overrides what the cast header stores, and the default applies when neither sets it):\n")
         + """
               --font-size N            Font size, 1-128 (default 16)
@@ -2699,18 +3053,51 @@ static class HelpText
                                        --background.
               --blur N                 Blur the background seen through a translucent window, 0-50 pixels
                                        (default 0). Needs --opacity below 1.
-              --end-hold N             Seconds the final screen stays before the SVG starts again or the
-                                       mp4 ends, 0-60 (default: as long as the pause before the last output)
-              --fade-out N             Fade the terminal's contents out over N seconds after the end hold,
-                                       0-10 (default 0). The window and the background stay.
 
-            """;
+            """
+        + (animation
+            ? """
+                  --end-hold N             Seconds the final screen stays before the SVG starts again or the
+                                           mp4 ends, 0-60 (default: as long as the pause before the last output)
+                  --fade-out N             Fade the terminal's contents out over N seconds after the end hold,
+                                           0-10 (default 0). The window and the background stay.
+
+                """
+            : "");
 
     internal const string SvgOptions = """
         SVG (--format svg, or the svg command):
           --max-fps N              Cap the animation frame rate, 1-120. 0 keeps every frame (default).
           --no-loop                Play the animation once and stop on the final screen (default: loop)
           --loop                   Loop, also when the scenario or the cast says not to
+
+        """;
+
+    internal const string StillOptions = """
+        Still image (--format png, the png command, or --at with SVG):
+          --at TIME                Draw the screen shown TIME seconds into the recording, such as 2.5,
+                                   or end for the final screen. A PNG shows the final screen without it.
+                                   With SVG, --at makes a still SVG without animation, which --max-fps,
+                                   --no-loop, --end-hold and --fade-out do not apply to.
+
+        """;
+
+    internal const string PngOptions = """
+        PNG (the png command, or --format png):
+          --at TIME                Draw the screen shown TIME seconds into the recording, such as 2.5,
+                                   or end for the final screen (default end)
+          --font-file PATH         A font file (TTF, OTF, TTC) to use before the --font-family fonts
+
+        The PNG is the frame an mp4 shows at that time, at the terminal's own size, with a palette
+        when it has 256 colors or fewer. It needs no ffmpeg, except to decode a --background image.
+
+        """;
+
+    internal const string PngIntro = """
+        Usage: scenetake png [options] <input.cast> [output]
+
+        Draws one screen of an asciinema v2 or v3 cast file as a PNG. [output] names the PNG. Without
+        it, the PNG is written next to the cast with the same name and .png.
 
         """;
 
@@ -2723,13 +3110,15 @@ static class HelpText
           --size WxH               Make the video exactly WxH (both even): the terminal is centered on
                                    the theme background, and a larger one is scaled down to fit.
                                    Not with --max-size.
-          --font-file PATH         A font file (TTF, OTF, TTC) to use before the --font-family fonts
+          --font-file PATH         A font file (TTF, OTF, TTC) to use before the --font-family fonts.
+                                   PNG takes it too.
 
         """;
 
     internal const string Environment = """
         Environment:
-          SCENETAKE_FFMPEG         The ffmpeg to use for mp4, instead of the one on PATH
+          SCENETAKE_FFMPEG         The ffmpeg to use for mp4, and for a PNG's background image,
+                                   instead of the one on PATH
 
         """;
 

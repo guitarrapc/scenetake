@@ -321,7 +321,9 @@ scenetake --format svg scenario.yaml</code></pre>
             <tr>
               <td>Zenn</td>
               <td>Uploads of PNG, JPEG, GIF, or WebP up to 3 MB, not SVG</td>
-              <td>A GIF made from the cast with <a href="https://github.com/asciinema/agg">agg</a> in Docker:
+              <td>One screen as a PNG, without ffmpeg: <code>scenetake png scenario.cast</code> (the final screen, or
+                <code>--at 2.5</code> for the screen 2.5 seconds in).<br>
+                For motion, a GIF made from the cast with <a href="https://github.com/asciinema/agg">agg</a> in Docker:
                 <code>docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20 --last-frame-duration 0</code><br>
                 On Windows, use the <a href="https://github.com/guitarrapc/scenetake#quick-start">Quick Start</a>
                 command, which copies the GIF out of the container.</td>

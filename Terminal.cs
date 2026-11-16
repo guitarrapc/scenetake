@@ -2629,6 +2629,41 @@ internal static class TerminalReplay
             throw new InvalidOperationException($"replay reached {next} of {frames.Count} frames");
     }
 
+    /// <summary>
+    /// The frame a still image shows at <paramref name="at"/> seconds: the last of <paramref name="frames"/> (from
+    /// <see cref="BuildFrames"/>) shown by then, as the animation shows it, or null before the first.
+    /// <see cref="double.PositiveInfinity"/> gives the final screen, which the animation holds at its end.
+    /// </summary>
+    internal static ReplayFrame? SelectStill(IReadOnlyList<ReplayFrame> frames, double at)
+    {
+        for (var i = frames.Count - 1; i >= 0; i--)
+        {
+            if (frames[i].Time <= at + ReplayStepper.TimeEpsilon)
+                return frames[i];
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The canvas-sized screen of <paramref name="frame"/>, replayed as <see cref="ReplaySelected"/> replays it for the
+    /// SVG, so a still PNG shows the same cells as a still SVG.
+    /// </summary>
+    internal static ScreenBuffer ReplayStill(
+        IReadOnlyList<CastEvent> events,
+        int initialWidth,
+        int initialHeight,
+        int canvasWidth,
+        int canvasHeight,
+        TerminalTheme theme,
+        ReplayFrame frame)
+    {
+        foreach (var (_, view) in ReplaySelected(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme, [frame]))
+            return view;
+
+        throw new InvalidOperationException("the replay drew no screen");
+    }
+
     /// <summary>The live buffer when it already fills the canvas, otherwise a resized copy.</summary>
     internal static ScreenBuffer ViewForCanvas(ScreenBuffer source, int canvasWidth, int canvasHeight)
     {

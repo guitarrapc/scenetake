@@ -168,6 +168,15 @@ Sizes are of LF files.
   | 200×60 | 17.0MB | 116MB (was 4.8GB) |
   | 384×108 | 53.2MB | 272MB (did not finish before: over 43GB) |
 
+### Still SVG
+
+`--at TIME` (`svg` subcommand, or `--format svg` on the scenario path) writes one screen instead of the animation: the screen the animated SVG shows `TIME` seconds into the recording, or with `end` the final screen it holds before it loops ([spec_cli.md](spec_cli.md) → `--at`).
+
+- The screen is the last frame of the animation's timeline shown by then, from the same frames, after the trailing blank alternate-screen restore is trimmed. So `end` is the final screen of the animated SVG, not the shell's screen after a full-screen program exits and clears.
+- The still has the window, title, background, opacity, and blur of the animated SVG. It has no `.l` rule, no timing rules, and no fade, so every element shows without CSS animation, also in an image converter that ignores `@keyframes`. `--max-fps`, `loop`, `end-hold`, and `fade-out` do not apply.
+- Before the first output the still is the empty terminal, as the animation shows it then.
+- **Why a still SVG.** A page or a slide that shows the result of a command does not need it typed out, and some places show an SVG without running its CSS animation. A still of a typing demo is also about a tenth of its animated size: `basic` is 3.3KB against 42KB.
+
 ### Window chrome
 
 Optional OS-style frame for README embeds. Configured via `render.window` in scenario YAML, `st:window` in v3 cast `tags`, or `--window` on CLI. Default: **`none`** (plain terminal above).

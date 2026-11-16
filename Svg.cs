@@ -3,16 +3,21 @@ using System.Text;
 
 internal static class SvgRender
 {
+    /// <param name="stillAt">
+    /// Seconds into the recording for a still SVG of the screen shown then, without animation, or
+    /// <see cref="double.PositiveInfinity"/> for the final screen. Null renders the animation.
+    /// </param>
     internal static void WriteSvg(
         IReadOnlyList<CastEvent> events,
         int width,
         int height,
         ResolvedRenderSettings render,
         string outputPath,
-        double? loopDurationOverride = null)
+        double? loopDurationOverride = null,
+        double? stillAt = null)
     {
         // Render fully before opening the file, so a render failure leaves no file behind.
-        var svg = Render(events, width, height, render, loopDurationOverride);
+        var svg = Render(events, width, height, render, loopDurationOverride, stillAt);
         using var stream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 1 << 16);
         svg.WriteTo(stream);
     }
@@ -59,10 +64,11 @@ internal static class SvgRender
         int width,
         int height,
         ResolvedRenderSettings render,
-        double? loopDurationOverride = null)
+        double? loopDurationOverride = null,
+        double? stillAt = null)
     {
         using var stream = new MemoryStream();
-        Render(events, width, height, render, loopDurationOverride).WriteTo(stream);
+        Render(events, width, height, render, loopDurationOverride, stillAt).WriteTo(stream);
         return stream.ToArray();
     }
 
@@ -72,10 +78,11 @@ internal static class SvgRender
         int width,
         int height,
         ResolvedRenderSettings render,
-        double? loopDurationOverride = null)
+        double? loopDurationOverride = null,
+        double? stillAt = null)
     {
         using var stream = new MemoryStream();
-        Render(events, width, height, render, loopDurationOverride).WriteTo(stream);
+        Render(events, width, height, render, loopDurationOverride, stillAt).WriteTo(stream);
         return SvgDocument.Utf8NoBom.GetString(stream.GetBuffer(), 0, (int)stream.Length);
     }
 
@@ -84,10 +91,20 @@ internal static class SvgRender
         int width,
         int height,
         ResolvedRenderSettings render,
-        double? loopDurationOverride)
+        double? loopDurationOverride,
+        double? stillAt = null)
     {
         var (canvasWidth, canvasHeight) = TerminalReplay.ResolveCanvasSize(width, height, events);
         var theme = TerminalTheme.FromResolved(render.Theme);
+        if (stillAt is double at)
+        {
+            // The one screen shown at that time, drawn from the start: the animation's frames, timing, and fade do
+            // not apply. Before the first screen there is nothing to draw but the terminal and its window.
+            var all = TerminalReplay.BuildFrames(events, width, height, canvasWidth, canvasHeight, theme, lastOfSameTime: true);
+            IReadOnlyList<ReplayFrame> still = TerminalReplay.SelectStill(all, at) is { } frame ? [frame.WithTime(0)] : [];
+            return SvgFrameRenderer.Render(events, width, height, still, render with { MaxFps = 0, FadeOut = null }, canvasWidth, canvasHeight, loopDuration: 1, still: true);
+        }
+
         // Without --max-fps only the last of frames that share a time is drawn (DropZeroLengthFrames).
         var frames = TerminalReplay.BuildFrames(events, width, height, canvasWidth, canvasHeight, theme, lastOfSameTime: render.MaxFps <= 0);
         var loopDuration = RenderSettingsResolver.ResolveLoopDuration(
@@ -1123,6 +1140,34 @@ internal static class RenderSettingsResolver
     internal static string ResolveCastSvgOutputPath(string castPath, string? outputArg) =>
         ResolveOutputPath(castPath, outputArg, ".svg");
 
+    internal static string ResolveCastPngOutputPath(string castPath, string? outputArg) =>
+        ResolveOutputPath(castPath, outputArg, ".png");
+
+    /// <summary>
+    /// <c>--at</c>: seconds from the start of the recording, 0 or more with decimals, or <c>end</c> for the final
+    /// screen (<see cref="double.PositiveInfinity"/>). A time past the end gives the final screen too.
+    /// </summary>
+    internal static bool TryParseStillAt(string text, out double at, out string error)
+    {
+        error = "";
+        var value = text.Trim();
+        if (value.Equals("end", StringComparison.OrdinalIgnoreCase))
+        {
+            at = double.PositiveInfinity;
+            return true;
+        }
+
+        if (double.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out at) && double.IsFinite(at))
+            return true;
+
+        error = $"invalid --at value: {text} (expected seconds from the start, such as 2.5, or end)";
+        return false;
+    }
+
+    /// <summary>The still's time as the log prints it: <c>at 2.5s</c>, or <c>final screen</c>.</summary>
+    internal static string FormatStillAt(double at) =>
+        double.IsPositiveInfinity(at) ? "final screen" : $"at {FormatSeconds(at)}s";
+
     internal static string ResolveOutputStem(string scenarioPath, string? outputArg) =>
         ResolveOutputPath(scenarioPath, outputArg, null);
 
@@ -1298,6 +1343,10 @@ internal static class SvgFrameRenderer
     /// same events and sizes). Frames carry no screen contents, so this replays
     /// <paramref name="events"/> once more and encodes each changed row as it goes.
     /// </summary>
+    /// <param name="still">
+    /// <paramref name="frames"/> is one screen shown from the start (<see cref="SvgRender.WriteSvg"/>'s still): the SVG
+    /// has no animation, so every element shows without CSS animation support.
+    /// </param>
     internal static SvgDocument Render(
         IReadOnlyList<CastEvent> events,
         int initialWidth,
@@ -1306,7 +1355,8 @@ internal static class SvgFrameRenderer
         ResolvedRenderSettings render,
         int canvasWidth,
         int canvasHeight,
-        double loopDuration)
+        double loopDuration,
+        bool still = false)
     {
         if (frames.Count == 0)
             return SvgDocument.FromText(BuildEmptySvg(render, canvasWidth, canvasHeight));
@@ -1319,7 +1369,7 @@ internal static class SvgFrameRenderer
         var layers = BuildLayers(events, initialWidth, initialHeight, frames, canvasWidth, canvasHeight, context);
         loopDuration = ResolveLoopDuration(loopDuration, layers);
 
-        var (head, rowKeyframes, tail) = BuildLayeredSvg(layers, context, render, canvasWidth, canvasHeight, loopDuration);
+        var (head, rowKeyframes, tail) = BuildLayeredSvg(layers, context, render, canvasWidth, canvasHeight, loopDuration, still);
         return new SvgDocument(head, stream => WriteRowLayers(stream, layers, rowKeyframes, context), tail);
     }
 
@@ -1628,7 +1678,8 @@ internal static class SvgFrameRenderer
         ResolvedRenderSettings render,
         int canvasWidth,
         int canvasHeight,
-        double loopDuration)
+        double loopDuration,
+        bool still)
     {
         var metrics = context.Metrics;
         var theme = context.Theme;
@@ -1717,9 +1768,15 @@ internal static class SvgFrameRenderer
         sb.AppendLf(".bg,rect:not([class]) { shape-rendering: crispEdges; }");
         // Every animated element: hidden by default, switched at its window's offsets, looping. Played once, each keeps
         // its value at the end of the loop: the elements of the final screen show from there on, and no others.
-        sb.AppendLf(CultureInfo.InvariantCulture,
-            $".l {{ visibility: hidden; animation: {loopDurationText}s step-start {(render.Loops ? "infinite" : "forwards")}; }}");
-        var fadeOut = render.SvgFadeOut;
+        // A still has one screen, all of it shown, so it leaves this rule and the timing rules out: a viewer
+        // without CSS animation, such as an image converter, then shows it too.
+        if (!still)
+        {
+            sb.AppendLf(CultureInfo.InvariantCulture,
+                $".l {{ visibility: hidden; animation: {loopDurationText}s step-start {(render.Loops ? "infinite" : "forwards")}; }}");
+        }
+
+        var fadeOut = still ? 0 : render.SvgFadeOut;
         if (fadeOut > 0 && loopDuration > 0)
         {
             // The terminal's contents fade out at the end of each loop. Its background, the window, and the
@@ -1738,7 +1795,8 @@ internal static class SvgFrameRenderer
         }
 
         context.Fills.AppendRules(sb);
-        keyframes.AppendAll(sb);
+        if (!still)
+            keyframes.AppendAll(sb);
         sb.AppendLf("</style>");
 
         sb.AppendLf("<defs>");

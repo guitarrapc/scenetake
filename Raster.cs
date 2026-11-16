@@ -20,7 +20,8 @@ internal readonly record struct RasterLayout(
     /// Whether a background surrounds the window. Without one the window is the whole frame, as video has no
     /// transparency to show around it, and <paramref name="margin"/> does not apply.
     /// </param>
-    internal static RasterLayout Create(int fontSize, int cols, int rows, WindowStyle window = WindowStyle.None, int? padding = null, int? margin = null, bool desktop = false)
+    /// <param name="png">Whether the frame is a PNG, which names the output in the error for a frame too large.</param>
+    internal static RasterLayout Create(int fontSize, int cols, int rows, WindowStyle window = WindowStyle.None, int? padding = null, int? margin = null, bool desktop = false, bool png = false)
     {
         var cellWidth = Math.Max(1, Round(fontSize * SvgFrameRenderer.CharWidthFactor));
         var cellHeight = Math.Max(1, Round(fontSize * SvgFrameRenderer.LineHeightFactor));
@@ -35,7 +36,7 @@ internal readonly record struct RasterLayout(
         {
             var width = windowWidth + (windowWidth & 1);
             var height = windowHeight + (windowHeight & 1);
-            CheckRawFrame(width, height, "use a smaller --font-size or terminal size");
+            CheckRawFrame(width, height, "use a smaller --font-size or terminal size", png);
             return new RasterLayout(cols, rows, cellWidth, cellHeight, baseline, padX, padY, width, height, fontSize, window, titleBar, 0, 0, width, height);
         }
 
@@ -44,7 +45,7 @@ internal readonly record struct RasterLayout(
         var frameHeight = windowHeight + outer * 2;
         frameWidth += frameWidth & 1;
         frameHeight += frameHeight & 1;
-        CheckRawFrame(frameWidth, frameHeight, "use a smaller --font-size, terminal size, or --margin");
+        CheckRawFrame(frameWidth, frameHeight, "use a smaller --font-size, terminal size, or --margin", png);
         return new RasterLayout(cols, rows, cellWidth, cellHeight, baseline, padX, padY, frameWidth, frameHeight, fontSize, window, titleBar,
             outer, outer, windowWidth, windowHeight, Desktop: true);
     }
@@ -115,12 +116,17 @@ internal readonly record struct RasterLayout(
     /// <summary>
     /// ffmpeg rejects a raw input frame unless (width + 128) × (height + 128) is below 2^28, about
     /// 16000x16000. Large accepted sizes reach that, for example 512×512 cells from font size 37.
-    /// Checking it here also keeps the RGB24 frame within one array and int arithmetic.
+    /// Checking it here also keeps the RGB24 frame within one array and int arithmetic. A PNG needs no
+    /// ffmpeg, but the same limit keeps its frame, about 800MB at most, within one array too.
     /// </summary>
-    private static void CheckRawFrame(long width, long height, string advice)
+    private static void CheckRawFrame(long width, long height, string advice, bool png = false)
     {
-        if ((width + 128) * (height + 128) >= 1L << 28)
-            throw new FrameTooLargeException($"an mp4 frame of {width}x{height} pixels is too large for ffmpeg: {advice}");
+        if ((width + 128) * (height + 128) < 1L << 28)
+            return;
+
+        throw new FrameTooLargeException(png
+            ? $"a PNG of {width}x{height} pixels is too large to draw: {advice}"
+            : $"an mp4 frame of {width}x{height} pixels is too large for ffmpeg: {advice}");
     }
 
     internal int CellX(int col) => WindowX + PadX + col * CellWidth;

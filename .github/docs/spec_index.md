@@ -14,6 +14,7 @@ scenetake behavior is split into focused specs under `.github/docs/`. Each spec 
 | [spec_pre_post.md](spec_pre_post.md) | `pre` / `post` — recording exclusion, fail-fast, exit-code semantics |
 | [spec_svg.md](spec_svg.md) | SVG output — renderer, `svg` subcommand consumption of cast events |
 | [spec_mp4.md](spec_mp4.md) | mp4 output — frame rendering, fonts, ffmpeg encoding, `mp4` subcommand |
+| [spec_png.md](spec_png.md) | PNG output — one screen picked with `--at`, drawn as the mp4 frame, encoded by scenetake, `png` subcommand |
 | [spec_pty.md](spec_pty.md) | PTY recording behavior when `pty: true` (keys in [spec_scenario.md](spec_scenario.md)) |
 | [spec_playground.md](spec_playground.md) | Browser playground on GitHub Pages — WASM build, outputs file, replay of recorded output, Scenario and Cast tabs, deployment |
 
@@ -43,6 +44,7 @@ Use this when you know the goal but not the document.
 | Produce `.svg` alongside or from a `.cast` | [spec_cli.md](spec_cli.md) → `--format svg` / `svg` subcommand; rendering in [spec_svg.md](spec_svg.md) |
 | Produce `.mp4` for full-screen TUIs or sharing on X | [spec_cli.md](spec_cli.md) → `--format mp4` / `mp4` subcommand; rendering and ffmpeg in [spec_mp4.md](spec_mp4.md) |
 | Choose between SVG and mp4 | [spec_mp4.md](spec_mp4.md) → Motivation |
+| Make one still image (a PNG, or an SVG without animation) for Zenn, slides, or a page | [spec_png.md](spec_png.md); `--at` in [spec_cli.md](spec_cli.md); the still SVG in [spec_svg.md](spec_svg.md) → Still SVG |
 | Understand exit codes or stderr output | [spec_cli.md](spec_cli.md) |
 | Know what happens when `pre`, SVG, or `post` fails | [spec_pre_post.md](spec_pre_post.md) + [spec_svg.md](spec_svg.md) failure tables |
 | Convert an existing cast (resize events, unsupported codes) | [spec_cast.md](spec_cast.md) + [spec_svg.md](spec_svg.md) → `svg` subcommand |

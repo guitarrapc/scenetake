@@ -13,14 +13,16 @@ scenetake records scenarios, converts casts to SVG or mp4, and creates starter Y
 | `scenetake <scenario.yaml> [output]` | Run a scenario. Write `.cast` (default), `.cast` + `.svg`, or `.cast` + `.mp4` |
 | `scenetake svg <input.cast> [output]` | Convert an existing cast to SVG |
 | `scenetake mp4 <input.cast> [output]` | Convert an existing cast to mp4 (needs ffmpeg. See [spec_mp4.md](spec_mp4.md)) |
+| `scenetake png <input.cast> [output]` | Draw one screen of an existing cast as a PNG (see [spec_png.md](spec_png.md)) |
 | `scenetake init [--shell bash\|pwsh\|powershell] [scenario.yaml]` | Create a commented starter scenario file |
 | `scenetake --help` | Print every command and option, with its range and default |
 | `scenetake --version` | Print version |
 
 ```bash
-scenetake [--verbose] [--strict] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]
-scenetake svg [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] <input.cast> [output]
+scenetake [--verbose] [--strict] [--format cast|svg|mp4|png] [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]
+scenetake svg [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] <input.cast> [output]
 scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output]
+scenetake png [--at TIME] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output]
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 ```
 
@@ -28,14 +30,17 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
 ## Parsing
 
-- Options may appear in any order before positional arguments on the scenario, `svg`, and `mp4` paths.
+- Options may appear in any order before positional arguments on the scenario, `svg`, `mp4`, and `png` paths.
 - Unknown `-` / `--` options are explicit errors (avoids typos becoming path-not-found errors).
-- `--format`, `--font-size`, `--font-family`, `--theme`, `--window`, `--max-fps`, `--fps`, `--crf`, `--max-size`, `--size`, and `--font-file` accept `--name=value` or `--name value`.
-- Duplicate `--font-size`, `--font-family`, `--theme`, `--window`, `--window-title`, `--background`, `--margin`, `--padding`, `--opacity`, `--blur`, `--max-fps`, `--fps`, `--crf`, `--max-size`, `--size`, or `--font-file` is an error. `--size` with `--max-size` is an error too: `--size` already sets the output size.
+- `--format`, `--at`, `--font-size`, `--font-family`, `--theme`, `--window`, `--max-fps`, `--fps`, `--crf`, `--max-size`, `--size`, and `--font-file` accept `--name=value` or `--name value`.
+- Duplicate `--at`, `--font-size`, `--font-family`, `--theme`, `--window`, `--window-title`, `--background`, `--margin`, `--padding`, `--opacity`, `--blur`, `--max-fps`, `--fps`, `--crf`, `--max-size`, `--size`, or `--font-file` is an error. `--size` with `--max-size` is an error too: `--size` already sets the output size.
 - Options for the other output format are errors, not ignored:
-  - On the scenario path, `--fps`, `--crf`, `--max-size`, `--size`, and `--font-file` without `--format mp4` fail with `<option> requires --format mp4`. The `svg` subcommand reports them as unknown options.
+  - On the scenario path, `--fps`, `--crf`, `--max-size`, and `--size` without `--format mp4` fail with `<option> requires --format mp4`. `--font-file` without `--format mp4` or `png` fails with `--font-file requires --format mp4 or png`. The `svg` subcommand reports them as unknown options.
   - `--max-fps` with mp4 output fails with `--max-fps applies to SVG, use --fps for mp4`.
-  - `--max-fps` with cast output (no `--format svg`) fails with `--max-fps requires --format svg`.
+  - `--max-fps` with cast output (no `--format svg`) fails with `--max-fps requires --format svg`, and with PNG output with `--max-fps applies to an animated SVG: a PNG is one screen`.
+  - `--at` needs SVG or PNG output: with cast output it fails with `--at requires --format svg or png`, and with mp4 with `--at applies to SVG and PNG: an mp4 plays the whole recording`.
+  - A still SVG has no animation. With `--at`, `--max-fps` fails on the scenario path, and the `svg` subcommand rejects `--max-fps`, `--loop`, `--no-loop`, `--end-hold`, and `--fade-out` with `<option> has no effect with --at: a still SVG does not play`. On the scenario path the loop and end options are stored in the cast, so they stay allowed.
+  - The `png` subcommand rejects `--fps`, `--crf`, `--max-size`, and `--size` (`<option> applies to mp4: a PNG is one screen at the terminal's own size`), and `--loop`, `--no-loop`, `--end-hold`, and `--fade-out` (`<option> applies to animation: a PNG is one screen, which --at picks`).
 - For `--fps`, `--crf`, `--max-size`, `--size`, and `--font-file`, a next argument that starts with `--` is not taken as the value: `--font-file --fps 30` fails with `--font-file requires a value`.
 - Range errors use plain ASCII ("between 1 and 60"), so every console code page shows them.
 
@@ -45,13 +50,14 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 |---|---|---|
 | `--verbose` | scenario path only | Show successful `pre`/`post` labels and phase markers, and the exception type and stack when an error stops the recording. See [spec_pre_post.md](spec_pre_post.md). |
 | `--strict` | scenario path only | For CI. Stop at the first recorded step that exits non-zero without `continue-on-error: true`. Skip later steps, preserve existing output files, and write no cast, SVG or mp4. Run `post`. Exit `1`. If a `post` command fails, return that command's exit code. The `svg` and `mp4` subcommands report it as an unknown option. See [spec_scenario.md](spec_scenario.md) → Step exit codes. |
-| `--format cast\|svg\|mp4` | scenario path only | Default `cast`. `svg` also writes `.svg`, and `mp4` also writes `.mp4`. See [spec_svg.md](spec_svg.md) and [spec_mp4.md](spec_mp4.md). |
+| `--format cast\|svg\|mp4\|png` | scenario path only | Default `cast`. `svg` also writes `.svg`, `mp4` also writes `.mp4`, and `png` also writes `.png`. See [spec_svg.md](spec_svg.md), [spec_mp4.md](spec_mp4.md), and [spec_png.md](spec_png.md). |
+| `--at TIME` | scenario (`--format svg` or `png`), `svg`, `png` | One screen: the one shown `TIME` seconds into the recording (decimals allowed, `0` or more), or `end` for the final screen. A time past the end gives the final screen, and a time before the first output an empty terminal. With SVG it makes a still SVG without animation ([spec_svg.md](spec_svg.md) → Still SVG). A PNG shows the final screen without it. Not stored in the cast. |
 | `--font-size N` | scenario, `svg` | `1`–`128`. Scenario path: overrides `render.font-size` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default `16`). See [spec_cast.md](spec_cast.md). |
 | `--font-family FAMILIES` | scenario, `svg` | CSS `font-family` string (`1`–`16` families, `256` characters max). Scenario path: overrides `render.font-family` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default stack). See [spec_cast.md](spec_cast.md) and [spec_svg.md](spec_svg.md). |
 | `--theme NAME` | scenario, `svg`, `mp4` | A named color theme ([spec_scenario.md](spec_scenario.md) → Color themes). An unknown name is an error that lists the names. Scenario path: overrides `render.theme.preset`. YAML `fg` / `bg` / `palette` still merge. Cast header stores resolved hex. `svg`: render-only override (CLI > cast header > default `dark`). See [spec_cast.md](spec_cast.md). |
 | `--window none\|macos\|windows` | scenario, `svg` | Scenario path: overrides `render.window` in the written cast header (and in the SVG when `--format svg`). `svg`: render-only override (CLI > cast header > default `none`). See [spec_cast.md](spec_cast.md) and [spec_svg.md](spec_svg.md). |
 | `--window-title TEXT` | scenario, `svg`, `mp4` | Text in the window's title bar. `""` or `--window-title=` shows none. Scenario path: overrides `render.window-title` in the written cast header. `svg`, `mp4`: overrides `st:window-title`, then the cast's `title`. See [spec_svg.md](spec_svg.md) → Window title, background, margin, and padding. |
-| `--background VALUE` | scenario, `svg`, `mp4` | One color, 2–4 colors for a gradient (separated by spaces or commas), or a `.png`, `.jpg`, `.gif`, or `.webp` file relative to the current folder. Colors are stored in the cast header; an image is not, so an image with cast output (no `--format svg` or `mp4`) is an error. |
+| `--background VALUE` | scenario, `svg`, `mp4`, `png` | One color, 2–4 colors for a gradient (separated by spaces or commas), or a `.png`, `.jpg`, `.gif`, or `.webp` file relative to the current folder. Colors are stored in the cast header; an image is not, so an image with cast output (no `--format svg`, `mp4`, or `png`) is an error. A PNG decodes an image with ffmpeg, as mp4 does. |
 | `--margin N` | scenario, `svg`, `mp4` | `0`–`200` px around the terminal or window. Default 8, 12 with a window, 32 with a background. mp4 has a margin only with a background. |
 | `--padding N` | scenario, `svg`, `mp4` | `0`–`100` px between the terminal's edge and its text. Default from the font size. |
 | `--opacity N` | scenario, `svg`, `mp4` | `0`–`1`, how much of the terminal's default background and the title bar covers the background. Default `1`. Below 1 without a background, a warning, and the window stays opaque. See [spec_svg.md](spec_svg.md) → Translucent window: opacity and blur. |
@@ -64,11 +70,11 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 | `--crf N` | scenario (`--format mp4`), `mp4` | H.264 quality, `1`–`51`. Default `23`. Higher values make smaller files. `0` (lossless) is not accepted, because x264 then writes the High 4:4:4 Predictive profile, which X and many players reject. |
 | `--max-size WxH` | scenario (`--format mp4`), `mp4` | Downscale to fit within `W×H` (each side `16`–`16384`), keeping the aspect ratio. Never upscales. `1280x1024` fits X video uploads. |
 | `--size WxH` | scenario (`--format mp4`), `mp4` | Make the video exactly `W×H` (each side `16`–`16384` and even): pad with the theme background, and scale down a larger terminal. Never upscales. Render only: the terminal's columns and rows are unchanged. Not with `--max-size`. See [spec_mp4.md](spec_mp4.md) → Exact size. |
-| `--font-file PATH` | scenario (`--format mp4`), `mp4` | Primary font file (TTF, OTF, TTC) for mp4, before the `font-family` lookup. See [spec_mp4.md](spec_mp4.md). |
+| `--font-file PATH` | scenario (`--format mp4` or `png`), `mp4`, `png` | Primary font file (TTF, OTF, TTC) for mp4 and PNG, before the `font-family` lookup. See [spec_mp4.md](spec_mp4.md). |
 
-`--format mp4` and the `mp4` subcommand also accept `--font-size`, `--font-family`, `--theme`, and `--window` with the same priority as SVG (CLI > cast header > default). `--window` draws the title bar and buttons without the SVG margin and shadow (see [spec_mp4.md](spec_mp4.md) → Window chrome).
+`--format mp4` and the `mp4` subcommand also accept `--font-size`, `--font-family`, `--theme`, and `--window` with the same priority as SVG (CLI > cast header > default). `--window` draws the title bar and buttons without the SVG margin and shadow (see [spec_mp4.md](spec_mp4.md) → Window chrome). `--format png` and the `png` subcommand accept them with the same priority, and the other style options too.
 
-**Environment.** `SCENETAKE_FFMPEG` names the ffmpeg binary for mp4 output. Otherwise `ffmpeg` on `PATH` is used.
+**Environment.** `SCENETAKE_FFMPEG` names the ffmpeg binary for mp4 output, and for decoding a PNG's background image. Otherwise `ffmpeg` on `PATH` is used. A PNG without a background image needs no ffmpeg.
 
 `SCENETAKE_OUTPUTS` names a file for the scenario path to write the outputs file to, after the cast and from the same run: what each step printed, which the browser playground replays ([spec_playground.md](spec_playground.md) → Outputs File). A relative path is resolved against the current folder. A failed write is an error, as for the cast, and `post` runs. The variable is for maintainers: `samples/regenerate.cs` sets it, and `--help` does not list it.
 
@@ -76,9 +82,9 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
 ## Output Paths
 
-**Scenario path.** `[output]` sets a shared stem. Extensions differ (`.cast`, plus `.svg` with `--format svg` or `.mp4` with `--format mp4`). With no `[output]`, stem matches the scenario path without extension. Passing `out.cast`, `out.svg`, or `out.mp4` yields the same stem.
+**Scenario path.** `[output]` sets a shared stem. Extensions differ (`.cast`, plus `.svg` with `--format svg`, `.mp4` with `--format mp4`, or `.png` with `--format png`). With no `[output]`, stem matches the scenario path without extension. Passing `out.cast`, `out.svg`, `out.mp4`, or `out.png` yields the same stem.
 
-**`svg` and `mp4` subcommands.** With no `[output]`, writes alongside the input as `<stem>.svg` or `<stem>.mp4`. With `[output]`, uses that path's stem and directory (extension optional).
+**`svg`, `mp4`, and `png` subcommands.** With no `[output]`, writes alongside the input as `<stem>.svg`, `<stem>.mp4`, or `<stem>.png`. With `[output]`, uses that path's stem and directory (extension optional).
 
 **Checks.** Before commands run, scenetake rejects output paths that are directories or refer to the input file. The scenario path checks these before `pre`. For example, `scenetake mp4 clip.mp4` would overwrite its input, and failed rendering deletes the output.
 
