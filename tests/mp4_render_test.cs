@@ -662,7 +662,7 @@ static (FixedRatePlan Plan, IReadOnlyList<int> Keyframes) PlanFor(string events,
         File.WriteAllText(path, "{\"version\":3,\"term\":{\"cols\":8,\"rows\":3,\"type\":\"xterm-256color\"}}\n" + events + "\n");
         var recording = CastReader.Read(path);
         var theme = TerminalTheme.FromResolved(recording.RenderSettings.Theme);
-        var plan = TerminalReplay.PlanFixedRate(recording.Events, recording.Width, recording.Height, recording.Width, recording.Height,
+        var plan = TerminalReplay.PlanFixedRate(recording.Events, recording.Width, recording.Height, CanvasWindow.Whole(recording.Width, recording.Height),
             theme, fps, Mp4FrameRenderer.CountFrames(recording.LoopDuration, fps));
         return (plan, Mp4Render.ChooseKeyframes(plan.ScreenSwitchFrames, fps));
     }

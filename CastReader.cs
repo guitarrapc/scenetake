@@ -114,6 +114,8 @@ internal static class CastReader
             Loop = style.Loop,
             EndHold = style.EndHold,
             FadeOut = style.FadeOut,
+            Fit = style.Fit,
+            Crop = new CropSpec(style.CropTop, style.CropBottom, style.CropLeft, style.CropRight),
         };
         var events = new List<CastEvent>();
         var warnedCodes = new HashSet<string>(StringComparer.Ordinal);
@@ -144,8 +146,8 @@ internal static class CastReader
     }
 
     /// <summary>
-    /// The window title, background, margin, padding, opacity, blur, loop, end hold, and fade-out a cast's tags set;
-    /// null for each it does not.
+    /// The window title, background, margin, padding, opacity, blur, loop, end hold, and fade-out a cast's tags set,
+    /// null for each it does not. Fit and crop are none and zero when unset.
     /// </summary>
     private sealed class CastStyle
     {
@@ -158,6 +160,11 @@ internal static class CastReader
         internal bool? Loop;
         internal double? EndHold;
         internal double? FadeOut;
+        internal FitMode Fit;
+        internal int CropTop;
+        internal int CropBottom;
+        internal int CropLeft;
+        internal int CropRight;
     }
 
     private static void ReadRenderTags(JsonElement tags, ref int fontSize, ref string fontFamily, ref WindowStyle window, CastStyle style)
@@ -223,7 +230,30 @@ internal static class CastReader
                 if (ReadTag<double>(value, RenderSettingsResolver.FadeOutTagPrefix, "fade-out", "no fade", RenderSettingsResolver.TryParseFadeOut, out var fadeOut))
                     style.FadeOut = fadeOut;
             }
+            else if (value.StartsWith(RenderSettingsResolver.FitTagPrefix, StringComparison.Ordinal))
+            {
+                if (ReadTag<FitMode>(value, RenderSettingsResolver.FitTagPrefix, "fit", "no fit", RenderSettingsResolver.TryParseFit, out var fit))
+                    style.Fit = fit;
+            }
+            else if (value.StartsWith(RenderSettingsResolver.CropTopTagPrefix, StringComparison.Ordinal))
+                style.CropTop = ReadCropTag(value, RenderSettingsResolver.CropTopTagPrefix, "crop-top");
+            else if (value.StartsWith(RenderSettingsResolver.CropBottomTagPrefix, StringComparison.Ordinal))
+                style.CropBottom = ReadCropTag(value, RenderSettingsResolver.CropBottomTagPrefix, "crop-bottom");
+            else if (value.StartsWith(RenderSettingsResolver.CropLeftTagPrefix, StringComparison.Ordinal))
+                style.CropLeft = ReadCropTag(value, RenderSettingsResolver.CropLeftTagPrefix, "crop-left");
+            else if (value.StartsWith(RenderSettingsResolver.CropRightTagPrefix, StringComparison.Ordinal))
+                style.CropRight = ReadCropTag(value, RenderSettingsResolver.CropRightTagPrefix, "crop-right");
         }
+    }
+
+    private static int ReadCropTag(string tag, string prefix, string name)
+    {
+        var text = tag[prefix.Length..];
+        if (RenderSettingsResolver.TryParseCrop(text, name, out var cells, out _))
+            return cells;
+
+        Console.Error.WriteLine($"Warning: cast: invalid {name} '{text}', using no crop");
+        return 0;
     }
 
     private delegate bool TagParser<T>(string text, out T parsed, out string error);

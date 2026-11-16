@@ -517,6 +517,11 @@ public partial class ScenarioRender
     public bool? Loop { get; set; }
     public double? EndHold { get; set; }
     public double? FadeOut { get; set; }
+    public string? Fit { get; set; }
+    public int? CropTop { get; set; }
+    public int? CropBottom { get; set; }
+    public int? CropLeft { get; set; }
+    public int? CropRight { get; set; }
     public ScenarioTheme? Theme { get; set; }
 }
 

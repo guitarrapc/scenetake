@@ -96,6 +96,7 @@ internal sealed class Mp4FrameRenderer
     private readonly string? _ffmpegPath;
     private readonly double _fadeOut;
     private readonly double _fadeStart;
+    private readonly CanvasWindow _canvas;
     private FixedRatePlan? _plan;
 
     /// <param name="loopDuration">The video's length, with the end hold and the fade-out (<see cref="RenderSettingsResolver.ResolveLoopDuration"/>).</param>
@@ -117,8 +118,8 @@ internal sealed class Mp4FrameRenderer
         _render = render;
         _fontFile = settings.FontFile;
         _ffmpegPath = ffmpegPath;
-        var (cols, rows) = TerminalReplay.ResolveCanvasSize(width, height, events);
-        Layout = Mp4Render.CreateLayout(render, cols, rows, settings);
+        _canvas = TerminalReplay.ResolveCanvas(events, width, height, render.Crop, render.Fit, _theme);
+        Layout = Mp4Render.CreateLayout(render, _canvas.Width, _canvas.Height, settings);
         Glyphs = GlyphSource.Create(render.FontFamily, settings.FontFile, Layout);
         FrameCount = CountFrames(loopDuration, settings.Fps);
         _fadeOut = render.FadeOut ?? 0;
@@ -136,7 +137,7 @@ internal sealed class Mp4FrameRenderer
 
     /// <summary>Where the replay stops and where full-screen programs switch screens. One parse of the recording, done once.</summary>
     internal FixedRatePlan Plan =>
-        _plan ??= TerminalReplay.PlanFixedRate(_events, _initialWidth, _initialHeight, Layout.Cols, Layout.Rows, _theme, _fps, FrameCount);
+        _plan ??= TerminalReplay.PlanFixedRate(_events, _initialWidth, _initialHeight, _canvas, _theme, _fps, FrameCount);
 
     /// <summary>Frames to encode as keyframes: see <see cref="Mp4Render.ChooseKeyframes"/>.</summary>
     internal IReadOnlyList<int> Keyframes => Mp4Render.ChooseKeyframes(Plan.ScreenSwitchFrames, _fps);
@@ -172,7 +173,7 @@ internal sealed class Mp4FrameRenderer
             titleGlyphs = CreateTitleGlyphs(Layout.Window, _render.FontFamily, _fontFile);
 
         var raster = new FrameRasterizer(Layout, _theme, Glyphs, desktop, titleGlyphs, _render.WindowTitle, _render.WindowOpacity, _render.WindowBlur);
-        var stepper = new ReplayStepper(_events, _initialWidth, _initialHeight, Layout.Cols, Layout.Rows, _theme, Plan.StopIndex);
+        var stepper = new ReplayStepper(_events, _initialWidth, _initialHeight, _canvas, _theme, Plan.StopIndex);
         byte[]? empty = null;
         byte[]? faded = null;
         for (var frame = 0; frame < FrameCount; frame++)
@@ -404,8 +405,8 @@ internal static class Mp4Render
     /// </summary>
     internal static (int Width, int Height) Measure(IReadOnlyList<CastEvent> events, int width, int height, ResolvedRenderSettings render, Mp4Settings settings)
     {
-        var (cols, rows) = TerminalReplay.ResolveCanvasSize(width, height, events);
-        return OutputSize(CreateLayout(render, cols, rows, settings), settings);
+        var canvas = TerminalReplay.ResolveCanvas(events, width, height, render.Crop, render.Fit, TerminalTheme.FromResolved(render.Theme));
+        return OutputSize(CreateLayout(render, canvas.Width, canvas.Height, settings), settings);
     }
 
     /// <summary>The encoded size: <c>--size</c>, or the frame fitted within <c>--max-size</c>.</summary>

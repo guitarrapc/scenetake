@@ -143,6 +143,12 @@ if (args[0] is "svg")
         }
 
         svgRenderSettings = svgStyle.ToOverrides().Apply(svgRenderSettings);
+        if (FindCropError(recording, svgRenderSettings) is { } svgCropError)
+        {
+            Console.Error.WriteLine($"Error: {svgCropError}");
+            return 1;
+        }
+
         foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(svgRenderSettings, svg: svgStillAt is null))
             Console.Error.WriteLine($"Warning: {note}");
         SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath, recording.LoopDuration, svgStillAt);
@@ -226,6 +232,12 @@ if (args[0] is "mp4")
         }
 
         mp4RenderSettings = mp4Style.ToOverrides().Apply(mp4RenderSettings);
+        if (FindCropError(recording, mp4RenderSettings) is { } mp4CropError)
+        {
+            Console.Error.WriteLine($"Error: {mp4CropError}");
+            return 1;
+        }
+
         foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(mp4RenderSettings, svg: false))
             Console.Error.WriteLine($"Warning: {note}");
         var result = Mp4Render.WriteMp4(recording.Events, recording.Width, recording.Height, mp4RenderSettings, mp4Options.ToSettings(), mp4OutputPath, mp4Ffmpeg, recording.LoopDuration);
@@ -311,6 +323,12 @@ if (args[0] is "gif")
         }
 
         gifRenderSettings = gifStyle.ToOverrides().Apply(gifRenderSettings);
+        if (FindCropError(recording, gifRenderSettings) is { } gifCropError)
+        {
+            Console.Error.WriteLine($"Error: {gifCropError}");
+            return 1;
+        }
+
         foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(gifRenderSettings, svg: false, gif: true))
             Console.Error.WriteLine($"Warning: {note}");
         var result = GifRender.WriteGif(recording.Events, recording.Width, recording.Height, gifRenderSettings, gifOptions.ToGifSettings(), gifOutputPath, gifFfmpeg, recording.LoopDuration);
@@ -400,6 +418,12 @@ if (args[0] is "png")
         }
 
         pngRenderSettings = pngStyle.ToOverrides().Apply(pngRenderSettings);
+        if (FindCropError(recording, pngRenderSettings) is { } pngCropError)
+        {
+            Console.Error.WriteLine($"Error: {pngCropError}");
+            return 1;
+        }
+
         foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(pngRenderSettings, svg: false))
             Console.Error.WriteLine($"Warning: {note}");
         var at = pngStillAt ?? double.PositiveInfinity;
@@ -567,6 +591,14 @@ if (runWindow is WindowStyle runWindowValue)
 if (runMaxFps is int runMaxFpsValue)
     renderSettings = renderSettings with { MaxFps = runMaxFpsValue };
 renderSettings = runStyle.ToOverrides().Apply(renderSettings);
+
+// A crop that leaves nothing of the terminal is known from the scenario alone, so it stops the run before anything runs.
+if (TerminalReplay.CheckCrop(renderSettings.Crop, scenarioWidth, scenarioHeight) is { } cropError)
+{
+    Console.Error.WriteLine($"Error: {cropError}");
+    return 1;
+}
+
 // The cast keeps the settings for a later `scenetake svg`, so only mp4, GIF, and still output skip the SVG's notes.
 foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(renderSettings,
     svg: outputFormat is OutputFormat.Svg or OutputFormat.Cast && runStillAt is null, gif: outputFormat == OutputFormat.Gif))
@@ -2610,6 +2642,14 @@ static (uint Volume, ulong Index, uint Links, string? FinalPath)? WindowsFileId(
     return (info.VolumeSerialNumber, ((ulong)info.FileIndexHigh << 32) | info.FileIndexLow, info.NumberOfLinks, finalPath);
 }
 
+// A crop that leaves no row or column of the cast's terminal, at the largest size its resize events reach. Checked
+// before rendering, so the error names the crop instead of coming from inside a render.
+static string? FindCropError(CastRecording recording, ResolvedRenderSettings settings)
+{
+    var (canvasWidth, canvasHeight) = TerminalReplay.ResolveCanvasSize(recording.Width, recording.Height, recording.Events);
+    return TerminalReplay.CheckCrop(settings.Crop, canvasWidth, canvasHeight);
+}
+
 static void DeleteFileIfExists(string path)
 {
     try
@@ -2743,6 +2783,31 @@ static bool TryConsumeStyleArg(string[] args, ref int i, StyleOptions style, out
             error = "duplicate option: --fade-out";
         else if (RenderSettingsResolver.TryParseFadeOut(fadeOut, out var parsed, out error))
             style.FadeOut = parsed;
+        return true;
+    }
+
+    if (TryTakeOptionValue(args, ref i, "--fit", out var fit, out error))
+    {
+        if (error.Length != 0)
+            return true;
+        if (style.Fit is not null)
+            error = "duplicate option: --fit";
+        else if (RenderSettingsResolver.TryParseFit(fit, out var parsed, out error))
+            style.Fit = parsed;
+        return true;
+    }
+
+    foreach (var edge in (ReadOnlySpan<string>)["top", "bottom", "left", "right"])
+    {
+        var name = "--crop-" + edge;
+        if (!TryTakeOptionValue(args, ref i, name, out var cells, out error))
+            continue;
+        if (error.Length != 0)
+            return true;
+        if (style.Crop(edge) is not null)
+            error = $"duplicate option: {name}";
+        else if (RenderSettingsResolver.TryParseCrop(cells, "crop-" + edge, out var parsed, out error))
+            style.SetCrop(edge, parsed);
         return true;
     }
 
@@ -3211,8 +3276,33 @@ sealed class StyleOptions
     internal bool? Loop { get; set; }
     internal double? EndHold { get; set; }
     internal double? FadeOut { get; set; }
+    internal FitMode? Fit { get; set; }
+    internal int? CropTop { get; set; }
+    internal int? CropBottom { get; set; }
+    internal int? CropLeft { get; set; }
+    internal int? CropRight { get; set; }
 
-    internal RenderStyleOverrides ToOverrides() => new(WindowTitle, Background, Margin, Padding, Opacity, Blur, Loop, EndHold, FadeOut);
+    internal int? Crop(string edge) => edge switch
+    {
+        "top" => CropTop,
+        "bottom" => CropBottom,
+        "left" => CropLeft,
+        _ => CropRight,
+    };
+
+    internal void SetCrop(string edge, int cells)
+    {
+        switch (edge)
+        {
+            case "top": CropTop = cells; break;
+            case "bottom": CropBottom = cells; break;
+            case "left": CropLeft = cells; break;
+            default: CropRight = cells; break;
+        }
+    }
+
+    internal RenderStyleOverrides ToOverrides() =>
+        new(WindowTitle, Background, Margin, Padding, Opacity, Blur, Loop, EndHold, FadeOut, Fit, CropTop, CropBottom, CropLeft, CropRight);
 }
 
 sealed class Mp4Options
@@ -3340,6 +3430,12 @@ static class HelpText
                                        --background.
               --blur N                 Blur the background seen through a translucent window, 0-50 pixels
                                        (default 0). Needs --opacity below 1.
+              --fit none|height|width|both
+                                       Move the bottom edge (height), the right edge (width), or both in to
+                                       the last row and column the recording shows, the cursor included
+                                       (default none). The cast keeps the terminal's size.
+              --crop-top N, --crop-bottom N, --crop-left N, --crop-right N
+                                       Cut N rows or columns from that edge before --fit, 0-511 (default 0)
 
             """
         + (animation

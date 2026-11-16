@@ -4,8 +4,9 @@ using static ScenarioCast;
 /// <summary>
 /// The render options of the playground. They are the CLI flags <c>--theme</c>, <c>--window</c>, <c>--font-size</c>,
 /// <c>--font-family</c>, <c>--max-fps</c>, <c>--window-title</c>, <c>--background</c>, <c>--margin</c>,
-/// <c>--padding</c>, <c>--opacity</c>, <c>--blur</c>, <c>--loop</c> / <c>--no-loop</c>, <c>--end-hold</c>, and
-/// <c>--fade-out</c>, with the same values and ranges. Null leaves a setting as the scenario or the cast sets it.
+/// <c>--padding</c>, <c>--opacity</c>, <c>--blur</c>, <c>--loop</c> / <c>--no-loop</c>, <c>--end-hold</c>,
+/// <c>--fade-out</c>, and <c>--fit</c>, with the same values and ranges. Null leaves a setting as the scenario or the
+/// cast sets it.
 /// </summary>
 /// <param name="Images">
 /// The images that a background, in the YAML or in <paramref name="Background"/>, names. The playground reads no
@@ -26,7 +27,8 @@ internal sealed record PlaygroundOptions(
     int? Blur = null,
     bool? Loop = null,
     double? EndHold = null,
-    double? FadeOut = null)
+    double? FadeOut = null,
+    string? Fit = null)
 {
     internal BackgroundImageSource ImageSource => BackgroundImageSource.FromImages(Images ?? new Dictionary<string, byte[]>());
 }
@@ -324,6 +326,18 @@ internal static class PlaygroundRender
             return false;
         }
 
+        FitMode? fit = null;
+        if (!string.IsNullOrWhiteSpace(options.Fit))
+        {
+            if (!RenderSettingsResolver.TryParseFit(options.Fit, out var parsedFit, out message))
+            {
+                error = message;
+                return false;
+            }
+
+            fit = parsedFit;
+        }
+
         style = new RenderStyleOverrides(
             options.WindowTitle is null ? null : RenderSettingsResolver.NormalizeWindowTitle(options.WindowTitle),
             background,
@@ -333,7 +347,8 @@ internal static class PlaygroundRender
             options.Blur,
             options.Loop,
             options.EndHold,
-            options.FadeOut);
+            options.FadeOut,
+            fit);
         return true;
     }
 

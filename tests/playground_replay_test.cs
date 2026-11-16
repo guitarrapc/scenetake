@@ -48,6 +48,7 @@ failures += Run("ErrorsAreValuesNotExceptions", ErrorsAreValuesNotExceptions);
 failures += Run("NotAppliedKeysAreListed", NotAppliedKeysAreListed);
 failures += Run("UnquotedColorsWarn", UnquotedColorsWarn);
 failures += Run("CastTabAppliesOverrides", () => CastTabAppliesOverrides(repoRoot));
+failures += Run("FitAndCropApplyInThePlayground", FitAndCropApplyInThePlayground);
 failures += Run("BackgroundImagesComeFromThePage", BackgroundImagesComeFromThePage);
 
 var scenetake = Environment.GetEnvironmentVariable("SCENETAKE_BIN");
@@ -469,6 +470,33 @@ static bool CastTabAppliesOverrides(string repoRoot)
             && ending.Warnings.Any(w => w.StartsWith("fade-out has no effect on an SVG that plays once", StringComparison.Ordinal)),
             $"the ending options act as the CLI's: {ending.Error} {string.Join("; ", ending.Warnings)}")
         & Expect(tooLong.Error == "end-hold must be between 0 and 60 seconds: 61", $"end-hold out of range: {tooLong.Error}");
+}
+
+// render.fit and crop in the YAML reach the playground's SVG through the cast's tags, as `scenetake svg` reads them.
+static bool FitAndCropApplyInThePlayground()
+{
+    var outputs = Outputs(RecordedStep.Pipe("echo hi", 0, [Out("hi\n")]));
+    var plain = PlaygroundRender.RenderScenario("width: 80\nheight: 24\nsteps:\n  - echo hi\n", outputs, new PlaygroundOptions());
+    var fitted = PlaygroundRender.RenderScenario("width: 80\nheight: 24\nrender:\n  fit: both\n  crop-left: 1\nsteps:\n  - echo hi\n", outputs, new PlaygroundOptions());
+    if (fitted.Error is not null || plain.Error is not null)
+        return Expect(false, $"render errors: {fitted.Error} {plain.Error}");
+
+    var recording = CastReader.ReadText(Encoding.UTF8.GetString(fitted.Cast!));
+    var expected = SvgRender.RenderToUtf8(recording.Events, recording.Width, recording.Height, recording.RenderSettings, recording.LoopDuration);
+    var castText = Encoding.UTF8.GetString(fitted.Cast!);
+
+    // The --fit option of the render options panel acts as render.fit does: the cast keeps it, and the SVG is the svg
+    // command's. (The YAML text seeds the typing, so a YAML with render.fit types differently and is no comparison.)
+    var byOption = PlaygroundRender.RenderScenario("width: 80\nheight: 24\nsteps:\n  - echo hi\n", outputs, new PlaygroundOptions(Fit: "height"));
+    var optionCast = CastReader.ReadText(Encoding.UTF8.GetString(byOption.Cast!));
+    var optionExpected = SvgRender.RenderToUtf8(optionCast.Events, optionCast.Width, optionCast.Height, optionCast.RenderSettings, optionCast.LoopDuration);
+    var wrong = PlaygroundRender.RenderScenario("width: 80\nheight: 24\nsteps:\n  - echo hi\n", outputs, new PlaygroundOptions(Fit: "wide"));
+    return Expect(castText.Contains("\"st:fit=both\"", StringComparison.Ordinal) && castText.Contains("\"st:crop-left=1\"", StringComparison.Ordinal), "the cast keeps fit and crop")
+        & Expect(fitted.Svg!.AsSpan().SequenceEqual(expected), "the playground draws what the svg command draws from its cast")
+        & Expect(fitted.Svg!.Length < plain.Svg!.Length && recording.RenderSettings is { Fit: FitMode.Both, Crop.Left: 1 }, "fit and crop change the SVG")
+        & Expect(byOption.Error is null && optionCast.RenderSettings.Fit == FitMode.Height && byOption.Svg!.AsSpan().SequenceEqual(optionExpected)
+            && byOption.Svg!.Length < plain.Svg!.Length, "the fit option is kept in the cast and drawn as the svg command draws it")
+        & Expect(wrong.Error == "unknown fit: wide (expected: none, height, width, both)", $"wrong fit: {wrong.Error}");
 }
 
 // The playground has no files: the page gives it each image with a name. A background in the YAML or the option

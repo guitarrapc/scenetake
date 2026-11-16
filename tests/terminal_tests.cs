@@ -330,8 +330,8 @@ static bool SameTimeFramesKeepLastScreen()
         (0.5, "a"), (0.5, "#mark"), (0.5, "b"), (0.5, "c"),
         (1.0, "\u001b[?25l"), (1.0, "\u001b[?25h"),
         (1.5, "d"), (2.0, "e"), (2.0, "#end"));
-    var all = TerminalReplay.BuildFrames(events, 8, 2, 8, 2, theme);
-    var last = TerminalReplay.BuildFrames(events, 8, 2, 8, 2, theme, lastOfSameTime: true);
+    var all = TerminalReplay.BuildFrames(events, 8, 2, CanvasWindow.Whole(8, 2), theme);
+    var last = TerminalReplay.BuildFrames(events, 8, 2, CanvasWindow.Whole(8, 2), theme, lastOfSameTime: true);
 
     // What a caller that keeps the last of frames sharing a time sees, without repeats of an unchanged screen.
     var kept = all.Where((f, i) => i + 1 == all.Count || all[i + 1].Time != f.Time).ToList();
@@ -348,8 +348,8 @@ static bool SameTimeFramesWithBlankFinalScreen()
     var theme = DarkTheme();
     var events = OutputEvents(
         (0.0, "\u001b[?1049h"), (0.5, "x"), (0.5, "y"), (1.0, "\u001b[2J"), (1.0, "\u001b[?1049l"));
-    var all = TerminalReplay.BuildFrames(events, 8, 2, 8, 2, theme);
-    var last = TerminalReplay.BuildFrames(events, 8, 2, 8, 2, theme, lastOfSameTime: true);
+    var all = TerminalReplay.BuildFrames(events, 8, 2, CanvasWindow.Whole(8, 2), theme);
+    var last = TerminalReplay.BuildFrames(events, 8, 2, CanvasWindow.Whole(8, 2), theme, lastOfSameTime: true);
     return all.Count > 0
         && !all[^1].IsBlank
         && last.Select(f => (f.Time, f.Signature, f.EventIndex)).SequenceEqual(all.Select(f => (f.Time, f.Signature, f.EventIndex)));

@@ -265,22 +265,31 @@ internal sealed class ScreenBuffer
         return hash;
     }
 
-    internal ulong ComputeCanvasSignature(int canvasWidth, int canvasHeight)
+    internal ulong ComputeCanvasSignature(int canvasWidth, int canvasHeight) =>
+        ComputeCanvasSignature(CanvasWindow.Whole(canvasWidth, canvasHeight));
+
+    /// <summary>A hash of what <paramref name="canvas"/> shows: its cells, and the cursor when it is inside.</summary>
+    internal ulong ComputeCanvasSignature(CanvasWindow canvas)
     {
         const ulong fnvOffset = 1469598103934665603UL;
         const ulong fnvPrime = 1099511628211UL;
 
+        var cursorRow = CursorRow - canvas.Top;
+        var cursorCol = CursorCol - canvas.Left;
+        var cursorShown = CursorVisible && (uint)cursorRow < (uint)canvas.Height && (uint)cursorCol < (uint)canvas.Width;
         var signature = fnvOffset;
-        signature = MixInt(signature, CursorRow, fnvPrime);
-        signature = MixInt(signature, CursorCol, fnvPrime);
-        signature = MixInt(signature, CursorVisible ? 1 : 0, fnvPrime);
+        signature = MixInt(signature, cursorRow, fnvPrime);
+        signature = MixInt(signature, cursorCol, fnvPrime);
+        signature = MixInt(signature, cursorShown ? 1 : 0, fnvPrime);
 
         var blank = BlankCell();
-        for (var row = 0; row < canvasHeight; row++)
+        for (var viewRow = 0; viewRow < canvas.Height; viewRow++)
         {
+            var row = viewRow + canvas.Top;
             var inRow = (uint)row < (uint)Height;
-            for (var col = 0; col < canvasWidth; col++)
+            for (var viewCol = 0; viewCol < canvas.Width; viewCol++)
             {
+                var col = viewCol + canvas.Left;
                 var cell = inRow && (uint)col < (uint)Width ? _cells[row, col] : blank;
                 var style = cell.Style;
                 signature = MixString(signature, cell.Text.AsSpan(), fnvPrime);
@@ -380,6 +389,83 @@ internal sealed class ScreenBuffer
         CursorRow = Math.Clamp(CursorRow, 0, Height - 1);
         CursorCol = Math.Clamp(CursorCol, 0, Width - 1);
         _pendingWrap = false;
+    }
+
+    /// <summary>
+    /// A copy of the cells <paramref name="canvas"/> covers, as a screen of its size. Cells outside this screen are
+    /// blank. A wide character that the window's edge cuts in half becomes blank. The cursor keeps its place on the
+    /// cells, and it is hidden when it is outside the window.
+    /// </summary>
+    internal ScreenBuffer CopyWindow(CanvasWindow canvas)
+    {
+        var view = new ScreenBuffer(canvas.Width, canvas.Height, _theme);
+        for (var viewRow = 0; viewRow < view.Height; viewRow++)
+        {
+            var row = viewRow + canvas.Top;
+            if ((uint)row >= (uint)Height)
+                continue;
+
+            for (var viewCol = 0; viewCol < view.Width; viewCol++)
+            {
+                var col = viewCol + canvas.Left;
+                if ((uint)col < (uint)Width)
+                    view._cells[viewRow, viewCol] = _cells[row, col];
+            }
+
+            if (view._cells[viewRow, 0].IsWideContinuation)
+                view._cells[viewRow, 0] = view.BlankCell();
+            if (view._cells[viewRow, view.Width - 1].IsWide)
+                view._cells[viewRow, view.Width - 1] = view.BlankCell();
+        }
+
+        var cursorRow = CursorRow - canvas.Top;
+        var cursorCol = CursorCol - canvas.Left;
+        var inside = (uint)cursorRow < (uint)view.Height && (uint)cursorCol < (uint)view.Width;
+        view.CursorRow = inside ? cursorRow : 0;
+        view.CursorCol = inside ? cursorCol : 0;
+        view.CursorVisible = CursorVisible && inside;
+        view._isAltScreen = _isAltScreen;
+        view.AlternateScreenSwitches = AlternateScreenSwitches;
+        return view;
+    }
+
+    /// <summary>
+    /// How many rows and columns of <paramref name="canvas"/> hold something to see: the last row and the last
+    /// column with a cell that is not blank (<see cref="IsRowBlank(int)"/>), or with the visible cursor, plus one.
+    /// Zero when the window shows nothing.
+    /// </summary>
+    internal (int Rows, int Cols) ContentExtent(CanvasWindow canvas)
+    {
+        var rows = 0;
+        var cols = 0;
+        for (var viewRow = 0; viewRow < canvas.Height; viewRow++)
+        {
+            var row = viewRow + canvas.Top;
+            if ((uint)row >= (uint)Height)
+                break;
+
+            var end = Math.Min(canvas.Width, Width - canvas.Left);
+            for (var viewCol = end - 1; viewCol >= 0; viewCol--)
+            {
+                ref readonly var cell = ref _cells[row, viewCol + canvas.Left];
+                if (cell.Text != Space || cell.Style != DefaultStyle || cell.IsWide || cell.IsWideContinuation || cell.Glyph is not null)
+                {
+                    rows = viewRow + 1;
+                    cols = Math.Max(cols, viewCol + 1);
+                    break;
+                }
+            }
+        }
+
+        var cursorRow = CursorRow - canvas.Top;
+        var cursorCol = CursorCol - canvas.Left;
+        if (CursorVisible && (uint)cursorRow < (uint)canvas.Height && (uint)cursorCol < (uint)canvas.Width)
+        {
+            rows = Math.Max(rows, cursorRow + 1);
+            cols = Math.Max(cols, cursorCol + 1);
+        }
+
+        return (rows, cols);
     }
 
     internal ScreenBuffer Clone()
@@ -2245,6 +2331,42 @@ internal sealed class ReplayFrame(double time, int viewportWidth, int viewportHe
 }
 
 /// <summary>
+/// The part of the terminal that a render draws: <see cref="Width"/> × <see cref="Height"/> cells from column
+/// <see cref="Left"/> and row <see cref="Top"/>. Without crop and fit it is the whole canvas: the terminal, or the
+/// largest size its resize events reach (<see cref="TerminalReplay.ResolveCanvasSize"/>).
+/// </summary>
+internal readonly struct CanvasWindow(int left, int top, int width, int height)
+{
+    internal int Left { get; } = left;
+    internal int Top { get; } = top;
+    internal int Width { get; } = width;
+    internal int Height { get; } = height;
+
+    internal static CanvasWindow Whole(int width, int height) => new(0, 0, width, height);
+
+    /// <summary>How much of a terminal of the given size the window shows: the viewport that the SVG draws for a resize.</summary>
+    internal (int Width, int Height) Viewport(int terminalWidth, int terminalHeight) =>
+        (Math.Clamp(terminalWidth - Left, 0, Width), Math.Clamp(terminalHeight - Top, 0, Height));
+
+    public override string ToString() => $"{Width}x{Height} at column {Left}, row {Top}";
+}
+
+/// <summary>Cells cut from each edge of the canvas before it is drawn (<c>render.crop-*</c>, <c>--crop-*</c>).</summary>
+internal readonly record struct CropSpec(int Top, int Bottom, int Left, int Right)
+{
+    internal bool IsEmpty => Top == 0 && Bottom == 0 && Left == 0 && Right == 0;
+}
+
+/// <summary>Which edges <c>render.fit</c> moves in to the content: the bottom (height), the right (width), or both.</summary>
+internal enum FitMode
+{
+    None,
+    Height,
+    Width,
+    Both,
+}
+
+/// <summary>
 /// A changed screen state during replay. <see cref="View"/> is canvas-sized and is only
 /// valid until the enumeration advances: it may be the live emulator buffer.
 /// </summary>
@@ -2265,8 +2387,7 @@ internal sealed class ReplayStepper
     private readonly IReadOnlyList<CastEvent> _events;
     private readonly ScreenBuffer _buffer;
     private readonly AnsiParser _parser;
-    private readonly int _canvasWidth;
-    private readonly int _canvasHeight;
+    private readonly CanvasWindow _canvas;
     private readonly int _stopIndex;
     private int _next;
     private ulong _lastSignature;
@@ -2276,16 +2397,14 @@ internal sealed class ReplayStepper
         IReadOnlyList<CastEvent> events,
         int initialWidth,
         int initialHeight,
-        int canvasWidth,
-        int canvasHeight,
+        CanvasWindow canvas,
         TerminalTheme theme,
         int stopIndex)
     {
         _events = events;
         _buffer = new ScreenBuffer(initialWidth, initialHeight, theme);
         _parser = new AnsiParser(_buffer, theme);
-        _canvasWidth = canvasWidth;
-        _canvasHeight = canvasHeight;
+        _canvas = canvas;
         _stopIndex = Math.Min(stopIndex, events.Count);
     }
 
@@ -2297,7 +2416,7 @@ internal sealed class ReplayStepper
     internal bool Started { get; private set; }
 
     /// <summary>The canvas-sized screen. Valid until the next <see cref="AdvanceTo"/>.</summary>
-    internal ScreenBuffer View => TerminalReplay.ViewForCanvas(_buffer, _canvasWidth, _canvasHeight);
+    internal ScreenBuffer View => TerminalReplay.ViewForCanvas(_buffer, _canvas);
 
     /// <summary>Applies every event with time ≤ <paramref name="time"/>. Returns true when the screen changed.</summary>
     internal bool AdvanceTo(double time)
@@ -2321,7 +2440,7 @@ internal sealed class ReplayStepper
         if (!applied)
             return false;
 
-        var signature = _buffer.ComputeCanvasSignature(_canvasWidth, _canvasHeight);
+        var signature = _buffer.ComputeCanvasSignature(_canvas);
         if (Started && signature == _lastSignature)
             return false;
 
@@ -2372,8 +2491,7 @@ internal static class TerminalReplay
         IReadOnlyList<CastEvent> events,
         int initialWidth,
         int initialHeight,
-        int canvasWidth,
-        int canvasHeight,
+        CanvasWindow canvas,
         TerminalTheme theme,
         bool lastOfSameTime = false)
     {
@@ -2381,12 +2499,12 @@ internal static class TerminalReplay
         {
             // A blank final screen may be trimmed as a restore, and that trim looks at frames inside
             // same-time runs, so only that case needs every frame.
-            var lastOnly = CollectFrames(EnumerateCaptures(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme, lastOfSameTime: true));
+            var lastOnly = CollectFrames(EnumerateCaptures(events, initialWidth, initialHeight, canvas, theme, lastOfSameTime: true));
             if (!lastOnly[^1].IsBlank)
                 return lastOnly;
         }
 
-        var frames = CollectFrames(EnumerateCaptures(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme));
+        var frames = CollectFrames(EnumerateCaptures(events, initialWidth, initialHeight, canvas, theme));
         return TrimTrailingBlankRestore(frames, events);
     }
 
@@ -2419,35 +2537,33 @@ internal static class TerminalReplay
         IReadOnlyList<CastEvent> events,
         int initialWidth,
         int initialHeight,
-        int canvasWidth,
-        int canvasHeight,
+        CanvasWindow canvas,
         TerminalTheme theme,
         int fps,
         int frameCount)
     {
-        var switchFrames = FindScreenSwitchFrames(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme, fps, frameCount, events.Count, out var finalIsBlank);
+        var switchFrames = FindScreenSwitchFrames(events, initialWidth, initialHeight, canvas, theme, fps, frameCount, events.Count, out var finalIsBlank);
 
         // Only a blank final screen can be trimmed, and checking which events to drop needs the screen hash
         // after every event, which is much more expensive than the parse above.
         if (!finalIsBlank)
             return new FixedRatePlan(events.Count, switchFrames);
 
-        var frames = CollectFrames(EnumerateCaptures(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme));
+        var frames = CollectFrames(EnumerateCaptures(events, initialWidth, initialHeight, canvas, theme));
         var kept = TrimTrailingBlankRestore(frames, events).Count;
         var stopIndex = kept < frames.Count && frames[kept].EventIndex >= 0 ? frames[kept].EventIndex : events.Count;
         if (stopIndex == events.Count)
             return new FixedRatePlan(stopIndex, switchFrames);
 
         // The dropped events may include a switch, and they change what later frames show.
-        return new FixedRatePlan(stopIndex, FindScreenSwitchFrames(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme, fps, frameCount, stopIndex, out _));
+        return new FixedRatePlan(stopIndex, FindScreenSwitchFrames(events, initialWidth, initialHeight, canvas, theme, fps, frameCount, stopIndex, out _));
     }
 
     private static List<int> FindScreenSwitchFrames(
         IReadOnlyList<CastEvent> events,
         int initialWidth,
         int initialHeight,
-        int canvasWidth,
-        int canvasHeight,
+        CanvasWindow canvas,
         TerminalTheme theme,
         int fps,
         int frameCount,
@@ -2477,7 +2593,7 @@ internal static class TerminalReplay
                 waitingForScreen = true;
             }
 
-            if (waitingForScreen && !IsBlankBuffer(ViewForCanvas(buffer, canvasWidth, canvasHeight)))
+            if (waitingForScreen && !IsBlankBuffer(ViewForCanvas(buffer, canvas)))
             {
                 if (frame > 0)
                     switchFrames.Add(frame);
@@ -2489,7 +2605,7 @@ internal static class TerminalReplay
         while (next < stopIndex)
             Apply(buffer, parser, events[next++]);
 
-        finalIsBlank = IsBlankBuffer(ViewForCanvas(buffer, canvasWidth, canvasHeight));
+        finalIsBlank = IsBlankBuffer(ViewForCanvas(buffer, canvas));
         return switchFrames;
     }
 
@@ -2522,8 +2638,7 @@ internal static class TerminalReplay
         IReadOnlyList<CastEvent> events,
         int initialWidth,
         int initialHeight,
-        int canvasWidth,
-        int canvasHeight,
+        CanvasWindow canvas,
         TerminalTheme theme,
         bool lastOfSameTime = false)
     {
@@ -2534,10 +2649,11 @@ internal static class TerminalReplay
 
         if (!IsBlankBuffer(buffer))
         {
-            var signature = buffer.ComputeCanvasSignature(canvasWidth, canvasHeight);
+            var signature = buffer.ComputeCanvasSignature(canvas);
             lastSignature = signature;
             yielded = true;
-            yield return new ReplayCapture(0, ViewForCanvas(buffer, canvasWidth, canvasHeight), buffer.Width, buffer.Height, signature, -1);
+            var (viewportWidth, viewportHeight) = canvas.Viewport(buffer.Width, buffer.Height);
+            yield return new ReplayCapture(0, ViewForCanvas(buffer, canvas), viewportWidth, viewportHeight, signature, -1);
         }
 
         for (var eventIndex = 0; eventIndex < events.Count; eventIndex++)
@@ -2556,19 +2672,21 @@ internal static class TerminalReplay
             if (lastOfSameTime && NextAppliedEventHasSameTime(events, eventIndex))
                 continue;
 
-            var signature = buffer.ComputeCanvasSignature(canvasWidth, canvasHeight);
+            var signature = buffer.ComputeCanvasSignature(canvas);
             if (lastSignature is ulong previous && previous == signature)
                 continue;
 
             lastSignature = signature;
             yielded = true;
-            yield return new ReplayCapture(ev.Time, ViewForCanvas(buffer, canvasWidth, canvasHeight), buffer.Width, buffer.Height, signature, eventIndex);
+            var (viewportWidth, viewportHeight) = canvas.Viewport(buffer.Width, buffer.Height);
+            yield return new ReplayCapture(ev.Time, ViewForCanvas(buffer, canvas), viewportWidth, viewportHeight, signature, eventIndex);
         }
 
         if (!yielded)
         {
-            var view = ViewForCanvas(buffer, canvasWidth, canvasHeight);
-            yield return new ReplayCapture(0, view, buffer.Width, buffer.Height, view.ComputeCanvasSignature(view.Width, view.Height), events.Count);
+            var view = ViewForCanvas(buffer, canvas);
+            var (viewportWidth, viewportHeight) = canvas.Viewport(buffer.Width, buffer.Height);
+            yield return new ReplayCapture(0, view, viewportWidth, viewportHeight, view.ComputeCanvasSignature(view.Width, view.Height), events.Count);
         }
     }
 
@@ -2594,8 +2712,7 @@ internal static class TerminalReplay
         IReadOnlyList<CastEvent> events,
         int initialWidth,
         int initialHeight,
-        int canvasWidth,
-        int canvasHeight,
+        CanvasWindow canvas,
         TerminalTheme theme,
         IReadOnlyList<ReplayFrame> frames)
     {
@@ -2603,7 +2720,7 @@ internal static class TerminalReplay
         var parser = new AnsiParser(buffer, theme);
         var next = 0;
         while (next < frames.Count && frames[next].EventIndex < 0)
-            yield return (frames[next++], ViewForCanvas(buffer, canvasWidth, canvasHeight));
+            yield return (frames[next++], ViewForCanvas(buffer, canvas));
 
         for (var eventIndex = 0; eventIndex < events.Count && next < frames.Count; eventIndex++)
         {
@@ -2619,11 +2736,11 @@ internal static class TerminalReplay
                 parser.Process(ev.Data);
 
             if (frames[next].EventIndex == eventIndex)
-                yield return (frames[next++], ViewForCanvas(buffer, canvasWidth, canvasHeight));
+                yield return (frames[next++], ViewForCanvas(buffer, canvas));
         }
 
         while (next < frames.Count && frames[next].EventIndex >= events.Count)
-            yield return (frames[next++], ViewForCanvas(buffer, canvasWidth, canvasHeight));
+            yield return (frames[next++], ViewForCanvas(buffer, canvas));
 
         if (next != frames.Count)
             throw new InvalidOperationException($"replay reached {next} of {frames.Count} frames");
@@ -2653,26 +2770,104 @@ internal static class TerminalReplay
         IReadOnlyList<CastEvent> events,
         int initialWidth,
         int initialHeight,
-        int canvasWidth,
-        int canvasHeight,
+        CanvasWindow canvas,
         TerminalTheme theme,
         ReplayFrame frame)
     {
-        foreach (var (_, view) in ReplaySelected(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme, [frame]))
+        foreach (var (_, view) in ReplaySelected(events, initialWidth, initialHeight, canvas, theme, [frame]))
             return view;
 
         throw new InvalidOperationException("the replay drew no screen");
     }
 
-    /// <summary>The live buffer when it already fills the canvas, otherwise a resized copy.</summary>
-    internal static ScreenBuffer ViewForCanvas(ScreenBuffer source, int canvasWidth, int canvasHeight)
+    /// <summary>
+    /// The live buffer when it is the canvas, a resized copy when the canvas is larger (a recording that resizes),
+    /// otherwise a copy of the part the canvas covers (crop and fit).
+    /// </summary>
+    internal static ScreenBuffer ViewForCanvas(ScreenBuffer source, CanvasWindow canvas)
     {
-        if (source.Width == canvasWidth && source.Height == canvasHeight)
-            return source;
+        if (canvas.Left == 0 && canvas.Top == 0)
+        {
+            if (source.Width == canvas.Width && source.Height == canvas.Height)
+                return source;
 
-        var copy = source.Clone();
-        copy.Resize(canvasWidth, canvasHeight);
-        return copy;
+            if (source.Width <= canvas.Width && source.Height <= canvas.Height)
+            {
+                var copy = source.Clone();
+                copy.Resize(canvas.Width, canvas.Height);
+                return copy;
+            }
+        }
+
+        return source.CopyWindow(canvas);
+    }
+
+    /// <summary>
+    /// The part of the terminal a render draws: the canvas (<see cref="ResolveCanvasSize"/>) less <paramref name="crop"/>,
+    /// then with <paramref name="fit"/> its bottom or right edge moved in to the last row or column that any screen of
+    /// the recording shows, the visible cursor included. The top and left edges stay. A recording that shows nothing
+    /// keeps one row and one column.
+    /// </summary>
+    /// <param name="stillAt">For a still image, the time of the screen it shows: fit looks at that screen only.</param>
+    /// <exception cref="ArgumentException">The crop leaves no row or no column.</exception>
+    internal static CanvasWindow ResolveCanvas(
+        IReadOnlyList<CastEvent> events,
+        int width,
+        int height,
+        CropSpec crop,
+        FitMode fit,
+        TerminalTheme theme,
+        double? stillAt = null)
+    {
+        var (canvasWidth, canvasHeight) = ResolveCanvasSize(width, height, events);
+        if (CheckCrop(crop, canvasWidth, canvasHeight) is { } error)
+            throw new ArgumentException(error);
+
+        var cropped = new CanvasWindow(crop.Left, crop.Top, canvasWidth - crop.Left - crop.Right, canvasHeight - crop.Top - crop.Bottom);
+        if (fit == FitMode.None)
+            return cropped;
+
+        // Every screen the recording shows, on the whole canvas so that the live buffer needs no copy. A screen that
+        // changes only outside the window shows the same cells inside it, so looking at it changes nothing.
+        var whole = CanvasWindow.Whole(canvasWidth, canvasHeight);
+        var rows = 0;
+        var cols = 0;
+        if (stillAt is double at)
+        {
+            if (SelectStill(BuildFrames(events, width, height, whole, theme, lastOfSameTime: true), at) is { } frame)
+                (rows, cols) = ReplayStill(events, width, height, whole, theme, frame).ContentExtent(cropped);
+        }
+        else
+        {
+            // Once the content reaches the edges that fit moves, nothing can move them further: a full-screen program's
+            // first screen ends the pass.
+            var fitRows = fit is FitMode.Height or FitMode.Both;
+            var fitCols = fit is FitMode.Width or FitMode.Both;
+            foreach (var capture in EnumerateCaptures(events, width, height, whole, theme, lastOfSameTime: true))
+            {
+                var (captureRows, captureCols) = capture.View.ContentExtent(cropped);
+                rows = Math.Max(rows, captureRows);
+                cols = Math.Max(cols, captureCols);
+                if ((!fitRows || rows == cropped.Height) && (!fitCols || cols == cropped.Width))
+                    break;
+            }
+        }
+
+        return new CanvasWindow(
+            cropped.Left,
+            cropped.Top,
+            fit is FitMode.Width or FitMode.Both ? Math.Max(1, cols) : cropped.Width,
+            fit is FitMode.Height or FitMode.Both ? Math.Max(1, rows) : cropped.Height);
+    }
+
+    /// <summary>An error when <paramref name="crop"/> leaves no row or no column of a canvas this size, else null.</summary>
+    internal static string? CheckCrop(CropSpec crop, int canvasWidth, int canvasHeight)
+    {
+        if (crop.Left + crop.Right >= canvasWidth)
+            return $"crop-left {crop.Left} and crop-right {crop.Right} leave no column of the {canvasWidth}-column terminal";
+        if (crop.Top + crop.Bottom >= canvasHeight)
+            return $"crop-top {crop.Top} and crop-bottom {crop.Bottom} leave no row of the {canvasHeight}-row terminal";
+        return null;
     }
 
     internal static (int width, int height) ResolveCanvasSize(

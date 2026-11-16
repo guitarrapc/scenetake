@@ -177,6 +177,18 @@ Sizes are of LF files.
 - Before the first output the still is the empty terminal, as the animation shows it then.
 - **Why a still SVG.** A page or a slide that shows the result of a command does not need it typed out, and some places show an SVG without running its CSS animation. A still of a typing demo is also about a tenth of its animated size: `basic` is 3.3KB against 42KB.
 
+### Fit and crop
+
+A render draws a window of the terminal instead of all of it: `render.crop-top`, `crop-bottom`, `crop-left`, and `crop-right` (`--crop-*`) cut cells from each edge, and then `render.fit` (`--fit`) moves the bottom edge (`height`), the right edge (`width`), or both in to the content. SVG, still SVG, mp4, PNG, and GIF draw the same window.
+
+- **What fit keeps.** The last row and the last column that any screen of the recording shows inside the cropped window: a cell that is not a blank in the default style, or the visible cursor. A screen that a later one clears still counts, so text never runs off the edge while it plays. A still image (`--at`, PNG) looks at its own screen only. The top and left edges stay where the crop puts them. A recording that shows nothing keeps one row and one column.
+- **The cast keeps the terminal.** `width` and `height` stay the recording's size, and the window is applied when a cast is drawn, from `st:fit` and `st:crop-*` ([spec_cast.md](spec_cast.md)). A PTY step runs at its full size, and a player that does not know these tags shows the whole terminal.
+- **Drawn as a smaller terminal.** The window's cells, cursor, and viewport are those of a terminal of the window's size: a recording whose text fits inside a window draws the same SVG as one made in a terminal that size. A cursor outside the window is not drawn. A wide character that the window's left or right edge cuts in half is drawn as a blank cell.
+- **Errors.** A crop that leaves no row or no column is an error: on the scenario path before anything runs, from the scenario's `width` and `height`, and on a cast before the render, from the largest size its resize events reach.
+- **Why.** A short demo in the default 80 × 24 terminal draws mostly empty rows, and the right size was found by trying: the showcase samples set `height` by hand for each tool. Fit measures the recording instead. Crop shows part of a screen, such as a full-screen program's top rows or a command's output without the line that typed it.
+- **Why in the render, not the recording.** A PTY step needs its size before it starts, and a full-screen program draws for that size. Measuring after the recording keeps the recording correct and leaves the choice to each render.
+- **Cost.** Fit replays the recording once more to measure it, without copying screens, and stops as soon as the content reaches the edges it moves: a full-screen program's first screen ends the pass. Without fit and crop a render does no extra work, and its output is unchanged.
+
 ### Window chrome
 
 Optional OS-style frame for README embeds. Configured via `render.window` in scenario YAML, `st:window` in v3 cast `tags`, or `--window` on CLI. Default: **`none`** (plain terminal above).

@@ -51,9 +51,9 @@ internal static class PngRender
         string? fontFile = null,
         string? ffmpegPath = null)
     {
-        var (cols, rows) = TerminalReplay.ResolveCanvasSize(width, height, events);
         var theme = TerminalTheme.FromResolved(render.Theme);
-        var layout = CreateLayout(render, cols, rows);
+        var canvas = TerminalReplay.ResolveCanvas(events, width, height, render.Crop, render.Fit, theme, at);
+        var layout = CreateLayout(render, canvas.Width, canvas.Height);
         var glyphs = GlyphSource.Create(render.FontFamily, fontFile, layout);
         var desktop = render.Background is { } background
             ? DesktopRaster.Render(layout, background, (frameWidth, frameHeight) => Ffmpeg.DecodeImage(
@@ -65,10 +65,10 @@ internal static class PngRender
         var raster = new FrameRasterizer(layout, theme, glyphs, desktop, titleGlyphs, render.WindowTitle, render.WindowOpacity, render.WindowBlur);
 
         // The same screen a still SVG shows. Before the first screen the terminal is empty, without a cursor.
-        var frames = TerminalReplay.BuildFrames(events, width, height, cols, rows, theme, lastOfSameTime: true);
+        var frames = TerminalReplay.BuildFrames(events, width, height, canvas, theme, lastOfSameTime: true);
         var view = TerminalReplay.SelectStill(frames, at) is { } frame
-            ? TerminalReplay.ReplayStill(events, width, height, cols, rows, theme, frame)
-            : new ScreenBuffer(cols, rows, theme) { CursorVisible = false };
+            ? TerminalReplay.ReplayStill(events, width, height, canvas, theme, frame)
+            : new ScreenBuffer(canvas.Width, canvas.Height, theme) { CursorVisible = false };
         raster.Draw(view);
 
         var png = PngEncoder.Encode(raster.Pixels, layout.Width, layout.Height, out var colors);

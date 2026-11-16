@@ -50,8 +50,8 @@ internal static class SvgRender
     /// </summary>
     internal static (double Width, double Height) Measure(IReadOnlyList<CastEvent> events, int width, int height, ResolvedRenderSettings render)
     {
-        var (cols, rows) = TerminalReplay.ResolveCanvasSize(width, height, events);
-        return SvgFrameRenderer.Measure(render, cols, rows);
+        var canvas = TerminalReplay.ResolveCanvas(events, width, height, render.Crop, render.Fit, TerminalTheme.FromResolved(render.Theme));
+        return SvgFrameRenderer.Measure(render, canvas.Width, canvas.Height);
     }
 
     /// <summary>A measured size as the CLI prints it: whole pixels, such as <c>830x504 px</c>.</summary>
@@ -94,22 +94,22 @@ internal static class SvgRender
         double? loopDurationOverride,
         double? stillAt = null)
     {
-        var (canvasWidth, canvasHeight) = TerminalReplay.ResolveCanvasSize(width, height, events);
         var theme = TerminalTheme.FromResolved(render.Theme);
+        var canvas = TerminalReplay.ResolveCanvas(events, width, height, render.Crop, render.Fit, theme, stillAt);
         if (stillAt is double at)
         {
             // The one screen shown at that time, drawn from the start: the animation's frames, timing, and fade do
             // not apply. Before the first screen there is nothing to draw but the terminal and its window.
-            var all = TerminalReplay.BuildFrames(events, width, height, canvasWidth, canvasHeight, theme, lastOfSameTime: true);
+            var all = TerminalReplay.BuildFrames(events, width, height, canvas, theme, lastOfSameTime: true);
             IReadOnlyList<ReplayFrame> still = TerminalReplay.SelectStill(all, at) is { } frame ? [frame.WithTime(0)] : [];
-            return SvgFrameRenderer.Render(events, width, height, still, render with { MaxFps = 0, FadeOut = null }, canvasWidth, canvasHeight, loopDuration: 1, still: true);
+            return SvgFrameRenderer.Render(events, width, height, still, render with { MaxFps = 0, FadeOut = null }, canvas, loopDuration: 1, still: true);
         }
 
         // Without --max-fps only the last of frames that share a time is drawn (DropZeroLengthFrames).
-        var frames = TerminalReplay.BuildFrames(events, width, height, canvasWidth, canvasHeight, theme, lastOfSameTime: render.MaxFps <= 0);
+        var frames = TerminalReplay.BuildFrames(events, width, height, canvas, theme, lastOfSameTime: render.MaxFps <= 0);
         var loopDuration = RenderSettingsResolver.ResolveLoopDuration(
             loopDurationOverride ?? TerminalReplay.ComputeLoopDuration(events), events, render);
-        return SvgFrameRenderer.Render(events, width, height, frames, render, canvasWidth, canvasHeight, loopDuration);
+        return SvgFrameRenderer.Render(events, width, height, frames, render, canvas, loopDuration);
     }
 }
 
@@ -303,6 +303,12 @@ internal readonly record struct ResolvedRenderSettings(
 
     /// <summary>The fade an SVG draws: none when it plays once, because it stops on its final screen.</summary>
     internal double SvgFadeOut => Loops ? FadeOut ?? 0 : 0;
+
+    /// <summary>Cells cut from each edge of the terminal before it is drawn. All zero draws the whole terminal.</summary>
+    internal CropSpec Crop { get; init; }
+
+    /// <summary>Which edges move in to the last row and column that the recording shows (<see cref="TerminalReplay.ResolveCanvas"/>).</summary>
+    internal FitMode Fit { get; init; }
 }
 
 /// <summary>
@@ -423,7 +429,12 @@ internal sealed record RenderStyleOverrides(
     int? Blur = null,
     bool? Loop = null,
     double? EndHold = null,
-    double? FadeOut = null)
+    double? FadeOut = null,
+    FitMode? Fit = null,
+    int? CropTop = null,
+    int? CropBottom = null,
+    int? CropLeft = null,
+    int? CropRight = null)
 {
     internal static readonly RenderStyleOverrides None = new(null, null, null, null);
 
@@ -438,6 +449,8 @@ internal sealed record RenderStyleOverrides(
         Loop = Loop ?? settings.Loop,
         EndHold = EndHold ?? settings.EndHold,
         FadeOut = FadeOut ?? settings.FadeOut,
+        Fit = Fit ?? settings.Fit,
+        Crop = new CropSpec(CropTop ?? settings.Crop.Top, CropBottom ?? settings.Crop.Bottom, CropLeft ?? settings.Crop.Left, CropRight ?? settings.Crop.Right),
     };
 }
 
@@ -473,6 +486,13 @@ internal static class RenderSettingsResolver
     internal const string LoopTagPrefix = "st:loop=";
     internal const string EndHoldTagPrefix = "st:end-hold=";
     internal const string FadeOutTagPrefix = "st:fade-out=";
+    internal const string FitTagPrefix = "st:fit=";
+    internal const string CropTopTagPrefix = "st:crop-top=";
+    internal const string CropBottomTagPrefix = "st:crop-bottom=";
+    internal const string CropLeftTagPrefix = "st:crop-left=";
+    internal const string CropRightTagPrefix = "st:crop-right=";
+    internal const int MinCrop = 0, MaxCrop = MaxTerminalCols - 1;
+    internal const string ExpectedFitNames = "none, height, width, both";
     internal const int MinMargin = 0, MaxMargin = 200;
     internal const int MinPadding = 0, MaxPadding = 100;
     internal const double MinOpacity = 0, MaxOpacity = 1;
@@ -664,6 +684,59 @@ internal static class RenderSettingsResolver
         error = $"invalid loop value: {text} (expected true or false)";
         return false;
     }
+
+    internal static bool TryParseFit(string text, out FitMode fit, out string error)
+    {
+        error = "";
+        switch (text.Trim().ToLowerInvariant())
+        {
+            case "none":
+                fit = FitMode.None;
+                return true;
+            case "height":
+                fit = FitMode.Height;
+                return true;
+            case "width":
+                fit = FitMode.Width;
+                return true;
+            case "both":
+                fit = FitMode.Both;
+                return true;
+            default:
+                fit = FitMode.None;
+                error = $"unknown fit: {text} (expected: {ExpectedFitNames})";
+                return false;
+        }
+    }
+
+    internal static string FitToTagValue(FitMode fit) => fit switch
+    {
+        FitMode.Height => "height",
+        FitMode.Width => "width",
+        FitMode.Both => "both",
+        _ => "none",
+    };
+
+    /// <summary>Reads cells to cut from one edge, as <c>--crop-top</c> and the others take them.</summary>
+    internal static bool TryParseCrop(string text, string name, out int cells, out string error)
+    {
+        error = "";
+        if (!int.TryParse(text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out cells))
+        {
+            error = $"invalid {name} value: {text} (expected whole cells from {MinCrop} to {MaxCrop})";
+            return false;
+        }
+
+        if (!IsValidCrop(cells))
+        {
+            error = $"{name} must be between {MinCrop} and {MaxCrop} cells: {cells}";
+            return false;
+        }
+
+        return true;
+    }
+
+    internal static bool IsValidCrop(int cells) => cells is >= MinCrop and <= MaxCrop;
 
     internal static bool TryParseEndHold(string text, out double seconds, out string error) =>
         TryParseSeconds(text, "end-hold", MinEndHold, MaxEndHold, out seconds, out error);
@@ -1033,6 +1106,29 @@ internal static class RenderSettingsResolver
             settings = settings with { FadeOut = fadeOut };
         }
 
+        if (render?.Fit is { } fitText)
+        {
+            if (!TryParseFit(fitText, out var fit, out error))
+            {
+                error = $"invalid render.fit: {error}";
+                return false;
+            }
+
+            settings = settings with { Fit = fit };
+        }
+
+        int[] crop = [render?.CropTop ?? 0, render?.CropBottom ?? 0, render?.CropLeft ?? 0, render?.CropRight ?? 0];
+        string[] cropKeys = ["crop-top", "crop-bottom", "crop-left", "crop-right"];
+        for (var i = 0; i < crop.Length; i++)
+        {
+            if (!IsValidCrop(crop[i]))
+            {
+                error = $"invalid render.{cropKeys[i]}: must be between {MinCrop} and {MaxCrop} cells: {crop[i]}";
+                return false;
+            }
+        }
+
+        settings = settings with { Crop = new CropSpec(crop[0], crop[1], crop[2], crop[3]) };
         return true;
     }
 
@@ -1360,11 +1456,12 @@ internal static class SvgFrameRenderer
         int initialHeight,
         IReadOnlyList<ReplayFrame> frames,
         ResolvedRenderSettings render,
-        int canvasWidth,
-        int canvasHeight,
+        CanvasWindow canvas,
         double loopDuration,
         bool still = false)
     {
+        var canvasWidth = canvas.Width;
+        var canvasHeight = canvas.Height;
         if (frames.Count == 0)
             return SvgDocument.FromText(BuildEmptySvg(render, canvasWidth, canvasHeight));
 
@@ -1373,7 +1470,7 @@ internal static class SvgFrameRenderer
         var metrics = CreateMetrics(render, canvasWidth, canvasHeight);
 
         var context = new EncodeContext(metrics, theme, canvasHeight);
-        var layers = BuildLayers(events, initialWidth, initialHeight, frames, canvasWidth, canvasHeight, context);
+        var layers = BuildLayers(events, initialWidth, initialHeight, frames, canvas, context);
         loopDuration = ResolveLoopDuration(loopDuration, layers);
 
         var (head, rowKeyframes, tail) = BuildLayeredSvg(layers, context, render, canvasWidth, canvasHeight, loopDuration, still);
@@ -1476,10 +1573,11 @@ internal static class SvgFrameRenderer
         int initialWidth,
         int initialHeight,
         IReadOnlyList<ReplayFrame> frames,
-        int canvasWidth,
-        int canvasHeight,
+        CanvasWindow canvas,
         EncodeContext context)
     {
+        var canvasWidth = canvas.Width;
+        var canvasHeight = canvas.Height;
         var theme = context.Theme;
         var metrics = context.Metrics;
         var rowLayers = context.Content;
@@ -1504,7 +1602,7 @@ internal static class SvgFrameRenderer
         var firstLayerByRowHash = new Dictionary<ulong, int>();
         var origin = metrics.ContentOrigin;
 
-        foreach (var (frame, buffer) in TerminalReplay.ReplaySelected(events, initialWidth, initialHeight, canvasWidth, canvasHeight, theme, frames))
+        foreach (var (frame, buffer) in TerminalReplay.ReplaySelected(events, initialWidth, initialHeight, canvas, theme, frames))
         {
             var time = frame.Time;
 

@@ -761,6 +761,16 @@ internal static partial class ScenarioCast
             tags.Add(RenderSettingsResolver.EndHoldTagPrefix + RenderSettingsResolver.FormatSeconds(endHold));
         if (renderSettings.FadeOut is double fadeOut)
             tags.Add(RenderSettingsResolver.FadeOutTagPrefix + RenderSettingsResolver.FormatSeconds(fadeOut));
+        if (renderSettings.Fit != FitMode.None)
+            tags.Add(RenderSettingsResolver.FitTagPrefix + RenderSettingsResolver.FitToTagValue(renderSettings.Fit));
+        if (renderSettings.Crop.Top > 0)
+            tags.Add(RenderSettingsResolver.CropTopTagPrefix + renderSettings.Crop.Top.ToString(CultureInfo.InvariantCulture));
+        if (renderSettings.Crop.Bottom > 0)
+            tags.Add(RenderSettingsResolver.CropBottomTagPrefix + renderSettings.Crop.Bottom.ToString(CultureInfo.InvariantCulture));
+        if (renderSettings.Crop.Left > 0)
+            tags.Add(RenderSettingsResolver.CropLeftTagPrefix + renderSettings.Crop.Left.ToString(CultureInfo.InvariantCulture));
+        if (renderSettings.Crop.Right > 0)
+            tags.Add(RenderSettingsResolver.CropRightTagPrefix + renderSettings.Crop.Right.ToString(CultureInfo.InvariantCulture));
         var tagsJson = string.Join(",", tags.ConvertAll(static tag => JsonEscape.JsonString(tag)));
         writer.WriteLine(
             $"{{\"version\":3,\"term\":{{\"cols\":{width},\"rows\":{height}" +

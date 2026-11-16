@@ -182,6 +182,15 @@
                 <label class="field">--padding
                   <input data-option="padding" type="number" min="0" max="100" inputmode="numeric" placeholder="from YAML" data-from-source />
                 </label>
+                <label class="field">--fit
+                  <select data-option="fit" title="Leave out the rows (height), the columns (width), or both that the demo never uses">
+                    <option value="" data-from-source>from YAML</option>
+                    <option value="none">none</option>
+                    <option value="height">height</option>
+                    <option value="width">width</option>
+                    <option value="both">both</option>
+                  </select>
+                </label>
                 <!--
                   The presets fill in the field, so the value they set is there to read and to copy into a scenario.
                   main.js paints each swatch from its data-background, and adds one per image: the samples' images

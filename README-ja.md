@@ -172,6 +172,10 @@ scenetake --format svg scenario.yaml --window macos --window-title "my-cli demo"
 # 画像の上に半透明のウィンドウを置き、文字の後ろの画像をぼかす
 scenetake --format svg scenario.yaml --window macos --background wallpaper.webp --opacity 0.85 --blur 8
 
+# 録画が一度も使わない行と列を描かない（render.fit）、端から行を切り取る（render.crop-*）
+scenetake --format svg scenario.yaml --fit both
+scenetake png scenario.cast --crop-top 1 --fit height
+
 # 最後の画面を 3 秒表示し、1 秒かけて文字を消してからループの最初に戻る
 scenetake --format svg scenario.yaml --end-hold 3 --fade-out 1
 
