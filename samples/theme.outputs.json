@@ -12,7 +12,7 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 4772931,
+          "ticks": 3452274,
           "out": "\u001B[1;34mLight theme preset\u001B[0m\n"
         }
       ]
@@ -23,7 +23,7 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 4221514,
+          "ticks": 3360455,
           "out": "16-color: \u001B[31mred\u001B[0m \u001B[32mgreen\u001B[0m \u001B[33myellow\u001B[0m \u001B[34mblue\u001B[0m\n"
         }
       ]
@@ -34,7 +34,7 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 4141328,
+          "ticks": 3193290,
           "out": "256-color: \u001B[38;5;196m196\u001B[0m \u001B[38;5;46m46\u001B[0m \u001B[38;5;27m27\u001B[0m\n"
         }
       ]
@@ -45,7 +45,7 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 4054889,
+          "ticks": 3249156,
           "out": "Done!\n"
         }
       ]

@@ -133,10 +133,27 @@
                   value</span></summary>
               <div class="options__grid" data-options>
                 <label class="field">--theme
+                  <!-- The names that --theme takes, in the CLI's order (RenderSettingsResolver.Presets). -->
                   <select data-option="theme">
                     <option value="" data-from-source>from YAML</option>
-                    <option value="dark">dark</option>
-                    <option value="light">light</option>
+                    <optgroup label="Dark background">
+                      <option value="dark">dark</option>
+                      <option value="macos-dark">macos-dark</option>
+                      <option value="dracula">dracula</option>
+                      <option value="nord">nord</option>
+                      <option value="one-dark">one-dark</option>
+                      <option value="gruvbox-dark">gruvbox-dark</option>
+                      <option value="catppuccin-mocha">catppuccin-mocha</option>
+                      <option value="tokyo-night">tokyo-night</option>
+                      <option value="solarized-dark">solarized-dark</option>
+                      <option value="github-dark">github-dark</option>
+                    </optgroup>
+                    <optgroup label="Light background">
+                      <option value="light">light</option>
+                      <option value="macos-light">macos-light</option>
+                      <option value="solarized-light">solarized-light</option>
+                      <option value="github-light">github-light</option>
+                    </optgroup>
                   </select>
                 </label>
                 <label class="field">--window

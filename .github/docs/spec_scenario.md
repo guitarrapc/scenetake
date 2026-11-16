@@ -131,7 +131,7 @@ Display metadata for the cast header. Written on every run. Header mapping: [spe
 |---|---|---|
 | `font-size` | `16` | Monospace font size (`1`–`128`) |
 | `font-family` | built-in stack | CSS `font-family` value (`1`–`16` families, `256` characters max). If `monospace` / `ui-monospace` is absent, `monospace` is appended. |
-| `theme.preset` | `dark` | Built-in preset: `dark` or `light` |
+| `theme.preset` | `dark` | A named color theme: see Color themes below |
 | `theme.fg` | from preset | Optional foreground override, `#rgb` or `#rrggbb` |
 | `theme.bg` | from preset | Optional background override, `#rgb` or `#rrggbb` |
 | `theme.palette` | from preset | Optional palette override: 16 colors, `#rgb` or `#rrggbb`, separated by `:` |
@@ -145,6 +145,33 @@ Display metadata for the cast header. Written on every run. Header mapping: [spe
 | `loop` | `true` | `false` plays the SVG once and stops on its final screen. An mp4 has no loop: the player decides. |
 | `end-hold` | the pause before the last output | Seconds the final screen stays before the SVG starts again or the mp4 ends, `0`–`60` |
 | `fade-out` | `0` | Seconds over which the terminal's contents fade out after `end-hold`, `0`–`10`. The terminal's background, the window, and `background` stay. An SVG that does not loop has no fade, with a warning. |
+
+### Color themes
+
+`theme.preset` and `--theme` take one of these names. Case does not matter. `fg`, `bg`, and `palette` change single colors on top of the theme. The cast header stores the resolved colors, so a player that does not know scenetake shows the same colors.
+
+| Name | Background | Source of the palette (MIT) |
+|---|---|---|
+| `dark` | dark | scenetake's own |
+| `light` | light | scenetake's own |
+| `macos-dark` | dark | mbadolato/iTerm2-Color-Schemes, `windowsterminal/Apple System Colors.json` |
+| `macos-light` | light | mbadolato/iTerm2-Color-Schemes, `windowsterminal/Apple System Colors Light.json` |
+| `dracula` | dark | dracula/windows-terminal, `dracula.json` |
+| `nord` | dark | nordtheme/xresources, `src/nord` |
+| `one-dark` | dark | joshdick/onedark.vim, `term/One Dark.Xresources` |
+| `gruvbox-dark` | dark | morhetz/gruvbox-contrib, `xresources/gruvbox-dark.xresources` |
+| `catppuccin-mocha` | dark | catppuccin/windows-terminal, `mocha.json` |
+| `tokyo-night` | dark | folke/tokyonight.nvim, `extras/windows_terminal/tokyonight_night.json` |
+| `solarized-dark` | dark | altercation/solarized, `xresources/solarized` |
+| `solarized-light` | light | altercation/solarized, `xresources/solarized`, with the light base tones that file gives |
+| `github-dark` | dark | @primer/primitives 11.10.0, `--ansi-*` with `fgColor-default` and `bgColor-default` |
+| `github-light` | light | @primer/primitives 11.10.0, the same tokens of the light theme |
+
+- **Why the published palettes.** A reader who picks `nord` expects the Nord they use in their terminal. Each palette is the project's own terminal definition, taken in ANSI order, not a version made up from the theme's colors.
+- **macOS has no published palette.** Apple publishes no palette file for Terminal.app. The macOS themes are "Apple System Colors" from iTerm2-Color-Schemes: macOS's system colors (`#ff453a` red, `#0a84ff` blue, `#32d74b` green) as a terminal palette, on `#1e1e1e` or white. They were chosen over that collection's "Terminal Basic", Terminal.app's default profile, whose light palette (`#990000` red, `#0000b2` blue) looks dated next to the `macos` window chrome.
+- **Solarized's bright colors are gray.** Solarized defines the bright eight as its base tones, so `\e[92m` (bright green) is a gray in both Solarized themes, and bright black is the background in `solarized-dark`. That is how Solarized looks in any terminal.
+- The window chrome follows the background's lightness, as for `dark` and `light` ([spec_svg.md](spec_svg.md) → Window chrome).
+- `samples/theme-presets/` has one preview per theme: `palette.cast` (text styles, the 16 colors as text, then as backgrounds) rendered with `--theme NAME --window macos --window-title NAME`. `samples/regenerate.cs` renders them, and `-- --theme-presets` renders them alone. `tests/svg_render_test.cs` checks each theme's colors and that every preview is current.
 
 `settings` controls recording. `render` controls presentation. The CLI may override each key, the theme only as a preset. See [spec_cli.md](spec_cli.md).
 

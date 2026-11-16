@@ -18,9 +18,9 @@ scenetake records scenarios, converts casts to SVG or mp4, and creates starter Y
 | `scenetake --version` | Print version |
 
 ```bash
-scenetake [--verbose] [--strict] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]
-scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output]
-scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output]
+scenetake [--verbose] [--strict] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]
+scenetake svg [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] <input.cast> [output]
+scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output]
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 ```
 
@@ -48,7 +48,7 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 | `--format cast\|svg\|mp4` | scenario path only | Default `cast`. `svg` also writes `.svg`, and `mp4` also writes `.mp4`. See [spec_svg.md](spec_svg.md) and [spec_mp4.md](spec_mp4.md). |
 | `--font-size N` | scenario, `svg` | `1`–`128`. Scenario path: overrides `render.font-size` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default `16`). See [spec_cast.md](spec_cast.md). |
 | `--font-family FAMILIES` | scenario, `svg` | CSS `font-family` string (`1`–`16` families, `256` characters max). Scenario path: overrides `render.font-family` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default stack). See [spec_cast.md](spec_cast.md) and [spec_svg.md](spec_svg.md). |
-| `--theme dark\|light` | scenario, `svg` | Scenario path: overrides `render.theme.preset`. YAML `fg` / `bg` / `palette` still merge. Cast header stores resolved hex. `svg`: render-only override (CLI > cast header > default `dark`). See [spec_cast.md](spec_cast.md). |
+| `--theme NAME` | scenario, `svg`, `mp4` | A named color theme ([spec_scenario.md](spec_scenario.md) → Color themes). An unknown name is an error that lists the names. Scenario path: overrides `render.theme.preset`. YAML `fg` / `bg` / `palette` still merge. Cast header stores resolved hex. `svg`: render-only override (CLI > cast header > default `dark`). See [spec_cast.md](spec_cast.md). |
 | `--window none\|macos\|windows` | scenario, `svg` | Scenario path: overrides `render.window` in the written cast header (and in the SVG when `--format svg`). `svg`: render-only override (CLI > cast header > default `none`). See [spec_cast.md](spec_cast.md) and [spec_svg.md](spec_svg.md). |
 | `--window-title TEXT` | scenario, `svg`, `mp4` | Text in the window's title bar. `""` or `--window-title=` shows none. Scenario path: overrides `render.window-title` in the written cast header. `svg`, `mp4`: overrides `st:window-title`, then the cast's `title`. See [spec_svg.md](spec_svg.md) → Window title, background, margin, and padding. |
 | `--background VALUE` | scenario, `svg`, `mp4` | One color, 2–4 colors for a gradient (separated by spaces or commas), or a `.png`, `.jpg`, `.gif`, or `.webp` file relative to the current folder. Colors are stored in the cast header; an image is not, so an image with cast output (no `--format svg` or `mp4`) is an error. |

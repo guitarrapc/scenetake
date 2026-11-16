@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="520.16" height="166" viewBox="0 0 520.16 166" preserveAspectRatio="xMidYMid meet" role="img" aria-label="scenetake output">
+<style>
+text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
+text { dominant-baseline: alphabetic; }
+.bg,rect:not([class]) { shape-rendering: crispEdges; }
+.l { visibility: hidden; animation: 0.001s step-start infinite; }
+.c { fill: #ffffff; fill-opacity: 0.5; }
+.b{transform:translate(0,62.8px)}
+.m{transform:translate(0,82.8px)}
+.u{transform:translate(0,102.8px)}
+.a{fill:#bfbfbf}
+.d{fill:#1a1a1a}
+.e{fill:#cc372e}
+.f{fill:#26a439}
+.g{fill:#cdac08}
+.h{fill:#0869cb}
+.i{fill:#9647bf}
+.j{fill:#479ec2}
+.k{fill:#98989d}
+.n{fill:#464646}
+.o{fill:#ff453a}
+.p{fill:#32d74b}
+.q{fill:#ffd60a}
+.r{fill:#0a84ff}
+.s{fill:#bf5af2}
+.t{fill:#76d6ff}
+.v{visibility:visible}
+</style>
+<defs>
+<filter id="window-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.22"/></filter>
+<mask id="viewport-mask" x="0" y="0" width="520.16" height="166" maskUnits="userSpaceOnUse">
+<rect class="l v viewport-mask-0" x="12" y="46" width="496.16" height="108" fill="white"/>
+</mask>
+</defs>
+<rect class="l v viewport-chrome-0" x="12" y="12" width="496.16" height="142" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
+<path class="l v viewport-chrome-0" d="M 20,12 H 500.16 Q 508.16,12 508.16,20 V 46 H 12 V 20 Q 12,12 20,12 Z" fill="#323232"/>
+<line class="l v viewport-chrome-0" x1="12" y1="46" x2="508.16" y2="46" stroke="#1a1a1a" stroke-width="1"/>
+<text class="l v viewport-chrome-0" x="260.08" y="33.5" style="font:bold 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI','Helvetica Neue',Helvetica,Arial,'Noto Sans','DejaVu Sans',sans-serif" text-anchor="middle" fill="#c8c8c8">macos-dark</text>
+<circle class="l v viewport-chrome-0" cx="34" cy="29" r="8" fill="#ff5f57"/>
+<circle class="l v viewport-chrome-0" cx="60" cy="29" r="8" fill="#febc2e"/>
+<circle class="l v viewport-chrome-0" cx="86" cy="29" r="8" fill="#28c840"/>
+<g mask="url(#viewport-mask)" fill="#ffffff">
+<rect class="bg l v viewport-bg-0" x="12" y="46" width="496.16" height="108" fill="#1e1e1e"/>
+<g class="l v b"><text x="22" textLength="69.44">default</text><text x="101.36" font-weight="bold" textLength="39.68">bold</text><text class="a" x="150.96" textLength="49.6">faint</text><text x="210.48" font-style="italic" textLength="59.52">italic</text><text x="279.92" text-decoration="underline" textLength="89.28">underline</text></g>
+<g class="l v m"><text class="d" x="22" textLength="49.6">black</text><text class="e" x="81.52" textLength="29.76">red</text><text class="f" x="121.2" textLength="49.6">green</text><text class="g" x="180.72" textLength="59.52">yellow</text><text class="h" x="250.16" textLength="39.68">blue</text><text class="i" x="299.76" textLength="69.44">magenta</text><text class="j" x="379.12" textLength="39.68">cyan</text><text class="k" x="428.72" textLength="49.6">white</text></g>
+<g class="l v u"><text class="n" x="22" textLength="49.6">black</text><text class="o" x="81.52" textLength="29.76">red</text><text class="p" x="121.2" textLength="49.6">green</text><text class="q" x="180.72" textLength="59.52">yellow</text><text class="r" x="250.16" textLength="39.68">blue</text><text class="s" x="299.76" textLength="69.44">magenta</text><text class="t" x="379.12" textLength="39.68">cyan</text><text x="428.72" textLength="49.6">white</text></g>
+<g class="l v"><rect x="22" y="110" width="59.52" height="20" fill="#1a1a1a"/><rect x="81.52" y="110" width="59.52" height="20" fill="#cc372e"/><rect x="141.04" y="110" width="59.52" height="20" fill="#26a439"/><rect x="200.56" y="110" width="59.52" height="20" fill="#cdac08"/><rect x="260.08" y="110" width="59.52" height="20" fill="#0869cb"/><rect x="319.6" y="110" width="59.52" height="20" fill="#9647bf"/><rect x="379.12" y="110" width="59.52" height="20" fill="#479ec2"/><rect x="438.64" y="110" width="59.52" height="20" fill="#98989d"/></g>
+<g class="l v"><rect x="22" y="130" width="59.52" height="20" fill="#464646"/><rect x="81.52" y="130" width="59.52" height="20" fill="#ff453a"/><rect x="141.04" y="130" width="59.52" height="20" fill="#32d74b"/><rect x="200.56" y="130" width="59.52" height="20" fill="#ffd60a"/><rect x="260.08" y="130" width="59.52" height="20" fill="#0a84ff"/><rect x="319.6" y="130" width="59.52" height="20" fill="#bf5af2"/><rect x="379.12" y="130" width="59.52" height="20" fill="#76d6ff"/><rect x="438.64" y="130" width="59.52" height="20" fill="#ffffff"/></g>
+</g>
+<rect class="l v viewport-chrome-0" x="12.5" y="12.5" width="495.16" height="141" rx="7.5" ry="7.5" fill="none" stroke="#ffffff" stroke-opacity="0.16"/>
+</svg>

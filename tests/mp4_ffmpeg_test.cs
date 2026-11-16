@@ -822,7 +822,7 @@ static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string w
     // --help prints, on stdout, what every option of that command does; usage after an error stays short,
     // on stderr, and points to --help. The option lists here follow the parsers, so an option added there
     // and left out of the help fails this test.
-    string[] render = ["--font-size N", "--font-family FAMILIES", "--theme dark|light", "--window none|macos|windows",
+    string[] render = ["--font-size N", "--font-family FAMILIES", "--theme NAME", "--window none|macos|windows",
         "--window-title TEXT", "--background VALUE", "--margin N", "--padding N", "--opacity N", "--blur N",
         "--end-hold N", "--fade-out N"];
     string[] svg = ["--max-fps N", "--no-loop", "--loop "];
@@ -862,6 +862,27 @@ static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string w
         if (exit != 1 || stdout.Length != 0 || !stderr.Contains(pointer, StringComparison.Ordinal) || !stderr.Contains("Usage:", StringComparison.Ordinal))
         {
             Console.Error.WriteLine($"  {string.Join(' ', args)}: exit {exit}, stdout '{stdout}', stderr:{Environment.NewLine}{stderr}");
+            ok = false;
+        }
+    }
+
+    // Every theme name that --theme accepts, as its error lists them, is in each command's help.
+    var (_, _, themeError) = ExecCapture(scenetake, repoRoot, ["svg", "--theme", "no-such-theme", "samples/basic.cast"]);
+    var listed = System.Text.RegularExpressions.Regex.Match(themeError, @"\(expected: ([^)]+)\)");
+    var names = listed.Success ? listed.Groups[1].Value.Split(", ") : [];
+    if (names.Length < 12)
+    {
+        Console.Error.WriteLine($"  the theme error lists {names.Length} names: {themeError}");
+        ok = false;
+    }
+
+    foreach (var command in new[] { new[] { "--help" }, ["svg", "--help"], ["mp4", "--help"] })
+    {
+        var (_, help, _) = ExecCapture(scenetake, repoRoot, command);
+        var missing = names.Where(name => !System.Text.RegularExpressions.Regex.IsMatch(help, $@"(?<![\w-]){System.Text.RegularExpressions.Regex.Escape(name)}(?![\w-])")).ToList();
+        if (missing.Count != 0)
+        {
+            Console.Error.WriteLine($"  {string.Join(' ', command)} leaves out the themes {string.Join(", ", missing)}");
             ok = false;
         }
     }

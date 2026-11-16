@@ -473,7 +473,7 @@ internal static class RenderSettingsResolver
     private static readonly string[] BackgroundImageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".webp"];
     internal const string DarkName = "dark", LightName = "light";
     internal const string MacosWindowName = "macos", WindowsWindowName = "windows", NoneWindowName = "none";
-    internal static string ExpectedPresetNames => $"{DarkName}|{LightName}";
+    internal static string ExpectedPresetNames => string.Join(", ", PresetNames);
     internal static string ExpectedWindowNames => $"{NoneWindowName}|{MacosWindowName}|{WindowsWindowName}";
     internal const string DefaultFontFamily =
         "ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace";
@@ -485,6 +485,59 @@ internal static class RenderSettingsResolver
         "#383838", "#fafafa",
         "#383838:#c82828:#548b2e:#a88800:#2871aa:#9a4a96:#008787:#585858:#686868:#e74c3c:#69a845:#d4a017:#3498db:#c678dd:#20b2aa:#fafafa");
 
+    /// <summary>
+    /// The named color themes, in the order that help, errors, and the docs list them. Each is the terminal palette
+    /// that its project publishes, in ANSI order (black, red, green, yellow, blue, magenta, cyan, white, then the
+    /// bright eight), all under the MIT license:
+    /// <list type="bullet">
+    /// <item>dracula: dracula/windows-terminal, dracula.json</item>
+    /// <item>nord: nordtheme/xresources, src/nord</item>
+    /// <item>one-dark: joshdick/onedark.vim, term/One Dark.Xresources</item>
+    /// <item>gruvbox-dark: morhetz/gruvbox-contrib, xresources/gruvbox-dark.xresources</item>
+    /// <item>catppuccin-mocha: catppuccin/windows-terminal, mocha.json</item>
+    /// <item>tokyo-night: folke/tokyonight.nvim, extras/windows_terminal/tokyonight_night.json</item>
+    /// <item>solarized-dark and solarized-light: altercation/solarized, xresources/solarized, with the light base
+    /// tones that file gives. Its bright colors are the base tones, as Solarized defines them.</item>
+    /// <item>github-dark and github-light: @primer/primitives 11.10.0, dist/css/functional/themes, the --ansi-*
+    /// colors with fgColor-default and bgColor-default</item>
+    /// <item>macos-dark and macos-light: mbadolato/iTerm2-Color-Schemes, windowsterminal/Apple System Colors.json and
+    /// Apple System Colors Light.json, macOS's system colors as a terminal palette. Apple publishes no palette file
+    /// for Terminal.app.</item>
+    /// </list>
+    /// </summary>
+    private static readonly (string Name, ResolvedTheme Theme)[] Presets =
+    [
+        (DarkName, DarkTheme),
+        (LightName, LightTheme),
+        ("macos-dark", new("#ffffff", "#1e1e1e",
+            "#1a1a1a:#cc372e:#26a439:#cdac08:#0869cb:#9647bf:#479ec2:#98989d:#464646:#ff453a:#32d74b:#ffd60a:#0a84ff:#bf5af2:#76d6ff:#ffffff")),
+        ("macos-light", new("#000000", "#feffff",
+            "#1a1a1a:#cc372e:#26a439:#cdac08:#0869cb:#9647bf:#479ec2:#98989d:#464646:#ff453a:#32d74b:#e5bc00:#0a84ff:#bf5af2:#69c9f2:#ffffff")),
+        ("dracula", new("#f8f8f2", "#282a36",
+            "#21222c:#ff5555:#50fa7b:#f1fa8c:#bd93f9:#ff79c6:#8be9fd:#f8f8f2:#6272a4:#ff6e6e:#69ff94:#ffffa5:#d6acff:#ff92df:#a4ffff:#ffffff")),
+        ("nord", new("#d8dee9", "#2e3440",
+            "#3b4252:#bf616a:#a3be8c:#ebcb8b:#81a1c1:#b48ead:#88c0d0:#e5e9f0:#4c566a:#bf616a:#a3be8c:#ebcb8b:#81a1c1:#b48ead:#8fbcbb:#eceff4")),
+        ("one-dark", new("#abb2bf", "#282c34",
+            "#2c323c:#e06c75:#98c379:#e5c07b:#61afef:#c678dd:#56b6c2:#5c6370:#3e4452:#e06c75:#98c379:#e5c07b:#61afef:#c678dd:#56b6c2:#abb2bf")),
+        ("gruvbox-dark", new("#ebdbb2", "#282828",
+            "#282828:#cc241d:#98971a:#d79921:#458588:#b16286:#689d6a:#a89984:#928374:#fb4934:#b8bb26:#fabd2f:#83a598:#d3869b:#8ec07c:#ebdbb2")),
+        ("catppuccin-mocha", new("#cdd6f4", "#1e1e2e",
+            "#45475a:#f38ba8:#a6e3a1:#f9e2af:#89b4fa:#f5c2e7:#94e2d5:#bac2de:#585b70:#f38ba8:#a6e3a1:#f9e2af:#89b4fa:#f5c2e7:#94e2d5:#a6adc8")),
+        ("tokyo-night", new("#c0caf5", "#1a1b26",
+            "#15161e:#f7768e:#9ece6a:#e0af68:#7aa2f7:#bb9af7:#7dcfff:#a9b1d6:#414868:#f7768e:#9ece6a:#e0af68:#7aa2f7:#9d7cd8:#7dcfff:#c0caf5")),
+        ("solarized-dark", new("#839496", "#002b36",
+            "#073642:#dc322f:#859900:#b58900:#268bd2:#d33682:#2aa198:#eee8d5:#002b36:#cb4b16:#586e75:#657b83:#839496:#6c71c4:#93a1a1:#fdf6e3")),
+        ("solarized-light", new("#657b83", "#fdf6e3",
+            "#eee8d5:#dc322f:#859900:#b58900:#268bd2:#d33682:#2aa198:#073642:#fdf6e3:#cb4b16:#93a1a1:#839496:#657b83:#6c71c4:#586e75:#002b36")),
+        ("github-dark", new("#f0f6fc", "#0d1117",
+            "#2f3742:#ff7b72:#3fb950:#d29922:#58a6ff:#be8fff:#39c5cf:#f0f6fc:#656c76:#ffa198:#56d364:#e3b341:#79c0ff:#d2a8ff:#56d4dd:#ffffff")),
+        ("github-light", new("#1f2328", "#ffffff",
+            "#1f2328:#cf222e:#116329:#4d2d00:#0969da:#8250df:#1b7c83:#59636e:#393f46:#a40e26:#1a7f37:#633c01:#218bff:#a475f9:#3192aa:#818b98")),
+    ];
+
+    /// <summary>The named color themes, in their listed order.</summary>
+    internal static IEnumerable<string> PresetNames => Presets.Select(static preset => preset.Name);
+
     internal static string DefaultFg => DarkTheme.Fg;
     internal static string DefaultBg => DarkTheme.Bg;
     internal static string DefaultPalette => DarkTheme.Palette;
@@ -495,12 +548,18 @@ internal static class RenderSettingsResolver
 
     internal static bool TryGetPreset(string name, out ResolvedTheme theme)
     {
-        switch (name.Trim().ToLowerInvariant())
+        var trimmed = name.Trim();
+        foreach (var preset in Presets)
         {
-            case DarkName: theme = DarkTheme; return true;
-            case LightName: theme = LightTheme; return true;
-            default: theme = default; return false;
+            if (string.Equals(preset.Name, trimmed, StringComparison.OrdinalIgnoreCase))
+            {
+                theme = preset.Theme;
+                return true;
+            }
         }
+
+        theme = default;
+        return false;
     }
 
     internal static bool TryParsePreset(string text, out string presetName, out string error)

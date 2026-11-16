@@ -49,7 +49,7 @@ steps:
 | --- | --- |
 | ![](samples/basic.gif) | ![](samples/basic.svg) |
 
-SVG と mp4 の出力では、フォント、ライト/ダークテーマのほか、ターミナルを囲むウィンドウを次の設定で変えられます。どれもシナリオの `render` キーとコマンドラインのフラグの両方で指定できます。
+SVG と mp4 の出力では、フォント、カラーテーマ（後述）のほか、ターミナルを囲むウィンドウを次の設定で変えられます。どれもシナリオの `render` キーとコマンドラインのフラグの両方で指定できます。
 
 | `render` キー | フラグ | 設定する内容 |
 | --- | --- | --- |
@@ -79,8 +79,22 @@ README の本文に並べるデモは、たいてい背景なしで十分です�
 | `end-hold` | `--end-hold` | 最後の画面を表示し続ける秒数（0〜60）。その後 SVG は最初に戻り、mp4 は終わります。既定は最後の出力の前の間と同じ長さ |
 | `fade-out` | `--fade-out` | `end-hold` の後に文字を消していく秒数（0〜10）。ループが空のターミナルから始まり直します。ウィンドウと背景は残ります |
 
+| macOS | Windows |
 | --- | --- |
 | ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
+
+カラーテーマは `render.theme.preset` か `--theme` に名前で指定します。`render.theme` の `fg`、`bg`、`palette` で、その上から個別の色を変えられます。どのテーマも、各プロジェクトが公開しているターミナル用の配色を使っています。Apple はターミナルの配色を公開していないため、macOS の 2 テーマは macOS のシステムカラーを使っています。
+
+| 暗い背景 | |
+| --- | --- |
+| ![](samples/theme-presets/dark.svg) | ![](samples/theme-presets/macos-dark.svg) |
+| ![](samples/theme-presets/dracula.svg) | ![](samples/theme-presets/nord.svg) |
+| ![](samples/theme-presets/one-dark.svg) | ![](samples/theme-presets/gruvbox-dark.svg) |
+| ![](samples/theme-presets/catppuccin-mocha.svg) | ![](samples/theme-presets/tokyo-night.svg) |
+| ![](samples/theme-presets/solarized-dark.svg) | ![](samples/theme-presets/github-dark.svg) |
+| **明るい背景** | |
+| ![](samples/theme-presets/light.svg) | ![](samples/theme-presets/macos-light.svg) |
+| ![](samples/theme-presets/solarized-light.svg) | ![](samples/theme-presets/github-light.svg) |
 
 ## ギャラリー
 
@@ -206,18 +220,18 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
 # シナリオを実行して cast（既定）、cast + SVG、または cast + mp4 を生成
 scenetake [--verbose] [--strict] [--format cast|svg|mp4]
-  [--font-size N] [--font-family FAMILIES] [--theme dark|light]
+  [--font-size N] [--font-family FAMILIES] [--theme NAME]
   [--window none|macos|windows] [--max-fps N]
   [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH]
   scenario.yaml [output]
 
 # 既存の cast ファイルを SVG に変換
-scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light]
+scenetake svg [--font-size N] [--font-family FAMILIES] [--theme NAME]
   [--window none|macos|windows] [--max-fps N]
   <input.cast> [output.svg]
 
 # 既存の cast ファイルを mp4 に変換
-scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light]
+scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME]
   [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH]
   <input.cast> [output.mp4]
 ```
@@ -460,7 +474,7 @@ render:                          # Optional display metadata for cast header and
   font-size: 16
   font-family: ui-monospace, monospace
   theme:
-    preset: dark                 # dark | light; optional fg / bg / palette overrides
+    preset: dark                 # dark, light, nord, dracula, and more, with optional fg / bg / palette overrides
   window: macos                  # none | macos | windows
   window-title: "scenario_format.yaml"  # title bar text; default: the top-level title, "" for none
   background: "#0f2027 #2c5364"  # one color, 2-4 colors for a gradient, or a .png/.jpg/.gif/.webp file

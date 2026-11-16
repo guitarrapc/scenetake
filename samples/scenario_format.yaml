@@ -11,7 +11,7 @@ render:                          # Optional display metadata for cast header and
   font-size: 16
   font-family: ui-monospace, monospace
   theme:
-    preset: dark                 # dark | light; optional fg / bg / palette overrides
+    preset: dark                 # dark, light, nord, dracula, and more, with optional fg / bg / palette overrides
   window: macos                  # none | macos | windows
   window-title: "scenario_format.yaml"  # title bar text; default: the top-level title, "" for none
   background: "#0f2027 #2c5364"  # one color, 2-4 colors for a gradient, or a .png/.jpg/.gif/.webp file

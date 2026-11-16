@@ -15,7 +15,7 @@ render:
   font-size: 16
   background: "#a1c4fd #c2e9fb"   # one color, or 2-4 colors for a gradient from the top-left corner
   theme:
-    # Built-in presets: dark (default) | light
+    # A color theme name: dark (default), light, or another in the README's color themes, such as nord
     preset: light
 
     # Optional: override individual keys on top of the preset

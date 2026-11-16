@@ -41,8 +41,11 @@ scenetake のサンプル集です。各シナリオの**目的**と**生成物*
 リポジトリルートで実行します。
 
 ```bash
-# すべての *.yaml から .cast と .svg を再生成
+# すべての *.yaml から .cast と .svg を再生成し、続けてカラーテーマの見本も作る
 dotnet run samples/regenerate.cs
+
+# theme-presets/ のカラーテーマの見本だけを作る（palette.cast を各テーマで描画。録画は不要）
+dotnet run samples/regenerate.cs -- --theme-presets
 
 # GIF は agg が必要（Docker 例。v3 cast は ghcr.io/asciinema/agg を使用）
 docker run --rm -v "$PWD:/data" ghcr.io/asciinema/agg \

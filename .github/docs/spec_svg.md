@@ -16,7 +16,7 @@ Rich TUI recordings (`copilot --banner`, `sl`, `matrix`, etc.) work on the scena
 - Built-in C# SVG renderer (no bundled external binary).
 - **Row-diff** animated SVG (changed rows only, each shown and hidden by a CSS `visibility` animation) with optional **`--max-fps`** frame sampling (default **off**).
 - VT emulator. (see [VT emulator](#vt-emulator)).
-- Theme presets `dark` (default) and `light`; default `font-size` of `16`; default `font-family` stack tuned for programming.
+- Named color themes, `dark` by default ([spec_scenario.md](spec_scenario.md) → Color themes), a default `font-size` of `16`, and a default `font-family` stack tuned for programming.
 - Block cursor (`theme.fg` at 50% opacity, no blink); DECTCEM visibility (`\e[?25h`, `\e[?25l`).
 - Warn-and-continue for unsupported cast event codes.
 - Resize cast events (`"r"`) during `svg` conversion.

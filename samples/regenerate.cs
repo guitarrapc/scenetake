@@ -24,6 +24,10 @@ if (!File.Exists(toolPath))
 if (RunReadmeSync(repoRoot) != 0)
     return 1;
 
+// The color theme previews need no recording, so `-- --theme-presets` renders them alone.
+if (args.Contains("--theme-presets"))
+    return RenderThemePresets(repoRoot, toolPath);
+
 var scenarios = Directory
     .EnumerateFiles(samplesDir, "*.yaml", SearchOption.TopDirectoryOnly)
     .OrderBy(Path.GetFileName, StringComparer.Ordinal)
@@ -53,9 +57,46 @@ if (failures > 0)
     return 1;
 }
 
+if (RenderThemePresets(repoRoot, toolPath) != 0)
+    return 1;
+
 Console.Error.WriteLine();
-Console.Error.WriteLine($"Done: {scenarios.Length} sample(s)");
+Console.Error.WriteLine($"Done: {scenarios.Length} sample(s) and the theme previews");
 return 0;
+
+// samples/theme-presets/<name>.svg: palette.cast in each named color theme, with the name in a macOS title bar.
+// The names are RenderSettingsResolver.Presets in Svg.cs; svg_render_test checks that every theme has a current
+// preview and that no preview is left of a theme that is gone.
+static int RenderThemePresets(string repoRoot, string toolPath)
+{
+    string[] themes =
+    [
+        "dark", "light", "macos-dark", "macos-light", "dracula", "nord", "one-dark", "gruvbox-dark",
+        "catppuccin-mocha", "tokyo-night", "solarized-dark", "solarized-light", "github-dark", "github-light",
+    ];
+    Console.Error.WriteLine();
+    Console.Error.WriteLine("=== theme-presets ===");
+    foreach (var theme in themes)
+    {
+        var psi = new ProcessStartInfo { FileName = "dotnet", WorkingDirectory = repoRoot, UseShellExecute = false };
+        foreach (var arg in new[] { "run", toolPath, "--", "svg", "--theme", theme, "--window", "macos", "--window-title", theme,
+            "samples/theme-presets/palette.cast", $"samples/theme-presets/{theme}.svg" })
+            psi.ArgumentList.Add(arg);
+
+        using var process = Process.Start(psi);
+        if (process is null)
+        {
+            Console.Error.WriteLine("Error: failed to start dotnet");
+            return 1;
+        }
+
+        process.WaitForExit();
+        if (process.ExitCode != 0)
+            return process.ExitCode;
+    }
+
+    return 0;
+}
 
 static int RunReadmeSync(string repoRoot)
 {

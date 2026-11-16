@@ -41,8 +41,11 @@ Demos of popular terminal tools, for the README gallery and the playground. They
 Run from the repository root:
 
 ```bash
-# Regenerate .cast and .svg from every *.yaml
+# Regenerate .cast and .svg from every *.yaml, then the color theme previews
 dotnet run samples/regenerate.cs
+
+# Only the color theme previews in theme-presets/ (palette.cast in each theme), which need no recording
+dotnet run samples/regenerate.cs -- --theme-presets
 
 # GIFs require agg (Docker example; use ghcr.io/asciinema/agg for v3 casts)
 docker run --rm -v "$PWD:/data" ghcr.io/asciinema/agg \

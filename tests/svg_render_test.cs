@@ -17,6 +17,7 @@ failures += Run("LoopDurationMatchesAggGifCycle", LoopDurationMatchesAggGifCycle
 failures += Run("MaxFpsDoesNotChangeLoopDuration", MaxFpsDoesNotChangeLoopDuration);
 failures += Run("EndHoldAndFadeOutSetTheLoop", EndHoldAndFadeOutSetTheLoop);
 failures += Run("NoLoopPlaysOnceWithoutFade", NoLoopPlaysOnceWithoutFade);
+failures += Run("ThemePresetsAreValidAndPreviewed", ThemePresetsAreValidAndPreviewed);
 failures += Run("MatrixTintWhiteNearGreen", MatrixTintWhiteNearGreen);
 failures += Run("MatrixTintIgnoresVerticalNeighbors", MatrixTintIgnoresVerticalNeighbors);
 failures += Run("CopilotBannerBlockGlyphs", CopilotBannerBlockGlyphs);
@@ -694,6 +695,47 @@ static bool NoLoopPlaysOnceWithoutFade()
         && RenderSettingsResolver.FindIneffectiveStyle(recording.RenderSettings with { Loop = false, FadeOut = 1 })
             .Any(note => note.StartsWith("fade-out has no effect on an SVG that plays once", StringComparison.Ordinal))
         && RenderSettingsResolver.FindIneffectiveStyle(recording.RenderSettings with { Loop = false, FadeOut = 1 }, svg: false).Count == 0;
+}
+
+// Each named theme has 16 palette colors and fg and bg that the cast reader accepts, so a cast written with it reads
+// back the same. samples/theme-presets has one preview per theme, as `scenetake svg --theme NAME --window macos
+// --window-title NAME palette.cast` renders it (samples/regenerate.cs), and no preview of a theme that is gone.
+static bool ThemePresetsAreValidAndPreviewed()
+{
+    var ok = true;
+    var folder = Path.Combine("samples", "theme-presets");
+    var recording = CastReader.Read(Path.Combine(folder, "palette.cast"));
+    var names = RenderSettingsResolver.PresetNames.ToList();
+    foreach (var name in names)
+    {
+        if (!RenderSettingsResolver.TryGetPreset(name, out var theme)
+            || !CastReader.TryParseHexColor(theme.Fg, out _) || !CastReader.TryParseHexColor(theme.Bg, out _)
+            || !CastReader.TryParsePalette(theme.Palette, out _) || theme.Palette.Split(':').Length != 16)
+        {
+            Console.Error.WriteLine($"  {name}: invalid colors {theme}");
+            ok = false;
+            continue;
+        }
+
+        var settings = RenderSettingsResolver.ApplySvgOverrides(recording.RenderSettings, null, null, name, WindowStyle.Macos, null, out var error)
+            with { WindowTitle = name };
+        var preview = Path.Combine(folder, name + ".svg");
+        var expected = SvgRender.RenderToString(recording.Events, recording.Width, recording.Height, settings, recording.LoopDuration);
+        if (error.Length != 0 || !File.Exists(preview) || File.ReadAllText(preview) != expected)
+        {
+            Console.Error.WriteLine($"  {preview} is missing or stale {error}: run samples/regenerate.cs");
+            ok = false;
+        }
+    }
+
+    var extra = Directory.GetFiles(folder, "*.svg").Select(Path.GetFileNameWithoutExtension).Except(names).ToList();
+    if (extra.Count != 0)
+    {
+        Console.Error.WriteLine($"  previews of no theme: {string.Join(", ", extra)}");
+        ok = false;
+    }
+
+    return ok && RenderSettingsResolver.TryGetPreset("Nord", out _) && !RenderSettingsResolver.TryGetPreset("nord-light", out _);
 }
 
 static bool MatrixTintWhiteNearGreen()

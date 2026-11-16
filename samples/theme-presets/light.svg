@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="520.16" height="166" viewBox="0 0 520.16 166" preserveAspectRatio="xMidYMid meet" role="img" aria-label="scenetake output">
+<style>
+text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
+text { dominant-baseline: alphabetic; }
+.bg,rect:not([class]) { shape-rendering: crispEdges; }
+.l { visibility: hidden; animation: 0.001s step-start infinite; }
+.c { fill: #383838; fill-opacity: 0.5; }
+.d{transform:translate(0,62.8px)}
+.m{transform:translate(0,82.8px)}
+.v{transform:translate(0,102.8px)}
+.a{fill:#434343}
+.b{fill:#2a2a2a}
+.e{fill:#c82828}
+.f{fill:#548b2e}
+.g{fill:#a88800}
+.h{fill:#2871aa}
+.i{fill:#9a4a96}
+.j{fill:#008787}
+.k{fill:#585858}
+.n{fill:#686868}
+.o{fill:#e74c3c}
+.p{fill:#69a845}
+.q{fill:#d4a017}
+.r{fill:#3498db}
+.s{fill:#c678dd}
+.t{fill:#20b2aa}
+.u{fill:#fafafa}
+.w{visibility:visible}
+</style>
+<defs>
+<filter id="window-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.22"/></filter>
+<mask id="viewport-mask" x="0" y="0" width="520.16" height="166" maskUnits="userSpaceOnUse">
+<rect class="l w viewport-mask-0" x="12" y="46" width="496.16" height="108" fill="white"/>
+</mask>
+</defs>
+<rect class="l w viewport-chrome-0" x="12" y="12" width="496.16" height="142" rx="8" ry="8" fill="none" stroke="#b0b0b0" stroke-width="1" filter="url(#window-shadow)"/>
+<path class="l w viewport-chrome-0" d="M 20,12 H 500.16 Q 508.16,12 508.16,20 V 46 H 12 V 20 Q 12,12 20,12 Z" fill="#dcdcdc"/>
+<line class="l w viewport-chrome-0" x1="12" y1="46" x2="508.16" y2="46" stroke="#b0b0b0" stroke-width="1"/>
+<text class="l w viewport-chrome-0" x="260.08" y="33.5" style="font:bold 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI','Helvetica Neue',Helvetica,Arial,'Noto Sans','DejaVu Sans',sans-serif" text-anchor="middle" fill="#4a4a4a">light</text>
+<circle class="l w viewport-chrome-0" cx="34" cy="29" r="8" fill="#ff5f57"/>
+<circle class="l w viewport-chrome-0" cx="60" cy="29" r="8" fill="#febc2e"/>
+<circle class="l w viewport-chrome-0" cx="86" cy="29" r="8" fill="#28c840"/>
+<g mask="url(#viewport-mask)" fill="#383838">
+<rect class="bg l w viewport-bg-0" x="12" y="46" width="496.16" height="108" fill="#fafafa"/>
+<g class="l w d"><text x="22" textLength="69.44">default</text><text class="a" x="101.36" font-weight="bold" textLength="39.68">bold</text><text class="b" x="150.96" textLength="49.6">faint</text><text x="210.48" font-style="italic" textLength="59.52">italic</text><text x="279.92" text-decoration="underline" textLength="89.28">underline</text></g>
+<g class="l w m"><text x="22" textLength="49.6">black</text><text class="e" x="81.52" textLength="29.76">red</text><text class="f" x="121.2" textLength="49.6">green</text><text class="g" x="180.72" textLength="59.52">yellow</text><text class="h" x="250.16" textLength="39.68">blue</text><text class="i" x="299.76" textLength="69.44">magenta</text><text class="j" x="379.12" textLength="39.68">cyan</text><text class="k" x="428.72" textLength="49.6">white</text></g>
+<g class="l w v"><text class="n" x="22" textLength="49.6">black</text><text class="o" x="81.52" textLength="29.76">red</text><text class="p" x="121.2" textLength="49.6">green</text><text class="q" x="180.72" textLength="59.52">yellow</text><text class="r" x="250.16" textLength="39.68">blue</text><text class="s" x="299.76" textLength="69.44">magenta</text><text class="t" x="379.12" textLength="39.68">cyan</text><text class="u" x="428.72" textLength="49.6">white</text></g>
+<g class="l w"><rect x="22" y="110" width="59.52" height="20" fill="#383838"/><rect x="81.52" y="110" width="59.52" height="20" fill="#c82828"/><rect x="141.04" y="110" width="59.52" height="20" fill="#548b2e"/><rect x="200.56" y="110" width="59.52" height="20" fill="#a88800"/><rect x="260.08" y="110" width="59.52" height="20" fill="#2871aa"/><rect x="319.6" y="110" width="59.52" height="20" fill="#9a4a96"/><rect x="379.12" y="110" width="59.52" height="20" fill="#008787"/><rect x="438.64" y="110" width="59.52" height="20" fill="#585858"/></g>
+<g class="l w"><rect x="22" y="130" width="59.52" height="20" fill="#686868"/><rect x="81.52" y="130" width="59.52" height="20" fill="#e74c3c"/><rect x="141.04" y="130" width="59.52" height="20" fill="#69a845"/><rect x="200.56" y="130" width="59.52" height="20" fill="#d4a017"/><rect x="260.08" y="130" width="59.52" height="20" fill="#3498db"/><rect x="319.6" y="130" width="59.52" height="20" fill="#c678dd"/><rect x="379.12" y="130" width="59.52" height="20" fill="#20b2aa"/></g>
+</g>
+</svg>

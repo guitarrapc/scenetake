@@ -1956,16 +1956,16 @@ static string CreateInitialScenarioYaml(string? shell)
 
 static void PrintUsage()
 {
-    Console.Error.WriteLine("Usage: scenetake [--verbose] [--strict] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
-    Console.Error.WriteLine("       scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
-    Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
+    Console.Error.WriteLine("Usage: scenetake [--verbose] [--strict] [--format cast|svg|mp4] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
+    Console.Error.WriteLine("       scenetake svg [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
+    Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
     Console.Error.WriteLine("       scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]");
     Console.Error.WriteLine("Run 'scenetake --help' for what each option does.");
 }
 
 static void PrintMp4Usage()
 {
-    Console.Error.WriteLine("Usage: scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
+    Console.Error.WriteLine("Usage: scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
     Console.Error.WriteLine("Run 'scenetake mp4 --help' for what each option does.");
 }
 
@@ -2511,7 +2511,7 @@ static void PrintInitUsage()
 
 static void PrintSvgUsage()
 {
-    Console.Error.WriteLine("Usage: scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
+    Console.Error.WriteLine("Usage: scenetake svg [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
     Console.Error.WriteLine("Run 'scenetake svg --help' for what each option does.");
 }
 
@@ -2667,14 +2667,20 @@ static class HelpText
             """
         + (scenario
             ? """
-                  --theme dark|light       Color theme preset (default dark). The scenario's render.theme fg,
+                  --theme NAME             Color theme preset (default dark). The scenario's render.theme fg,
                                            bg and palette still apply on top of it.
 
                 """
             : """
-                  --theme dark|light       Color theme, replacing the colors the cast stores (default dark)
+                  --theme NAME             Color theme, replacing the colors the cast stores (default dark)
 
                 """)
+        + """
+                                       Names: dark, light, macos-dark, macos-light, dracula, nord,
+                                       one-dark, gruvbox-dark, catppuccin-mocha, tokyo-night,
+                                       solarized-dark, solarized-light, github-dark, github-light
+
+            """
         + """
               --window none|macos|windows
                                        Draw a window title bar around the terminal (default none)

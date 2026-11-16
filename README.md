@@ -49,7 +49,7 @@ steps:
 | --- | --- |
 | ![](samples/basic.gif) | ![](samples/basic.svg) |
 
-SVG and mp4 output support a custom font, a light or dark theme, and these settings for the window around the terminal. Each is a `render` key in the scenario and a flag on the command line:
+SVG and mp4 output support a custom font, a color theme (below), and these settings for the window around the terminal. Each is a `render` key in the scenario and a flag on the command line:
 
 | `render` key | Flag | What it sets |
 | --- | --- | --- |
@@ -79,8 +79,22 @@ How the demo ends is set the same way:
 | `end-hold` | `--end-hold` | Seconds the final screen stays before the SVG starts again or the mp4 ends, 0–60. Default: as long as the pause before the last output. |
 | `fade-out` | `--fade-out` | Seconds over which the text fades out after `end-hold`, 0–10, so the loop starts again from a clear terminal. The window and the background stay. |
 
+| macOS | Windows |
 | --- | --- |
 | ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
+
+The color theme is a name in `render.theme.preset` or `--theme`. `fg`, `bg`, and `palette` under `render.theme` change single colors on top of it. Each theme uses the terminal colors its project publishes, and the two macOS themes use macOS's system colors, as Apple publishes no terminal palette:
+
+| Dark background | |
+| --- | --- |
+| ![](samples/theme-presets/dark.svg) | ![](samples/theme-presets/macos-dark.svg) |
+| ![](samples/theme-presets/dracula.svg) | ![](samples/theme-presets/nord.svg) |
+| ![](samples/theme-presets/one-dark.svg) | ![](samples/theme-presets/gruvbox-dark.svg) |
+| ![](samples/theme-presets/catppuccin-mocha.svg) | ![](samples/theme-presets/tokyo-night.svg) |
+| ![](samples/theme-presets/solarized-dark.svg) | ![](samples/theme-presets/github-dark.svg) |
+| **Light background** | |
+| ![](samples/theme-presets/light.svg) | ![](samples/theme-presets/macos-light.svg) |
+| ![](samples/theme-presets/solarized-light.svg) | ![](samples/theme-presets/github-light.svg) |
 
 ## Gallery
 
@@ -206,18 +220,18 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
 # Run scenario to generate cast (default), cast + SVG, or cast + mp4
 scenetake [--verbose] [--strict] [--format cast|svg|mp4]
-  [--font-size N] [--font-family FAMILIES] [--theme dark|light]
+  [--font-size N] [--font-family FAMILIES] [--theme NAME]
   [--window none|macos|windows] [--max-fps N]
   [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH]
   scenario.yaml [output]
 
 # Convert an existing cast file to SVG
-scenetake svg [--font-size N] [--font-family FAMILIES] [--theme dark|light]
+scenetake svg [--font-size N] [--font-family FAMILIES] [--theme NAME]
   [--window none|macos|windows] [--max-fps N]
   <input.cast> [output.svg]
 
 # Convert an existing cast file to mp4
-scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme dark|light]
+scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME]
   [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH]
   <input.cast> [output.mp4]
 ```
@@ -463,7 +477,7 @@ render:                          # Optional display metadata for cast header and
   font-size: 16
   font-family: ui-monospace, monospace
   theme:
-    preset: dark                 # dark | light; optional fg / bg / palette overrides
+    preset: dark                 # dark, light, nord, dracula, and more, with optional fg / bg / palette overrides
   window: macos                  # none | macos | windows
   window-title: "scenario_format.yaml"  # title bar text; default: the top-level title, "" for none
   background: "#0f2027 #2c5364"  # one color, 2-4 colors for a gradient, or a .png/.jpg/.gif/.webp file
