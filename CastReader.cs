@@ -160,7 +160,7 @@ internal static class CastReader
         internal bool? Loop;
         internal double? EndHold;
         internal double? FadeOut;
-        internal FitMode Fit;
+        internal FitMode Fit = RenderSettingsResolver.DefaultFit;
         internal int CropTop;
         internal int CropBottom;
         internal int CropLeft;
@@ -232,7 +232,7 @@ internal static class CastReader
             }
             else if (value.StartsWith(RenderSettingsResolver.FitTagPrefix, StringComparison.Ordinal))
             {
-                if (ReadTag<FitMode>(value, RenderSettingsResolver.FitTagPrefix, "fit", "no fit", RenderSettingsResolver.TryParseFit, out var fit))
+                if (ReadTag<FitMode>(value, RenderSettingsResolver.FitTagPrefix, "fit", "the default fit (height)", RenderSettingsResolver.TryParseFit, out var fit))
                     style.Fit = fit;
             }
             else if (value.StartsWith(RenderSettingsResolver.CropTopTagPrefix, StringComparison.Ordinal))

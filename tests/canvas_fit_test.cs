@@ -208,7 +208,10 @@ static bool ScenarioKeysResolve()
         new Scenario { Render = new ScenarioRender { Fit = "Height", CropTop = 1, CropRight = 3 } }, null, out var settings, out var error);
     var badFit = RenderSettingsResolver.TryResolve(new Scenario { Render = new ScenarioRender { Fit = "wide" } }, null, out _, out var fitError);
     var badCrop = RenderSettingsResolver.TryResolve(new Scenario { Render = new ScenarioRender { CropLeft = 512 } }, null, out _, out var cropError);
+    RenderSettingsResolver.TryResolve(new Scenario(), null, out var unset, out _);
+    RenderSettingsResolver.TryResolve(new Scenario { Render = new ScenarioRender { Fit = "none" } }, null, out var none, out _);
     return Expect(ok && settings.Fit == FitMode.Height && settings.Crop == new CropSpec(1, 0, 0, 3), $"resolved: {error} {settings.Fit} {settings.Crop}")
+        & Expect(unset.Fit == FitMode.Height && none.Fit == FitMode.None, $"default height, none kept: {unset.Fit} {none.Fit}")
         & Expect(!badFit && fitError == "invalid render.fit: unknown fit: wide (expected: none, height, width, both)", $"fit error: {fitError}")
         & Expect(!badCrop && cropError == "invalid render.crop-left: must be between 0 and 511 cells: 512", $"crop error: {cropError}");
 }
@@ -225,14 +228,16 @@ static bool OverridesReplaceEachEdge()
 static bool CastTagsRoundTrip()
 {
     var tagged = ReadHeader("\"st:fit=both\",\"st:crop-top=2\",\"st:crop-bottom=1\",\"st:crop-left=3\",\"st:crop-right=4\"");
+    var none = ReadHeader("\"st:fit=none\"");
     var invalid = ReadHeader("\"st:fit=wide\",\"st:crop-top=-1\",\"st:crop-left=x\"");
     var plain = ReadHeader("");
     return Expect(tagged.Settings.Fit == FitMode.Both && tagged.Settings.Crop == new CropSpec(2, 1, 3, 4), $"tagged: {tagged.Settings.Fit} {tagged.Settings.Crop}")
-        & Expect(invalid.Settings.Fit == FitMode.None && invalid.Settings.Crop.IsEmpty, $"invalid: {invalid.Settings.Fit} {invalid.Settings.Crop}")
-        & Expect(invalid.Warnings.Contains("Warning: cast: invalid fit 'wide', using no fit", StringComparison.Ordinal)
+        & Expect(none.Settings.Fit == FitMode.None, $"st:fit=none: {none.Settings.Fit}")
+        & Expect(invalid.Settings.Fit == FitMode.Height && invalid.Settings.Crop.IsEmpty, $"invalid: {invalid.Settings.Fit} {invalid.Settings.Crop}")
+        & Expect(invalid.Warnings.Contains("Warning: cast: invalid fit 'wide', using the default fit (height)", StringComparison.Ordinal)
             && invalid.Warnings.Contains("Warning: cast: invalid crop-top '-1', using no crop", StringComparison.Ordinal)
             && invalid.Warnings.Contains("Warning: cast: invalid crop-left 'x', using no crop", StringComparison.Ordinal), $"warnings: {invalid.Warnings}")
-        & Expect(plain.Settings.Fit == FitMode.None && plain.Settings.Crop.IsEmpty && plain.Warnings.Length == 0, "no tags: none and no crop");
+        & Expect(plain.Settings.Fit == FitMode.Height && plain.Settings.Crop.IsEmpty && plain.Warnings.Length == 0, "no tags: the default fit (height) and no crop");
 
     static (ResolvedRenderSettings Settings, string Warnings) ReadHeader(string tags)
     {

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="877.6" height="586" viewBox="0 0 877.6 586" preserveAspectRatio="xMidYMid meet" role="img" aria-label="scenetake output">
+<svg xmlns="http://www.w3.org/2000/svg" width="877.6" height="326" viewBox="0 0 877.6 326" preserveAspectRatio="xMidYMid meet" role="img" aria-label="scenetake output">
 <style>
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
@@ -381,21 +381,21 @@ text { dominant-baseline: alphabetic; }
 .ai{visibility:visible}
 </style>
 <defs>
-<filter id="window-shadow" filterUnits="userSpaceOnUse" x="0" y="0" width="877.6" height="586"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-opacity="0.45"/></filter>
+<filter id="window-shadow" filterUnits="userSpaceOnUse" x="0" y="0" width="877.6" height="326"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-opacity="0.45"/></filter>
 <linearGradient id="desktop" x1="0" y1="0" x2="1" y2="1">
 <stop offset="0" stop-color="#4b6cb7"/>
 <stop offset="1" stop-color="#182848"/>
 </linearGradient>
-<clipPath id="window-clip-0"><rect x="32" y="32" width="813.6" height="522" rx="8" ry="8"/></clipPath>
-<mask id="window-outside-0" maskUnits="userSpaceOnUse" x="0" y="0" width="877.6" height="586"><rect width="877.6" height="586" fill="white"/><rect x="32" y="32" width="813.6" height="522" rx="8" ry="8" fill="black"/></mask>
+<clipPath id="window-clip-0"><rect x="32" y="32" width="813.6" height="262" rx="8" ry="8"/></clipPath>
+<mask id="window-outside-0" maskUnits="userSpaceOnUse" x="0" y="0" width="877.6" height="326"><rect width="877.6" height="326" fill="white"/><rect x="32" y="32" width="813.6" height="262" rx="8" ry="8" fill="black"/></mask>
 <rect id="c" class="c" width="9.92" height="20"/>
-<mask id="viewport-mask" x="0" y="0" width="877.6" height="586" maskUnits="userSpaceOnUse">
-<rect class="l ai viewport-mask-0" x="32" y="66" width="813.6" height="488" fill="white"/>
+<mask id="viewport-mask" x="0" y="0" width="877.6" height="326" maskUnits="userSpaceOnUse">
+<rect class="l ai viewport-mask-0" x="32" y="66" width="813.6" height="228" fill="white"/>
 </mask>
 </defs>
-<rect x="0" y="0" width="877.6" height="586" fill="url(#desktop)"/>
-<rect class="l ai viewport-chrome-0" x="32" y="32" width="813.6" height="522" rx="8" ry="8" fill="#000" filter="url(#window-shadow)" mask="url(#window-outside-0)"/>
-<rect class="l ai viewport-chrome-0" x="32" y="32" width="813.6" height="522" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+<rect x="0" y="0" width="877.6" height="326" fill="url(#desktop)"/>
+<rect class="l ai viewport-chrome-0" x="32" y="32" width="813.6" height="262" rx="8" ry="8" fill="#000" filter="url(#window-shadow)" mask="url(#window-outside-0)"/>
+<rect class="l ai viewport-chrome-0" x="32" y="32" width="813.6" height="262" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1"/>
 <path class="l ai viewport-chrome-0" d="M 40,32 H 837.6 Q 845.6,32 845.6,40 V 66 H 32 V 40 Q 32,32 40,32 Z" fill="#323232" fill-opacity="0.85"/>
 <line class="l ai viewport-chrome-0" x1="32" y1="66" x2="845.6" y2="66" stroke="#1a1a1a" stroke-width="1"/>
 <text class="l ai viewport-chrome-0" x="438.8" y="53.5" style="font:bold 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI','Helvetica Neue',Helvetica,Arial,'Noto Sans','DejaVu Sans',sans-serif" text-anchor="middle" fill="#c8c8c8">Theme macOS</text>
@@ -403,7 +403,7 @@ text { dominant-baseline: alphabetic; }
 <circle class="l ai viewport-chrome-0" cx="80" cy="49" r="8" fill="#febc2e"/>
 <circle class="l ai viewport-chrome-0" cx="106" cy="49" r="8" fill="#28c840"/>
 <g mask="url(#viewport-mask)" fill="#d0d0d0">
-<rect class="bg l ai viewport-bg-0" x="32" y="66" width="813.6" height="488" fill="#282c34" fill-opacity="0.85" clip-path="url(#window-clip-0)"/>
+<rect class="bg l ai viewport-bg-0" x="32" y="66" width="813.6" height="228" fill="#282c34" fill-opacity="0.85" clip-path="url(#window-clip-0)"/>
 <g class="l ay"><text x="42" y="82.8">$</text><use href="#c" x="61.84" y="70"/></g>
 <g class="l az"><text x="42 61.84" y="82.8">$p</text><use href="#c" x="71.76" y="70"/></g>
 <g class="l a0"><text x="42 61.84 71.76" y="82.8">$pr</text><use href="#c" x="81.68" y="70"/></g>
@@ -717,5 +717,5 @@ text { dominant-baseline: alphabetic; }
 <use href="#c" x="42" y="250" class="l jn"/>
 <use href="#c" x="42" y="270" class="l jo"/>
 </g>
-<rect class="l ai viewport-chrome-0" x="32.5" y="32.5" width="812.6" height="521" rx="7.5" ry="7.5" fill="none" stroke="#ffffff" stroke-opacity="0.16"/>
+<rect class="l ai viewport-chrome-0" x="32.5" y="32.5" width="812.6" height="261" rx="7.5" ry="7.5" fill="none" stroke="#ffffff" stroke-opacity="0.16"/>
 </svg>

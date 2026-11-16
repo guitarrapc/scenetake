@@ -286,7 +286,9 @@ static CastRecording Recording(string events, string? tags = null)
     var path = Path.Combine(Path.GetTempPath(), $"scenetake-png-{Guid.NewGuid():N}.cast");
     try
     {
-        var tagsJson = tags is null ? "" : $",\"tags\":[{tags}]";
+        // These tests check the drawing at the terminal's full size, so they turn off the default fit (canvas_fit_test
+        // checks fit).
+        var tagsJson = $",\"tags\":[\"st:fit=none\"{(tags is null ? "" : "," + tags)}]";
         File.WriteAllText(path, "{\"version\":3,\"term\":{\"cols\":12,\"rows\":3,\"type\":\"xterm-256color\"}" + tagsJson + "}\n" + events + "\n");
         return CastReader.Read(path);
     }

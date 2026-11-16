@@ -761,7 +761,8 @@ internal static partial class ScenarioCast
             tags.Add(RenderSettingsResolver.EndHoldTagPrefix + RenderSettingsResolver.FormatSeconds(endHold));
         if (renderSettings.FadeOut is double fadeOut)
             tags.Add(RenderSettingsResolver.FadeOutTagPrefix + RenderSettingsResolver.FormatSeconds(fadeOut));
-        if (renderSettings.Fit != FitMode.None)
+        // A cast without st:fit is read with the default fit, so only another fit, none included, needs the tag.
+        if (renderSettings.Fit != RenderSettingsResolver.DefaultFit)
             tags.Add(RenderSettingsResolver.FitTagPrefix + RenderSettingsResolver.FitToTagValue(renderSettings.Fit));
         if (renderSettings.Crop.Top > 0)
             tags.Add(RenderSettingsResolver.CropTopTagPrefix + renderSettings.Crop.Top.ToString(CultureInfo.InvariantCulture));

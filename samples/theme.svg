@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="877.6" height="552" viewBox="0 0 877.6 552" preserveAspectRatio="xMidYMid meet" role="img" aria-label="scenetake output">
+<svg xmlns="http://www.w3.org/2000/svg" width="877.6" height="292" viewBox="0 0 877.6 292" preserveAspectRatio="xMidYMid meet" role="img" aria-label="scenetake output">
 <style>
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
@@ -365,13 +365,13 @@ text { dominant-baseline: alphabetic; }
 <stop offset="1" stop-color="#c2e9fb"/>
 </linearGradient>
 <rect id="c" class="c" width="9.92" height="20"/>
-<mask id="viewport-mask" x="0" y="0" width="877.6" height="552" maskUnits="userSpaceOnUse">
-<rect class="l aw viewport-mask-0" x="32" y="32" width="813.6" height="488" fill="white"/>
+<mask id="viewport-mask" x="0" y="0" width="877.6" height="292" maskUnits="userSpaceOnUse">
+<rect class="l aw viewport-mask-0" x="32" y="32" width="813.6" height="228" fill="white"/>
 </mask>
 </defs>
-<rect x="0" y="0" width="877.6" height="552" fill="url(#desktop)"/>
+<rect x="0" y="0" width="877.6" height="292" fill="url(#desktop)"/>
 <g mask="url(#viewport-mask)" fill="#383838">
-<rect class="bg l aw viewport-bg-0" x="32" y="32" width="813.6" height="488" fill="#fafafa"/>
+<rect class="bg l aw viewport-bg-0" x="32" y="32" width="813.6" height="228" fill="#fafafa"/>
 <g class="l ax"><text x="42" y="48.8">$</text><use href="#c" x="61.84" y="36"/></g>
 <g class="l ay"><text x="42 61.84" y="48.8">$p</text><use href="#c" x="71.76" y="36"/></g>
 <g class="l az"><text x="42 61.84 71.76" y="48.8">$pr</text><use href="#c" x="81.68" y="36"/></g>

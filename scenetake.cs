@@ -3758,7 +3758,8 @@ static class HelpText
               --fit none|height|width|both
                                        Move the bottom edge (height), the right edge (width), or both in to
                                        the last row and column the recording shows, the cursor included
-                                       (default none). The cast keeps the terminal's size.
+                                       (default height: no empty rows below the content). none draws the
+                                       whole terminal. The cast keeps the terminal's size.
               --crop-top N, --crop-bottom N, --crop-left N, --crop-right N
                                        Cut N rows or columns from that edge before --fit, 0-511 (default 0)
 

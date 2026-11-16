@@ -487,15 +487,17 @@ static bool FitAndCropApplyInThePlayground()
 
     // The --fit option of the render options panel acts as render.fit does: the cast keeps it, and the SVG is the svg
     // command's. (The YAML text seeds the typing, so a YAML with render.fit types differently and is no comparison.)
-    var byOption = PlaygroundRender.RenderScenario("width: 80\nheight: 24\nsteps:\n  - echo hi\n", outputs, new PlaygroundOptions(Fit: "height"));
+    var byOption = PlaygroundRender.RenderScenario("width: 80\nheight: 24\nsteps:\n  - echo hi\n", outputs, new PlaygroundOptions(Fit: "none"));
     var optionCast = CastReader.ReadText(Encoding.UTF8.GetString(byOption.Cast!));
     var optionExpected = SvgRender.RenderToUtf8(optionCast.Events, optionCast.Width, optionCast.Height, optionCast.RenderSettings, optionCast.LoopDuration);
     var wrong = PlaygroundRender.RenderScenario("width: 80\nheight: 24\nsteps:\n  - echo hi\n", outputs, new PlaygroundOptions(Fit: "wide"));
     return Expect(castText.Contains("\"st:fit=both\"", StringComparison.Ordinal) && castText.Contains("\"st:crop-left=1\"", StringComparison.Ordinal), "the cast keeps fit and crop")
         & Expect(fitted.Svg!.AsSpan().SequenceEqual(expected), "the playground draws what the svg command draws from its cast")
         & Expect(fitted.Svg!.Length < plain.Svg!.Length && recording.RenderSettings is { Fit: FitMode.Both, Crop.Left: 1 }, "fit and crop change the SVG")
-        & Expect(byOption.Error is null && optionCast.RenderSettings.Fit == FitMode.Height && byOption.Svg!.AsSpan().SequenceEqual(optionExpected)
-            && byOption.Svg!.Length < plain.Svg!.Length, "the fit option is kept in the cast and drawn as the svg command draws it")
+        // fit height is the default, so the option that changes the plain render is none: the whole 24-row terminal.
+        & Expect(byOption.Error is null && optionCast.RenderSettings.Fit == FitMode.None && byOption.Svg!.AsSpan().SequenceEqual(optionExpected)
+            && byOption.Svg!.Length > plain.Svg!.Length && Encoding.UTF8.GetString(byOption.Cast!).Contains("\"st:fit=none\"", StringComparison.Ordinal),
+            "the fit option is kept in the cast and drawn as the svg command draws it")
         & Expect(wrong.Error == "unknown fit: wide (expected: none, height, width, both)", $"wrong fit: {wrong.Error}");
 }
 

@@ -725,7 +725,9 @@ static (List<byte[]> Frames, RasterLayout Layout) Render(string events, int fps,
     var path = Path.Combine(Path.GetTempPath(), $"scenetake-mp4-{Guid.NewGuid():N}.cast");
     try
     {
-        string[] allTags = [.. window is null ? [] : new[] { $"st:window={window}" }, .. tags ?? []];
+        // These tests check the drawing at the terminal's full size, so they turn off the default fit (canvas_fit_test
+        // checks fit).
+        string[] allTags = ["st:fit=none", .. window is null ? [] : new[] { $"st:window={window}" }, .. tags ?? []];
         var tagsJson = allTags.Length == 0 ? "" : $",\"tags\":[{string.Join(',', allTags.Select(static tag => $"\"{tag}\""))}]";
         File.WriteAllText(path, "{\"version\":3,\"term\":{\"cols\":8,\"rows\":3,\"type\":\"xterm-256color\"}" + tagsJson + "}\n" + events + "\n");
         var recording = CastReader.Read(path);

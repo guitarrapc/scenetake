@@ -165,7 +165,7 @@ scenetake --format svg scenario.yaml
 
 # Record one command without a scenario file: writes git.svg and git.cast here (run in a PTY, so colors show)
 scenetake capture -- git log --oneline -5
-scenetake capture --window macos --fit height -o help -- mycli --help
+scenetake capture --window macos -o help -- mycli --help
 
 # SVG styling: font, theme, window chrome, frame cap
 scenetake --format svg scenario.yaml --font-size 20 --font-family "'Noto Sans Mono', ui-monospace" --theme light --window macos
@@ -176,9 +176,11 @@ scenetake --format svg scenario.yaml --window macos --window-title "my-cli demo"
 # A translucent window over an image, with the image blurred behind the text
 scenetake --format svg scenario.yaml --window macos --background wallpaper.webp --opacity 0.85 --blur 8
 
-# Leave out the rows and columns the recording never uses (render.fit), or cut rows from an edge (render.crop-*)
+# Rows below the content are left out by default (render.fit: height). Fit the width too, keep the whole
+# terminal, or cut rows from an edge (render.crop-*)
 scenetake --format svg scenario.yaml --fit both
-scenetake png scenario.cast --crop-top 1 --fit height
+scenetake --format svg scenario.yaml --fit none
+scenetake png scenario.cast --crop-top 1
 
 # Keep the final screen for 3 seconds, then fade the text out over 1 second before the loop starts again
 scenetake --format svg scenario.yaml --end-hold 3 --fade-out 1

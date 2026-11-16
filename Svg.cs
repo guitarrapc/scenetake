@@ -493,6 +493,12 @@ internal static class RenderSettingsResolver
     internal const string CropRightTagPrefix = "st:crop-right=";
     internal const int MinCrop = 0, MaxCrop = MaxTerminalCols - 1;
     internal const string ExpectedFitNames = "none, height, width, both";
+
+    /// <summary>
+    /// The fit of a scenario without <c>render.fit</c> and of a cast without <c>st:fit</c>: the rows below the last one
+    /// the recording shows are left out, and the width stays the terminal's.
+    /// </summary>
+    internal const FitMode DefaultFit = FitMode.Height;
     internal const int MinMargin = 0, MaxMargin = 200;
     internal const int MinPadding = 0, MaxPadding = 100;
     internal const double MinOpacity = 0, MaxOpacity = 1;
@@ -1022,7 +1028,7 @@ internal static class RenderSettingsResolver
             return false;
         }
 
-        settings = new ResolvedRenderSettings(fontSize, fontFamily, theme, window);
+        settings = new ResolvedRenderSettings(fontSize, fontFamily, theme, window) { Fit = DefaultFit };
         if (render?.WindowTitle is { } windowTitle)
             settings = settings with { WindowTitle = NormalizeWindowTitle(windowTitle) };
 
