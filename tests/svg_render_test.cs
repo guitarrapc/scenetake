@@ -222,10 +222,11 @@ static bool SoftGlyphIdsAvoidOtherIds()
 
 static bool CurlOutputSurvivesFrameSampling()
 {
+    // curl -sI prints every header in one burst: the first, a middle, and the last row must all be drawn.
     var rows = DecodeRowLayers(RenderCast("samples/basic.cast", maxFps: 12));
-    return rows.Any(r => r.Text.Contains("% Total", StringComparison.Ordinal))
-        && rows.Any(r => r.Text.Contains("HTTP/1.1 301 Moved Permanently", StringComparison.Ordinal))
-        && rows.Any(r => r.Text.Contains("Dload  Upload", StringComparison.Ordinal));
+    return rows.Any(r => r.Text.Contains("HTTP/1.1 301 Moved Permanently", StringComparison.Ordinal))
+        && rows.Any(r => r.Text.Contains("Location: https://www.google.com/", StringComparison.Ordinal))
+        && rows.Any(r => r.Text.StartsWith("Alt-Svc: ", StringComparison.Ordinal));
 }
 
 static bool EchoOutputNoDuplicateCommandLine()

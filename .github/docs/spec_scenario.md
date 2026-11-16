@@ -25,6 +25,14 @@ Example: `Warning: unknown key 'hightlight' in step 3 (did you mean 'highlight'?
 
 Unknown keys have no exemption, including compose-style `x-` keys. VYaml skips anchors under unknown keys, so aliases to those anchors fail to parse. Such keys can only contain data that scenetake ignores.
 
+Only the kebab-case spelling takes effect. Another spelling, such as `typing_speed` or `TypingSpeed`, has no effect anywhere, which is what the warning says.
+
+### Value types
+
+A value that cannot be read as the type of its key stops the run before any command runs. The error names the key and the value, for example `'settings.typing-speed' must be a number of seconds, such as 0.5, not '50ms'.` The check covers the top level, `settings`, `render`, and `render.theme`. Each key there takes a number, a whole number, `true` or `false`, text, a list, or a mapping.
+
+A step's timing key that is not a number is a warning. The step then uses the value from `settings`, or the default: `Warning: typing-speed: '50ms' is not a number of seconds, such as 0.5; using 0.05`. A step's flag that is not `true` or `false` also warns.
+
 ```yaml
 title: "Demo"
 width: 120
@@ -210,6 +218,7 @@ PTY steps need none of this: ConPTY translates everything to UTF-8. On Linux and
 
 Before `pre`, scenetake checks:
 
+- Value types of the top-level, `settings`, `render`, and `render.theme` keys (see Value types above).
 - Terminal dimensions.
 - At least one command to record.
 - Step structure: no lists, missing `run`, or `run` values that are lists or mappings.
@@ -279,6 +288,8 @@ Template commands must run in the selected shell. `scenetake init --shell bash|p
 - **Recorded failures need an explicit CI policy.** Default exit `0` can hide broken demos. `--strict` stops unexpected failures and exits `1`. Later commands may depend on the failed command. Existing recordings must remain available for comparison. An earlier version wrote all outputs before failing, which lost that protection. Without `--strict`, one run still shows all failures. `continue-on-error: true` permits expected failures.
 - **Wall-clock steps changed unrelated cast lines.** Repeated recordings with one stream step and one PTY step differed on 26–39 of 140 lines. Most differences were 1ms changes in later typing. Rounding after these steps reduced differences to 2–4 lines: their output and the following interval. Instant pipe steps already have stable timing.
 - **Unknown keys hid sample errors.** Warnings found `Post:` in `samples/demo.yaml`, where cleanup never ran. YAML also parsed two `printf` steps in each theme sample as mappings because they contained `: `. Missing-`run` validation exposed those omitted steps for 16- and 256-color output. Unknown keys produce warnings so newer scenarios can still run on older versions.
+- **Another key spelling took effect while the warning said it had none.** VYaml converts each YAML key to kebab case before it compares it with the class's keys, unless the options name kebab case themselves. scenetake parsed with the default options, so under `settings`, `render`, and the top level, `typing_speed: 0.3` changed the typing speed. The unknown-key warning said scenetake did not read it. A step key, read from a plain map, never took effect. The playground found this on 2026-11-15, when a scenario written the way an AI assistant often writes one was pasted into it. The parse now names kebab case in the options, so one spelling works everywhere.
+- **The YAML library's type errors named neither the key nor the type.** `typing-speed: 50ms` gave `Cannot detect a scalar value as double : Scalar 50ms at Line: 9, Col: 9`, and the line was the one after the value. Units such as `ms` and `s` are a common guess. When the typed parse fails, scenetake reads the file again as plain maps and finds the first value that does not fit its key's type. The key types come from the schema that VYaml generates for the unknown-key check. A step value used to fall back to the default with no message, and it now warns.
 - **Native AOT needs VYaml's `object` formatter.** `Dictionary<object, object?>` parsed under `dotnet run` but failed after publishing because its formatter required reflection metadata. Reading as `object` uses an AOT-compatible formatter with the same maps. A published-binary test protects the warning behavior.
 - **Relative `cwd` must follow the scenario location.** Previously, `cwd: work/repo` referred to different folders when the caller changed directories. Relative paths now use the scenario file's folder. This affects only relative `cwd` values when scenetake starts elsewhere. Without `cwd`, commands still use the caller's folder. The interactive sample relies on this to edit that folder's `README.md`.
 - **The starter template must match its shell.** Bash redirection caused a ParserError in Windows pwsh, and Windows lacked `printf`. The template now uses commands for the default shell. `--shell` supports other choices, including Git Bash on Windows and PowerShell on Unix. The generated file names the selected shell.

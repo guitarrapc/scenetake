@@ -173,6 +173,7 @@ jobs:
           dotnet run tests/window_chrome_test.cs
           dotnet run tests/mp4_render_test.cs
           dotnet run tests/pipe_output_decoder_test.cs
+          dotnet run tests/playground_replay_test.cs
 
       - name: Upload macOS binary
         if: ${{ startsWith(matrix.rid, 'osx-') }}
@@ -281,9 +282,35 @@ jobs:
           dotnet run tests/mp4_render_test.cs
           SCENETAKE_BIN="$binary_path" dotnet run tests/mp4_ffmpeg_test.cs
           SCENETAKE_BIN="$binary_path" dotnet run tests/scenario_render_test.cs
+          SCENETAKE_BIN="$binary_path" dotnet run tests/playground_replay_test.cs
+
+  playground:
+    name: Build playground (browser-wasm)
+    runs-on: ubuntu-24.04
+    # The playground compiles the CLI's shared source for WebAssembly; building it here catches a change that only
+    # breaks that build, which the tag-time deploy would otherwise find first. AOT runs only in the deploy.
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install wasm-tools workload
+        run: dotnet workload install wasm-tools-net10
+
+      - name: Build playground
+        run: dotnet build playground/Scenetake.Playground.csproj -c Release
 
   build-complete:
-    needs: [npm-pack, build, macos-oldest, mp4]
+    needs: [npm-pack, build, macos-oldest, mp4, playground]
     timeout-minutes: 5
     runs-on: ubuntu-24.04
     permissions: {}

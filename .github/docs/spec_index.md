@@ -15,6 +15,7 @@ scenetake behavior is split into focused specs under `.github/docs/`. Each spec 
 | [spec_svg.md](spec_svg.md) | SVG output — renderer, `svg` subcommand consumption of cast events |
 | [spec_mp4.md](spec_mp4.md) | mp4 output — frame rendering, fonts, ffmpeg encoding, `mp4` subcommand |
 | [spec_pty.md](spec_pty.md) | PTY recording behavior when `pty: true` (keys in [spec_scenario.md](spec_scenario.md)) |
+| [spec_playground.md](spec_playground.md) | Browser playground on GitHub Pages — WASM build, outputs file, replay of recorded output, Scenario and Cast tabs, deployment |
 
 All listed specs are **Implemented**.
 
@@ -46,6 +47,8 @@ Use this when you know the goal but not the document.
 | Know what happens when `pre`, SVG, or `post` fails | [spec_pre_post.md](spec_pre_post.md) + [spec_svg.md](spec_svg.md) failure tables |
 | Convert an existing cast (resize events, unsupported codes) | [spec_cast.md](spec_cast.md) + [spec_svg.md](spec_svg.md) → `svg` subcommand |
 | Understand why cast metadata changes when YAML edits don't affect recording | [spec_scenario.md](spec_scenario.md) → Determinism |
+| Know how the browser playground gets command output without running commands | [spec_playground.md](spec_playground.md) → Outputs File, Replay |
+| Add a sample to the playground, or find why it no longer matches its cast | [spec_playground.md](spec_playground.md) → Producing, Equivalence with the CLI |
 
 ## How Specs Relate
 
@@ -63,6 +66,7 @@ spec_scenario.md          ← YAML input (start here for file format)
                                     ▲
 spec_cli.md ────────────────────────┘    invokes everything above
 spec_install.md ─── npm / Scoop / GitHub Releases (how binaries reach users)
+spec_playground.md ─ the same code in WASM: replays recorded step output into a cast, renders it with spec_svg.md
 ```
 
 - **YAML keys** live in [spec_scenario.md](spec_scenario.md).
@@ -72,6 +76,7 @@ spec_install.md ─── npm / Scoop / GitHub Releases (how binaries reach user
 - **Value semantics** for coloring live in [spec_highlight.md](spec_highlight.md).
 - **CLI surface** lives in [spec_cli.md](spec_cli.md); it references the others for flag effects.
 - **Install channels** live in [spec_install.md](spec_install.md).
+- **Browser playground** lives in [spec_playground.md](spec_playground.md). It reuses the keys, cast format, and renderer of the specs above and runs no commands.
 - **SVG rendering** lives in [spec_svg.md](spec_svg.md); it reads cast files defined in [spec_cast.md](spec_cast.md).
 - **mp4 rendering** lives in [spec_mp4.md](spec_mp4.md); it shares the VT emulator, cell colors, and timing with [spec_svg.md](spec_svg.md).
 

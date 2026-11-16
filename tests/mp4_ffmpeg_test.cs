@@ -42,6 +42,8 @@ try
     failures += Run("ScenarioErrorsStopBeforePre", () => ScenarioErrorsStopBeforePre(scenetake, repoRoot, work));
     failures += Run("RelativeCwdFollowsScenarioFolder", () => RelativeCwdFollowsScenarioFolder(scenetake, repoRoot, work));
     failures += Run("UnknownKeysWarnWithHints", () => UnknownKeysWarnWithHints(scenetake, repoRoot, work));
+    failures += Run("OtherKeySpellingsHaveNoEffect", () => OtherKeySpellingsHaveNoEffect(scenetake, repoRoot, work));
+    failures += Run("WrongValueTypeNamesTheKey", () => WrongValueTypeNamesTheKey(scenetake, repoRoot, work));
     failures += Run("KnownKeysDoNotWarn", () => KnownKeysDoNotWarn(scenetake, repoRoot, work));
     failures += Run("StrictStopsAtFirstFailure", () => StrictStopsAtFirstFailure(scenetake, repoRoot, work));
     failures += Run("ScenarioErrorsAfterPreRunPost", () => ScenarioErrorsAfterPreRunPost(scenetake, repoRoot, work));
@@ -1145,6 +1147,71 @@ static bool UnknownKeysWarnWithHints(string scenetake, string repoRoot, string w
     if (!ok)
         Console.Error.WriteLine($"  exit {exit}, {warnings} warnings, missing:{Environment.NewLine}  {string.Join(Environment.NewLine + "  ", missing)}{Environment.NewLine}{stderr}");
     return ok;
+}
+
+static bool OtherKeySpellingsHaveNoEffect(string scenetake, string repoRoot, string work)
+{
+    // VYaml converted typing_speed, typingSpeed and TypingSpeed to typing-speed before matching, so under
+    // settings they took effect while the warning said scenetake does not read them. A step key never did.
+    // Each spelling would make this short command take minutes to type; ignored, it takes about a second.
+    var directory = Directory.CreateDirectory(Path.Combine(work, "key-spellings")).FullName;
+    var results = new List<string>();
+    foreach (var (section, key) in new[] { ("settings", "typing_speed"), ("settings", "typingSpeed"), ("settings", "TypingSpeed"), ("settings", "post_delay") })
+    {
+        var scenario = Path.Combine(directory, $"{key}.yaml");
+        File.WriteAllText(scenario, $"width: 40\nheight: 6\n{section}:\n  {key}: 30\nsteps:\n  - echo hi\n");
+        var (exit, stderr) = Exec(scenetake, repoRoot, [scenario]);
+        var castPath = Path.Combine(directory, $"{key}.cast");
+        var duration = File.Exists(castPath)
+            ? File.ReadLines(castPath).Skip(1).Sum(line => double.Parse(line[1..line.IndexOf(',')], System.Globalization.CultureInfo.InvariantCulture))
+            : double.NaN;
+        var warned = stderr.Contains($"Warning: unknown key '{key}' in {section} (did you mean ", StringComparison.Ordinal);
+        if (exit != 0 || !warned || !(duration < 10))
+            results.Add($"{key}: exit {exit}, warned {warned}, duration {duration}{Environment.NewLine}{stderr}");
+    }
+
+    if (results.Count > 0)
+        Console.Error.WriteLine("  " + string.Join(Environment.NewLine + "  ", results));
+    return results.Count == 0;
+}
+
+static bool WrongValueTypeNamesTheKey(string scenetake, string repoRoot, string work)
+{
+    // VYaml's own message, "Cannot detect a scalar value as double : Scalar 50ms at Line: 7, Col: 5", named
+    // neither the key nor the type, and its line is the one after the value. A step value fell back to the
+    // default with no message. Under settings or render the run stops; in a step it is a warning, as an
+    // invalid boolean is.
+    var directory = Directory.CreateDirectory(Path.Combine(work, "value-types")).FullName;
+    (string Body, string Error)[] stops =
+    [
+        ("settings:\n  typing-speed: 50ms\n", "'settings.typing-speed' must be a number of seconds, such as 0.5, not '50ms'."),
+        ("width: 100px\n", "'width' must be a whole number, not '100px'."),
+        ("render:\n  font-size: 16.5\n", "'render.font-size' must be a whole number, not '16.5'."),
+        ("settings:\n  stream-output: maybe\n", "'settings.stream-output' must be true or false, not 'maybe'."),
+        ("settings: fast\n", "'settings' must be a mapping of keys, not 'fast'."),
+        ("render:\n  theme: dark\n", "'render.theme' must be a mapping of keys, not 'dark'."),
+    ];
+    var results = new List<string>();
+    for (var i = 0; i < stops.Length; i++)
+    {
+        var scenario = Path.Combine(directory, $"stop{i}.yaml");
+        File.WriteAllText(scenario, $"{stops[i].Body}steps:\n  - echo hi\n");
+        var (exit, stderr) = Exec(scenetake, repoRoot, [scenario]);
+        if (exit != 1 || !stderr.Contains($"stop{i}.yaml: {stops[i].Error}", StringComparison.Ordinal) || File.Exists(Path.Combine(directory, $"stop{i}.cast")))
+            results.Add($"stop{i}: exit {exit}{Environment.NewLine}{stderr}");
+    }
+
+    var stepScenario = Path.Combine(directory, "step.yaml");
+    File.WriteAllText(stepScenario, "width: 40\nheight: 6\nsteps:\n  - run: echo hi\n    typing-speed: 50ms\n    max-duration: soon\n");
+    var (stepExit, stepStderr) = Exec(scenetake, repoRoot, [stepScenario]);
+    if (stepExit != 0
+        || !stepStderr.Contains("Warning: typing-speed: '50ms' is not a number of seconds, such as 0.5; using 0.05", StringComparison.Ordinal)
+        || !stepStderr.Contains("Warning: max-duration: 'soon' is not a number of seconds, such as 0.5; ignoring it", StringComparison.Ordinal))
+        results.Add($"step: exit {stepExit}{Environment.NewLine}{stepStderr}");
+
+    if (results.Count > 0)
+        Console.Error.WriteLine("  " + string.Join(Environment.NewLine + "  ", results));
+    return results.Count == 0;
 }
 
 static bool StrictStopsAtFirstFailure(string scenetake, string repoRoot, string work)

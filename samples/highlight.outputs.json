@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "scenetake": "1.5.0",
+  "os": "windows",
+  "shell": "bash",
+  "width": 80,
+  "height": 24,
+  "steps": [
+    {
+      "run": "echo hello",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 4647049,
+          "out": "hello\n"
+        }
+      ]
+    },
+    {
+      "run": "echo world",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3922732,
+          "out": "world\n"
+        }
+      ]
+    },
+    {
+      "run": "date",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 4485705,
+          "out": "15 Nov 2026 09:12:22\n"
+        }
+      ]
+    },
+    {
+      "run": "date",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 4154501,
+          "out": "15 Nov 2026 09:12:22\n"
+        }
+      ]
+    },
+    {
+      "run": "printf 'line1 alpha\\nline2 beta gamma\\nline3\\n'",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3941599,
+          "out": "line1 alpha\n"
+        },
+        {
+          "ticks": 3941933,
+          "out": "line2 beta gamma\nline3\n"
+        }
+      ]
+    },
+    {
+      "run": "echo \"this is error\" 1>&2",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3471626,
+          "err": "this is error\n"
+        }
+      ]
+    },
+    {
+      "run": "echo \"this is error\" 1>&2",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3875494,
+          "err": "this is error\n"
+        }
+      ]
+    },
+    {
+      "run": "echo \"stderr style literal\" 1>&2",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3755241,
+          "err": "stderr style literal\n"
+        }
+      ]
+    },
+    {
+      "run": "printf 'indexed color\\n'",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3921312,
+          "out": "indexed color\n"
+        }
+      ]
+    },
+    {
+      "run": "printf 'true color\\n'",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3739417,
+          "out": "true color\n"
+        }
+      ]
+    }
+  ]
+}

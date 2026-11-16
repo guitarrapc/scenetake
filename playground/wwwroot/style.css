@@ -1,0 +1,725 @@
+:root {
+  --bg: #11141a;
+  --surface: #181c24;
+  --surface-2: #1f2430;
+  --border: #2c3342;
+  --text: #e3e6ec;
+  --muted: #9aa3b2;
+  --accent: #7dd6cf;
+  --accent-strong: #4fb8b0;
+  --danger: #ff7b72;
+  --danger-bg: rgba(255, 123, 114, 0.1);
+  --warning: #e5b567;
+  --warning-bg: rgba(229, 181, 103, 0.1);
+  --info: #6c99bb;
+  --info-bg: rgba(108, 153, 187, 0.12);
+  --preview-bg: #0b0d11;
+  --mono: ui-monospace, "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", "Noto Sans", "Hiragino Sans", sans-serif;
+  /* The editor's text size in px. It has no unit so that the preview's size rule can divide by it. */
+  --code-text: 13;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --surface-2: #f0f2f5;
+    --border: #d9dde4;
+    --text: #1d2330;
+    --muted: #5d6676;
+    --accent: #00807a;
+    --accent-strong: #006b66;
+    --danger: #c62828;
+    --danger-bg: rgba(198, 40, 40, 0.07);
+    --warning: #8a6d00;
+    --warning-bg: rgba(212, 160, 23, 0.12);
+    --info: #2871aa;
+    --info-bg: rgba(40, 113, 170, 0.08);
+    --preview-bg: #e9ecf0;
+    color-scheme: light;
+  }
+}
+
+:root[data-theme="light"] {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f0f2f5;
+  --border: #d9dde4;
+  --text: #1d2330;
+  --muted: #5d6676;
+  --accent: #00807a;
+  --accent-strong: #006b66;
+  --danger: #c62828;
+  --danger-bg: rgba(198, 40, 40, 0.07);
+  --warning: #8a6d00;
+  --warning-bg: rgba(212, 160, 23, 0.12);
+  --info: #2871aa;
+  --info-bg: rgba(40, 113, 170, 0.08);
+  --preview-bg: #e9ecf0;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+a {
+  color: var(--accent);
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.92em;
+}
+
+.site-header,
+main,
+.site-footer {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.site-header {
+  padding-top: 20px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 1.45rem;
+  letter-spacing: -0.01em;
+}
+
+.brand__mark {
+  color: var(--accent);
+  font-size: 1.1rem;
+}
+
+.badge {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.tagline {
+  margin: 6px 0 14px;
+  color: var(--muted);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tabs button {
+  appearance: none;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  padding: 8px 14px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.tabs button[aria-selected="true"] {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.loading,
+.fatal {
+  max-width: 1440px;
+  margin: 12px auto 0;
+  padding: 8px 16px;
+  color: var(--muted);
+}
+
+.fatal {
+  color: var(--danger);
+}
+
+main {
+  padding-top: 16px;
+}
+
+.options {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 8px 12px;
+}
+
+.options-slot:not(:has(.options)) {
+  display: none;
+}
+
+.options summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.hint {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-left: 6px;
+}
+
+.options__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px 14px;
+  margin-top: 10px;
+}
+
+.field--wide {
+  grid-column: span 2;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--muted);
+  min-width: 0;
+}
+
+.field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+}
+
+.field input,
+.field select {
+  font: inherit;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.field--inline select {
+  width: auto;
+  max-width: 100%;
+}
+
+.field--inline {
+  max-width: 100%;
+}
+
+/* The sample notes make the selector wide: it shrinks, so the editor's toolbar stays on one row. */
+.column--editor > .toolbar {
+  flex-wrap: nowrap;
+}
+
+.column--editor > .toolbar .field--inline {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.column--editor > .toolbar .field--inline select {
+  min-width: 0;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.column--result {
+  position: sticky;
+  top: 12px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.btn {
+  appearance: none;
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.btn--quiet {
+  background: transparent;
+}
+
+.editor-host,
+.drop {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.editor-host textarea,
+.drop textarea {
+  display: block;
+  width: 100%;
+  min-height: 560px;
+  resize: vertical;
+  border: 0;
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: calc(var(--code-text) * 1px);
+  line-height: 1.5;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  tab-size: 2;
+}
+
+.drop.drop--over {
+  border-color: var(--accent);
+}
+
+.drop textarea {
+  min-height: 360px;
+}
+
+.editor-host .CodeMirror {
+  height: auto;
+  min-height: 560px;
+  font-family: var(--mono);
+  font-size: calc(var(--code-text) * 1px);
+  line-height: 1.5;
+}
+
+.editor-host .CodeMirror-scroll {
+  min-height: 560px;
+}
+
+:root:not([data-theme="dark"]) .editor-host .cm-s-default {
+  background: var(--surface);
+}
+
+.note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.preview {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--preview-bg);
+  min-height: 220px;
+  display: flex;
+  padding: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/*
+  The SVG fits the preview's width, but its terminal text never gets smaller than --min-text px; past that, the
+  preview scrolls sideways. main.js gives the image the SVG's width and text size as --svg-width and --svg-text, and
+  min-width wins over max-width. Auto margins center the SVG. Unlike justify-content: center, they become zero when
+  the SVG is wider than the preview, so its left edge stays in view. flex: none keeps the width that those give: with
+  an explicit min-width, a shrinkable flex item would shrink below the SVG's own size under Actual size.
+*/
+.preview img {
+  --min-text: 8;
+  flex: none;
+  display: block;
+  max-width: 100%;
+  min-width: calc(var(--svg-width, 0) * 1px * min(1, var(--min-text) / var(--svg-text, 1)));
+  height: auto;
+  margin: auto;
+  cursor: zoom-in;
+}
+
+.preview--actual img {
+  max-width: none;
+}
+
+.btn[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.viewer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--preview-bg);
+  overflow: hidden;
+  cursor: zoom-out;
+}
+
+.viewer[open] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.viewer::backdrop {
+  background: var(--preview-bg);
+}
+
+html.viewer-open {
+  overflow: hidden;
+}
+
+/*
+  object-fit scales the SVG to the box in both directions, so a large screen shows it larger than its own size.
+  The box is the whole screen: the SVG has its own padding, and on a phone each pixel of the short side counts
+  (basic's 16 px text is 11.9 px on a 375 px phone, against 11.4 px with an 8 px margin).
+*/
+.viewer__img {
+  flex: none;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  object-fit: contain;
+}
+
+.viewer__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/*
+  An upright phone: the box takes the screen's height as its width and is turned a quarter turn clockwise, so the
+  demo reads with the phone turned to the left, the usual way to hold it for a video. A phone already held sideways
+  is in landscape and needs no turn.
+*/
+@media (orientation: portrait) and (max-width: 600px) {
+  .viewer__img {
+    width: 100vh;
+    width: 100dvh;
+    height: 100vw;
+    transform: rotate(90deg);
+  }
+}
+
+.preview__empty {
+  margin: auto;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.status {
+  margin: 0;
+  min-height: 1.5em;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-family: var(--mono);
+}
+
+.message {
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.88rem;
+  border-left: 3px solid;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.message ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+.message--error {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.message--warning {
+  border-color: var(--warning);
+  background: var(--warning-bg);
+}
+
+.message--info {
+  border-color: var(--info);
+  background: var(--info-bg);
+}
+
+.about h2 {
+  font-size: 1rem;
+  margin: 6px 0 4px;
+}
+
+.about {
+  margin: 32px 0 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.about pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  overflow-x: auto;
+}
+
+.about h2 + p,
+.about h2 + .table-scroll {
+  margin-top: 4px;
+}
+
+.about h2:not(:first-child) {
+  margin-top: 20px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.share-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9rem;
+}
+
+.share-table th,
+.share-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.share-table th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.share-table td:first-child {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.share-table code {
+  overflow-wrap: anywhere;
+}
+
+.site-footer {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding-top: 12px;
+  padding-bottom: 24px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.site-footer button {
+  margin-left: auto;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 960px) {
+  /*
+    One column with the preview first: a reader who opens a shared link on a phone sees the demo, not the YAML.
+    The sample picker and the editor follow it, then the notes and warnings, then the render options.
+  */
+  .workspace {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .column {
+    display: contents;
+  }
+
+  .column--editor > * {
+    order: 1;
+  }
+
+  .column--result > .result-note,
+  .column--result > .options-slot {
+    order: 2;
+  }
+
+  .options__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .field--wide {
+    grid-column: 1 / -1;
+  }
+
+  .editor-host textarea,
+  .editor-host .CodeMirror,
+  .editor-host .CodeMirror-scroll {
+    min-height: 360px;
+  }
+}
+
+@media (max-width: 600px) {
+  /*
+    A phone's first screen should hold the preview and the top of the YAML, so the header, the toolbars, and the
+    preview frame are tighter here. Each toolbar fits on one row at 375 px.
+  */
+  .site-header {
+    padding-top: 12px;
+  }
+
+  .brand h1 {
+    font-size: 1.2rem;
+  }
+
+  .tagline {
+    margin: 2px 0 8px;
+    font-size: 0.88rem;
+    line-height: 1.4;
+  }
+
+  .tagline__more {
+    display: none;
+  }
+
+  .tabs button {
+    padding: 6px 12px;
+  }
+
+  main {
+    padding-top: 10px;
+  }
+
+  .toolbar {
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
+  .btn {
+    padding: 4px 9px;
+  }
+
+  /* Edge to edge: the page's side margins would take 12% of a 375 px screen from the demo. */
+  .preview {
+    margin: 0 -16px;
+    padding: 4px 0;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    min-height: 160px;
+  }
+
+  /*
+    On a phone the demo's text is as large as the editor's, and the preview scrolls sideways like the editor does.
+    An 80-column terminal fitted to a 375 px screen has 7 px text, and 8 px still read as much smaller than the YAML
+    beside it. At 13 px the first 44 columns are in view, which holds the prompt and most commands.
+  */
+  .preview img {
+    --min-text: var(--code-text);
+  }
+
+  /* Full screen replaces Actual size on a phone: turned sideways on the whole screen, the demo is whole. */
+  .toolbar [data-zoom] {
+    display: none;
+  }
+
+  /*
+    Each place to share becomes a block: in three columns the command column is about 110 px wide, and the agg
+    command wrapped to 14 lines.
+  */
+  .share-table thead {
+    display: none;
+  }
+
+  .share-table tr {
+    display: block;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .share-table td {
+    display: block;
+    padding: 2px 0;
+    border-bottom: 0;
+  }
+}

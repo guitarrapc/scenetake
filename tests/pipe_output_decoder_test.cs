@@ -4,6 +4,7 @@
 #:property ImplicitUsings=enable
 #:property AllowUnsafeBlocks=true
 #:include ../PipeStreamCapture.cs
+#:include ../StepChunks.cs
 #:include ../Kernel32.cs
 
 // PipeOutputDecoder reads a Windows child's redirected output: a line that is valid UTF-8 as UTF-8, any

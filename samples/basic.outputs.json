@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "scenetake": "1.5.0",
+  "os": "windows",
+  "shell": "bash",
+  "width": 80,
+  "height": 24,
+  "steps": [
+    {
+      "run": "echo \"Hello, World!\"",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 3876323,
+          "out": "Hello, World!\n"
+        }
+      ]
+    },
+    {
+      "run": "echo \"Current directory:\"",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 4170608,
+          "out": "Current directory:\n"
+        }
+      ]
+    },
+    {
+      "run": "curl -sI https://google.com",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 6127749,
+          "out": "HTTP/1.1 301 Moved Permanently\r\nLocation: https://www.google.com/\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-5RFh1uunnWcssfOWpKcY6Q' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp\r\nDate: Sun, 15 Nov 2026 08:15:46 GMT\r\nExpires: Tue, 15 Dec 2026 08:15:46 GMT\r\nCache-Control: public, max-age=2592000\r\nServer: gws\r\nContent-Length: 220\r\nX-XSS-Protection: 0\r\nX-Frame-Options: SAMEORIGIN\r\nAlt-Svc: h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000\r\n\r\n"
+        }
+      ]
+    },
+    {
+      "run": "echo \"Wait for 2 seconds...\"",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 4332630,
+          "out": "Wait for 2 seconds...\n"
+        }
+      ]
+    },
+    {
+      "run": "sleep 2",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": []
+    },
+    {
+      "run": "echo \"stderr output is red by default\" 1>&2",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 4154660,
+          "err": "stderr output is red by default\n"
+        }
+      ]
+    },
+    {
+      "run": "echo \"Done!\"",
+      "kind": "pipe",
+      "exitCode": 0,
+      "chunks": [
+        {
+          "ticks": 4225751,
+          "out": "Done!\n"
+        }
+      ]
+    }
+  ]
+}

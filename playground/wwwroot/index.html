@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>scenetake playground</title>
+  <meta name="description" content="Try scenetake in your browser: edit a YAML scenario and see the terminal demo it records, as an animated SVG">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://guitarrapc.github.io/scenetake/">
+  <meta property="og:title" content="scenetake playground | Try in your browser">
+  <meta property="og:description" content="Record terminal demos of your CLI or library from a YAML scenario. Edit one in your browser and see the animated SVG">
+  <meta property="og:site_name" content="scenetake playground">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="scenetake playground | Try in your browser">
+  <meta name="twitter:description" content="Record terminal demos of your CLI or library from a YAML scenario. Edit one in your browser and see the animated SVG">
+  <meta name="color-scheme" id="meta-color-scheme" content="light dark" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+  <script>
+    (function () {
+      var key = 'scenetake-playground-color-mode';
+      var root = document.documentElement;
+      var meta = document.getElementById('meta-color-scheme');
+      try {
+        var v = localStorage.getItem(key);
+        if (v === 'light' || v === 'dark') {
+          root.setAttribute('data-theme', v);
+          if (meta) meta.setAttribute('content', v);
+        }
+      } catch (e) { /* storage can be blocked */ }
+    })();
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"
+    integrity="sha384-zaeBlB/vwYsDRSlFajnDd7OydJ0cWk+c2OWybl3eSUf6hW2EbhlCsQPqKr3gkznT" crossorigin="anonymous"
+    referrerpolicy="no-referrer" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css"
+    integrity="sha384-eZTPTN0EvJdn23s24UDYJmUM2T7C2ZFa3qFLypeBruJv8mZeTusKUAO/j5zPAQ6l" crossorigin="anonymous"
+    referrerpolicy="no-referrer" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="style#[.{fingerprint}].css">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"
+    integrity="sha384-ZYmwuq4n2gOcNxMSiJ6jyTj+BbIrilr7p6dlq6q5nmSWKmsH9UU4K1qqjycMkfmR" crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"
+    integrity="sha384-9q49Jm3hZMwxEMLImsxPxLiaptHpFz1PVa26Dg6SVIO+rj5kx0cgOM2+4ikKJFH9" crossorigin="anonymous"
+    referrerpolicy="no-referrer"></script>
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true">▶</span>
+      <h1>scenetake playground</h1>
+      <a id="version" class="badge" href="https://github.com/guitarrapc/scenetake/releases" hidden></a>
+    </div>
+    <p class="tagline">Record a terminal demo of your CLI or library from a YAML scenario, for a README, X, Zenn, or
+      Reddit. <span class="tagline__more">Edit the YAML here and watch the animated SVG. Nothing leaves your
+        browser.</span></p>
+    <nav class="tabs" role="tablist" aria-label="Playground mode">
+      <button type="button" role="tab" id="tab-scenario" aria-controls="panel-scenario" aria-selected="true">Scenario</button>
+      <button type="button" role="tab" id="tab-cast" aria-controls="panel-cast" aria-selected="false">Cast → SVG</button>
+    </nav>
+  </header>
+
+  <div id="loading" class="loading" role="status">Loading the WebAssembly runtime…</div>
+  <div id="fatal" class="fatal" role="alert" hidden></div>
+
+  <main>
+    <section id="panel-scenario" role="tabpanel" aria-labelledby="tab-scenario" class="panel">
+      <div class="workspace">
+        <div class="column column--editor">
+          <div class="toolbar">
+            <label class="field field--inline">Sample
+              <select id="sample-select" aria-label="Sample scenario"></select>
+            </label>
+            <button type="button" id="reset-btn" class="btn btn--quiet" title="Load the sample's YAML again">Reset</button>
+            <span class="spacer"></span>
+            <button type="button" id="share-btn" class="btn" title="Copy a URL that opens this scenario">Copy link</button>
+          </div>
+          <div id="editor-host" class="editor-host">
+            <textarea id="yaml-input" spellcheck="false" aria-label="Scenario YAML"></textarea>
+          </div>
+          <p class="note">Commands do not run in the browser. Each step replays the output that its command printed
+            when the sample was recorded with scenetake<span id="recording-info"></span>. A step whose <code>run</code> text has no recording shows a
+            line that says so. Demos operated from the keyboard, such as Copilot CLI and vim, are on the
+            <strong>Cast → SVG</strong> tab.</p>
+        </div>
+
+        <div class="column column--result">
+          <div class="toolbar">
+            <button type="button" id="replay-btn" class="btn" disabled>Replay</button>
+            <button type="button" id="zoom-btn" class="btn btn--quiet" aria-pressed="false" data-zoom="preview" disabled
+              title="Show the SVG at its own size; scroll sideways when it is wider than the page">Actual size</button>
+            <button type="button" id="full-btn" class="btn btn--quiet" disabled
+              title="Show the demo on the whole screen; an upright phone shows it sideways">Full screen</button>
+            <span class="spacer"></span>
+            <button type="button" id="download-yaml" class="btn btn--quiet" disabled>.yaml</button>
+            <button type="button" id="download-cast" class="btn btn--quiet" disabled>.cast</button>
+            <button type="button" id="download-svg" class="btn btn--quiet" disabled>.svg</button>
+          </div>
+          <figure class="preview">
+            <div id="preview-empty" class="preview__empty">The SVG appears here.</div>
+            <img id="preview" alt="Animated SVG rendered from the scenario" hidden />
+          </figure>
+          <p id="status" class="status" aria-live="polite"></p>
+          <div id="error" class="message message--error" role="alert" hidden></div>
+          <!--
+            Notes appear only when something differs from a plain replay of the recording. On a narrow screen they
+            come after the editor, so a note that appears while the reader types does not move the editor.
+          -->
+          <div id="step-notes" class="message message--warning result-note" hidden></div>
+          <div id="not-applied" class="message message--info result-note" hidden></div>
+          <div id="warnings" class="message message--warning result-note" hidden></div>
+          <!--
+            The options sit under the preview, not above the page: the first screen is for the demo and the YAML.
+            One set of controls serves both tabs, and selectTab() moves it into the active tab's slot.
+          -->
+          <div class="options-slot" data-options-slot>
+            <details class="options" open>
+              <!--
+                "from YAML" and "from cast" say where an unset option gets its value; selectTab() switches them with
+                the tab. --max-fps has no YAML or cast setting, so its empty value is the default, 0.
+              -->
+              <summary>Render options <span class="hint" id="options-hint">the CLI flags; empty keeps the YAML's
+                  value</span></summary>
+              <div class="options__grid" data-options>
+                <label class="field">--theme
+                  <select data-option="theme">
+                    <option value="" data-from-source>from YAML</option>
+                    <option value="dark">dark</option>
+                    <option value="light">light</option>
+                  </select>
+                </label>
+                <label class="field">--window
+                  <select data-option="window">
+                    <option value="" data-from-source>from YAML</option>
+                    <option value="none">none</option>
+                    <option value="macos">macos</option>
+                    <option value="windows">windows</option>
+                  </select>
+                </label>
+                <label class="field">--font-size
+                  <input data-option="fontSize" type="number" min="1" max="128" inputmode="numeric" placeholder="from YAML" data-from-source />
+                </label>
+                <label class="field">--max-fps
+                  <input data-option="maxFps" type="number" min="0" max="120" inputmode="numeric" placeholder="0" />
+                </label>
+                <label class="field field--wide">--font-family
+                  <input data-option="fontFamily" type="text" spellcheck="false" placeholder="from YAML" data-from-source />
+                </label>
+              </div>
+            </details>
+          </div>
+          <script>
+            // On a narrow screen the options start closed: they come after the editor there.
+            if (window.matchMedia('(max-width: 960px)').matches) document.querySelector('details.options').open = false;
+          </script>
+        </div>
+      </div>
+    </section>
+
+    <section id="panel-cast" role="tabpanel" aria-labelledby="tab-cast" class="panel" hidden>
+      <div class="workspace">
+        <div class="column column--editor">
+          <div class="toolbar">
+            <label class="field field--inline">Sample cast
+              <select id="cast-sample-select" aria-label="Sample cast"></select>
+            </label>
+            <span class="spacer"></span>
+            <label class="btn" for="cast-file">Open .cast…</label>
+            <input id="cast-file" type="file" accept=".cast,application/x-asciicast,application/json,text/plain" hidden />
+          </div>
+          <div id="cast-drop" class="drop">
+            <textarea id="cast-input" spellcheck="false" aria-label="Cast file content"
+              placeholder="Drop an asciinema v2 or v3 .cast file here, open one, or paste its content."></textarea>
+          </div>
+          <p class="note">The file is converted in your browser, as <code>scenetake svg</code> does. It is not uploaded.</p>
+        </div>
+        <div class="column column--result">
+          <div class="toolbar">
+            <button type="button" id="cast-replay-btn" class="btn" disabled>Replay</button>
+            <button type="button" id="cast-zoom-btn" class="btn btn--quiet" aria-pressed="false" data-zoom="cast-preview" disabled
+              title="Show the SVG at its own size; scroll sideways when it is wider than the page">Actual size</button>
+            <button type="button" id="cast-full-btn" class="btn btn--quiet" disabled
+              title="Show the demo on the whole screen; an upright phone shows it sideways">Full screen</button>
+            <span class="spacer"></span>
+            <button type="button" id="cast-download-svg" class="btn btn--quiet" disabled>.svg</button>
+          </div>
+          <figure class="preview">
+            <div id="cast-preview-empty" class="preview__empty">The SVG appears here.</div>
+            <img id="cast-preview" alt="Animated SVG rendered from the cast" hidden />
+          </figure>
+          <p id="cast-status" class="status" aria-live="polite"></p>
+          <div id="cast-error" class="message message--error" role="alert" hidden></div>
+          <div id="cast-warnings" class="message message--warning" hidden></div>
+          <div class="options-slot" data-options-slot></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="about">
+      <h2>Record your own</h2>
+      <p>scenetake runs the commands of a YAML scenario for real and writes an asciinema v3 cast, an animated SVG,
+        or an mp4. Install it, then write a scenario with <code>scenetake init</code> or download the one you
+        edited here with <strong>.yaml</strong>.</p>
+      <pre><code>npm install -g scenetake      # or: dotnet tool install -g scenetake
+scenetake init                  # writes scenario.yaml
+scenetake --format svg scenario.yaml</code></pre>
+      <p>Scoop on Windows and single-file binaries for Linux, macOS, and Windows are in the
+        <a href="https://github.com/guitarrapc/scenetake#quick-start">Quick Start</a>.</p>
+
+      <h2>Pick the output for where you share it</h2>
+      <div class="table-scroll">
+        <table class="share-table">
+          <thead>
+            <tr><th scope="col">Where</th><th scope="col">What it takes</th><th scope="col">Command</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>GitHub README</td>
+              <td>Animated SVG</td>
+              <td><code>scenetake --format svg scenario.yaml</code>, then <code>![](scenario.svg)</code></td>
+            </tr>
+            <tr>
+              <td>X, Reddit</td>
+              <td>Video (mp4) or GIF; not SVG</td>
+              <td><code>scenetake --format mp4 scenario.yaml</code> (needs ffmpeg). For X:
+                <code>scenetake mp4 scenario.cast --max-size 1280x1024</code></td>
+            </tr>
+            <tr>
+              <td>Zenn</td>
+              <td>Uploads of PNG, JPEG, GIF, or WebP up to 3 MB; not SVG</td>
+              <td>A GIF made from the cast with <a href="https://github.com/asciinema/agg">agg</a> in Docker:
+                <code>docker run --rm -v "${PWD}:/data" ghcr.io/asciinema/agg /data/scenario.cast /data/scenario.gif --font-size 20 --last-frame-duration 0</code><br>
+                On Windows, use the <a href="https://github.com/guitarrapc/scenetake#quick-start">Quick Start</a>
+                command, which copies the GIF out of the container.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p><a href="https://github.com/guitarrapc/scenetake">Scenario format and samples on GitHub</a></p>
+    </section>
+  </main>
+
+  <!--
+    The full-screen view. On an upright phone the demo is turned sideways, so an 80-column terminal uses the screen's
+    long side: the reader turns the phone, as for a video. A tap anywhere, Esc, or Back closes it.
+  -->
+  <dialog id="viewer" class="viewer" aria-label="Demo on the whole screen">
+    <img id="viewer-img" class="viewer__img" alt="Animated SVG on the whole screen" />
+    <button type="button" id="viewer-close" class="viewer__close" aria-label="Close the full-screen view">×</button>
+  </dialog>
+
+  <footer class="site-footer">
+    <a href="https://github.com/guitarrapc/scenetake">GitHub</a>
+    <span>MIT License</span>
+    <button type="button" id="theme-btn" class="btn btn--quiet" aria-label="Color theme">Theme: system</button>
+  </footer>
+
+  <script type="module" src="main#[.{fingerprint}].js"></script>
+</body>
+
+</html>
