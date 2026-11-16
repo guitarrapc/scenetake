@@ -136,6 +136,24 @@ internal sealed class Mp4FrameRenderer
     /// <summary>Frames to encode as keyframes: see <see cref="Mp4Render.ChooseKeyframes"/>.</summary>
     internal IReadOnlyList<int> Keyframes => Mp4Render.ChooseKeyframes(Plan.ScreenSwitchFrames, _fps);
 
+    /// <summary>
+    /// Glyphs for the window title: the SVG title's sans-serif families (<see cref="SvgFrameRenderer.ChromeTitleFontFamily"/>)
+    /// that are installed here, at the title's size. With none of them and no fallback font installed either, the
+    /// terminal's font, as the title used before.
+    /// </summary>
+    private GlyphSource CreateTitleGlyphs()
+    {
+        var titleLayout = RasterLayout.Create((int)SvgFrameRenderer.TitleFontSize(Layout.Window), 1, 1);
+        try
+        {
+            return GlyphSource.Create(SvgFrameRenderer.ChromeTitleFontFamily, null, titleLayout);
+        }
+        catch (FontNotFoundException)
+        {
+            return GlyphSource.Create(_render.FontFamily, _fontFile, titleLayout);
+        }
+    }
+
     /// <summary>Calls <paramref name="sink"/> with each RGB24 frame in order. The buffer is reused between calls.</summary>
     internal void Render(Action<byte[]> sink)
     {
@@ -144,13 +162,11 @@ internal sealed class Mp4FrameRenderer
                 _ffmpegPath ?? throw new Mp4Exception("a background image needs ffmpeg to decode it"), background.ImagePath!, frameWidth, frameHeight))
             : null;
 
-        // The title uses the terminal's font at the title size, in whole-pixel cells as the terminal text is.
         GlyphSource? titleGlyphs = null;
-        var titleLayout = RasterLayout.Create((int)SvgFrameRenderer.ChromeTitleFontSize, 1, 1);
         if (Layout.Window != WindowStyle.None && !string.IsNullOrEmpty(_render.WindowTitle))
-            titleGlyphs = GlyphSource.Create(_render.FontFamily, _fontFile, titleLayout);
+            titleGlyphs = CreateTitleGlyphs();
 
-        var raster = new FrameRasterizer(Layout, _theme, Glyphs, desktop, titleGlyphs, titleLayout.CellWidth, _render.WindowTitle, _render.WindowOpacity, _render.WindowBlur);
+        var raster = new FrameRasterizer(Layout, _theme, Glyphs, desktop, titleGlyphs, _render.WindowTitle, _render.WindowOpacity, _render.WindowBlur);
         var stepper = new ReplayStepper(_events, _initialWidth, _initialHeight, Layout.Cols, Layout.Rows, _theme, Plan.StopIndex);
         for (var frame = 0; frame < FrameCount; frame++)
         {

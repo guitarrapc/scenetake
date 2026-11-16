@@ -784,6 +784,56 @@ internal sealed unsafe class GlyphSource
         return glyph;
     }
 
+    /// <summary>
+    /// The mask of <paramref name="text"/>'s first scalar and any combining marks, drawn at the glyph's own
+    /// advance with its origin at <paramref name="pen"/> pixels, and that advance: for proportional text such as
+    /// the window title. A character no font has is a box one cell wide, or two for a wide one.
+    /// </summary>
+    internal (RasterGlyph Glyph, float Advance) GetProportional(string text, bool bold, float pen)
+    {
+        if (text.Length == 0 || !Rune.TryGetRuneAt(text, 0, out var first) || Rune.IsControl(first))
+            return (RasterGlyph.Empty, 0);
+
+        foreach (var family in _chain)
+        {
+            var (info, syntheticBold, _) = family.Resolve(bold, italic: false);
+            if (LoadedFace.TryLoad(info) is not { } face || face.GlyphIndex(first.Value) == 0)
+                continue;
+
+            var font = face.Font;
+            var glyphIndex = face.GlyphIndex(first.Value);
+            int advance, bearing;
+            StbTrueType.stbtt_GetGlyphHMetrics(font, glyphIndex, &advance, &bearing);
+            var scale = StbTrueType.stbtt_ScaleForMappingEmToPixels(font, _layout.FontSize);
+            var advancePx = advance * scale;
+            if (Rune.IsWhiteSpace(first))
+                return (RasterGlyph.Empty, advancePx);
+
+            var glyph = RasterizeAt(font, glyphIndex, scale, pen);
+            for (var i = first.Utf16SequenceLength; i < text.Length;)
+            {
+                if (!Rune.TryGetRuneAt(text, i, out var rune))
+                    break;
+                i += rune.Utf16SequenceLength;
+                if (Rune.GetUnicodeCategory(rune) is not (UnicodeCategory.NonSpacingMark or UnicodeCategory.EnclosingMark))
+                    continue;
+                var markIndex = face.GlyphIndex(rune.Value);
+                if (markIndex != 0)
+                    glyph = Union(glyph, RasterizeAt(font, markIndex, scale, pen + advancePx));
+            }
+
+            if (syntheticBold)
+                glyph = Embolden(glyph, Math.Max(1, (int)Math.Round(_layout.FontSize / 16.0)));
+            return (glyph, advancePx);
+        }
+
+        var span = ScreenBuffer.IsWideCodePoint(first.Value) ? 2 : 1;
+        if (Rune.IsWhiteSpace(first))
+            return (RasterGlyph.Empty, _layout.CellWidth * span);
+        var tofu = CellGlyphs.Tofu(_layout, span);
+        return (tofu with { OffsetX = tofu.OffsetX + (int)MathF.Round(pen) }, _layout.CellWidth * span);
+    }
+
     /// <summary>The mask for a soft font glyph: its bitmap scaled to the cell (see <see cref="CellGlyphs.DrawSoft"/>).</summary>
     internal RasterGlyph GetSoft(SoftGlyph glyph)
     {
@@ -1315,7 +1365,6 @@ internal sealed class FrameRasterizer
     private readonly bool[] _rowValid;
     private readonly byte[]? _desktop;
     private readonly GlyphSource? _titleGlyphs;
-    private readonly int _titleCellWidth;
     private readonly string? _title;
 
     // How much of the window's own fill covers the background, 0-255; 255 is opaque.
@@ -1329,7 +1378,7 @@ internal sealed class FrameRasterizer
     private (int Row, int Col)? _cursor;
 
     /// <param name="desktop">The background around the window as RGB24 pixels of the whole frame, when the layout has one.</param>
-    /// <param name="titleGlyphs">Glyphs at the title's size, with <paramref name="titleCellWidth"/> per cell, when <paramref name="title"/> shows.</param>
+    /// <param name="titleGlyphs">Glyphs of the title's font at its size, when <paramref name="title"/> shows.</param>
     /// <param name="opacity">
     /// How much of the terminal's default background and the title bar covers <paramref name="desktop"/>, 0-1.
     /// Without a desktop the window is opaque.
@@ -1341,7 +1390,6 @@ internal sealed class FrameRasterizer
         GlyphSource glyphs,
         byte[]? desktop = null,
         GlyphSource? titleGlyphs = null,
-        int titleCellWidth = 0,
         string? title = null,
         double opacity = 1,
         int blur = 0)
@@ -1351,7 +1399,6 @@ internal sealed class FrameRasterizer
         _glyphs = glyphs;
         _desktop = desktop;
         _titleGlyphs = titleGlyphs;
-        _titleCellWidth = titleCellWidth;
         _title = title;
         _windowAlpha = desktop is null ? 255 : (int)Math.Round(Math.Clamp(opacity, 0, 1) * 255, MidpointRounding.AwayFromZero);
         _blur = _windowAlpha < 255 ? Math.Max(blur, 0) : 0;
@@ -1376,6 +1423,8 @@ internal sealed class FrameRasterizer
         if (_desktop is not null)
         {
             _desktop.CopyTo(Pixels, 0);
+            if (_layout.Window != WindowStyle.None)
+                DrawWindowShadow();
             DrawWindowBody();
         }
         else
@@ -1384,8 +1433,15 @@ internal sealed class FrameRasterizer
         }
 
         if (_layout.Window != WindowStyle.None)
+        {
             DrawChrome();
-        if (_windowAlpha < 255)
+            if (_desktop is not null)
+                DrawEdgeHighlight();
+        }
+
+        // On a background, a row is drawn again from this, so the edge line, the rounded corners, and a translucent
+        // window's background come back with it.
+        if (_desktop is not null)
             _cleared = (byte[])Pixels.Clone();
         Array.Clear(_rowValid);
         _cursor = null;
@@ -1438,6 +1494,129 @@ internal sealed class FrameRasterizer
     }
 
     /// <summary>
+    /// The window's shadow on the background, as the SVG draws it: the window's shape moved down by
+    /// <see cref="SvgFrameRenderer.WindowShadowOffsetY"/>, blurred by a Gaussian of
+    /// <see cref="SvgFrameRenderer.WindowShadowDeviation"/>, and darkening the background by up to
+    /// <see cref="SvgFrameRenderer.WindowShadowOpacity"/>. It stays outside the window, as the SVG's mask keeps a
+    /// translucent window's shadow; an opaque window covers it anyway. Drawn once per video.
+    /// </summary>
+    private void DrawWindowShadow()
+    {
+        var (x, y, width, height) = (_layout.WindowX, _layout.WindowY, _layout.WindowWidth, _layout.WindowHeight);
+        var radius = _layout.CornerRadius;
+        var offset = (int)Math.Round(SvgFrameRenderer.WindowShadowOffsetY);
+        var kernel = GaussianKernel(SvgFrameRenderer.WindowShadowDeviation);
+        var reach = kernel.Length / 2;
+
+        // The moved shape's coverage over the area its blur reaches, which may run past the frame.
+        var left = x - reach;
+        var top = y + offset - reach;
+        var areaWidth = width + reach * 2;
+        var areaHeight = height + reach * 2;
+        var shape = RoundedRect(x, y + offset, width, height, radius, roundTop: true, roundBottom: true);
+        var coverage = new float[areaWidth * areaHeight];
+        for (var row = reach; row < reach + height; row++)
+        {
+            for (var col = reach; col < reach + width; col++)
+                coverage[row * areaWidth + col] = ShapeCoverage(left + col, top + row, x, y + offset, width, height, radius, shape);
+        }
+
+        var across = new float[coverage.Length];
+        for (var row = reach; row < reach + height; row++)
+        {
+            for (var col = 0; col < areaWidth; col++)
+            {
+                var sum = 0f;
+                for (var k = 0; k < kernel.Length; k++)
+                {
+                    var source = col + k - reach;
+                    if ((uint)source < (uint)areaWidth)
+                        sum += coverage[row * areaWidth + source] * kernel[k];
+                }
+
+                across[row * areaWidth + col] = sum;
+            }
+        }
+
+        var window = RoundedRect(x, y, width, height, radius, roundTop: true, roundBottom: true);
+        var opacity = (float)SvgFrameRenderer.WindowShadowOpacity;
+        for (var row = 0; row < areaHeight; row++)
+        {
+            var frameY = top + row;
+            if ((uint)frameY >= (uint)_layout.Height)
+                continue;
+
+            for (var col = 0; col < areaWidth; col++)
+            {
+                var frameX = left + col;
+                if ((uint)frameX >= (uint)_layout.Width)
+                    continue;
+
+                var sum = 0f;
+                for (var k = 0; k < kernel.Length; k++)
+                {
+                    var source = row + k - reach;
+                    if ((uint)source < (uint)areaHeight)
+                        sum += across[source * areaWidth + col] * kernel[k];
+                }
+
+                var inside = ShapeCoverage(frameX, frameY, x, y, width, height, radius, window);
+                var shade = opacity * sum * (1 - inside);
+                if (shade <= 0)
+                    continue;
+
+                var offsetPixel = (frameY * _layout.Width + frameX) * 3;
+                for (var c = 0; c < 3; c++)
+                    Pixels[offsetPixel + c] = (byte)MathF.Round(Pixels[offsetPixel + c] * (1 - shade));
+            }
+        }
+    }
+
+    /// <summary>
+    /// How much of the pixel at (<paramref name="px"/>, <paramref name="py"/>) a rounded rectangle with whole-pixel
+    /// edges covers, 0-1: whole inside its straight edges, sampled as <see cref="FillShape"/> samples near a corner.
+    /// </summary>
+    private static float ShapeCoverage(int px, int py, int x, int y, int width, int height, int radius, Func<double, double, bool> inside)
+    {
+        if (px < x || px >= x + width || py < y || py >= y + height)
+            return 0;
+        var nearX = px < x + radius || px >= x + width - radius;
+        var nearY = py < y + radius || py >= y + height - radius;
+        return nearX && nearY ? Coverage(px, py, inside) / 16f : 1;
+    }
+
+    /// <summary>
+    /// The faint white line just inside the window's dark border, over the title bar and the terminal, when the
+    /// chrome palette has one (<see cref="SvgFrameRenderer.ChromePalette.EdgeHighlight"/>).
+    /// </summary>
+    private void DrawEdgeHighlight()
+    {
+        var palette = SvgFrameRenderer.ResolveChromePalette(_layout.Window, _theme.Background);
+        if (palette.EdgeHighlight <= 0)
+            return;
+
+        var (x, y, width, height) = (_layout.WindowX, _layout.WindowY, _layout.WindowWidth, _layout.WindowHeight);
+        var radius = _layout.CornerRadius;
+        var outer = RoundedRect(x + 1, y + 1, width - 2, height - 2, Math.Max(radius - 1, 0), roundTop: true, roundBottom: true);
+        var inner = RoundedRect(x + 2, y + 2, width - 4, height - 4, Math.Max(radius - 2, 0), roundTop: true, roundBottom: true);
+        var alpha = (int)Math.Round(palette.EdgeHighlight * 255, MidpointRounding.AwayFromZero);
+        FillShape(x + 1, y + 1, x + width - 1, y + height - 1, ((byte)255, (byte)255, (byte)255), (px, py) => outer(px, py) && !inner(px, py), alpha);
+    }
+
+    /// <summary>A normalized Gaussian kernel of standard deviation <paramref name="sigma"/>, three deviations each side.</summary>
+    private static float[] GaussianKernel(double sigma)
+    {
+        var radius = (int)Math.Ceiling(sigma * 3);
+        var kernel = new float[radius * 2 + 1];
+        var total = 0f;
+        for (var k = -radius; k <= radius; k++)
+            total += kernel[k + radius] = (float)Math.Exp(-(k * k) / (2 * sigma * sigma));
+        for (var k = 0; k < kernel.Length; k++)
+            kernel[k] /= total;
+        return kernel;
+    }
+
+    /// <summary>
     /// The desktop with the window's box blurred: a Gaussian blur in two passes, with the frame's edge pixels
     /// repeated outward, as the SVG's feGaussianBlur with edgeMode="duplicate" draws it. Values blur as stored,
     /// in sRGB, as the SVG's filter does with color-interpolation-filters="sRGB".
@@ -1454,13 +1633,8 @@ internal sealed class FrameRasterizer
         if (x1 <= x0 || y1 <= y0)
             return result;
 
-        var radius = (int)Math.Ceiling(_blur * 3.0);
-        var kernel = new float[radius * 2 + 1];
-        var total = 0f;
-        for (var k = -radius; k <= radius; k++)
-            total += kernel[k + radius] = MathF.Exp(-(k * k) / (2f * _blur * _blur));
-        for (var k = 0; k < kernel.Length; k++)
-            kernel[k] /= total;
+        var kernel = GaussianKernel(_blur);
+        var radius = kernel.Length / 2;
 
         // Across, for the rows the pass down reads.
         var boxWidth = x1 - x0;
@@ -1514,92 +1688,155 @@ internal sealed class FrameRasterizer
     }
 
     /// <summary>
-    /// The SVG title bar, title, and buttons, with the same palette and fixed-pixel geometry. On a background
-    /// the bar has the window's rounded top corners inside its border. Without one, video has no transparency,
-    /// so the SVG's outer margin, drop shadow, rounded corners, and outer border are left out and the title bar
-    /// runs flush with the top edge of the frame. The SVG's shadow is left out on a background too.
+    /// The SVG title bar with its title and buttons, or on Windows its tab row, with the same palette and
+    /// fixed-pixel geometry. On a background the bar has the window's rounded top corners inside its border.
+    /// Without one, video has no transparency, so the SVG's outer margin, drop shadow, rounded corners, and outer
+    /// border are left out and the bar runs flush with the top edge of the frame.
     /// </summary>
     private void DrawChrome()
     {
         var palette = SvgFrameRenderer.ResolveChromePalette(_layout.Window, _theme.Background);
         var (x, y, width) = (_layout.WindowX, _layout.WindowY, _layout.WindowWidth);
         var bar = _layout.TitleBarHeight;
+
+        // A macOS bar ends in a line; a Windows tab row meets the terminal, its active tab in the terminal's color.
+        var windows = _layout.Window == WindowStyle.Windows;
         if (_layout.Desktop)
         {
-            FillRoundedRect(x + 1, y + 1, width - 2, bar - 2, Math.Max(_layout.CornerRadius - 1, 0), ParseColor(palette.TitleBarBg), roundBottom: false, _windowAlpha);
-            FillRect(x + 1, y + bar - 1, width - 2, 1, ParseColor(palette.Border));
+            FillRoundedRect(x + 1, y + 1, width - 2, windows ? bar - 1 : bar - 2, Math.Max(_layout.CornerRadius - 1, 0), ParseColor(palette.TitleBarBg), roundBottom: false, _windowAlpha);
+            if (!windows)
+                FillRect(x + 1, y + bar - 1, width - 2, 1, ParseColor(palette.Border));
         }
         else
         {
-            FillRect(x, y, width, bar - 1, ParseColor(palette.TitleBarBg));
-            FillRect(x, y + bar - 1, width, 1, ParseColor(palette.Border));
+            FillRect(x, y, width, windows ? bar : bar - 1, ParseColor(palette.TitleBarBg));
+            if (!windows)
+                FillRect(x, y + bar - 1, width, 1, ParseColor(palette.Border));
         }
 
-        DrawTitle(palette);
-
-        if (_layout.Window == WindowStyle.Macos)
+        if (windows)
         {
-            var radius = SvgFrameRenderer.MacButtonDiameter / 2;
-            var cx = x + SvgFrameRenderer.ChromeSidePadding + radius;
-            var cy = y + SvgFrameRenderer.ChromeTopPadding + radius;
-            foreach (var color in SvgFrameRenderer.MacButtonColors)
-            {
-                var centerX = cx;
-                FillShape(centerX - radius, cy - radius, centerX + radius, cy + radius, ParseColor(color),
-                    (x, y) => (x - centerX) * (x - centerX) + (y - cy) * (y - cy) <= radius * radius);
-                cx += SvgFrameRenderer.MacButtonDiameter + SvgFrameRenderer.MacButtonGap;
-            }
-
+            DrawWinTabRow(palette);
             return;
         }
 
-        var size = SvgFrameRenderer.WinButtonSize;
-        var corner = SvgFrameRenderer.WinButtonCornerRadius;
-        var top = y + SvgFrameRenderer.ChromeTopPadding;
-        var left = x + width - SvgFrameRenderer.ChromeSidePadding - size * 3 - SvgFrameRenderer.WinButtonGap * 2;
-        var buttonColor = ParseColor(palette.WinButton);
-        for (var i = 0; i < 3; i++)
+        if (SvgFrameRenderer.FitWindowTitle(_title, _layout.Window, width) is { } fitted)
+            DrawTitle(fitted.Text, x + fitted.X, fitted.Centered, y + SvgFrameRenderer.ChromeTitleBaseline, bold: true, ParseColor(palette.TitleText));
+
+        var radius = SvgFrameRenderer.MacButtonDiameter / 2;
+        var cx = x + SvgFrameRenderer.ChromeSidePadding + radius;
+        var cy = y + SvgFrameRenderer.ChromeTopPadding + radius;
+        foreach (var color in SvgFrameRenderer.MacButtonColors)
         {
-            var x0 = left;
-            FillShape(x0, top, x0 + size, top + size, buttonColor, (x, y) =>
-            {
-                // Inside the rounded square: clamp to the inner rectangle, then compare with the corner radius.
-                var dx = Math.Max(Math.Max(x0 + corner - x, x - (x0 + size - corner)), 0);
-                var dy = Math.Max(Math.Max(top + corner - y, y - (top + size - corner)), 0);
-                return dx * dx + dy * dy <= corner * corner;
-            });
-            left += size + SvgFrameRenderer.WinButtonGap;
+            var centerX = cx;
+            FillShape(centerX - radius, cy - radius, centerX + radius, cy + radius, ParseColor(color),
+                (x, y) => (x - centerX) * (x - centerX) + (y - cy) * (y - cy) <= radius * radius);
+            cx += SvgFrameRenderer.MacButtonDiameter + SvgFrameRenderer.MacButtonGap;
         }
     }
 
-    /// <summary>The window title in the bar, cut as the SVG cuts it (<see cref="SvgFrameRenderer.FitWindowTitle"/>).</summary>
-    private void DrawTitle(SvgFrameRenderer.ChromePalette palette)
+    /// <summary>
+    /// The Windows Terminal tab row, laid out as the SVG lays it out (<see cref="SvgFrameRenderer.LayoutWinTabRow"/>):
+    /// the active tab in the terminal's color with the outlined terminal icon, the title, and a close glyph; the
+    /// new-tab and dropdown glyphs; and the minimize, maximize, and close glyphs at the right.
+    /// </summary>
+    private void DrawWinTabRow(SvgFrameRenderer.ChromePalette palette)
     {
-        if (_titleGlyphs is null || SvgFrameRenderer.FitWindowTitle(_title, _layout.Window, _layout.WindowWidth) is not { } fitted)
+        var (x, y, width) = (_layout.WindowX, _layout.WindowY, _layout.WindowWidth);
+        var color = ParseColor(palette.TitleText);
+        var row = SvgFrameRenderer.LayoutWinTabRow(_title, width);
+        if (row.HasTab)
+        {
+            double left = x + row.TabLeft, right = x + row.TabRight, top = y + SvgFrameRenderer.WinTabTop, bottom = y + _layout.TitleBarHeight;
+            FillShape(left, top, right, bottom, _background,
+                RoundedRect(left, top, right - left, bottom - top, SvgFrameRenderer.WinTabCornerRadius, roundTop: true, roundBottom: false), _windowAlpha);
+
+            var cy = y + SvgFrameRenderer.WinTabCenterY;
+            var ix = left + 10;
+            var iy = cy - 6.5;
+            StrokeRoundedRect(ix + 0.5, iy + 0.5, 14, 11, 2, color);
+            StrokeLine(ix + 4, iy + 4, ix + 6.5, iy + 6.5, color);
+            StrokeLine(ix + 6.5, iy + 6.5, ix + 4, iy + 9, color);
+            StrokeLine(ix + 8, iy + 9, ix + 11, iy + 9, color);
+
+            if (row.Title is { } title)
+                DrawTitle(title, x + row.TitleX, centered: false, y + SvgFrameRenderer.WinTitleBaseline, bold: false, color);
+
+            var close = right - 16;
+            StrokeLine(close - 4, cy - 4, close + 4, cy + 4, color);
+            StrokeLine(close + 4, cy - 4, close - 4, cy + 4, color);
+
+            if (row.Extras)
+            {
+                var plus = right + 20;
+                var down = right + 46;
+                StrokeLine(plus - 5, cy, plus + 5, cy, color);
+                StrokeLine(plus, cy - 5, plus, cy + 5, color);
+                StrokeLine(down - 4, cy - 2, down, cy + 2, color);
+                StrokeLine(down, cy + 2, down + 4, cy - 2, color);
+            }
+        }
+
+        var edge = x + width;
+        var captionY = y + SvgFrameRenderer.WinCaptionCenterY;
+        var minimize = edge - SvgFrameRenderer.WinCaptionWidth * 2.5;
+        var maximize = edge - SvgFrameRenderer.WinCaptionWidth * 1.5;
+        var closeWindow = edge - SvgFrameRenderer.WinCaptionWidth * 0.5;
+        StrokeLine(minimize - 5, captionY, minimize + 5, captionY, color);
+        StrokeRoundedRect(maximize - 4.5, captionY - 4.5, 9, 9, 1, color);
+        StrokeLine(closeWindow - 5, captionY - 5, closeWindow + 5, captionY + 5, color);
+        StrokeLine(closeWindow + 5, captionY - 5, closeWindow - 5, captionY + 5, color);
+    }
+
+    /// <summary>
+    /// A window title in its sans-serif at each glyph's own width, starting at <paramref name="x"/> or, with
+    /// <paramref name="centered"/>, centered on it by the width it draws, as the SVG's text-anchor centers it.
+    /// </summary>
+    private void DrawTitle(string text, double x, bool centered, double baseline, bool bold, (byte R, byte G, byte B) color)
+    {
+        if (_titleGlyphs is null)
             return;
 
-        var elements = new List<(string Text, int Cells)>();
-        var cells = 0;
-        var enumerator = StringInfo.GetTextElementEnumerator(fitted.Text);
+        var elements = new List<string>();
+        var enumerator = StringInfo.GetTextElementEnumerator(text);
         while (enumerator.MoveNext())
-        {
-            var element = enumerator.GetTextElement();
-            var span = Rune.TryGetRuneAt(element, 0, out var rune) && ScreenBuffer.IsWideCodePoint(rune.Value) ? 2 : 1;
-            elements.Add((element, span));
-            cells += span;
-        }
+            elements.Add(enumerator.GetTextElement());
 
-        double left = _layout.WindowX + fitted.X - (fitted.Centered ? cells * _titleCellWidth / 2.0 : 0);
-        var x = (int)Math.Round(left, MidpointRounding.AwayFromZero);
-        var baseline = _layout.WindowY + (int)Math.Round(SvgFrameRenderer.ChromeTitleBaseline, MidpointRounding.AwayFromZero);
-        var color = ParseColor(palette.TitleText);
-        foreach (var (element, span) in elements)
+        var width = 0f;
+        foreach (var element in elements)
+            width += _titleGlyphs.GetProportional(element, bold, 0).Advance;
+
+        var pen = (float)(x - (centered ? width / 2 : 0));
+        var baselineY = (int)Math.Round(baseline, MidpointRounding.AwayFromZero);
+        foreach (var element in elements)
         {
-            var glyph = _titleGlyphs.Get(element, bold: false, italic: false, span);
+            var (glyph, advance) = _titleGlyphs.GetProportional(element, bold, pen);
             if (glyph.Width != 0)
-                Blit(glyph, x, baseline, _layout.WindowY, _layout.WindowY + _layout.TitleBarHeight - 1, color);
-            x += span * _titleCellWidth;
+                Blit(glyph, 0, baselineY, _layout.WindowY, _layout.WindowY + _layout.TitleBarHeight, color);
+            pen += advance;
         }
+    }
+
+    /// <summary>A 1-pixel line from one point to another, anti-aliased, with round ends.</summary>
+    private void StrokeLine(double x0, double y0, double x1, double y1, (byte R, byte G, byte B) color)
+    {
+        const double half = 0.5;
+        var (dx, dy) = (x1 - x0, y1 - y0);
+        var lengthSquared = dx * dx + dy * dy;
+        FillShape(Math.Min(x0, x1) - half, Math.Min(y0, y1) - half, Math.Max(x0, x1) + half, Math.Max(y0, y1) + half, color, (px, py) =>
+        {
+            var t = lengthSquared == 0 ? 0 : Math.Clamp(((px - x0) * dx + (py - y0) * dy) / lengthSquared, 0, 1);
+            var (nx, ny) = (x0 + t * dx - px, y0 + t * dy - py);
+            return nx * nx + ny * ny <= half * half;
+        });
+    }
+
+    /// <summary>The 1-pixel outline of a rounded rectangle, centered on its edges as an SVG stroke is.</summary>
+    private void StrokeRoundedRect(double x, double y, double width, double height, double radius, (byte R, byte G, byte B) color)
+    {
+        var outer = RoundedRect(x - 0.5, y - 0.5, width + 1, height + 1, radius + 0.5, roundTop: true, roundBottom: true);
+        var inner = RoundedRect(x + 0.5, y + 0.5, width - 1, height - 1, Math.Max(radius - 0.5, 0), roundTop: true, roundBottom: true);
+        FillShape(x - 0.5, y - 0.5, x + width + 0.5, y + height + 0.5, color, (px, py) => outer(px, py) && !inner(px, py));
     }
 
     /// <summary>
@@ -1714,8 +1951,8 @@ internal sealed class FrameRasterizer
     {
         var top = _layout.RowY(row);
         var height = _layout.CellHeight;
-        // Inside the window, and inside its border when it stands on a background. A translucent window's row
-        // comes back as Clear drew it, with the background showing through.
+        // Inside the window, and inside its border when it stands on a background. On a background the row comes
+        // back as Clear drew it: the edge line, the corners, and a translucent window's background with it.
         var inset = _layout.Desktop && _layout.Window != WindowStyle.None ? 1 : 0;
         if (_cleared is null)
             FillRect(_layout.WindowX + inset, top, _layout.WindowWidth - inset * 2, height, _background);

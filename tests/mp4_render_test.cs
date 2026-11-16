@@ -30,6 +30,7 @@ failures += Run("BackgroundGradientRunsCornerToCorner", BackgroundGradientRunsCo
 failures += Run("WindowOnBackgroundHasBorderAndCorners", WindowOnBackgroundHasBorderAndCorners);
 failures += Run("TranslucentWindowShowsBackground", TranslucentWindowShowsBackground);
 failures += Run("BlurSoftensBackgroundUnderWindow", BlurSoftensBackgroundUnderWindow);
+failures += Run("TitleIsSansSerifAtItsOwnWidths", TitleIsSansSerifAtItsOwnWidths);
 failures += Run("OptionParsing", OptionParsing);
 failures += Run("FfmpegArgumentsUseH264Bt709", FfmpegArgumentsUseH264Bt709);
 failures += Run("FontFamilyListParsing", FontFamilyListParsing);
@@ -48,7 +49,7 @@ failures += Run("TrimmedRestoreForcesNoKeyframe", TrimmedRestoreForcesNoKeyframe
 failures += Run("ForcedKeyframesAreSpacedAndCapped", ForcedKeyframesAreSpacedAndCapped);
 failures += Run("MatrixTintMatchesSvg", MatrixTintMatchesSvg);
 failures += Run("MacosChromeDrawsTrafficLights", MacosChromeDrawsTrafficLights);
-failures += Run("WindowsChromeDrawsButtons", WindowsChromeDrawsButtons);
+failures += Run("WindowsChromeDrawsTabRow", WindowsChromeDrawsTabRow);
 failures += Run("BoxDrawingAtTinySizesStaysInCell", BoxDrawingAtTinySizesStaysInCell);
 failures += Run("HugeFrameIsReportedClearly", HugeFrameIsReportedClearly);
 failures += Run("FfmpegProbeTimesOut", FfmpegProbeTimesOut);
@@ -158,15 +159,27 @@ static bool WindowOnBackgroundHasBorderAndCorners()
     }
 
     // Outside the window: the background. The window's top-left corner is rounded, so its corner pixel is still
-    // background. Its top edge is the macOS dark border, the bar below is the title bar color, and the terminal
-    // area is the theme background.
+    // background, a little shaded by the shadow. Its top edge is the macOS dark border, the bar below is the title bar color, and the terminal
+    // area is the theme background. Just inside the border, the dark macOS window's white line at alpha 41 (0.16).
+    // Beside and below the window its shadow darkens the background, more near the window; far away it does not.
     var (x, y) = (layout.WindowX, layout.WindowY);
-    return At(0, 0) == (255, 0, 0)
-        && At(x, y) == (255, 0, 0)
+    var (width, height) = (layout.WindowWidth, layout.WindowHeight);
+    static int Blend(int under, int over) => under + (over - under) * 41 / 255;
+    var beside = At(x + width + 5, y + 60);
+    var farther = At(x + width + 20, y + 60);
+    var below = At(x + width / 2, y + height + 8);
+    var ok = At(0, 0) == (255, 0, 0)
+        && At(x, y) is { R: > 200, G: 0, B: 0 }
         && At(x + 20, y) == (0x1a, 0x1a, 0x1a)
         && At(x + 60, y + 5) == (0x32, 0x32, 0x32)
         && At(x + 60, y + 60) == (0x28, 0x2c, 0x34)
-        && At(x + layout.WindowWidth + 5, y + 60) == (255, 0, 0);
+        && At(x + 1, y + 60) == (Blend(0x28, 255), Blend(0x2c, 255), Blend(0x34, 255))
+        && beside is { R: > 150 and < 250, G: 0, B: 0 }
+        && farther.R > beside.R && farther.R < 255
+        && below is { R: > 120 and < 240, G: 0, B: 0 };
+    if (!ok)
+        Console.Error.WriteLine($"  corner {At(0, 0)} {At(x, y)}, border {At(x + 20, y)}, bar {At(x + 60, y + 5)}, terminal {At(x + 60, y + 60)}, edge {At(x + 1, y + 60)}, beside {beside}, farther {farther}, below {below}");
+    return ok;
 }
 
 static bool TranslucentWindowShowsBackground()
@@ -236,6 +249,43 @@ static bool BlurSoftensBackgroundUnderWindow()
         && At(sharp, split, inside) == (0, 0, 255);
     if (!ok)
         Console.Error.WriteLine($"  near the edge {nearEdge}, 13 px left {At(blurred, split - 13, inside)}, outside {At(blurred, split - 1, outside)}");
+    return ok;
+}
+
+static bool TitleIsSansSerifAtItsOwnWidths()
+{
+    // The title is drawn at each glyph's own width, centered on the window by that width, as the SVG's
+    // text-anchor centers it: four i's take far less room than four W's, and both are centered.
+    var layout = RasterLayout.Create(16, 60, 3, WindowStyle.Macos);
+    var theme = TerminalTheme.FromResolved(new ResolvedTheme("#d0d0d0", "#282c34", RenderSettingsResolver.DefaultPalette));
+    var glyphs = GlyphSource.Create("monospace", null, layout);
+    var titleGlyphs = GlyphSource.Create(SvgFrameRenderer.ChromeTitleFontFamily, null, RasterLayout.Create(13, 1, 1));
+    (int Left, int Right) Ink(string title)
+    {
+        var raster = new FrameRasterizer(layout, theme, glyphs, titleGlyphs: titleGlyphs, title: title);
+        var (left, right) = (int.MaxValue, int.MinValue);
+        // Between the buttons' room on both sides, in the bar: pixels lighter than the bar are the title's.
+        for (var py = 4; py < layout.TitleBarHeight - 4; py++)
+        {
+            for (var px = 100; px < layout.Width - 100; px++)
+            {
+                if (raster.Pixels[(py * layout.Width + px) * 3] > 0x60)
+                    (left, right) = (Math.Min(left, px), Math.Max(right, px));
+            }
+        }
+
+        return (left, right);
+    }
+
+    var narrow = Ink("iiii");
+    var wide = Ink("WWWW");
+    var center = layout.Width / 2.0;
+    var ok = narrow.Right > narrow.Left && wide.Right > wide.Left
+        && (narrow.Right - narrow.Left) * 2 < wide.Right - wide.Left
+        && Math.Abs((narrow.Left + narrow.Right + 1) / 2.0 - center) <= 3
+        && Math.Abs((wide.Left + wide.Right + 1) / 2.0 - center) <= 3;
+    if (!ok)
+        Console.Error.WriteLine($"  iiii ink {narrow}, WWWW ink {wide}, center {center}");
     return ok;
 }
 
@@ -584,15 +634,31 @@ static bool MacosChromeDrawsTrafficLights()
         && CellPixel(last, layout, 0, 0) == (0xd0, 0xd0, 0xd0); // terminal content starts below the title bar
 }
 
-static bool WindowsChromeDrawsButtons()
+static bool WindowsChromeDrawsTabRow()
 {
-    // Dark theme → WinDark: title bar #2d2d2d, buttons #8a8a8a, right-aligned 14px from the edge.
-    var (frames, layout) = Render("""[0.0,"o","\u001b[?25l"]""", fps: 10, window: "windows");
-    var last = frames[^1];
-    var lastButtonCenter = layout.Width - 14 - 9;
-    return Pixel(last, layout, lastButtonCenter, 17) == (0x8a, 0x8a, 0x8a)
-        && Pixel(last, layout, 5, 5) == (0x2d, 0x2d, 0x2d)
-        && Pixel(last, layout, layout.Width - 5, 5) == (0x2d, 0x2d, 0x2d);
+    // Dark theme → WinDark: the tab row #1c1c1c, the active tab from 8 to 128 px in the terminal's #282c34, and
+    // the caption glyphs in #d6d6d6: the minimize line on row 17 around 115 px from the right, and the maximize
+    // square's left side 73.5 px from the right.
+    var layout = RasterLayout.Create(16, 60, 3, WindowStyle.Windows);
+    var theme = TerminalTheme.FromResolved(new ResolvedTheme("#d0d0d0", "#282c34", RenderSettingsResolver.DefaultPalette));
+    var raster = new FrameRasterizer(layout, theme, GlyphSource.Create("monospace", null, layout));
+    (int R, int G, int B) At(int x, int y)
+    {
+        var offset = (y * layout.Width + x) * 3;
+        return (raster.Pixels[offset], raster.Pixels[offset + 1], raster.Pixels[offset + 2]);
+    }
+
+    var ok = At(5, 5) == (0x1c, 0x1c, 0x1c)
+        && At(layout.Width - 5, 30) == (0x1c, 0x1c, 0x1c)
+        && At(7, 30) == (0x1c, 0x1c, 0x1c)
+        && At(8, 30) == (0x28, 0x2c, 0x34)
+        && At(60, 30) == (0x28, 0x2c, 0x34)
+        && At(133, 30) == (0x1c, 0x1c, 0x1c)
+        && At(layout.Width - 115, 17) == (0xd6, 0xd6, 0xd6)
+        && At(layout.Width - 74, 17) == (0xd6, 0xd6, 0xd6);
+    if (!ok)
+        Console.Error.WriteLine($"  row {At(5, 5)} {At(layout.Width - 5, 30)} {At(7, 30)}, tab {At(8, 30)} {At(60, 30)}, after {At(133, 30)}, minimize {At(layout.Width - 115, 17)}, maximize {At(layout.Width - 74, 17)}");
+    return ok;
 }
 
 static (List<byte[]> Frames, RasterLayout Layout) Render(string events, int fps, string? window = null, (int Width, int Height)? size = null, string[]? tags = null)

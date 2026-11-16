@@ -48,7 +48,7 @@ text { dominant-baseline: alphabetic; }
 .j{visibility:visible}
 </style>
 <defs>
-<filter id="window-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.22"/></filter>
+<filter id="window-shadow" filterUnits="userSpaceOnUse" x="0" y="0" width="837.92" height="506"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-opacity="0.45"/></filter>
 <linearGradient id="desktop" x1="0" y1="0" x2="1" y2="1">
 <stop offset="0" stop-color="#0f2027"/>
 <stop offset="0.5" stop-color="#203a43"/>
@@ -60,10 +60,11 @@ text { dominant-baseline: alphabetic; }
 </mask>
 </defs>
 <rect x="0" y="0" width="837.92" height="506" fill="url(#desktop)"/>
-<rect class="l j viewport-chrome-0" x="32" y="32" width="773.92" height="442" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
+<rect class="l j viewport-chrome-0" x="32" y="32" width="773.92" height="442" rx="8" ry="8" fill="#000" filter="url(#window-shadow)"/>
+<rect class="l j viewport-chrome-0" x="32" y="32" width="773.92" height="442" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1"/>
 <path class="l j viewport-chrome-0" d="M 40,32 H 797.92 Q 805.92,32 805.92,40 V 66 H 32 V 40 Q 32,32 40,32 Z" fill="#323232"/>
 <line class="l j viewport-chrome-0" x1="32" y1="66" x2="805.92" y2="66" stroke="#1a1a1a" stroke-width="1"/>
-<text class="l j viewport-chrome-0" x="418.96" y="53.5" style="font-size:13px" text-anchor="middle" fill="#c8c8c8">fastfetch</text>
+<text class="l j viewport-chrome-0" x="418.96" y="53.5" style="font:bold 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI','Helvetica Neue',Helvetica,Arial,'Noto Sans','DejaVu Sans',sans-serif" text-anchor="middle" fill="#c8c8c8">fastfetch</text>
 <circle class="l j viewport-chrome-0" cx="54" cy="49" r="8" fill="#ff5f57"/>
 <circle class="l j viewport-chrome-0" cx="80" cy="49" r="8" fill="#febc2e"/>
 <circle class="l j viewport-chrome-0" cx="106" cy="49" r="8" fill="#28c840"/>
@@ -106,4 +107,5 @@ text { dominant-baseline: alphabetic; }
 <use href="#c" x="42" y="90" class="l aj"/>
 <use href="#c" x="42" y="430" class="l al"/>
 </g>
+<rect class="l j viewport-chrome-0" x="32.5" y="32.5" width="772.92" height="441" rx="7.5" ry="7.5" fill="none" stroke="#ffffff" stroke-opacity="0.16"/>
 </svg>

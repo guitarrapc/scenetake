@@ -970,30 +970,120 @@ internal static class SvgFrameRenderer
     internal const double ChromeTopPadding = 9.0;
     private const double ChromeOuterMargin = 12.0;
     internal const double ChromeMacCornerRadius = 8.0;
-    internal const double ChromeWindowsCornerRadius = 4.0;
+    internal const double ChromeWindowsCornerRadius = 8.0;
     internal const double MacButtonDiameter = 16.0;
     internal const double MacButtonGap = 10.0;
-    internal const double WinButtonSize = 17.0;
-    internal const double WinButtonGap = 5.5;
-    internal const double WinButtonCornerRadius = 2.55;
+
+    // Windows: the tab row of Windows Terminal. The active tab, in the terminal's color, holds an icon, the title,
+    // and a close button; the new-tab and dropdown buttons follow it, and the caption buttons sit at the right.
+    // Positions are from the window's top-left corner.
+    internal const double WinTabLeft = 8.0;
+    internal const double WinTabTop = 6.0;
+    internal const double WinTabCornerRadius = 6.0;
+    internal const double WinTabMinWidth = 120.0;
+
+    /// <summary>The middle of the tab's content, on a half pixel so that 1-pixel lines are sharp.</summary>
+    internal const double WinTabCenterY = 20.5;
+
+    /// <summary>From the tab's left edge to the title: 10 px, the 15 px icon, and 9 px.</summary>
+    internal const double WinTabTitleX = 34.0;
+
+    /// <summary>From the title's end to the tab's right edge: 12 px, the 8 px close glyph, and 12 px.</summary>
+    internal const double WinTabTitleEnd = 32.0;
+
+    /// <summary>The new-tab and dropdown buttons after the tab, centered 20 and 46 px past it.</summary>
+    internal const double WinTabExtras = 56.0;
+
+    /// <summary>The width of each caption button, minimize, maximize, and close, at the right of the row.</summary>
+    internal const double WinCaptionWidth = 46.0;
+
+    /// <summary>The middle of the caption glyphs, on a half pixel so that 1-pixel lines are sharp.</summary>
+    internal const double WinCaptionCenterY = 17.5;
+
+    internal const double WinTitleFontSize = 12.0;
+
+    /// <summary>The title's baseline below the window's top edge: a 12 px line centered in the tab.</summary>
+    internal const double WinTitleBaseline = 24.5;
     private const string WindowShadowFilter =
         "<filter id=\"window-shadow\" x=\"-25%\" y=\"-25%\" width=\"150%\" height=\"150%\"><feDropShadow dx=\"0\" dy=\"2\" stdDeviation=\"4\" flood-opacity=\"0.22\"/></filter>";
 
-    // The window title: the terminal's font family at a fixed size, so SVG and mp4 measure it in the same cells.
+    // On a background, the window casts a desktop window's shadow: its whole shape, offset down and blurred.
+    internal const double WindowShadowOffsetY = 10;
+    internal const double WindowShadowDeviation = 14;
+    internal const double WindowShadowOpacity = 0.45;
+
+    /// <summary>The window title's font: the viewer's system sans-serif, as a desktop's title bar draws it.</summary>
+    internal const string ChromeTitleFontFamily = "-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI','Helvetica Neue',Helvetica,Arial,'Noto Sans','DejaVu Sans',sans-serif";
+
+    /// <summary>
+    /// The width of each printable ASCII character, U+0020 to U+007E, in a bold sans-serif title, in em: the widest
+    /// of Verdana, Segoe UI, Arial, Tahoma, Trebuchet MS, and Calibri in bold, rounded up. Verdana is the widest
+    /// nearly everywhere, and DejaVu Sans, the usual sans-serif on Linux, has nearly its widths. A title measured
+    /// with these is no narrower than it draws in any of them, so a cut title stays clear of the buttons.
+    /// </summary>
+    private static readonly double[] TitleCharWidths =
+    [
+        0.35, 0.41, 0.59, 0.87, 0.72, 1.28, 0.87, 0.34, 0.55, 0.55, 0.72, 0.87, 0.37, 0.48, 0.37, 0.69, // ' ' to '/'
+        0.72, 0.72, 0.72, 0.72, 0.72, 0.72, 0.72, 0.72, 0.72, 0.72, 0.41, 0.41, 0.87, 0.87, 0.87, 0.62, // '0' to '?'
+        0.98, 0.78, 0.77, 0.73, 0.83, 0.69, 0.65, 0.82, 0.84, 0.55, 0.56, 0.78, 0.64, 0.96, 0.85, 0.85, // '@' to 'O'
+        0.74, 0.85, 0.79, 0.71, 0.69, 0.82, 0.77, 1.13, 0.77, 0.74, 0.70, 0.55, 0.69, 0.55, 0.87, 0.72, // 'P' to '_'
+        0.72, 0.67, 0.70, 0.59, 0.70, 0.67, 0.43, 0.70, 0.72, 0.35, 0.41, 0.68, 0.35, 1.06, 0.72, 0.69, // U+0060 to 'o'
+        0.70, 0.70, 0.50, 0.60, 0.46, 0.72, 0.65, 0.98, 0.67, 0.66, 0.60, 0.72, 0.64, 0.72, 0.87,       // 'p' to '~'
+    ];
+
+    /// <summary>The width of the ellipsis that ends a cut title, in em, measured as <see cref="TitleCharWidths"/> are.</summary>
+    private const double TitleEllipsisWidth = 1.05;
+
+    /// <summary>The width of a character outside ASCII whose base letter is not ASCII either, in em: W's, the widest letter.</summary>
+    private const double TitleOtherWidth = 1.13;
+
+    // The macOS window title's size.
     internal const double ChromeTitleFontSize = 13.0;
 
-    /// <summary>The title's baseline below the window's top edge: a 13 px line centered in the 34 px bar.</summary>
+    /// <summary>The macOS title's baseline below the window's top edge: a 13 px line centered in the 34 px bar.</summary>
     internal const double ChromeTitleBaseline = 21.5;
+
+    /// <summary>The title's font size: 13 px in a macOS bar, 12 px in a Windows Terminal tab.</summary>
+    internal static double TitleFontSize(WindowStyle window) => window == WindowStyle.Windows ? WinTitleFontSize : ChromeTitleFontSize;
 
     /// <summary>Room kept between the title and the buttons.</summary>
     private const double ChromeTitleGap = 10.0;
 
-    private static readonly ChromePalette MacDark = new("#323232", "#1a1a1a", "#8a8a8a", "#c8c8c8");
-    private static readonly ChromePalette MacLight = new("#dcdcdc", "#b0b0b0", "#8a8a8a", "#4a4a4a");
-    private static readonly ChromePalette WinDark = new("#2d2d2d", "#404040", "#8a8a8a", "#d6d6d6");
-    private static readonly ChromePalette WinLight = new("#f3f3f3", "#d0d0d0", "#8a8a8a", "#333333");
+    // A dark macOS window has a faint white line just inside its dark border, so its edge shows on a dark background.
+    private static readonly ChromePalette MacDark = new("#323232", "#1a1a1a", "#c8c8c8", EdgeHighlight: 0.16);
+    private static readonly ChromePalette MacLight = new("#dcdcdc", "#b0b0b0", "#4a4a4a");
 
-    internal readonly record struct ChromePalette(string TitleBarBg, string Border, string WinButton, string TitleText);
+    // Windows: the tab row is darker (lighter in light mode) than the active tab, which takes the terminal's color.
+    private static readonly ChromePalette WinDark = new("#1c1c1c", "#404040", "#d6d6d6");
+    private static readonly ChromePalette WinLight = new("#ebebeb", "#d0d0d0", "#333333");
+
+    /// <param name="TitleBarBg">The title bar, or on Windows the tab row.</param>
+    /// <param name="TitleText">The title, and on Windows the icon and the button glyphs.</param>
+    /// <param name="EdgeHighlight">The opacity of a white 1-pixel line just inside the window's edge; 0 for none.</param>
+    internal readonly record struct ChromePalette(string TitleBarBg, string Border, string TitleText, double EdgeHighlight = 0);
+
+    /// <summary>
+    /// A Windows Terminal tab row, relative to the window's top-left corner: the active tab's edges, the title in
+    /// it, cut as <see cref="FitWindowTitle"/> cuts it, and whether the new-tab and dropdown buttons fit after it.
+    /// No tab when the window is too narrow for one beside the caption buttons.
+    /// </summary>
+    internal readonly record struct WinTabRow(bool HasTab, double TabLeft, double TabRight, string? Title, double TitleX, bool Extras);
+
+    /// <summary>
+    /// Lays out a Windows Terminal tab row in a window <paramref name="windowWidth"/> wide. The tab fits its
+    /// title, as measured to cut it, and is at least <see cref="WinTabMinWidth"/> wide, so the SVG and the mp4
+    /// draw the same tab whatever font draws the title.
+    /// </summary>
+    internal static WinTabRow LayoutWinTabRow(string? title, double windowWidth)
+    {
+        var fitted = FitWindowTitle(title, WindowStyle.Windows, windowWidth);
+        var tabWidth = Math.Max(WinTabMinWidth, WinTabTitleX + MeasureTitle(fitted?.Text, WinTitleFontSize) + WinTabTitleEnd);
+        var available = windowWidth - WinTabLeft - 3 * WinCaptionWidth - ChromeTitleGap;
+        var extras = tabWidth + WinTabExtras <= available;
+        tabWidth = Math.Min(tabWidth, available);
+        var hasTab = tabWidth >= WinTabTitleX + WinTabTitleEnd;
+        return new(hasTab, WinTabLeft, WinTabLeft + tabWidth, hasTab ? fitted?.Text : null, WinTabLeft + WinTabTitleX, extras && hasTab);
+    }
 
     /// <summary>macOS close, minimize, and zoom buttons, left to right.</summary>
     internal static readonly string[] MacButtonColors = ["#ff5f57", "#febc2e", "#28c840"];
@@ -1401,9 +1491,16 @@ internal static class SvgFrameRenderer
         // A translucent window clips its background, and its blurred copy of the background, to the window's shape.
         var clipsWindow = windowOpacity < 1 && (metrics.HasChrome || windowBlur > 0);
 
-        // Mask, background, the blurred copy of the background if any, and the chrome's parts: its frame, bar,
-        // line, three buttons, and the title if any.
-        var viewportElements = 2 + (windowBlur > 0 ? 1 : 0) + (metrics.HasChrome ? 6 : 0) + (metrics.HasChrome && !string.IsNullOrEmpty(render.WindowTitle) ? 1 : 0);
+        // With chrome on a background, the window casts a shape's shadow; a translucent window keeps it outside.
+        var chrome = metrics.HasChrome ? ResolveChromePalette(render.Window, render.Theme.Bg) : default;
+        var castsShadow = metrics.HasChrome && render.Background is not null;
+        var masksShadow = castsShadow && windowOpacity < 1;
+        var edgeHighlight = metrics.HasChrome && chrome.EdgeHighlight > 0;
+
+        // Mask, background, the blurred copy of the background if any, and the chrome's parts: its shadow on a
+        // background, frame, bar, line, three buttons, the title if any, and the edge line if any.
+        var viewportElements = 2 + (windowBlur > 0 ? 1 : 0) + ChromeElementCount(render.Window) + (metrics.HasChrome && !string.IsNullOrEmpty(render.WindowTitle) ? 1 : 0)
+            + (castsShadow ? 1 : 0) + (edgeHighlight ? 1 : 0);
         for (var i = 0; i < viewportLayers.Count; i++)
             keyframes.Use(viewportKeyframeIds[i], viewportElements);
 
@@ -1436,13 +1533,19 @@ internal static class SvgFrameRenderer
 
         sb.AppendLf("<defs>");
         if (metrics.HasChrome)
-            sb.AppendLf(WindowShadowFilter);
+            AppendShadowFilter(sb, metrics, castsShadow);
         if (render.Background is { } backgroundDefs)
             AppendBackgroundDefs(sb, metrics, backgroundDefs, windowBlur);
         if (clipsWindow)
         {
             for (var i = 0; i < viewportLayers.Count; i++)
                 AppendWindowClip(sb, metrics, viewportLayers[i].P0, viewportLayers[i].P1, i);
+        }
+
+        if (masksShadow)
+        {
+            for (var i = 0; i < viewportLayers.Count; i++)
+                AppendOutsideWindowMask(sb, metrics, viewportLayers[i].P0, viewportLayers[i].P1, i);
         }
 
         if (cursorLayers.Count > 0)
@@ -1478,11 +1581,10 @@ internal static class SvgFrameRenderer
 
         if (metrics.HasChrome)
         {
-            var chrome = ResolveChromePalette(render.Window, render.Theme.Bg);
             for (var i = 0; i < viewportLayers.Count; i++)
             {
                 var viewport = viewportLayers[i];
-                AppendWindowChrome(sb, metrics, chrome, render.Window, render.WindowTitle, viewport.P0, viewport.P1, i, keyframes.Name(viewportKeyframeIds[i]), fillOpacity);
+                AppendWindowChrome(sb, metrics, chrome, render.Window, render.WindowTitle, viewport.P0, viewport.P1, i, keyframes.Name(viewportKeyframeIds[i]), fillOpacity, castsShadow, masksShadow, render.Theme.Bg);
             }
         }
 
@@ -1509,6 +1611,14 @@ internal static class SvgFrameRenderer
         }
 
         sb.AppendLf("</g>");
+
+        // Over the terminal, whose background reaches the window's edge.
+        if (edgeHighlight)
+        {
+            for (var i = 0; i < viewportLayers.Count; i++)
+                AppendEdgeHighlight(sb, metrics, chrome, viewportLayers[i].P0, viewportLayers[i].P1, i, keyframes.Name(viewportKeyframeIds[i]));
+        }
+
         sb.AppendLf("</svg>");
 
         var rowKeyframes = new string?[rowLayers.Count];
@@ -1842,8 +1952,9 @@ internal static class SvgFrameRenderer
     /// <summary>
     /// The title as the bar shows it, with its x relative to the window's left edge: its center on macOS, its
     /// start on Windows. A title wider than the room the buttons leave is cut and ends in an ellipsis. Null when
-    /// there is no title or no room for two cells. Widths count cells of the terminal's monospace font, a wide
-    /// character as two, so the SVG and the mp4 cut a title at the same place.
+    /// there is no title, or no room for two cells of the terminal's font at the title's size. Widths are
+    /// <see cref="TitleWidth"/>'s, no narrower than any common sans-serif draws them, so the SVG and the mp4 cut
+    /// a title at the same place, and a cut title stays clear of the buttons whatever font the viewer has.
     /// </summary>
     internal static (string Text, double X, bool Centered)? FitWindowTitle(string? title, WindowStyle window, double windowWidth)
     {
@@ -1862,41 +1973,76 @@ internal static class SvgFrameRenderer
         }
         else
         {
-            var buttons = ChromeSidePadding + WinButtonSize * 3 + WinButtonGap * 2;
-            room = windowWidth - ChromeSidePadding - buttons - ChromeTitleGap;
-            x = ChromeSidePadding;
+            // In the tab, which leaves room for the new-tab and dropdown buttons and the caption buttons.
+            room = windowWidth - WinTabLeft - WinTabTitleX - WinTabTitleEnd - WinTabExtras - 3 * WinCaptionWidth - ChromeTitleGap;
+            x = WinTabLeft + WinTabTitleX;
             centered = false;
         }
 
-        var maxCells = (int)Math.Floor(room / (ChromeTitleFontSize * CharWidthFactor));
-        if (maxCells < 2)
+        var fontSize = TitleFontSize(window);
+        if (room < 2 * fontSize * CharWidthFactor)
             return null;
 
-        var elements = new List<(string Text, int Cells)>();
-        var total = 0;
+        var elements = new List<(string Text, double Width)>();
+        var total = 0.0;
         var enumerator = StringInfo.GetTextElementEnumerator(title);
         while (enumerator.MoveNext())
         {
             var element = enumerator.GetTextElement();
-            var cells = Rune.TryGetRuneAt(element, 0, out var rune) && ScreenBuffer.IsWideCodePoint(rune.Value) ? 2 : 1;
-            elements.Add((element, cells));
-            total += cells;
+            var width = TitleWidth(element, fontSize);
+            elements.Add((element, width));
+            total += width;
         }
 
-        if (total <= maxCells)
+        if (total <= room)
             return (title, x, centered);
 
         var builder = new StringBuilder();
-        var used = 0;
-        foreach (var (element, cells) in elements)
+        var used = 0.0;
+        var ellipsis = TitleEllipsisWidth * fontSize;
+        foreach (var (element, width) in elements)
         {
-            if (used + cells > maxCells - 1)
+            if (used + width + ellipsis > room)
                 break;
             builder.Append(element);
-            used += cells;
+            used += width;
         }
 
-        return (builder.Append('…').ToString(), x, centered);
+        return builder.Length == 0 ? null : (builder.Append('…').ToString(), x, centered);
+    }
+
+    /// <summary>
+    /// The width in pixels that a title gives one text element: a wide character as two cells of the terminal's
+    /// font, which no sans-serif's CJK reaches; ASCII from <see cref="TitleCharWidths"/>; a letter with a mark as
+    /// its base letter; anything else as W.
+    /// </summary>
+    internal static double TitleWidth(string element, double fontSize = ChromeTitleFontSize)
+    {
+        if (!Rune.TryGetRuneAt(element, 0, out var rune))
+            return 0;
+        if (ScreenBuffer.IsWideCodePoint(rune.Value))
+            return 2 * CharWidthFactor * fontSize;
+        if (element == "…")
+            return TitleEllipsisWidth * fontSize;
+
+        var code = rune.Value;
+        if (code > 0x7E && element.Normalize(NormalizationForm.FormD)[0] is var letter && letter <= 0x7E)
+            code = letter;
+        var em = code is >= 0x20 and <= 0x7E ? TitleCharWidths[code - 0x20] : TitleOtherWidth;
+        return em * fontSize;
+    }
+
+    /// <summary>The width of a title as <see cref="FitWindowTitle"/> measures it, its ellipsis included; 0 for none.</summary>
+    internal static double MeasureTitle(string? text, double fontSize)
+    {
+        if (string.IsNullOrEmpty(text))
+            return 0;
+
+        var width = 0.0;
+        var enumerator = StringInfo.GetTextElementEnumerator(text);
+        while (enumerator.MoveNext())
+            width += TitleWidth(enumerator.GetTextElement(), fontSize);
+        return width;
     }
 
     /// <summary>
@@ -1971,6 +2117,39 @@ internal static class SvgFrameRenderer
             $"<clipPath id=\"window-clip-{layerIndex}\"><rect x=\"{metrics.OuterMargin:0.##}\" y=\"{metrics.OuterMargin:0.##}\" width=\"{metrics.ViewportPixelWidth(cols):0.##}\" height=\"{metrics.TitleBarHeight + metrics.ViewportPixelHeight(rows):0.##}\" rx=\"{rx:0.##}\" ry=\"{rx:0.##}\"/></clipPath>");
     }
 
+    /// <summary>
+    /// The window's shadow filter. Without a background, the faint shadow of its 1-pixel frame. On one, a desktop
+    /// window's shadow of its whole shape; its region is the canvas, so a small window's shadow is not cut short.
+    /// </summary>
+    private static void AppendShadowFilter(StringBuilder sb, SvgMetrics metrics, bool castsShadow)
+    {
+        if (!castsShadow)
+        {
+            sb.AppendLf(WindowShadowFilter);
+            return;
+        }
+
+        sb.AppendLf(CultureInfo.InvariantCulture,
+            $"<filter id=\"window-shadow\" filterUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\"><feDropShadow dx=\"0\" dy=\"{WindowShadowOffsetY:0.##}\" stdDeviation=\"{WindowShadowDeviation:0.##}\" flood-opacity=\"{WindowShadowOpacity:0.##}\"/></filter>");
+    }
+
+    /// <summary>Everything but a viewport layer's window, for the shadow of a translucent window.</summary>
+    private static void AppendOutsideWindowMask(StringBuilder sb, SvgMetrics metrics, int cols, int rows, int layerIndex)
+    {
+        var rx = metrics.CornerRadius;
+        sb.AppendLf(CultureInfo.InvariantCulture,
+            $"<mask id=\"window-outside-{layerIndex}\" maskUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\"><rect width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" fill=\"white\"/><rect x=\"{metrics.OuterMargin:0.##}\" y=\"{metrics.OuterMargin:0.##}\" width=\"{metrics.ViewportPixelWidth(cols):0.##}\" height=\"{metrics.TitleBarHeight + metrics.ViewportPixelHeight(rows):0.##}\" rx=\"{rx:0.##}\" ry=\"{rx:0.##}\" fill=\"black\"/></mask>");
+    }
+
+    /// <summary>The faint white line just inside a viewport layer's window edge, over the title bar and the terminal.</summary>
+    private static void AppendEdgeHighlight(StringBuilder sb, SvgMetrics metrics, ChromePalette chrome, int cols, int rows, int layerIndex, string? keyframe)
+    {
+        var cls = keyframe is null ? $"viewport-chrome-{layerIndex}" : $"l {keyframe} viewport-chrome-{layerIndex}";
+        var rx = Math.Max(metrics.CornerRadius - 0.5, 0);
+        sb.AppendLf(CultureInfo.InvariantCulture,
+            $"<rect class=\"{cls}\" x=\"{metrics.OuterMargin + 0.5:0.##}\" y=\"{metrics.OuterMargin + 0.5:0.##}\" width=\"{metrics.ViewportPixelWidth(cols) - 1:0.##}\" height=\"{metrics.TitleBarHeight + metrics.ViewportPixelHeight(rows) - 1:0.##}\" rx=\"{rx:0.##}\" ry=\"{rx:0.##}\" fill=\"none\" stroke=\"#ffffff\" stroke-opacity=\"{chrome.EdgeHighlight:0.##}\"/>");
+    }
+
     /// <summary>The blurred background, cut to a viewport layer's window, under the window's translucent fill.</summary>
     private static void AppendFrost(StringBuilder sb, int layerIndex, string? keyframe)
     {
@@ -1993,7 +2172,10 @@ internal static class SvgFrameRenderer
         int rows,
         int layerIndex,
         string? keyframe,
-        string fillOpacity)
+        string fillOpacity,
+        bool castsShadow,
+        bool masksShadow,
+        string terminalBg)
     {
         var x = metrics.OuterMargin;
         var y = metrics.OuterMargin;
@@ -2006,45 +2188,123 @@ internal static class SvgFrameRenderer
         var barBottom = y + barH;
         var cls = keyframe is null ? $"viewport-chrome-{layerIndex}" : $"l {keyframe} viewport-chrome-{layerIndex}";
 
-        sb.AppendLf(CultureInfo.InvariantCulture,
-            $"<rect class=\"{cls}\" x=\"{x:0.##}\" y=\"{y:0.##}\" width=\"{width:0.##}\" height=\"{totalHeight:0.##}\" rx=\"{rx:0.##}\" ry=\"{rx:0.##}\" fill=\"none\" stroke=\"{chrome.Border}\" stroke-width=\"1\" filter=\"url(#window-shadow)\"/>");
-        sb.AppendLf(CultureInfo.InvariantCulture,
-            $"<path class=\"{cls}\" d=\"M {x + rx:0.##},{y:0.##} H {right - rx:0.##} Q {right:0.##},{y:0.##} {right:0.##},{y + rx:0.##} V {barBottom:0.##} H {x:0.##} V {y + rx:0.##} Q {x:0.##},{y:0.##} {x + rx:0.##},{y:0.##} Z\" fill=\"{chrome.TitleBarBg}\"{fillOpacity}/>");
-        sb.AppendLf(CultureInfo.InvariantCulture,
-            $"<line class=\"{cls}\" x1=\"{x:0.##}\" y1=\"{barBottom:0.##}\" x2=\"{right:0.##}\" y2=\"{barBottom:0.##}\" stroke=\"{chrome.Border}\" stroke-width=\"1\"/>");
-
-        // The style attribute wins over the stylesheet's font-size for terminal text; a font-size attribute would not.
-        if (FitWindowTitle(title, window, width) is { } fitted)
+        if (castsShadow)
+        {
+            // The window's shape in black casts the shadow and lies under the window. A translucent window would show
+            // it, so the mask then keeps the shadow outside the window.
+            var mask = masksShadow ? $" mask=\"url(#window-outside-{layerIndex})\"" : "";
+            sb.AppendLf(CultureInfo.InvariantCulture,
+                $"<rect class=\"{cls}\" x=\"{x:0.##}\" y=\"{y:0.##}\" width=\"{width:0.##}\" height=\"{totalHeight:0.##}\" rx=\"{rx:0.##}\" ry=\"{rx:0.##}\" fill=\"#000\" filter=\"url(#window-shadow)\"{mask}/>");
+            sb.AppendLf(CultureInfo.InvariantCulture,
+                $"<rect class=\"{cls}\" x=\"{x:0.##}\" y=\"{y:0.##}\" width=\"{width:0.##}\" height=\"{totalHeight:0.##}\" rx=\"{rx:0.##}\" ry=\"{rx:0.##}\" fill=\"none\" stroke=\"{chrome.Border}\" stroke-width=\"1\"/>");
+        }
+        else
         {
             sb.AppendLf(CultureInfo.InvariantCulture,
-                $"<text class=\"{cls}\" x=\"{x + fitted.X:0.##}\" y=\"{y + ChromeTitleBaseline:0.##}\" style=\"font-size:{ChromeTitleFontSize:0.##}px\"{(fitted.Centered ? " text-anchor=\"middle\"" : "")} fill=\"{chrome.TitleText}\">{EscapeXml(fitted.Text)}</text>");
+                $"<rect class=\"{cls}\" x=\"{x:0.##}\" y=\"{y:0.##}\" width=\"{width:0.##}\" height=\"{totalHeight:0.##}\" rx=\"{rx:0.##}\" ry=\"{rx:0.##}\" fill=\"none\" stroke=\"{chrome.Border}\" stroke-width=\"1\" filter=\"url(#window-shadow)\"/>");
         }
+        sb.AppendLf(CultureInfo.InvariantCulture,
+            $"<path class=\"{cls}\" d=\"M {x + rx:0.##},{y:0.##} H {right - rx:0.##} Q {right:0.##},{y:0.##} {right:0.##},{y + rx:0.##} V {barBottom:0.##} H {x:0.##} V {y + rx:0.##} Q {x:0.##},{y:0.##} {x + rx:0.##},{y:0.##} Z\" fill=\"{chrome.TitleBarBg}\"{fillOpacity}/>");
 
-        if (window == WindowStyle.Macos)
+        if (window == WindowStyle.Windows)
         {
-            var radius = MacButtonDiameter / 2d;
-            var cx = x + ChromeSidePadding + radius;
-            var cy = y + ChromeTopPadding + radius;
-            foreach (var color in MacButtonColors)
-            {
-                sb.AppendLf(CultureInfo.InvariantCulture,
-                    $"<circle class=\"{cls}\" cx=\"{cx:0.##}\" cy=\"{cy:0.##}\" r=\"{radius:0.##}\" fill=\"{color}\"/>");
-                cx += MacButtonDiameter + MacButtonGap;
-            }
-
+            AppendWinTabRow(sb, chrome, cls, title, x, y, width, barBottom, fillOpacity, terminalBg);
             return;
         }
 
-        var size = WinButtonSize;
-        var gap = WinButtonGap;
-        var top = y + ChromeTopPadding;
-        var left = right - ChromeSidePadding - (size * 3) - (gap * 2);
-        for (var i = 0; i < 3; i++)
+        sb.AppendLf(CultureInfo.InvariantCulture,
+            $"<line class=\"{cls}\" x1=\"{x:0.##}\" y1=\"{barBottom:0.##}\" x2=\"{right:0.##}\" y2=\"{barBottom:0.##}\" stroke=\"{chrome.Border}\" stroke-width=\"1\"/>");
+
+        // The style attribute wins over the stylesheet's font for terminal text; font attributes would not. A macOS
+        // title is bold, as the system draws it.
+        if (FitWindowTitle(title, window, width) is { } fitted)
         {
             sb.AppendLf(CultureInfo.InvariantCulture,
-                $"<rect class=\"{cls}\" x=\"{left:0.##}\" y=\"{top:0.##}\" width=\"{size:0.##}\" height=\"{size:0.##}\" rx=\"{WinButtonCornerRadius:0.##}\" ry=\"{WinButtonCornerRadius:0.##}\" fill=\"{chrome.WinButton}\"/>");
-            left += size + gap;
+                $"<text class=\"{cls}\" x=\"{x + fitted.X:0.##}\" y=\"{y + ChromeTitleBaseline:0.##}\" style=\"font:bold {ChromeTitleFontSize:0.##}px {ChromeTitleFontFamily}\"{(fitted.Centered ? " text-anchor=\"middle\"" : "")} fill=\"{chrome.TitleText}\">{EscapeXml(fitted.Text)}</text>");
         }
+
+        var radius = MacButtonDiameter / 2d;
+        var cx = x + ChromeSidePadding + radius;
+        var cy = y + ChromeTopPadding + radius;
+        foreach (var color in MacButtonColors)
+        {
+            sb.AppendLf(CultureInfo.InvariantCulture,
+                $"<circle class=\"{cls}\" cx=\"{cx:0.##}\" cy=\"{cy:0.##}\" r=\"{radius:0.##}\" fill=\"{color}\"/>");
+            cx += MacButtonDiameter + MacButtonGap;
+        }
+    }
+
+    /// <summary>The elements a window's chrome draws besides the title, its shadow, and its edge line.</summary>
+    private static int ChromeElementCount(WindowStyle window) => window switch
+    {
+        // Frame, bar, line, and three buttons.
+        WindowStyle.Macos => 6,
+        // Frame, tab row, tab, icon (2), close, new tab, dropdown, and three caption buttons. A narrow window draws
+        // fewer, which only changes which timing gets the shorter name.
+        WindowStyle.Windows => 11,
+        _ => 0,
+    };
+
+    /// <summary>
+    /// The Windows Terminal tab row over the bar: the active tab in the terminal's color with a generic terminal
+    /// icon, the title, and a close glyph; the new-tab and dropdown glyphs; and the minimize, maximize, and close
+    /// glyphs at the right. The icon is an outlined window with a prompt, no shell's logo.
+    /// </summary>
+    private static void AppendWinTabRow(StringBuilder sb, ChromePalette chrome, string cls, string? title, double x, double y, double width, double barBottom, string fillOpacity, string terminalBg)
+    {
+        var glyph = $"fill=\"none\" stroke=\"{chrome.TitleText}\" stroke-width=\"1\"";
+        var row = LayoutWinTabRow(title, width);
+        if (row.HasTab)
+        {
+            var left = x + row.TabLeft;
+            var right = x + row.TabRight;
+            var top = y + WinTabTop;
+            var r = WinTabCornerRadius;
+            var cy = y + WinTabCenterY;
+            sb.AppendLf(CultureInfo.InvariantCulture,
+                $"<path class=\"{cls}\" d=\"M {left:0.##},{barBottom:0.##} V {top + r:0.##} Q {left:0.##},{top:0.##} {left + r:0.##},{top:0.##} H {right - r:0.##} Q {right:0.##},{top:0.##} {right:0.##},{top + r:0.##} V {barBottom:0.##} Z\" fill=\"{terminalBg}\"{fillOpacity}/>");
+
+            // The icon: a 15 × 12 outlined window with a prompt in it.
+            var ix = left + 10;
+            var iy = cy - 6.5;
+            sb.AppendLf(CultureInfo.InvariantCulture,
+                $"<rect class=\"{cls}\" x=\"{ix + 0.5:0.##}\" y=\"{iy + 0.5:0.##}\" width=\"14\" height=\"11\" rx=\"2\" ry=\"2\" {glyph}/>");
+            sb.AppendLf(CultureInfo.InvariantCulture,
+                $"<path class=\"{cls}\" d=\"M {ix + 4:0.##},{iy + 4:0.##} L {ix + 6.5:0.##},{iy + 6.5:0.##} L {ix + 4:0.##},{iy + 9:0.##} M {ix + 8:0.##},{iy + 9:0.##} H {ix + 11:0.##}\" {glyph} stroke-linecap=\"round\" stroke-linejoin=\"round\"/>");
+
+            if (row.Title is { } text)
+            {
+                sb.AppendLf(CultureInfo.InvariantCulture,
+                    $"<text class=\"{cls}\" x=\"{x + row.TitleX:0.##}\" y=\"{y + WinTitleBaseline:0.##}\" style=\"font:{WinTitleFontSize:0.##}px {ChromeTitleFontFamily}\" fill=\"{chrome.TitleText}\">{EscapeXml(text)}</text>");
+            }
+
+            var close = right - 16;
+            sb.AppendLf(CultureInfo.InvariantCulture,
+                $"<path class=\"{cls}\" d=\"M {close - 4:0.##},{cy - 4:0.##} L {close + 4:0.##},{cy + 4:0.##} M {close + 4:0.##},{cy - 4:0.##} L {close - 4:0.##},{cy + 4:0.##}\" {glyph}/>");
+
+            if (row.Extras)
+            {
+                var plus = right + 20;
+                var down = right + 46;
+                sb.AppendLf(CultureInfo.InvariantCulture,
+                    $"<path class=\"{cls}\" d=\"M {plus - 5:0.##},{cy:0.##} H {plus + 5:0.##} M {plus:0.##},{cy - 5:0.##} V {cy + 5:0.##}\" {glyph}/>");
+                sb.AppendLf(CultureInfo.InvariantCulture,
+                    $"<path class=\"{cls}\" d=\"M {down - 4:0.##},{cy - 2:0.##} L {down:0.##},{cy + 2:0.##} L {down + 4:0.##},{cy - 2:0.##}\" {glyph}/>");
+            }
+        }
+
+        // Minimize, maximize, and close, each centered in its 46 px.
+        var edge = x + width;
+        var captionY = y + WinCaptionCenterY;
+        var minimize = edge - WinCaptionWidth * 2.5;
+        var maximize = edge - WinCaptionWidth * 1.5;
+        var closeWindow = edge - WinCaptionWidth * 0.5;
+        sb.AppendLf(CultureInfo.InvariantCulture,
+            $"<path class=\"{cls}\" d=\"M {minimize - 5:0.##},{captionY:0.##} H {minimize + 5:0.##}\" {glyph}/>");
+        sb.AppendLf(CultureInfo.InvariantCulture,
+            $"<rect class=\"{cls}\" x=\"{maximize - 4.5:0.##}\" y=\"{captionY - 4.5:0.##}\" width=\"9\" height=\"9\" rx=\"1\" ry=\"1\" {glyph}/>");
+        sb.AppendLf(CultureInfo.InvariantCulture,
+            $"<path class=\"{cls}\" d=\"M {closeWindow - 5:0.##},{captionY - 5:0.##} L {closeWindow + 5:0.##},{captionY + 5:0.##} M {closeWindow + 5:0.##},{captionY - 5:0.##} L {closeWindow - 5:0.##},{captionY + 5:0.##}\" {glyph}/>");
     }
 
     private static string BuildEmptySvg(ResolvedRenderSettings render, int width, int height)
@@ -2053,6 +2313,8 @@ internal static class SvgFrameRenderer
         var windowBlur = render.WindowBlur;
         var fillOpacity = FillOpacityAttribute(render.WindowOpacity);
         var clipsWindow = render.WindowOpacity < 1 && (metrics.HasChrome || windowBlur > 0);
+        var castsShadow = metrics.HasChrome && render.Background is not null;
+        var masksShadow = castsShadow && render.WindowOpacity < 1;
         var sb = new StringBuilder();
         sb.AppendLf(CultureInfo.InvariantCulture, $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLf(CultureInfo.InvariantCulture,
@@ -2062,11 +2324,13 @@ internal static class SvgFrameRenderer
             sb.AppendLf(CultureInfo.InvariantCulture, $"<style>text {{ font-family: {render.FontFamily}; white-space: pre; }}</style>");
             sb.AppendLf("<defs>");
             if (metrics.HasChrome)
-                sb.AppendLf(WindowShadowFilter);
+                AppendShadowFilter(sb, metrics, castsShadow);
             if (render.Background is { } backgroundDefs)
                 AppendBackgroundDefs(sb, metrics, backgroundDefs, windowBlur);
             if (clipsWindow)
                 AppendWindowClip(sb, metrics, width, height, 0);
+            if (masksShadow)
+                AppendOutsideWindowMask(sb, metrics, width, height, 0);
             sb.AppendLf("</defs>");
         }
 
@@ -2078,10 +2342,12 @@ internal static class SvgFrameRenderer
         if (metrics.HasChrome)
         {
             var chrome = ResolveChromePalette(render.Window, render.Theme.Bg);
-            AppendWindowChrome(sb, metrics, chrome, render.Window, render.WindowTitle, width, height, 0, keyframe: null, fillOpacity);
+            AppendWindowChrome(sb, metrics, chrome, render.Window, render.WindowTitle, width, height, 0, keyframe: null, fillOpacity, castsShadow, masksShadow, render.Theme.Bg);
             var bgRect = metrics.TerminalBackgroundRect(width, height);
             sb.AppendLf(CultureInfo.InvariantCulture,
                 $"<rect x=\"{bgRect.X:0.##}\" y=\"{bgRect.Y:0.##}\" width=\"{bgRect.Width:0.##}\" height=\"{bgRect.Height:0.##}\" fill=\"{render.Theme.Bg}\"{fillOpacity}{(clipsWindow ? " clip-path=\"url(#window-clip-0)\"" : "")}/>");
+            if (chrome.EdgeHighlight > 0)
+                AppendEdgeHighlight(sb, metrics, chrome, width, height, 0, keyframe: null);
         }
         else
         {

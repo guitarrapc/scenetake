@@ -179,12 +179,16 @@ Priority: **CLI > cast header > default `none`**. Unknown values error on scenar
 #### Visual behavior
 
 - Replaces the plain 8px outer margin with a title bar, border, rounded outer frame, and drop shadow.
-- **Title bar:** controls only (no title text). macOS: three traffic-light circles (left). Windows: three square buttons (right).
-- **Title bar shape:** top corners rounded; bottom edge straight (flush with terminal viewport — avoids a gap between bar and terminal).
+- **macOS title bar:** three traffic-light circles at the left and the title centered, as Terminal.app draws it, with a line under the bar.
+- **Windows tab row:** the tab row of Windows Terminal, the terminal Windows 11 opens. The active tab, in the terminal's background color so that it runs into the terminal, holds a terminal icon, the title, and a close glyph; the new-tab (+) and dropdown (∨) glyphs follow it, and the minimize, maximize, and close glyphs sit at the right, each centered in 46 px. The row is darker than the tab in dark mode (`#1c1c1c`) and lighter in light mode (`#ebebeb`); glyphs take the title's color. The earlier Windows chrome, a flat bar with the title at the left and three filled gray squares, looked like no Windows window.
+- **The icon** is an outlined 15 × 12 window with a `>_` prompt, the generic sign for a terminal. Windows Terminal shows the profile's icon there, but a recording does not say which shell or profile made it, and PowerShell's logo, a filled slanted tile with `>_`, belongs to PowerShell; an outline with no fill or slant reads as "a terminal", not as that logo.
+- **Shadow:** without a background, the faint shadow of the 1-pixel frame (2 px down, deviation 4, 22%). On a background, the window's whole shape casts a desktop window's shadow: 10 px down, a Gaussian deviation of 14, 45% black, filtered over the whole canvas so that a small window's shadow is not cut short. A window without a background stands on whatever page shows the SVG, and its 12 px margin has no room for a deep shadow, so it keeps the faint one. A translucent window keeps the shadow outside itself with a mask; an opaque one covers it.
+- **Edge line:** a dark macOS window has a white 1-pixel line at 16% opacity just inside its edge, over the title bar and the terminal, as a dark-mode macOS window has. On a dark background the dark border alone disappears, and the line keeps the window's edge in view. Light macOS windows and Windows windows have none.
+- **Title bar shape:** top corners rounded; bottom edge straight (flush with terminal viewport — avoids a gap between bar and terminal). Windows 11 rounds a window's corners by 8 px, as macOS does.
 - **Chrome colors:** derived from terminal `theme.bg` luminance (light vs dark chrome palette). `theme.preset` and resolved header colors drive this; per-key `theme.fg` / `theme.bg` overrides affect **terminal content only**, not chrome palette selection beyond bg luminance.
 - **Resize:** chrome width/height follow viewport `"r"` events; chrome elements share `viewport-*` layer animation timing with the terminal background mask.
 - **Inner terminal padding** (around cell content) is unchanged from plain mode.
-- **mp4** draws the same title bar and controls but leaves out the outer margin, shadow, rounded corners, and border, because video has no transparency. See [spec_mp4.md](spec_mp4.md) → Window chrome.
+- **mp4** draws the same title bar and controls. Without a background it leaves out the outer margin, shadow, rounded corners, and border, because video has no transparency; on a background it draws them all. See [spec_mp4.md](spec_mp4.md) → Window chrome.
 
 #### Fixed chrome geometry (px)
 
@@ -196,13 +200,15 @@ Does **not** scale with `font-size` (matches real OS window chrome). Tuned at de
 | Outer margin (shadow) | 12 | 12 |
 | Side padding (controls inset) | 14 | 14 |
 | Top padding (controls) | 9 | 9 |
-| Outer corner radius | 8 | 4 |
-| Control size | circles Ø16, gap 10 | squares 17×17, gap 5.5 |
+| Outer corner radius | 8 | 8 |
+| Control size | circles Ø16, gap 10 | glyphs 10 px (minimize, close) and 9 px (maximize), each in 46 px |
+| Tab | — | 8 px in, 6 px down, top corners 6 px; 34 px before the title, 32 after it, at least 120 px |
+| New-tab and dropdown | — | centered 20 and 46 px past the tab |
 
 #### Samples
 
 - `samples/theme.yaml` — color demo, no chrome, `preset: light` on a light gradient.
-- `samples/theme-macos.yaml` — `window: macos`, `preset: dark`, on a gradient.
+- `samples/theme-macos.yaml` — `window: macos`, `preset: dark`, on a gradient that tints the window through `opacity: 0.85`.
 - `samples/theme-windows.yaml` — `window: windows`, `preset: dark`, on a gradient.
 - `samples/showcase/fetch.yaml` — `window: macos` on a three-color gradient, with the scenario's title in the bar.
 - `samples/showcase/vim.yaml` — `window: macos` on an image, `../background.webp` (`samples/background.webp`), with `margin: 64`, and a translucent window over it: `opacity: 0.8`, `blur: 8`.
@@ -225,9 +231,10 @@ An unknown value is an error on the scenario path and the CLI. An invalid cast t
 #### Title
 
 - **Only with chrome.** Without `window`, the title is not drawn.
-- **Font:** the terminal's font family at 13 px, so the SVG and the mp4 measure it alike: a cell is 13 × 0.62 = 8.06 px, and a wide character takes two.
-- **Place:** macOS centers it over the whole bar, as Terminal.app does. Windows starts it 14 px from the left. Its baseline is 21.5 px below the window's top edge.
-- **Room:** macOS keeps the buttons' width and a 10 px gap clear on both sides (92 px each), so a centered title never meets the buttons. Windows keeps 14 px on the left and the buttons with a 10 px gap on the right. A longer title is cut between characters and ends in `…`. With room for fewer than two cells, there is no title.
+- **Font:** the viewer's system sans-serif, 13 px bold on macOS as the system draws it, and 12 px in a Windows Terminal tab: `-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Helvetica Neue", Helvetica, Arial, "Noto Sans", "DejaVu Sans", sans-serif`. The mp4 uses the first of those families that is installed where it renders. The title used to be in the terminal's monospace font; next to a system sans-serif it was what looked least like a real window.
+- **Measure:** where to cut a title is decided by widths that no common sans-serif exceeds, so the SVG and the mp4 cut a title at the same place whatever font draws it. Each printable ASCII character has the width that the widest of Verdana, Segoe UI, Arial, Tahoma, Trebuchet MS, and Calibri in bold gives it: Verdana nearly always, and DejaVu Sans on Linux has nearly Verdana's widths. A letter with a mark counts as its base letter, any other character as W (1.13 em), and a wide character as two cells of the terminal's font (16.12 px), more than CJK in any sans-serif. The drawn title is no wider, so a cut title stays clear of the buttons.
+- **Place:** macOS centers it over the whole bar, as Terminal.app does, with its baseline 21.5 px below the window's top edge. Windows starts it in the tab, 42 px from the window's left edge, with its baseline 24.5 px down.
+- **Room:** macOS keeps the buttons' width and a 10 px gap clear on both sides (92 px each), so a centered title never meets the buttons. On Windows the tab fits its title, as measured to cut it, and leaves room for the new-tab and dropdown glyphs, a 10 px gap, and the caption buttons; the SVG and the mp4 therefore draw the same tab. A longer title is cut between characters and ends in `…`. With room for less than two cells of the terminal's font at the title's size, there is no title. A window too narrow for the new-tab and dropdown glyphs leaves them out, and one too narrow for a tab leaves the tab out.
 - **Colors** follow the chrome palette:
 
 | Chrome | Dark terminal | Light terminal |
@@ -303,7 +310,7 @@ The input file is never modified by the `svg` subcommand.
 | `tests/terminal_tests.cs` | VT emulator (CSI, Unicode, alt screen, region scrolls by count, insert/delete lines). Replay timeline: same-time writes keep the last screen, and a blank final screen gives the same frames either way. Soft fonts: both byte streams, a DECDLD split across chunks, a designation before the load, undefined codes, the matrix size from the data, erase control, other DCS strings skipped, glyph cells against text cells, DECSC/DECRC, RIS, single shifts |
 | `tests/svg_render_test.cs` | Row-diff smoke, marker timing, `--max-fps`, matrix rain tint, streamed file output matches in-memory render, row encoding choice (glyph list vs run, underline, multi-unit cells, background spans, shared keyframe rules), combining marks, block and shade rects, LF line endings, inherited foreground and fill classes, single-text layers, row-local content in every layer form, short lowercase class names, unused timing left out, keyframes shared by window length, no gap where a layer replaces another, dropped zero-length frames, run `textLength` in cells, underlined spaces and block elements, plain block elements kept out of run text, block-only rows decoded to their row, XML-invalid characters, scenario theme color validation, cast warning prefix, soft font glyphs as `<use>`s of `<defs>` paths (path pixels, scale, position, color), both soft font byte streams giving the same SVG, underlined glyphs, glyph ids. Text checks decode every layer form back to row text, color, and row, and cursor checks cover cursors inside row layers and with their own timing, so a layer or cursor drawn on the wrong line fails. |
 | `tests/scenario_render_test.cs` | Scenario path (`--format svg` / `--format mp4`) output is byte-identical to `scenetake svg` / `scenetake mp4` on the written cast (default, `--max-fps`, render overrides). Needs `SCENETAKE_BIN`; mp4 also needs ffmpeg. |
-| `tests/window_chrome_test.cs` | `render.window` / cast tag / CLI resolution; chrome SVG structure; title, background, margin, padding, opacity, and blur: parsing, cast tags, the warnings without a background or on an opaque window, and the translucent and blurred SVG markup (image embedded once) |
+| `tests/window_chrome_test.cs` | `render.window` / cast tag / CLI resolution; chrome SVG structure; the Windows Terminal tab row and the tab's width for short, long, and cut titles and narrow windows; title, background, margin, padding, opacity, and blur: parsing, cast tags, the warnings without a background or on an opaque window, and the translucent and blurred SVG markup (image embedded once); the shadow with and without a background, masked for a translucent window; the dark macOS edge line; the title's font and the widths that cut it |
 
 Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs all four.
 
@@ -344,6 +351,8 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 | Cell-unit coordinates (`scale(cellWidth)` per row, integer `x`) | Another 8 points off matrix output. But matrix 200×60 played about 1.5× slower per frame, and text drawn at 1.6px and scaled up is unchecked in Firefox and Safari. Chromium does not apply its minimum font size to SVG inside `<img>`. |
 
 ## Lessons Learned
+
+- **The old window shadow was the shadow of a line.** The filter sat on the frame, a rectangle with a 1-pixel stroke and no fill, so it shadowed the stroke alone, and at 22% it barely showed. That is also why the mp4 left it out. Seen next to a whole window's shadow on 2026-11-16, it was the main thing that kept a window on a background from looking like a desktop screenshot.
 
 - **One more element per chrome layer renamed timing classes.** Short class names go to the most-used timing first, and the title adds a use to each chrome layer's timing. Re-rendering the committed samples on 2026-11-16 changed only the title line in `theme-macos`, `devtools`, and `vim`. In `demo`, `quickstart`, `theme-windows`, and `sl`, it also swapped the names of some timing classes, with the same drawing. A sample's SVG is compared byte for byte with the playground's replay, so all of them were rendered again from their casts.
 - Row-diff layers keep typing-heavy casts small (46KB for `basic.cast`). Full-screen redraws emit one layer per changed row.

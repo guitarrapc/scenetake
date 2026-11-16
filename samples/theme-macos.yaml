@@ -14,6 +14,9 @@ render:
   font-size: 16
   window: macos
   background: "#4b6cb7 #182848"
+  # The gradient shows through the terminal's background and the title bar, tinting the window as a desktop's
+  # wallpaper does. A gradient has no detail to blur, so there is no blur.
+  opacity: 0.85
   theme:
     preset: dark
 

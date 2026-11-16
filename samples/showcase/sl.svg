@@ -29,9 +29,9 @@ text { dominant-baseline: alphabetic; }
 @keyframes o{0.329626%{visibility:visible}}
 .ei{animation-delay:1.427s;animation-name:o}
 .d9{animation-delay:1.467s;animation-name:o}
-.dk{animation-delay:1.507s;animation-name:o}
-.dl{animation-delay:1.547s;animation-name:o}
-.dm{animation-delay:1.587s;animation-name:o}
+.dl{animation-delay:1.507s;animation-name:o}
+.dm{animation-delay:1.547s;animation-name:o}
+.dn{animation-delay:1.587s;animation-name:o}
 @keyframes p{0.337866%{visibility:visible}}
 .r{animation-delay:1.627s;animation-name:p}
 .s{animation-delay:1.668s;animation-name:o}
@@ -221,24 +221,24 @@ text { dominant-baseline: alphabetic; }
 .fi{animation-delay:1.235s;animation-name:fh}
 @keyframes fj{17.313556%{visibility:visible}}
 .fk{animation-delay:7.933s;animation-name:fj}
-.dn{visibility:visible}
+.dk{visibility:visible}
 </style>
 <defs>
 <filter id="window-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.22"/></filter>
 <rect id="c" class="c" width="9.92" height="20"/>
 <mask id="viewport-mask" x="0" y="0" width="837.6" height="386" maskUnits="userSpaceOnUse">
-<rect class="l dn viewport-mask-0" x="12" y="46" width="813.6" height="328" fill="white"/>
+<rect class="l dk viewport-mask-0" x="12" y="46" width="813.6" height="328" fill="white"/>
 </mask>
 </defs>
-<rect class="l dn viewport-chrome-0" x="12" y="12" width="813.6" height="362" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
-<path class="l dn viewport-chrome-0" d="M 20,12 H 817.6 Q 825.6,12 825.6,20 V 46 H 12 V 20 Q 12,12 20,12 Z" fill="#323232"/>
-<line class="l dn viewport-chrome-0" x1="12" y1="46" x2="825.6" y2="46" stroke="#1a1a1a" stroke-width="1"/>
-<text class="l dn viewport-chrome-0" x="418.8" y="33.5" style="font-size:13px" text-anchor="middle" fill="#c8c8c8">sl</text>
-<circle class="l dn viewport-chrome-0" cx="34" cy="29" r="8" fill="#ff5f57"/>
-<circle class="l dn viewport-chrome-0" cx="60" cy="29" r="8" fill="#febc2e"/>
-<circle class="l dn viewport-chrome-0" cx="86" cy="29" r="8" fill="#28c840"/>
+<rect class="l dk viewport-chrome-0" x="12" y="12" width="813.6" height="362" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
+<path class="l dk viewport-chrome-0" d="M 20,12 H 817.6 Q 825.6,12 825.6,20 V 46 H 12 V 20 Q 12,12 20,12 Z" fill="#323232"/>
+<line class="l dk viewport-chrome-0" x1="12" y1="46" x2="825.6" y2="46" stroke="#1a1a1a" stroke-width="1"/>
+<text class="l dk viewport-chrome-0" x="418.8" y="33.5" style="font:bold 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI','Helvetica Neue',Helvetica,Arial,'Noto Sans','DejaVu Sans',sans-serif" text-anchor="middle" fill="#c8c8c8">sl</text>
+<circle class="l dk viewport-chrome-0" cx="34" cy="29" r="8" fill="#ff5f57"/>
+<circle class="l dk viewport-chrome-0" cx="60" cy="29" r="8" fill="#febc2e"/>
+<circle class="l dk viewport-chrome-0" cx="86" cy="29" r="8" fill="#28c840"/>
 <g mask="url(#viewport-mask)" fill="#d0d0d0">
-<rect class="bg l dn viewport-bg-0" x="12" y="46" width="813.6" height="328" fill="#282c34"/>
+<rect class="bg l dk viewport-bg-0" x="12" y="46" width="813.6" height="328" fill="#282c34"/>
 <g class="l e6"><text x="22" y="62.8">$</text><use href="#c" x="41.84" y="50"/></g>
 <g class="l e8"><text x="22 41.84" y="62.8">$s</text><use href="#c" x="51.76" y="50"/></g>
 <text class="l fa" x="22 41.84 51.76" y="62.8">$sl</text>
@@ -252,33 +252,33 @@ text { dominant-baseline: alphabetic; }
 <text class="l d9" x="785.84 795.76 805.68" y="262.8">__/</text>
 <text class="l d9" x="795.76 805.68" y="282.8">|/</text>
 <text class="l d9" x="805.68" y="302.8">\</text>
-<text class="l dk" x="795.76 805.68" y="142.8">_D</text>
-<text class="l dk" x="805.68" y="162.8">|</text>
-<text class="l dk" x="805.68" y="182.8">/</text>
-<text class="l dk" x="795.76" y="202.8">|</text>
-<text class="l dk" x="795.76" y="222.8">|</text>
-<text class="l dk" x="795.76 805.68" y="242.8">|/</text>
-<text class="l dk" x="775.92 785.84 795.76" y="262.8">__/</text>
-<text class="l dk" x="785.84 795.76 805.68" y="282.8">|/-</text>
-<text class="l dk" x="795.76 805.68" y="302.8">\_</text>
-<text class="l dl" x="785.84 795.76" y="142.8">_D</text>
-<text class="l dl" x="795.76 805.68" y="162.8">|(</text>
-<text class="l dl" x="795.76" y="182.8">/</text>
-<text class="l dl" x="785.84" y="202.8">|</text>
-<text class="l dl" x="785.84 805.68" y="222.8">|_</text>
-<text class="l dl" x="785.84 795.76" y="242.8">|/</text>
-<text class="l dl a" x="766" textLength="49.6">__/ =</text>
-<text class="l dl" x="775.92" y="282.8" textLength="39.68">|/-=</text>
-<text class="l dl" x="785.84 795.76 805.68" y="302.8">\_/</text>
-<text class="l dm" x="775.92 785.84 805.68" y="142.8">_D_</text>
-<text class="l dm" x="785.84 795.76 805.68" y="162.8">|(_</text>
-<text class="l dm" x="785.84" y="182.8">/</text>
-<text class="l dm" x="775.92" y="202.8">|</text>
-<text class="l dm" x="775.92 795.76 805.68" y="222.8">|__</text>
-<text class="l dm" x="775.92 785.84 805.68" y="242.8">|/|</text>
-<text class="l dm a" x="756.08" textLength="59.52">__/ =|</text>
-<text class="l dm b" x="766" textLength="49.6">|/-=|</text>
-<text class="l dm" x="775.92 785.84 795.76" y="302.8">\_/</text>
+<text class="l dl" x="795.76 805.68" y="142.8">_D</text>
+<text class="l dl" x="805.68" y="162.8">|</text>
+<text class="l dl" x="805.68" y="182.8">/</text>
+<text class="l dl" x="795.76" y="202.8">|</text>
+<text class="l dl" x="795.76" y="222.8">|</text>
+<text class="l dl" x="795.76 805.68" y="242.8">|/</text>
+<text class="l dl" x="775.92 785.84 795.76" y="262.8">__/</text>
+<text class="l dl" x="785.84 795.76 805.68" y="282.8">|/-</text>
+<text class="l dl" x="795.76 805.68" y="302.8">\_</text>
+<text class="l dm" x="785.84 795.76" y="142.8">_D</text>
+<text class="l dm" x="795.76 805.68" y="162.8">|(</text>
+<text class="l dm" x="795.76" y="182.8">/</text>
+<text class="l dm" x="785.84" y="202.8">|</text>
+<text class="l dm" x="785.84 805.68" y="222.8">|_</text>
+<text class="l dm" x="785.84 795.76" y="242.8">|/</text>
+<text class="l dm a" x="766" textLength="49.6">__/ =</text>
+<text class="l dm" x="775.92" y="282.8" textLength="39.68">|/-=</text>
+<text class="l dm" x="785.84 795.76 805.68" y="302.8">\_/</text>
+<text class="l dn" x="775.92 785.84 805.68" y="142.8">_D_</text>
+<text class="l dn" x="785.84 795.76 805.68" y="162.8">|(_</text>
+<text class="l dn" x="785.84" y="182.8">/</text>
+<text class="l dn" x="775.92" y="202.8">|</text>
+<text class="l dn" x="775.92 795.76 805.68" y="222.8">|__</text>
+<text class="l dn" x="775.92 785.84 805.68" y="242.8">|/|</text>
+<text class="l dn a" x="756.08" textLength="59.52">__/ =|</text>
+<text class="l dn b" x="766" textLength="49.6">|/-=|</text>
+<text class="l dn" x="775.92 785.84 795.76" y="302.8">\_/</text>
 <text class="l r" x="805.68" y="122.8">=</text>
 <text class="l r d" x="766" textLength="49.6">_D _|</text>
 <text class="l r" x="775.92" y="162.8" textLength="39.68">|(_)</text>
@@ -1803,4 +1803,5 @@ text { dominant-baseline: alphabetic; }
 <use href="#c" x="22" y="70" class="l fi"/>
 <use href="#c" x="22" y="350" class="l fk"/>
 </g>
+<rect class="l dk viewport-chrome-0" x="12.5" y="12.5" width="812.6" height="361" rx="7.5" ry="7.5" fill="none" stroke="#ffffff" stroke-opacity="0.16"/>
 </svg>

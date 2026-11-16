@@ -15,7 +15,8 @@ failures += Run("ScenarioResolveReadsWindow", ScenarioResolveReadsWindow);
 failures += Run("ApplySvgOverridesWindowWins", ApplySvgOverridesWindowWins);
 failures += Run("CastTagReadsWindow", CastTagReadsWindow);
 failures += Run("MacosChromeAddsTrafficLights", MacosChromeAddsTrafficLights);
-failures += Run("WindowsChromeAddsButtons", WindowsChromeAddsButtons);
+failures += Run("WindowsChromeIsATabRow", WindowsChromeIsATabRow);
+failures += Run("WinTabRowFitsItsTitle", WinTabRowFitsItsTitle);
 failures += Run("ChromeIncreasesSvgHeight", ChromeIncreasesSvgHeight);
 failures += Run("PlainSvgHasNoChrome", PlainSvgHasNoChrome);
 failures += Run("ScenarioResolveReadsStyle", ScenarioResolveReadsStyle);
@@ -29,6 +30,9 @@ failures += Run("ParseOpacityAndBlur", ParseOpacityAndBlur);
 failures += Run("OpacityAndBlurNeedBackground", OpacityAndBlurNeedBackground);
 failures += Run("TranslucentWindowSvg", TranslucentWindowSvg);
 failures += Run("FrostedWindowSvg", FrostedWindowSvg);
+failures += Run("WindowOnBackgroundCastsShadow", WindowOnBackgroundCastsShadow);
+failures += Run("DarkMacWindowHasEdgeLine", DarkMacWindowHasEdgeLine);
+failures += Run("TitleWidthIsNoNarrowerThanSans", TitleWidthIsNoNarrowerThanSans);
 
 return failures == 0 ? 0 : 1;
 
@@ -141,30 +145,109 @@ static bool ChromeShowsTitle()
     var windows = RenderStyled(WindowStyle.Windows, title: "Demo");
     var plain = RenderStyled(WindowStyle.None, title: "Demo");
     var empty = RenderStyled(WindowStyle.Macos, title: "");
+    // The title is in the system's sans-serif, bold on macOS as the system draws it.
     return macos.Contains(">Demo &lt;1&gt; &amp; &quot;2&quot;</text>", StringComparison.Ordinal)
         && macos.Contains("text-anchor=\"middle\"", StringComparison.Ordinal)
-        && macos.Contains("style=\"font-size:13px\"", StringComparison.Ordinal)
+        && macos.Contains("style=\"font:bold 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',", StringComparison.Ordinal)
         && windows.Contains(">Demo</text>", StringComparison.Ordinal)
+        && windows.Contains("style=\"font:12px -apple-system,", StringComparison.Ordinal)
         && !windows.Contains("text-anchor", StringComparison.Ordinal)
         && !plain.Contains(">Demo</text>", StringComparison.Ordinal)
-        && !empty.Contains("font-size:13px", StringComparison.Ordinal);
+        && !empty.Contains("13px -apple-system", StringComparison.Ordinal);
 }
 
 static bool FitWindowTitleCutsToRoom()
 {
-    // macOS keeps the buttons' width clear on both sides: 2 * (14 + 3*16 + 2*10 + 10) = 184 px, and a cell of the
-    // 13 px title is 8.06 px. At 400 px there is room for 26 cells.
+    // macOS keeps the buttons' width clear on both sides: 2 * (14 + 3*16 + 2*10 + 10) = 184 px, so 400 px leaves
+    // 216. At 13 px an 'a' is 0.67 em, 8.71 px: 24 fit. Cut, 23 leave room for the 1.05 em ellipsis (13.65 px).
     var cut = SvgFrameRenderer.FitWindowTitle(new string('a', 40), WindowStyle.Macos, 400);
-    var fits = SvgFrameRenderer.FitWindowTitle(new string('a', 26), WindowStyle.Macos, 400);
-    // A wide character takes two cells, and is never split.
+    var fits = SvgFrameRenderer.FitWindowTitle(new string('a', 24), WindowStyle.Macos, 400);
+    var over = SvgFrameRenderer.FitWindowTitle(new string('a', 25), WindowStyle.Macos, 400);
+    // 'W' is the widest letter, 1.13 em: 13 fit with the ellipsis.
+    var widest = SvgFrameRenderer.FitWindowTitle(new string('W', 40), WindowStyle.Macos, 400);
+    // A wide character is two cells of the terminal's font, 16.12 px, and is never split. A letter with a mark is
+    // as wide as its base letter.
     var wide = SvgFrameRenderer.FitWindowTitle("日本語のタイトルです日本語のタイトルです", WindowStyle.Macos, 400);
+    var accented = SvgFrameRenderer.FitWindowTitle(new string('é', 40), WindowStyle.Macos, 400);
+    // Below room for two cells, 16.12 px, there is no title.
     var none = SvgFrameRenderer.FitWindowTitle("Demo", WindowStyle.Macos, 190);
     var windows = SvgFrameRenderer.FitWindowTitle("Demo", WindowStyle.Windows, 400);
-    return cut is { Text: var cutText, Centered: true, X: 200 } && cutText == new string('a', 25) + "…"
-        && fits?.Text == new string('a', 26)
+    var ok = cut is { Text: var cutText, Centered: true, X: 200 } && cutText == new string('a', 23) + "…"
+        && fits?.Text == new string('a', 24)
+        && over?.Text == new string('a', 23) + "…"
+        && widest?.Text == new string('W', 13) + "…"
         && wide?.Text == "日本語のタイトルです日本…"
+        && accented?.Text == new string('é', 23) + "…"
         && none is null
-        && windows is { Text: "Demo", Centered: false, X: 14 };
+        && windows is { Text: "Demo", Centered: false, X: 42 };
+    if (!ok)
+        Console.Error.WriteLine($"  cut={cut?.Text} fits={fits?.Text} over={over?.Text} widest={widest?.Text} wide={wide?.Text} accented={accented?.Text} none={none} windows={windows}");
+    return ok;
+}
+
+static bool TitleWidthIsNoNarrowerThanSans()
+{
+    // Each ASCII width is at least what the widest common sans-serif in bold gives it (Verdana Bold, measured):
+    // spot checks at 13 px.
+    var checks = new (string Text, double MinEm)[] { (" ", 0.342), ("i", 0.342), ("m", 1.058), ("W", 1.128), ("M", 0.957), ("%", 1.272), ("0", 0.711) };
+    var ok = true;
+    foreach (var (text, minEm) in checks)
+    {
+        var width = SvgFrameRenderer.TitleWidth(text);
+        if (width < minEm * 13)
+        {
+            Console.Error.WriteLine($"  '{text}': {width} px, below {minEm * 13} px");
+            ok = false;
+        }
+    }
+
+    // Outside ASCII: a base letter's width, W's for anything else.
+    return ok
+        && SvgFrameRenderer.TitleWidth("é") == SvgFrameRenderer.TitleWidth("e")
+        && SvgFrameRenderer.TitleWidth("Ж") == SvgFrameRenderer.TitleWidth("W")
+        && Math.Abs(SvgFrameRenderer.TitleWidth("日") - 16.12) < 0.001;
+}
+
+static bool WindowOnBackgroundCastsShadow()
+{
+    // On a background the window's whole shape casts a desktop window's shadow, filtered over the canvas. A
+    // translucent window keeps it outside itself with a mask. Without a background the 1-pixel frame keeps its
+    // faint shadow, as before.
+    var background = new BackgroundSpec(["#4b6cb7", "#182848"], null);
+    var opaque = RenderStyled(WindowStyle.Macos, background: background);
+    var translucent = RenderStyled(WindowStyle.Windows, background: background, opacity: 0.85);
+    var plain = RenderStyled(WindowStyle.Macos);
+    var shape = new System.Text.RegularExpressions.Regex("<rect class=\"l [a-z0-9]+ viewport-chrome-0\" x=\"32\" y=\"32\" width=\"[0-9.]+\" height=\"[0-9.]+\" rx=\"8\" ry=\"8\" fill=\"#000\" filter=\"url\\(#window-shadow\\)\"/>");
+    var maskedShape = new System.Text.RegularExpressions.Regex("rx=\"8\" ry=\"8\" fill=\"#000\" filter=\"url\\(#window-shadow\\)\" mask=\"url\\(#window-outside-0\\)\"/>");
+    var ok = opaque.Contains("<feDropShadow dx=\"0\" dy=\"10\" stdDeviation=\"14\" flood-opacity=\"0.45\"/>", StringComparison.Ordinal)
+        && opaque.Contains("<filter id=\"window-shadow\" filterUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\"", StringComparison.Ordinal)
+        && shape.IsMatch(opaque)
+        // The frame no longer has a shadow of its own.
+        && CountOccurrences(opaque, "filter=\"url(#window-shadow)\"") == 1
+        && !opaque.Contains("window-outside", StringComparison.Ordinal)
+        && maskedShape.IsMatch(translucent)
+        && translucent.Contains("<mask id=\"window-outside-0\" maskUnits=\"userSpaceOnUse\"", StringComparison.Ordinal)
+        && plain.Contains("<feDropShadow dx=\"0\" dy=\"2\" stdDeviation=\"4\" flood-opacity=\"0.22\"/>", StringComparison.Ordinal)
+        && plain.Contains("fill=\"none\" stroke=\"#1a1a1a\" stroke-width=\"1\" filter=\"url(#window-shadow)\"/>", StringComparison.Ordinal)
+        && !plain.Contains("fill=\"#000\"", StringComparison.Ordinal);
+    if (!ok)
+        Console.Error.WriteLine("  shadow markup not as expected");
+    return ok;
+}
+
+static bool DarkMacWindowHasEdgeLine()
+{
+    // A dark macOS window has a faint white line just inside its edge, drawn after the terminal, whose background
+    // reaches the edge. A light one and Windows windows have none.
+    var dark = RenderStyled(WindowStyle.Macos);
+    var light = RenderStyled(WindowStyle.Macos, lightTheme: true);
+    var windows = RenderStyled(WindowStyle.Windows);
+    var line = new System.Text.RegularExpressions.Regex("<rect class=\"l [a-z0-9]+ viewport-chrome-0\" x=\"12.5\" y=\"12.5\" width=\"[0-9.]+\" height=\"[0-9.]+\" rx=\"7.5\" ry=\"7.5\" fill=\"none\" stroke=\"#ffffff\" stroke-opacity=\"0.16\"/>");
+    var match = line.Match(dark);
+    return match.Success
+        && match.Index > dark.IndexOf("</g>", StringComparison.Ordinal)
+        && !light.Contains("stroke=\"#ffffff\"", StringComparison.Ordinal)
+        && !windows.Contains("stroke=\"#ffffff\"", StringComparison.Ordinal);
 }
 
 static bool BackgroundMarginAndPaddingShapeCanvas()
@@ -299,7 +382,7 @@ static bool FrostedWindowSvg()
         && !opaque.Contains("frost", StringComparison.Ordinal);
 }
 
-static string RenderStyled(WindowStyle window, string? title = null, BackgroundSpec? background = null, int? margin = null, int? padding = null, double? opacity = null, int? blur = null)
+static string RenderStyled(WindowStyle window, string? title = null, BackgroundSpec? background = null, int? margin = null, int? padding = null, double? opacity = null, int? blur = null, bool lightTheme = false)
 {
     var castPath = Path.Combine(Path.GetTempPath(), $"st-styled-{Guid.NewGuid():N}.cast");
     try
@@ -307,6 +390,8 @@ static string RenderStyled(WindowStyle window, string? title = null, BackgroundS
         File.WriteAllText(castPath, "{\"version\":3,\"term\":{\"cols\":40,\"rows\":6}}\n[0.0,\"o\",\"hello\\r\\n\"]\n");
         var recording = CastReader.Read(castPath);
         var settings = recording.RenderSettings with { Window = window, WindowTitle = title, Background = background, Margin = margin, Padding = padding, Opacity = opacity, Blur = blur };
+        if (lightTheme)
+            settings = settings with { Theme = settings.Theme with { Bg = "#ffffff", Fg = "#000000" } };
         return SvgRender.RenderToString(recording.Events, recording.Width, recording.Height, settings, recording.LoopDuration);
     }
     finally
@@ -446,12 +531,48 @@ static bool MacosChromeAddsTrafficLights()
         && CountOccurrences(svg, "<circle") >= 3;
 }
 
-static bool WindowsChromeAddsButtons()
+static bool WindowsChromeIsATabRow()
 {
-    var svg = RenderMinimal("windows");
-    return svg.Contains("viewport-chrome-0", StringComparison.Ordinal)
-        && CountOccurrences(svg, "viewport-chrome-0") >= 4
-        && svg.Contains("window-shadow", StringComparison.Ordinal);
+    // A Windows Terminal tab row: the active tab in the terminal's color, an outlined terminal icon, the title in
+    // the tab, and the minimize, maximize, and close glyphs. No macOS-style line under the bar, and no filled
+    // buttons. The window is 40 cols, 416 px, at x = 12: the tab runs from 20 to 140, at least 120 wide.
+    var dark = RenderStyled(WindowStyle.Windows, title: "Demo");
+    var light = RenderStyled(WindowStyle.Windows, title: "Demo", lightTheme: true);
+    var minimal = RenderMinimal("windows");
+    var ok = dark.Contains("d=\"M 20,46 V 24 Q 20,18 26,18 H 134 Q 140,18 140,24 V 46 Z\" fill=\"#282c34\"/>", StringComparison.Ordinal)
+        && dark.Contains("fill=\"#1c1c1c\"/>", StringComparison.Ordinal)
+        && dark.Contains("width=\"14\" height=\"11\" rx=\"2\" ry=\"2\" fill=\"none\" stroke=\"#d6d6d6\"", StringComparison.Ordinal)
+        && dark.Contains("x=\"54\" y=\"36.5\" style=\"font:12px -apple-system,", StringComparison.Ordinal)
+        && dark.Contains("width=\"9\" height=\"9\" rx=\"1\" ry=\"1\" fill=\"none\" stroke=\"#d6d6d6\"", StringComparison.Ordinal)
+        && !dark.Contains("<line class=\"l", StringComparison.Ordinal)
+        && light.Contains("V 46 Z\" fill=\"#ffffff\"/>", StringComparison.Ordinal)
+        && light.Contains("fill=\"#ebebeb\"/>", StringComparison.Ordinal)
+        && light.Contains("stroke=\"#333333\"", StringComparison.Ordinal)
+        && minimal.Contains("window-shadow", StringComparison.Ordinal);
+    if (!ok)
+        Console.Error.WriteLine("  Windows tab row markup not as expected");
+    return ok;
+}
+
+static bool WinTabRowFitsItsTitle()
+{
+    // The tab is at least 120 px; a longer title widens it by the width that cuts titles (12 px here), and the
+    // new-tab and dropdown buttons follow it while they fit. A narrow window drops them and the title, then the tab.
+    var demo = SvgFrameRenderer.LayoutWinTabRow("Demo", 400);
+    var longTitle = SvgFrameRenderer.LayoutWinTabRow("A longer window title", 600);
+    var cut = SvgFrameRenderer.LayoutWinTabRow(new string('a', 80), 600);
+    var narrow = SvgFrameRenderer.LayoutWinTabRow("Demo", 250);
+    var tiny = SvgFrameRenderer.LayoutWinTabRow("Demo", 200);
+    var longWidth = 34 + SvgFrameRenderer.MeasureTitle("A longer window title", 12) + 32;
+    var ok = demo is { HasTab: true, TabLeft: 8, TabRight: 128, Title: "Demo", TitleX: 42, Extras: true }
+        && Math.Abs(longTitle.TabRight - (8 + longWidth)) < 0.001 && longTitle.Extras
+        && cut.Title?.EndsWith('…') == true && cut.Extras
+        && cut.TabRight + 56 <= 600 - 3 * 46 - 10 + 0.001
+        && narrow is { HasTab: true, Title: null, Extras: false }
+        && !tiny.HasTab;
+    if (!ok)
+        Console.Error.WriteLine($"  demo={demo} long={longTitle} cut={cut} narrow={narrow} tiny={tiny}");
+    return ok;
 }
 
 static bool ChromeIncreasesSvgHeight()

@@ -223,7 +223,7 @@ scenetake --format svg samples/theme.yaml
 
 ## theme-macos
 
-**目的:** **`render.window: macos`** ウィンドウ chrome + dark テーマを **`render.background`** のグラデーションの上に置き、タイトルバーにシナリオの title を表示。agg の GIF にはウィンドウ枠も背景も付かない。
+**目的:** **`render.window: macos`** ウィンドウ chrome + dark テーマを **`render.background`** のグラデーションの上に置き、**`render.opacity: 0.85`** でグラデーションの色をウィンドウに透かし、タイトルバーにシナリオの title を表示。agg の GIF にはウィンドウ枠も背景も付かない。
 
 | GIF | SVG |
 |-----|-----|

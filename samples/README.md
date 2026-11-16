@@ -223,7 +223,7 @@ scenetake --format svg samples/theme.yaml
 
 ## theme-macos
 
-**Purpose:** **`render.window: macos`** window chrome with the dark theme, on a **`render.background`** gradient, with the scenario title in the title bar. The GIF from agg has no chrome or background.
+**Purpose:** **`render.window: macos`** window chrome with the dark theme, on a **`render.background`** gradient that tints the window through **`render.opacity: 0.85`**, with the scenario title in the title bar. The GIF from agg has no chrome or background.
 
 | GIF | SVG |
 |-----|-----|

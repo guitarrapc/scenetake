@@ -12,7 +12,7 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 4459323,
+          "ticks": 5002165,
           "out": "\u001B[1;34mDark theme with macOS window chrome\u001B[0m\n"
         }
       ]
@@ -23,7 +23,7 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 4318635,
+          "ticks": 4495505,
           "out": "16-color: \u001B[31mred\u001B[0m \u001B[32mgreen\u001B[0m \u001B[33myellow\u001B[0m \u001B[34mblue\u001B[0m\n"
         }
       ]
@@ -34,7 +34,7 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 4349587,
+          "ticks": 4850961,
           "out": "256-color: \u001B[38;5;196m196\u001B[0m \u001B[38;5;46m46\u001B[0m \u001B[38;5;27m27\u001B[0m\n"
         }
       ]
@@ -45,7 +45,7 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 4412922,
+          "ticks": 4469724,
           "out": "Done!\n"
         }
       ]

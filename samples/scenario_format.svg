@@ -989,7 +989,7 @@ text { dominant-baseline: alphabetic; }
 .bv{visibility:visible}
 </style>
 <defs>
-<filter id="window-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.22"/></filter>
+<filter id="window-shadow" filterUnits="userSpaceOnUse" x="0" y="0" width="865.6" height="586"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-opacity="0.45"/></filter>
 <linearGradient id="desktop" x1="0" y1="0" x2="1" y2="1">
 <stop offset="0" stop-color="#0f2027"/>
 <stop offset="1" stop-color="#2c5364"/>
@@ -1000,10 +1000,11 @@ text { dominant-baseline: alphabetic; }
 </mask>
 </defs>
 <rect x="0" y="0" width="865.6" height="586" fill="url(#desktop)"/>
-<rect class="l bv viewport-chrome-0" x="24" y="24" width="817.6" height="538" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
+<rect class="l bv viewport-chrome-0" x="24" y="24" width="817.6" height="538" rx="8" ry="8" fill="#000" filter="url(#window-shadow)"/>
+<rect class="l bv viewport-chrome-0" x="24" y="24" width="817.6" height="538" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1"/>
 <path class="l bv viewport-chrome-0" d="M 32,24 H 833.6 Q 841.6,24 841.6,32 V 58 H 24 V 32 Q 24,24 32,24 Z" fill="#323232"/>
 <line class="l bv viewport-chrome-0" x1="24" y1="58" x2="841.6" y2="58" stroke="#1a1a1a" stroke-width="1"/>
-<text class="l bv viewport-chrome-0" x="432.8" y="45.5" style="font-size:13px" text-anchor="middle" fill="#c8c8c8">scenario_format.yaml</text>
+<text class="l bv viewport-chrome-0" x="432.8" y="45.5" style="font:bold 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI','Helvetica Neue',Helvetica,Arial,'Noto Sans','DejaVu Sans',sans-serif" text-anchor="middle" fill="#c8c8c8">scenario_format.yaml</text>
 <circle class="l bv viewport-chrome-0" cx="46" cy="41" r="8" fill="#ff5f57"/>
 <circle class="l bv viewport-chrome-0" cx="72" cy="41" r="8" fill="#febc2e"/>
 <circle class="l bv viewport-chrome-0" cx="98" cy="41" r="8" fill="#28c840"/>
@@ -2422,4 +2423,5 @@ text { dominant-baseline: alphabetic; }
 <use href="#c" x="115.36" y="530" class="l ez"/>
 <use href="#c" x="36" y="530" class="l aat"/>
 </g>
+<rect class="l bv viewport-chrome-0" x="24.5" y="24.5" width="816.6" height="537" rx="7.5" ry="7.5" fill="none" stroke="#ffffff" stroke-opacity="0.16"/>
 </svg>
