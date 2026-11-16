@@ -20,7 +20,8 @@ PTY mode stays opt-in so ordinary steps keep predictable pipe-based stdout/stder
 
 ### Out of scope (v1)
 
-- Step-level stdin beyond what the shell command provides (non-interactive PTY)
+- Step-level stdin beyond what the shell command provides and what `keys` writes (non-interactive PTY)
+- Waiting for output before a key, as `expect` does. `keys` waits for time only.
 - YAML keys beyond those defined in [spec_scenario.md](spec_scenario.md)
 - MiniPty library API details — [MiniPty docs](https://github.com/guitarrapc/MiniPty/blob/main/.github/docs/spec_index.md)
 
@@ -31,7 +32,7 @@ When a map-form step has `pty: true` (default `false`):
 - **Simulated typing** — scenetake emits the same prompt, per-character typed command, optional `run-highlight`, and synthetic Enter used by non-PTY steps before the PTY output begins. The command is still executed as a PTY shell command. Typing is a recording effect, not PTY stdin.
 - **PTY geometry** — uses scenario `width` × `height` (same as cast header terminal size).
 - **Shell interpretation** — the `run` string is passed to the scenario `shell` the same way as non-PTY execution (`pwsh -Command`, `cmd /c`, `bash -lc`, etc.). PTY does not bypass the shell.
-- **Color environment** — the PTY child gets `COLORTERM=truecolor` like every scenario command, replacing any host value ([spec_scenario.md](spec_scenario.md) → Command Environment). The child sees scenetake's PTY, not the host terminal, so host hints such as `WT_SESSION` say nothing about what the recording can show.
+- **Color environment** — the PTY child gets `COLORTERM=truecolor` like every scenario command, replacing any host value ([spec_scenario.md](spec_scenario.md) → Command Environment). The child sees scenetake's PTY, not the host terminal, so host hints such as `WT_SESSION` say nothing about what the recording can show. On Unix MiniPty sets `TERM=xterm-256color` for the child, also when scenetake's own environment has no `TERM`, as in a container: curses tools such as `sl` start there without one.
 - **Merged output** — stdout and stderr are one byte stream. `stderr-color` and pipe-style `highlight` do not apply to PTY output for that step.
 - **Timestamped chunks** — output is read while the child runs. Cast `o` events use `command_start + chunk_time` on the scenario timeline when stream emit is enabled (see [spec_scenario.md](spec_scenario.md) → Output timing). When stream emit is off, PTY bytes are still timestamped internally but merged according to the existing startup-offset rules before write.
 - **Startup timing** — after `PtyLeadingInitFilter` produces the first cast `o` event, scenetake may shift all chunk times earlier so that output appears no later than non-PTY steps (`execution-duration` after `command_start`). When the first emitted chunk is already faster than that threshold, times are unchanged. Inter-chunk spacing (for example TUI frame intervals) is not scaled unless stream emit and `max-duration` are set.
@@ -68,6 +69,91 @@ When `pty: false` (default):
 - Coloring keys apply per [spec_highlight.md](spec_highlight.md).
 
 PTY capture records bytes from the child session. Terminal rendering (ANSI parsing, SVG) is separate: [spec_svg.md](spec_svg.md). OS implementation notes: [MiniPty references/pty_crossplatform.md](https://github.com/guitarrapc/MiniPty/blob/main/.github/docs/references/pty_crossplatform.md).
+
+### Keys and timeout
+
+A TUI often runs until a key ends it, and a demo often needs a menu choice or a typed answer. A non-interactive PTY step can script both, so the recording needs no person at the keyboard and comes out the same on every run.
+
+```yaml
+- run: btop
+  pty: true
+  timeout: 10          # safety net: stop it if the keys did not
+  keys:
+    - sleep: 3         # let it draw
+      key: down
+    - sleep: 1
+      type: "q"
+```
+
+#### `keys` entries
+
+| Entry key | Value | What scenetake does |
+|---|---|---|
+| `sleep` | Seconds, 0 or more | Waits, then goes on to the entry's `key` or `type`, or to the next entry |
+| `type` | Text (a number is text too) | Writes it one character at a time, each after a typing delay drawn from the step's `typing-speed` and `typing-jitter`, as for a typed command. A line break is Enter. |
+| `key` | A key name (table below) | Writes that key |
+
+- Entries run in order. Times count from the command's start.
+- An entry holds `sleep`, `type`, or `key`, or `sleep` with one of the other two. The wait comes first.
+- A key right after typed text waits one typing delay.
+- Writing stops when the command exits. Keys left over are dropped without a message.
+
+#### Key names
+
+Names ignore case. Each sends the bytes xterm sends in normal cursor mode. Programs in application cursor mode, such as vim, read those arrows too.
+
+| Key name | Bytes sent |
+|---|---|
+| `enter` (`return`) | CR (`0x0D`) |
+| `tab` | HT (`0x09`) |
+| `space` | A space (`0x20`) |
+| `backspace` | DEL (`0x7F`) |
+| `escape` (`esc`) | ESC (`0x1B`) |
+| `up`, `down`, `right`, `left` | `ESC [ A`, `ESC [ B`, `ESC [ C`, `ESC [ D` |
+| `home`, `end` | `ESC [ H`, `ESC [ F` |
+| `page-up` (`pageup`), `page-down` (`pagedown`) | `ESC [ 5 ~`, `ESC [ 6 ~` |
+| `insert`, `delete` | `ESC [ 2 ~`, `ESC [ 3 ~` |
+| `f1`–`f4` | `ESC O P`, `ESC O Q`, `ESC O R`, `ESC O S` |
+| `f5`–`f12` | `ESC [ 15 ~`, `ESC [ 17 ~`, `ESC [ 18 ~`, `ESC [ 19 ~`, `ESC [ 20 ~`, `ESC [ 21 ~`, `ESC [ 23 ~`, `ESC [ 24 ~` |
+| `ctrl+` and a letter, such as `ctrl+c` | The control character: `ctrl+a` is `0x01`, `ctrl+c` is `0x03`, `ctrl+z` is `0x1A` |
+| `alt+` and one printable ASCII character, such as `alt+x` | ESC, then the character |
+
+#### `timeout`
+
+Seconds from the command's start, above 0. When the command is still running then:
+
+| Step | At the timeout | If it is still running |
+|---|---|---|
+| PTY | Ctrl+C, as a person would press it, so a TUI can leave the alternate screen and restore the terminal. The recording shows that. | SIGTERM after 2 seconds. Ended 1 second after that. |
+| Pipe | Its process tree ends. What it printed so far is its output. | — |
+
+- stderr shows `stopped after N s (timeout)`.
+- **A stop is no failure.** The author asked for it, so its exit code (130, or a signal's) is recorded as 0: no warning, and `--strict` goes on.
+
+#### Errors
+
+Each of these stops the run before `pre`, so a typo does not cost a recording. The message names the step and the entry.
+
+| Scenario | Error |
+|---|---|
+| `keys` without `pty: true` | `Step N key 'keys' requires 'pty: true'` |
+| `keys` or `timeout` with `interactive: true` | `Step N key 'keys' does not apply to 'interactive: true'` (or `'timeout'`) |
+| `timeout` that is not a number above 0 | `Step N key 'timeout' must be a number of seconds above 0` |
+| `keys` that is not a list | `Step N key 'keys' must be a list` |
+| An entry that is not a mapping | `Step N keys entry M must be a mapping with 'sleep', 'type', or 'key'` |
+| An entry with none of `sleep`, `type`, `key` | `Step N keys entry M needs 'sleep', 'type', or 'key'` |
+| An entry with both `type` and `key` | `Step N keys entry M has both 'type' and 'key'` |
+| A negative or non-numeric `sleep` | `Step N keys entry M 'sleep' must be a number of seconds` |
+| An empty `type`, or a list or mapping under it | `Step N keys entry M 'type' must be text to type` |
+| An unknown key name | `Step N keys entry M has an unknown key 'x'` |
+
+An unknown key inside an entry, such as `slep`, is a warning like other unknown keys.
+
+#### Recording, cast, and playground
+
+- **Recording path.** A PTY step with `keys` or `timeout` reads the PTY itself while it writes the keys, timing each chunk on arrival, as interactive steps do: writing keys needs the session while output is read, which MiniPty.Capture does not expose. Other PTY steps keep MiniPty.Capture, which joins bursts differently, so their recordings stay as they were. Startup cleanup, the ConPTY cursor report, and output timing are the same for both.
+- **Cast.** Keys are input, so the cast has no event for them. The recording shows what the program echoes or draws in answer.
+- **Playground.** The outputs file holds the output the keys produced. The playground draws the same typing delays for `type`, so later steps type as on the CLI, but it writes nothing and stops nothing ([spec_playground.md](spec_playground.md) → Keys that have no effect).
 
 ### Interactive PTY (`interactive: true`)
 
@@ -129,6 +215,7 @@ Each fatal error stops the recording: no cast is written, `post` runs, and scene
 | PTY layer | `scenetake/tests/pty_test.cs` |
 | PTY startup cleanup filter | `scenetake/tests/pty_continue_test.cs` |
 | Interactive PTY validation | `scenetake/tests/interactive_pty_test.cs` |
+| `keys` and `timeout`: key names, errors, timing, playground; with `SCENETAKE_BIN`, typed input, Ctrl+C, the grace kill, and a pipe timeout | `scenetake/tests/step_input_test.cs`, fixtures `scenetake/tests/fixtures/step-input-*.yaml` |
 | Interactive input recorder | `scenetake/tests/interactive_pty_input_test.cs` |
 | Command environment (`COLORTERM`) for pipe and PTY steps | `scenetake/tests/pty_test.cs` (`IntegrationChildEnvironmentFixture`) |
 | Fixture scenarios | `scenetake/tests/fixtures/pty-*.yaml`, `scenetake/tests/fixtures/child-env*.yaml` |
@@ -157,5 +244,7 @@ Integration tests require `SCENETAKE_BIN` pointing at a published scenetake bina
 - **ConPTY redraws overwrote earlier output.** Windows progress bars using `\r` became cursor-home sequences because ConPTY started with an empty screen at row 1. This overwrote preceding steps and disrupted later output. The same Linux scenario retained `\r` and rendered correctly. Tests on Windows 11 26200 (2026-11-13) confirmed that `InheritCursor` plus an initial position report preserved `\r` and removed startup clears. The child received no extra input, and runtime did not increase. ConPTY already had the report when it needed it. Starting at row 29 of 30 scrolled correctly, and `matrix` rendering was unchanged. The ConPTY title also arrived before the first output, where startup filtering removed it.
 - **Interactive terminal checks must precede `pre`.** Previously, redirected stdin or stdout failed only when the interactive step began. Setup and earlier steps ran before the recording was discarded. Redirection does not change during a run, so validation now checks it before `pre`.
 - Recorded failures normally remain demo content. `--strict` stops unexpected non-zero exits. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
+- **Ctrl+C from a timeout reaches the program through both PTYs.** On 2026-11-16 a test whose trap leaves the alternate screen on SIGINT showed its message in the cast on Linux, and on Windows through ConPTY and Git Bash. A command that ignores SIGINT was ended by the later SIGTERM and kill within the timeout plus about 3 seconds. On Linux the terminal echoes `^C`, which the cast keeps. nyancat clears its screen when it gets Ctrl+C.
+- **A container needs no `TERM`.** With `TERM` removed from scenetake's environment, a Linux PTY step still saw `TERM=xterm-256color`, which MiniPty sets.
 - ConPTY cannot identify Windows Terminal directly. Inherited `WT_SESSION` caused `matrix` to select 16 colors when absent, despite renderer support for 24-bit color. Setting `COLORTERM=truecolor` removes this dependency ([spec_scenario.md](spec_scenario.md) → Lessons Learned).
 - **ConPTY transforms soft-font sequences.** The Windows ConPTY renames DECDLD fonts, assigns them to G1, and surrounds characters with SO/SI. It answers device queries with soft-font support. Unix PTYs do not answer those queries. The renderer accepts both streams, but application detection controls whether a font is sent ([spec_svg.md](spec_svg.md) → Soft fonts).

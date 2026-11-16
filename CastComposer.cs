@@ -75,7 +75,14 @@ internal static partial class ScenarioCast
             var ptyStartCursor = usePty && !useInteractive && options.TrackPtyCursor
                 ? (cursorTracker ??= new CastCursorTracker(width, height)).Advance(events)
                 : ((int Row, int Column)?)null;
-            var execution = await run(new StepStart(i, command, usePty, useInteractive, width, height, ptyStartCursor));
+            // Drawn here for the playground too, which ignores the keys: their typing delays come from the same
+            // random sequence as the typed commands, so the steps after them type the same way in both.
+            var keys = BuildKeyActions(command.Extra, cmdSpeed, cmdJitter, rng);
+            var execution = await run(new StepStart(i, command, usePty, useInteractive, width, height, ptyStartCursor)
+            {
+                Keys = keys,
+                Timeout = GetStepTimeout(command.Extra),
+            });
             // A step that is meant to fail (a demo of an error) says so with continue-on-error: no warning, and
             // --strict goes on. Any other failure is a warning, or with --strict the end of the recording: later
             // steps may depend on this one, and they run real commands.
@@ -931,7 +938,14 @@ internal readonly record struct StepStart(
     bool UseInteractive,
     int Width,
     int Height,
-    (int Row, int Column)? PtyStartCursor);
+    (int Row, int Column)? PtyStartCursor)
+{
+    /// <summary>What the step's <c>keys</c> write to its PTY, and when. Empty when it sets none.</summary>
+    internal IReadOnlyList<ScenarioCast.KeyAction> Keys { get; init; } = [];
+
+    /// <summary>Seconds after which the step's command is stopped (<c>timeout</c>), or null.</summary>
+    internal double? Timeout { get; init; }
+}
 
 /// <summary>Output that is already timed: each chunk's time since the command started, and where the step ends.</summary>
 internal sealed record ComposedPtyOutput(IReadOnlyList<(double Time, ReadOnlyMemory<byte> Data)> Chunks, double End);

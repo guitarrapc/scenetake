@@ -4,15 +4,13 @@ FROM debian:trixie-slim
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      bash bat ca-certificates fastfetch figlet git jq less lolcat nyancat sl toilet \
+      bash bat ca-certificates fastfetch figlet git jq less lolcat nyancat sl toilet vim \
  && rm -rf /var/lib/apt/lists/* \
  && ln -s /usr/bin/batcat /usr/local/bin/bat
 
 # less is git's pager, as on a desktop: without it git falls back to more, which counts color codes as width and
-# wraps the log early. sl and lolcat install to /usr/games. scenetake does not set TERM for PTY steps, and a container has none, so curses
-# tools such as sl would not start without it.
+# wraps the log early. sl and lolcat install to /usr/games. TERM needs no setting: a PTY step gets xterm-256color.
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games \
-    TERM=xterm-256color \
     LANG=C.UTF-8
 
 RUN useradd --create-home demo \

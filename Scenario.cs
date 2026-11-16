@@ -200,6 +200,8 @@ internal static partial class ScenarioCast
                 return "Step key 'interactive: true' requires 'pty: true'.";
             if (IsStepFlagSet(command.Extra, "normalize-typing") && !useInteractive)
                 return "Step key 'normalize-typing: true' requires 'interactive: true'.";
+            if (FindStepInputError(command.Extra, index + 1, usePty, useInteractive) is { } inputError)
+                return inputError;
         }
 
         // A missing or misspelled steps key (`step:`) used to write an empty cast and exit 0.
@@ -288,6 +290,163 @@ internal static partial class ScenarioCast
         }
 
         return def;
+    }
+
+    // ---------------------------------------------------------------- step input: keys and timeout
+
+    /// <summary>Seconds a step stopped by its timeout gets to exit after Ctrl+C, before scenetake ends it.</summary>
+    internal const double TimeoutInterruptGrace = 2.0;
+
+    /// <summary>
+    /// What a terminal sends for each named key, as xterm sends it in normal cursor mode. Programs in application
+    /// cursor mode, such as vim, also read the normal-mode arrows.
+    /// </summary>
+    private static readonly Dictionary<string, string> NamedKeys = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["enter"] = "\r", ["return"] = "\r", ["tab"] = "\t", ["space"] = " ", ["backspace"] = "\u007f",
+        ["escape"] = "\u001b", ["esc"] = "\u001b",
+        ["up"] = "\u001b[A", ["down"] = "\u001b[B", ["right"] = "\u001b[C", ["left"] = "\u001b[D",
+        ["home"] = "\u001b[H", ["end"] = "\u001b[F",
+        ["page-up"] = "\u001b[5~", ["pageup"] = "\u001b[5~", ["page-down"] = "\u001b[6~", ["pagedown"] = "\u001b[6~",
+        ["insert"] = "\u001b[2~", ["delete"] = "\u001b[3~",
+        ["f1"] = "\u001bOP", ["f2"] = "\u001bOQ", ["f3"] = "\u001bOR", ["f4"] = "\u001bOS",
+        ["f5"] = "\u001b[15~", ["f6"] = "\u001b[17~", ["f7"] = "\u001b[18~", ["f8"] = "\u001b[19~",
+        ["f9"] = "\u001b[20~", ["f10"] = "\u001b[21~", ["f11"] = "\u001b[23~", ["f12"] = "\u001b[24~",
+    };
+
+    /// <summary>
+    /// A step's input for its PTY: wait <paramref name="Delay"/> seconds after the previous action (or the
+    /// command's start), then write <paramref name="Text"/>.
+    /// </summary>
+    internal readonly record struct KeyAction(double Delay, string Text);
+
+    /// <summary>
+    /// The bytes a key name stands for: a name from the table above, <c>ctrl+</c> and a letter, or <c>alt+</c>
+    /// and one printable ASCII character. Null for any other name. Names ignore case.
+    /// </summary>
+    internal static string? KeyText(string name)
+    {
+        var key = name.Trim();
+        if (NamedKeys.TryGetValue(key, out var text))
+            return text;
+
+        if (key.Length == 6 && key.StartsWith("ctrl+", StringComparison.OrdinalIgnoreCase) && char.IsAsciiLetter(key[5]))
+            return ((char)(char.ToLowerInvariant(key[5]) - 'a' + 1)).ToString();
+
+        if (key.Length == 5 && key.StartsWith("alt+", StringComparison.OrdinalIgnoreCase) && key[4] is > ' ' and < '\u007f')
+            return "\u001b" + key[4];
+
+        return null;
+    }
+
+    /// <summary>The step's <c>timeout</c> in seconds, or null when it sets none. <see cref="FindStepInputError"/> checks the value.</summary>
+    internal static double? GetStepTimeout(Dictionary<string, object?> extra) =>
+        extra.TryGetValue("timeout", out var value) && TryReadSeconds(value, out var seconds) && seconds > 0 ? seconds : null;
+
+    /// <summary>
+    /// The error for a step's <c>keys</c> or <c>timeout</c>, or null. <paramref name="number"/> is the step's
+    /// 1-based position. Both are found before <c>pre</c> runs, so a typo does not cost a recording.
+    /// </summary>
+    internal static string? FindStepInputError(Dictionary<string, object?> extra, int number, bool usePty, bool useInteractive)
+    {
+        if (extra.TryGetValue("timeout", out var timeout) && timeout is not null)
+        {
+            if (!TryReadSeconds(timeout, out var seconds) || seconds <= 0)
+                return $"Step {number} key 'timeout' must be a number of seconds above 0, such as 5, not {DescribeValue(timeout)}.";
+            if (useInteractive)
+                return $"Step {number} key 'timeout' does not apply to 'interactive: true': the person at the keyboard ends that step.";
+        }
+
+        if (!extra.TryGetValue("keys", out var keys) || keys is null)
+            return null;
+        if (useInteractive)
+            return $"Step {number} key 'keys' does not apply to 'interactive: true': the person at the keyboard types in that step.";
+        if (!usePty)
+            return $"Step {number} key 'keys' requires 'pty: true': a step without a terminal has nothing to type into.";
+        if (keys is not System.Collections.IList list)
+            return $"Step {number} key 'keys' must be a list, such as [{{sleep: 2, key: q}}], not {DescribeValue(keys)}.";
+
+        for (var i = 0; i < list.Count; i++)
+        {
+            var where = $"Step {number} keys entry {i + 1}";
+            if (list[i] is not Dictionary<object, object?> entry)
+                return $"{where} must be a mapping with 'sleep', 'type', or 'key', such as {{key: enter}}, not {DescribeValue(list[i])}.";
+
+            var hasSleep = entry.TryGetValue("sleep", out var sleep);
+            var hasType = entry.TryGetValue("type", out var type);
+            var hasKey = entry.TryGetValue("key", out var key);
+            if (!hasSleep && !hasType && !hasKey)
+                return $"{where} needs 'sleep', 'type', or 'key'.";
+            if (hasType && hasKey)
+                return $"{where} has both 'type' and 'key'. Put each in an entry of its own.";
+            if (hasSleep && (!TryReadSeconds(sleep, out var wait) || wait < 0))
+                return $"{where} 'sleep' must be a number of seconds, such as 0.5, not {DescribeValue(sleep)}.";
+            if (hasType && string.IsNullOrEmpty(TextToType(type)))
+                return $"{where} 'type' must be text to type, not {DescribeValue(type)}.";
+            if (hasKey && (key is not string name || KeyText(name) is null))
+                return $"{where} has an unknown key {DescribeValue(key)}. Use a name such as enter, escape, up, page-down, f1, ctrl+c, or alt+x.";
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// A step's <c>keys</c> as timed writes. <c>sleep</c> adds to the wait before the next write. <c>type</c> writes
+    /// one character at a time, each after a typing delay drawn as for a typed command, and a line break in it is
+    /// Enter. Assumes <see cref="FindStepInputError"/> accepted the step. The playground draws the same delays, so
+    /// the typing of later steps stays the same as on the CLI.
+    /// </summary>
+    internal static IReadOnlyList<KeyAction> BuildKeyActions(Dictionary<string, object?> extra, double speed, double jitter, Random rng)
+    {
+        if (!extra.TryGetValue("keys", out var keys) || keys is not System.Collections.IList list)
+            return [];
+
+        var actions = new List<KeyAction>();
+        var wait = 0.0;
+        foreach (var item in list)
+        {
+            if (item is not Dictionary<object, object?> entry)
+                continue;
+
+            if (entry.TryGetValue("sleep", out var sleep) && TryReadSeconds(sleep, out var seconds) && seconds > 0)
+                wait += seconds;
+
+            if (entry.TryGetValue("key", out var key) && key is string name && KeyText(name) is { } keyText)
+            {
+                actions.Add(new KeyAction(wait, keyText));
+                wait = 0;
+            }
+            else if (entry.TryGetValue("type", out var type) && TextToType(type) is { Length: > 0 } text)
+            {
+                var normalized = text.Replace("\r\n", "\n");
+                for (var i = 0; i < normalized.Length;)
+                {
+                    var length = StringInfo.GetNextTextElementLength(normalized.AsSpan(i));
+                    var element = normalized.Substring(i, length);
+                    actions.Add(new KeyAction(wait, element == "\n" ? "\r" : element));
+                    wait = Math.Max(speed + rng.NextDouble() * 2 * jitter - jitter, 0.005);
+                    i += length;
+                }
+            }
+        }
+
+        return actions;
+    }
+
+    /// <summary>The text of a <c>type</c> value: YAML reads <c>type: 42</c> as a number, which is still text to type.</summary>
+    private static string? TextToType(object? value) => value switch
+    {
+        string text => text,
+        int or long or double or float or decimal => Convert.ToString(value, CultureInfo.InvariantCulture),
+        _ => null,
+    };
+
+    private static bool TryReadSeconds(object? value, out double seconds)
+    {
+        seconds = 0;
+        return value is not (null or bool or System.Collections.IEnumerable and not string)
+            && double.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), NumberStyles.Float, CultureInfo.InvariantCulture, out seconds)
+            && double.IsFinite(seconds);
     }
 
     internal static int ComputeDeterministicSeed(string yaml)

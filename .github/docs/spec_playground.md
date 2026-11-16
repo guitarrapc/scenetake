@@ -129,6 +129,7 @@ The UI lists these keys as not applied when the scenario sets them.
 | `cwd` | No command runs. |
 | `pre`, `post` | No command runs. Their output is never in a cast. |
 | Timing and typing keys of an interactive step | Its output is stored already timed ([Contents](#contents)). The UI does not list these. |
+| `keys`, `timeout` | No command runs to type into or stop. The recorded output already holds what they did. The playground still draws the typing delays of `type`, so later steps type as on the CLI. The UI does not list these. |
 
 ### Exit codes, warnings, and errors
 

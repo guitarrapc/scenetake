@@ -18,10 +18,14 @@ internal static class ScenarioKeys
         "stream-output", "max-duration", "silence-threshold", "max-idle",
         "run-highlight", "highlight", "stderr-color",
         "pty", "interactive", "normalize-typing", "continue-on-error",
+        "keys", "timeout",
     ];
 
     /// <summary>The keys a <c>highlight</c> entry reads.</summary>
     internal static readonly string[] Highlight = ["color", "at"];
+
+    /// <summary>The keys a <c>keys</c> entry reads.</summary>
+    internal static readonly string[] KeyEntry = ["sleep", "type", "key"];
 
     /// <summary>The keys of the typed sections, taken from the classes that read them.</summary>
     internal sealed record Known(
@@ -40,6 +44,7 @@ internal static class ScenarioKeys
             ("under render.theme", known.Theme),
             ("in a step", Step),
             ("in a highlight entry", Highlight),
+            ("in a keys entry", KeyEntry),
         };
         var findings = new List<string>();
         Check(root, known.TopLevel, "at the top level", levels, findings);
@@ -62,13 +67,22 @@ internal static class ScenarioKeys
                     continue;
 
                 Check(step, Step, $"in step {i + 1}", levels, findings);
-                if (step.GetValueOrDefault("highlight") is not List<object?> highlights)
-                    continue;
-
-                for (var j = 0; j < highlights.Count; j++)
+                if (step.GetValueOrDefault("highlight") is List<object?> highlights)
                 {
-                    if (highlights[j] is Dictionary<object, object?> entry)
-                        Check(entry, Highlight, $"in step {i + 1} highlight {j + 1}", levels, findings);
+                    for (var j = 0; j < highlights.Count; j++)
+                    {
+                        if (highlights[j] is Dictionary<object, object?> entry)
+                            Check(entry, Highlight, $"in step {i + 1} highlight {j + 1}", levels, findings);
+                    }
+                }
+
+                if (step.GetValueOrDefault("keys") is List<object?> keys)
+                {
+                    for (var j = 0; j < keys.Count; j++)
+                    {
+                        if (keys[j] is Dictionary<object, object?> entry)
+                            Check(entry, KeyEntry, $"in step {i + 1} keys entry {j + 1}", levels, findings);
+                    }
                 }
             }
         }
