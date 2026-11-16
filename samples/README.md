@@ -33,6 +33,7 @@ Demos of popular terminal tools, for the README gallery and the playground. They
 | sl | The steam locomotive, drawn with curses | [sl.yaml](showcase/sl.yaml) | [cast](showcase/sl.cast) · [svg](showcase/sl.svg) |
 | nyancat | A full-screen truecolor animation, stopped by `timeout` | [nyancat.yaml](showcase/nyancat.yaml) | [cast](showcase/nyancat.cast) · [svg](showcase/nyancat.svg) |
 | vim | `vim` edited by `keys`, then `git diff` | [vim.yaml](showcase/vim.yaml) | [cast](showcase/vim.cast) · [svg](showcase/vim.svg) |
+| welcome | The playground's first screen: the scenetake logo with `oh-my-logo`, and `git log --graph`, in a macOS window on an image | [welcome.yaml](showcase/welcome.yaml) | [cast](showcase/welcome.cast) · [svg](showcase/welcome.svg) |
 
 ## Regenerate
 

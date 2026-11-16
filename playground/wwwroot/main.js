@@ -4,7 +4,8 @@
 import { encodeShare, decodeShare, MAX_SHARE_HASH_LENGTH } from './share.js';
 
 const COLOR_MODE_KEY = 'scenetake-playground-color-mode';
-const DEFAULT_SAMPLE = 'basic';
+// The first screen: the scenetake logo (oh-my-logo) and a real git graph in a window on an image, from a short YAML.
+const DEFAULT_SAMPLE = 'welcome';
 const RENDER_DELAY_MS = 500;
 
 const $ = (id) => document.getElementById(id);
@@ -353,6 +354,7 @@ const SAMPLE_NOTES = {
   theme: 'light theme, 16 and 256 colors, gradient background',
   'theme-macos': 'macOS window frame on a gradient',
   'theme-windows': 'Windows window frame on a gradient',
+  welcome: 'the scenetake logo and a git graph, on an image',
 };
 
 function sampleLabel(name) {
@@ -361,7 +363,9 @@ function sampleLabel(name) {
 
 async function loadIndex() {
   const index = JSON.parse(await fetchText('samples/index.json'));
-  state.samples = [...(index.scenarios ?? [])].sort();
+  // The first screen's sample comes first in the list; the rest are in name order.
+  state.samples = [...(index.scenarios ?? [])].sort((a, b) =>
+    Number(b === DEFAULT_SAMPLE) - Number(a === DEFAULT_SAMPLE) || (a < b ? -1 : a > b ? 1 : 0));
   state.casts = [...(index.casts ?? [])].sort();
   state.images = [...(index.images ?? [])].sort();
   fillSelect($('sample-select'), state.samples, sampleLabel);

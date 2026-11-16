@@ -33,6 +33,7 @@ scenetake のサンプル集です。各シナリオの**目的**と**生成物*
 | sl | curses で描く SL | [sl.yaml](showcase/sl.yaml) | [cast](showcase/sl.cast) · [svg](showcase/sl.svg) |
 | nyancat | 全画面のトゥルーカラーアニメーション、`timeout` で停止 | [nyancat.yaml](showcase/nyancat.yaml) | [cast](showcase/nyancat.cast) · [svg](showcase/nyancat.svg) |
 | vim | `keys` で `vim` を編集し、`git diff` で確認 | [vim.yaml](showcase/vim.yaml) | [cast](showcase/vim.cast) · [svg](showcase/vim.svg) |
+| welcome | プレイグラウンドの初期画面。`oh-my-logo` の scenetake ロゴと `git log --graph` を、画像の上の macOS ウィンドウで表示 | [welcome.yaml](showcase/welcome.yaml) | [cast](showcase/welcome.cast) · [svg](showcase/welcome.svg) |
 
 ## 再生成
 

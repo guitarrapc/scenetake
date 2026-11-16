@@ -8,8 +8,9 @@
 //
 // Options:
 //   --url <url>        The served playground (default: http://127.0.0.1:5180/)
-//   --sample <name>    The sample to show (default: fetch)
-//   --time <seconds>   The moment of the demo to show; the SVG's animations are paused there (default: 6)
+//   --sample <name>    The sample to show (default: welcome, the first screen)
+//   --time <seconds>   The moment of the demo to show; the SVG's animations are paused there (default: 14, when
+//                      welcome has printed everything and its 15 s loop has not started again)
 //   --output <path>    Output file (default: playground/wwwroot/ogp.png)
 //   --channel <name>   A browser Playwright did not download, such as msedge or chrome
 
@@ -20,8 +21,8 @@ import { stat } from 'node:fs/promises';
 const { values: args } = parseArgs({
   options: {
     url: { type: 'string', default: 'http://127.0.0.1:5180/' },
-    sample: { type: 'string', default: 'fetch' },
-    time: { type: 'string', default: '6' },
+    sample: { type: 'string', default: 'welcome' },
+    time: { type: 'string', default: '14' },
     output: { type: 'string', default: 'playground/wwwroot/ogp.png' },
     channel: { type: 'string' },
   },
@@ -57,8 +58,9 @@ try {
   }
   await page.waitForTimeout(1000);
 
-  // The version changes with each release, so it stays out of the image, as in seiton's.
-  await page.addStyleTag({ content: '.version-badge { display: none !important; }' });
+  // The version changes with each release, so it stays out of the image, as in seiton's. The status line under the
+  // preview gives the render time, which differs on every run.
+  await page.addStyleTag({ content: '.version-badge { display: none !important; } #status { visibility: hidden; }' });
 
   // An <img> SVG plays on its own clock. The same SVG in an <object> exposes its animations, so every one of them
   // can be paused at the same moment, and the image shows that frame whenever it is taken.

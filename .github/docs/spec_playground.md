@@ -168,7 +168,8 @@ Below 960 px the panel comes after the editor and starts closed, unless a share 
 
 | Feature | Behavior |
 |---|---|
-| Sample selector | Lists each sample in `samples/` or `samples/showcase/` that has both a `.yaml` file and an `.outputs.json` file, with a short note on what it shows, such as `pty — a full-screen TUI in a PTY`. A sample without a note shows its name only. Selecting a sample loads both files. The default is `basic`. Reset loads the sample's YAML again. |
+| Sample selector | Lists each sample in `samples/` or `samples/showcase/` that has both a `.yaml` file and an `.outputs.json` file, with a short note on what it shows, such as `pty — a full-screen TUI in a PTY`. A sample without a note shows its name only. Selecting a sample loads both files. The default is `welcome`, listed first; the others follow in name order. Reset loads the sample's YAML again. |
+| First screen | `samples/showcase/welcome.yaml`: the scenetake logo (`oh-my-logo SCENETAKE dawn --filled`: block letters, cyan to blue) and a colored `git log --graph`, in a macOS window on `background.webp`. Its YAML is short and commented, so a reader sees what each key does. **Why:** it was `basic`, plain text on the default theme, which showed little of what scenetake makes. A `toilet` and `lolcat` banner came first; oh-my-logo's filled letters stand out more, with a shorter command. The first screen is also the link preview ([Link preview](#link-preview-ogp)). |
 | YAML editor | CodeMirror 5 in YAML mode. Without CodeMirror (a blocked CDN), a plain text area. |
 | Live render | Composes the cast and the SVG 500 ms after the last edit, at once after a paste. Editing never waits for a render. A result that arrives after a newer edit is dropped, and the newer state is rendered. |
 | Preview | Shows the SVG in an `<img>` element, as GitHub shows an SVG in a README. It fits the SVG to its width, but not so far that the terminal text is smaller than the editor's 13 px below 600 px, or 8 px on a wider screen: past that, the preview scrolls sideways. Replay restarts the animation. **Actual size** shows the SVG at its own width, and the preview scrolls sideways. **Full screen**, or a tap on the preview, shows the demo on the whole screen from its start (see below). The status line shows the render time and the cast and SVG sizes. |
@@ -218,8 +219,8 @@ The agg command runs agg in Docker, as the README does, so a reader needs no agg
 
 A link to the page shows a large image on X, Slack, Discord, and other sites, as a link to the seiton playground does.
 
-- `ogp.png` is the page itself at 1200 × 670 in the dark theme: the `fetch` sample's whole YAML next to its demo, without the version badge. The image says what the page does without words: a short YAML gives this demo.
-- `playground/take-ogp.mjs` takes it with Playwright from the served page, as seiton's `take-ogp.mjs` does. It pauses every animation of the SVG at one moment (6 s by default), so the same page gives the same image byte for byte. An SVG in an `<img>` plays on its own clock, so without the pause the frame would depend on when the screenshot runs.
+- `ogp.png` is the page itself at 1200 × 670 in the dark theme: the first screen, `welcome`, with its YAML next to its demo, without the version badge. The image says what the page does without words: a short YAML gives this demo.
+- `playground/take-ogp.mjs` takes it with Playwright from the served page, as seiton's `take-ogp.mjs` does. It pauses every animation of the SVG at one moment (14 s by default, when `welcome` has printed everything and its 15 s loop has not started again), so the same page gives the same image byte for byte. An SVG in an `<img>` plays on its own clock, so without the pause the frame would depend on when the screenshot runs. The status line under the preview is hidden too: it gives the render time, and two runs gave different images until it was hidden.
 - The meta tags give `summary_large_image`, the image's size, and alt text. The image URL is absolute and has `?v=`, which is raised when the image changes, because sites cache the image by URL.
 
 ## Interop API
