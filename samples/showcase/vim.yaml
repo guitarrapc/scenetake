@@ -1,0 +1,33 @@
+title: "vim and git diff"
+width: 80
+height: 22
+shell: bash
+
+settings:
+  prompt: "$ "
+  typing-speed: 0.05
+  pre-delay: 0.6
+  post-delay: 2.0
+
+render:
+  window: macos
+
+steps:
+  # keys edits the file with no one at the keyboard: find render, add a line below it, save, and quit. The
+  # timeout is a safety net in case a key goes astray and vim stays open.
+  - run: vim greet.py
+    pty: true
+    timeout: 30
+    keys:
+      - sleep: 1.5
+        type: "/return\n"
+      - sleep: 0.8
+        key: home
+      - sleep: 0.4
+        type: "O# Say hello, with a mark at the end."
+      - sleep: 0.6
+        key: escape
+      - sleep: 1.0
+        type: ":wq\n"
+  - run: git diff
+    pty: true

@@ -1,0 +1,7 @@
+title: "step input: keys without pty"
+shell: bash
+
+steps:
+  - run: echo should-not-run
+    keys:
+      - key: enter

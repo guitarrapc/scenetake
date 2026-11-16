@@ -64,8 +64,10 @@ Each recording below is a scenario in [`samples/showcase`](samples/showcase), ru
 | ![](samples/showcase/fetch.svg) | ![](samples/showcase/devtools.svg) |
 | [**figlet, lolcat, and toilet**](samples/showcase/logo.yaml) | [**sl**](samples/showcase/sl.yaml) |
 | ![](samples/showcase/logo.svg) | ![](samples/showcase/sl.svg) |
+| [**vim and git diff, typed by `keys`**](samples/showcase/vim.yaml) | |
+| ![](samples/showcase/vim.svg) | |
 
-[nyancat](samples/showcase/nyancat.yaml), 96 × 26 cells of truecolor animation:
+[nyancat](samples/showcase/nyancat.yaml), 96 × 26 cells of truecolor animation, stopped by `timeout`:
 
 ![](samples/showcase/nyancat.svg)
 
@@ -344,6 +346,31 @@ scenetake runs every command with `COLORTERM=truecolor`, so tools that pick thei
 
 Recordings also draw DECDLD soft fonts, but a program behind the PTY cannot detect that. Tell it in the scenario, for example `matrix --mode movie --soft-font`.
 
+A TUI that runs until a key ends it, or a demo that needs a menu choice, can be scripted with `keys`, so the recording needs no one at the keyboard. `timeout` stops a command that never exits: in a PTY it presses Ctrl+C first, so the program can restore the screen.
+
+```yaml
+steps:
+  - run: vim greet.py
+    pty: true
+    timeout: 30             # Ctrl+C after 30 seconds
+    keys:                   # Written to the PTY in order
+      - sleep: 1.5          # Seconds to wait first
+        type: "/return\n"   # Text, one character per typing delay, a line break (\n) is Enter
+      - type: "O# Say hello"
+      - key: escape         # enter, tab, up, page-down, f1, ctrl+c, alt+x...
+      - type: ":wq\n"
+  - run: nyancat
+    pty: true
+    timeout: 5              # nyancat runs until it is stopped
+```
+
+| Kind | Key names (case-insensitive) |
+| --- | --- |
+| Named | `enter`, `tab`, `space`, `backspace`, `escape` (`esc`), `up`, `down`, `left`, `right`, `home`, `end`, `page-up`, `page-down`, `insert`, `delete`, `f1`–`f12` |
+| Combination | `ctrl+` and one letter, such as `ctrl+c`; `alt+` and one ASCII character, such as `alt+x` |
+
+See [samples/showcase/vim.yaml](samples/showcase/vim.yaml) and [spec_pty.md](.github/docs/spec_pty.md#keys-and-timeout) → Keys and timeout.
+
 ### Interactive application output
 
 For interactive applications (`vim`, `copilot`), set `pty: true` and `interactive: true`. This lets you send input to the child process. Add `normalize-typing: true` to adjust typing speed while banners and help output retain their original timing.
@@ -447,6 +474,15 @@ steps:
   - name: "pty demo"
     run: echo "This command runs in a PTY, so output appears immediately and can include interactive features like colors and progress bars."
     pty: true
+
+  - name: "keys and timeout"
+    run: read -r -p "Your name? " name; echo "Hello, $name"
+    pty: true                    # keys need a PTY to type into
+    timeout: 10                  # seconds; then Ctrl+C, as a person would press it
+    keys:                        # sleep (seconds), then type (text) or key (enter, up, esc, ctrl+c, f1...)
+      - sleep: 0.5
+        type: "scenetake"
+      - key: enter
 
   - name: "run-highlight colors the typed command"
     run: printf 'done\n'

@@ -344,6 +344,7 @@ const SAMPLE_NOTES = {
   'password-prompt': 'a sudo password kept out of the recording',
   pty: 'a full-screen TUI in a PTY',
   sl: 'the steam locomotive, drawn with curses',
+  vim: 'vim edited by scripted keys, then git diff',
   quickstart: 'the README quick start',
   resize: 'a v2 cast that resizes the terminal',
   scenario_format: 'every scenario key in one file',

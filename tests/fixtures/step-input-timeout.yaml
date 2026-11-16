@@ -1,0 +1,18 @@
+title: "step input: timeout"
+width: 60
+height: 8
+shell: bash
+
+steps:
+  # Ctrl+C reaches the command first: the trap leaves the alternate screen and says so, as a TUI restores the screen.
+  - run: trap 'printf "\033[?1049l"; echo interrupted; exit 0' INT; printf "\033[?1049h"; echo inside; while :; do sleep 0.1; done
+    pty: true
+    timeout: 1
+  # A command that ignores Ctrl+C is ended after the grace period.
+  - run: trap '' INT; sleep 30
+    pty: true
+    timeout: 1
+  # A pipe step has no terminal; its process tree ends at the timeout.
+  - run: echo pipe-started; sleep 30
+    timeout: 1
+  - echo after-timeouts

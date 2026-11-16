@@ -64,6 +64,15 @@ steps:
     run: echo "This command runs in a PTY, so output appears immediately and can include interactive features like colors and progress bars."
     pty: true
 
+  - name: "keys and timeout"
+    run: read -r -p "Your name? " name; echo "Hello, $name"
+    pty: true                    # keys need a PTY to type into
+    timeout: 10                  # seconds; then Ctrl+C, as a person would press it
+    keys:                        # sleep (seconds), then type (text) or key (enter, up, esc, ctrl+c, f1...)
+      - sleep: 0.5
+        type: "scenetake"
+      - key: enter
+
   - name: "run-highlight colors the typed command"
     run: printf 'done\n'
     run-highlight: bright-cyan

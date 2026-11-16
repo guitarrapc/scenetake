@@ -10,7 +10,8 @@ settings:
   post-delay: 1.0
 
 steps:
-  # nyancat runs until it is stopped; -f stops it after 60 frames (about 5 seconds). -n and -s leave out the
-  # timer and the window title.
-  - run: nyancat -n -s -f 60
+  # nyancat runs until it is stopped. timeout presses Ctrl+C after 5 seconds, as a person would. -n and -s leave
+  # out the timer and the window title.
+  - run: nyancat -n -s
     pty: true
+    timeout: 5

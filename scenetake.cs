@@ -469,9 +469,12 @@ try
         TrackPtyCursor = OperatingSystem.IsWindows(),
         Record = recordedSteps,
     };
-    (events, strictFailure) = await GenerateAsync(scenario, deterministicSeed, generateOptions, step => step.UseInteractive
-        ? RunInteractivePtyAsync(step.Command.Cmd, scenario.Cwd, shell, step.Width, step.Height, verbose)
-        : RunCommandCoreAsync(step.Command.Cmd, scenario.Cwd, shell, step.UsePty, step.Width, step.Height, verbose, step.PtyStartCursor));
+    (events, strictFailure) = await GenerateAsync(scenario, deterministicSeed, generateOptions, step => step switch
+    {
+        { UseInteractive: true } => RunInteractivePtyAsync(step.Command.Cmd, scenario.Cwd, shell, step.Width, step.Height, verbose),
+        { UsePty: true } when step.Keys.Count > 0 || step.Timeout is not null => RunPtyWithInputAsync(step, scenario.Cwd, shell, verbose),
+        _ => RunCommandCoreAsync(step.Command.Cmd, scenario.Cwd, shell, step.UsePty, step.Width, step.Height, verbose, step.PtyStartCursor, step.Timeout),
+    });
 }
 catch (Exception ex)
 {
@@ -1142,7 +1145,8 @@ static Task<CommandExecution> RunCommand(string cmd, string? cwd, ShellLaunch sh
 /// For a PTY step on Windows, the recording's cursor as a 1-based row and column. ConPTY then starts drawing
 /// there (<see cref="PtyStartInfo.InheritCursor"/>) instead of on an empty screen of its own. Null elsewhere.
 /// </param>
-static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd, ShellLaunch shell, bool usePty, int width, int height, bool verbose = false, (int Row, int Column)? ptyStartCursor = null)
+/// <param name="timeout">For a pipe step, seconds after which its process tree is ended (<c>timeout</c>). A PTY step with a timeout runs in <see cref="RunPtyWithInputAsync"/>.</param>
+static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd, ShellLaunch shell, bool usePty, int width, int height, bool verbose = false, (int Row, int Column)? ptyStartCursor = null, double? timeout = null)
 {
     if (usePty)
     {
@@ -1186,10 +1190,206 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
 
     using var proc = new Process { StartInfo = psi };
     proc.Start();
-    var pipeChunks = await PipeStreamCapture.ReadAsync(proc);
+    var readTask = PipeStreamCapture.ReadAsync(proc);
+    var stopped = false;
+    if (timeout is { } seconds)
+    {
+        // A pipe has no terminal to press Ctrl+C in. The whole tree ends, so no grandchild keeps the pipes open, and
+        // what it printed so far is the step's output.
+        using var limit = new CancellationTokenSource(DelayOf(seconds));
+        try
+        {
+            await proc.WaitForExitAsync(limit.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            stopped = true;
+            try
+            {
+                proc.Kill(entireProcessTree: true);
+            }
+            catch (InvalidOperationException)
+            {
+                // It exited just now.
+            }
+
+            PrintTimeoutStop(seconds);
+        }
+    }
+
+    var pipeChunks = await readTask;
     await proc.WaitForExitAsync();
     var (stdout, stderr) = CollectPipeOutputs(pipeChunks);
-    return CommandExecution.FromPipeStream(stdout, stderr, proc.ExitCode, pipeChunks);
+    // The author asked for the stop, so the exit code it causes is no failure.
+    return CommandExecution.FromPipeStream(stdout, stderr, stopped ? 0 : proc.ExitCode, pipeChunks);
+}
+
+static void PrintTimeoutStop(double seconds) =>
+    Console.Error.WriteLine($"  stopped after {seconds.ToString("0.###", CultureInfo.InvariantCulture)} s (timeout)");
+
+/// <summary>
+/// Runs a non-interactive PTY step that sets <c>keys</c> or <c>timeout</c>: writes each key to the PTY at its
+/// time while recording the output, and stops the command when its timeout passes. Steps without either keep
+/// <see cref="PtyCapture"/>, so their recordings stay as they were.
+/// </summary>
+static async Task<CommandExecution> RunPtyWithInputAsync(StepStart step, string? cwd, ShellLaunch shell, bool verbose)
+{
+    if (!Pty.IsSupported)
+        throw new InvalidOperationException("PTY is not supported on this operating system.");
+
+    var session = Pty.Start(new PtyStartInfo
+    {
+        FileName = shell.FileName,
+        Arguments = BuildPtyShellArguments(shell, step.Command.Cmd),
+        WorkingDirectory = cwd,
+        Size = new(step.Width, step.Height),
+        Environment = CreateChildEnvironmentOverlay(),
+        InheritCursor = step.PtyStartCursor is not null,
+    });
+    try
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var chunks = new List<PtyCaptureChunk>();
+        var pump = PumpPtyOutputAsync(session, chunks, stopwatch);
+        // As in RunCommandCoreAsync: ConPTY waits for this report before it draws, and consumes it before the child reads.
+        if (step.PtyStartCursor is { } cursor)
+            await session.WriteInputAsync($"\u001b[{cursor.Row};{cursor.Column}R", Encoding.UTF8);
+
+        var exit = session.WaitForExitAsync();
+        using var stopKeys = new CancellationTokenSource();
+        var keys = WriteKeysAsync(session, step.Keys, exit, stopwatch, stopKeys.Token);
+        var stopped = false;
+        if (step.Timeout is { } timeout)
+        {
+            var left = timeout - stopwatch.Elapsed.TotalSeconds;
+            var timedOut = left > 0
+                ? await Task.WhenAny(exit, Task.Delay(DelayOf(left))) != exit
+                : !exit.IsCompleted;
+            if (timedOut)
+            {
+                stopped = true;
+                stopKeys.Cancel();
+                PrintTimeoutStop(timeout);
+                await StopPtyChildAsync(session, exit);
+            }
+        }
+
+        var status = await exit;
+        stopKeys.Cancel();
+        try
+        {
+            await keys;
+        }
+        catch (OperationCanceledException)
+        {
+            // The command ended or was stopped before its last key.
+        }
+
+        // Output ends shortly after the child exits. A descendant that still holds the terminal would keep it open,
+        // and disposing the session hangs the terminal up, which ends it.
+        if (await Task.WhenAny(pump, Task.Delay(TimeSpan.FromSeconds(5))) != pump)
+            session.Dispose();
+        await pump;
+
+        if (verbose)
+            Console.Error.WriteLine($"scenetake: pty verbose: chunks={chunks.Count} keys={step.Keys.Count} stopped={stopped}");
+        return new CommandExecution(stopped ? 0 : status.ExitCode, true, "", "", ToTimedBytes(chunks), null, null);
+    }
+    finally
+    {
+        session.Dispose();
+    }
+}
+
+static async Task PumpPtyOutputAsync(PtySession session, List<PtyCaptureChunk> chunks, Stopwatch stopwatch)
+{
+    try
+    {
+        await foreach (var chunk in session.ReadOutputAsync().ConfigureAwait(false))
+            chunks.Add(new PtyCaptureChunk(stopwatch.Elapsed, chunk.Data.ToArray()));
+    }
+    catch (ObjectDisposedException)
+    {
+        // The session was disposed to end a descendant that kept the terminal open; the output read so far stays.
+    }
+}
+
+/// <summary>
+/// Writes each key at its time since the command started. Times are kept against the start, so a slow write does
+/// not push the later keys back. Stops when the command exits, as a person stops typing into a closed program.
+/// </summary>
+static async Task WriteKeysAsync(PtySession session, IReadOnlyList<ScenarioCast.KeyAction> keys, Task exit, Stopwatch stopwatch, CancellationToken cancel)
+{
+    var due = 0.0;
+    foreach (var key in keys)
+    {
+        due += key.Delay;
+        var wait = due - stopwatch.Elapsed.TotalSeconds;
+        if (wait > 0)
+        {
+            var delay = Task.Delay(DelayOf(wait), cancel);
+            if (await Task.WhenAny(delay, exit) == exit)
+                return;
+            await delay;
+        }
+
+        if (exit.IsCompleted)
+            return;
+        try
+        {
+            await session.WriteInputAsync(key.Text, Encoding.UTF8, cancel);
+        }
+        catch (IOException)
+        {
+            // The command closed its terminal as the key went out.
+            if (await ExitsSoonAsync(exit))
+                return;
+            throw;
+        }
+    }
+}
+
+/// <summary>Whether a command that a write to its terminal just failed for exits within a second.</summary>
+static async Task<bool> ExitsSoonAsync(Task exit) =>
+    await Task.WhenAny(exit, Task.Delay(TimeSpan.FromSeconds(1))) == exit;
+
+/// <summary>A wait in seconds as a delay that Task.Delay accepts: about 24 days at most, which a recording never reaches.</summary>
+static TimeSpan DelayOf(double seconds) =>
+    seconds * 1000 >= int.MaxValue ? TimeSpan.FromMilliseconds(int.MaxValue) : TimeSpan.FromSeconds(Math.Max(seconds, 0));
+
+/// <summary>
+/// Stops a PTY step's command as a person would: Ctrl+C first, so a TUI can leave the alternate screen and restore
+/// the terminal, which the recording then shows. A command that is still running after
+/// <see cref="ScenarioCast.TimeoutInterruptGrace"/> seconds gets SIGTERM, and a second later it is ended.
+/// </summary>
+static async Task StopPtyChildAsync(PtySession session, Task exit)
+{
+    try
+    {
+        await session.WriteInputAsync("\u0003", Encoding.UTF8);
+    }
+    catch (IOException)
+    {
+        // It closed its terminal just as the timeout passed.
+        if (await ExitsSoonAsync(exit))
+            return;
+        throw;
+    }
+
+    if (await Task.WhenAny(exit, Task.Delay(TimeSpan.FromSeconds(ScenarioCast.TimeoutInterruptGrace))) == exit)
+        return;
+
+    try
+    {
+        session.Kill(PtySignal.Terminate);
+        if (await Task.WhenAny(exit, Task.Delay(TimeSpan.FromSeconds(1))) == exit)
+            return;
+        session.Kill();
+    }
+    catch (InvalidOperationException)
+    {
+        // It exited between the checks.
+    }
 }
 
 static bool IsPowerShellLaunch(ShellLaunch shell) =>

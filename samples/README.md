@@ -31,7 +31,8 @@ Demos of popular terminal tools, for the README gallery and the playground. They
 | devtools | `bat`, `git log --graph`, and `jq` in color, Windows window chrome | [devtools.yaml](showcase/devtools.yaml) | [cast](showcase/devtools.cast) · [svg](showcase/devtools.svg) |
 | logo | `figlet` with animated `lolcat`, and `toilet` | [logo.yaml](showcase/logo.yaml) | [cast](showcase/logo.cast) · [svg](showcase/logo.svg) |
 | sl | The steam locomotive, drawn with curses | [sl.yaml](showcase/sl.yaml) | [cast](showcase/sl.cast) · [svg](showcase/sl.svg) |
-| nyancat | A full-screen truecolor animation | [nyancat.yaml](showcase/nyancat.yaml) | [cast](showcase/nyancat.cast) · [svg](showcase/nyancat.svg) |
+| nyancat | A full-screen truecolor animation, stopped by `timeout` | [nyancat.yaml](showcase/nyancat.yaml) | [cast](showcase/nyancat.cast) · [svg](showcase/nyancat.svg) |
+| vim | `vim` edited by `keys`, then `git diff` | [vim.yaml](showcase/vim.yaml) | [cast](showcase/vim.cast) · [svg](showcase/vim.svg) |
 
 ## Regenerate
 

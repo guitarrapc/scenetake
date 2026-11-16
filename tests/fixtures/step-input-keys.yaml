@@ -1,0 +1,13 @@
+title: "step input: keys"
+width: 60
+height: 8
+shell: bash
+
+steps:
+  # read answers from what keys types into the PTY, so the cast shows that the keys arrived.
+  - run: read -r -p "name? " name; echo "hello:$name"
+    pty: true
+    keys:
+      - sleep: 0.3
+        type: "abc"
+      - key: enter

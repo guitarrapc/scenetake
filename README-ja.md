@@ -64,8 +64,10 @@ SVG 出力ではフォント、ライト/ダークテーマ、ウィンドウ枠
 | ![](samples/showcase/fetch.svg) | ![](samples/showcase/devtools.svg) |
 | [**figlet、lolcat、toilet**](samples/showcase/logo.yaml) | [**sl**](samples/showcase/sl.yaml) |
 | ![](samples/showcase/logo.svg) | ![](samples/showcase/sl.svg) |
+| [**`keys` で操作する vim と git diff**](samples/showcase/vim.yaml) | |
+| ![](samples/showcase/vim.svg) | |
 
-[nyancat](samples/showcase/nyancat.yaml)（96 × 26 セルのトゥルーカラーアニメーション）:
+[nyancat](samples/showcase/nyancat.yaml)（96 × 26 セルのトゥルーカラーアニメーション、`timeout` で停止）:
 
 ![](samples/showcase/nyancat.svg)
 
@@ -346,6 +348,31 @@ scenetake はすべてのコマンドを `COLORTERM=truecolor` 付きで実行�
 
 録画は DECDLD ソフトフォントも描画しますが、PTY の内側のプログラムからはそれを確かめられません。シナリオで指定してください。たとえば `matrix --mode movie --soft-font` です。
 
+キーを押すまで終わらない TUI や、メニューを選ぶデモは `keys` で操作を書けるので、録画中にキーボードの前にいる必要はありません。`timeout` は終わらないコマンドを止めます。PTY ではまず Ctrl+C を押すので、プログラムは画面を元に戻せます。
+
+```yaml
+steps:
+  - run: vim greet.py
+    pty: true
+    timeout: 30             # 保険。30 秒たったら Ctrl+C
+    keys:                   # 上から順に PTY へ書き込む
+      - sleep: 1.5          # 先に待つ秒数
+        type: "/return\n"   # 文字列。タイピングの間隔で 1 文字ずつ送る。改行は Enter
+      - type: "O# Say hello"
+      - key: escape         # enter、tab、up、page-down、f1、ctrl+c、alt+x など
+      - type: ":wq\n"
+  - run: nyancat
+    pty: true
+    timeout: 5              # nyancat は止めるまで動き続ける
+```
+
+| 種類 | 使えるキー名（大文字小文字は区別しない） |
+| --- | --- |
+| 名前付き | `enter`、`tab`、`space`、`backspace`、`escape`（`esc`）、`up`、`down`、`left`、`right`、`home`、`end`、`page-up`、`page-down`、`insert`、`delete`、`f1`〜`f12` |
+| 組み合わせ | `ctrl+` と英字 1 文字（例：`ctrl+c`）、`alt+` と ASCII 文字 1 文字（例：`alt+x`） |
+
+[samples/showcase/vim.yaml](samples/showcase/vim.yaml) と [spec_pty.md](.github/docs/spec_pty.md#keys-and-timeout) の Keys and timeout を参照してください。
+
 ### 対話型アプリケーション出力
 
 対話型アプリケーション（`vim`、`copilot` など）をキャプチャする場合、`pty: true` と `interactive: true` を指定します。PTY が有効になり、子プロセスでの対話を可能にします。`normalize-typing: true` を指定すると、バナーやヘルプなどの出力は実時間のまま、ユーザー入力のタイピングだけを読みやすく再タイミングします。
@@ -450,6 +477,15 @@ steps:
   - name: "pty demo"
     run: echo "This command runs in a PTY, so output appears immediately and can include interactive features like colors and progress bars."
     pty: true
+
+  - name: "keys and timeout"
+    run: read -r -p "Your name? " name; echo "Hello, $name"
+    pty: true                    # keys need a PTY to type into
+    timeout: 10                  # seconds; then Ctrl+C, as a person would press it
+    keys:                        # sleep (seconds), then type (text) or key (enter, up, esc, ctrl+c, f1...)
+      - sleep: 0.5
+        type: "scenetake"
+      - key: enter
 
   - name: "run-highlight colors the typed command"
     run: printf 'done\n'

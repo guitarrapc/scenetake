@@ -31,7 +31,8 @@ scenetake のサンプル集です。各シナリオの**目的**と**生成物*
 | devtools | `bat`、`git log --graph`、`jq` のカラー出力、Windows のウィンドウ枠 | [devtools.yaml](showcase/devtools.yaml) | [cast](showcase/devtools.cast) · [svg](showcase/devtools.svg) |
 | logo | `figlet` と動く `lolcat`、`toilet` | [logo.yaml](showcase/logo.yaml) | [cast](showcase/logo.cast) · [svg](showcase/logo.svg) |
 | sl | curses で描く SL | [sl.yaml](showcase/sl.yaml) | [cast](showcase/sl.cast) · [svg](showcase/sl.svg) |
-| nyancat | 全画面のトゥルーカラーアニメーション | [nyancat.yaml](showcase/nyancat.yaml) | [cast](showcase/nyancat.cast) · [svg](showcase/nyancat.svg) |
+| nyancat | 全画面のトゥルーカラーアニメーション、`timeout` で停止 | [nyancat.yaml](showcase/nyancat.yaml) | [cast](showcase/nyancat.cast) · [svg](showcase/nyancat.svg) |
+| vim | `keys` で `vim` を編集し、`git diff` で確認 | [vim.yaml](showcase/vim.yaml) | [cast](showcase/vim.cast) · [svg](showcase/vim.svg) |
 
 ## 再生成
 
