@@ -15,6 +15,7 @@ scenetake records scenarios, converts casts to SVG or mp4, and creates starter Y
 | `scenetake mp4 <input.cast> [output]` | Convert an existing cast to mp4 (needs ffmpeg. See [spec_mp4.md](spec_mp4.md)) |
 | `scenetake png <input.cast> [output]` | Draw one screen of an existing cast as a PNG (see [spec_png.md](spec_png.md)) |
 | `scenetake gif <input.cast> [output]` | Convert an existing cast to an animated GIF (needs ffmpeg. See [spec_gif.md](spec_gif.md)) |
+| `scenetake capture [options] -- <command>` | Record one command without a scenario file. See Capture below. |
 | `scenetake init [--shell bash\|pwsh\|powershell] [scenario.yaml]` | Create a commented starter scenario file |
 | `scenetake --help` | Print every command and option, with its range and default |
 | `scenetake --version` | Print version |
@@ -177,6 +178,17 @@ Previously, cast parsing reported a JSON error before the hint. Failed conversio
 | `--strict` and a recorded step exited non-zero without `continue-on-error: true` | `1`, with nothing written, after `post` has run (a failing `post` returns its own code) |
 
 Without `--strict`, recorded step exit codes do not affect the process exit code. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
+
+## Capture
+
+`scenetake capture [options] -- <command>` (or `scenetake capture [options] "<command>"`) records one command without a scenario file.
+
+- **What it records.** The scenario a file with one step would hold: `title` and `run` are the command, the step runs with `pty: true` unless `--pipe` is given, and `--width`, `--height`, `--shell`, and `--timeout` set `width`, `height`, `shell`, and the step's `timeout`. The scenario path then records it as it records a file: the typed command, its output, masking, and every format and render option. The scenario's text seeds the typing, so the same capture types the same way.
+- **Its own options.** `--width N` and `--height N` (terminal columns and rows, `1`–`512`, default 80 × 24), `--shell NAME`, `--pipe`, `--timeout N` (seconds above 0), and `-o` / `--output NAME`, which names the files as the scenario path's `[output]` does. The scenario path's options all apply too.
+- **Defaults.** It writes an SVG and the cast next to it when no `--format` is given, because it is for a quick image. The files go to the current folder, named after the command without its folder and extension: `git status` writes `git.cast` and `git.svg`, `./build.sh` writes `build.*`, and a command that leaves no name writes `capture.*`.
+- **The command.** After `--` each word is the caller's shell's word, and capture quotes a word again when it holds a space, a quote, or another character a shell reads, for the shell that runs it: single quotes for POSIX shells (`'it'\''s'`) and PowerShell (`'it''s'`), double quotes for cmd. Without `--` the one argument is the command as it is typed and run, like a step's `run`. Both forms, or more than one argument, are an error.
+- **Why a PTY by default.** A one-command capture is usually a tool's colored output, which most tools print only to a terminal. A command that waits for input in a PTY needs `--timeout`, or a scenario with `keys`.
+- **Why it is a scenario.** Building the one-step scenario keeps every option, the masking, the outputs file, and the cast the same as for a file, with no second recording path. A capture that needs more, such as several commands, typing settings, or keys, becomes a scenario file.
 
 ## Init
 

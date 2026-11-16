@@ -163,6 +163,10 @@ scenetake scenario.yaml
 # Generate cast and animated SVG in one command
 scenetake --format svg scenario.yaml
 
+# Record one command without a scenario file: writes git.svg and git.cast here (run in a PTY, so colors show)
+scenetake capture -- git log --oneline -5
+scenetake capture --window macos --fit height -o help -- mycli --help
+
 # SVG styling: font, theme, window chrome, frame cap
 scenetake --format svg scenario.yaml --font-size 20 --font-family "'Noto Sans Mono', ui-monospace" --theme light --window macos
 

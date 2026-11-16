@@ -459,15 +459,25 @@ if (args[0] is "-h" or "--help")
     return 0;
 }
 
-if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runStyle, out var runStillAt, out var runError))
+if (args[0] is "capture" && args.Length > 1 && args[1] is "-h" or "--help")
+{
+    PrintCaptureHelp();
+    return 0;
+}
+
+// `capture` comes here too: it records the one-step scenario that its command makes, without a file.
+if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runStyle, out var runStillAt, out var capture, out var runError))
 {
     Console.Error.WriteLine($"Error: {runError}");
-    PrintUsage();
+    if (args[0] is "capture")
+        PrintCaptureUsage();
+    else
+        PrintUsage();
     return 1;
 }
 
 var scenarioPath = Path.GetFullPath(scenarioArg);
-if (!File.Exists(scenarioPath))
+if (capture is null && !File.Exists(scenarioPath))
 {
     Console.Error.WriteLine($"Error: {FormatDisplayPath(scenarioPath)} not found");
     return 1;
@@ -480,12 +490,12 @@ var mp4Path = outputFormat == OutputFormat.Mp4 ? outputStem + ".mp4" : null;
 var pngPath = outputFormat == OutputFormat.Png ? outputStem + ".png" : null;
 var gifPath = outputFormat == OutputFormat.Gif ? outputStem + ".gif" : null;
 
-Console.Error.WriteLine($"Loading: {FormatDisplayPath(scenarioPath)}");
+Console.Error.WriteLine(capture is null ? $"Loading: {FormatDisplayPath(scenarioPath)}" : $"Capturing: {capture.CommandLine}");
 string yaml;
 Scenario scenario;
 try
 {
-    yaml = File.ReadAllText(scenarioPath, Encoding.UTF8);
+    yaml = capture?.Yaml ?? File.ReadAllText(scenarioPath, Encoding.UTF8);
     scenario = ParseScenario(yaml);
 }
 catch (Exception ex)
@@ -1128,12 +1138,17 @@ static bool TryParseRunArgs(
     out Mp4Options mp4Options,
     out StyleOptions style,
     out double? stillAt,
+    out CaptureRequest? capture,
     out string error)
 {
     scenarioPath = "";
     style = new StyleOptions();
     outputPath = null;
-    outputFormat = OutputFormat.Cast;
+    // `capture` records one command given here instead of a scenario file. It writes an SVG unless --format says
+    // otherwise: it is for a quick image, and the cast stays next to it for other formats.
+    var captureMode = args.Length > 0 && args[0] == "capture";
+    capture = captureMode ? new CaptureRequest() : null;
+    outputFormat = captureMode ? OutputFormat.Svg : OutputFormat.Cast;
     verbose = false;
     strict = false;
     fontSizeOverride = null;
@@ -1145,9 +1160,26 @@ static bool TryParseRunArgs(
     stillAt = null;
     error = "";
 
-    for (var i = 0; i < args.Length; i++)
+    for (var i = captureMode ? 1 : 0; i < args.Length; i++)
     {
         var arg = args[i];
+        if (capture is not null)
+        {
+            // Everything after -- is the command, word by word, so its own options are never read as scenetake's.
+            if (arg == "--")
+            {
+                capture.Words = args[(i + 1)..];
+                break;
+            }
+
+            if (TryConsumeCaptureArg(args, ref i, capture, ref outputPath, out error))
+            {
+                if (error.Length != 0)
+                    return false;
+                continue;
+            }
+        }
+
         if (arg == "--verbose")
         {
             verbose = true;
@@ -1244,6 +1276,18 @@ static bool TryParseRunArgs(
             return false;
         }
 
+        if (capture is not null)
+        {
+            if (capture.Command is not null)
+            {
+                error = $"capture takes one command: quote it as one argument, or put it after --: {arg}";
+                return false;
+            }
+
+            capture.Command = arg;
+            continue;
+        }
+
         if (scenarioPath.Length == 0)
         {
             scenarioPath = arg;
@@ -1309,10 +1353,87 @@ static bool TryParseRunArgs(
         return false;
     }
 
+    if (capture is not null)
+        return capture.TryFinish(out scenarioPath, out error);
+
     if (scenarioPath.Length != 0)
         return true;
 
     error = "scenario path is required";
+    return false;
+}
+
+/// <summary>
+/// The options only <c>capture</c> takes: the terminal's <c>--width</c> and <c>--height</c>, <c>--shell</c>,
+/// <c>--timeout</c>, <c>--pipe</c>, and <c>-o</c> / <c>--output</c>, which names the files as the scenario path's
+/// [output] does.
+/// </summary>
+static bool TryConsumeCaptureArg(string[] args, ref int i, CaptureRequest capture, ref string? outputPath, out string error)
+{
+    error = "";
+    var arg = args[i];
+    if (arg == "--pipe")
+    {
+        if (capture.Pipe)
+            error = "duplicate option: --pipe";
+        capture.Pipe = true;
+        return true;
+    }
+
+    foreach (var (name, isWidth) in (ReadOnlySpan<(string, bool)>)[("--width", true), ("--height", false)])
+    {
+        if (!TryTakeOptionValue(args, ref i, name, out var value, out error))
+            continue;
+        if (error.Length != 0)
+            return true;
+
+        var (min, max) = isWidth
+            ? (RenderSettingsResolver.MinTerminalCols, RenderSettingsResolver.MaxTerminalCols)
+            : (RenderSettingsResolver.MinTerminalRows, RenderSettingsResolver.MaxTerminalRows);
+        if ((isWidth ? capture.Width : capture.Height) is not null)
+            error = $"duplicate option: {name}";
+        else if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var cells) || cells < min || cells > max)
+            error = $"{name} must be a whole number of {(isWidth ? "columns" : "rows")} from {min} to {max}: {value}";
+        else if (isWidth)
+            capture.Width = cells;
+        else
+            capture.Height = cells;
+        return true;
+    }
+
+    if (TryTakeOptionValue(args, ref i, "--shell", out var shell, out error))
+    {
+        if (error.Length == 0 && capture.Shell is not null)
+            error = "duplicate option: --shell";
+        else if (error.Length == 0)
+            capture.Shell = shell;
+        return true;
+    }
+
+    if (TryTakeOptionValue(args, ref i, "--timeout", out var timeout, out error))
+    {
+        if (error.Length != 0)
+            return true;
+        if (capture.Timeout is not null)
+            error = "duplicate option: --timeout";
+        else if (!double.TryParse(timeout, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds) || !double.IsFinite(seconds) || seconds <= 0)
+            error = $"--timeout must be seconds above 0, such as 5: {timeout}";
+        else
+            capture.Timeout = seconds;
+        return true;
+    }
+
+    foreach (var name in (ReadOnlySpan<string>)["-o", "--output"])
+    {
+        if (!TryTakeOptionValue(args, ref i, name, out var output, out error))
+            continue;
+        if (error.Length == 0 && outputPath is not null)
+            error = $"duplicate option: {name}";
+        else if (error.Length == 0)
+            outputPath = output;
+        return true;
+    }
+
     return false;
 }
 
@@ -2357,9 +2478,29 @@ static void PrintUsage()
     Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
     Console.Error.WriteLine("       scenetake png [--at TIME] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output.png]");
     Console.Error.WriteLine("       scenetake gif [--fps N] [--max-size WxH | --size WxH] [--no-loop] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output.gif]");
+    Console.Error.WriteLine("       scenetake capture [options] [-o output] -- <command>");
     Console.Error.WriteLine("       scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]");
     Console.Error.WriteLine("Run 'scenetake --help' for what each option does.");
 }
+
+static void PrintCaptureUsage()
+{
+    Console.Error.WriteLine("Usage: scenetake capture [--width N] [--height N] [--shell NAME] [--pipe] [--timeout N] [-o output] [options] -- <command>");
+    Console.Error.WriteLine("       scenetake capture [options] \"<command>\"");
+    Console.Error.WriteLine("Run 'scenetake capture --help' for what each option does.");
+}
+
+static void PrintCaptureHelp() =>
+    Console.Out.Write(
+        HelpText.CaptureIntro + "\n" +
+        HelpText.CaptureOptions + "\n" +
+        HelpText.Recording(capture: true) + "\n" +
+        HelpText.Render(scenario: true) + "\n" +
+        HelpText.SvgOptions + "\n" +
+        HelpText.StillOptions + "\n" +
+        HelpText.Mp4Options + "\n" +
+        HelpText.GifOptions + "\n" +
+        HelpText.Environment);
 
 static void PrintGifUsage()
 {
@@ -3191,7 +3332,7 @@ static void PrintHelp() =>
         $"scenetake {GetAppVersion()}\n" +
         HelpText.Intro + "\n" +
         HelpText.Commands + "\n" +
-        HelpText.Recording + "\n" +
+        HelpText.Recording() + "\n" +
         HelpText.Render(scenario: true) + "\n" +
         HelpText.SvgOptions + "\n" +
         HelpText.StillOptions + "\n" +
@@ -3305,6 +3446,148 @@ sealed class StyleOptions
         new(WindowTitle, Background, Margin, Padding, Opacity, Blur, Loop, EndHold, FadeOut, Fit, CropTop, CropBottom, CropLeft, CropRight);
 }
 
+/// <summary>
+/// <c>scenetake capture</c>: one command recorded without a YAML file. It becomes the scenario that a file with one
+/// step would hold, and the scenario path records that as it records a file: the typed command, its output, masking,
+/// and every output format. The command runs in a PTY unless <c>--pipe</c> is given, so tools color their output
+/// as they do in a terminal.
+/// </summary>
+sealed class CaptureRequest
+{
+    /// <summary>The command as one argument, as a step's <c>run</c> holds it.</summary>
+    internal string? Command { get; set; }
+
+    /// <summary>The command's words after <c>--</c>, which the caller's shell already split.</summary>
+    internal string[]? Words { get; set; }
+
+    internal int? Width { get; set; }
+    internal int? Height { get; set; }
+    internal string? Shell { get; set; }
+    internal double? Timeout { get; set; }
+    internal bool Pipe { get; set; }
+
+    /// <summary>The command line that the recording types and the shell runs.</summary>
+    internal string CommandLine { get; private set; } = "";
+
+    /// <summary>The scenario as YAML. Its text seeds the typing, as a file's does, so the same capture types the same way.</summary>
+    internal string Yaml { get; private set; } = "";
+
+    /// <summary>
+    /// Builds the scenario, and the path a scenario file for it would have: the files are written next to it, in the
+    /// current folder, named after the command (<c>git status</c> writes <c>git.cast</c> and <c>git.svg</c>).
+    /// </summary>
+    internal bool TryFinish(out string scenarioPath, out string error)
+    {
+        scenarioPath = "";
+        error = "";
+        if (Command is not null && Words is not null)
+        {
+            error = $"capture takes one command: give it as one argument or after --, not both: {Command}";
+            return false;
+        }
+
+        CommandLine = Words is not null ? JoinWords(Words) : Command ?? "";
+        if (string.IsNullOrWhiteSpace(CommandLine))
+        {
+            error = "capture needs a command: scenetake capture [options] -- <command>";
+            return false;
+        }
+
+        var yaml = new StringBuilder();
+        yaml.Append("title: ").Append(QuoteYaml(CommandLine)).Append('\n');
+        if (Width is int width)
+            yaml.Append("width: ").Append(width.ToString(CultureInfo.InvariantCulture)).Append('\n');
+        if (Height is int height)
+            yaml.Append("height: ").Append(height.ToString(CultureInfo.InvariantCulture)).Append('\n');
+        if (Shell is not null)
+            yaml.Append("shell: ").Append(QuoteYaml(Shell)).Append('\n');
+        yaml.Append("steps:\n  - run: ").Append(QuoteYaml(CommandLine)).Append('\n');
+        if (!Pipe)
+            yaml.Append("    pty: true\n");
+        if (Timeout is double timeout)
+            yaml.Append("    timeout: ").Append(timeout.ToString("R", CultureInfo.InvariantCulture)).Append('\n');
+        Yaml = yaml.ToString();
+
+        scenarioPath = Path.Combine(Directory.GetCurrentDirectory(), OutputName() + ".yaml");
+        return true;
+    }
+
+    /// <summary>
+    /// The words as one command line for the shell that runs it. A word with a space, a quote, or another character a
+    /// shell reads is quoted for that shell, so it reaches the command as the caller's shell passed it.
+    /// </summary>
+    private string JoinWords(string[] words)
+    {
+        var shell = Shell ?? (OperatingSystem.IsWindows() ? "pwsh" : Environment.GetEnvironmentVariable("SHELL") ?? "bash");
+        var name = Path.GetFileNameWithoutExtension(shell.Trim()).ToLowerInvariant();
+        var line = new StringBuilder();
+        foreach (var word in words)
+        {
+            if (line.Length > 0)
+                line.Append(' ');
+            if (word.Length > 0 && IsPlainWord(word))
+                line.Append(word);
+            else if (name is "pwsh" or "powershell")
+                line.Append('\'').Append(word.Replace("'", "''")).Append('\'');
+            else if (name is "cmd")
+                line.Append('"').Append(word.Replace("\"", "\"\"")).Append('"');
+            else
+                line.Append('\'').Append(word.Replace("'", "'\\''")).Append('\'');
+        }
+
+        return line.ToString();
+
+        // Letters, digits, and the punctuation that no shell reads specially in a word.
+        static bool IsPlainWord(string word)
+        {
+            foreach (var c in word)
+            {
+                if (!char.IsAsciiLetterOrDigit(c) && "-_./=:,+@%^".IndexOf(c) < 0)
+                    return false;
+            }
+
+            return true;
+        }
+    }
+
+    /// <summary>The command's name without its folder and extension, such as <c>git</c> or <c>build</c>, or <c>capture</c>.</summary>
+    private string OutputName()
+    {
+        var first = Words is { Length: > 0 } ? Words[0] : CommandLine.TrimStart().Split([' ', '\t'], 2)[0].Trim('"', '\'');
+        var file = Path.GetFileNameWithoutExtension(first.Replace('\\', '/').Split('/')[^1]);
+        var name = new StringBuilder();
+        foreach (var c in file)
+        {
+            if (char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.')
+                name.Append(c);
+        }
+
+        var trimmed = name.ToString().Trim('.');
+        return trimmed.Length > 0 ? trimmed : "capture";
+    }
+
+    /// <summary>A YAML double-quoted scalar.</summary>
+    private static string QuoteYaml(string text)
+    {
+        var quoted = new StringBuilder("\"");
+        foreach (var c in text)
+        {
+            quoted.Append(c switch
+            {
+                '\\' => "\\\\",
+                '"' => "\\\"",
+                '\n' => "\\n",
+                '\r' => "\\r",
+                '\t' => "\\t",
+                < ' ' => $"\\x{(int)c:x2}",
+                _ => c.ToString(),
+            });
+        }
+
+        return quoted.Append('"').ToString();
+    }
+}
+
 sealed class Mp4Options
 {
     internal int? Fps { get; set; }
@@ -3360,20 +3643,62 @@ static class HelpText
           scenetake mp4 [options] <input.cast> [output]  Convert a cast file to an mp4 (needs ffmpeg)
           scenetake png [options] <input.cast> [output]  Draw one screen of a cast file as a PNG
           scenetake gif [options] <input.cast> [output]  Convert a cast file to a GIF (needs ffmpeg)
+          scenetake capture [options] -- <command>       Record one command without a scenario file
           scenetake init [--shell NAME] [scenario.yaml]  Write a commented starter scenario
           scenetake --version                            Print the version
-          scenetake svg|mp4|png|gif|init --help          Show the options of that command
+          scenetake svg|mp4|png|gif|capture|init --help  Show the options of that command
 
         [output] names the files without an extension: 'out' writes out.cast and out.svg, and an
         extension given is replaced. Without it, the files are named after the scenario, next to it.
 
         """;
 
-    internal const string Recording = """
-        Recording:
-          --format cast|svg|mp4|png|gif
-                                   Write only the cast (cast, the default), or the cast and an SVG,
-                                   an mp4, a PNG, or a GIF rendered from it
+    internal const string CaptureIntro = """
+        Usage: scenetake capture [options] -- <command>
+               scenetake capture [options] "<command>"
+
+        Records one command without a scenario file, as a scenario with that one step would: the
+        command is typed, then its output follows. Without --format it writes an SVG, and the cast
+        next to it. The files go to the current folder, named after the command ('git status'
+        writes git.cast and git.svg), unless -o names them.
+
+        """;
+
+    internal const string CaptureOptions = """
+        Capture:
+          --width N                Terminal columns, 1-512 (default 80)
+          --height N               Terminal rows, 1-512 (default 24)
+          --shell NAME             Shell that runs the command: bash, pwsh, powershell, or a path
+                                   (default: $SHELL or bash, pwsh on Windows)
+          --pipe                   Capture the output through pipes instead of a PTY. In a PTY, the
+                                   default, tools see a terminal and color their output.
+          --timeout N              Stop the command after N seconds, as a step's timeout does, for a
+                                   command that does not end by itself (default: none)
+          -o, --output NAME        Name the files without an extension: '-o demo' writes demo.cast
+                                   and demo.svg
+
+        """;
+
+    /// <summary>The recording options. <c>capture</c> writes an SVG when no format is given, a scenario only the cast.</summary>
+    internal static string Recording(bool capture = false) =>
+        (capture
+            ? """
+                Recording:
+                  --format cast|svg|mp4|png|gif
+                                           Write the cast and an SVG (svg, the default), an mp4, a PNG, or a
+                                           GIF rendered from it, or only the cast (cast)
+
+                """
+            : """
+                Recording:
+                  --format cast|svg|mp4|png|gif
+                                           Write only the cast (cast, the default), or the cast and an SVG,
+                                           an mp4, a PNG, or a GIF rendered from it
+
+                """)
+        + RecordingRest;
+
+    private const string RecordingRest = """
           --strict                 Stop at the first step that exits non-zero unless it sets
                                    'continue-on-error: true'. Write no output and run post.
                                    Exit 1. If a post command fails, return that command's exit code.

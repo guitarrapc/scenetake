@@ -163,6 +163,10 @@ scenetake scenario.yaml
 # cast とアニメーション SVG を一度に生成
 scenetake --format svg scenario.yaml
 
+# シナリオファイルなしで 1 コマンドを録画する。この場所に git.svg と git.cast を書き出す（PTY で動くので色も出る）
+scenetake capture -- git log --oneline -5
+scenetake capture --window macos --fit height -o help -- mycli --help
+
 # SVG のスタイル: フォント、テーマ、ウィンドウ枠、フレーム上限
 scenetake --format svg scenario.yaml --font-size 20 --font-family "'Noto Sans Mono', ui-monospace" --theme light --window macos
 

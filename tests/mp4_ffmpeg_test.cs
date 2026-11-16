@@ -41,6 +41,7 @@ try
     failures += Run("CliRulesForGif", () => CliRulesForGif(scenetake, repoRoot, work));
     failures += Run("HelpDescribesEveryOption", () => HelpDescribesEveryOption(scenetake, repoRoot, work));
     failures += Run("InitWritesStepsForItsShell", () => InitWritesStepsForItsShell(scenetake, work));
+    failures += Run("CaptureRecordsOneCommand", () => CaptureRecordsOneCommand(scenetake, work));
     failures += Run("SubcommandsNeverReplaceTheirInput", () => SubcommandsNeverReplaceTheirInput(scenetake, repoRoot, work));
     failures += Run("ScenarioChecksOutputPaths", () => ScenarioChecksOutputPaths(scenetake, repoRoot, work));
     failures += Run("ScenarioErrorsStopBeforePre", () => ScenarioErrorsStopBeforePre(scenetake, repoRoot, work));
@@ -712,6 +713,52 @@ static bool StaleMp4GoesWhenCastIsBad(string scenetake, string repoRoot, string 
     return exit == 1 && stderr.Contains("cast header is missing terminal size", StringComparison.Ordinal) && !File.Exists(stale);
 }
 
+// `capture` records one command without a scenario file: an SVG and its cast by default, named after the command in
+// the current folder, the command run in a PTY unless --pipe, and words after -- quoted again for the shell.
+static bool CaptureRecordsOneCommand(string scenetake, string work)
+{
+    var directory = Directory.CreateDirectory(Path.Combine(work, "capture")).FullName;
+    var ok = true;
+
+    var (pipeExit, pipeStderr) = Exec(scenetake, directory, ["capture", "--pipe", "--format", "cast", "--", "echo", "hello"]);
+    var pipeCast = Path.Combine(directory, "echo.cast");
+    var pipeText = File.Exists(pipeCast) ? File.ReadAllText(pipeCast) : "";
+    ok &= Check(pipeExit == 0 && pipeText.Contains("\"title\":\"echo hello\"", StringComparison.Ordinal) && pipeText.Contains("hello\\r\\n", StringComparison.Ordinal)
+        && !File.Exists(Path.Combine(directory, "echo.svg")), $"pipe capture: exit {pipeExit}{Environment.NewLine}{pipeStderr}{pipeText}");
+
+    var (svgExit, svgStderr) = Exec(scenetake, directory, ["capture", "-o", "greet", "echo hi"]);
+    ok &= Check(svgExit == 0 && File.Exists(Path.Combine(directory, "greet.cast")) && File.Exists(Path.Combine(directory, "greet.svg"))
+        && svgStderr.Contains("Capturing: echo hi", StringComparison.Ordinal), $"default SVG in a PTY: exit {svgExit}{Environment.NewLine}{svgStderr}");
+
+    var (wordsExit, wordsStderr) = Exec(scenetake, directory, ["capture", "--pipe", "--format", "cast", "-o", "words", "--", "echo", "a b", "it's"]);
+    var expectedLine = OperatingSystem.IsWindows() ? "Capturing: echo 'a b' 'it''s'" : "Capturing: echo 'a b' 'it'\\''s'";
+    var wordsText = File.Exists(Path.Combine(directory, "words.cast")) ? File.ReadAllText(Path.Combine(directory, "words.cast")) : "";
+    ok &= Check(wordsExit == 0 && wordsStderr.Contains(expectedLine, StringComparison.Ordinal) && wordsText.Contains("a b", StringComparison.Ordinal)
+        && wordsText.Contains("it's", StringComparison.Ordinal), $"words: exit {wordsExit}{Environment.NewLine}{wordsStderr}{wordsText}");
+
+    foreach (var (args, error) in new (string[] Args, string Error)[]
+    {
+        (["capture"], "capture needs a command"),
+        (["capture", "a", "b"], "capture takes one command: quote it as one argument, or put it after --: b"),
+        (["capture", "one", "--", "two"], "give it as one argument or after --, not both"),
+        (["capture", "--height", "600", "--", "x"], "--height must be a whole number of rows from 1 to 512: 600"),
+        (["capture", "--timeout", "0", "--", "x"], "--timeout must be seconds above 0"),
+    })
+    {
+        var (exit, stderr) = Exec(scenetake, directory, args);
+        ok &= Check(exit == 1 && stderr.Contains(error, StringComparison.Ordinal), $"{string.Join(' ', args)}: exit {exit}{Environment.NewLine}{stderr}");
+    }
+
+    return ok;
+
+    static bool Check(bool condition, string message)
+    {
+        if (!condition)
+            Console.Error.WriteLine($"  {message}");
+        return condition;
+    }
+}
+
 static bool InitWritesStepsForItsShell(string scenetake, string work)
 {
     // init writes its steps for one shell. --shell picks it and sets shell: in the file, so the steps never
@@ -1065,15 +1112,18 @@ static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string w
     // on stderr, and points to --help. The option lists here follow the parsers, so an option added there
     // and left out of the help fails this test.
     string[] still = ["--font-size N", "--font-family FAMILIES", "--theme NAME", "--window none|macos|windows",
-        "--window-title TEXT", "--background VALUE", "--margin N", "--padding N", "--opacity N", "--blur N"];
+        "--window-title TEXT", "--background VALUE", "--margin N", "--padding N", "--opacity N", "--blur N",
+        "--fit none|height|width|both", "--crop-top N", "--crop-bottom N", "--crop-left N", "--crop-right N"];
     string[] render = [.. still, "--end-hold N", "--fade-out N"];
     string[] svg = ["--max-fps N", "--no-loop", "--loop ", "--at TIME"];
     string[] mp4 = ["--fps N", "--crf N", "--max-size WxH", "--size WxH", "--font-file PATH", "SCENETAKE_FFMPEG"];
     string[] png = ["--at TIME", "--font-file PATH", "SCENETAKE_FFMPEG"];
     string[] gif = ["--fps N", "--max-size WxH", "--size WxH", "--no-loop", "--loop ", "--font-file PATH", "SCENETAKE_FFMPEG"];
+    string[] capture = ["--width N", "--height N", "--shell NAME", "--pipe", "--timeout N", "-o, --output NAME", "(svg, the default)"];
     var commands = new (string[] Args, string[] Options)[]
     {
-        (["--help"], ["--format cast|svg|mp4|png|gif", "--strict", "--verbose", .. render, .. svg, .. mp4, .. gif, "scenetake svg", "scenetake mp4", "scenetake png", "scenetake gif", "scenetake init", "--version"]),
+        (["--help"], ["--format cast|svg|mp4|png|gif", "--strict", "--verbose", .. render, .. svg, .. mp4, .. gif, "scenetake svg", "scenetake mp4", "scenetake png", "scenetake gif", "scenetake capture", "scenetake init", "--version"]),
+        (["capture", "--help"], [.. capture, "--strict", "--verbose", .. render, .. svg, .. mp4, .. gif]),
         (["-h"], ["--format cast|svg|mp4|png|gif", "--strict", "--verbose"]),
         (["svg", "--help"], [.. render, .. svg]),
         (["mp4", "--help"], [.. render, .. mp4]),
@@ -1115,6 +1165,7 @@ static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string w
         (["png", "--fps", "30", "x.cast"], "Run 'scenetake png --help'"),
         (["gif", "--crf", "20", "x.cast"], "Run 'scenetake gif --help'"),
         (["init", "--shell", "zsh"], "Run 'scenetake init --help'"),
+        (["capture", "--width", "0", "--", "echo"], "Run 'scenetake capture --help'"),
     })
     {
         var (exit, stdout, stderr) = ExecCapture(scenetake, repoRoot, args);
@@ -1135,7 +1186,7 @@ static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string w
         ok = false;
     }
 
-    foreach (var command in new[] { new[] { "--help" }, ["svg", "--help"], ["mp4", "--help"], ["png", "--help"], ["gif", "--help"] })
+    foreach (var command in new[] { new[] { "--help" }, ["svg", "--help"], ["mp4", "--help"], ["png", "--help"], ["gif", "--help"], ["capture", "--help"] })
     {
         var (_, help, _) = ExecCapture(scenetake, repoRoot, command);
         var missing = names.Where(name => !System.Text.RegularExpressions.Regex.IsMatch(help, $@"(?<![\w-]){System.Text.RegularExpressions.Regex.Escape(name)}(?![\w-])")).ToList();
