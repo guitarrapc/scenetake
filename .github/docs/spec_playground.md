@@ -51,6 +51,8 @@ The playground is a .NET WebAssembly build of the same source files that the CLI
 ### Producing
 
 - When the environment variable `SCENETAKE_OUTPUTS` names a file, the scenario path writes the outputs file there, from the same run as the cast. The file is written only when the cast is written. The variable is not listed in `--help`, because it is for maintainers. `samples/regenerate.cs` sets it for every sample. A sample recorded by hand, such as `password-prompt`, sets it by hand.
+- The showcase samples in `samples/showcase/` run tools that a Windows maintainer seldom has, such as fastfetch, bat, sl, and nyancat. `samples/showcase/record.sh` records them on Linux in a container built from `samples/showcase/Dockerfile`, with a Linux scenetake and `SCENETAKE_OUTPUTS`. `regenerate.cs` reads only `samples/*.yaml`, so it never tries to run them. The playground publishes both folders into one sample folder, and the publish fails when two samples share a name.
+- **Why a container.** It holds the tools at known versions and a small git project with fixed commit dates, so a new recording differs only where the tools changed. The README gallery shows these samples.
 - **Why the same run.** A cast and an outputs file from two runs can disagree: `curl` headers and `git log` dates change between runs. The playground would then not reproduce the committed sample.
 
 ### Contents
@@ -155,7 +157,7 @@ Below 960 px the panel comes after the editor and starts closed, unless a share 
 
 | Feature | Behavior |
 |---|---|
-| Sample selector | Lists each sample that has both a `.yaml` file and an `.outputs.json` file, with a short note on what it shows, such as `pty — a full-screen TUI in a PTY`. A sample without a note shows its name only. Selecting a sample loads both files. The default is `basic`. Reset loads the sample's YAML again. |
+| Sample selector | Lists each sample in `samples/` or `samples/showcase/` that has both a `.yaml` file and an `.outputs.json` file, with a short note on what it shows, such as `pty — a full-screen TUI in a PTY`. A sample without a note shows its name only. Selecting a sample loads both files. The default is `basic`. Reset loads the sample's YAML again. |
 | YAML editor | CodeMirror 5 in YAML mode. Without CodeMirror (a blocked CDN), a plain text area. |
 | Live render | Composes the cast and the SVG 500 ms after the last edit, at once after a paste. Editing never waits for a render. A result that arrives after a newer edit is dropped, and the newer state is rendered. |
 | Preview | Shows the SVG in an `<img>` element, as GitHub shows an SVG in a README. It fits the SVG to its width, but not so far that the terminal text is smaller than the editor's 13 px below 600 px, or 8 px on a wider screen: past that, the preview scrolls sideways. Replay restarts the animation. **Actual size** shows the SVG at its own width, and the preview scrolls sideways. **Full screen**, or a tap on the preview, shows the demo on the whole screen from its start (see below). The status line shows the render time and the cast and SVG sizes. |
@@ -232,7 +234,7 @@ The agg command runs agg in Docker, as the README does, so a reader needs no agg
 
 | Test | Checks |
 |---|---|
-| `SamplesReplayToCommittedCasts` | For each sample with an outputs file, the outputs file and the YAML give the committed `.cast` and `.svg` byte for byte, and every step is recorded |
+| `SamplesReplayToCommittedCasts` | For each sample with an outputs file, in `samples/` and `samples/showcase/`, the outputs file and the YAML give the committed `.cast` and `.svg` byte for byte, and every step is recorded |
 | `RecordedScenarioReplaysToSameCast` | With `SCENETAKE_BIN`, the CLI records `tests/fixtures/playground-replay.yaml` (instant and streamed pipe output, stderr, highlights, a repeated command, and OSC titles in pipe and PTY output) with `SCENETAKE_OUTPUTS`. The replay gives its cast and SVG byte for byte, and the outputs file holds no OSC text. |
 | `MaskedOscGivesSameFilteredEvents`, `MaskKeepsColorOscAndLength`, `MaskCarriesStateAcrossChunks`, `OutputsFileMasksPrivateOsc` | Masking keeps color OSCs and lengths, follows OSCs split between chunks, and gives the cast's filter the same result as the original bytes |
 | `OutputsFileRoundTripsExactly` | Times, bytes, cursors, and text survive a write and a read exactly; lines end with LF |

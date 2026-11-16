@@ -1,0 +1,18 @@
+title: "sl"
+width: 80
+height: 16
+shell: bash
+
+settings:
+  prompt: "$ "
+  typing-speed: 0.05
+  pre-delay: 0.6
+  post-delay: 1.5
+
+render:
+  window: macos
+
+steps:
+  # sl draws a train across the alternate screen with curses, and returns when it has passed.
+  - run: sl
+    pty: true

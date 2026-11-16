@@ -55,6 +55,20 @@ SVG 出力ではフォント、ライト/ダークテーマ、ウィンドウ枠
 | --- | --- |
 | ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
 
+## ギャラリー
+
+以下の録画は、どれも [`samples/showcase`](samples/showcase) のシナリオを Linux で実行したものです。[`record.sh`](samples/showcase/record.sh) が、ツールを入れたコンテナ（[`Dockerfile`](samples/showcase/Dockerfile)）の中で録画します。
+
+| [fastfetch](samples/showcase/fetch.yaml) | [bat、git、jq](samples/showcase/devtools.yaml) |
+| --- | --- |
+| ![](samples/showcase/fetch.svg) | ![](samples/showcase/devtools.svg) |
+| [**figlet、lolcat、toilet**](samples/showcase/logo.yaml) | [**sl**](samples/showcase/sl.yaml) |
+| ![](samples/showcase/logo.svg) | ![](samples/showcase/sl.svg) |
+
+[nyancat](samples/showcase/nyancat.yaml)（96 × 26 セルのトゥルーカラーアニメーション）:
+
+![](samples/showcase/nyancat.svg)
+
 ## モチベーション
 
 「コマンドをキャプチャしたいけど、コマンドのタイピングを頑張りたくない」、scenetakeはこんな動機で作ったツールです。asciinemaの周辺に様々なツールがありますが、シェルスクリプトに寄っていたり、asciinema 本体を前提にしていたり、実行パスがcastに出力されたり、実行せずにそれっぽい出力だけを作るものだったりして、どれも欲しい形とはずれています。欲しいのは、シナリオを素直に書けて、コマンドを実際に実行し、その結果から cast ファイルを直接生成できるものです。

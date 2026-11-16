@@ -21,6 +21,18 @@ scenetake のサンプル集です。各シナリオの**目的**と**生成物*
 | [theme-windows](#theme-windows) | Windows ウィンドウ chrome | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
 | [resize](#resize) | ターミナル resize イベント（cast のみ） | [resize.cast](resize.cast) | [gif](resize.gif) · [svg](resize.svg) |
 
+### ショーケース
+
+よく知られたターミナルツールのデモです。README のギャラリーとプレイグラウンドで使います。ツールを入れたコンテナの中で、Linux で実行します（[再生成](#再生成)を参照）。
+
+| シナリオ | 目的 | 入力 | 出力 |
+|----------|------|------|------|
+| fetch | PTY で `fastfetch`、macOS のウィンドウ枠 | [fetch.yaml](showcase/fetch.yaml) | [cast](showcase/fetch.cast) · [svg](showcase/fetch.svg) |
+| devtools | `bat`、`git log --graph`、`jq` のカラー出力、Windows のウィンドウ枠 | [devtools.yaml](showcase/devtools.yaml) | [cast](showcase/devtools.cast) · [svg](showcase/devtools.svg) |
+| logo | `figlet` と動く `lolcat`、`toilet` | [logo.yaml](showcase/logo.yaml) | [cast](showcase/logo.cast) · [svg](showcase/logo.svg) |
+| sl | curses で描く SL | [sl.yaml](showcase/sl.yaml) | [cast](showcase/sl.cast) · [svg](showcase/sl.svg) |
+| nyancat | 全画面のトゥルーカラーアニメーション | [nyancat.yaml](showcase/nyancat.yaml) | [cast](showcase/nyancat.cast) · [svg](showcase/nyancat.svg) |
+
 ## 再生成
 
 リポジトリルートで実行します。
@@ -32,6 +44,14 @@ dotnet run samples/regenerate.cs
 # GIF は agg が必要（Docker 例。v3 cast は ghcr.io/asciinema/agg を使用）
 docker run --rm -v "$PWD:/data" ghcr.io/asciinema/agg \
   /data/samples/basic.cast /data/samples/basic.gif --last-frame-duration 0
+```
+
+`regenerate.cs` が読むのはこのフォルダのシナリオだけです。`showcase/` のシナリオは Linux のツールを使うため、`showcase/record.sh` が `showcase/Dockerfile` から作ったコンテナの中で録画します。Linux か、Docker のある WSL で実行してください。引数には linux-x64 の scenetake があるフォルダを渡します。
+
+```bash
+dotnet publish scenetake.cs -c Release -r linux-x64 --self-contained -p:PublishAot=false -p:PublishSingleFile=true -o ~/scenetake-linux
+bash samples/showcase/record.sh ~/scenetake-linux            # showcase のシナリオすべて
+bash samples/showcase/record.sh ~/scenetake-linux fetch sl   # 指定したものだけ
 ```
 
 ---

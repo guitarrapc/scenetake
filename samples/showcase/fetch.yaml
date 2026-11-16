@@ -1,0 +1,18 @@
+title: "fastfetch"
+width: 76
+height: 20
+shell: bash
+
+settings:
+  prompt: "$ "
+  typing-speed: 0.03
+  pre-delay: 0.6
+  post-delay: 3.0
+
+render:
+  window: macos
+
+steps:
+  # fastfetch prints colors only to a terminal, so it runs in a PTY. Its modules are in fastfetch.jsonc.
+  - run: fastfetch
+    pty: true

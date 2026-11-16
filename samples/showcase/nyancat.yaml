@@ -1,0 +1,16 @@
+title: "nyancat"
+width: 96
+height: 26
+shell: bash
+
+settings:
+  prompt: "$ "
+  typing-speed: 0.05
+  pre-delay: 0.6
+  post-delay: 1.0
+
+steps:
+  # nyancat runs until it is stopped; -f stops it after 60 frames (about 5 seconds). -n and -s leave out the
+  # timer and the window title.
+  - run: nyancat -n -s -f 60
+    pty: true

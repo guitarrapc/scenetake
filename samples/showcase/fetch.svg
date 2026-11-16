@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="797.92" height="466" viewBox="0 0 797.92 466" preserveAspectRatio="xMidYMid meet" role="img" aria-label="scenetake output">
+<style>
+text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
+text { dominant-baseline: alphabetic; }
+.bg,rect:not([class]) { shape-rendering: crispEdges; }
+.l { visibility: hidden; animation: 8.909s step-start infinite; }
+.c { fill: #d0d0d0; fill-opacity: 0.5; }
+.a{transform:translate(0,62.8px)}
+.e{transform:translate(0,182.8px)}
+.b{fill:#fafafa}
+.d{fill:#ce4e4f}
+@keyframes k{0.56124%{visibility:visible}}
+.m{animation-delay:1.1s;animation-name:k}
+@keyframes n{0.50511%{visibility:visible}}
+.o{animation-delay:1.15s;animation-name:n}
+@keyframes p{0.35919%{visibility:visible}}
+.q{animation-delay:1.195s;animation-name:p}
+@keyframes j{0.48266%{visibility:visible}}
+.r{animation-delay:1.227s;animation-name:j}
+@keyframes s{0.40409%{visibility:visible}}
+.t{animation-delay:1.27s;animation-name:s}
+.u{animation-delay:1.306s;animation-name:j}
+@keyframes v{0.49389%{visibility:visible}}
+.w{animation-delay:1.349s;animation-name:v}
+@keyframes x{0.28062%{visibility:visible}}
+.y{animation-delay:1.393s;animation-name:x}
+@keyframes z{0.25817%{visibility:visible}}
+.aa{animation-delay:1.418s;animation-name:z}
+@keyframes ab{16.17465%{visibility:hidden}to{visibility:visible}}
+.ab{animation-name:ab}
+@keyframes f{18.1614%{visibility:hidden}to{visibility:visible}}
+.f{animation-name:f}
+@keyframes ac{0.01123%{visibility:visible}}
+.h{animation-delay:1.618s;animation-name:ac}
+@keyframes i{18.17263%{visibility:hidden}to{visibility:visible}}
+.i{animation-name:i}
+@keyframes ad{59.08631%{visibility:hidden}to{visibility:visible}}
+.ad{animation-name:ad}
+@keyframes ae{0.24695%{visibility:visible}}
+.af{animation-delay:1.441s;animation-name:ae}
+@keyframes ag{1.73982%{visibility:visible}}
+.ah{animation-delay:1.463s;animation-name:ag}
+@keyframes ai{40.91369%{visibility:visible}}
+.aj{animation-delay:1.619s;animation-name:ai}
+.g{visibility:visible}
+</style>
+<defs>
+<filter id="window-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.22"/></filter>
+<rect id="c" class="c" width="9.92" height="20"/>
+<mask id="viewport-mask" x="0" y="0" width="797.92" height="466" maskUnits="userSpaceOnUse">
+<rect class="l g viewport-mask-0" x="12" y="46" width="773.92" height="408" fill="white"/>
+</mask>
+</defs>
+<rect class="l g viewport-chrome-0" x="12" y="12" width="773.92" height="442" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
+<path class="l g viewport-chrome-0" d="M 20,12 H 777.92 Q 785.92,12 785.92,20 V 46 H 12 V 20 Q 12,12 20,12 Z" fill="#323232"/>
+<line class="l g viewport-chrome-0" x1="12" y1="46" x2="785.92" y2="46" stroke="#1a1a1a" stroke-width="1"/>
+<circle class="l g viewport-chrome-0" cx="34" cy="29" r="8" fill="#ff5f57"/>
+<circle class="l g viewport-chrome-0" cx="60" cy="29" r="8" fill="#febc2e"/>
+<circle class="l g viewport-chrome-0" cx="86" cy="29" r="8" fill="#28c840"/>
+<g mask="url(#viewport-mask)" fill="#d0d0d0">
+<rect class="bg l g viewport-bg-0" x="12" y="46" width="773.92" height="408" fill="#282c34"/>
+<g class="l m"><text x="22" y="62.8">$</text><use href="#c" x="41.84" y="50"/></g>
+<g class="l o"><text x="22 41.84" y="62.8">$f</text><use href="#c" x="51.76" y="50"/></g>
+<g class="l q"><text x="22 41.84 51.76" y="62.8">$fa</text><use href="#c" x="61.68" y="50"/></g>
+<g class="l r"><text x="22 41.84 51.76 61.68" y="62.8">$fas</text><use href="#c" x="71.6" y="50"/></g>
+<g class="l t a"><text x="22" textLength="59.52">$ fast</text><use href="#c" x="81.52" y="-12.8"/></g>
+<g class="l u a"><text x="22" textLength="69.44">$ fastf</text><use href="#c" x="91.44" y="-12.8"/></g>
+<g class="l w a"><text x="22" textLength="79.36">$ fastfe</text><use href="#c" x="101.36" y="-12.8"/></g>
+<g class="l y a"><text x="22" textLength="89.28">$ fastfet</text><use href="#c" x="111.28" y="-12.8"/></g>
+<g class="l aa a"><text x="22" textLength="99.2">$ fastfetc</text><use href="#c" x="121.2" y="-12.8"/></g>
+<text class="l ab a" x="22" textLength="109.12">$ fastfetch</text>
+<g class="l f"><text class="b" x="101.36" y="82.8" font-weight="bold" textLength="128.96">_,met$$$$$gg.</text><text class="d" x="329.52" y="82.8" font-weight="bold" textLength="39.68">demo</text><text x="369.2" y="82.8" textLength="9.92">@</text><text class="d" x="379.12" y="82.8" font-weight="bold" textLength="89.28">scenetake</text></g>
+<g class="l f"><text class="b" x="71.6" y="102.8" font-weight="bold" textLength="188.48">,g$$$$$$$$$$$$$$$P.</text><text x="329.52" y="102.8" textLength="138.88">--------------</text></g>
+<g class="l f"><text class="b" x="51.76" y="122.8" font-weight="bold" textLength="228.16">,g$$P&quot;&quot;       &quot;&quot;&quot;Y$$.&quot;.</text><text class="d" x="329.52" y="122.8" font-weight="bold" textLength="19.84">OS</text><text x="349.36" y="122.8" textLength="367.04">: Debian GNU/Linux 13 (trixie) x86_64</text></g>
+<g class="l f"><text class="b" x="41.84" y="142.8" font-weight="bold" textLength="238.08">,$$P'              `$$$.</text><text class="d" x="329.52" y="142.8" font-weight="bold" textLength="79.36">Packages</text><text x="408.88" y="142.8" textLength="119.04">: 151 (dpkg)</text></g>
+<g class="l f"><text class="b" x="22" y="162.8" font-weight="bold" textLength="267.84">',$$P       ,ggs.     `$$b:</text><text class="d" x="329.52" y="162.8" font-weight="bold" textLength="79.36">Terminal</text><text x="408.88" y="162.8" textLength="158.72">: xterm-256color</text></g>
+<g class="l h"><text class="b" x="22 31.92 41.84 51.76 61.68 121.2 131.12 141.04 150.96 160.88 250.16 260.08 270" y="182.8" font-weight="bold">`d$$',$P&quot;'$$$</text><text class="d" x="200.56" y="182.8" font-weight="bold">.</text><use href="#c" x="22" y="170"/></g>
+<g class="l f"><text class="b" x="31.92 41.84 51.76 121.2 131.12 141.04 250.16 260.08 270" y="202.8" font-weight="bold">$$Pd$'$$P</text><text class="d" x="200.56" y="202.8" font-weight="bold">,</text></g>
+<g class="l h"><text class="b" x="31.92 41.84 51.76 121.2 131.12 141.04 230.32 240.24 250.16 260.08 270" y="222.8" font-weight="bold">$$:$$.,d$$'</text><text class="d" x="180.72" y="222.8" font-weight="bold">-</text></g>
+<text class="l h b" x="31.92" y="242.8" font-weight="bold" textLength="228.16">$$;      Y$b._   _,d$P'</text>
+<g class="l f"><text class="b" x="31.92 41.84 51.76 61.68 131.12 141.04 150.96 160.88 170.8 180.72 190.64 200.56 210.48 220.4" y="262.8" font-weight="bold">Y$$.`&quot;Y$$$$P&quot;'</text><text class="d" x="111.28 121.2" y="262.8" font-weight="bold">`.</text></g>
+<g class="l f"><text class="b" x="31.92" y="282.8" font-weight="bold" textLength="39.68">`$$b</text><text class="d" x="131.12" y="282.8" font-weight="bold" textLength="49.6">&quot;-.__</text></g>
+<text class="l f b" x="41.84" y="302.8" font-weight="bold" textLength="49.6">`Y$$b</text>
+<text class="l f b" x="51.76" y="322.8" font-weight="bold" textLength="49.6">`Y$$.</text>
+<text class="l f b" x="71.6" y="342.8" font-weight="bold" textLength="49.6">`$$b.</text>
+<text class="l f b" x="91.44" y="362.8" font-weight="bold" textLength="59.52">`Y$$b.</text>
+<text class="l f b" x="111.28" y="382.8" font-weight="bold" textLength="69.44">`&quot;Y$b._</text>
+<text class="l f b" x="150.96" y="402.8" font-weight="bold" textLength="49.6">`&quot;&quot;&quot;&quot;</text>
+<g class="l i e"><text class="b" x="22 31.92 41.84 51.76 61.68 121.2 131.12 141.04 150.96 160.88 250.16 260.08 270" font-weight="bold">`d$$',$P&quot;'$$$</text><text class="d" x="200.56 329.52 339.44 349.36 359.28 369.2 379.12" font-weight="bold">.Locale</text><text x="389.04 408.88 418.8 428.72 438.64 448.56 458.48 468.4">:C.UTF-8</text></g>
+<g class="l i"><rect x="329.52" y="210" width="29.76" height="20" fill="#151515"/><rect x="359.28" y="210" width="29.76" height="20" fill="#ac4142"/><rect x="389.04" y="210" width="29.76" height="20" fill="#7e8e50"/><rect x="418.8" y="210" width="29.76" height="20" fill="#e5b567"/><rect x="448.56" y="210" width="29.76" height="20" fill="#6c99bb"/><rect x="478.32" y="210" width="29.76" height="20" fill="#9f4e85"/><rect x="508.08" y="210" width="29.76" height="20" fill="#7dd6cf"/><rect x="537.84" y="210" width="29.76" height="20" fill="#d0d0d0"/><text class="b" x="31.92 41.84 51.76 121.2 131.12 141.04 230.32 240.24 250.16 260.08 270" y="222.8" font-weight="bold">$$:$$.,d$$'</text><text class="d" x="180.72" y="222.8" font-weight="bold">-</text></g>
+<g class="l i"><rect x="329.52" y="230" width="29.76" height="20" fill="#505050"/><rect x="359.28" y="230" width="29.76" height="20" fill="#ac4142"/><rect x="389.04" y="230" width="29.76" height="20" fill="#7e8e50"/><rect x="418.8" y="230" width="29.76" height="20" fill="#e5b567"/><rect x="448.56" y="230" width="29.76" height="20" fill="#6c99bb"/><rect x="478.32" y="230" width="29.76" height="20" fill="#9f4e85"/><rect x="508.08" y="230" width="29.76" height="20" fill="#7dd6cf"/><rect x="537.84" y="230" width="29.76" height="20" fill="#f5f5f5"/><text class="b" x="31.92" y="242.8" font-weight="bold" textLength="228.16">$$;      Y$b._   _,d$P'</text></g>
+<g class="l ad"><text x="22" y="422.8">$</text><use href="#c" x="41.84" y="410"/></g>
+<use href="#c" x="131.12" y="50" class="l af"/>
+<use href="#c" x="22" y="70" class="l ah"/>
+<use href="#c" x="22" y="410" class="l aj"/>
+</g>
+</svg>

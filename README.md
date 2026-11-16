@@ -55,6 +55,20 @@ SVG output supports custom font, light/dark theme, and optional window chrome (`
 | --- | --- |
 | ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
 
+## Gallery
+
+Each recording below is a scenario in [`samples/showcase`](samples/showcase), run on Linux. [`record.sh`](samples/showcase/record.sh) records them in a container that has the tools ([`Dockerfile`](samples/showcase/Dockerfile)).
+
+| [fastfetch](samples/showcase/fetch.yaml) | [bat, git, and jq](samples/showcase/devtools.yaml) |
+| --- | --- |
+| ![](samples/showcase/fetch.svg) | ![](samples/showcase/devtools.svg) |
+| [**figlet, lolcat, and toilet**](samples/showcase/logo.yaml) | [**sl**](samples/showcase/sl.yaml) |
+| ![](samples/showcase/logo.svg) | ![](samples/showcase/sl.svg) |
+
+[nyancat](samples/showcase/nyancat.yaml), 96 × 26 cells of truecolor animation:
+
+![](samples/showcase/nyancat.svg)
+
 ## Motivation
 
 I wanted to record real commands from a scenario without typing each command by hand. Other tools depend on shell scripts or asciinema, expose execution paths, or simulate output without running commands.

@@ -1,0 +1,13 @@
+{
+  "name": "greet",
+  "version": "1.2.0",
+  "private": true,
+  "scripts": {
+    "demo": "scenetake --format svg demo.yaml",
+    "test": "python -m pytest"
+  },
+  "devDependencies": {
+    "scenetake": "^1.5.0"
+  },
+  "keywords": ["demo", "terminal", "svg"]
+}

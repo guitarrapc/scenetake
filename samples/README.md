@@ -21,6 +21,18 @@ Sample scenarios for scenetake. Use this page to quickly see each scenario’s *
 | [theme-windows](#theme-windows) | Windows window chrome | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
 | [resize](#resize) | Terminal resize events (cast only) | [resize.cast](resize.cast) | [gif](resize.gif) · [svg](resize.svg) |
 
+### Showcase
+
+Demos of popular terminal tools, for the README gallery and the playground. They run on Linux in a container that has the tools (see [Regenerate](#regenerate)).
+
+| Scenario | Purpose | Input | Outputs |
+|----------|---------|-------|---------|
+| fetch | `fastfetch` in a PTY, macOS window chrome | [fetch.yaml](showcase/fetch.yaml) | [cast](showcase/fetch.cast) · [svg](showcase/fetch.svg) |
+| devtools | `bat`, `git log --graph`, and `jq` in color, Windows window chrome | [devtools.yaml](showcase/devtools.yaml) | [cast](showcase/devtools.cast) · [svg](showcase/devtools.svg) |
+| logo | `figlet` with animated `lolcat`, and `toilet` | [logo.yaml](showcase/logo.yaml) | [cast](showcase/logo.cast) · [svg](showcase/logo.svg) |
+| sl | The steam locomotive, drawn with curses | [sl.yaml](showcase/sl.yaml) | [cast](showcase/sl.cast) · [svg](showcase/sl.svg) |
+| nyancat | A full-screen truecolor animation | [nyancat.yaml](showcase/nyancat.yaml) | [cast](showcase/nyancat.cast) · [svg](showcase/nyancat.svg) |
+
 ## Regenerate
 
 Run from the repository root:
@@ -32,6 +44,14 @@ dotnet run samples/regenerate.cs
 # GIFs require agg (Docker example; use ghcr.io/asciinema/agg for v3 casts)
 docker run --rm -v "$PWD:/data" ghcr.io/asciinema/agg \
   /data/samples/basic.cast /data/samples/basic.gif --last-frame-duration 0
+```
+
+`regenerate.cs` reads only the scenarios in this folder. The showcase scenarios in `showcase/` need Linux tools, so `showcase/record.sh` records them in a container built from `showcase/Dockerfile`, on Linux or in WSL with Docker. It takes a folder that holds a linux-x64 scenetake:
+
+```bash
+dotnet publish scenetake.cs -c Release -r linux-x64 --self-contained -p:PublishAot=false -p:PublishSingleFile=true -o ~/scenetake-linux
+bash samples/showcase/record.sh ~/scenetake-linux            # every showcase scenario
+bash samples/showcase/record.sh ~/scenetake-linux fetch sl   # only these
 ```
 
 ---

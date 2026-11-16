@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="631.2" height="264" viewBox="0 0 631.2 264" preserveAspectRatio="xMidYMid meet" role="img" aria-label="scenetake output">
+<style>
+text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
+text { dominant-baseline: alphabetic; }
+.bg,rect:not([class]) { shape-rendering: crispEdges; }
+.l { visibility: hidden; animation: 14.555s step-start infinite; }
+.c { fill: #d0d0d0; fill-opacity: 0.5; }
+.a{transform:translate(0,24.8px)}
+.g{transform:translate(0,44.8px)}
+.aw{transform:translate(0,64.8px)}
+.bo{transform:translate(0,84.8px)}
+.bs{transform:translate(0,104.8px)}
+.bw{transform:translate(0,124.8px)}
+.b1{transform:translate(0,164.8px)}
+.b8{transform:translate(0,184.8px)}
+.b9{transform:translate(0,204.8px)}
+.ca{transform:translate(0,224.8px)}
+.b{fill:#079ADE}
+.d{fill:#059EDB}
+.e{fill:#01C1BD}
+.f{fill:#01C5B9}
+.h{fill:#01BEC0}
+.i{fill:#07DE99}
+.j{fill:#08E195}
+.k{fill:#06DC9D}
+.m{fill:#18F373}
+.n{fill:#1BF56F}
+.o{fill:#16F177}
+.p{fill:#33FD4E}
+.q{fill:#36FE4A}
+.r{fill:#4739FE}
+.s{fill:#443DFE}
+.t{fill:#4040FE}
+.u{fill:#3C44FE}
+.v{fill:#3948FE}
+.w{fill:#354BFE}
+.x{fill:#324FFD}
+.y{fill:#2E53FD}
+.z{fill:#2B57FC}
+.aa{fill:#285BFB}
+.ab{fill:#255FFA}
+.ac{fill:#2264F9}
+.ad{fill:#1F68F7}
+.ae{fill:#1874F3}
+.af{fill:#1578F1}
+.ag{fill:#137DEF}
+.ah{fill:#1181ED}
+.ai{fill:#0B8EE6}
+.aj{fill:#0A92E3}
+.ak{fill:#0896E1}
+.al{fill:#04A2D8}
+.am{fill:#03AAD2}
+.an{fill:#02AECE}
+.ao{fill:#01B2CB}
+.ap{fill:#01B6C7}
+.aq{fill:#01BAC4}
+.ar{fill:#01C8B5}
+.as{fill:#02CFAD}
+.at{fill:#03D2A9}
+.au{fill:#04D6A5}
+.av{fill:#05D9A1}
+.ax{fill:#1D6CF6}
+.ay{fill:#1A70F4}
+.az{fill:#0F85EB}
+.a0{fill:#0D89E8}
+.a1{fill:#03A6D5}
+.a2{fill:#01CCB1}
+.a3{fill:#0AE491}
+.a4{fill:#0DE988}
+.a5{fill:#0FEB84}
+.a6{fill:#11ED80}
+.a7{fill:#14EF7C}
+.a8{fill:#0CE68D}
+.a9{fill:#1DF66B}
+.ba{fill:#23F962}
+.bb{fill:#26FA5E}
+.bc{fill:#29FB5A}
+.bd{fill:#2CFC56}
+.be{fill:#2FFD52}
+.bf{fill:#20F867}
+.bh{fill:#3AFE47}
+.bi{fill:#41FE3F}
+.bj{fill:#44FE3C}
+.bk{fill:#48FE38}
+.bl{fill:#4CFE35}
+.bm{fill:#50FD31}
+.bn{fill:#54FD2E}
+.bp{fill:#3DFE43}
+.bq{fill:#5CFB28}
+.br{fill:#64F922}
+.bt{fill:#68F71F}
+.bu{fill:#6DF61C}
+.bv{fill:#71F41A}
+.bx{fill:#58FC2B}
+.by{fill:#60FA25}
+.bz{fill:#75F217}
+.b0{fill:#79F115}
+.b2{fill:#bf5ea0}
+.b3{fill:#ce4e4f}
+.b4{fill:#ffd97c}
+.b5{fill:#97aa60}
+.b6{fill:#96fff8}
+.b7{fill:#82b8e0}
+@keyframes cz{0.343525%{visibility:visible}}
+.dc{animation-delay:1.1s;animation-name:cz}
+@keyframes co{0.288561%{visibility:visible}}
+.dd{animation-delay:1.15s;animation-name:co}
+@keyframes cg{0.254209%{visibility:visible}}
+.de{animation-delay:1.192s;animation-name:cg}
+@keyframes cd{0.233597%{visibility:visible}}
+.df{animation-delay:1.229s;animation-name:cd}
+.dg{animation-delay:1.263s;animation-name:cg}
+@keyframes ch{0.144281%{visibility:visible}}
+.dh{animation-delay:1.3s;animation-name:ch}
+@keyframes c0{0.357266%{visibility:visible}}
+.di{animation-delay:1.321s;animation-name:c0}
+.dj{animation-delay:1.373s;animation-name:cg}
+@keyframes dk{0.377878%{visibility:visible}}
+.dl{animation-delay:1.41s;animation-name:dk}
+@keyframes c1{0.178633%{visibility:visible}}
+.dm{animation-delay:1.465s;animation-name:c1}
+@keyframes ck{0.26795%{visibility:visible}}
+.dn{animation-delay:1.491s;animation-name:ck}
+@keyframes cp{0.151151%{visibility:visible}}
+.do{animation-delay:1.53s;animation-name:cp}
+@keyframes c2{0.295432%{visibility:visible}}
+.dp{animation-delay:1.552s;animation-name:c2}
+@keyframes c3{0.398489%{visibility:visible}}
+.dq{animation-delay:1.595s;animation-name:c3}
+.dr{animation-delay:1.653s;animation-name:cp}
+@keyframes cl{0.192374%{visibility:visible}}
+.ds{animation-delay:1.675s;animation-name:cl}
+@keyframes cq{0.164892%{visibility:visible}}
+.dt{animation-delay:1.703s;animation-name:cq}
+@keyframes ci{0.123669%{visibility:visible}}
+.du{animation-delay:1.727s;animation-name:ci}
+@keyframes ce{0.212986%{visibility:visible}}
+.dv{animation-delay:1.745s;animation-name:ce}
+.dw{animation-delay:1.776s;animation-name:co}
+@keyframes cr{0.185504%{visibility:visible}}
+.dx{animation-delay:1.818s;animation-name:cr}
+.dy{animation-delay:1.845s;animation-name:cl}
+.dz{animation-delay:1.873s;animation-name:c0}
+@keyframes d0{0.439712%{visibility:visible}}
+.d1{animation-delay:1.925s;animation-name:d0}
+@keyframes cf{0.158022%{visibility:visible}}
+.d2{animation-delay:1.989s;animation-name:cf}
+.d3{animation-delay:2.012s;animation-name:ce}
+@keyframes cs{0.247338%{visibility:visible}}
+.d4{animation-delay:2.043s;animation-name:cs}
+@keyframes cj{0.171763%{visibility:visible}}
+.d5{animation-delay:2.079s;animation-name:cj}
+.d6{animation-delay:2.104s;animation-name:cf}
+@keyframes d7{0.384748%{visibility:visible}}
+.d8{animation-delay:2.127s;animation-name:d7}
+@keyframes ct{0.27482%{visibility:visible}}
+.d9{animation-delay:2.183s;animation-name:ct}
+@keyframes ea{0.405359%{visibility:visible}}
+.eb{animation-delay:2.223s;animation-name:ea}
+@keyframes cc{0.199245%{visibility:visible}}
+.ec{animation-delay:2.282s;animation-name:cc}
+@keyframes ed{0.425971%{visibility:visible}}
+.ee{animation-delay:2.311s;animation-name:ed}
+@keyframes ef{0.487805%{visibility:visible}}
+.eg{animation-delay:2.373s;animation-name:ef}
+.eh{animation-delay:2.444s;animation-name:cc}
+@keyframes ei{0.494676%{visibility:visible}}
+.ej{animation-delay:2.473s;animation-name:ei}
+.ek{animation-delay:2.545s;animation-name:cs}
+.el{animation-delay:2.581s;animation-name:c3}
+@keyframes c4{0.281691%{visibility:visible}}
+.em{animation-delay:2.639s;animation-name:c4}
+@keyframes en{0.474064%{visibility:visible}}
+.eo{animation-delay:2.68s;animation-name:en}
+@keyframes cu{0.116799%{visibility:visible}}
+.ep{animation-delay:2.749s;animation-name:cu}
+@keyframes eq{0.329784%{visibility:visible}}
+.er{animation-delay:2.766s;animation-name:eq}
+@keyframes c5{0.103058%{visibility:visible}}
+.es{animation-delay:2.814s;animation-name:c5}
+@keyframes et{19.436619%{visibility:hidden}to{visibility:visible}}
+.et{animation-name:et}
+@keyframes eu{0.013741%{visibility:visible}}
+.ev{animation-delay:3.054s;animation-name:eu}
+@keyframes ew{0.226727%{visibility:visible}}
+.ex{animation-delay:3.056s;animation-name:ew}
+.ey{animation-delay:3.089s;animation-name:cd}
+@keyframes cb{0.240468%{visibility:visible}}
+.ez{animation-delay:3.123s;animation-name:cb}
+@keyframes cv{0.006871%{visibility:visible}}
+.e0{animation-delay:3.158s;animation-name:cv}
+@keyframes e1{21.703881%{visibility:hidden}to{visibility:visible}}
+.e1{animation-name:e1}
+.e2{animation-delay:3.194s;animation-name:cd}
+.e3{animation-delay:3.228s;animation-name:cv}
+.e4{animation-delay:3.229s;animation-name:cd}
+.e5{animation-delay:3.263s;animation-name:cb}
+@keyframes e6{22.65888%{visibility:hidden}to{visibility:visible}}
+.e6{animation-name:e6}
+.e7{animation-delay:3.334s;animation-name:cd}
+.e8{animation-delay:3.368s;animation-name:cb}
+.e9{animation-delay:3.403s;animation-name:cs}
+@keyframes fa{23.627619%{visibility:hidden}to{visibility:visible}}
+.fa{animation-name:fa}
+.fb{animation-delay:3.474s;animation-name:cb}
+.fc{animation-delay:3.509s;animation-name:cb}
+.fd{animation-delay:3.544s;animation-name:cb}
+@keyframes fe{24.589488%{visibility:hidden}to{visibility:visible}}
+.fe{animation-name:fe}
+.ff{animation-delay:3.614s;animation-name:cb}
+.fg{animation-delay:3.649s;animation-name:cb}
+.fh{animation-delay:3.684s;animation-name:cd}
+@keyframes fi{25.544486%{visibility:hidden}to{visibility:visible}}
+.fi{animation-name:fi}
+.fj{animation-delay:6.993s;animation-name:cz}
+.fk{animation-delay:7.043s;animation-name:ch}
+.fl{animation-delay:7.064s;animation-name:ch}
+.fm{animation-delay:7.085s;animation-name:c5}
+.fn{animation-delay:7.1s;animation-name:ci}
+.fo{animation-delay:7.118s;animation-name:ce}
+@keyframes fp{0.460323%{visibility:visible}}
+.fq{animation-delay:7.149s;animation-name:fp}
+.fr{animation-delay:7.216s;animation-name:ck}
+@keyframes fs{0.322914%{visibility:visible}}
+.ft{animation-delay:7.255s;animation-name:fs}
+.fu{animation-delay:7.302s;animation-name:cc}
+.fv{animation-delay:7.331s;animation-name:ct}
+.fw{animation-delay:7.371s;animation-name:cg}
+.fx{animation-delay:7.408s;animation-name:c4}
+.fy{animation-delay:7.449s;animation-name:ck}
+@keyframes fz{0.604604%{visibility:visible}}
+.f0{animation-delay:7.488s;animation-name:fz}
+.f1{animation-delay:7.576s;animation-name:cj}
+@keyframes cw{0.109928%{visibility:visible}}
+.f2{animation-delay:7.601s;animation-name:cw}
+.f3{animation-delay:7.617s;animation-name:cw}
+@keyframes cm{0.302302%{visibility:visible}}
+.f4{animation-delay:7.633s;animation-name:cm}
+@keyframes f5{0.316043%{visibility:visible}}
+.f6{animation-delay:7.677s;animation-name:f5}
+@keyframes cn{0.206115%{visibility:visible}}
+.f7{animation-delay:7.723s;animation-name:cn}
+.f8{animation-delay:7.753s;animation-name:c2}
+.f9{animation-delay:7.796s;animation-name:cf}
+.ga{animation-delay:7.819s;animation-name:cr}
+@keyframes gb{0.13741%{visibility:visible}}
+.gc{animation-delay:7.846s;animation-name:gb}
+@keyframes gd{0.4191%{visibility:visible}}
+.ge{animation-delay:7.866s;animation-name:gd}
+@keyframes c6{0.13054%{visibility:visible}}
+.gf{animation-delay:7.927s;animation-name:c6}
+.gg{animation-delay:7.946s;animation-name:cq}
+.gh{animation-delay:7.97s;animation-name:ci}
+@keyframes gi{0.371007%{visibility:visible}}
+.gj{animation-delay:7.988s;animation-name:gi}
+.gk{animation-delay:8.042s;animation-name:cf}
+.gl{animation-delay:8.065s;animation-name:cc}
+.gm{animation-delay:8.094s;animation-name:ch}
+.gn{animation-delay:8.115s;animation-name:cp}
+@keyframes go{55.905187%{visibility:hidden}to{visibility:visible}}
+.go{animation-name:go}
+@keyframes cx{57.402954%{visibility:hidden}to{visibility:visible}}
+.cx{animation-name:cx}
+@keyframes gp{78.701477%{visibility:hidden}to{visibility:visible}}
+.gp{animation-name:gp}
+.gq{animation-delay:1.321s;animation-name:cb}
+.gr{animation-delay:1.356s;animation-name:cu}
+.gs{animation-delay:1.41s;animation-name:cj}
+.gt{animation-delay:1.435s;animation-name:cn}
+@keyframes cy{0.219856%{visibility:visible}}
+.gu{animation-delay:1.595s;animation-name:cy}
+.gv{animation-delay:1.627s;animation-name:c1}
+.gw{animation-delay:1.873s;animation-name:ce}
+.gx{animation-delay:1.904s;animation-name:ch}
+.gy{animation-delay:1.925s;animation-name:cy}
+.gz{animation-delay:1.957s;animation-name:cy}
+@keyframes c7{0.261079%{visibility:visible}}
+.g0{animation-delay:2.127s;animation-name:c7}
+.g1{animation-delay:2.165s;animation-name:ci}
+.g2{animation-delay:2.223s;animation-name:cn}
+.g3{animation-delay:2.253s;animation-name:cc}
+.g4{animation-delay:2.311s;animation-name:cj}
+.g5{animation-delay:2.336s;animation-name:cg}
+.g6{animation-delay:2.373s;animation-name:ce}
+.g7{animation-delay:2.404s;animation-name:ct}
+.g8{animation-delay:2.473s;animation-name:cm}
+.g9{animation-delay:2.517s;animation-name:cl}
+.ha{animation-delay:2.581s;animation-name:cb}
+.hb{animation-delay:2.616s;animation-name:cf}
+.hc{animation-delay:2.68s;animation-name:cr}
+.hd{animation-delay:2.707s;animation-name:co}
+.he{animation-delay:2.766s;animation-name:c6}
+.hf{animation-delay:2.785s;animation-name:cc}
+.hg{animation-delay:2.829s;animation-name:cj}
+@keyframes c8{1.374099%{visibility:visible}}
+.hh{animation-delay:2.854s;animation-name:c8}
+@keyframes hi{0.700791%{visibility:visible}}
+.hj{animation-delay:3.056s;animation-name:hi}
+.hk{animation-delay:3.159s;animation-name:cb}
+@keyframes hl{0.714532%{visibility:visible}}
+.hm{animation-delay:3.229s;animation-name:hl}
+.hn{animation-delay:3.333s;animation-name:cv}
+@keyframes c9{0.961869%{visibility:visible}}
+.ho{animation-delay:3.334s;animation-name:c9}
+.hp{animation-delay:3.474s;animation-name:c9}
+@keyframes da{0.954999%{visibility:visible}}
+.hq{animation-delay:3.614s;animation-name:da}
+.hr{animation-delay:3.753s;animation-name:da}
+@keyframes hs{21.305394%{visibility:visible}}
+.ht{animation-delay:3.892s;animation-name:hs}
+.hu{animation-delay:7.149s;animation-name:cl}
+.hv{animation-delay:7.177s;animation-name:ck}
+.hw{animation-delay:7.255s;animation-name:cw}
+.hx{animation-delay:7.271s;animation-name:ce}
+.hy{animation-delay:7.488s;animation-name:cm}
+.hz{animation-delay:7.532s;animation-name:cm}
+.h0{animation-delay:7.677s;animation-name:cc}
+.h1{animation-delay:7.706s;animation-name:cu}
+.h2{animation-delay:7.866s;animation-name:c7}
+.h3{animation-delay:7.904s;animation-name:cf}
+.h4{animation-delay:7.988s;animation-name:cn}
+.h5{animation-delay:8.018s;animation-name:cq}
+.h6{animation-delay:8.137s;animation-name:ci}
+.h7{animation-delay:8.155s;animation-name:c8}
+@keyframes h8{21.298523%{visibility:visible}}
+.h9{animation-delay:8.355s;animation-name:h8}
+.db{visibility:visible}
+</style>
+<defs>
+<rect id="c" class="c" width="9.92" height="20"/>
+<mask id="viewport-mask" x="0" y="0" width="631.2" height="264" maskUnits="userSpaceOnUse">
+<rect class="l db viewport-mask-0" x="8" y="8" width="615.2" height="248" fill="white"/>
+</mask>
+</defs>
+<g mask="url(#viewport-mask)" fill="#d0d0d0">
+<rect class="bg l db viewport-bg-0" x="8" y="8" width="615.2" height="248" fill="#282c34"/>
+<g class="l dc"><text x="18" y="24.8">$</text><use href="#c" x="37.84" y="12"/></g>
+<g class="l dd"><text x="18 37.84" y="24.8">$f</text><use href="#c" x="47.76" y="12"/></g>
+<g class="l de"><text x="18 37.84 47.76" y="24.8">$fi</text><use href="#c" x="57.68" y="12"/></g>
+<g class="l df"><text x="18 37.84 47.76 57.68" y="24.8">$fig</text><use href="#c" x="67.6" y="12"/></g>
+<g class="l dg a"><text x="18" textLength="59.52">$ figl</text><use href="#c" x="77.52" y="-12.8"/></g>
+<g class="l dh a"><text x="18" textLength="69.44">$ figle</text><use href="#c" x="87.44" y="-12.8"/></g>
+<text class="l di a" x="18" textLength="79.36">$ figlet</text>
+<g class="l dj a"><text x="18" textLength="99.2">$ figlet -</text><use href="#c" x="117.2" y="-12.8"/></g>
+<text class="l dl a" x="18" textLength="109.12">$ figlet -f</text>
+<g class="l dm a"><text x="18" textLength="128.96">$ figlet -f s</text><use href="#c" x="146.96" y="-12.8"/></g>
+<g class="l dn a"><text x="18" textLength="138.88">$ figlet -f sl</text><use href="#c" x="156.88" y="-12.8"/></g>
+<g class="l do a"><text x="18" textLength="148.8">$ figlet -f sla</text><use href="#c" x="166.8" y="-12.8"/></g>
+<g class="l dp a"><text x="18" textLength="158.72">$ figlet -f slan</text><use href="#c" x="176.72" y="-12.8"/></g>
+<text class="l dq a" x="18" textLength="168.64">$ figlet -f slant</text>
+<g class="l dr a"><text x="18" textLength="188.48">$ figlet -f slant s</text><use href="#c" x="206.48" y="-12.8"/></g>
+<g class="l ds a"><text x="18" textLength="198.4">$ figlet -f slant sc</text><use href="#c" x="216.4" y="-12.8"/></g>
+<g class="l dt a"><text x="18" textLength="208.32">$ figlet -f slant sce</text><use href="#c" x="226.32" y="-12.8"/></g>
+<g class="l du a"><text x="18" textLength="218.24">$ figlet -f slant scen</text><use href="#c" x="236.24" y="-12.8"/></g>
+<g class="l dv a"><text x="18" textLength="228.16">$ figlet -f slant scene</text><use href="#c" x="246.16" y="-12.8"/></g>
+<g class="l dw a"><text x="18" textLength="238.08">$ figlet -f slant scenet</text><use href="#c" x="256.08" y="-12.8"/></g>
+<g class="l dx a"><text x="18" textLength="248">$ figlet -f slant sceneta</text><use href="#c" x="266" y="-12.8"/></g>
+<g class="l dy a"><text x="18" textLength="257.92">$ figlet -f slant scenetak</text><use href="#c" x="275.92" y="-12.8"/></g>
+<text class="l dz a" x="18" textLength="267.84">$ figlet -f slant scenetake</text>
+<text class="l d1 a" x="18" textLength="287.68">$ figlet -f slant scenetake |</text>
+<g class="l d2 a"><text x="18" textLength="307.52">$ figlet -f slant scenetake | l</text><use href="#c" x="325.52" y="-12.8"/></g>
+<g class="l d3 a"><text x="18" textLength="317.44">$ figlet -f slant scenetake | lo</text><use href="#c" x="335.44" y="-12.8"/></g>
+<g class="l d4 a"><text x="18" textLength="327.36">$ figlet -f slant scenetake | lol</text><use href="#c" x="345.36" y="-12.8"/></g>
+<g class="l d5 a"><text x="18" textLength="337.28">$ figlet -f slant scenetake | lolc</text><use href="#c" x="355.28" y="-12.8"/></g>
+<g class="l d6 a"><text x="18" textLength="347.2">$ figlet -f slant scenetake | lolca</text><use href="#c" x="365.2" y="-12.8"/></g>
+<text class="l d8 a" x="18" textLength="357.12">$ figlet -f slant scenetake | lolcat</text>
+<g class="l d9 a"><text x="18" textLength="376.96">$ figlet -f slant scenetake | lolcat -</text><use href="#c" x="394.96" y="-12.8"/></g>
+<text class="l eb a" x="18" textLength="386.88">$ figlet -f slant scenetake | lolcat -a</text>
+<g class="l ec a"><text x="18" textLength="406.72">$ figlet -f slant scenetake | lolcat -a -</text><use href="#c" x="424.72" y="-12.8"/></g>
+<text class="l ee a" x="18" textLength="416.64">$ figlet -f slant scenetake | lolcat -a -d</text>
+<text class="l eg a" x="18" textLength="436.48">$ figlet -f slant scenetake | lolcat -a -d 4</text>
+<g class="l eh a"><text x="18" textLength="456.32">$ figlet -f slant scenetake | lolcat -a -d 4 -</text><use href="#c" x="474.32" y="-12.8"/></g>
+<text class="l ej a" x="18" textLength="466.24">$ figlet -f slant scenetake | lolcat -a -d 4 -s</text>
+<g class="l ek a"><text x="18" textLength="486.08">$ figlet -f slant scenetake | lolcat -a -d 4 -s 3</text><use href="#c" x="504.08" y="-12.8"/></g>
+<text class="l el a" x="18" textLength="496">$ figlet -f slant scenetake | lolcat -a -d 4 -s 30</text>
+<g class="l em a"><text x="18" textLength="515.84">$ figlet -f slant scenetake | lolcat -a -d 4 -s 30 -</text><use href="#c" x="533.84" y="-12.8"/></g>
+<text class="l eo a" x="18" textLength="525.76">$ figlet -f slant scenetake | lolcat -a -d 4 -s 30 -t</text>
+<g class="l ep a"><text x="18" textLength="545.6">$ figlet -f slant scenetake | lolcat -a -d 4 -s 30 -t -</text><use href="#c" x="563.6" y="-12.8"/></g>
+<text class="l er a" x="18" textLength="555.52">$ figlet -f slant scenetake | lolcat -a -d 4 -s 30 -t -S</text>
+<g class="l es a"><text x="18" textLength="575.36">$ figlet -f slant scenetake | lolcat -a -d 4 -s 30 -t -S 3</text><use href="#c" x="593.36" y="-12.8"/></g>
+<text class="l et a" x="18" textLength="585.28">$ figlet -f slant scenetake | lolcat -a -d 4 -s 30 -t -S 30</text>
+<g class="l ev"><text class="b" x="315.6" y="44.8">_</text><text class="d" x="325.52" y="44.8">_</text><text class="e" x="414.8" y="44.8">_</text><use href="#c" x="424.72" y="32"/></g>
+<g class="l ex g"><text class="b" x="315.6">_</text><text class="d" x="325.52">_</text><text class="e" x="414.8">_</text><text class="f" x="424.72">_</text></g>
+<g class="l ey g"><text class="h" x="315.6">_</text><text class="e" x="325.52">_</text><text class="i" x="414.8">_</text><text class="j" x="424.72">_</text></g>
+<g class="l ez g"><text class="k" x="315.6">_</text><text class="i" x="325.52">_</text><text class="m" x="414.8">_</text><text class="n" x="424.72">_</text></g>
+<g class="l e0 g"><text class="k" x="315.6">_</text><text class="i" x="325.52">_</text><text class="m" x="414.8">_</text><text class="n" x="424.72">_</text><use href="#c" x="117.2" y="-12.8"/></g>
+<g class="l e1 g"><text class="o" x="315.6">_</text><text class="m" x="325.52">_</text><text class="p" x="414.8">_</text><text class="q" x="424.72">_</text></g>
+<g class="l e2 aw"><text class="r" x="47.76">_</text><text class="s" x="57.68">_</text><text class="t" x="67.6">_</text><text class="u" x="77.52">_</text><text class="v" x="87.44">_</text><text class="w" x="97.36">_</text><text class="x" x="107.28">_</text><text class="y" x="117.2">_</text><text class="z" x="127.12">_</text><text class="aa" x="137.04">_</text><text class="ab" x="146.96">_</text><text class="ac" x="156.88">_</text><text class="ad" x="166.8">_</text><text class="ae" x="196.56">_</text><text class="af" x="206.48">_</text><text class="ag" x="216.4">_</text><text class="ah" x="226.32">_</text><text class="ai" x="256.08">_</text><text class="aj" x="266">_</text><text class="ak" x="275.92">_</text><text class="al" x="305.68">/</text><text class="am" x="325.52">/</text><text class="an" x="335.44">_</text><text class="ao" x="345.36">_</text><text class="ap" x="355.28">_</text><text class="aq" x="365.2">_</text><text class="h" x="375.12">_</text><text class="f" x="394.96">_</text><text class="ar" x="404.88">/</text><text class="as" x="424.72">/</text><text class="at" x="434.64">_</text><text class="au" x="444.56">_</text><text class="av" x="454.48">_</text><text class="k" x="464.4">_</text><text class="i" x="474.32">_</text><use href="#c" x="494.16" y="-12.8"/></g>
+<g class="l e3 aw"><text class="aa" x="47.76">_</text><text class="ab" x="57.68">_</text><text class="ac" x="67.6">_</text><text class="ad" x="77.52">_</text><text class="ax" x="87.44">_</text><text class="ay" x="97.36">_</text><text class="ae" x="107.28">_</text><text class="af" x="117.2">_</text><text class="ag" x="127.12">_</text><text class="ah" x="137.04">_</text><text class="az" x="146.96">_</text><text class="a0" x="156.88">_</text><text class="ai" x="166.8">_</text><text class="b" x="196.56">_</text><text class="d" x="206.48">_</text><text class="al" x="216.4">_</text><text class="a1" x="226.32">_</text><text class="ao" x="256.08 345.36">__</text><text class="ap" x="266 355.28">__</text><text class="aq" x="275.92 365.2">__</text><text class="f" x="305.68 394.96">/_</text><text class="am" x="325.52">/</text><text class="an" x="335.44">_</text><text class="h" x="375.12">_</text><text class="ar" x="404.88">/</text><text class="as" x="424.72">/</text><text class="at" x="434.64">_</text><text class="au" x="444.56">_</text><text class="av" x="454.48">_</text><text class="k" x="464.4">_</text><text class="i" x="474.32">_</text><use href="#c" x="325.52" y="-12.8"/></g>
+<g class="l e4 aw"><text class="aa" x="47.76">_</text><text class="ab" x="57.68">_</text><text class="ac" x="67.6">_</text><text class="ad" x="77.52">_</text><text class="ax" x="87.44">_</text><text class="ay" x="97.36">_</text><text class="ae" x="107.28">_</text><text class="af" x="117.2">_</text><text class="ag" x="127.12">_</text><text class="ah" x="137.04">_</text><text class="az" x="146.96">_</text><text class="a0" x="156.88">_</text><text class="ai" x="166.8">_</text><text class="b" x="196.56">_</text><text class="d" x="206.48">_</text><text class="al" x="216.4">_</text><text class="a1" x="226.32">_</text><text class="ao" x="256.08">_</text><text class="ap" x="266">_</text><text class="aq" x="275.92">_</text><text class="f" x="305.68">/</text><text class="a2" x="325.52">/</text><text class="as" x="335.44">_</text><text class="at" x="345.36">_</text><text class="au" x="355.28">_</text><text class="av" x="365.2">_</text><text class="k" x="375.12">_</text><text class="j" x="394.96">_</text><text class="a3" x="404.88">/</text><text class="a4" x="424.72">/</text><text class="a5" x="434.64">_</text><text class="a6" x="444.56">_</text><text class="a7" x="454.48">_</text><text class="o" x="464.4">_</text><text class="m" x="474.32">_</text></g>
+<g class="l e5 aw"><text class="ah" x="47.76">_</text><text class="az" x="57.68">_</text><text class="a0" x="67.6">_</text><text class="ai" x="77.52">_</text><text class="aj" x="87.44">_</text><text class="ak" x="97.36">_</text><text class="b" x="107.28">_</text><text class="d" x="117.2">_</text><text class="al" x="127.12">_</text><text class="a1" x="137.04">_</text><text class="am" x="146.96">_</text><text class="an" x="156.88">_</text><text class="ao" x="166.8">_</text><text class="h" x="196.56">_</text><text class="e" x="206.48">_</text><text class="f" x="216.4">_</text><text class="ar" x="226.32">_</text><text class="at" x="256.08">_</text><text class="au" x="266">_</text><text class="av" x="275.92">_</text><text class="j" x="305.68">/</text><text class="a8" x="325.52">/</text><text class="a4" x="335.44">_</text><text class="a5" x="345.36">_</text><text class="a6" x="355.28">_</text><text class="a7" x="365.2">_</text><text class="o" x="375.12">_</text><text class="n" x="394.96">_</text><text class="a9" x="404.88">/</text><text class="ba" x="424.72">/</text><text class="bb" x="434.64">_</text><text class="bc" x="444.56">_</text><text class="bd" x="454.48">_</text><text class="be" x="464.4">_</text><text class="p" x="474.32">_</text></g>
+<g class="l e6 aw"><text class="a1" x="47.76">_</text><text class="am" x="57.68">_</text><text class="an" x="67.6">_</text><text class="ao" x="77.52">_</text><text class="ap" x="87.44">_</text><text class="aq" x="97.36">_</text><text class="h" x="107.28">_</text><text class="e" x="117.2">_</text><text class="f" x="127.12">_</text><text class="ar" x="137.04">_</text><text class="a2" x="146.96">_</text><text class="as" x="156.88">_</text><text class="at" x="166.8">_</text><text class="k" x="196.56">_</text><text class="i" x="206.48">_</text><text class="j" x="216.4">_</text><text class="a3" x="226.32">_</text><text class="a5" x="256.08">_</text><text class="a6" x="266">_</text><text class="a7" x="275.92">_</text><text class="n" x="305.68">/</text><text class="bf" x="325.52">/</text><text class="ba" x="335.44">_</text><text class="bb" x="345.36">_</text><text class="bc" x="355.28">_</text><text class="bd" x="365.2">_</text><text class="be" x="375.12">_</text><text class="q" x="394.96">_</text><text class="bh" x="404.88">/</text><text class="bi" x="424.72">/</text><text class="bj" x="434.64">_</text><text class="bk" x="444.56">_</text><text class="bl" x="454.48">_</text><text class="bm" x="464.4">_</text><text class="bn" x="474.32">_</text></g>
+<g class="l e7 bo"><text class="t" x="37.84">/</text><text class="v" x="57.68">_</text><text class="w" x="67.6">_</text><text class="x" x="77.52">_</text><text class="y" x="87.44">/</text><text class="aa" x="107.28">_</text><text class="ab" x="117.2">_</text><text class="ac" x="127.12">_</text><text class="ad" x="137.04">/</text><text class="ay" x="156.88">_</text><text class="af" x="176.72">\</text><text class="ag" x="186.64">/</text><text class="az" x="206.48">_</text><text class="a0" x="216.4">_</text><text class="aj" x="236.24">\</text><text class="ak" x="246.16">/</text><text class="d" x="266">_</text><text class="a1" x="285.84">\</text><text class="am" x="295.76">/</text><text class="ao" x="315.6">_</text><text class="ap" x="325.52">_</text><text class="aq" x="335.44">/</text><text class="e" x="355.28">_</text><text class="f" x="365.2">_</text><text class="a2" x="385.04">`</text><text class="as" x="394.96">/</text><text class="au" x="414.8">/</text><text class="av" x="424.72">/</text><text class="k" x="434.64">_</text><text class="i" x="444.56">/</text><text class="a3" x="464.4">_</text><text class="a4" x="484.24">\</text></g>
+<g class="l e8 bo"><text class="ac" x="37.84">/</text><text class="ax" x="57.68">_</text><text class="ay" x="67.6">_</text><text class="ae" x="77.52">_</text><text class="af" x="87.44">/</text><text class="ah" x="107.28">_</text><text class="az" x="117.2">_</text><text class="a0" x="127.12">_</text><text class="ai" x="137.04">/</text><text class="ak" x="156.88">_</text><text class="d" x="176.72">\</text><text class="al" x="186.64">/</text><text class="am" x="206.48">_</text><text class="an" x="216.4">_</text><text class="ap" x="236.24">\</text><text class="aq" x="246.16">/</text><text class="e" x="266">_</text><text class="ar" x="285.84">\</text><text class="a2" x="295.76">/</text><text class="at" x="315.6">_</text><text class="au" x="325.52">_</text><text class="av" x="335.44">/</text><text class="i" x="355.28">_</text><text class="j" x="365.2">_</text><text class="a8" x="385.04">`</text><text class="a4" x="394.96">/</text><text class="a6" x="414.8">/</text><text class="a7" x="424.72">/</text><text class="o" x="434.64">_</text><text class="m" x="444.56">/</text><text class="a9" x="464.4">_</text><text class="ba" x="484.24">\</text></g>
+<g class="l e9 bo"><text class="a0" x="37.84">/</text><text class="aj" x="57.68">_</text><text class="ak" x="67.6">_</text><text class="b" x="77.52">_</text><text class="d" x="87.44">/</text><text class="a1" x="107.28">_</text><text class="am" x="117.2">_</text><text class="an" x="127.12">_</text><text class="ao" x="137.04">/</text><text class="aq" x="156.88">_</text><text class="e" x="176.72">\</text><text class="f" x="186.64">/</text><text class="a2" x="206.48">_</text><text class="as" x="216.4">_</text><text class="au" x="236.24">\</text><text class="av" x="246.16">/</text><text class="i" x="266">_</text><text class="a3" x="285.84">\</text><text class="a8" x="295.76">/</text><text class="a5" x="315.6">_</text><text class="a6" x="325.52">_</text><text class="a7" x="335.44">/</text><text class="m" x="355.28">_</text><text class="n" x="365.2">_</text><text class="bf" x="385.04">`</text><text class="ba" x="394.96">/</text><text class="bc" x="414.8">/</text><text class="bd" x="424.72">/</text><text class="be" x="434.64">_</text><text class="p" x="444.56">/</text><text class="bh" x="464.4">_</text><text class="bi" x="484.24">\</text></g>
+<g class="l fa bo"><text class="an" x="37.84">/</text><text class="ap" x="57.68">_</text><text class="aq" x="67.6">_</text><text class="h" x="77.52">_</text><text class="e" x="87.44">/</text><text class="ar" x="107.28">_</text><text class="a2" x="117.2">_</text><text class="as" x="127.12">_</text><text class="at" x="137.04">/</text><text class="av" x="156.88">_</text><text class="i" x="176.72">\</text><text class="j" x="186.64">/</text><text class="a8" x="206.48">_</text><text class="a4" x="216.4">_</text><text class="a6" x="236.24">\</text><text class="a7" x="246.16">/</text><text class="m" x="266">_</text><text class="a9" x="285.84">\</text><text class="bf" x="295.76">/</text><text class="bb" x="315.6">_</text><text class="bc" x="325.52">_</text><text class="bd" x="335.44">/</text><text class="p" x="355.28">_</text><text class="q" x="365.2">_</text><text class="bp" x="385.04">`</text><text class="bi" x="394.96">/</text><text class="bk" x="414.8">/</text><text class="bl" x="424.72">/</text><text class="bm" x="434.64">_</text><text class="bn" x="444.56">/</text><text class="bq" x="464.4">_</text><text class="br" x="484.24">\</text></g>
+<g class="l fb bs"><text class="v" x="27.92">(</text><text class="w" x="37.84">_</text><text class="x" x="47.76">_</text><text class="aa" x="77.52">)</text><text class="ac" x="97.36">/</text><text class="ad" x="107.28">_</text><text class="ax" x="117.2">_</text><text class="ay" x="127.12">/</text><text class="ag" x="156.88">_</text><text class="ah" x="166.8">_</text><text class="az" x="176.72">/</text><text class="ai" x="196.56">/</text><text class="ak" x="216.4">/</text><text class="d" x="236.24">/</text><text class="am" x="266">_</text><text class="an" x="275.92">_</text><text class="ao" x="285.84">/</text><text class="aq" x="305.68">/</text><text class="h" x="315.6">_</text><text class="e" x="325.52">/</text><text class="ar" x="345.36">/</text><text class="a2" x="355.28">_</text><text class="as" x="365.2">/</text><text class="au" x="385.04">/</text><text class="k" x="404.88">,</text><text class="i" x="414.8">&lt;</text><text class="a3" x="434.64">/</text><text class="a5" x="464.4">_</text><text class="a6" x="474.32">_</text><text class="a7" x="484.24">/</text></g>
+<g class="l fc bs"><text class="ax" x="27.92">(</text><text class="ay" x="37.84">_</text><text class="ae" x="47.76">_</text><text class="ah" x="77.52">)</text><text class="a0" x="97.36">/</text><text class="ai" x="107.28">_</text><text class="aj" x="117.2">_</text><text class="ak" x="127.12">/</text><text class="al" x="156.88">_</text><text class="a1" x="166.8">_</text><text class="am" x="176.72">/</text><text class="ao" x="196.56">/</text><text class="aq" x="216.4">/</text><text class="e" x="236.24">/</text><text class="a2" x="266">_</text><text class="as" x="275.92">_</text><text class="at" x="285.84">/</text><text class="av" x="305.68">/</text><text class="k" x="315.6">_</text><text class="i" x="325.52">/</text><text class="a3" x="345.36">/</text><text class="a8" x="355.28">_</text><text class="a4" x="365.2">/</text><text class="a6" x="385.04">/</text><text class="o" x="404.88">,</text><text class="m" x="414.8">&lt;</text><text class="a9" x="434.64">/</text><text class="bb" x="464.4">_</text><text class="bc" x="474.32">_</text><text class="bd" x="484.24">/</text></g>
+<g class="l fd bs"><text class="aj" x="27.92">(</text><text class="ak" x="37.84">_</text><text class="b" x="47.76">_</text><text class="a1" x="77.52">)</text><text class="an" x="97.36">/</text><text class="ao" x="107.28">_</text><text class="ap" x="117.2">_</text><text class="aq" x="127.12">/</text><text class="f" x="156.88">_</text><text class="ar" x="166.8">_</text><text class="a2" x="176.72">/</text><text class="at" x="196.56">/</text><text class="av" x="216.4">/</text><text class="i" x="236.24">/</text><text class="a8" x="266">_</text><text class="a4" x="275.92">_</text><text class="a5" x="285.84">/</text><text class="a7" x="305.68">/</text><text class="o" x="315.6">_</text><text class="m" x="325.52">/</text><text class="a9" x="345.36">/</text><text class="bf" x="355.28">_</text><text class="ba" x="365.2">/</text><text class="bc" x="385.04">/</text><text class="be" x="404.88">,</text><text class="p" x="414.8">&lt;</text><text class="bh" x="434.64">/</text><text class="bj" x="464.4">_</text><text class="bk" x="474.32">_</text><text class="bl" x="484.24">/</text></g>
+<g class="l fe bs"><text class="ap" x="27.92">(</text><text class="aq" x="37.84">_</text><text class="h" x="47.76">_</text><text class="ar" x="77.52">)</text><text class="as" x="97.36">/</text><text class="at" x="107.28">_</text><text class="au" x="117.2">_</text><text class="av" x="127.12">/</text><text class="j" x="156.88">_</text><text class="a3" x="166.8">_</text><text class="a8" x="176.72">/</text><text class="a5" x="196.56">/</text><text class="a7" x="216.4">/</text><text class="m" x="236.24">/</text><text class="bf" x="266">_</text><text class="ba" x="275.92">_</text><text class="bb" x="285.84">/</text><text class="bd" x="305.68">/</text><text class="be" x="315.6">_</text><text class="p" x="325.52">/</text><text class="bh" x="345.36">/</text><text class="bp" x="355.28">_</text><text class="bi" x="365.2">/</text><text class="bk" x="385.04">/</text><text class="bm" x="404.88">,</text><text class="bn" x="414.8">&lt;</text><text class="bq" x="434.64">/</text><text class="bt" x="464.4">_</text><text class="bu" x="474.32">_</text><text class="bv" x="484.24">/</text></g>
+<g class="l ff bw"><text class="x" x="18">/</text><text class="y" x="27.92">_</text><text class="z" x="37.84">_</text><text class="aa" x="47.76">_</text><text class="ab" x="57.68">_</text><text class="ac" x="67.6">/</text><text class="ad" x="77.52">\</text><text class="ax" x="87.44">_</text><text class="ay" x="97.36">_</text><text class="ae" x="107.28">_</text><text class="af" x="117.2">/</text><text class="ag" x="127.12">\</text><text class="ah" x="137.04">_</text><text class="az" x="146.96">_</text><text class="a0" x="156.88">_</text><text class="ai" x="166.8">/</text><text class="aj" x="176.72">_</text><text class="ak" x="186.64">/</text><text class="d" x="206.48">/</text><text class="al" x="216.4">_</text><text class="a1" x="226.32">/</text><text class="am" x="236.24">\</text><text class="an" x="246.16">_</text><text class="ao" x="256.08">_</text><text class="ap" x="266">_</text><text class="aq" x="275.92">/</text><text class="h" x="285.84">\</text><text class="e" x="295.76">_</text><text class="f" x="305.68">_</text><text class="ar" x="315.6">/</text><text class="a2" x="325.52">\</text><text class="as" x="335.44">_</text><text class="at" x="345.36">_</text><text class="au" x="355.28">,</text><text class="av" x="365.2">_</text><text class="k" x="375.12">/</text><text class="i" x="385.04">_</text><text class="j" x="394.96">/</text><text class="a3" x="404.88">|</text><text class="a8" x="414.8">_</text><text class="a4" x="424.72">|</text><text class="a5" x="434.64">\</text><text class="a6" x="444.56">_</text><text class="a7" x="454.48">_</text><text class="o" x="464.4">_</text><text class="m" x="474.32">/</text></g>
+<g class="l fg bw"><text class="ae" x="18">/</text><text class="af" x="27.92">_</text><text class="ag" x="37.84">_</text><text class="ah" x="47.76">_</text><text class="az" x="57.68">_</text><text class="a0" x="67.6">/</text><text class="ai" x="77.52">\</text><text class="aj" x="87.44">_</text><text class="ak" x="97.36">_</text><text class="b" x="107.28">_</text><text class="d" x="117.2">/</text><text class="al" x="127.12">\</text><text class="a1" x="137.04">_</text><text class="am" x="146.96">_</text><text class="an" x="156.88">_</text><text class="ao" x="166.8">/</text><text class="ap" x="176.72">_</text><text class="aq" x="186.64">/</text><text class="e" x="206.48">/</text><text class="f" x="216.4">_</text><text class="ar" x="226.32">/</text><text class="a2" x="236.24">\</text><text class="as" x="246.16">_</text><text class="at" x="256.08">_</text><text class="au" x="266">_</text><text class="av" x="275.92">/</text><text class="k" x="285.84">\</text><text class="i" x="295.76">_</text><text class="j" x="305.68">_</text><text class="a3" x="315.6">/</text><text class="a8" x="325.52">\</text><text class="a4" x="335.44">_</text><text class="a5" x="345.36">_</text><text class="a6" x="355.28">,</text><text class="a7" x="365.2">_</text><text class="o" x="375.12">/</text><text class="m" x="385.04">_</text><text class="n" x="394.96">/</text><text class="a9" x="404.88">|</text><text class="bf" x="414.8">_</text><text class="ba" x="424.72">|</text><text class="bb" x="434.64">\</text><text class="bc" x="444.56">_</text><text class="bd" x="454.48">_</text><text class="be" x="464.4">_</text><text class="p" x="474.32">/</text></g>
+<g class="l fh bw"><text class="b" x="18">/</text><text class="d" x="27.92">_</text><text class="al" x="37.84">_</text><text class="a1" x="47.76">_</text><text class="am" x="57.68">_</text><text class="an" x="67.6">/</text><text class="ao" x="77.52">\</text><text class="ap" x="87.44">_</text><text class="aq" x="97.36">_</text><text class="h" x="107.28">_</text><text class="e" x="117.2">/</text><text class="f" x="127.12">\</text><text class="ar" x="137.04">_</text><text class="a2" x="146.96">_</text><text class="as" x="156.88">_</text><text class="at" x="166.8">/</text><text class="au" x="176.72">_</text><text class="av" x="186.64">/</text><text class="i" x="206.48">/</text><text class="j" x="216.4">_</text><text class="a3" x="226.32">/</text><text class="a8" x="236.24">\</text><text class="a4" x="246.16">_</text><text class="a5" x="256.08">_</text><text class="a6" x="266">_</text><text class="a7" x="275.92">/</text><text class="o" x="285.84">\</text><text class="m" x="295.76">_</text><text class="n" x="305.68">_</text><text class="a9" x="315.6">/</text><text class="bf" x="325.52">\</text><text class="ba" x="335.44">_</text><text class="bb" x="345.36">_</text><text class="bc" x="355.28">,</text><text class="bd" x="365.2">_</text><text class="be" x="375.12">/</text><text class="p" x="385.04">_</text><text class="q" x="394.96">/</text><text class="bh" x="404.88">|</text><text class="bp" x="414.8">_</text><text class="bi" x="424.72">|</text><text class="bj" x="434.64">\</text><text class="bk" x="444.56">_</text><text class="bl" x="454.48">_</text><text class="bm" x="464.4">_</text><text class="bn" x="474.32">/</text></g>
+<g class="l fi bw"><text class="h" x="18">/</text><text class="e" x="27.92">_</text><text class="f" x="37.84">_</text><text class="ar" x="47.76">_</text><text class="a2" x="57.68">_</text><text class="as" x="67.6">/</text><text class="at" x="77.52">\</text><text class="au" x="87.44">_</text><text class="av" x="97.36">_</text><text class="k" x="107.28">_</text><text class="i" x="117.2">/</text><text class="j" x="127.12">\</text><text class="a3" x="137.04">_</text><text class="a8" x="146.96">_</text><text class="a4" x="156.88">_</text><text class="a5" x="166.8">/</text><text class="a6" x="176.72">_</text><text class="a7" x="186.64">/</text><text class="m" x="206.48">/</text><text class="n" x="216.4">_</text><text class="a9" x="226.32">/</text><text class="bf" x="236.24">\</text><text class="ba" x="246.16">_</text><text class="bb" x="256.08">_</text><text class="bc" x="266">_</text><text class="bd" x="275.92">/</text><text class="be" x="285.84">\</text><text class="p" x="295.76">_</text><text class="q" x="305.68">_</text><text class="bh" x="315.6">/</text><text class="bp" x="325.52">\</text><text class="bi" x="335.44">_</text><text class="bj" x="345.36">_</text><text class="bk" x="355.28">,</text><text class="bl" x="365.2">_</text><text class="bm" x="375.12">/</text><text class="bn" x="385.04">_</text><text class="bx" x="394.96">/</text><text class="bq" x="404.88">|</text><text class="by" x="414.8">_</text><text class="br" x="424.72">|</text><text class="bt" x="434.64">\</text><text class="bu" x="444.56">_</text><text class="bv" x="454.48">_</text><text class="bz" x="464.4">_</text><text class="b0" x="474.32">/</text></g>
+<g class="l fj"><text x="18" y="164.8">$</text><use href="#c" x="37.84" y="152"/></g>
+<g class="l fk"><text x="18 37.84" y="164.8">$t</text><use href="#c" x="47.76" y="152"/></g>
+<g class="l fl"><text x="18 37.84 47.76" y="164.8">$to</text><use href="#c" x="57.68" y="152"/></g>
+<g class="l fm"><text x="18 37.84 47.76 57.68" y="164.8">$toi</text><use href="#c" x="67.6" y="152"/></g>
+<g class="l fn"><text x="18" y="164.8" textLength="59.52">$ toil</text><use href="#c" x="77.52" y="152"/></g>
+<g class="l fo b1"><text x="18" textLength="69.44">$ toile</text><use href="#c" x="87.44" y="-12.8"/></g>
+<text class="l fq b1" x="18" textLength="79.36">$ toilet</text>
+<g class="l fr b1"><text x="18" textLength="99.2">$ toilet -</text><use href="#c" x="117.2" y="-12.8"/></g>
+<text class="l ft b1" x="18" textLength="109.12">$ toilet -f</text>
+<g class="l fu b1"><text x="18" textLength="128.96">$ toilet -f f</text><use href="#c" x="146.96" y="-12.8"/></g>
+<g class="l fv b1"><text x="18" textLength="138.88">$ toilet -f fu</text><use href="#c" x="156.88" y="-12.8"/></g>
+<g class="l fw b1"><text x="18" textLength="148.8">$ toilet -f fut</text><use href="#c" x="166.8" y="-12.8"/></g>
+<g class="l fx b1"><text x="18" textLength="158.72">$ toilet -f futu</text><use href="#c" x="176.72" y="-12.8"/></g>
+<g class="l fy b1"><text x="18" textLength="168.64">$ toilet -f futur</text><use href="#c" x="186.64" y="-12.8"/></g>
+<text class="l f0 b1" x="18" textLength="178.56">$ toilet -f future</text>
+<g class="l f1 b1"><text x="18" textLength="198.4">$ toilet -f future -</text><use href="#c" x="216.4" y="-12.8"/></g>
+<g class="l f2 b1"><text x="18" textLength="208.32">$ toilet -f future --</text><use href="#c" x="226.32" y="-12.8"/></g>
+<g class="l f3 b1"><text x="18" textLength="218.24">$ toilet -f future --g</text><use href="#c" x="236.24" y="-12.8"/></g>
+<g class="l f4 b1"><text x="18" textLength="228.16">$ toilet -f future --ga</text><use href="#c" x="246.16" y="-12.8"/></g>
+<text class="l f6 b1" x="18" textLength="238.08">$ toilet -f future --gay</text>
+<g class="l f7 b1"><text x="18" textLength="257.92">$ toilet -f future --gay &quot;</text><use href="#c" x="275.92" y="-12.8"/></g>
+<g class="l f8 b1"><text x="18" textLength="267.84">$ toilet -f future --gay &quot;d</text><use href="#c" x="285.84" y="-12.8"/></g>
+<g class="l f9 b1"><text x="18" textLength="277.76">$ toilet -f future --gay &quot;de</text><use href="#c" x="295.76" y="-12.8"/></g>
+<g class="l ga b1"><text x="18" textLength="287.68">$ toilet -f future --gay &quot;dem</text><use href="#c" x="305.68" y="-12.8"/></g>
+<g class="l gc b1"><text x="18" textLength="297.6">$ toilet -f future --gay &quot;demo</text><use href="#c" x="315.6" y="-12.8"/></g>
+<text class="l ge b1" x="18" textLength="307.52">$ toilet -f future --gay &quot;demos</text>
+<g class="l gf b1"><text x="18" textLength="327.36">$ toilet -f future --gay &quot;demos f</text><use href="#c" x="345.36" y="-12.8"/></g>
+<g class="l gg b1"><text x="18" textLength="337.28">$ toilet -f future --gay &quot;demos fr</text><use href="#c" x="355.28" y="-12.8"/></g>
+<g class="l gh b1"><text x="18" textLength="347.2">$ toilet -f future --gay &quot;demos fro</text><use href="#c" x="365.2" y="-12.8"/></g>
+<text class="l gj b1" x="18" textLength="357.12">$ toilet -f future --gay &quot;demos from</text>
+<g class="l gk b1"><text x="18" textLength="376.96">$ toilet -f future --gay &quot;demos from Y</text><use href="#c" x="394.96" y="-12.8"/></g>
+<g class="l gl b1"><text x="18" textLength="386.88">$ toilet -f future --gay &quot;demos from YA</text><use href="#c" x="404.88" y="-12.8"/></g>
+<g class="l gm b1"><text x="18" textLength="396.8">$ toilet -f future --gay &quot;demos from YAM</text><use href="#c" x="414.8" y="-12.8"/></g>
+<g class="l gn b1"><text x="18" textLength="406.72">$ toilet -f future --gay &quot;demos from YAML</text><use href="#c" x="424.72" y="-12.8"/></g>
+<text class="l go b1" x="18" textLength="416.64">$ toilet -f future --gay &quot;demos from YAML&quot;</text>
+<g class="l cx b8"><text class="b2" x="18 27.92 137.04 146.96 256.08 266 375.12 385.04" font-weight="bold">╺┳┏━┏━┏━</text><text class="b3" x="37.84 47.76 156.88 275.92 285.84 394.96 404.88" font-weight="bold">┓┏┓┓┏┓┏</text><text class="b4" x="57.68 67.6 295.76 305.68 414.8 424.72" font-weight="bold">━╸┳┓┳┓</text><text class="b5" x="77.52 87.44 196.56 206.48 434.64" font-weight="bold">┏┳┏━╻</text><text class="b6" x="97.36 107.28 216.4 226.32 345.36" font-weight="bold">┓┏╸┏╻</text><text class="b7" x="117.2 127.12 236.24 246.16 365.2" font-weight="bold">━┓━┓╻</text></g>
+<g class="l cx b9"><text class="b3" x="27.92 137.04 146.96 256.08 375.12 385.04" font-weight="bold">┃┗━┃┣━</text><text class="b4" x="37.84 47.76 156.88 275.92 285.84 394.96 404.88" font-weight="bold">┃┣┓┃┃┫┃</text><text class="b5" x="57.68 295.76 305.68 414.8 424.72" font-weight="bold">╸┃┃┃┃</text><text class="b6" x="77.52 87.44 196.56 206.48 434.64" font-weight="bold">┃┃┣╸┃</text><text class="b7" x="97.36 107.28 226.32 345.36" font-weight="bold">┃┃┣┗</text><text class="b2" x="127.12 236.24 246.16 355.28 365.2" font-weight="bold">┃┳┛┳┛</text></g>
+<g class="l cx ca"><text class="b4" x="18 27.92 137.04 146.96 256.08 266 375.12" font-weight="bold">╺┻┗━┗━╹</text><text class="b5" x="37.84 47.76 156.88 275.92 285.84 394.96 404.88" font-weight="bold">┛┗┛┛╹╹╹</text><text class="b6" x="57.68 67.6 305.68 424.72" font-weight="bold">━╸╹╹</text><text class="b7" x="77.52 196.56 434.64 444.56" font-weight="bold">╹╹┗━</text><text class="b2" x="97.36 107.28 226.32 454.48" font-weight="bold">╹┗╹╸</text><text class="b3" x="117.2 127.12 236.24 246.16 355.28" font-weight="bold">━┛┗╸╹</text></g>
+<g class="l gp"><text x="18" y="244.8">$</text><use href="#c" x="37.84" y="232"/></g>
+<use href="#c" x="97.36" y="12" class="l gq"/>
+<use href="#c" x="107.28" y="12" class="l gr"/>
+<use href="#c" x="127.12" y="12" class="l gs"/>
+<use href="#c" x="137.04" y="12" class="l gt"/>
+<use href="#c" x="186.64" y="12" class="l gu"/>
+<use href="#c" x="196.56" y="12" class="l gv"/>
+<use href="#c" x="285.84" y="12" class="l gw"/>
+<use href="#c" x="295.76" y="12" class="l gx"/>
+<use href="#c" x="305.68" y="12" class="l gy"/>
+<use href="#c" x="315.6" y="12" class="l gz"/>
+<use href="#c" x="375.12" y="12" class="l g0"/>
+<use href="#c" x="385.04" y="12" class="l g1"/>
+<use href="#c" x="404.88" y="12" class="l g2"/>
+<use href="#c" x="414.8" y="12" class="l g3"/>
+<use href="#c" x="434.64" y="12" class="l g4"/>
+<use href="#c" x="444.56" y="12" class="l g5"/>
+<use href="#c" x="454.48" y="12" class="l g6"/>
+<use href="#c" x="464.4" y="12" class="l g7"/>
+<use href="#c" x="484.24" y="12" class="l g8"/>
+<use href="#c" x="494.16" y="12" class="l g9"/>
+<use href="#c" x="514" y="12" class="l ha"/>
+<use href="#c" x="523.92" y="12" class="l hb"/>
+<use href="#c" x="543.76" y="12" class="l hc"/>
+<use href="#c" x="553.68" y="12" class="l hd"/>
+<use href="#c" x="573.52" y="12" class="l he"/>
+<use href="#c" x="583.44" y="12" class="l hf"/>
+<use href="#c" x="603.28" y="12" class="l hg"/>
+<use href="#c" x="18" y="32" class="l hh"/>
+<use href="#c" x="494.16" y="32" class="l hj"/>
+<use href="#c" x="494.16" y="32" class="l hk"/>
+<use href="#c" x="494.16" y="52" class="l hm"/>
+<use href="#c" x="18" y="72" class="l hn"/>
+<use href="#c" x="494.16" y="72" class="l ho"/>
+<use href="#c" x="494.16" y="92" class="l hp"/>
+<use href="#c" x="494.16" y="112" class="l hq"/>
+<use href="#c" x="494.16" y="132" class="l hr"/>
+<use href="#c" x="18" y="152" class="l ht"/>
+<use href="#c" x="97.36" y="152" class="l hu"/>
+<use href="#c" x="107.28" y="152" class="l hv"/>
+<use href="#c" x="127.12" y="152" class="l hw"/>
+<use href="#c" x="137.04" y="152" class="l hx"/>
+<use href="#c" x="196.56" y="152" class="l hy"/>
+<use href="#c" x="206.48" y="152" class="l hz"/>
+<use href="#c" x="256.08" y="152" class="l h0"/>
+<use href="#c" x="266" y="152" class="l h1"/>
+<use href="#c" x="325.52" y="152" class="l h2"/>
+<use href="#c" x="335.44" y="152" class="l h3"/>
+<use href="#c" x="375.12" y="152" class="l h4"/>
+<use href="#c" x="385.04" y="152" class="l h5"/>
+<use href="#c" x="434.64" y="152" class="l h6"/>
+<use href="#c" x="18" y="172" class="l h7"/>
+<use href="#c" x="18" y="232" class="l h9"/>
+</g>
+</svg>

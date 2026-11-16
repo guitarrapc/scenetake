@@ -77,20 +77,25 @@
   </ItemGroup>
 
   <!--
-    The samples the playground offers: each samples/<name>.yaml with a samples/<name>.outputs.json, with its cast for
-    the Cast tab. They are copied next to the page, with samples/index.json listing their names.
+    The samples the playground offers: each <name>.yaml with a <name>.outputs.json, with its cast for the Cast tab,
+    from samples/ and from samples/showcase/ (recorded in a container by samples/showcase/record.sh). They are copied
+    into one folder next to the page, with samples/index.json listing their names.
   -->
   <ItemGroup>
-    <PlaygroundOutputs Include="../samples/*.outputs.json" />
-    <PlaygroundCast Include="../samples/*.cast" />
+    <PlaygroundOutputs Include="../samples/*.outputs.json;../samples/showcase/*.outputs.json" />
+    <PlaygroundCast Include="../samples/*.cast;../samples/showcase/*.cast" />
   </ItemGroup>
 
   <Target Name="_CopyPlaygroundSamples" AfterTargets="Publish">
     <ItemGroup>
       <_PlaygroundSampleName Include="@(PlaygroundOutputs->'%(Filename)'->Replace('.outputs', ''))" />
-      <_PlaygroundSampleYaml Include="@(_PlaygroundSampleName->'../samples/%(Identity).yaml')" />
+      <_PlaygroundSampleYaml Include="@(PlaygroundOutputs->'%(RelativeDir)%(Filename).yaml'->Replace('.outputs.yaml', '.yaml'))" />
     </ItemGroup>
     <Error Condition="'@(_PlaygroundSampleYaml)' != '' and !Exists('%(_PlaygroundSampleYaml.Identity)')" Text="An outputs file has no scenario: %(_PlaygroundSampleYaml.Identity)" />
+    <RemoveDuplicates Inputs="@(_PlaygroundSampleName)">
+      <Output TaskParameter="Filtered" ItemName="_PlaygroundUniqueSampleName" />
+    </RemoveDuplicates>
+    <Error Condition="'@(_PlaygroundUniqueSampleName->Count())' != '@(_PlaygroundSampleName->Count())'" Text="Two samples share a name. samples/ and samples/showcase/ are published into one folder, so their names must differ." />
     <Copy SourceFiles="@(PlaygroundOutputs);@(_PlaygroundSampleYaml);@(PlaygroundCast)" DestinationFolder="$(PublishDir)wwwroot/samples" />
     <PropertyGroup>
       <_PlaygroundIndexScenarios>@(_PlaygroundSampleName->'&quot;%(Identity)&quot;', ',')</_PlaygroundIndexScenarios>

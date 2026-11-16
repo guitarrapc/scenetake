@@ -1,0 +1,5 @@
+// fastfetch config for fetch.yaml. The modules leave out the host's hardware; Kernel, whose WSL or cloud kernel
+// name is wider than the terminal; and Shell, which would name scenetake: it is fastfetch's parent process.
+{
+  "modules": ["title", "separator", "os", "packages", "terminal", "locale", "break", "colors"]
+}

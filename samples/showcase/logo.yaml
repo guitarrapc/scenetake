@@ -1,0 +1,16 @@
+title: "figlet, lolcat, and toilet"
+width: 60
+height: 12
+shell: bash
+
+settings:
+  prompt: "$ "
+  typing-speed: 0.03
+  pre-delay: 0.6
+  post-delay: 2.5
+
+steps:
+  # lolcat animates each line in place, so it runs in a PTY. A fixed seed gives the same colors on every run.
+  - run: figlet -f slant scenetake | lolcat -a -d 4 -s 30 -t -S 30
+    pty: true
+  - run: toilet -f future --gay "demos from YAML"

@@ -62,11 +62,16 @@ if (failures > 0)
 Console.Error.WriteLine("all playground replay tests passed");
 return 0;
 
-// Every committed sample with an outputs file replays to its committed cast and SVG.
+// Every committed sample with an outputs file replays to its committed cast and SVG. The showcase samples are
+// recorded on Linux in a container (samples/showcase/record.sh), and the playground offers them too.
 static bool SamplesReplayToCommittedCasts(string repoRoot)
 {
-    var samples = Path.Combine(repoRoot, "samples");
-    var outputsFiles = Directory.GetFiles(samples, "*.outputs.json").OrderBy(static path => path, StringComparer.Ordinal).ToArray();
+    var outputsFiles = new[] { "samples", "samples/showcase" }
+        .Select(folder => Path.Combine(repoRoot, folder))
+        .Where(Directory.Exists)
+        .SelectMany(static folder => Directory.GetFiles(folder, "*.outputs.json"))
+        .OrderBy(static path => path, StringComparer.Ordinal)
+        .ToArray();
     if (outputsFiles.Length == 0)
     {
         Console.Error.WriteLine("  no samples/*.outputs.json yet");
@@ -76,6 +81,7 @@ static bool SamplesReplayToCommittedCasts(string repoRoot)
     var ok = true;
     foreach (var outputsPath in outputsFiles)
     {
+        var samples = Path.GetDirectoryName(outputsPath)!;
         var name = Path.GetFileName(outputsPath)[..^".outputs.json".Length];
         var yaml = File.ReadAllText(Path.Combine(samples, name + ".yaml"), Encoding.UTF8);
         var outputs = StepOutputs.Parse(File.ReadAllText(outputsPath, Encoding.UTF8));

@@ -1,0 +1,1805 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="837.6" height="386" viewBox="0 0 837.6 386" preserveAspectRatio="xMidYMid meet" role="img" aria-label="scenetake output">
+<style>
+text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
+text { dominant-baseline: alphabetic; }
+.bg,rect:not([class]) { shape-rendering: crispEdges; }
+.l { visibility: hidden; animation: 12.135s step-start infinite; }
+.c { fill: #d0d0d0; fill-opacity: 0.5; }
+.m{transform:translate(0,62.8px)}
+.n{transform:translate(0,102.8px)}
+.k{transform:translate(0,122.8px)}
+.d{transform:translate(0,142.8px)}
+.i{transform:translate(0,162.8px)}
+.j{transform:translate(0,182.8px)}
+.e{transform:translate(0,202.8px)}
+.f{transform:translate(0,222.8px)}
+.g{transform:translate(0,242.8px)}
+.a{transform:translate(0,262.8px)}
+.b{transform:translate(0,282.8px)}
+.h{transform:translate(0,302.8px)}
+@keyframes e5{0.412032%{visibility:visible}}
+.e6{animation-delay:1.1s;animation-name:e5}
+@keyframes e7{0.321385%{visibility:visible}}
+.e8{animation-delay:1.15s;animation-name:e7}
+@keyframes e9{1.648126%{visibility:visible}}
+.fa{animation-delay:1.189s;animation-name:e9}
+@keyframes fb{0.313144%{visibility:visible}}
+.fc{animation-delay:1.389s;animation-name:fb}
+@keyframes o{0.329626%{visibility:visible}}
+.ei{animation-delay:1.427s;animation-name:o}
+.d9{animation-delay:1.467s;animation-name:o}
+.dk{animation-delay:1.507s;animation-name:o}
+.dl{animation-delay:1.547s;animation-name:o}
+.dm{animation-delay:1.587s;animation-name:o}
+@keyframes p{0.337866%{visibility:visible}}
+.r{animation-delay:1.627s;animation-name:p}
+.s{animation-delay:1.668s;animation-name:o}
+.t{animation-delay:1.708s;animation-name:o}
+.u{animation-delay:1.748s;animation-name:o}
+@keyframes q{1.326741%{visibility:visible}}
+.ej{animation-delay:1.788s;animation-name:q}
+.v{animation-delay:1.788s;animation-name:o}
+.w{animation-delay:1.828s;animation-name:p}
+.x{animation-delay:1.869s;animation-name:o}
+.y{animation-delay:1.909s;animation-name:o}
+.ek{animation-delay:1.949s;animation-name:q}
+.z{animation-delay:1.949s;animation-name:o}
+.aa{animation-delay:1.989s;animation-name:o}
+.ab{animation-delay:2.029s;animation-name:p}
+.ac{animation-delay:2.07s;animation-name:o}
+@keyframes ef{1.318501%{visibility:visible}}
+.el{animation-delay:2.11s;animation-name:ef}
+.ad{animation-delay:2.11s;animation-name:o}
+.ae{animation-delay:2.15s;animation-name:o}
+.af{animation-delay:2.19s;animation-name:o}
+.ag{animation-delay:2.23s;animation-name:o}
+.em{animation-delay:2.27s;animation-name:q}
+.ah{animation-delay:2.27s;animation-name:p}
+.ai{animation-delay:2.311s;animation-name:o}
+.aj{animation-delay:2.351s;animation-name:o}
+.ak{animation-delay:2.391s;animation-name:o}
+.en{animation-delay:2.431s;animation-name:q}
+.al{animation-delay:2.431s;animation-name:o}
+.am{animation-delay:2.471s;animation-name:o}
+.an{animation-delay:2.511s;animation-name:p}
+.ao{animation-delay:2.552s;animation-name:o}
+.eo{animation-delay:2.592s;animation-name:ef}
+.ap{animation-delay:2.592s;animation-name:o}
+.aq{animation-delay:2.632s;animation-name:o}
+.ar{animation-delay:2.672s;animation-name:o}
+.as{animation-delay:2.712s;animation-name:o}
+.ep{animation-delay:2.752s;animation-name:q}
+.at{animation-delay:2.752s;animation-name:p}
+.au{animation-delay:2.793s;animation-name:o}
+.av{animation-delay:2.833s;animation-name:o}
+.aw{animation-delay:2.873s;animation-name:o}
+.eq{animation-delay:2.913s;animation-name:q}
+.ax{animation-delay:2.913s;animation-name:o}
+.ay{animation-delay:2.953s;animation-name:o}
+.az{animation-delay:2.993s;animation-name:p}
+.a0{animation-delay:3.034s;animation-name:o}
+.er{animation-delay:3.074s;animation-name:ef}
+.a1{animation-delay:3.074s;animation-name:o}
+.a2{animation-delay:3.114s;animation-name:o}
+.a3{animation-delay:3.154s;animation-name:o}
+.a4{animation-delay:3.194s;animation-name:o}
+.es{animation-delay:3.234s;animation-name:q}
+.a5{animation-delay:3.234s;animation-name:p}
+.a6{animation-delay:3.275s;animation-name:o}
+.a7{animation-delay:3.315s;animation-name:o}
+.a8{animation-delay:3.355s;animation-name:o}
+.et{animation-delay:3.395s;animation-name:q}
+.a9{animation-delay:3.395s;animation-name:p}
+.ba{animation-delay:3.436s;animation-name:o}
+.bb{animation-delay:3.476s;animation-name:o}
+.bc{animation-delay:3.516s;animation-name:o}
+.eu{animation-delay:3.556s;animation-name:q}
+.bd{animation-delay:3.556s;animation-name:o}
+.be{animation-delay:3.596s;animation-name:p}
+.bf{animation-delay:3.637s;animation-name:o}
+.bh{animation-delay:3.677s;animation-name:o}
+.ev{animation-delay:3.717s;animation-name:q}
+.bi{animation-delay:3.717s;animation-name:o}
+.bj{animation-delay:3.757s;animation-name:o}
+.bk{animation-delay:3.797s;animation-name:o}
+.bl{animation-delay:3.837s;animation-name:p}
+.ew{animation-delay:3.878s;animation-name:ef}
+.bm{animation-delay:3.878s;animation-name:o}
+.bn{animation-delay:3.918s;animation-name:o}
+.bo{animation-delay:3.958s;animation-name:o}
+.bp{animation-delay:3.998s;animation-name:o}
+.ex{animation-delay:4.038s;animation-name:q}
+.bq{animation-delay:4.038s;animation-name:o}
+.br{animation-delay:4.078s;animation-name:p}
+.bs{animation-delay:4.119s;animation-name:o}
+.bt{animation-delay:4.159s;animation-name:o}
+.ey{animation-delay:4.199s;animation-name:q}
+.bu{animation-delay:4.199s;animation-name:o}
+.bv{animation-delay:4.239s;animation-name:o}
+.bw{animation-delay:4.279s;animation-name:p}
+.bx{animation-delay:4.32s;animation-name:o}
+.ez{animation-delay:4.36s;animation-name:ef}
+.by{animation-delay:4.36s;animation-name:o}
+.bz{animation-delay:4.4s;animation-name:o}
+.b0{animation-delay:4.44s;animation-name:o}
+.b1{animation-delay:4.48s;animation-name:o}
+.e0{animation-delay:4.52s;animation-name:q}
+.b2{animation-delay:4.52s;animation-name:p}
+.b3{animation-delay:4.561s;animation-name:o}
+.b4{animation-delay:4.601s;animation-name:o}
+.b5{animation-delay:4.641s;animation-name:o}
+.e1{animation-delay:4.681s;animation-name:q}
+.b6{animation-delay:4.681s;animation-name:o}
+.b7{animation-delay:4.721s;animation-name:p}
+.b8{animation-delay:4.762s;animation-name:o}
+.b9{animation-delay:4.802s;animation-name:o}
+.e2{animation-delay:4.842s;animation-name:ef}
+.ca{animation-delay:4.842s;animation-name:o}
+.cb{animation-delay:4.882s;animation-name:o}
+.cc{animation-delay:4.922s;animation-name:o}
+.cd{animation-delay:4.962s;animation-name:o}
+.e3{animation-delay:5.002s;animation-name:q}
+.ce{animation-delay:5.002s;animation-name:p}
+.cf{animation-delay:5.043s;animation-name:o}
+.cg{animation-delay:5.083s;animation-name:o}
+.ch{animation-delay:5.123s;animation-name:o}
+.ci{animation-delay:5.163s;animation-name:o}
+.cj{animation-delay:5.203s;animation-name:o}
+.ck{animation-delay:5.243s;animation-name:p}
+.cl{animation-delay:5.284s;animation-name:o}
+.cm{animation-delay:5.324s;animation-name:o}
+.cn{animation-delay:5.364s;animation-name:o}
+.co{animation-delay:5.404s;animation-name:o}
+.cp{animation-delay:5.444s;animation-name:o}
+.cq{animation-delay:5.484s;animation-name:o}
+.cr{animation-delay:5.524s;animation-name:p}
+.cs{animation-delay:5.565s;animation-name:o}
+.ct{animation-delay:5.605s;animation-name:o}
+.cu{animation-delay:5.645s;animation-name:o}
+.cv{animation-delay:5.685s;animation-name:o}
+.cw{animation-delay:5.725s;animation-name:o}
+.cx{animation-delay:5.765s;animation-name:p}
+.cy{animation-delay:5.806s;animation-name:o}
+.cz{animation-delay:5.846s;animation-name:o}
+.c0{animation-delay:5.886s;animation-name:o}
+.c1{animation-delay:5.926s;animation-name:o}
+.c2{animation-delay:5.966s;animation-name:o}
+.c3{animation-delay:6.006s;animation-name:o}
+.c4{animation-delay:6.046s;animation-name:p}
+.c5{animation-delay:6.087s;animation-name:o}
+.c6{animation-delay:6.127s;animation-name:o}
+.c7{animation-delay:6.167s;animation-name:o}
+.c8{animation-delay:6.207s;animation-name:o}
+.c9{animation-delay:6.247s;animation-name:o}
+.da{animation-delay:6.287s;animation-name:o}
+.db{animation-delay:6.327s;animation-name:p}
+.dc{animation-delay:6.368s;animation-name:o}
+.dd{animation-delay:6.408s;animation-name:o}
+.de{animation-delay:6.448s;animation-name:o}
+.df{animation-delay:6.488s;animation-name:o}
+.dg{animation-delay:6.528s;animation-name:o}
+.dh{animation-delay:6.568s;animation-name:p}
+.di{animation-delay:6.609s;animation-name:o}
+.dj{animation-delay:6.649s;animation-name:o}
+.dn{animation-delay:6.689s;animation-name:o}
+.do{animation-delay:6.729s;animation-name:o}
+.dp{animation-delay:6.769s;animation-name:o}
+.dq{animation-delay:6.809s;animation-name:p}
+.dr{animation-delay:6.85s;animation-name:o}
+.ds{animation-delay:6.89s;animation-name:o}
+.dt{animation-delay:6.93s;animation-name:o}
+.du{animation-delay:6.97s;animation-name:o}
+.dv{animation-delay:7.01s;animation-name:o}
+.dw{animation-delay:7.05s;animation-name:o}
+.dx{animation-delay:7.09s;animation-name:p}
+.dy{animation-delay:7.131s;animation-name:o}
+.dz{animation-delay:7.171s;animation-name:o}
+.d0{animation-delay:7.211s;animation-name:o}
+.d1{animation-delay:7.251s;animation-name:o}
+.d2{animation-delay:7.291s;animation-name:o}
+.d3{animation-delay:7.331s;animation-name:o}
+.d4{animation-delay:7.371s;animation-name:p}
+.d5{animation-delay:7.412s;animation-name:o}
+.d6{animation-delay:7.452s;animation-name:o}
+.d7{animation-delay:7.492s;animation-name:o}
+.ea{animation-delay:7.532s;animation-name:o}
+.eb{animation-delay:7.572s;animation-name:o}
+.ec{animation-delay:7.612s;animation-name:o}
+.ed{animation-delay:7.652s;animation-name:p}
+.ee{animation-delay:7.693s;animation-name:o}
+.eg{animation-delay:7.733s;animation-name:o}
+.eh{animation-delay:7.773s;animation-name:o}
+.e4{animation-delay:7.813s;animation-name:o}
+@keyframes fd{65.372888%{visibility:hidden}to{visibility:visible}}
+.fd{animation-name:fd}
+@keyframes fe{82.686444%{visibility:hidden}to{visibility:visible}}
+.fe{animation-name:fe}
+@keyframes ff{0.379069%{visibility:visible}}
+.fg{animation-delay:1.189s;animation-name:ff}
+@keyframes fh{1.269057%{visibility:visible}}
+.fi{animation-delay:1.235s;animation-name:fh}
+@keyframes fj{17.313556%{visibility:visible}}
+.fk{animation-delay:7.933s;animation-name:fj}
+.d8{visibility:visible}
+</style>
+<defs>
+<filter id="window-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.22"/></filter>
+<rect id="c" class="c" width="9.92" height="20"/>
+<mask id="viewport-mask" x="0" y="0" width="837.6" height="386" maskUnits="userSpaceOnUse">
+<rect class="l d8 viewport-mask-0" x="12" y="46" width="813.6" height="328" fill="white"/>
+</mask>
+</defs>
+<rect class="l d8 viewport-chrome-0" x="12" y="12" width="813.6" height="362" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
+<path class="l d8 viewport-chrome-0" d="M 20,12 H 817.6 Q 825.6,12 825.6,20 V 46 H 12 V 20 Q 12,12 20,12 Z" fill="#323232"/>
+<line class="l d8 viewport-chrome-0" x1="12" y1="46" x2="825.6" y2="46" stroke="#1a1a1a" stroke-width="1"/>
+<circle class="l d8 viewport-chrome-0" cx="34" cy="29" r="8" fill="#ff5f57"/>
+<circle class="l d8 viewport-chrome-0" cx="60" cy="29" r="8" fill="#febc2e"/>
+<circle class="l d8 viewport-chrome-0" cx="86" cy="29" r="8" fill="#28c840"/>
+<g mask="url(#viewport-mask)" fill="#d0d0d0">
+<rect class="bg l d8 viewport-bg-0" x="12" y="46" width="813.6" height="328" fill="#282c34"/>
+<g class="l e6"><text x="22" y="62.8">$</text><use href="#c" x="41.84" y="50"/></g>
+<g class="l e8"><text x="22 41.84" y="62.8">$s</text><use href="#c" x="51.76" y="50"/></g>
+<text class="l fa" x="22 41.84 51.76" y="62.8">$sl</text>
+<text class="l fc" x="805.68" y="262.8">_</text>
+<text class="l ei" x="795.76 805.68" y="262.8">__</text>
+<text class="l ei" x="805.68" y="282.8">|</text>
+<text class="l d9" x="805.68" y="142.8">_</text>
+<text class="l d9" x="805.68" y="202.8">|</text>
+<text class="l d9" x="805.68" y="222.8">|</text>
+<text class="l d9" x="805.68" y="242.8">|</text>
+<text class="l d9" x="785.84 795.76 805.68" y="262.8">__/</text>
+<text class="l d9" x="795.76 805.68" y="282.8">|/</text>
+<text class="l d9" x="805.68" y="302.8">\</text>
+<text class="l dk" x="795.76 805.68" y="142.8">_D</text>
+<text class="l dk" x="805.68" y="162.8">|</text>
+<text class="l dk" x="805.68" y="182.8">/</text>
+<text class="l dk" x="795.76" y="202.8">|</text>
+<text class="l dk" x="795.76" y="222.8">|</text>
+<text class="l dk" x="795.76 805.68" y="242.8">|/</text>
+<text class="l dk" x="775.92 785.84 795.76" y="262.8">__/</text>
+<text class="l dk" x="785.84 795.76 805.68" y="282.8">|/-</text>
+<text class="l dk" x="795.76 805.68" y="302.8">\_</text>
+<text class="l dl" x="785.84 795.76" y="142.8">_D</text>
+<text class="l dl" x="795.76 805.68" y="162.8">|(</text>
+<text class="l dl" x="795.76" y="182.8">/</text>
+<text class="l dl" x="785.84" y="202.8">|</text>
+<text class="l dl" x="785.84 805.68" y="222.8">|_</text>
+<text class="l dl" x="785.84 795.76" y="242.8">|/</text>
+<text class="l dl a" x="766" textLength="49.6">__/ =</text>
+<text class="l dl" x="775.92" y="282.8" textLength="39.68">|/-=</text>
+<text class="l dl" x="785.84 795.76 805.68" y="302.8">\_/</text>
+<text class="l dm" x="775.92 785.84 805.68" y="142.8">_D_</text>
+<text class="l dm" x="785.84 795.76 805.68" y="162.8">|(_</text>
+<text class="l dm" x="785.84" y="182.8">/</text>
+<text class="l dm" x="775.92" y="202.8">|</text>
+<text class="l dm" x="775.92 795.76 805.68" y="222.8">|__</text>
+<text class="l dm" x="775.92 785.84 805.68" y="242.8">|/|</text>
+<text class="l dm a" x="756.08" textLength="59.52">__/ =|</text>
+<text class="l dm b" x="766" textLength="49.6">|/-=|</text>
+<text class="l dm" x="775.92 785.84 795.76" y="302.8">\_/</text>
+<text class="l r" x="805.68" y="122.8">=</text>
+<text class="l r d" x="766" textLength="49.6">_D _|</text>
+<text class="l r" x="775.92" y="162.8" textLength="39.68">|(_)</text>
+<text class="l r" x="775.92" y="182.8">/</text>
+<text class="l r e" x="766">|</text>
+<text class="l r f" x="766" textLength="49.6">| ___</text>
+<text class="l r g" x="766 775.92 795.76">|/|</text>
+<text class="l r a" x="746.16" textLength="59.52">__/ =|</text>
+<text class="l r b" x="756.08" textLength="59.52">|/-=|_</text>
+<text class="l r h" x="766 775.92 785.84">\_/</text>
+<text class="l s" x="795.76 805.68" y="122.8">==</text>
+<text class="l s d" x="756.08 766 785.84 795.76">_D_|</text>
+<text class="l s i" x="766" textLength="49.6">|(_)-</text>
+<text class="l s j" x="766">/</text>
+<text class="l s e" x="756.08">|</text>
+<text class="l s f" x="756.08" textLength="59.52">| ____</text>
+<text class="l s g" x="756.08 766 785.84">|/|</text>
+<text class="l s a" x="736.24" textLength="79.36">__/ =| o</text>
+<text class="l s b" x="746.16" textLength="69.44">|/-=|__</text>
+<text class="l s h" x="756.08 766 775.92">\_/</text>
+<text class="l t" x="785.84 795.76 805.68" y="122.8">===</text>
+<text class="l t d" x="746.16" textLength="49.6">_D _|</text>
+<text class="l t i" x="756.08" textLength="59.52">|(_)--</text>
+<text class="l t j" x="756.08">/</text>
+<text class="l t e" x="746.16">|</text>
+<text class="l t f" x="746.16" textLength="69.44">| _____</text>
+<text class="l t g" x="746.16 756.08 775.92">|/|</text>
+<text class="l t a" x="726.32" textLength="79.36">__/ =| o</text>
+<text class="l t b" x="736.24" textLength="79.36">|/-=|___</text>
+<text class="l t h" x="746.16 756.08 766">\_/</text>
+<text class="l u" x="775.92" y="122.8" textLength="39.68">====</text>
+<text class="l u d" x="736.24" textLength="79.36">_D _|  |</text>
+<text class="l u i" x="746.16" textLength="69.44">|(_)---</text>
+<text class="l u j" x="746.16 805.68">/|</text>
+<text class="l u e" x="736.24 805.68">||</text>
+<text class="l u f" x="736.24" textLength="79.36">| ______</text>
+<text class="l u g" x="736.24 746.16 766 805.68">|/||</text>
+<text class="l u a" x="716.4" textLength="99.2">__/ =| o |</text>
+<text class="l u b" x="726.32" textLength="89.28">|/-=|___|</text>
+<text class="l u h" x="736.24 746.16 756.08">\_/</text>
+<text class="l ej" x="795.76 805.68" y="62.8">(@</text>
+<text class="l ej" x="775.92" y="102.8">(</text>
+<text class="l v k" x="766" textLength="39.68">====</text>
+<text class="l v d" x="726.32" textLength="89.28">_D _|  |_</text>
+<text class="l v i" x="736.24" textLength="69.44">|(_)---</text>
+<text class="l v j" x="736.24 795.76">/|</text>
+<text class="l v e" x="726.32 795.76">||</text>
+<text class="l v f" x="726.32" textLength="89.28">| _______</text>
+<text class="l v g" x="726.32" textLength="89.28">|/ |   |-</text>
+<text class="l v a" x="706.48" textLength="109.12">__/ =| o |=</text>
+<text class="l v b" x="716.4" textLength="99.2">|/-=|___|=</text>
+<text class="l v h" x="726.32 736.24 746.16">\_/</text>
+<text class="l w k" x="756.08 766 775.92 785.84">====</text>
+<text class="l w d" x="716.4" textLength="99.2">_D _|  |__</text>
+<text class="l w i" x="726.32" textLength="69.44">|(_)---</text>
+<text class="l w j" x="726.32 785.84">/|</text>
+<text class="l w e" x="716.4 785.84">||</text>
+<text class="l w f" x="716.4" textLength="99.2">| ________</text>
+<text class="l w g" x="716.4" textLength="99.2">|/ |   |--</text>
+<text class="l w a" x="696.56" textLength="119.04">__/ =| o |=-</text>
+<text class="l w b" x="706.48" textLength="109.12">|/-=|___|=O</text>
+<text class="l w h" x="716.4 726.32 736.24 805.68">\_/\</text>
+<text class="l x k" x="746.16 756.08 766 775.92">====</text>
+<text class="l x d" x="706.48" textLength="109.12">_D _|  |___</text>
+<text class="l x i" x="716.4" textLength="99.2">|(_)---  |</text>
+<text class="l x j" x="716.4 775.92 805.68">/||</text>
+<text class="l x e" x="706.48 775.92 805.68">|||</text>
+<text class="l x f" x="706.48" textLength="109.12">| ________|</text>
+<text class="l x g" x="706.48" textLength="109.12">|/ |   |---</text>
+<text class="l x a" x="686.64" textLength="128.96">__/ =| o |=-~</text>
+<text class="l x b" x="696.56" textLength="99.2">|/-=|___|=</text>
+<text class="l x h" x="706.48" textLength="109.12">\_/      \O</text>
+<text class="l y k" x="736.24 746.16 756.08 766">====</text>
+<text class="l y d" x="696.56" textLength="119.04">_D _|  |____</text>
+<text class="l y i" x="706.48" textLength="99.2">|(_)---  |</text>
+<text class="l y j" x="706.48 766 795.76">/||</text>
+<text class="l y e" x="696.56 766 795.76">|||</text>
+<text class="l y f" x="696.56" textLength="119.04">| ________|_</text>
+<text class="l y g" x="696.56" textLength="119.04">|/ |   |----</text>
+<text class="l y a" x="676.72" textLength="138.88">__/ =| o |=-~~</text>
+<text class="l y b" x="686.64" textLength="99.2">|/-=|___|=</text>
+<text class="l y h" x="696.56" textLength="119.04">\_/      \_O</text>
+<text class="l ek m" x="756.08 805.68">()</text>
+<text class="l ek" x="736.24" y="102.8" textLength="49.6">(@@@)</text>
+<text class="l z k" x="726.32" textLength="39.68">====</text>
+<text class="l z d" x="686.64" textLength="128.96">_D _|  |_____</text>
+<text class="l z i" x="696.56" textLength="99.2">|(_)---  |</text>
+<text class="l z j" x="696.56 756.08 785.84">/||</text>
+<text class="l z e" x="686.64 756.08 785.84">|||</text>
+<text class="l z f" x="686.64" textLength="128.96">| ________|__</text>
+<text class="l z g" x="686.64" textLength="128.96">|/ |   |-----</text>
+<text class="l z a" x="666.8" textLength="148.8">__/ =| o |=-~~\</text>
+<text class="l z b" x="676.72" textLength="138.88">|/-=|___|=   O</text>
+<text class="l z h" x="686.64" textLength="128.96">\_/      \__/</text>
+<text class="l aa k" x="716.4" textLength="39.68">====</text>
+<text class="l aa d" x="676.72" textLength="138.88">_D _|  |______</text>
+<text class="l aa i" x="686.64" textLength="99.2">|(_)---  |</text>
+<text class="l aa j" x="686.64 746.16 775.92">/||</text>
+<text class="l aa e" x="676.72 746.16 775.92">|||</text>
+<text class="l aa f" x="676.72" textLength="138.88">| ________|___</text>
+<text class="l aa g" x="676.72" textLength="138.88">|/ |   |------</text>
+<text class="l aa a" x="656.88" textLength="158.72">__/ =| o |=-~O==</text>
+<text class="l aa b" x="666.8" textLength="148.8">|/-=|___|=    |</text>
+<text class="l aa h" x="676.72" textLength="128.96">\_/      \__/</text>
+<text class="l ab k" x="706.48" textLength="39.68">====</text>
+<text class="l ab d" x="666.8" textLength="148.8">_D _|  |_______</text>
+<text class="l ab i" x="676.72" textLength="138.88">|(_)---  |   H</text>
+<text class="l ab j" x="676.72 736.24 766 805.68">/||H</text>
+<text class="l ab e" x="666.8 736.24 766 805.68">|||H</text>
+<text class="l ab f" x="666.8" textLength="148.8">| ________|___H</text>
+<text class="l ab g" x="666.8" textLength="148.8">|/ |   |-------</text>
+<text class="l ab a" x="646.96" textLength="168.64">__/ =| o |=-O====</text>
+<text class="l ab b" x="656.88" textLength="158.72">|/-=|___|=    ||</text>
+<text class="l ab h" x="666.8" textLength="128.96">\_/      \__/</text>
+<text class="l ac k" x="696.56" textLength="39.68">====</text>
+<text class="l ac d" x="656.88" textLength="158.72">_D _|  |_______/</text>
+<text class="l ac i" x="666.8" textLength="148.8">|(_)---  |   H\</text>
+<text class="l ac j" x="666.8 726.32 756.08 795.76">/||H</text>
+<text class="l ac e" x="656.88 726.32 756.08 795.76">|||H</text>
+<text class="l ac f" x="656.88" textLength="158.72">| ________|___H_</text>
+<text class="l ac g" x="656.88" textLength="158.72">|/ |   |--------</text>
+<text class="l ac a" x="637.04" textLength="178.56">__/ =| o |=-~~\  /</text>
+<text class="l ac b" x="646.96" textLength="168.64">|/-=|___|=O=====O</text>
+<text class="l ac h" x="656.88" textLength="158.72">\_/      \__/  \</text>
+<text class="l el m" x="716.4" textLength="59.52">(@@@@)</text>
+<text class="l el" x="696.56 736.24" y="102.8">()</text>
+<text class="l ad k" x="686.64 696.56 706.48 716.4 805.68">====_</text>
+<text class="l ad d" x="646.96" textLength="158.72">_D _|  |_______/</text>
+<text class="l ad i" x="656.88" textLength="158.72">|(_)---  |   H\_</text>
+<text class="l ad j" x="656.88 716.4 746.16 785.84">/||H</text>
+<text class="l ad e" x="646.96 716.4 746.16 785.84">|||H</text>
+<text class="l ad f" x="646.96" textLength="168.64">| ________|___H__</text>
+<text class="l ad g" x="646.96" textLength="168.64">|/ |   |---------</text>
+<text class="l ad a" x="627.12" textLength="188.48">__/ =| o |=-~~\  /~</text>
+<text class="l ad b" x="637.04" textLength="158.72">|/-=|___|=    ||</text>
+<text class="l ad h" x="646.96" textLength="168.64">\_/      \O=====O</text>
+<text class="l ae k" x="676.72" textLength="138.88">====        __</text>
+<text class="l ae d" x="637.04" textLength="158.72">_D _|  |_______/</text>
+<text class="l ae i" x="646.96" textLength="168.64">|(_)---  |   H\__</text>
+<text class="l ae j" x="646.96 706.48 736.24 775.92 805.68">/||H|</text>
+<text class="l ae e" x="637.04 706.48 736.24 775.92 805.68">|||H|</text>
+<text class="l ae f" x="637.04" textLength="178.56">| ________|___H__/</text>
+<text class="l ae g" x="637.04" textLength="178.56">|/ |   |----------</text>
+<text class="l ae a" x="617.2" textLength="198.4">__/ =| o |=-~~\  /~~</text>
+<text class="l ae b" x="627.12" textLength="158.72">|/-=|___|=    ||</text>
+<text class="l ae h" x="637.04" textLength="178.56">\_/      \_O=====O</text>
+<text class="l af k" x="666.8" textLength="148.8">====        ___</text>
+<text class="l af d" x="627.12" textLength="158.72">_D _|  |_______/</text>
+<text class="l af i" x="637.04" textLength="178.56">|(_)---  |   H\___</text>
+<text class="l af j" x="637.04 696.56 726.32 766 795.76">/||H|</text>
+<text class="l af e" x="627.12 696.56 726.32 766 795.76 805.68">|||H|_</text>
+<text class="l af f" x="627.12" textLength="188.48">| ________|___H__/_</text>
+<text class="l af g" x="627.12" textLength="188.48">|/ |   |-----------</text>
+<text class="l af a" x="607.28" textLength="208.32">__/ =| o |=-~~\  /~~\</text>
+<text class="l af b" x="617.2" textLength="198.4">|/-=|___|=   O=====O</text>
+<text class="l af h" x="627.12" textLength="188.48">\_/      \__/  \__/</text>
+<text class="l ag k" x="656.88" textLength="158.72">====        ____</text>
+<text class="l ag d" x="617.2" textLength="158.72">_D _|  |_______/</text>
+<text class="l ag i" x="627.12" textLength="188.48">|(_)---  |   H\____</text>
+<text class="l ag j" x="627.12 686.64 716.4 756.08 785.84">/||H|</text>
+<text class="l ag e" x="617.2" textLength="198.4">|      |  |   H  |__</text>
+<text class="l ag f" x="617.2" textLength="198.4">| ________|___H__/__</text>
+<text class="l ag g" x="617.2" textLength="198.4">|/ |   |-----------I</text>
+<text class="l ag a" x="597.36" textLength="218.24">__/ =| o |=-~O=====O==</text>
+<text class="l ag b" x="607.28" textLength="208.32">|/-=|___|=    ||    |</text>
+<text class="l ag h" x="617.2" textLength="188.48">\_/      \__/  \__/</text>
+<text class="l em m" x="676.72 726.32">()</text>
+<text class="l em" x="656.88" y="102.8" textLength="49.6">(@@@)</text>
+<text class="l ah k" x="646.96" textLength="168.64">====        _____</text>
+<text class="l ah d" x="607.28" textLength="158.72">_D _|  |_______/</text>
+<text class="l ah i" x="617.2" textLength="198.4">|(_)---  |   H\_____</text>
+<text class="l ah j" x="617.2" textLength="198.4">/     |  |   H  |  |</text>
+<text class="l ah e" x="607.28" textLength="208.32">|      |  |   H  |__-</text>
+<text class="l ah f" x="607.28" textLength="208.32">| ________|___H__/__|</text>
+<text class="l ah g" x="607.28" textLength="208.32">|/ |   |-----------I_</text>
+<text class="l ah a" x="587.44" textLength="228.16">__/ =| o |=-O=====O====</text>
+<text class="l ah b" x="597.36" textLength="218.24">|/-=|___|=    ||    ||</text>
+<text class="l ah h" x="607.28" textLength="188.48">\_/      \__/  \__/</text>
+<text class="l ai k" x="637.04" textLength="178.56">====        ______</text>
+<text class="l ai d" x="597.36" textLength="158.72">_D _|  |_______/</text>
+<text class="l ai i" x="607.28" textLength="208.32">|(_)---  |   H\______</text>
+<text class="l ai j" x="607.28 666.8 696.56 736.24 766 795.76">/||H||</text>
+<text class="l ai e" x="597.36" textLength="218.24">|      |  |   H  |__--</text>
+<text class="l ai f" x="597.36" textLength="218.24">| ________|___H__/__|_</text>
+<text class="l ai g" x="597.36" textLength="218.24">|/ |   |-----------I__</text>
+<text class="l ai a" x="577.52" textLength="238.08">__/ =| o |=-~~\  /~~\  /</text>
+<text class="l ai b" x="587.44" textLength="228.16">|/-=|___|=O=====O=====O</text>
+<text class="l ai h" x="597.36" textLength="218.24">\_/      \__/  \__/  \</text>
+<text class="l aj k" x="627.12" textLength="188.48">====        _______</text>
+<text class="l aj d" x="587.44" textLength="158.72">_D _|  |_______/</text>
+<text class="l aj i" x="597.36" textLength="218.24">|(_)---  |   H\_______</text>
+<text class="l aj j" x="597.36" textLength="198.4">/     |  |   H  |  |</text>
+<text class="l aj e" x="587.44" textLength="228.16">|      |  |   H  |__---</text>
+<text class="l aj f" x="587.44" textLength="228.16">| ________|___H__/__|__</text>
+<text class="l aj g" x="587.44" textLength="228.16">|/ |   |-----------I___</text>
+<text class="l aj a" x="567.6" textLength="248">__/ =| o |=-~~\  /~~\  /~</text>
+<text class="l aj b" x="577.52" textLength="218.24">|/-=|___|=    ||    ||</text>
+<text class="l aj h" x="587.44" textLength="228.16">\_/      \O=====O=====O</text>
+<text class="l ak k" x="617.2" textLength="198.4">====        ________</text>
+<text class="l ak d" x="577.52" textLength="158.72">_D _|  |_______/</text>
+<text class="l ak i" x="587.44" textLength="228.16">|(_)---  |   H\________</text>
+<text class="l ak j" x="587.44" textLength="198.4">/     |  |   H  |  |</text>
+<text class="l ak e" x="577.52" textLength="238.08">|      |  |   H  |__----</text>
+<text class="l ak f" x="577.52" textLength="238.08">| ________|___H__/__|___</text>
+<text class="l ak g" x="577.52" textLength="238.08">|/ |   |-----------I____</text>
+<text class="l ak a" x="557.68" textLength="257.92">__/ =| o |=-~~\  /~~\  /~~</text>
+<text class="l ak b" x="567.6" textLength="218.24">|/-=|___|=    ||    ||</text>
+<text class="l ak h" x="577.52" textLength="238.08">\_/      \_O=====O=====O</text>
+<text class="l en m" x="637.04" textLength="59.52">(@@@@)</text>
+<text class="l en n" x="617.2 656.88">()</text>
+<text class="l al k" x="607.28" textLength="198.4">====        ________</text>
+<text class="l al d" x="567.6" textLength="248">_D _|  |_______/        \</text>
+<text class="l al i" x="577.52" textLength="238.08">|(_)---  |   H\________/</text>
+<text class="l al j" x="577.52 637.04 666.8 706.48 736.24 766">/||H||</text>
+<text class="l al e" x="567.6" textLength="248">|      |  |   H  |__-----</text>
+<text class="l al f" x="567.6" textLength="248">| ________|___H__/__|____</text>
+<text class="l al g" x="567.6" textLength="248">|/ |   |-----------I_____</text>
+<text class="l al a" x="547.76" textLength="267.84">__/ =| o |=-~~\  /~~\  /~~\</text>
+<text class="l al b" x="557.68" textLength="257.92">|/-=|___|=   O=====O=====O</text>
+<text class="l al h" x="567.6" textLength="248">\_/      \__/  \__/  \__/</text>
+<text class="l am k" x="597.36" textLength="198.4">====        ________</text>
+<text class="l am d" x="557.68" textLength="257.92">_D _|  |_______/        \_</text>
+<text class="l am i" x="567.6" textLength="238.08">|(_)---  |   H\________/</text>
+<text class="l am j" x="567.6" textLength="198.4">/     |  |   H  |  |</text>
+<text class="l am e" x="557.68" textLength="257.92">|      |  |   H  |__------</text>
+<text class="l am f" x="557.68" textLength="257.92">| ________|___H__/__|_____</text>
+<text class="l am g" x="557.68" textLength="257.92">|/ |   |-----------I_____I</text>
+<text class="l am a" x="537.84" textLength="277.76">__/ =| o |=-~O=====O=====O==</text>
+<text class="l am b" x="547.76" textLength="267.84">|/-=|___|=    ||    ||    |</text>
+<text class="l am h" x="557.68" textLength="248">\_/      \__/  \__/  \__/</text>
+<text class="l an k" x="587.44" textLength="198.4">====        ________</text>
+<text class="l an d" x="547.76" textLength="267.84">_D _|  |_______/        \__</text>
+<text class="l an i" x="557.68" textLength="257.92">|(_)---  |   H\________/ |</text>
+<text class="l an j" x="557.68" textLength="257.92">/     |  |   H  |  |     |</text>
+<text class="l an e" x="547.76" textLength="267.84">|      |  |   H  |__-------</text>
+<text class="l an f" x="547.76" textLength="267.84">| ________|___H__/__|_____/</text>
+<text class="l an g" x="547.76" textLength="257.92">|/ |   |-----------I_____I</text>
+<text class="l an a" x="527.92" textLength="287.68">__/ =| o |=-O=====O=====O====</text>
+<text class="l an b" x="537.84" textLength="277.76">|/-=|___|=    ||    ||    ||</text>
+<text class="l an h" x="547.76" textLength="248">\_/      \__/  \__/  \__/</text>
+<text class="l ao k" x="577.52" textLength="198.4">====        ________</text>
+<text class="l ao d" x="537.84" textLength="277.76">_D _|  |_______/        \__I</text>
+<text class="l ao i" x="547.76" textLength="257.92">|(_)---  |   H\________/ |</text>
+<text class="l ao j" x="547.76" textLength="257.92">/     |  |   H  |  |     |</text>
+<text class="l ao e" x="537.84" textLength="277.76">|      |  |   H  |__--------</text>
+<text class="l ao f" x="537.84" textLength="277.76">| ________|___H__/__|_____/[</text>
+<text class="l ao g" x="537.84" textLength="277.76">|/ |   |-----------I_____I [</text>
+<text class="l ao a" x="518" textLength="297.6">__/ =| o |=-~~\  /~~\  /~~\  /</text>
+<text class="l ao b" x="527.92" textLength="287.68">|/-=|___|=O=====O=====O=====O</text>
+<text class="l ao h" x="537.84" textLength="277.76">\_/      \__/  \__/  \__/  \</text>
+<text class="l eo m" x="597.36 646.96">()</text>
+<text class="l eo n" x="577.52" textLength="49.6">(@@@)</text>
+<text class="l ap k" x="567.6" textLength="198.4">====        ________</text>
+<text class="l ap d" x="527.92" textLength="287.68">_D _|  |_______/        \__I_</text>
+<text class="l ap i" x="537.84" textLength="257.92">|(_)---  |   H\________/ |</text>
+<text class="l ap j" x="537.84" textLength="257.92">/     |  |   H  |  |     |</text>
+<text class="l ap e" x="527.92" textLength="287.68">|      |  |   H  |__---------</text>
+<text class="l ap f" x="527.92" textLength="287.68">| ________|___H__/__|_____/[]</text>
+<text class="l ap g" x="527.92" textLength="287.68">|/ |   |-----------I_____I []</text>
+<text class="l ap a" x="508.08" textLength="307.52">__/ =| o |=-~~\  /~~\  /~~\  /~</text>
+<text class="l ap b" x="518" textLength="277.76">|/-=|___|=    ||    ||    ||</text>
+<text class="l ap h" x="527.92" textLength="287.68">\_/      \O=====O=====O=====O</text>
+<text class="l aq k" x="557.68" textLength="198.4">====        ________</text>
+<text class="l aq d" x="518" textLength="297.6">_D _|  |_______/        \__I_I</text>
+<text class="l aq i" x="527.92" textLength="257.92">|(_)---  |   H\________/ |</text>
+<text class="l aq j" x="527.92" textLength="257.92">/     |  |   H  |  |     |</text>
+<text class="l aq e" x="518" textLength="297.6">|      |  |   H  |__----------</text>
+<text class="l aq f" x="518" textLength="297.6">| ________|___H__/__|_____/[][</text>
+<text class="l aq g" x="518" textLength="297.6">|/ |   |-----------I_____I [][</text>
+<text class="l aq a" x="498.16" textLength="317.44">__/ =| o |=-~~\  /~~\  /~~\  /~~</text>
+<text class="l aq b" x="508.08" textLength="277.76">|/-=|___|=    ||    ||    ||</text>
+<text class="l aq h" x="518" textLength="297.6">\_/      \_O=====O=====O=====O</text>
+<text class="l ar k" x="547.76" textLength="198.4">====        ________</text>
+<text class="l ar d" x="508.08" textLength="307.52">_D _|  |_______/        \__I_I_</text>
+<text class="l ar i" x="518" textLength="297.6">|(_)---  |   H\________/ |   |</text>
+<text class="l ar j" x="518" textLength="297.6">/     |  |   H  |  |     |   |</text>
+<text class="l ar e" x="508.08" textLength="307.52">|      |  |   H  |__-----------</text>
+<text class="l ar f" x="508.08" textLength="307.52">| ________|___H__/__|_____/[][]</text>
+<text class="l ar g" x="508.08" textLength="307.52">|/ |   |-----------I_____I [][]</text>
+<text class="l ar a" x="488.24" textLength="327.36">__/ =| o |=-~~\  /~~\  /~~\  /~~\</text>
+<text class="l ar b" x="498.16" textLength="317.44">|/-=|___|=   O=====O=====O=====O</text>
+<text class="l ar h" x="508.08" textLength="307.52">\_/      \__/  \__/  \__/  \__/</text>
+<text class="l as k" x="537.84" textLength="198.4">====        ________</text>
+<text class="l as d" x="498.16" textLength="317.44">_D _|  |_______/        \__I_I__</text>
+<text class="l as i" x="508.08" textLength="297.6">|(_)---  |   H\________/ |   |</text>
+<text class="l as j" x="508.08" textLength="297.6">/     |  |   H  |  |     |   |</text>
+<text class="l as e" x="498.16" textLength="317.44">|      |  |   H  |__------------</text>
+<text class="l as f" x="498.16" textLength="317.44">| ________|___H__/__|_____/[][]~</text>
+<text class="l as g" x="498.16" textLength="307.52">|/ |   |-----------I_____I [][]</text>
+<text class="l as a" x="478.32" textLength="327.36">__/ =| o |=-~O=====O=====O=====O\</text>
+<text class="l as b" x="488.24" textLength="327.36">|/-=|___|=    ||    ||    ||    |</text>
+<text class="l as h" x="498.16" textLength="307.52">\_/      \__/  \__/  \__/  \__/</text>
+<text class="l ep m" x="557.68" textLength="59.52">(@@@@)</text>
+<text class="l ep n" x="537.84 577.52">()</text>
+<text class="l at k" x="527.92" textLength="198.4">====        ________</text>
+<text class="l at d" x="488.24" textLength="327.36">_D _|  |_______/        \__I_I___</text>
+<text class="l at i" x="498.16" textLength="297.6">|(_)---  |   H\________/ |   |</text>
+<text class="l at j" x="498.16" textLength="297.6">/     |  |   H  |  |     |   |</text>
+<text class="l at e" x="488.24" textLength="327.36">|      |  |   H  |__-------------</text>
+<text class="l at f" x="488.24" textLength="327.36">| ________|___H__/__|_____/[][]~\</text>
+<text class="l at g" x="488.24" textLength="327.36">|/ |   |-----------I_____I [][] [</text>
+<text class="l at a" x="468.4" textLength="347.2">__/ =| o |=-O=====O=====O=====O \ _</text>
+<text class="l at b" x="478.32" textLength="337.28">|/-=|___|=    ||    ||    ||    |_</text>
+<text class="l at h" x="488.24" textLength="307.52">\_/      \__/  \__/  \__/  \__/</text>
+<text class="l au k" x="518" textLength="198.4">====        ________</text>
+<text class="l au d" x="478.32" textLength="337.28">_D _|  |_______/        \__I_I____</text>
+<text class="l au i" x="488.24" textLength="297.6">|(_)---  |   H\________/ |   |</text>
+<text class="l au j" x="488.24" textLength="297.6">/     |  |   H  |  |     |   |</text>
+<text class="l au e" x="478.32" textLength="337.28">|      |  |   H  |__--------------</text>
+<text class="l au f" x="478.32" textLength="337.28">| ________|___H__/__|_____/[][]~\_</text>
+<text class="l au g" x="478.32" textLength="337.28">|/ |   |-----------I_____I [][] []</text>
+<text class="l au a" x="458.48" textLength="357.12">__/ =| o |=-~~\  /~~\  /~~\  /~~\ __</text>
+<text class="l au b" x="468.4" textLength="347.2">|/-=|___|=O=====O=====O=====O   |__</text>
+<text class="l au h" x="478.32" textLength="307.52">\_/      \__/  \__/  \__/  \__/</text>
+<text class="l av k" x="508.08" textLength="198.4">====        ________</text>
+<text class="l av d" x="468.4" textLength="347.2">_D _|  |_______/        \__I_I_____</text>
+<text class="l av i" x="478.32" textLength="297.6">|(_)---  |   H\________/ |   |</text>
+<text class="l av j" x="478.32" textLength="297.6">/     |  |   H  |  |     |   |</text>
+<text class="l av e" x="468.4" textLength="347.2">|      |  |   H  |__---------------</text>
+<text class="l av f" x="468.4" textLength="347.2">| ________|___H__/__|_____/[][]~\__</text>
+<text class="l av g" x="468.4" textLength="337.28">|/ |   |-----------I_____I [][] []</text>
+<text class="l av a" x="448.56" textLength="367.04">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ___</text>
+<text class="l av b" x="458.48" textLength="357.12">|/-=|___|=    ||    ||    ||    |___</text>
+<text class="l av h" x="468.4" textLength="307.52">\_/      \O=====O=====O=====O_/</text>
+<text class="l aw k" x="498.16" textLength="198.4">====        ________</text>
+<text class="l aw d" x="458.48" textLength="357.12">_D _|  |_______/        \__I_I_____=</text>
+<text class="l aw i" x="468.4" textLength="297.6">|(_)---  |   H\________/ |   |</text>
+<text class="l aw j" x="468.4" textLength="297.6">/     |  |   H  |  |     |   |</text>
+<text class="l aw e" x="458.48" textLength="357.12">|      |  |   H  |__----------------</text>
+<text class="l aw f" x="458.48" textLength="357.12">| ________|___H__/__|_____/[][]~\___</text>
+<text class="l aw g" x="458.48" textLength="337.28">|/ |   |-----------I_____I [][] []</text>
+<text class="l aw a" x="438.64" textLength="376.96">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____</text>
+<text class="l aw b" x="448.56" textLength="367.04">|/-=|___|=    ||    ||    ||    |____</text>
+<text class="l aw h" x="458.48" textLength="307.52">\_/      \_O=====O=====O=====O/</text>
+<text class="l eq m" x="518 567.6">()</text>
+<text class="l eq n" x="498.16" textLength="49.6">(@@@)</text>
+<text class="l ax k" x="488.24" textLength="198.4">====        ________</text>
+<text class="l ax d" x="448.56" textLength="367.04">_D _|  |_______/        \__I_I_____==</text>
+<text class="l ax i" x="458.48" textLength="297.6">|(_)---  |   H\________/ |   |</text>
+<text class="l ax j" x="458.48" textLength="297.6">/     |  |   H  |  |     |   |</text>
+<text class="l ax e" x="448.56" textLength="367.04">|      |  |   H  |__-----------------</text>
+<text class="l ax f" x="448.56" textLength="367.04">| ________|___H__/__|_____/[][]~\____</text>
+<text class="l ax g" x="448.56" textLength="367.04">|/ |   |-----------I_____I [][] []  D</text>
+<text class="l ax a" x="428.72" textLength="386.88">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y</text>
+<text class="l ax b" x="438.64" textLength="376.96">|/-=|___|=   O=====O=====O=====O|_____</text>
+<text class="l ax h" x="448.56" textLength="307.52">\_/      \__/  \__/  \__/  \__/</text>
+<text class="l ay k" x="478.32" textLength="198.4">====        ________</text>
+<text class="l ay d" x="438.64" textLength="376.96">_D _|  |_______/        \__I_I_____===</text>
+<text class="l ay i" x="448.56" textLength="297.6">|(_)---  |   H\________/ |   |</text>
+<text class="l ay j" x="448.56" textLength="297.6">/     |  |   H  |  |     |   |</text>
+<text class="l ay e" x="438.64" textLength="376.96">|      |  |   H  |__------------------</text>
+<text class="l ay f" x="438.64" textLength="376.96">| ________|___H__/__|_____/[][]~\_____</text>
+<text class="l ay g" x="438.64" textLength="367.04">|/ |   |-----------I_____I [][] []  D</text>
+<text class="l ay a" x="418.8" textLength="396.8">__/ =| o |=-~O=====O=====O=====O\ ____Y_</text>
+<text class="l ay b" x="428.72" textLength="386.88">|/-=|___|=    ||    ||    ||    |_____/</text>
+<text class="l ay h" x="438.64" textLength="376.96">\_/      \__/  \__/  \__/  \__/      \</text>
+<text class="l az k" x="468.4" textLength="198.4">====        ________</text>
+<text class="l az d" x="428.72" textLength="386.88">_D _|  |_______/        \__I_I_____===_</text>
+<text class="l az i" x="438.64" textLength="297.6">|(_)---  |   H\________/ |   |</text>
+<text class="l az j" x="438.64" textLength="297.6">/     |  |   H  |  |     |   |</text>
+<text class="l az e" x="428.72" textLength="386.88">|      |  |   H  |__-------------------</text>
+<text class="l az f" x="428.72" textLength="386.88">| ________|___H__/__|_____/[][]~\______</text>
+<text class="l az g" x="428.72" textLength="367.04">|/ |   |-----------I_____I [][] []  D</text>
+<text class="l az a" x="408.88" textLength="406.72">__/ =| o |=-O=====O=====O=====O \ ____Y__</text>
+<text class="l az b" x="418.8" textLength="396.8">|/-=|___|=    ||    ||    ||    |_____/~</text>
+<text class="l az h" x="428.72" textLength="386.88">\_/      \__/  \__/  \__/  \__/      \_</text>
+<text class="l a0 k" x="458.48" textLength="198.4">====        ________</text>
+<text class="l a0 d" x="418.8" textLength="396.8">_D _|  |_______/        \__I_I_____===__</text>
+<text class="l a0 i" x="428.72" textLength="386.88">|(_)---  |   H\________/ |   |        =</text>
+<text class="l a0 j" x="428.72" textLength="297.6">/     |  |   H  |  |     |   |</text>
+<text class="l a0 e" x="418.8" textLength="396.8">|      |  |   H  |__--------------------</text>
+<text class="l a0 f" x="418.8" textLength="396.8">| ________|___H__/__|_____/[][]~\_______</text>
+<text class="l a0 g" x="418.8" textLength="367.04">|/ |   |-----------I_____I [][] []  D</text>
+<text class="l a0 a" x="398.96" textLength="416.64">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___</text>
+<text class="l a0 b" x="408.88" textLength="406.72">|/-=|___|=O=====O=====O=====O   |_____/~\</text>
+<text class="l a0 h" x="418.8" textLength="396.8">\_/      \__/  \__/  \__/  \__/      \_/</text>
+<text class="l er m" x="478.32" textLength="59.52">(@@@@)</text>
+<text class="l er n" x="458.48 498.16">()</text>
+<text class="l a1 k" x="448.56" textLength="367.04">====        ________                _</text>
+<text class="l a1 d" x="408.88" textLength="406.72">_D _|  |_______/        \__I_I_____===__|</text>
+<text class="l a1 i" x="418.8" textLength="396.8">|(_)---  |   H\________/ |   |        =|</text>
+<text class="l a1 j" x="418.8" textLength="396.8">/     |  |   H  |  |     |   |         |</text>
+<text class="l a1 e" x="408.88" textLength="406.72">|      |  |   H  |__--------------------|</text>
+<text class="l a1 f" x="408.88" textLength="406.72">| ________|___H__/__|_____/[][]~\_______|</text>
+<text class="l a1 g" x="408.88" textLength="406.72">|/ |   |-----------I_____I [][] []  D   |</text>
+<text class="l a1 a" x="389.04" textLength="426.56">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y____</text>
+<text class="l a1 b" x="398.96" textLength="416.64">|/-=|___|=    ||    ||    ||    |_____/~\_</text>
+<text class="l a1 h" x="408.88" textLength="396.8">\_/      \O=====O=====O=====O_/      \_/</text>
+<text class="l a2 k" x="438.64" textLength="376.96">====        ________                __</text>
+<text class="l a2 d" x="398.96" textLength="416.64">_D _|  |_______/        \__I_I_____===__|_</text>
+<text class="l a2 i" x="408.88" textLength="406.72">|(_)---  |   H\________/ |   |        =|_</text>
+<text class="l a2 j" x="408.88" textLength="406.72">/     |  |   H  |  |     |   |         ||</text>
+<text class="l a2 e" x="398.96" textLength="406.72">|      |  |   H  |__--------------------|</text>
+<text class="l a2 f" x="398.96" textLength="406.72">| ________|___H__/__|_____/[][]~\_______|</text>
+<text class="l a2 g" x="398.96" textLength="416.64">|/ |   |-----------I_____I [][] []  D   |=</text>
+<text class="l a2 a" x="379.12" textLength="436.48">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y_____</text>
+<text class="l a2 b" x="389.04" textLength="426.56">|/-=|___|=    ||    ||    ||    |_____/~\__</text>
+<text class="l a2 h" x="398.96" textLength="396.8">\_/      \_O=====O=====O=====O/      \_/</text>
+<text class="l a3 k" x="428.72" textLength="386.88">====        ________                ___</text>
+<text class="l a3 d" x="389.04" textLength="426.56">_D _|  |_______/        \__I_I_____===__|__</text>
+<text class="l a3 i" x="398.96" textLength="416.64">|(_)---  |   H\________/ |   |        =|__</text>
+<text class="l a3 j" x="398.96" textLength="416.64">/     |  |   H  |  |     |   |         ||_</text>
+<text class="l a3 e" x="389.04" textLength="426.56">|      |  |   H  |__--------------------| [</text>
+<text class="l a3 f" x="389.04" textLength="406.72">| ________|___H__/__|_____/[][]~\_______|</text>
+<text class="l a3 g" x="389.04" textLength="426.56">|/ |   |-----------I_____I [][] []  D   |==</text>
+<text class="l a3 a" x="369.2" textLength="446.4">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y______</text>
+<text class="l a3 b" x="379.12" textLength="436.48">|/-=|___|=   O=====O=====O=====O|_____/~\___</text>
+<text class="l a3 h" x="389.04" textLength="396.8">\_/      \__/  \__/  \__/  \__/      \_/</text>
+<text class="l a4 k" x="418.8" textLength="396.8">====        ________                ____</text>
+<text class="l a4 d" x="379.12" textLength="436.48">_D _|  |_______/        \__I_I_____===__|___</text>
+<text class="l a4 i" x="389.04" textLength="426.56">|(_)---  |   H\________/ |   |        =|___</text>
+<text class="l a4 j" x="389.04" textLength="426.56">/     |  |   H  |  |     |   |         ||_|</text>
+<text class="l a4 e" x="379.12" textLength="436.48">|      |  |   H  |__--------------------| [_</text>
+<text class="l a4 f" x="379.12" textLength="406.72">| ________|___H__/__|_____/[][]~\_______|</text>
+<text class="l a4 g" x="379.12" textLength="436.48">|/ |   |-----------I_____I [][] []  D   |===</text>
+<text class="l a4 a" x="359.28" textLength="456.32">__/ =| o |=-~O=====O=====O=====O\ ____Y_______</text>
+<text class="l a4 b" x="369.2" textLength="446.4">|/-=|___|=    ||    ||    ||    |_____/~\___/</text>
+<text class="l a4 h" x="379.12" textLength="396.8">\_/      \__/  \__/  \__/  \__/      \_/</text>
+<text class="l es m" x="438.64 488.24">()</text>
+<text class="l es n" x="418.8" textLength="49.6">(@@@)</text>
+<text class="l a5 k" x="408.88" textLength="406.72">====        ________                _____</text>
+<text class="l a5 d" x="369.2" textLength="446.4">_D _|  |_______/        \__I_I_____===__|____</text>
+<text class="l a5 i" x="379.12" textLength="426.56">|(_)---  |   H\________/ |   |        =|___</text>
+<text class="l a5 j" x="379.12" textLength="426.56">/     |  |   H  |  |     |   |         ||_|</text>
+<text class="l a5 e" x="369.2" textLength="446.4">|      |  |   H  |__--------------------| [__</text>
+<text class="l a5 f" x="369.2" textLength="406.72">| ________|___H__/__|_____/[][]~\_______|</text>
+<text class="l a5 g" x="369.2" textLength="446.4">|/ |   |-----------I_____I [][] []  D   |====</text>
+<text class="l a5 a" x="349.36" textLength="466.24">__/ =| o |=-O=====O=====O=====O \ ____Y________</text>
+<text class="l a5 b" x="359.28" textLength="446.4">|/-=|___|=    ||    ||    ||    |_____/~\___/</text>
+<text class="l a5 h" x="369.2" textLength="396.8">\_/      \__/  \__/  \__/  \__/      \_/</text>
+<text class="l a6 k" x="398.96" textLength="416.64">====        ________                ______</text>
+<text class="l a6 d" x="359.28" textLength="456.32">_D _|  |_______/        \__I_I_____===__|_____</text>
+<text class="l a6 i" x="369.2" textLength="446.4">|(_)---  |   H\________/ |   |        =|___ _</text>
+<text class="l a6 j" x="369.2" textLength="446.4">/     |  |   H  |  |     |   |         ||_| |</text>
+<text class="l a6 e" x="359.28" textLength="456.32">|      |  |   H  |__--------------------| [___</text>
+<text class="l a6 f" x="359.28" textLength="406.72">| ________|___H__/__|_____/[][]~\_______|</text>
+<text class="l a6 g" x="359.28" textLength="456.32">|/ |   |-----------I_____I [][] []  D   |=====</text>
+<text class="l a6 a" x="339.44" textLength="476.16">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y_________</text>
+<text class="l a6 b" x="349.36" textLength="446.4">|/-=|___|=O=====O=====O=====O   |_____/~\___/</text>
+<text class="l a6 h" x="359.28" textLength="396.8">\_/      \__/  \__/  \__/  \__/      \_/</text>
+<text class="l a7 k" x="389.04" textLength="426.56">====        ________                _______</text>
+<text class="l a7 d" x="349.36" textLength="466.24">_D _|  |_______/        \__I_I_____===__|______</text>
+<text class="l a7 i" x="359.28" textLength="456.32">|(_)---  |   H\________/ |   |        =|___ __</text>
+<text class="l a7 j" x="359.28" textLength="456.32">/     |  |   H  |  |     |   |         ||_| |_</text>
+<text class="l a7 e" x="349.36" textLength="466.24">|      |  |   H  |__--------------------| [___]</text>
+<text class="l a7 f" x="349.36" textLength="406.72">| ________|___H__/__|_____/[][]~\_______|</text>
+<text class="l a7 g" x="349.36" textLength="466.24">|/ |   |-----------I_____I [][] []  D   |======</text>
+<text class="l a7 a" x="329.52" textLength="486.08">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y__________</text>
+<text class="l a7 b" x="339.44" textLength="446.4">|/-=|___|=    ||    ||    ||    |_____/~\___/</text>
+<text class="l a7 h" x="349.36" textLength="396.8">\_/      \O=====O=====O=====O_/      \_/</text>
+<text class="l a8 k" x="379.12" textLength="436.48">====        ________                ________</text>
+<text class="l a8 d" x="339.44" textLength="476.16">_D _|  |_______/        \__I_I_____===__|_______</text>
+<text class="l a8 i" x="349.36" textLength="466.24">|(_)---  |   H\________/ |   |        =|___ ___</text>
+<text class="l a8 j" x="349.36" textLength="466.24">/     |  |   H  |  |     |   |         ||_| |_|</text>
+<text class="l a8 e" x="339.44" textLength="466.24">|      |  |   H  |__--------------------| [___]</text>
+<text class="l a8 f" x="339.44" textLength="406.72">| ________|___H__/__|_____/[][]~\_______|</text>
+<text class="l a8 g" x="339.44" textLength="476.16">|/ |   |-----------I_____I [][] []  D   |=======</text>
+<text class="l a8 a" x="319.6" textLength="496">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________</text>
+<text class="l a8 b" x="329.52" textLength="446.4">|/-=|___|=    ||    ||    ||    |_____/~\___/</text>
+<text class="l a8 h" x="339.44" textLength="396.8">\_/      \_O=====O=====O=====O/      \_/</text>
+<text class="l et m" x="398.96" textLength="59.52">(@@@@)</text>
+<text class="l et n" x="379.12 418.8">()</text>
+<text class="l a9 k" x="369.2" textLength="446.4">====        ________                _________</text>
+<text class="l a9 d" x="329.52" textLength="486.08">_D _|  |_______/        \__I_I_____===__|________</text>
+<text class="l a9 i" x="339.44" textLength="476.16">|(_)---  |   H\________/ |   |        =|___ ___|</text>
+<text class="l a9 j" x="339.44" textLength="476.16">/     |  |   H  |  |     |   |         ||_| |_||</text>
+<text class="l a9 e" x="329.52" textLength="486.08">|      |  |   H  |__--------------------| [___] |</text>
+<text class="l a9 f" x="329.52" textLength="486.08">| ________|___H__/__|_____/[][]~\_______|       |</text>
+<text class="l a9 g" x="329.52" textLength="486.08">|/ |   |-----------I_____I [][] []  D   |=======|</text>
+<text class="l a9 a" x="309.68" textLength="505.92">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|</text>
+<text class="l a9 b" x="319.6" textLength="446.4">|/-=|___|=   O=====O=====O=====O|_____/~\___/</text>
+<text class="l a9 h" x="329.52" textLength="396.8">\_/      \__/  \__/  \__/  \__/      \_/</text>
+<text class="l ba k" x="359.28" textLength="456.32">====        ________                __________</text>
+<text class="l ba d" x="319.6" textLength="496">_D _|  |_______/        \__I_I_____===__|_________</text>
+<text class="l ba i" x="329.52" textLength="476.16">|(_)---  |   H\________/ |   |        =|___ ___|</text>
+<text class="l ba j" x="329.52" textLength="476.16">/     |  |   H  |  |     |   |         ||_| |_||</text>
+<text class="l ba e" x="319.6" textLength="486.08">|      |  |   H  |__--------------------| [___] |</text>
+<text class="l ba f" x="319.6" textLength="486.08">| ________|___H__/__|_____/[][]~\_______|       |</text>
+<text class="l ba g" x="319.6" textLength="496">|/ |   |-----------I_____I [][] []  D   |=======|_</text>
+<text class="l ba a" x="299.76" textLength="515.84">__/ =| o |=-~O=====O=====O=====O\ ____Y___________|_</text>
+<text class="l ba b" x="309.68" textLength="446.4">|/-=|___|=    ||    ||    ||    |_____/~\___/</text>
+<text class="l ba h" x="319.6" textLength="396.8">\_/      \__/  \__/  \__/  \__/      \_/</text>
+<text class="l bb k" x="349.36" textLength="466.24">====        ________                ___________</text>
+<text class="l bb d" x="309.68" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bb i" x="319.6" textLength="476.16">|(_)---  |   H\________/ |   |        =|___ ___|</text>
+<text class="l bb j" x="319.6" textLength="476.16">/     |  |   H  |  |     |   |         ||_| |_||</text>
+<text class="l bb e" x="309.68" textLength="486.08">|      |  |   H  |__--------------------| [___] |</text>
+<text class="l bb f" x="309.68" textLength="486.08">| ________|___H__/__|_____/[][]~\_______|       |</text>
+<text class="l bb g" x="309.68" textLength="505.92">|/ |   |-----------I_____I [][] []  D   |=======|__</text>
+<text class="l bb a" x="289.84" textLength="525.76">__/ =| o |=-O=====O=====O=====O \ ____Y___________|__</text>
+<text class="l bb b" x="299.76" textLength="446.4">|/-=|___|=    ||    ||    ||    |_____/~\___/</text>
+<text class="l bb h" x="309.68" textLength="396.8">\_/      \__/  \__/  \__/  \__/      \_/</text>
+<text class="l bc k" x="339.44" textLength="466.24">====        ________                ___________</text>
+<text class="l bc d" x="299.76" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bc i" x="309.68" textLength="476.16">|(_)---  |   H\________/ |   |        =|___ ___|</text>
+<text class="l bc j" x="309.68" textLength="476.16">/     |  |   H  |  |     |   |         ||_| |_||</text>
+<text class="l bc e" x="299.76" textLength="486.08">|      |  |   H  |__--------------------| [___] |</text>
+<text class="l bc f" x="299.76" textLength="486.08">| ________|___H__/__|_____/[][]~\_______|       |</text>
+<text class="l bc g" x="299.76" textLength="515.84">|/ |   |-----------I_____I [][] []  D   |=======|___</text>
+<text class="l bc a" x="279.92" textLength="535.68">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|</text>
+<text class="l bc b" x="289.84" textLength="446.4">|/-=|___|=O=====O=====O=====O   |_____/~\___/</text>
+<text class="l bc h" x="299.76" textLength="396.8">\_/      \__/  \__/  \__/  \__/      \_/</text>
+<text class="l eu m" x="359.28 408.88">()</text>
+<text class="l eu n" x="339.44" textLength="49.6">(@@@)</text>
+<text class="l bd k" x="329.52" textLength="466.24">====        ________                ___________</text>
+<text class="l bd d" x="289.84" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bd i" x="299.76" textLength="476.16">|(_)---  |   H\________/ |   |        =|___ ___|</text>
+<text class="l bd j" x="299.76" textLength="476.16">/     |  |   H  |  |     |   |         ||_| |_||</text>
+<text class="l bd e" x="289.84" textLength="525.76">|      |  |   H  |__--------------------| [___] |   =</text>
+<text class="l bd f" x="289.84" textLength="525.76">| ________|___H__/__|_____/[][]~\_______|       |   -</text>
+<text class="l bd g" x="289.84" textLength="525.76">|/ |   |-----------I_____I [][] []  D   |=======|____</text>
+<text class="l bd a" x="270" textLength="545.6">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|_</text>
+<text class="l bd b" x="279.92" textLength="446.4">|/-=|___|=    ||    ||    ||    |_____/~\___/</text>
+<text class="l bd h" x="289.84" textLength="396.8">\_/      \O=====O=====O=====O_/      \_/</text>
+<text class="l be k" x="319.6" textLength="466.24">====        ________                ___________</text>
+<text class="l be d" x="279.92" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l be i" x="289.84" textLength="476.16">|(_)---  |   H\________/ |   |        =|___ ___|</text>
+<text class="l be j" x="289.84" textLength="476.16">/     |  |   H  |  |     |   |         ||_| |_||</text>
+<text class="l be e" x="279.92" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l be f" x="279.92" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l be g" x="279.92" textLength="535.68">|/ |   |-----------I_____I [][] []  D   |=======|____|</text>
+<text class="l be a" x="260.08" textLength="555.52">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|__</text>
+<text class="l be b" x="270" textLength="446.4">|/-=|___|=    ||    ||    ||    |_____/~\___/</text>
+<text class="l be h" x="279.92" textLength="396.8">\_/      \_O=====O=====O=====O/      \_/</text>
+<text class="l bf k" x="309.68" textLength="466.24">====        ________                ___________</text>
+<text class="l bf d" x="270" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bf i" x="279.92" textLength="476.16">|(_)---  |   H\________/ |   |        =|___ ___|</text>
+<text class="l bf j" x="279.92" textLength="535.68">/     |  |   H  |  |     |   |         ||_| |_||     _</text>
+<text class="l bf e" x="270" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bf f" x="270" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bf g" x="270" textLength="545.6">|/ |   |-----------I_____I [][] []  D   |=======|____|_</text>
+<text class="l bf a" x="250.16" textLength="565.44">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|___</text>
+<text class="l bf b" x="260.08" textLength="555.52">|/-=|___|=   O=====O=====O=====O|_____/~\___/          |</text>
+<text class="l bf h" x="270" textLength="396.8">\_/      \__/  \__/  \__/  \__/      \_/</text>
+<text class="l bh k" x="299.76" textLength="466.24">====        ________                ___________</text>
+<text class="l bh d" x="260.08" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bh i" x="270" textLength="545.6">|(_)---  |   H\________/ |   |        =|___ ___|      _</text>
+<text class="l bh j" x="270" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l bh e" x="260.08" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bh f" x="260.08" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bh g" x="260.08" textLength="555.52">|/ |   |-----------I_____I [][] []  D   |=======|____|__</text>
+<text class="l bh a" x="240.24" textLength="575.36">__/ =| o |=-~O=====O=====O=====O\ ____Y___________|__|____</text>
+<text class="l bh b" x="250.16" textLength="565.44">|/-=|___|=    ||    ||    ||    |_____/~\___/          |_</text>
+<text class="l bh h" x="260.08" textLength="555.52">\_/      \__/  \__/  \__/  \__/      \_/               \</text>
+<text class="l ev m" x="319.6" textLength="59.52">(@@@@)</text>
+<text class="l ev n" x="299.76 339.44">()</text>
+<text class="l bi k" x="289.84" textLength="466.24">====        ________                ___________</text>
+<text class="l bi d" x="250.16" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bi i" x="260.08" textLength="555.52">|(_)---  |   H\________/ |   |        =|___ ___|      __</text>
+<text class="l bi j" x="260.08" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l bi e" x="250.16" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bi f" x="250.16" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bi g" x="250.16" textLength="565.44">|/ |   |-----------I_____I [][] []  D   |=======|____|___</text>
+<text class="l bi a" x="230.32" textLength="585.28">__/ =| o |=-O=====O=====O=====O \ ____Y___________|__|_____</text>
+<text class="l bi b" x="240.24" textLength="575.36">|/-=|___|=    ||    ||    ||    |_____/~\___/          |_D</text>
+<text class="l bi h" x="250.16" textLength="565.44">\_/      \__/  \__/  \__/  \__/      \_/               \_</text>
+<text class="l bj k" x="279.92" textLength="466.24">====        ________                ___________</text>
+<text class="l bj d" x="240.24" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bj i" x="250.16" textLength="565.44">|(_)---  |   H\________/ |   |        =|___ ___|      ___</text>
+<text class="l bj j" x="250.16" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l bj e" x="240.24" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bj f" x="240.24" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bj g" x="240.24" textLength="575.36">|/ |   |-----------I_____I [][] []  D   |=======|____|____</text>
+<text class="l bj a" x="220.4" textLength="595.2">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|______</text>
+<text class="l bj b" x="230.32" textLength="585.28">|/-=|___|=O=====O=====O=====O   |_____/~\___/          |_D_</text>
+<text class="l bj h" x="240.24" textLength="575.36">\_/      \__/  \__/  \__/  \__/      \_/               \_/</text>
+<text class="l bk k" x="270" textLength="466.24">====        ________                ___________</text>
+<text class="l bk d" x="230.32" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bk i" x="240.24" textLength="575.36">|(_)---  |   H\________/ |   |        =|___ ___|      ____</text>
+<text class="l bk j" x="240.24" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l bk e" x="230.32" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bk f" x="230.32" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bk g" x="230.32" textLength="585.28">|/ |   |-----------I_____I [][] []  D   |=======|____|_____</text>
+<text class="l bk a" x="210.48" textLength="605.12">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|_______</text>
+<text class="l bk b" x="220.4" textLength="595.2">|/-=|___|=    ||    ||    ||    |_____/~\___/          |_D__</text>
+<text class="l bk h" x="230.32" textLength="575.36">\_/      \O=====O=====O=====O_/      \_/               \_/</text>
+<text class="l bl k" x="260.08" textLength="466.24">====        ________                ___________</text>
+<text class="l bl d" x="220.4" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bl i" x="230.32" textLength="585.28">|(_)---  |   H\________/ |   |        =|___ ___|      _____</text>
+<text class="l bl j" x="230.32" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l bl e" x="220.4" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bl f" x="220.4" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bl g" x="220.4" textLength="595.2">|/ |   |-----------I_____I [][] []  D   |=======|____|______</text>
+<text class="l bl a" x="200.56" textLength="615.04">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|________</text>
+<text class="l bl b" x="210.48" textLength="605.12">|/-=|___|=    ||    ||    ||    |_____/~\___/          |_D__D</text>
+<text class="l bl h" x="220.4" textLength="575.36">\_/      \_O=====O=====O=====O/      \_/               \_/</text>
+<text class="l ew m" x="279.92 329.52">()</text>
+<text class="l ew n" x="260.08" textLength="49.6">(@@@)</text>
+<text class="l bm k" x="250.16" textLength="466.24">====        ________                ___________</text>
+<text class="l bm d" x="210.48" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bm i" x="220.4" textLength="595.2">|(_)---  |   H\________/ |   |        =|___ ___|      ______</text>
+<text class="l bm j" x="220.4" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l bm e" x="210.48" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bm f" x="210.48" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bm g" x="210.48" textLength="605.12">|/ |   |-----------I_____I [][] []  D   |=======|____|_______</text>
+<text class="l bm a" x="190.64" textLength="624.96">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|_________</text>
+<text class="l bm b" x="200.56" textLength="615.04">|/-=|___|=   O=====O=====O=====O|_____/~\___/          |_D__D_</text>
+<text class="l bm h" x="210.48" textLength="575.36">\_/      \__/  \__/  \__/  \__/      \_/               \_/</text>
+<text class="l bn k" x="240.24" textLength="466.24">====        ________                ___________</text>
+<text class="l bn d" x="200.56" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bn i" x="210.48" textLength="605.12">|(_)---  |   H\________/ |   |        =|___ ___|      _______</text>
+<text class="l bn j" x="210.48" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l bn e" x="200.56" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bn f" x="200.56" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bn g" x="200.56" textLength="615.04">|/ |   |-----------I_____I [][] []  D   |=======|____|________</text>
+<text class="l bn a" x="180.72" textLength="634.88">__/ =| o |=-~O=====O=====O=====O\ ____Y___________|__|__________</text>
+<text class="l bn b" x="190.64" textLength="624.96">|/-=|___|=    ||    ||    ||    |_____/~\___/          |_D__D__</text>
+<text class="l bn h" x="200.56" textLength="615.04">\_/      \__/  \__/  \__/  \__/      \_/               \_/   \</text>
+<text class="l bo k" x="230.32" textLength="466.24">====        ________                ___________</text>
+<text class="l bo d" x="190.64" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bo i" x="200.56" textLength="615.04">|(_)---  |   H\________/ |   |        =|___ ___|      ________</text>
+<text class="l bo j" x="200.56" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l bo e" x="190.64" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bo f" x="190.64" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bo g" x="190.64" textLength="624.96">|/ |   |-----------I_____I [][] []  D   |=======|____|_________</text>
+<text class="l bo a" x="170.8" textLength="644.8">__/ =| o |=-O=====O=====O=====O \ ____Y___________|__|___________</text>
+<text class="l bo b" x="180.72" textLength="634.88">|/-=|___|=    ||    ||    ||    |_____/~\___/          |_D__D__D</text>
+<text class="l bo h" x="190.64" textLength="624.96">\_/      \__/  \__/  \__/  \__/      \_/               \_/   \_</text>
+<text class="l bp k" x="220.4" textLength="466.24">====        ________                ___________</text>
+<text class="l bp d" x="180.72" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bp i" x="190.64" textLength="624.96">|(_)---  |   H\________/ |   |        =|___ ___|      _________</text>
+<text class="l bp j" x="190.64" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l bp e" x="180.72" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bp f" x="180.72" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bp g" x="180.72" textLength="634.88">|/ |   |-----------I_____I [][] []  D   |=======|____|__________</text>
+<text class="l bp a" x="160.88" textLength="654.72">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|____________</text>
+<text class="l bp b" x="170.8" textLength="644.8">|/-=|___|=O=====O=====O=====O   |_____/~\___/          |_D__D__D_</text>
+<text class="l bp h" x="180.72" textLength="634.88">\_/      \__/  \__/  \__/  \__/      \_/               \_/   \_/</text>
+<text class="l ex m" x="240.24" textLength="59.52">(@@@@)</text>
+<text class="l ex n" x="220.4 260.08">()</text>
+<text class="l bq k" x="210.48" textLength="466.24">====        ________                ___________</text>
+<text class="l bq d" x="170.8" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bq i" x="180.72" textLength="634.88">|(_)---  |   H\________/ |   |        =|___ ___|      __________</text>
+<text class="l bq j" x="180.72" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l bq e" x="170.8" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bq f" x="170.8" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bq g" x="170.8" textLength="644.8">|/ |   |-----------I_____I [][] []  D   |=======|____|___________</text>
+<text class="l bq a" x="150.96" textLength="664.64">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|_____________</text>
+<text class="l bq b" x="160.88" textLength="654.72">|/-=|___|=    ||    ||    ||    |_____/~\___/          |_D__D__D_|</text>
+<text class="l bq h" x="170.8" textLength="634.88">\_/      \O=====O=====O=====O_/      \_/               \_/   \_/</text>
+<text class="l br k" x="200.56" textLength="466.24">====        ________                ___________</text>
+<text class="l br d" x="160.88" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l br i" x="170.8" textLength="644.8">|(_)---  |   H\________/ |   |        =|___ ___|      ___________</text>
+<text class="l br j" x="170.8" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l br e" x="160.88" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l br f" x="160.88" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l br g" x="160.88" textLength="654.72">|/ |   |-----------I_____I [][] []  D   |=======|____|____________</text>
+<text class="l br a" x="141.04" textLength="674.56">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|______________</text>
+<text class="l br b" x="150.96" textLength="654.72">|/-=|___|=    ||    ||    ||    |_____/~\___/          |_D__D__D_|</text>
+<text class="l br h" x="160.88" textLength="634.88">\_/      \_O=====O=====O=====O/      \_/               \_/   \_/</text>
+<text class="l bs k" x="190.64" textLength="466.24">====        ________                ___________</text>
+<text class="l bs d" x="150.96" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bs i" x="160.88" textLength="654.72">|(_)---  |   H\________/ |   |        =|___ ___|      ____________</text>
+<text class="l bs j" x="160.88" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l bs e" x="150.96" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bs f" x="150.96" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bs g" x="150.96" textLength="664.64">|/ |   |-----------I_____I [][] []  D   |=======|____|_____________</text>
+<text class="l bs a" x="131.12" textLength="684.48">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|_______________</text>
+<text class="l bs b" x="141.04" textLength="654.72">|/-=|___|=   O=====O=====O=====O|_____/~\___/          |_D__D__D_|</text>
+<text class="l bs h" x="150.96" textLength="634.88">\_/      \__/  \__/  \__/  \__/      \_/               \_/   \_/</text>
+<text class="l bt k" x="180.72" textLength="466.24">====        ________                ___________</text>
+<text class="l bt d" x="141.04" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bt i" x="150.96" textLength="664.64">|(_)---  |   H\________/ |   |        =|___ ___|      _____________</text>
+<text class="l bt j" x="150.96" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l bt e" x="141.04" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bt f" x="141.04" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bt g" x="141.04" textLength="674.56">|/ |   |-----------I_____I [][] []  D   |=======|____|______________</text>
+<text class="l bt a" x="121.2" textLength="694.4">__/ =| o |=-~O=====O=====O=====O\ ____Y___________|__|________________</text>
+<text class="l bt b" x="131.12" textLength="684.48">|/-=|___|=    ||    ||    ||    |_____/~\___/          |_D__D__D_|  |</text>
+<text class="l bt h" x="141.04" textLength="634.88">\_/      \__/  \__/  \__/  \__/      \_/               \_/   \_/</text>
+<text class="l ey m" x="200.56 250.16">()</text>
+<text class="l ey n" x="180.72" textLength="49.6">(@@@)</text>
+<text class="l bu k" x="170.8" textLength="466.24">====        ________                ___________</text>
+<text class="l bu d" x="131.12" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bu i" x="141.04" textLength="674.56">|(_)---  |   H\________/ |   |        =|___ ___|      ______________</text>
+<text class="l bu j" x="141.04" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l bu e" x="131.12" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bu f" x="131.12" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bu g" x="131.12" textLength="684.48">|/ |   |-----------I_____I [][] []  D   |=======|____|_______________</text>
+<text class="l bu a" x="111.28" textLength="704.32">__/ =| o |=-O=====O=====O=====O \ ____Y___________|__|_________________</text>
+<text class="l bu b" x="121.2" textLength="694.4">|/-=|___|=    ||    ||    ||    |_____/~\___/          |_D__D__D_|  |_</text>
+<text class="l bu h" x="131.12" textLength="684.48">\_/      \__/  \__/  \__/  \__/      \_/               \_/   \_/    \</text>
+<text class="l bv k" x="160.88" textLength="466.24">====        ________                ___________</text>
+<text class="l bv d" x="121.2" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bv i" x="131.12" textLength="684.48">|(_)---  |   H\________/ |   |        =|___ ___|      _______________</text>
+<text class="l bv j" x="131.12" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l bv e" x="121.2" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bv f" x="121.2" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bv g" x="121.2" textLength="694.4">|/ |   |-----------I_____I [][] []  D   |=======|____|________________</text>
+<text class="l bv a" x="101.36" textLength="714.24">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|__________________</text>
+<text class="l bv b" x="111.28" textLength="704.32">|/-=|___|=O=====O=====O=====O   |_____/~\___/          |_D__D__D_|  |_D</text>
+<text class="l bv h" x="121.2" textLength="694.4">\_/      \__/  \__/  \__/  \__/      \_/               \_/   \_/    \_</text>
+<text class="l bw k" x="150.96" textLength="466.24">====        ________                ___________</text>
+<text class="l bw d" x="111.28" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bw i" x="121.2" textLength="694.4">|(_)---  |   H\________/ |   |        =|___ ___|      ________________</text>
+<text class="l bw j" x="121.2" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l bw e" x="111.28" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bw f" x="111.28" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bw g" x="111.28" textLength="704.32">|/ |   |-----------I_____I [][] []  D   |=======|____|_________________</text>
+<text class="l bw a" x="91.44" textLength="724.16">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|___________________</text>
+<text class="l bw b" x="101.36" textLength="714.24">|/-=|___|=    ||    ||    ||    |_____/~\___/          |_D__D__D_|  |_D_</text>
+<text class="l bw h" x="111.28" textLength="704.32">\_/      \O=====O=====O=====O_/      \_/               \_/   \_/    \_/</text>
+<text class="l bx k" x="141.04" textLength="466.24">====        ________                ___________</text>
+<text class="l bx d" x="101.36" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bx i" x="111.28" textLength="704.32">|(_)---  |   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l bx j" x="111.28" textLength="545.6">/     |  |   H  |  |     |   |         ||_| |_||     _|</text>
+<text class="l bx e" x="101.36" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bx f" x="101.36" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bx g" x="101.36" textLength="714.24">|/ |   |-----------I_____I [][] []  D   |=======|____|__________________</text>
+<text class="l bx a" x="81.52" textLength="734.08">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|____________________</text>
+<text class="l bx b" x="91.44" textLength="724.16">|/-=|___|=    ||    ||    ||    |_____/~\___/          |_D__D__D_|  |_D__</text>
+<text class="l bx h" x="101.36" textLength="704.32">\_/      \_O=====O=====O=====O/      \_/               \_/   \_/    \_/</text>
+<text class="l ez m" x="160.88" textLength="59.52">(@@@@)</text>
+<text class="l ez n" x="141.04 180.72">()</text>
+<text class="l by k" x="131.12" textLength="466.24">====        ________                ___________</text>
+<text class="l by d" x="91.44" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l by i" x="101.36" textLength="704.32">|(_)---  |   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l by j" x="101.36" textLength="714.24">/     |  |   H  |  |     |   |         ||_| |_||     _|                \</text>
+<text class="l by e" x="91.44" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l by f" x="91.44" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l by g" x="91.44" textLength="724.16">|/ |   |-----------I_____I [][] []  D   |=======|____|___________________</text>
+<text class="l by a" x="71.6" textLength="744">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|_____________________</text>
+<text class="l by b" x="81.52" textLength="734.08">|/-=|___|=   O=====O=====O=====O|_____/~\___/          |_D__D__D_|  |_D__D</text>
+<text class="l by h" x="91.44" textLength="704.32">\_/      \__/  \__/  \__/  \__/      \_/               \_/   \_/    \_/</text>
+<text class="l bz k" x="121.2" textLength="466.24">====        ________                ___________</text>
+<text class="l bz d" x="81.52" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l bz i" x="91.44" textLength="704.32">|(_)---  |   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l bz j" x="91.44" textLength="724.16">/     |  |   H  |  |     |   |         ||_| |_||     _|                \_</text>
+<text class="l bz e" x="81.52" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l bz f" x="81.52" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l bz g" x="81.52" textLength="734.08">|/ |   |-----------I_____I [][] []  D   |=======|____|____________________</text>
+<text class="l bz a" x="61.68" textLength="753.92">__/ =| o |=-~O=====O=====O=====O\ ____Y___________|__|______________________</text>
+<text class="l bz b" x="71.6" textLength="744">|/-=|___|=    ||    ||    ||    |_____/~\___/          |_D__D__D_|  |_D__D_</text>
+<text class="l bz h" x="81.52" textLength="704.32">\_/      \__/  \__/  \__/  \__/      \_/               \_/   \_/    \_/</text>
+<text class="l b0 k" x="111.28" textLength="466.24">====        ________                ___________</text>
+<text class="l b0 d" x="71.6" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l b0 i" x="81.52" textLength="704.32">|(_)---  |   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l b0 j" x="81.52" textLength="734.08">/     |  |   H  |  |     |   |         ||_| |_||     _|                \__</text>
+<text class="l b0 e" x="71.6" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l b0 f" x="71.6" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l b0 g" x="71.6" textLength="744">|/ |   |-----------I_____I [][] []  D   |=======|____|_____________________</text>
+<text class="l b0 a" x="51.76" textLength="763.84">__/ =| o |=-O=====O=====O=====O \ ____Y___________|__|_______________________</text>
+<text class="l b0 b" x="61.68" textLength="753.92">|/-=|___|=    ||    ||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__</text>
+<text class="l b0 h" x="71.6" textLength="744">\_/      \__/  \__/  \__/  \__/      \_/               \_/   \_/    \_/   \</text>
+<text class="l b1 k" x="101.36" textLength="466.24">====        ________                ___________</text>
+<text class="l b1 d" x="61.68" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l b1 i" x="71.6" textLength="704.32">|(_)---  |   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l b1 j" x="71.6" textLength="744">/     |  |   H  |  |     |   |         ||_| |_||     _|                \___</text>
+<text class="l b1 e" x="61.68" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l b1 f" x="61.68" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l b1 g" x="61.68" textLength="753.92">|/ |   |-----------I_____I [][] []  D   |=======|____|______________________</text>
+<text class="l b1 a" x="41.84" textLength="773.76">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|________________________</text>
+<text class="l b1 b" x="51.76" textLength="763.84">|/-=|___|=O=====O=====O=====O   |_____/~\___/          |_D__D__D_|  |_D__D__D</text>
+<text class="l b1 h" x="61.68" textLength="753.92">\_/      \__/  \__/  \__/  \__/      \_/               \_/   \_/    \_/   \_</text>
+<text class="l e0 m" x="121.2 170.8">()</text>
+<text class="l e0 n" x="101.36" textLength="49.6">(@@@)</text>
+<text class="l b2 k" x="91.44" textLength="466.24">====        ________                ___________</text>
+<text class="l b2 d" x="51.76" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l b2 i" x="61.68" textLength="704.32">|(_)---  |   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l b2 j" x="61.68" textLength="753.92">/     |  |   H  |  |     |   |         ||_| |_||     _|                \____</text>
+<text class="l b2 e" x="51.76" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l b2 f" x="51.76" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l b2 g" x="51.76" textLength="763.84">|/ |   |-----------I_____I [][] []  D   |=======|____|_______________________</text>
+<text class="l b2 a" x="31.92" textLength="783.68">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|_________________________</text>
+<text class="l b2 b" x="41.84" textLength="773.76">|/-=|___|=    ||    ||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__D_</text>
+<text class="l b2 h" x="51.76" textLength="763.84">\_/      \O=====O=====O=====O_/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l b3 k" x="81.52" textLength="466.24">====        ________                ___________</text>
+<text class="l b3 d" x="41.84" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l b3 i" x="51.76" textLength="704.32">|(_)---  |   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l b3 j" x="51.76" textLength="763.84">/     |  |   H  |  |     |   |         ||_| |_||     _|                \_____</text>
+<text class="l b3 e" x="41.84" textLength="535.68">|      |  |   H  |__--------------------| [___] |   =|</text>
+<text class="l b3 f" x="41.84" textLength="535.68">| ________|___H__/__|_____/[][]~\_______|       |   -|</text>
+<text class="l b3 g" x="41.84" textLength="773.76">|/ |   |-----------I_____I [][] []  D   |=======|____|________________________</text>
+<text class="l b3 a" x="22" textLength="793.6">__/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|__________________________</text>
+<text class="l b3 b" x="31.92" textLength="783.68">|/-=|___|=    ||    ||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l b3 h" x="41.84" textLength="763.84">\_/      \_O=====O=====O=====O/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l b4 k" x="71.6" textLength="466.24">====        ________                ___________</text>
+<text class="l b4 d" x="31.92" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l b4 i" x="41.84" textLength="704.32">|(_)---  |   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l b4 j" x="41.84" textLength="773.76">/     |  |   H  |  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l b4 e" x="31.92" textLength="783.68">|      |  |   H  |__--------------------| [___] |   =|                        |</text>
+<text class="l b4 f" x="31.92" textLength="783.68">| ________|___H__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l b4 g" x="31.92" textLength="783.68">|/ |   |-----------I_____I [][] []  D   |=======|____|________________________|</text>
+<text class="l b4 a" x="22" textLength="793.6">_/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|__________________________|</text>
+<text class="l b4 b" x="22" textLength="783.68">|/-=|___|=   O=====O=====O=====O|_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l b4 h" x="31.92" textLength="763.84">\_/      \__/  \__/  \__/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l b5 k" x="61.68" textLength="466.24">====        ________                ___________</text>
+<text class="l b5 d" x="22" textLength="505.92">_D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l b5 i" x="31.92" textLength="704.32">|(_)---  |   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l b5 j" x="31.92" textLength="773.76">/     |  |   H  |  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l b5 e" x="22" textLength="783.68">|      |  |   H  |__--------------------| [___] |   =|                        |</text>
+<text class="l b5 f" x="22" textLength="783.68">| ________|___H__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l b5 g" x="22" textLength="793.6">|/ |   |-----------I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l b5 a" x="22" textLength="793.6">/ =| o |=-~O=====O=====O=====O\ ____Y___________|__|__________________________|_</text>
+<text class="l b5 b" x="22" textLength="773.76">/-=|___|=    ||    ||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l b5 h" x="22" textLength="763.84">\_/      \__/  \__/  \__/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l e1 m" x="81.52" textLength="59.52">(@@@@)</text>
+<text class="l e1 n" x="61.68 101.36">()</text>
+<text class="l b6 k" x="51.76" textLength="466.24">====        ________                ___________</text>
+<text class="l b6 d" x="22" textLength="496">D _|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l b6 i" x="22" textLength="704.32">|(_)---  |   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l b6 j" x="22" textLength="773.76">/     |  |   H  |  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l b6 e" x="81.52" textLength="714.24">|  |   H  |__--------------------| [___] |   =|                        |</text>
+<text class="l b6 f" x="31.92" textLength="763.84">________|___H__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l b6 g" x="22" textLength="783.68">/ |   |-----------I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l b6 a" x="31.92" textLength="773.76">=| o |=-O=====O=====O=====O \ ____Y___________|__|__________________________|_</text>
+<text class="l b6 b" x="22" textLength="763.84">-=|___|=    ||    ||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l b6 h" x="22" textLength="753.92">_/      \__/  \__/  \__/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l b7 k" x="41.84" textLength="466.24">====        ________                ___________</text>
+<text class="l b7 d" x="31.92" textLength="476.16">_|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l b7 i" x="22" textLength="694.4">(_)---  |   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l b7 j" x="71.6" textLength="714.24">|  |   H  |  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l b7 e" x="71.6" textLength="714.24">|  |   H  |__--------------------| [___] |   =|                        |</text>
+<text class="l b7 f" x="22" textLength="763.84">________|___H__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l b7 g" x="31.92" textLength="763.84">|   |-----------I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l b7 a" x="22" textLength="773.76">=| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|__________________________|_</text>
+<text class="l b7 b" x="22" textLength="753.92">=|___|=O=====O=====O=====O   |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l b7 h" x="22" textLength="744">/      \__/  \__/  \__/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l b8 k" x="31.92" textLength="466.24">====        ________                ___________</text>
+<text class="l b8 d" x="22" textLength="476.16">_|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l b8 i" x="22" textLength="684.48">_)---  |   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l b8 j" x="61.68" textLength="714.24">|  |   H  |  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l b8 e" x="61.68" textLength="714.24">|  |   H  |__--------------------| [___] |   =|                        |</text>
+<text class="l b8 f" x="22" textLength="753.92">_______|___H__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l b8 g" x="22" textLength="763.84">|   |-----------I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l b8 a" x="22" textLength="763.84">| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|__________________________|_</text>
+<text class="l b8 b" x="22" textLength="744">|___|=    ||    ||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l b8 h" x="81.52" textLength="674.56">\O=====O=====O=====O_/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l b9 k" x="22" textLength="466.24">====        ________                ___________</text>
+<text class="l b9 d" x="22" textLength="466.24">|  |_______/        \__I_I_____===__|_________|</text>
+<text class="l b9 i" x="22" textLength="674.56">)---  |   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l b9 j" x="51.76" textLength="714.24">|  |   H  |  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l b9 e" x="51.76" textLength="714.24">|  |   H  |__--------------------| [___] |   =|                        |</text>
+<text class="l b9 f" x="22" textLength="744">______|___H__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l b9 g" x="51.76" textLength="724.16">|-----------I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l b9 a" x="31.92" textLength="744">o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|__________________________|_</text>
+<text class="l b9 b" x="22" textLength="734.08">___|=    ||    ||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l b9 h" x="71.6" textLength="674.56">\_O=====O=====O=====O/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l e2 m" x="41.84 91.44">()</text>
+<text class="l e2 n" x="22" textLength="49.6">(@@@)</text>
+<text class="l ca k" x="22" textLength="456.32">===        ________                ___________</text>
+<text class="l ca d" x="41.84" textLength="436.48">|_______/        \__I_I_____===__|_________|</text>
+<text class="l ca i" x="22" textLength="664.64">---  |   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l ca j" x="41.84" textLength="714.24">|  |   H  |  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l ca e" x="41.84" textLength="714.24">|  |   H  |__--------------------| [___] |   =|                        |</text>
+<text class="l ca f" x="22" textLength="734.08">_____|___H__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l ca g" x="41.84" textLength="724.16">|-----------I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l ca a" x="22" textLength="744">o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|__________________________|_</text>
+<text class="l ca b" x="22" textLength="724.16">__|=   O=====O=====O=====O|_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l ca h" x="61.68" textLength="674.56">\__/  \__/  \__/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cb k" x="22" textLength="446.4">==        ________                ___________</text>
+<text class="l cb d" x="31.92" textLength="436.48">|_______/        \__I_I_____===__|_________|</text>
+<text class="l cb i" x="22" textLength="654.72">--  |   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l cb j" x="31.92" textLength="714.24">|  |   H  |  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l cb e" x="31.92" textLength="714.24">|  |   H  |__--------------------| [___] |   =|                        |</text>
+<text class="l cb f" x="22" textLength="724.16">____|___H__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l cb g" x="31.92" textLength="724.16">|-----------I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l cb a" x="31.92" textLength="724.16">|=-~O=====O=====O=====O\ ____Y___________|__|__________________________|_</text>
+<text class="l cb b" x="22" textLength="714.24">_|=    ||    ||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cb h" x="51.76" textLength="674.56">\__/  \__/  \__/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cc k" x="22" textLength="436.48">=        ________                ___________</text>
+<text class="l cc d" x="22" textLength="436.48">|_______/        \__I_I_____===__|_________|</text>
+<text class="l cc i" x="22" textLength="644.8">-  |   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l cc j" x="22" textLength="714.24">|  |   H  |  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l cc e" x="22" textLength="714.24">|  |   H  |__--------------------| [___] |   =|                        |</text>
+<text class="l cc f" x="22" textLength="714.24">___|___H__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l cc g" x="22" textLength="724.16">|-----------I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l cc a" x="22" textLength="724.16">|=-O=====O=====O=====O \ ____Y___________|__|__________________________|_</text>
+<text class="l cc b" x="22" textLength="704.32">|=    ||    ||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cc h" x="41.84" textLength="674.56">\__/  \__/  \__/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cd k" x="101.36" textLength="347.2">________                ___________</text>
+<text class="l cd d" x="22" textLength="426.56">_______/        \__I_I_____===__|_________|</text>
+<text class="l cd i" x="41.84" textLength="615.04">|   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l cd j" x="41.84" textLength="684.48">|   H  |  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l cd e" x="41.84" textLength="684.48">|   H  |__--------------------| [___] |   =|                        |</text>
+<text class="l cd f" x="22" textLength="704.32">__|___H__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l cd g" x="22" textLength="714.24">-----------I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l cd a" x="22" textLength="714.24">=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|__________________________|_</text>
+<text class="l cd b" x="22" textLength="694.4">=O=====O=====O=====O   |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cd h" x="31.92" textLength="674.56">\__/  \__/  \__/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l e3 m" x="22 31.92 41.84 51.76">@@@)</text>
+<text class="l e3 n" x="22">)</text>
+<text class="l ce k" x="91.44" textLength="347.2">________                ___________</text>
+<text class="l ce d" x="22" textLength="416.64">______/        \__I_I_____===__|_________|</text>
+<text class="l ce i" x="31.92" textLength="615.04">|   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l ce j" x="31.92" textLength="684.48">|   H  |  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l ce e" x="31.92" textLength="684.48">|   H  |__--------------------| [___] |   =|                        |</text>
+<text class="l ce f" x="22" textLength="694.4">_|___H__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l ce g" x="22" textLength="704.32">----------I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l ce a" x="22" textLength="704.32">-~~\  /~~\  /~~\  /~~\ ____Y___________|__|__________________________|_</text>
+<text class="l ce b" x="61.68" textLength="644.8">||    ||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l ce h" x="22" textLength="674.56">\O=====O=====O=====O_/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cf k" x="81.52" textLength="347.2">________                ___________</text>
+<text class="l cf d" x="22" textLength="406.72">_____/        \__I_I_____===__|_________|</text>
+<text class="l cf i" x="22" textLength="615.04">|   H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l cf j" x="22" textLength="684.48">|   H  |  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l cf e" x="22" textLength="684.48">|   H  |__--------------------| [___] |   =|                        |</text>
+<text class="l cf f" x="22" textLength="684.48">|___H__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l cf g" x="22" textLength="694.4">---------I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l cf a" x="22" textLength="694.4">~~\  /~~\  /~~\  /~~\ ____Y___________|__|__________________________|_</text>
+<text class="l cf b" x="51.76" textLength="644.8">||    ||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cf h" x="22" textLength="664.64">_O=====O=====O=====O/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cg k" x="71.6" textLength="347.2">________                ___________</text>
+<text class="l cg d" x="22" textLength="396.8">____/        \__I_I_____===__|_________|</text>
+<text class="l cg i" x="51.76" textLength="575.36">H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l cg j" x="51.76" textLength="644.8">H  |  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l cg e" x="51.76" textLength="644.8">H  |__--------------------| [___] |   =|                        |</text>
+<text class="l cg f" x="22" textLength="674.56">___H__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l cg g" x="22" textLength="684.48">--------I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l cg a" x="22" textLength="684.48">~\  /~~\  /~~\  /~~\ ____Y___________|__|__________________________|_</text>
+<text class="l cg b" x="31.92" textLength="654.72">O=====O=====O=====O|_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cg h" x="22" textLength="654.72">_/  \__/  \__/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l ch k" x="61.68" textLength="347.2">________                ___________</text>
+<text class="l ch d" x="22" textLength="386.88">___/        \__I_I_____===__|_________|</text>
+<text class="l ch i" x="41.84" textLength="575.36">H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l ch j" x="41.84" textLength="644.8">H  |  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l ch e" x="41.84" textLength="644.8">H  |__--------------------| [___] |   =|                        |</text>
+<text class="l ch f" x="22" textLength="664.64">__H__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l ch g" x="22" textLength="674.56">-------I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l ch a" x="22" textLength="674.56">=====O=====O=====O\ ____Y___________|__|__________________________|_</text>
+<text class="l ch b" x="31.92" textLength="644.8">||    ||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l ch h" x="22" textLength="644.8">/  \__/  \__/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l ci k" x="51.76" textLength="347.2">________                ___________</text>
+<text class="l ci d" x="22" textLength="376.96">__/        \__I_I_____===__|_________|</text>
+<text class="l ci i" x="31.92" textLength="575.36">H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l ci j" x="31.92" textLength="644.8">H  |  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l ci e" x="31.92" textLength="644.8">H  |__--------------------| [___] |   =|                        |</text>
+<text class="l ci f" x="22" textLength="654.72">_H__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l ci g" x="22" textLength="664.64">------I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l ci a" x="22" textLength="664.64">===O=====O=====O \ ____Y___________|__|__________________________|_</text>
+<text class="l ci b" x="22" textLength="644.8">||    ||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l ci h" x="41.84" textLength="615.04">\__/  \__/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cj k" x="41.84" textLength="347.2">________                ___________</text>
+<text class="l cj d" x="22" textLength="367.04">_/        \__I_I_____===__|_________|</text>
+<text class="l cj i" x="22" textLength="575.36">H\________/ |   |        =|___ ___|      _________________</text>
+<text class="l cj j" x="22" textLength="644.8">H  |  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l cj e" x="22" textLength="644.8">H  |__--------------------| [___] |   =|                        |</text>
+<text class="l cj f" x="22" textLength="644.8">H__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l cj g" x="22" textLength="654.72">-----I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l cj a" x="31.92" textLength="644.8">/~~\  /~~\  /~~\ ____Y___________|__|__________________________|_</text>
+<text class="l cj b" x="22" textLength="634.88">=O=====O=====O   |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cj h" x="31.92" textLength="615.04">\__/  \__/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l ck k" x="31.92" textLength="347.2">________                ___________</text>
+<text class="l ck d" x="22" textLength="357.12">/        \__I_I_____===__|_________|</text>
+<text class="l ck i" x="22" textLength="565.44">\________/ |   |        =|___ ___|      _________________</text>
+<text class="l ck j" x="41.84" textLength="615.04">|  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l ck e" x="41.84" textLength="615.04">|__--------------------| [___] |   =|                        |</text>
+<text class="l ck f" x="22" textLength="634.88">__/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l ck g" x="22" textLength="644.8">----I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l ck a" x="22" textLength="644.8">/~~\  /~~\  /~~\ ____Y___________|__|__________________________|_</text>
+<text class="l ck b" x="61.68" textLength="585.28">||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l ck h" x="22" textLength="615.04">=O=====O=====O_/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cl k" x="22" textLength="347.2">________                ___________</text>
+<text class="l cl d" x="101.36" textLength="267.84">\__I_I_____===__|_________|</text>
+<text class="l cl i" x="22" textLength="555.52">________/ |   |        =|___ ___|      _________________</text>
+<text class="l cl j" x="31.92" textLength="615.04">|  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l cl e" x="31.92" textLength="615.04">|__--------------------| [___] |   =|                        |</text>
+<text class="l cl f" x="22" textLength="624.96">_/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l cl g" x="22" textLength="634.88">---I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l cl a" x="22" textLength="634.88">~~\  /~~\  /~~\ ____Y___________|__|__________________________|_</text>
+<text class="l cl b" x="51.76" textLength="585.28">||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cl h" x="22" textLength="605.12">=O=====O=====O/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cm k" x="22" textLength="337.28">_______                ___________</text>
+<text class="l cm d" x="91.44" textLength="267.84">\__I_I_____===__|_________|</text>
+<text class="l cm i" x="22" textLength="545.6">_______/ |   |        =|___ ___|      _________________</text>
+<text class="l cm j" x="22" textLength="615.04">|  |     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l cm e" x="22" textLength="615.04">|__--------------------| [___] |   =|                        |</text>
+<text class="l cm f" x="22" textLength="615.04">/__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l cm g" x="22" textLength="624.96">--I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l cm a" x="22" textLength="624.96">~\  /~~\  /~~\ ____Y___________|__|__________________________|_</text>
+<text class="l cm b" x="22" textLength="605.12">=O=====O=====O|_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cm h" x="22" textLength="595.2">_/  \__/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cn k" x="22" textLength="327.36">______                ___________</text>
+<text class="l cn d" x="81.52" textLength="267.84">\__I_I_____===__|_________|</text>
+<text class="l cn i" x="22" textLength="535.68">______/ |   |        =|___ ___|      _________________</text>
+<text class="l cn j" x="41.84" textLength="585.28">|     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l cn e" x="22" textLength="605.12">__--------------------| [___] |   =|                        |</text>
+<text class="l cn f" x="22" textLength="605.12">__|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l cn g" x="22" textLength="615.04">-I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l cn a" x="22" textLength="615.04">=====O=====O\ ____Y___________|__|__________________________|_</text>
+<text class="l cn b" x="31.92" textLength="585.28">||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cn h" x="22" textLength="585.28">/  \__/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l co k" x="22" textLength="317.44">_____                ___________</text>
+<text class="l co d" x="71.6" textLength="267.84">\__I_I_____===__|_________|</text>
+<text class="l co i" x="22" textLength="525.76">_____/ |   |        =|___ ___|      _________________</text>
+<text class="l co j" x="31.92" textLength="585.28">|     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l co e" x="22" textLength="595.2">_--------------------| [___] |   =|                        |</text>
+<text class="l co f" x="22" textLength="595.2">_|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l co g" x="22" textLength="605.12">I_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l co a" x="22" textLength="605.12">===O=====O \ ____Y___________|__|__________________________|_</text>
+<text class="l co b" x="22" textLength="585.28">||    ||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l co h" x="41.84" textLength="555.52">\__/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cp k" x="22" textLength="307.52">____                ___________</text>
+<text class="l cp d" x="61.68" textLength="267.84">\__I_I_____===__|_________|</text>
+<text class="l cp i" x="22" textLength="515.84">____/ |   |        =|___ ___|      _________________</text>
+<text class="l cp j" x="22" textLength="585.28">|     |   |         ||_| |_||     _|                \_____A</text>
+<text class="l cp e" x="22" textLength="585.28">--------------------| [___] |   =|                        |</text>
+<text class="l cp f" x="22" textLength="585.28">|_____/[][]~\_______|       |   -|                        |</text>
+<text class="l cp g" x="22" textLength="595.2">_____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l cp a" x="31.92" textLength="585.28">/~~\  /~~\ ____Y___________|__|__________________________|_</text>
+<text class="l cp b" x="22" textLength="575.36">=O=====O   |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cp h" x="31.92" textLength="555.52">\__/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cq k" x="22" textLength="297.6">___                ___________</text>
+<text class="l cq d" x="51.76" textLength="267.84">\__I_I_____===__|_________|</text>
+<text class="l cq i" x="22" textLength="505.92">___/ |   |        =|___ ___|      _________________</text>
+<text class="l cq j" x="71.6" textLength="525.76">|   |         ||_| |_||     _|                \_____A</text>
+<text class="l cq e" x="22" textLength="575.36">-------------------| [___] |   =|                        |</text>
+<text class="l cq f" x="22" textLength="575.36">_____/[][]~\_______|       |   -|                        |</text>
+<text class="l cq g" x="22" textLength="585.28">____I [][] []  D   |=======|____|________________________|_</text>
+<text class="l cq a" x="22" textLength="585.28">/~~\  /~~\ ____Y___________|__|__________________________|_</text>
+<text class="l cq b" x="61.68" textLength="525.76">||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cq h" x="22" textLength="555.52">=O=====O_/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cr k" x="22" textLength="287.68">__                ___________</text>
+<text class="l cr d" x="41.84" textLength="267.84">\__I_I_____===__|_________|</text>
+<text class="l cr i" x="22" textLength="496">__/ |   |        =|___ ___|      _________________</text>
+<text class="l cr j" x="61.68" textLength="525.76">|   |         ||_| |_||     _|                \_____A</text>
+<text class="l cr e" x="22" textLength="565.44">------------------| [___] |   =|                        |</text>
+<text class="l cr f" x="22" textLength="565.44">____/[][]~\_______|       |   -|                        |</text>
+<text class="l cr g" x="22" textLength="575.36">___I [][] []  D   |=======|____|________________________|_</text>
+<text class="l cr a" x="22" textLength="575.36">~~\  /~~\ ____Y___________|__|__________________________|_</text>
+<text class="l cr b" x="51.76" textLength="525.76">||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cr h" x="22" textLength="545.6">=O=====O/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cs k" x="22" textLength="277.76">_                ___________</text>
+<text class="l cs d" x="31.92" textLength="267.84">\__I_I_____===__|_________|</text>
+<text class="l cs i" x="22" textLength="486.08">_/ |   |        =|___ ___|      _________________</text>
+<text class="l cs j" x="51.76" textLength="525.76">|   |         ||_| |_||     _|                \_____A</text>
+<text class="l cs e" x="22" textLength="555.52">-----------------| [___] |   =|                        |</text>
+<text class="l cs f" x="22" textLength="555.52">___/[][]~\_______|       |   -|                        |</text>
+<text class="l cs g" x="22" textLength="565.44">__I [][] []  D   |=======|____|________________________|_</text>
+<text class="l cs a" x="22" textLength="565.44">~\  /~~\ ____Y___________|__|__________________________|_</text>
+<text class="l cs b" x="22" textLength="545.6">=O=====O|_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cs h" x="22" textLength="535.68">_/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l ct k" x="180.72" textLength="109.12">___________</text>
+<text class="l ct d" x="22" textLength="267.84">\__I_I_____===__|_________|</text>
+<text class="l ct i" x="22" textLength="476.16">/ |   |        =|___ ___|      _________________</text>
+<text class="l ct j" x="41.84" textLength="525.76">|   |         ||_| |_||     _|                \_____A</text>
+<text class="l ct e" x="22" textLength="545.6">----------------| [___] |   =|                        |</text>
+<text class="l ct f" x="22" textLength="545.6">__/[][]~\_______|       |   -|                        |</text>
+<text class="l ct g" x="22" textLength="555.52">_I [][] []  D   |=======|____|________________________|_</text>
+<text class="l ct a" x="22" textLength="555.52">=====O\ ____Y___________|__|__________________________|_</text>
+<text class="l ct b" x="31.92" textLength="525.76">||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l ct h" x="22" textLength="525.76">/  \__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cu k" x="170.8" textLength="109.12">___________</text>
+<text class="l cu d" x="22" textLength="257.92">__I_I_____===__|_________|</text>
+<text class="l cu i" x="31.92" textLength="456.32">|   |        =|___ ___|      _________________</text>
+<text class="l cu j" x="31.92" textLength="525.76">|   |         ||_| |_||     _|                \_____A</text>
+<text class="l cu e" x="22" textLength="535.68">---------------| [___] |   =|                        |</text>
+<text class="l cu f" x="22" textLength="535.68">_/[][]~\_______|       |   -|                        |</text>
+<text class="l cu g" x="22" textLength="545.6">I [][] []  D   |=======|____|________________________|_</text>
+<text class="l cu a" x="22" textLength="545.6">===O \ ____Y___________|__|__________________________|_</text>
+<text class="l cu b" x="22" textLength="525.76">||    |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cu h" x="41.84" textLength="496">\__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cv k" x="160.88" textLength="109.12">___________</text>
+<text class="l cv d" x="22" textLength="248">_I_I_____===__|_________|</text>
+<text class="l cv i" x="22" textLength="456.32">|   |        =|___ ___|      _________________</text>
+<text class="l cv j" x="22" textLength="525.76">|   |         ||_| |_||     _|                \_____A</text>
+<text class="l cv e" x="22" textLength="525.76">--------------| [___] |   =|                        |</text>
+<text class="l cv f" x="22" textLength="525.76">/[][]~\_______|       |   -|                        |</text>
+<text class="l cv g" x="31.92" textLength="525.76">[][] []  D   |=======|____|________________________|_</text>
+<text class="l cv a" x="31.92" textLength="525.76">/~~\ ____Y___________|__|__________________________|_</text>
+<text class="l cv b" x="22" textLength="515.84">=O   |_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cv h" x="31.92" textLength="496">\__/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cw k" x="150.96" textLength="109.12">___________</text>
+<text class="l cw d" x="22" textLength="238.08">I_I_____===__|_________|</text>
+<text class="l cw i" x="51.76" textLength="416.64">|        =|___ ___|      _________________</text>
+<text class="l cw j" x="51.76" textLength="486.08">|         ||_| |_||     _|                \_____A</text>
+<text class="l cw e" x="22" textLength="515.84">-------------| [___] |   =|                        |</text>
+<text class="l cw f" x="22" textLength="515.84">[][]~\_______|       |   -|                        |</text>
+<text class="l cw g" x="22" textLength="525.76">[][] []  D   |=======|____|________________________|_</text>
+<text class="l cw a" x="22" textLength="525.76">/~~\ ____Y___________|__|__________________________|_</text>
+<text class="l cw b" x="61.68" textLength="466.24">|_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cw h" x="22" textLength="496">=O_/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cx k" x="141.04" textLength="109.12">___________</text>
+<text class="l cx d" x="22" textLength="228.16">_I_____===__|_________|</text>
+<text class="l cx i" x="41.84" textLength="416.64">|        =|___ ___|      _________________</text>
+<text class="l cx j" x="41.84" textLength="486.08">|         ||_| |_||     _|                \_____A</text>
+<text class="l cx e" x="22" textLength="505.92">------------| [___] |   =|                        |</text>
+<text class="l cx f" x="22" textLength="505.92">][]~\_______|       |   -|                        |</text>
+<text class="l cx g" x="22" textLength="515.84">][] []  D   |=======|____|________________________|_</text>
+<text class="l cx a" x="22" textLength="515.84">~~\ ____Y___________|__|__________________________|_</text>
+<text class="l cx b" x="51.76" textLength="466.24">|_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cx h" x="22" textLength="486.08">=O/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cy k" x="131.12" textLength="109.12">___________</text>
+<text class="l cy d" x="22" textLength="218.24">I_____===__|_________|</text>
+<text class="l cy i" x="31.92" textLength="416.64">|        =|___ ___|      _________________</text>
+<text class="l cy j" x="31.92" textLength="486.08">|         ||_| |_||     _|                \_____A</text>
+<text class="l cy e" x="22" textLength="496">-----------| [___] |   =|                        |</text>
+<text class="l cy f" x="22" textLength="496">[]~\_______|       |   -|                        |</text>
+<text class="l cy g" x="22" textLength="505.92">[] []  D   |=======|____|________________________|_</text>
+<text class="l cy a" x="22" textLength="505.92">~\ ____Y___________|__|__________________________|_</text>
+<text class="l cy b" x="22" textLength="486.08">=O|_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cy h" x="22" textLength="476.16">_/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l cz k" x="121.2" textLength="109.12">___________</text>
+<text class="l cz d" x="22" textLength="208.32">_____===__|_________|</text>
+<text class="l cz i" x="22" textLength="416.64">|        =|___ ___|      _________________</text>
+<text class="l cz j" x="22" textLength="486.08">|         ||_| |_||     _|                \_____A</text>
+<text class="l cz e" x="22" textLength="486.08">----------| [___] |   =|                        |</text>
+<text class="l cz f" x="22" textLength="486.08">]~\_______|       |   -|                        |</text>
+<text class="l cz g" x="22" textLength="496">] []  D   |=======|____|________________________|_</text>
+<text class="l cz a" x="22" textLength="496">\ ____Y___________|__|__________________________|_</text>
+<text class="l cz b" x="31.92" textLength="466.24">|_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l cz h" x="22" textLength="466.24">/      \_/               \_/   \_/    \_/   \_/</text>
+<text class="l c0 k" x="111.28" textLength="109.12">___________</text>
+<text class="l c0 d" x="22" textLength="198.4">____===__|_________|</text>
+<text class="l c0 i" x="101.36" textLength="327.36">=|___ ___|      _________________</text>
+<text class="l c0 j" x="111.28" textLength="386.88">||_| |_||     _|                \_____A</text>
+<text class="l c0 e" x="22" textLength="476.16">---------| [___] |   =|                        |</text>
+<text class="l c0 f" x="22" textLength="476.16">~\_______|       |   -|                        |</text>
+<text class="l c0 g" x="31.92" textLength="476.16">[]  D   |=======|____|________________________|_</text>
+<text class="l c0 a" x="31.92" textLength="476.16">____Y___________|__|__________________________|_</text>
+<text class="l c0 b" x="22" textLength="466.24">|_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l c0 h" x="81.52" textLength="396.8">\_/               \_/   \_/    \_/   \_/</text>
+<text class="l c1 k" x="101.36" textLength="109.12">___________</text>
+<text class="l c1 d" x="22" textLength="188.48">___===__|_________|</text>
+<text class="l c1 i" x="91.44" textLength="327.36">=|___ ___|      _________________</text>
+<text class="l c1 j" x="101.36" textLength="386.88">||_| |_||     _|                \_____A</text>
+<text class="l c1 e" x="22" textLength="466.24">--------| [___] |   =|                        |</text>
+<text class="l c1 f" x="22" textLength="466.24">\_______|       |   -|                        |</text>
+<text class="l c1 g" x="22" textLength="476.16">[]  D   |=======|____|________________________|_</text>
+<text class="l c1 a" x="22" textLength="476.16">____Y___________|__|__________________________|_</text>
+<text class="l c1 b" x="22" textLength="456.32">_____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l c1 h" x="71.6" textLength="396.8">\_/               \_/   \_/    \_/   \_/</text>
+<text class="l c2 k" x="91.44" textLength="109.12">___________</text>
+<text class="l c2 d" x="22" textLength="178.56">__===__|_________|</text>
+<text class="l c2 i" x="81.52" textLength="327.36">=|___ ___|      _________________</text>
+<text class="l c2 j" x="91.44" textLength="386.88">||_| |_||     _|                \_____A</text>
+<text class="l c2 e" x="22" textLength="456.32">-------| [___] |   =|                        |</text>
+<text class="l c2 f" x="22" textLength="456.32">_______|       |   -|                        |</text>
+<text class="l c2 g" x="22" textLength="466.24">]  D   |=======|____|________________________|_</text>
+<text class="l c2 a" x="22" textLength="466.24">___Y___________|__|__________________________|_</text>
+<text class="l c2 b" x="22" textLength="446.4">____/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l c2 h" x="61.68" textLength="396.8">\_/               \_/   \_/    \_/   \_/</text>
+<text class="l c3 k" x="81.52" textLength="109.12">___________</text>
+<text class="l c3 d" x="22" textLength="168.64">_===__|_________|</text>
+<text class="l c3 i" x="71.6" textLength="327.36">=|___ ___|      _________________</text>
+<text class="l c3 j" x="81.52" textLength="386.88">||_| |_||     _|                \_____A</text>
+<text class="l c3 e" x="22" textLength="446.4">------| [___] |   =|                        |</text>
+<text class="l c3 f" x="22" textLength="446.4">______|       |   -|                        |</text>
+<text class="l c3 g" x="41.84" textLength="436.48">D   |=======|____|________________________|_</text>
+<text class="l c3 a" x="22" textLength="456.32">__Y___________|__|__________________________|_</text>
+<text class="l c3 b" x="22" textLength="436.48">___/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l c3 h" x="51.76" textLength="396.8">\_/               \_/   \_/    \_/   \_/</text>
+<text class="l c4 k" x="71.6" textLength="109.12">___________</text>
+<text class="l c4 d" x="22" textLength="158.72">===__|_________|</text>
+<text class="l c4 i" x="61.68" textLength="327.36">=|___ ___|      _________________</text>
+<text class="l c4 j" x="71.6" textLength="386.88">||_| |_||     _|                \_____A</text>
+<text class="l c4 e" x="22" textLength="436.48">-----| [___] |   =|                        |</text>
+<text class="l c4 f" x="22" textLength="436.48">_____|       |   -|                        |</text>
+<text class="l c4 g" x="31.92" textLength="436.48">D   |=======|____|________________________|_</text>
+<text class="l c4 a" x="22" textLength="446.4">_Y___________|__|__________________________|_</text>
+<text class="l c4 b" x="22" textLength="426.56">__/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l c4 h" x="41.84" textLength="396.8">\_/               \_/   \_/    \_/   \_/</text>
+<text class="l c5 k" x="61.68" textLength="109.12">___________</text>
+<text class="l c5 d" x="22" textLength="148.8">==__|_________|</text>
+<text class="l c5 i" x="51.76" textLength="327.36">=|___ ___|      _________________</text>
+<text class="l c5 j" x="61.68" textLength="386.88">||_| |_||     _|                \_____A</text>
+<text class="l c5 e" x="22" textLength="426.56">----| [___] |   =|                        |</text>
+<text class="l c5 f" x="22 31.92 41.84 51.76 61.68 141.04 180.72 190.64 438.64">____||-||</text>
+<text class="l c5 g" x="22" textLength="436.48">D   |=======|____|________________________|_</text>
+<text class="l c5 a" x="22" textLength="436.48">Y___________|__|__________________________|_</text>
+<text class="l c5 b" x="22" textLength="416.64">_/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l c5 h" x="31.92" textLength="396.8">\_/               \_/   \_/    \_/   \_/</text>
+<text class="l c6 k" x="51.76" textLength="109.12">___________</text>
+<text class="l c6 d" x="22" textLength="138.88">=__|_________|</text>
+<text class="l c6 i" x="41.84" textLength="327.36">=|___ ___|      _________________</text>
+<text class="l c6 j" x="51.76" textLength="386.88">||_| |_||     _|                \_____A</text>
+<text class="l c6 e" x="22" textLength="416.64">---| [___] |   =|                        |</text>
+<text class="l c6 f" x="22 31.92 41.84 51.76 131.12 170.8 180.72 428.72">___||-||</text>
+<text class="l c6 g" x="51.76" textLength="396.8">|=======|____|________________________|_</text>
+<text class="l c6 a" x="22" textLength="426.56">___________|__|__________________________|_</text>
+<text class="l c6 b" x="22" textLength="406.72">/~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l c6 h" x="22" textLength="396.8">\_/               \_/   \_/    \_/   \_/</text>
+<text class="l c7 k" x="41.84" textLength="109.12">___________</text>
+<text class="l c7 d" x="22" textLength="128.96">__|_________|</text>
+<text class="l c7 i" x="31.92" textLength="327.36">=|___ ___|      _________________</text>
+<text class="l c7 j" x="41.84" textLength="386.88">||_| |_||     _|                \_____A</text>
+<text class="l c7 e" x="22" textLength="406.72">--| [___] |   =|                        |</text>
+<text class="l c7 f" x="22 31.92 41.84 121.2 160.88 170.8 418.8">__||-||</text>
+<text class="l c7 g" x="41.84" textLength="396.8">|=======|____|________________________|_</text>
+<text class="l c7 a" x="22" textLength="416.64">__________|__|__________________________|_</text>
+<text class="l c7 b" x="22" textLength="396.8">~\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l c7 h" x="22" textLength="386.88">_/               \_/   \_/    \_/   \_/</text>
+<text class="l c8 k" x="31.92" textLength="109.12">___________</text>
+<text class="l c8 d" x="22" textLength="119.04">_|_________|</text>
+<text class="l c8 i" x="22" textLength="327.36">=|___ ___|      _________________</text>
+<text class="l c8 j" x="31.92" textLength="386.88">||_| |_||     _|                \_____A</text>
+<text class="l c8 e" x="22" textLength="396.8">-| [___] |   =|                        |</text>
+<text class="l c8 f" x="22 31.92 111.28 150.96 160.88 408.88">_||-||</text>
+<text class="l c8 g" x="31.92" textLength="396.8">|=======|____|________________________|_</text>
+<text class="l c8 a" x="22" textLength="406.72">_________|__|__________________________|_</text>
+<text class="l c8 b" x="22" textLength="386.88">\___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l c8 h" x="22" textLength="376.96">/               \_/   \_/    \_/   \_/</text>
+<g class="l c9 k"><g id="r1232"><text x="22" textLength="109.12">___________</text></g></g>
+<text class="l c9 d" x="22" textLength="109.12">|_________|</text>
+<text class="l c9 i" x="22" textLength="317.44">|___ ___|      _________________</text>
+<text class="l c9 j" x="22" textLength="386.88">||_| |_||     _|                \_____A</text>
+<text class="l c9 e" x="22" textLength="386.88">| [___] |   =|                        |</text>
+<text class="l c9 f" x="22 101.36 141.04 150.96 398.96">||-||</text>
+<text class="l c9 g" x="22" textLength="396.8">|=======|____|________________________|_</text>
+<text class="l c9 a" x="22" textLength="396.8">________|__|__________________________|_</text>
+<text class="l c9 b" x="22" textLength="376.96">___/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l c9 h" x="170.8" textLength="218.24">\_/   \_/    \_/   \_/</text>
+<g class="l da k"><g id="r1242"><text x="22" textLength="99.2">__________</text></g></g>
+<text class="l da d" x="22" textLength="99.2">_________|</text>
+<text class="l da i" x="22" textLength="307.52">___ ___|      _________________</text>
+<text class="l da j" x="22" textLength="376.96">|_| |_||     _|                \_____A</text>
+<text class="l da e" x="31.92" textLength="367.04">[___] |   =|                        |</text>
+<text class="l da f" x="91.44 131.12 141.04 389.04">|-||</text>
+<text class="l da g" x="22" textLength="386.88">=======|____|________________________|_</text>
+<text class="l da a" x="22" textLength="386.88">_______|__|__________________________|_</text>
+<text class="l da b" x="22" textLength="367.04">__/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l da h" x="160.88" textLength="218.24">\_/   \_/    \_/   \_/</text>
+<g class="l db k"><g id="r1252"><text x="22" textLength="89.28">_________</text></g></g>
+<text class="l db d" x="22" textLength="89.28">________|</text>
+<text class="l db i" x="22" textLength="297.6">__ ___|      _________________</text>
+<text class="l db j" x="22" textLength="367.04">_| |_||     _|                \_____A</text>
+<text class="l db e" x="22" textLength="367.04">[___] |   =|                        |</text>
+<text class="l db f" x="81.52 121.2 131.12 379.12">|-||</text>
+<text class="l db g" x="22" textLength="376.96">======|____|________________________|_</text>
+<text class="l db a" x="22" textLength="376.96">______|__|__________________________|_</text>
+<text class="l db b" x="22" textLength="357.12">_/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l db h" x="150.96" textLength="218.24">\_/   \_/    \_/   \_/</text>
+<text class="l dc k" x="22" textLength="79.36">________</text>
+<text class="l dc d" x="22" textLength="79.36">_______|</text>
+<text class="l dc i" x="22" textLength="287.68">_ ___|      _________________</text>
+<text class="l dc j" x="22" textLength="357.12">| |_||     _|                \_____A</text>
+<text class="l dc e" x="22 31.92 41.84 51.76 71.6 111.28 121.2 369.2">___]|=||</text>
+<text class="l dc f" x="71.6 111.28 121.2 369.2">|-||</text>
+<text class="l dc g" x="22" textLength="367.04">=====|____|________________________|_</text>
+<text class="l dc a" x="22" textLength="367.04">_____|__|__________________________|_</text>
+<text class="l dc b" x="22" textLength="347.2">/          |_D__D__D_|  |_D__D__D_|</text>
+<text class="l dc h" x="141.04" textLength="218.24">\_/   \_/    \_/   \_/</text>
+<text class="l dd k" x="22" textLength="69.44">_______</text>
+<text class="l dd d" x="22" textLength="69.44">______|</text>
+<text class="l dd i" x="31.92" textLength="267.84">___|      _________________</text>
+<text class="l dd j" x="31.92" textLength="337.28">|_||     _|                \_____A</text>
+<text class="l dd e" x="22 31.92 41.84 61.68 101.36 111.28 359.28">__]|=||</text>
+<text class="l dd f" x="61.68 101.36 111.28 359.28">|-||</text>
+<text class="l dd g" x="22" textLength="357.12">====|____|________________________|_</text>
+<text class="l dd a" x="22" textLength="357.12">____|__|__________________________|_</text>
+<text class="l dd b" x="121.2" textLength="238.08">|_D__D__D_|  |_D__D__D_|</text>
+<text class="l dd h" x="131.12" textLength="218.24">\_/   \_/    \_/   \_/</text>
+<text class="l de k" x="22" textLength="59.52">______</text>
+<text class="l de d" x="22" textLength="59.52">_____|</text>
+<text class="l de i" x="22" textLength="267.84">___|      _________________</text>
+<text class="l de j" x="22" textLength="337.28">|_||     _|                \_____A</text>
+<text class="l de e" x="22 31.92 51.76 91.44 101.36 349.36">_]|=||</text>
+<text class="l de f" x="51.76 91.44 101.36 349.36">|-||</text>
+<text class="l de g" x="22" textLength="347.2">===|____|________________________|_</text>
+<text class="l de a" x="22" textLength="347.2">___|__|__________________________|_</text>
+<text class="l de b" x="111.28" textLength="238.08">|_D__D__D_|  |_D__D__D_|</text>
+<text class="l de h" x="121.2" textLength="218.24">\_/   \_/    \_/   \_/</text>
+<text class="l df k" x="22" textLength="49.6">_____</text>
+<text class="l df d" x="22" textLength="49.6">____|</text>
+<text class="l df i" x="22" textLength="257.92">__|      _________________</text>
+<text class="l df j" x="22" textLength="327.36">_||     _|                \_____A</text>
+<text class="l df e" x="22 41.84 81.52 91.44 339.44">]|=||</text>
+<text class="l df f" x="41.84 81.52 91.44 339.44">|-||</text>
+<text class="l df g" x="22" textLength="337.28">==|____|________________________|_</text>
+<text class="l df a" x="22" textLength="337.28">__|__|__________________________|_</text>
+<text class="l df b" x="101.36" textLength="238.08">|_D__D__D_|  |_D__D__D_|</text>
+<text class="l df h" x="111.28" textLength="218.24">\_/   \_/    \_/   \_/</text>
+<text class="l dg k" x="22 31.92 41.84 51.76">____</text>
+<text class="l dg d" x="22 31.92 41.84 51.76">___|</text>
+<text class="l dg i" x="22" textLength="248">_|      _________________</text>
+<text class="l dg j" x="22" textLength="317.44">||     _|                \_____A</text>
+<text class="l dg e" x="31.92 71.6 81.52 329.52">|=||</text>
+<text class="l dg f" x="31.92 71.6 81.52 329.52">|-||</text>
+<text class="l dg g" x="22" textLength="327.36">=|____|________________________|_</text>
+<text class="l dg a" x="22" textLength="327.36">_|__|__________________________|_</text>
+<text class="l dg b" x="91.44" textLength="238.08">|_D__D__D_|  |_D__D__D_|</text>
+<text class="l dg h" x="101.36" textLength="218.24">\_/   \_/    \_/   \_/</text>
+<text class="l dh k" x="22 31.92 41.84">___</text>
+<text class="l dh d" x="22 31.92 41.84">__|</text>
+<text class="l dh i" x="22" textLength="238.08">|      _________________</text>
+<text class="l dh j" x="22" textLength="307.52">|     _|                \_____A</text>
+<text class="l dh e" x="22 61.68 71.6 319.6">|=||</text>
+<text class="l dh f" x="22 61.68 71.6 319.6">|-||</text>
+<text class="l dh g" x="22" textLength="317.44">|____|________________________|_</text>
+<text class="l dh a" x="22" textLength="317.44">|__|__________________________|_</text>
+<text class="l dh b" x="81.52" textLength="238.08">|_D__D__D_|  |_D__D__D_|</text>
+<text class="l dh h" x="91.44" textLength="218.24">\_/   \_/    \_/   \_/</text>
+<text class="l di k" x="22 31.92">__</text>
+<text class="l di d" x="22 31.92">_|</text>
+<text class="l di i" x="81.52" textLength="168.64">_________________</text>
+<text class="l di j" x="71.6" textLength="248">_|                \_____A</text>
+<text class="l di e" x="51.76 61.68 309.68">=||</text>
+<text class="l di f" x="51.76 61.68 309.68">-||</text>
+<text class="l di g" x="22" textLength="307.52">____|________________________|_</text>
+<text class="l di a" x="22" textLength="307.52">__|__________________________|_</text>
+<text class="l di b" x="71.6" textLength="238.08">|_D__D__D_|  |_D__D__D_|</text>
+<text class="l di h" x="81.52" textLength="218.24">\_/   \_/    \_/   \_/</text>
+<text class="l dj k" x="22">_</text>
+<text class="l dj d" x="22">|</text>
+<text class="l dj i" x="71.6" textLength="168.64">_________________</text>
+<text class="l dj j" x="61.68" textLength="248">_|                \_____A</text>
+<text class="l dj e" x="41.84 51.76 299.76">=||</text>
+<text class="l dj f" x="41.84 51.76 299.76">-||</text>
+<text class="l dj g" x="22" textLength="297.6">___|________________________|_</text>
+<text class="l dj a" x="22" textLength="297.6">_|__________________________|_</text>
+<text class="l dj b" x="61.68" textLength="238.08">|_D__D__D_|  |_D__D__D_|</text>
+<text class="l dj h" x="71.6" textLength="218.24">\_/   \_/    \_/   \_/</text>
+<text class="l dn i" x="61.68" textLength="168.64">_________________</text>
+<text class="l dn j" x="51.76" textLength="248">_|                \_____A</text>
+<text class="l dn e" x="31.92 41.84 289.84">=||</text>
+<text class="l dn f" x="31.92 41.84 289.84">-||</text>
+<text class="l dn g" x="22" textLength="287.68">__|________________________|_</text>
+<text class="l dn a" x="22" textLength="287.68">|__________________________|_</text>
+<text class="l dn b" x="51.76" textLength="238.08">|_D__D__D_|  |_D__D__D_|</text>
+<text class="l dn h" x="61.68" textLength="218.24">\_/   \_/    \_/   \_/</text>
+<text class="l do i" x="51.76" textLength="168.64">_________________</text>
+<text class="l do j" x="41.84" textLength="248">_|                \_____A</text>
+<text class="l do e" x="22 31.92 279.92">=||</text>
+<text class="l do f" x="22 31.92 279.92">-||</text>
+<text class="l do g" x="22" textLength="277.76">_|________________________|_</text>
+<text class="l do a" x="22" textLength="277.76">__________________________|_</text>
+<text class="l do b" x="41.84" textLength="238.08">|_D__D__D_|  |_D__D__D_|</text>
+<text class="l do h" x="51.76" textLength="218.24">\_/   \_/    \_/   \_/</text>
+<text class="l dp i" x="41.84" textLength="168.64">_________________</text>
+<text class="l dp j" x="31.92" textLength="248">_|                \_____A</text>
+<text class="l dp e" x="22 270">||</text>
+<text class="l dp f" x="22 270">||</text>
+<text class="l dp g" x="22" textLength="267.84">|________________________|_</text>
+<text class="l dp a" x="22" textLength="267.84">_________________________|_</text>
+<text class="l dp b" x="31.92" textLength="238.08">|_D__D__D_|  |_D__D__D_|</text>
+<text class="l dp h" x="41.84" textLength="218.24">\_/   \_/    \_/   \_/</text>
+<text class="l dq i" x="31.92" textLength="168.64">_________________</text>
+<text class="l dq j" x="22" textLength="248">_|                \_____A</text>
+<text class="l dq e" x="260.08">|</text>
+<text class="l dq f" x="260.08">|</text>
+<g class="l dq g"><g id="r1370"><text x="22" textLength="257.92">________________________|_</text></g></g>
+<use href="#r1370" class="l dq a"/>
+<text class="l dq b" x="22" textLength="238.08">|_D__D__D_|  |_D__D__D_|</text>
+<text class="l dq h" x="31.92" textLength="218.24">\_/   \_/    \_/   \_/</text>
+<text class="l dr i" x="22" textLength="168.64">_________________</text>
+<text class="l dr j" x="22" textLength="238.08">|                \_____A</text>
+<text class="l dr e" x="250.16">|</text>
+<text class="l dr f" x="250.16">|</text>
+<g class="l dr g"><g id="r1378"><text x="22" textLength="248">_______________________|_</text></g></g>
+<use href="#r1378" class="l dr a"/>
+<text class="l dr b" x="22" textLength="228.16">_D__D__D_|  |_D__D__D_|</text>
+<text class="l dr h" x="22" textLength="218.24">\_/   \_/    \_/   \_/</text>
+<text class="l ds i" x="22" textLength="158.72">________________</text>
+<text class="l ds j" x="180.72" textLength="69.44">\_____A</text>
+<text class="l ds e" x="240.24">|</text>
+<text class="l ds f" x="240.24">|</text>
+<g class="l ds g"><g id="r1386"><text x="22" textLength="238.08">______________________|_</text></g></g>
+<use href="#r1386" class="l ds a"/>
+<text class="l ds b" x="22" textLength="218.24">D__D__D_|  |_D__D__D_|</text>
+<text class="l ds h" x="22" textLength="208.32">_/   \_/    \_/   \_/</text>
+<text class="l dt i" x="22" textLength="148.8">_______________</text>
+<text class="l dt j" x="170.8" textLength="69.44">\_____A</text>
+<text class="l dt e" x="230.32">|</text>
+<text class="l dt f" x="230.32">|</text>
+<g class="l dt g"><g id="r1394"><text x="22" textLength="228.16">_____________________|_</text></g></g>
+<use href="#r1394" class="l dt a"/>
+<text class="l dt b" x="22" textLength="208.32">__D__D_|  |_D__D__D_|</text>
+<text class="l dt h" x="22" textLength="198.4">/   \_/    \_/   \_/</text>
+<text class="l du i" x="22" textLength="138.88">______________</text>
+<text class="l du j" x="160.88" textLength="69.44">\_____A</text>
+<text class="l du e" x="220.4">|</text>
+<text class="l du f" x="220.4">|</text>
+<g class="l du g"><g id="r1402"><text x="22" textLength="218.24">____________________|_</text></g></g>
+<use href="#r1402" class="l du a"/>
+<text class="l du b" x="22" textLength="198.4">_D__D_|  |_D__D__D_|</text>
+<text class="l du h" x="51.76" textLength="158.72">\_/    \_/   \_/</text>
+<text class="l dv i" x="22" textLength="128.96">_____________</text>
+<text class="l dv j" x="150.96" textLength="69.44">\_____A</text>
+<text class="l dv e" x="210.48">|</text>
+<text class="l dv f" x="210.48">|</text>
+<g class="l dv g"><g id="r1410"><text x="22" textLength="208.32">___________________|_</text></g></g>
+<use href="#r1410" class="l dv a"/>
+<text class="l dv b" x="22" textLength="188.48">D__D_|  |_D__D__D_|</text>
+<text class="l dv h" x="41.84" textLength="158.72">\_/    \_/   \_/</text>
+<text class="l dw i" x="22" textLength="119.04">____________</text>
+<text class="l dw j" x="141.04" textLength="69.44">\_____A</text>
+<text class="l dw e" x="200.56">|</text>
+<text class="l dw f" x="200.56">|</text>
+<g class="l dw g"><g id="r1418"><text x="22" textLength="198.4">__________________|_</text></g></g>
+<use href="#r1418" class="l dw a"/>
+<text class="l dw b" x="22" textLength="178.56">__D_|  |_D__D__D_|</text>
+<text class="l dw h" x="31.92" textLength="158.72">\_/    \_/   \_/</text>
+<use href="#r1232" class="l dx i"/>
+<text class="l dx j" x="131.12" textLength="69.44">\_____A</text>
+<text class="l dx e" x="190.64">|</text>
+<text class="l dx f" x="190.64">|</text>
+<g class="l dx g"><g id="r1426"><text x="22" textLength="188.48">_________________|_</text></g></g>
+<use href="#r1426" class="l dx a"/>
+<text class="l dx b" x="22" textLength="168.64">_D_|  |_D__D__D_|</text>
+<text class="l dx h" x="22" textLength="158.72">\_/    \_/   \_/</text>
+<use href="#r1242" class="l dy i"/>
+<text class="l dy j" x="121.2" textLength="69.44">\_____A</text>
+<text class="l dy e" x="180.72">|</text>
+<text class="l dy f" x="180.72">|</text>
+<g class="l dy g"><g id="r1434"><text x="22" textLength="178.56">________________|_</text></g></g>
+<use href="#r1434" class="l dy a"/>
+<text class="l dy b" x="22" textLength="158.72">D_|  |_D__D__D_|</text>
+<text class="l dy h" x="22" textLength="148.8">_/    \_/   \_/</text>
+<use href="#r1252" class="l dz i"/>
+<text class="l dz j" x="111.28" textLength="69.44">\_____A</text>
+<text class="l dz e" x="170.8">|</text>
+<text class="l dz f" x="170.8">|</text>
+<g class="l dz g"><g id="r1442"><text x="22" textLength="168.64">_______________|_</text></g></g>
+<use href="#r1442" class="l dz a"/>
+<text class="l dz b" x="22" textLength="148.8">_|  |_D__D__D_|</text>
+<text class="l dz h" x="22" textLength="138.88">/    \_/   \_/</text>
+<text class="l d0 i" x="22" textLength="79.36">________</text>
+<text class="l d0 j" x="101.36" textLength="69.44">\_____A</text>
+<text class="l d0 e" x="160.88">|</text>
+<text class="l d0 f" x="160.88">|</text>
+<g class="l d0 g"><g id="r1450"><text x="22" textLength="158.72">______________|_</text></g></g>
+<use href="#r1450" class="l d0 a"/>
+<text class="l d0 b" x="22" textLength="138.88">|  |_D__D__D_|</text>
+<text class="l d0 h" x="61.68" textLength="89.28">\_/   \_/</text>
+<text class="l d1 i" x="22" textLength="69.44">_______</text>
+<text class="l d1 j" x="91.44" textLength="69.44">\_____A</text>
+<text class="l d1 e" x="150.96">|</text>
+<text class="l d1 f" x="150.96">|</text>
+<g class="l d1 g"><g id="r1458"><text x="22" textLength="148.8">_____________|_</text></g></g>
+<use href="#r1458" class="l d1 a"/>
+<text class="l d1 b" x="41.84" textLength="109.12">|_D__D__D_|</text>
+<text class="l d1 h" x="51.76" textLength="89.28">\_/   \_/</text>
+<text class="l d2 i" x="22" textLength="59.52">______</text>
+<text class="l d2 j" x="81.52" textLength="69.44">\_____A</text>
+<text class="l d2 e" x="141.04">|</text>
+<text class="l d2 f" x="141.04">|</text>
+<g class="l d2 g"><g id="r1466"><text x="22" textLength="138.88">____________|_</text></g></g>
+<use href="#r1466" class="l d2 a"/>
+<text class="l d2 b" x="31.92" textLength="109.12">|_D__D__D_|</text>
+<text class="l d2 h" x="41.84" textLength="89.28">\_/   \_/</text>
+<text class="l d3 i" x="22" textLength="49.6">_____</text>
+<text class="l d3 j" x="71.6" textLength="69.44">\_____A</text>
+<text class="l d3 e" x="131.12">|</text>
+<text class="l d3 f" x="131.12">|</text>
+<g class="l d3 g"><g id="r1474"><text x="22" textLength="128.96">___________|_</text></g></g>
+<use href="#r1474" class="l d3 a"/>
+<text class="l d3 b" x="22" textLength="109.12">|_D__D__D_|</text>
+<text class="l d3 h" x="31.92" textLength="89.28">\_/   \_/</text>
+<text class="l d4 i" x="22 31.92 41.84 51.76">____</text>
+<text class="l d4 j" x="61.68" textLength="69.44">\_____A</text>
+<text class="l d4 e" x="121.2">|</text>
+<text class="l d4 f" x="121.2">|</text>
+<g class="l d4 g"><g id="r1482"><text x="22" textLength="119.04">__________|_</text></g></g>
+<use href="#r1482" class="l d4 a"/>
+<text class="l d4 b" x="22" textLength="99.2">_D__D__D_|</text>
+<text class="l d4 h" x="22" textLength="89.28">\_/   \_/</text>
+<text class="l d5 i" x="22 31.92 41.84">___</text>
+<text class="l d5 j" x="51.76" textLength="69.44">\_____A</text>
+<text class="l d5 e" x="111.28">|</text>
+<text class="l d5 f" x="111.28">|</text>
+<g class="l d5 g"><g id="r1490"><text x="22" textLength="109.12">_________|_</text></g></g>
+<use href="#r1490" class="l d5 a"/>
+<text class="l d5 b" x="22" textLength="89.28">D__D__D_|</text>
+<text class="l d5 h" x="22" textLength="79.36">_/   \_/</text>
+<text class="l d6 i" x="22 31.92">__</text>
+<text class="l d6 j" x="41.84" textLength="69.44">\_____A</text>
+<text class="l d6 e" x="101.36">|</text>
+<text class="l d6 f" x="101.36">|</text>
+<g class="l d6 g"><g id="r1498"><text x="22" textLength="99.2">________|_</text></g></g>
+<use href="#r1498" class="l d6 a"/>
+<text class="l d6 b" x="22" textLength="79.36">__D__D_|</text>
+<text class="l d6 h" x="22 61.68 71.6 81.52">/\_/</text>
+<text class="l d7 i" x="22">_</text>
+<text class="l d7 j" x="31.92" textLength="69.44">\_____A</text>
+<text class="l d7 e" x="91.44">|</text>
+<text class="l d7 f" x="91.44">|</text>
+<g class="l d7 g"><g id="r1506"><text x="22" textLength="89.28">_______|_</text></g></g>
+<use href="#r1506" class="l d7 a"/>
+<text class="l d7 b" x="22" textLength="69.44">_D__D_|</text>
+<text class="l d7 h" x="51.76 61.68 71.6">\_/</text>
+<text class="l ea j" x="22" textLength="69.44">\_____A</text>
+<text class="l ea e" x="81.52">|</text>
+<text class="l ea f" x="81.52">|</text>
+<text class="l ea g" x="22" textLength="79.36">______|_</text>
+<text class="l ea a" x="22" textLength="79.36">______|_</text>
+<text class="l ea b" x="22" textLength="59.52">D__D_|</text>
+<text class="l ea h" x="41.84 51.76 61.68">\_/</text>
+<text class="l eb j" x="22" textLength="59.52">_____A</text>
+<text class="l eb e" x="71.6">|</text>
+<text class="l eb f" x="71.6">|</text>
+<text class="l eb g" x="22" textLength="69.44">_____|_</text>
+<text class="l eb a" x="22" textLength="69.44">_____|_</text>
+<text class="l eb b" x="22" textLength="49.6">__D_|</text>
+<text class="l eb h" x="31.92 41.84 51.76">\_/</text>
+<text class="l ec j" x="22" textLength="49.6">____A</text>
+<text class="l ec e" x="61.68">|</text>
+<text class="l ec f" x="61.68">|</text>
+<text class="l ec g" x="22" textLength="59.52">____|_</text>
+<text class="l ec a" x="22" textLength="59.52">____|_</text>
+<text class="l ec b" x="22 31.92 41.84 51.76">_D_|</text>
+<text class="l ec h" x="22 31.92 41.84">\_/</text>
+<text class="l ed j" x="22 31.92 41.84 51.76">___A</text>
+<text class="l ed e" x="51.76">|</text>
+<text class="l ed f" x="51.76">|</text>
+<text class="l ed g" x="22" textLength="49.6">___|_</text>
+<text class="l ed a" x="22" textLength="49.6">___|_</text>
+<text class="l ed b" x="22 31.92 41.84">D_|</text>
+<text class="l ed h" x="22 31.92">_/</text>
+<text class="l ee j" x="22 31.92 41.84">__A</text>
+<text class="l ee e" x="41.84">|</text>
+<text class="l ee f" x="41.84">|</text>
+<text class="l ee g" x="22 31.92 41.84 51.76">__|_</text>
+<text class="l ee a" x="22 31.92 41.84 51.76">__|_</text>
+<text class="l ee b" x="22 31.92">_|</text>
+<text class="l ee h" x="22">/</text>
+<text class="l eg j" x="22 31.92">_A</text>
+<text class="l eg e" x="31.92">|</text>
+<text class="l eg f" x="31.92">|</text>
+<text class="l eg g" x="22 31.92 41.84">_|_</text>
+<text class="l eg a" x="22 31.92 41.84">_|_</text>
+<text class="l eg b" x="22">|</text>
+<text class="l eh j" x="22">A</text>
+<text class="l eh e" x="22">|</text>
+<text class="l eh f" x="22">|</text>
+<text class="l eh g" x="22 31.92">|_</text>
+<text class="l eh a" x="22 31.92">|_</text>
+<text class="l e4 g" x="22">_</text>
+<text class="l e4 a" x="22">_</text>
+<text class="l fd m" x="22 41.84 51.76">$sl</text>
+<g class="l fe"><text x="22" y="362.8">$</text><use href="#c" x="41.84" y="350"/></g>
+<use href="#c" x="61.68" y="50" class="l fg"/>
+<use href="#c" x="22" y="70" class="l fi"/>
+<use href="#c" x="22" y="350" class="l fk"/>
+</g>
+</svg>
