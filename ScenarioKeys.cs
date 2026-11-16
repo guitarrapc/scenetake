@@ -90,6 +90,93 @@ internal static class ScenarioKeys
         return findings;
     }
 
+    /// <summary>Keys whose value is a color, <c>#rgb</c> or <c>#rrggbb</c>.</summary>
+    internal static readonly string[] ColorKeys = ["background", "fg", "bg", "palette"];
+
+    /// <summary>Keys whose value is a style, which takes a hex color as <c>fg:#rrggbb</c> (spec_highlight.md).</summary>
+    internal static readonly string[] StyleKeys = ["stderr-color", "run-highlight", "color"];
+
+    /// <summary>
+    /// Finds a color written without quotes, such as <c>background: #1e3c72</c>. YAML reads <c>#</c> after a space
+    /// as the start of a comment, so the key gets no value, and the scenario ran without the color and without a
+    /// word. A line counts only when the parsed scenario has that key with no value somewhere, so a <c>#fff</c>
+    /// inside a script block is not taken for one.
+    /// </summary>
+    internal static List<string> FindUnquotedColors(string yaml, Dictionary<object, object?> root)
+    {
+        var emptyKeys = new HashSet<string>(StringComparer.Ordinal);
+        CollectEmptyKeys(root, emptyKeys);
+        var findings = new List<string>();
+        if (emptyKeys.Count == 0)
+            return findings;
+
+        var lines = yaml.Replace("\r\n", "\n").Split('\n');
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var line = lines[i].AsSpan().TrimStart();
+            if (line.StartsWith("- "))
+                line = line[2..].TrimStart();
+
+            var colon = line.IndexOf(':');
+            if (colon <= 0)
+                continue;
+
+            var key = line[..colon].Trim().ToString();
+            var isColor = ColorKeys.Contains(key);
+            if ((!isColor && !StyleKeys.Contains(key)) || !emptyKeys.Contains(key))
+                continue;
+
+            // A comment needs a space before its #, as in `key: #1e3c72`; `key:#1e3c72` is not one.
+            var rest = line[(colon + 1)..];
+            if (rest.IsEmpty || !char.IsWhiteSpace(rest[0]))
+                continue;
+
+            var text = rest.Trim().ToString();
+            if (!StartsWithHexColor(text))
+                continue;
+
+            var first = text.Split([' ', '\t', ','], StringSplitOptions.RemoveEmptyEntries)[0];
+            findings.Add(isColor
+                ? $"line {i + 1}: '{key}' has no value: YAML reads '{text}' as a comment. Quote the color: {key}: \"{text}\""
+                : $"line {i + 1}: '{key}' has no value: YAML reads '{text}' as a comment. Quote the style: {key}: \"fg:{first}\"");
+        }
+
+        return findings;
+
+        static bool StartsWithHexColor(string text)
+        {
+            if (text.Length < 4 || text[0] != '#')
+                return false;
+
+            var digits = 1;
+            while (digits < text.Length && char.IsAsciiHexDigit(text[digits]))
+                digits++;
+            return digits - 1 is 3 or 6 && (digits == text.Length || !char.IsAsciiLetterOrDigit(text[digits]));
+        }
+    }
+
+    /// <summary>Every key of every mapping in the scenario whose value is null.</summary>
+    private static void CollectEmptyKeys(object? node, HashSet<string> keys)
+    {
+        switch (node)
+        {
+            case Dictionary<object, object?> map:
+                foreach (var (key, value) in map)
+                {
+                    if (value is null)
+                        keys.Add(key?.ToString() ?? "");
+                    else
+                        CollectEmptyKeys(value, keys);
+                }
+
+                break;
+            case List<object?> list:
+                foreach (var item in list)
+                    CollectEmptyKeys(item, keys);
+                break;
+        }
+    }
+
     private static void Check(
         Dictionary<object, object?> map,
         IReadOnlyList<string> keys,

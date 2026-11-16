@@ -14,6 +14,13 @@
   --info: #6c99bb;
   --info-bg: rgba(108, 153, 187, 0.12);
   --preview-bg: #0b0d11;
+  --header-border: rgba(125, 214, 207, 0.2);
+  --header-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --badge-fg: #a8ece6;
+  --badge-bg: rgba(125, 214, 207, 0.12);
+  --badge-border: rgba(125, 214, 207, 0.42);
+  --badge-inset: rgba(0, 0, 0, 0.2);
+  --badge-glow: rgba(125, 214, 207, 0.12);
   --mono: ui-monospace, "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
   --sans: system-ui, -apple-system, "Segoe UI", "Noto Sans", "Hiragino Sans", sans-serif;
   /* The editor's text size in px. It has no unit so that the preview's size rule can divide by it. */
@@ -38,6 +45,13 @@
     --info: #2871aa;
     --info-bg: rgba(40, 113, 170, 0.08);
     --preview-bg: #e9ecf0;
+    --header-border: rgba(0, 128, 122, 0.18);
+    --header-shadow: 0 8px 24px rgba(26, 35, 50, 0.07);
+    --badge-fg: #00615c;
+    --badge-bg: rgba(0, 128, 122, 0.1);
+    --badge-border: rgba(0, 128, 122, 0.35);
+    --badge-inset: rgba(255, 255, 255, 0.65);
+    --badge-glow: rgba(0, 128, 122, 0.07);
     color-scheme: light;
   }
 }
@@ -58,6 +72,13 @@
   --info: #2871aa;
   --info-bg: rgba(40, 113, 170, 0.08);
   --preview-bg: #e9ecf0;
+  --header-border: rgba(0, 128, 122, 0.18);
+  --header-shadow: 0 8px 24px rgba(26, 35, 50, 0.07);
+  --badge-fg: #00615c;
+  --badge-bg: rgba(0, 128, 122, 0.1);
+  --badge-border: rgba(0, 128, 122, 0.35);
+  --badge-inset: rgba(255, 255, 255, 0.65);
+  --badge-glow: rgba(0, 128, 122, 0.07);
   color-scheme: light;
 }
 
@@ -84,54 +105,106 @@ code {
   font-size: 0.92em;
 }
 
-.site-header,
-main,
-.site-footer {
+main {
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 16px;
 }
 
+/*
+  The header follows the seiton playground's: a full-width bar with the title and the version badge centered, and
+  the tagline under them. scenetake has no logo, so the title stands alone.
+*/
 .site-header {
-  padding-top: 20px;
+  position: relative;
+  z-index: 1;
+  padding: 18px 16px 16px;
+  border-bottom: 1px solid var(--header-border);
+  box-shadow: var(--header-shadow);
+  text-align: center;
 }
 
-.brand {
+.site-title-row {
   display: flex;
-  align-items: center;
-  gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 0.85rem;
 }
 
-.brand h1 {
+.site-header h1 {
   margin: 0;
-  font-size: 1.45rem;
-  letter-spacing: -0.01em;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
 }
 
-.brand__mark {
-  color: var(--accent);
-  font-size: 1.1rem;
-}
-
-.badge {
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  padding: 2px 8px;
-  border: 1px solid var(--border);
+.version-badge {
+  display: inline-flex;
+  align-items: baseline;
+  flex-shrink: 0;
+  padding: 0.28em 0.78em 0.32em;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  color: var(--badge-fg);
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
   border-radius: 999px;
-  color: var(--muted);
+  box-shadow:
+    0 0 0 1px var(--badge-inset) inset,
+    0 1px 8px var(--badge-glow);
   text-decoration: none;
 }
 
+.version-badge:hover {
+  filter: brightness(1.06);
+}
+
+.version-badge:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .tagline {
-  margin: 6px 0 14px;
+  margin: 0.45rem 0 0;
+  font-size: clamp(1rem, 0.92rem + 0.35vw, 1.12rem);
+  font-weight: 500;
+  letter-spacing: 0.01em;
   color: var(--muted);
+}
+
+.tagline-more {
+  margin: 0.15rem 0 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+@media (min-width: 840px) {
+  .site-header {
+    padding: 22px 16px 20px;
+  }
+
+  .site-title-row {
+    gap: 0.55rem 1rem;
+  }
+
+  .site-header h1 {
+    font-size: clamp(2rem, 0.9rem + 1.65vw, 2.6rem);
+  }
+
+  .version-badge {
+    font-size: clamp(0.82rem, 0.72rem + 0.28vw, 0.95rem);
+  }
 }
 
 .tabs {
   display: flex;
   gap: 4px;
+  margin-bottom: 16px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -164,7 +237,7 @@ main,
 }
 
 main {
-  padding-top: 16px;
+  padding-top: 12px;
 }
 
 .options {
@@ -199,6 +272,86 @@ main {
 
 .field--wide {
   grid-column: span 2;
+}
+
+.field--full {
+  grid-column: 1 / -1;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Painted from data-background by main.js. 28 px squares stay easy to tap on a phone. */
+.swatch {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.swatch[aria-pressed="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* An image swatch shows the image, cropped to the square as the SVG crops it to the canvas. */
+.swatch--image {
+  background-size: cover;
+  background-position: center;
+}
+
+/* "Image…" opens the file chooser; the input itself is kept out of sight but stays focusable. */
+.image-pick {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.image-pick:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.image-pick input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.field__hint--error {
+  color: var(--danger);
+}
+
+/* None: a diagonal line, as a crossed-out color. */
+.swatch--none {
+  background: linear-gradient(135deg, transparent 46%, var(--muted) 46% 54%, transparent 54%), var(--surface-2);
+}
+
+.field__hint {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.field__hint code {
+  font-family: var(--mono);
+  color: var(--text);
+  user-select: all;
 }
 
 .field {
@@ -581,18 +734,83 @@ html.viewer-open {
   overflow-wrap: anywhere;
 }
 
+/* The footer follows the seiton playground's: repository mark | copyright and license | theme switch, centered. */
 .site-footer {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  padding-top: 12px;
-  padding-bottom: 24px;
+  margin-top: 24px;
+  padding: 1.15rem 16px 1.35rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.8rem;
   color: var(--muted);
-  font-size: 0.85rem;
+  text-align: center;
 }
 
-.site-footer button {
-  margin-left: auto;
+.footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  column-gap: clamp(0.55rem, 2.25vw, 1.05rem);
+  row-gap: 0.4rem;
+  margin: 0;
+}
+
+.repo-mark {
+  display: inline-flex;
+  color: var(--muted);
+  border-radius: 6px;
+}
+
+.repo-mark:hover {
+  color: var(--accent);
+}
+
+.repo-mark:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.repo-mark__icon {
+  display: block;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.footer-sep {
+  line-height: 1;
+  opacity: 0.9;
+  user-select: none;
+}
+
+.theme-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  padding: 0.42rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.theme-btn:hover {
+  color: var(--accent);
+}
+
+.theme-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.theme-btn__icon {
+  display: none;
+}
+
+.theme-btn[data-theme-mode="system"] .theme-btn__icon--system,
+.theme-btn[data-theme-mode="light"] .theme-btn__icon--light,
+.theme-btn[data-theme-mode="dark"] .theme-btn__icon--dark {
+  display: block;
 }
 
 [hidden] {
@@ -645,21 +863,45 @@ html.viewer-open {
     preview frame are tighter here. Each toolbar fits on one row at 375 px.
   */
   .site-header {
-    padding-top: 12px;
+    padding: 12px 12px 10px;
   }
 
-  .brand h1 {
-    font-size: 1.2rem;
+  .site-title-row {
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+
+  .site-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .version-badge {
+    font-size: 0.72rem;
+    padding: 0.24em 0.62em;
   }
 
   .tagline {
-    margin: 2px 0 8px;
+    margin-top: 4px;
     font-size: 0.88rem;
     line-height: 1.4;
   }
 
-  .tagline__more {
+  .tagline-more {
     display: none;
+  }
+
+  /* The text wraps on a phone, so it goes first, and the mark and the theme switch share a row below it. */
+  .footer-text {
+    flex-basis: 100%;
+    order: -1;
+  }
+
+  .footer-sep {
+    display: none;
+  }
+
+  .tabs {
+    margin-bottom: 10px;
   }
 
   .tabs button {
@@ -667,7 +909,7 @@ html.viewer-open {
   }
 
   main {
-    padding-top: 10px;
+    padding-top: 6px;
   }
 
   .toolbar {

@@ -61,9 +61,9 @@ Every cast file written by the scenario path includes render metadata in the hea
 | `timestamp` | deterministic from YAML | See [spec_scenario.md](spec_scenario.md) → Determinism. |
 | `title` | scenario `title` | May be empty. |
 | `env.SHELL` | resolved shell's file name | Name only, without its folder and without `.exe`: `bash`, `pwsh`, `cmd`, also when the scenario gives a path. A cast is shared, and the folder is often under the user's home (`C:\Users\<name>\scoop\...`). `TERM` is represented by `term.type`. |
-| `tags` | `st:font-size=N`, `st:font-family=…`, `st:window=macos\|windows` | SVG render metadata. `st:window` is omitted when window chrome is off. Unknown tags are ignored by external tools. |
+| `tags` | `st:font-size=N`, `st:font-family=…`, `st:window=macos\|windows`, `st:window-title=…`, `st:background=#rrggbb …`, `st:margin=N`, `st:padding=N` | SVG and mp4 render metadata. `st:window` is omitted when window chrome is off. The other four are written only when the scenario or the CLI sets them. Without `st:window-title`, the title bar shows `title`. `st:background` holds colors only: a cast never names an image file. Unknown tags are ignored by external tools. |
 
-On read, v2 headers use top-level `width`, `height`, and `theme` only. Render metadata defaults apply unless overridden by CLI: v3 `st:font-size` / `st:font-family` / `st:window` in `tags`. Invalid `st:` render tags warn once each and fall back to defaults. An invalid `theme` color, or a palette that is not 16 colors, falls back to the defaults without a warning. A missing or out-of-range terminal size is an error. This holds wherever a cast is read: the `svg` and `mp4` subcommands, and the scenario path's SVG and mp4 output.
+On read, v2 headers use top-level `width`, `height`, and `theme` only. Render metadata defaults apply unless overridden by CLI: v3 `st:font-size` / `st:font-family` / `st:window` / `st:window-title` / `st:background` / `st:margin` / `st:padding` in `tags`. Invalid `st:` render tags warn once each and fall back to defaults. An invalid `theme` color, or a palette that is not 16 colors, falls back to the defaults without a warning. A missing or out-of-range terminal size is an error. This holds wherever a cast is read: the `svg` and `mp4` subcommands, and the scenario path's SVG and mp4 output.
 
 ## Event Stream
 

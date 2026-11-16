@@ -1,0 +1,29 @@
+# Welcome to the scenetake playground!
+# This YAML recorded the demo on the right. Edit a line,
+# and the demo follows. More samples are in the list above.
+
+title: "Welcome to scenetake"   # the window's title
+width: 86                       # terminal columns
+height: 22                      # terminal rows
+shell: bash
+
+settings:
+  prompt: "$ "
+  typing-speed: 0.04            # seconds per typed character
+  pre-delay: 0.5                # pause before typing
+  post-delay: 3.0               # pause after the output
+
+render:
+  window: macos                 # a window frame
+  background: ../background.webp  # an image around it
+  margin: 48                    # pixels of the image
+
+steps:
+  # name: a comment line before the command.
+  # pty: a terminal, so the commands print colors.
+  - name: "[bright-cyan]Terminal demos, written as YAML"
+    run: oh-my-logo SCENETAKE dawn --filled
+    pty: true
+  - name: "[bright-cyan]Commands run for real, colors and all"
+    run: git log --graph --oneline --all
+    pty: true

@@ -10,7 +10,8 @@ settings:
   post-delay: 3.0
 
 render:
-  window: macos
+  window: macos                       # the title bar shows the title above
+  background: "#0f2027 #203a43 #2c5364" # a gradient behind the window
 
 steps:
   # fastfetch prints colors only to a terminal, so it runs in a PTY. Its modules are in fastfetch.jsonc.

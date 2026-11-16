@@ -13,6 +13,10 @@ render:                          # Optional display metadata for cast header and
   theme:
     preset: dark                 # dark | light; optional fg / bg / palette overrides
   window: macos                  # none | macos | windows
+  window-title: "scenario_format.yaml"  # title bar text; default: the top-level title, "" for none
+  background: "#0f2027 #2c5364"  # one color, 2-4 colors for a gradient, or a .png/.jpg/.gif/.webp file
+  margin: 24                     # px around the window (default 8, 12 with a window, 32 with a background)
+  padding: 12                    # px between the terminal edge and its text (default from font-size)
 
 settings:                        # Defaults for all steps; map-form steps can override per key
   prompt: "$ "

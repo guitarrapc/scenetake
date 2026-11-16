@@ -91,23 +91,31 @@ internal sealed class Mp4FrameRenderer
     private readonly int _initialHeight;
     private readonly TerminalTheme _theme;
     private readonly int _fps;
+    private readonly ResolvedRenderSettings _render;
+    private readonly string? _fontFile;
+    private readonly string? _ffmpegPath;
     private FixedRatePlan? _plan;
 
+    /// <param name="ffmpegPath">ffmpeg, which decodes a background image. Needed only when the background is an image.</param>
     internal Mp4FrameRenderer(
         IReadOnlyList<CastEvent> events,
         int width,
         int height,
         ResolvedRenderSettings render,
         Mp4Settings settings,
-        double loopDuration)
+        double loopDuration,
+        string? ffmpegPath = null)
     {
         _events = events;
         _initialWidth = width;
         _initialHeight = height;
         _theme = TerminalTheme.FromResolved(render.Theme);
         _fps = settings.Fps;
+        _render = render;
+        _fontFile = settings.FontFile;
+        _ffmpegPath = ffmpegPath;
         var (cols, rows) = TerminalReplay.ResolveCanvasSize(width, height, events);
-        Layout = Mp4Render.CreateLayout(render.FontSize, cols, rows, render.Window, settings);
+        Layout = Mp4Render.CreateLayout(render, cols, rows, settings);
         Glyphs = GlyphSource.Create(render.FontFamily, settings.FontFile, Layout);
         FrameCount = CountFrames(loopDuration, settings.Fps);
     }
@@ -131,7 +139,18 @@ internal sealed class Mp4FrameRenderer
     /// <summary>Calls <paramref name="sink"/> with each RGB24 frame in order. The buffer is reused between calls.</summary>
     internal void Render(Action<byte[]> sink)
     {
-        var raster = new FrameRasterizer(Layout, _theme, Glyphs);
+        var desktop = _render.Background is { } background
+            ? DesktopRaster.Render(Layout, background, (frameWidth, frameHeight) => Ffmpeg.DecodeImage(
+                _ffmpegPath ?? throw new Mp4Exception("a background image needs ffmpeg to decode it"), background.ImagePath!, frameWidth, frameHeight))
+            : null;
+
+        // The title uses the terminal's font at the title size, in whole-pixel cells as the terminal text is.
+        GlyphSource? titleGlyphs = null;
+        var titleLayout = RasterLayout.Create((int)SvgFrameRenderer.ChromeTitleFontSize, 1, 1);
+        if (Layout.Window != WindowStyle.None && !string.IsNullOrEmpty(_render.WindowTitle))
+            titleGlyphs = GlyphSource.Create(_render.FontFamily, _fontFile, titleLayout);
+
+        var raster = new FrameRasterizer(Layout, _theme, Glyphs, desktop, titleGlyphs, titleLayout.CellWidth, _render.WindowTitle);
         var stepper = new ReplayStepper(_events, _initialWidth, _initialHeight, Layout.Cols, Layout.Rows, _theme, Plan.StopIndex);
         for (var frame = 0; frame < FrameCount; frame++)
         {
@@ -189,7 +208,7 @@ internal static class Mp4Render
             throw new Mp4Exception($"output path is a directory: {fullOutputPath}");
 
         var loopDuration = loopDurationOverride ?? TerminalReplay.ComputeLoopDuration(events);
-        var renderer = new Mp4FrameRenderer(events, width, height, render, settings, loopDuration);
+        var renderer = new Mp4FrameRenderer(events, width, height, render, settings, loopDuration, ffmpegPath);
         var layout = renderer.Layout;
         var (outputWidth, outputHeight) = OutputSize(layout, settings);
 
@@ -310,9 +329,13 @@ internal static class Mp4Render
     }
 
     /// <summary>The drawn frame: the terminal at its own size, or inside the <c>--size</c> frame.</summary>
-    internal static RasterLayout CreateLayout(int fontSize, int cols, int rows, WindowStyle window, Mp4Settings settings)
+    internal static RasterLayout CreateLayout(int fontSize, int cols, int rows, WindowStyle window, Mp4Settings settings) =>
+        CreateLayout(new ResolvedRenderSettings(fontSize, RenderSettingsResolver.DefaultFontFamily, default, window), cols, rows, settings);
+
+    /// <summary>The drawn frame for <paramref name="render"/>'s font size, window, padding, margin, and background.</summary>
+    internal static RasterLayout CreateLayout(ResolvedRenderSettings render, int cols, int rows, Mp4Settings settings)
     {
-        var layout = RasterLayout.Create(fontSize, cols, rows, window);
+        var layout = RasterLayout.Create(render.FontSize, cols, rows, render.Window, render.Padding, render.Margin, render.Background is not null);
         return settings.FrameWidth > 0 ? layout.FitFrame(settings.FrameWidth, settings.FrameHeight) : layout;
     }
 
@@ -395,6 +418,37 @@ internal static class Mp4Render
 /// <summary>Finds ffmpeg and checks that it can encode H.264 with libx264.</summary>
 internal static class Ffmpeg
 {
+    /// <summary>
+    /// Decodes an image to RGB24 pixels of exactly <paramref name="width"/> × <paramref name="height"/>: scaled to
+    /// cover that size and cropped to it, centered, as the SVG's <c>preserveAspectRatio="xMidYMid slice"</c> does.
+    /// </summary>
+    internal static byte[] DecodeImage(string ffmpegPath, string imagePath, int width, int height)
+    {
+        var psi = new System.Diagnostics.ProcessStartInfo(ffmpegPath)
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+        foreach (var argument in new[]
+        {
+            "-hide_banner", "-loglevel", "error", "-i", imagePath,
+            "-vf", string.Create(CultureInfo.InvariantCulture, $"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height}"),
+            "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1",
+        })
+            psi.ArgumentList.Add(argument);
+
+        using var process = System.Diagnostics.Process.Start(psi) ?? throw new Mp4Exception($"cannot start ffmpeg to read the background image: {imagePath}");
+        var stderr = process.StandardError.ReadToEndAsync();
+        using var pixels = new MemoryStream();
+        process.StandardOutput.BaseStream.CopyTo(pixels);
+        process.WaitForExit();
+        if (process.ExitCode != 0 || pixels.Length != (long)width * height * 3)
+            throw new Mp4Exception($"ffmpeg could not read the background image {imagePath}: {stderr.Result.Trim()}");
+        return pixels.ToArray();
+    }
+
     internal const string PathVariable = "SCENETAKE_FFMPEG";
 
     /// <summary>Resolves ffmpeg from <c>SCENETAKE_FFMPEG</c>, else <c>PATH</c>, and checks for libx264. The error ends with install hints.</summary>

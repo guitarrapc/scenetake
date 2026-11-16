@@ -11,6 +11,9 @@ settings:
 
 render:
   window: macos
+  # An image behind the window. A path starts from this file's folder: the image is samples/background.webp.
+  background: ../background.webp
+  margin: 64
 
 steps:
   # keys edits the file with no one at the keyboard: find render, add a line below it, save, and quit. The

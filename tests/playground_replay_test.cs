@@ -45,7 +45,9 @@ failures += Run("PtySizeMismatchGivesNotice", PtySizeMismatchGivesNotice);
 failures += Run("RecordedExitCodeWarns", RecordedExitCodeWarns);
 failures += Run("ErrorsAreValuesNotExceptions", ErrorsAreValuesNotExceptions);
 failures += Run("NotAppliedKeysAreListed", NotAppliedKeysAreListed);
+failures += Run("UnquotedColorsWarn", UnquotedColorsWarn);
 failures += Run("CastTabAppliesOverrides", () => CastTabAppliesOverrides(repoRoot));
+failures += Run("BackgroundImagesComeFromThePage", BackgroundImagesComeFromThePage);
 
 var scenetake = Environment.GetEnvironmentVariable("SCENETAKE_BIN");
 if (!string.IsNullOrWhiteSpace(scenetake) && File.Exists(scenetake))
@@ -63,9 +65,12 @@ Console.Error.WriteLine("all playground replay tests passed");
 return 0;
 
 // Every committed sample with an outputs file replays to its committed cast and SVG. The showcase samples are
-// recorded on Linux in a container (samples/showcase/record.sh), and the playground offers them too.
+// recorded on Linux in a container (samples/showcase/record.sh), and the playground offers them too. The replay has
+// the images that the playground publishes (PlaygroundImage in its project), as the page loads them: a sample that
+// names another image fails here, as it would on the page.
 static bool SamplesReplayToCommittedCasts(string repoRoot)
 {
+    var images = PublishedImages(repoRoot);
     var outputsFiles = new[] { "samples", "samples/showcase" }
         .Select(folder => Path.Combine(repoRoot, folder))
         .Where(Directory.Exists)
@@ -85,7 +90,7 @@ static bool SamplesReplayToCommittedCasts(string repoRoot)
         var name = Path.GetFileName(outputsPath)[..^".outputs.json".Length];
         var yaml = File.ReadAllText(Path.Combine(samples, name + ".yaml"), Encoding.UTF8);
         var outputs = StepOutputs.Parse(File.ReadAllText(outputsPath, Encoding.UTF8));
-        var result = PlaygroundRender.RenderScenario(yaml, outputs, new PlaygroundOptions());
+        var result = PlaygroundRender.RenderScenario(yaml, outputs, new PlaygroundOptions(Images: images));
         if (result.Error is not null)
         {
             Console.Error.WriteLine($"  {name}: {result.Error}");
@@ -403,6 +408,48 @@ static bool NotAppliedKeysAreListed()
         & Expect(sameShell.NotApplied.Count == 0, "the recording's own shell is no note: " + string.Join("; ", sameShell.NotApplied));
 }
 
+// YAML reads `key: #1e3c72` as a key with no value and a comment, so the color was lost without a word. The CLI and
+// the playground warn the same way: a color key gets the quoted color, a style key the quoted fg: style. A real
+// comment, a quoted color, and a #fff inside a script block draw no warning.
+static bool UnquotedColorsWarn()
+{
+    var yaml = """
+        width: 80
+        height: 24
+        settings:
+          stderr-color: #ff8800
+        render:
+          background: #1e3c72 #2a5298
+          theme:
+            bg: #222
+            fg: "#eeeeee"
+            palette: # 16 colors go here
+        steps:
+          - run: |
+              echo "background: #fff"
+          - run: echo hi
+            highlight:
+              - color: #00ff00
+                at: "1"
+        """;
+    var expected = new[]
+    {
+        "line 4: 'stderr-color' has no value: YAML reads '#ff8800' as a comment. Quote the style: stderr-color: \"fg:#ff8800\"",
+        "line 6: 'background' has no value: YAML reads '#1e3c72 #2a5298' as a comment. Quote the color: background: \"#1e3c72 #2a5298\"",
+        "line 8: 'bg' has no value: YAML reads '#222' as a comment. Quote the color: bg: \"#222\"",
+        "line 16: 'color' has no value: YAML reads '#00ff00' as a comment. Quote the style: color: \"fg:#00ff00\"",
+    };
+    var found = ScenarioCast.FindUnknownScenarioKeys(yaml);
+    var ok = Expect(found.SequenceEqual(expected), "the four unquoted colors, in order; got:\n    " + string.Join("\n    ", found));
+
+    // The playground lists them with its other warnings.
+    var outputs = Outputs(RecordedStep.Pipe("echo hi", 0, [Out("hi\n")]));
+    var result = Render("width: 80\nheight: 24\nrender:\n  background: #1e3c72\nsteps:\n  - echo hi\n", outputs);
+    ok &= Expect(result.Warnings.Contains("line 4: 'background' has no value: YAML reads '#1e3c72' as a comment. Quote the color: background: \"#1e3c72\""),
+        "the playground warning; got: " + string.Join("; ", result.Warnings));
+    return ok;
+}
+
 static bool CastTabAppliesOverrides(string repoRoot)
 {
     var castText = File.ReadAllText(Path.Combine(repoRoot, "samples", "resize.cast"), Encoding.UTF8);
@@ -412,6 +459,60 @@ static bool CastTabAppliesOverrides(string repoRoot)
     var expected = SvgRender.RenderToUtf8(recording.Events, recording.Width, recording.Height, recording.RenderSettings, recording.LoopDuration);
     return Expect(plain.Error is null && plain.Svg!.AsSpan().SequenceEqual(expected), "no option gives the svg command's output")
         & Expect(light.Error is null && !light.Svg!.AsSpan().SequenceEqual(expected), "options change the SVG");
+}
+
+// The playground has no files: the page gives it each image with a name. A background in the YAML or the option
+// finds an image by its file name, so a CLI path such as ../wall.webp works unchanged. The cast keeps no image,
+// and the SVG embeds the page's bytes.
+static bool BackgroundImagesComeFromThePage()
+{
+    byte[] wall = [0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4];
+    var images = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["wall.webp"] = wall };
+    var outputs = Outputs(RecordedStep.Pipe("echo hi", 0, [Out("hi\n")]));
+    var embedded = "data:image/webp;base64," + Convert.ToBase64String(wall);
+    string WithBackground(string background) => $"width: 80\nheight: 24\nrender:\n  background: {background}\nsteps:\n  - echo hi\n";
+
+    var ok = true;
+    foreach (var name in new[] { "wall.webp", "../wall.webp", "/home/me/wall.webp", @"C:\walls\wall.webp" })
+    {
+        var result = PlaygroundRender.RenderScenario(WithBackground(name), outputs, new PlaygroundOptions(Images: images));
+        ok &= Expect(result.Error is null && Encoding.UTF8.GetString(result.Svg!).Contains(embedded, StringComparison.Ordinal), $"the YAML's {name} embeds wall.webp: {result.Error}");
+        ok &= Expect(result.Cast is not null && !Encoding.UTF8.GetString(result.Cast).Contains("st:background", StringComparison.Ordinal), $"the cast of {name} names no image");
+    }
+
+    var missing = PlaygroundRender.RenderScenario(WithBackground("night.webp"), outputs, new PlaygroundOptions(Images: images));
+    ok &= Expect(missing.Error == "invalid render.background: background image not loaded: night.webp (loaded: wall.webp)", $"a missing image names what is loaded: {missing.Error}");
+    var none = PlaygroundRender.RenderScenario(WithBackground("wall.webp"), outputs, new PlaygroundOptions());
+    ok &= Expect(none.Error == "invalid render.background: background image not loaded: wall.webp", $"no images: {none.Error}");
+    var notImage = PlaygroundRender.RenderScenario(WithBackground("wall.bmp"), outputs, new PlaygroundOptions(Images: images));
+    ok &= Expect(notImage.Error?.Contains(".png, .jpg, .gif, or .webp", StringComparison.Ordinal) == true, $"another extension: {notImage.Error}");
+
+    // The option names an image too, on the Scenario tab and on the Cast tab, and replaces the YAML's colors.
+    var option = PlaygroundRender.RenderScenario(WithBackground("\"#102030\""), outputs, new PlaygroundOptions(Background: "wall.webp", Images: images));
+    ok &= Expect(option.Error is null && Encoding.UTF8.GetString(option.Svg!).Contains(embedded, StringComparison.Ordinal), $"the option's image replaces the YAML's color: {option.Error}");
+    var colors = PlaygroundRender.RenderScenario(WithBackground("\"#102030\""), outputs, new PlaygroundOptions(Images: images));
+    var castTab = PlaygroundRender.RenderCast(Encoding.UTF8.GetString(colors.Cast!), new PlaygroundOptions(Background: "../wall.webp", Images: images));
+    ok &= Expect(castTab.Error is null && Encoding.UTF8.GetString(castTab.Svg!).Contains(embedded, StringComparison.Ordinal), $"the Cast tab's option: {castTab.Error}");
+    var castMissing = PlaygroundRender.RenderCast(Encoding.UTF8.GetString(colors.Cast!), new PlaygroundOptions(Background: "night.webp", Images: images));
+    ok &= Expect(castMissing.Error == "background image not loaded: night.webp (loaded: wall.webp)", $"the Cast tab's missing image: {castMissing.Error}");
+    return ok;
+}
+
+// The images the playground publishes next to the samples: PlaygroundImage items in its project file.
+static Dictionary<string, byte[]> PublishedImages(string repoRoot)
+{
+    var project = Path.Combine(repoRoot, "playground", "Scenetake.Playground.csproj");
+    var images = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+    foreach (var element in System.Xml.Linq.XDocument.Load(project).Descendants("PlaygroundImage"))
+    {
+        foreach (var include in element.Attribute("Include")!.Value.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var path = Path.GetFullPath(include, Path.GetDirectoryName(project)!);
+            images.Add(Path.GetFileName(path), File.ReadAllBytes(path));
+        }
+    }
+
+    return images;
 }
 
 static StepOutputs Outputs(params RecordedStep[] steps) => new()

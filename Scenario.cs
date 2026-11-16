@@ -125,7 +125,10 @@ internal static partial class ScenarioCast
         _ => $"'{value}'",
     };
 
-    /// <summary>Keys the scenario sets that scenetake does not read, one message each (see <see cref="ScenarioKeys"/>).</summary>
+    /// <summary>
+    /// Keys the scenario sets that scenetake does not read, and colors that YAML read as comments, one message each
+    /// (see <see cref="ScenarioKeys"/>). Both are warnings: the scenario still runs.
+    /// </summary>
     internal static List<string> FindUnknownScenarioKeys(string yaml)
     {
         // Maps are read as object: Native AOT has VYaml's formatter for object, which makes each map a
@@ -152,7 +155,7 @@ internal static partial class ScenarioCast
             return [];
         }
 
-        return ScenarioKeys.FindUnknown(root, known);
+        return [.. ScenarioKeys.FindUnknown(root, known), .. ScenarioKeys.FindUnquotedColors(yaml, root)];
 
         static string[] KeysOf<T>() =>
             GeneratedResolver.Instance.GetFormatter<T>() is IYamlSchemaInfoProvider provider
@@ -503,6 +506,10 @@ public partial class ScenarioRender
     public int? FontSize { get; set; }
     public string? FontFamily { get; set; }
     public string? Window { get; set; }
+    public string? WindowTitle { get; set; }
+    public string? Background { get; set; }
+    public int? Margin { get; set; }
+    public int? Padding { get; set; }
     public ScenarioTheme? Theme { get; set; }
 }
 

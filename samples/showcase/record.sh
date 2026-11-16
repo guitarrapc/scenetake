@@ -8,6 +8,7 @@
 set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
+samples=$(cd "$here/.." && pwd)
 bin=$(cd "${1:?usage: record.sh <folder with a linux-x64 scenetake> [name...]}" && pwd)
 shift
 
@@ -24,10 +25,13 @@ DOCKER_BUILDKIT=0 docker build --quiet --tag scenetake-showcase "$here" > /dev/n
 for name in "$@"; do
   echo "=== $name" >&2
   # The fixed hostname is what fastfetch shows in its title. The commands run in /home/demo/app, the image's project.
+  # samples/ is mounted read-only around this folder: a scenario may name a file there, as vim.yaml names
+  # ../background.webp.
   docker run --rm --hostname scenetake \
     --volume "$bin:/opt/scenetake:ro" \
-    --volume "$here:/showcase" \
-    --env SCENETAKE_OUTPUTS="/showcase/$name.outputs.json" \
+    --volume "$samples:/samples:ro" \
+    --volume "$here:/samples/showcase" \
+    --env SCENETAKE_OUTPUTS="/samples/showcase/$name.outputs.json" \
     scenetake-showcase \
-    /opt/scenetake/scenetake --format svg "/showcase/$name.yaml" "/showcase/$name"
+    /opt/scenetake/scenetake --format svg "/samples/showcase/$name.yaml" "/samples/showcase/$name"
 done

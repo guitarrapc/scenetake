@@ -3,10 +3,27 @@ using static ScenarioCast;
 
 /// <summary>
 /// The render options of the playground. They are the CLI flags <c>--theme</c>, <c>--window</c>, <c>--font-size</c>,
-/// <c>--font-family</c>, and <c>--max-fps</c>, with the same values and ranges. Null leaves a setting as the
-/// scenario or the cast sets it.
+/// <c>--font-family</c>, <c>--max-fps</c>, <c>--window-title</c>, <c>--background</c>, <c>--margin</c>, and
+/// <c>--padding</c>, with the same values and ranges. Null leaves a setting as the scenario or the cast sets it.
 /// </summary>
-internal sealed record PlaygroundOptions(string? Theme = null, string? Window = null, int? FontSize = null, string? FontFamily = null, int? MaxFps = null);
+/// <param name="Images">
+/// The images that a background, in the YAML or in <paramref name="Background"/>, names. The playground reads no
+/// files, so the page gives it each image with a name, and a name stands where the CLI takes a path.
+/// </param>
+internal sealed record PlaygroundOptions(
+    string? Theme = null,
+    string? Window = null,
+    int? FontSize = null,
+    string? FontFamily = null,
+    int? MaxFps = null,
+    string? WindowTitle = null,
+    string? Background = null,
+    int? Margin = null,
+    int? Padding = null,
+    IReadOnlyDictionary<string, byte[]>? Images = null)
+{
+    internal BackgroundImageSource ImageSource => BackgroundImageSource.FromImages(Images ?? new Dictionary<string, byte[]>());
+}
 
 /// <summary>
 /// What a render gives the playground. <see cref="Error"/> is set when the CLI would stop before recording, and then
@@ -53,10 +70,10 @@ internal static class PlaygroundRender
             foreach (var unknownKey in FindUnknownScenarioKeys(yaml))
                 Console.Error.WriteLine($"Warning: {unknownKey}");
 
-            if (!TryParseOptions(options, out var themePreset, out var window, out var fontSize, out var fontFamily, out var maxFps, out error))
+            if (!TryParseOptions(options, out var themePreset, out var window, out var fontSize, out var fontFamily, out var maxFps, out var style, out error))
                 return;
 
-            if (!RenderSettingsResolver.TryResolve(scenario, themePreset, out var renderSettings, out var themeError))
+            if (!RenderSettingsResolver.TryResolve(scenario, themePreset, out var renderSettings, out var themeError, options.ImageSource))
             {
                 error = themeError;
                 return;
@@ -86,6 +103,7 @@ internal static class PlaygroundRender
                 renderSettings = renderSettings with { Window = windowValue };
             if (maxFps is int maxFpsValue)
                 renderSettings = renderSettings with { MaxFps = maxFpsValue };
+            renderSettings = style.Apply(renderSettings);
 
             var seed = ComputeDeterministicSeed(yaml);
             var timestamp = ComputeDeterministicTimestamp(seed);
@@ -108,7 +126,7 @@ internal static class PlaygroundRender
             {
                 // As on the CLI, the SVG comes from the cast as written, with --max-fps applied again.
                 var written = CastReader.ReadText(castText);
-                svg = SvgRender.RenderToUtf8(written.Events, written.Width, written.Height, written.RenderSettings with { MaxFps = renderSettings.MaxFps }, written.LoopDuration);
+                svg = SvgRender.RenderToUtf8(written.Events, written.Width, written.Height, RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings) with { MaxFps = renderSettings.MaxFps }, written.LoopDuration);
                 if (SvgRender.SizeWarning(svg.LongLength, renderSettings.MaxFps, fromCast: false) is { } sizeWarning)
                     Console.Error.WriteLine($"Warning: {sizeWarning}");
             }
@@ -125,7 +143,7 @@ internal static class PlaygroundRender
 
         CaptureWarnings(warnings, () =>
         {
-            if (!TryParseOptions(options, out var themePreset, out var window, out var fontSize, out var fontFamily, out var maxFps, out error))
+            if (!TryParseOptions(options, out var themePreset, out var window, out var fontSize, out var fontFamily, out var maxFps, out var style, out error))
                 return;
 
             CastRecording recording;
@@ -146,6 +164,7 @@ internal static class PlaygroundRender
                 return;
             }
 
+            settings = style.Apply(settings);
             svg = SvgRender.RenderToUtf8(recording.Events, recording.Width, recording.Height, settings, recording.LoopDuration);
             if (SvgRender.SizeWarning(svg.LongLength, settings.MaxFps, fromCast: true) is { } sizeWarning)
                 Console.Error.WriteLine($"Warning: {sizeWarning}");
@@ -175,6 +194,7 @@ internal static class PlaygroundRender
         out int? fontSize,
         out string? fontFamily,
         out int? maxFps,
+        out RenderStyleOverrides style,
         out string? error)
     {
         themePreset = null;
@@ -182,6 +202,7 @@ internal static class PlaygroundRender
         fontSize = null;
         fontFamily = null;
         maxFps = null;
+        style = RenderStyleOverrides.None;
         error = null;
         string message;
 
@@ -240,6 +261,35 @@ internal static class PlaygroundRender
             maxFps = parsedFps;
         }
 
+        BackgroundSpec? background = null;
+        if (!string.IsNullOrWhiteSpace(options.Background))
+        {
+            if (!RenderSettingsResolver.TryParseBackground(options.Background, options.ImageSource, out var parsedBackground, out message))
+            {
+                error = message;
+                return false;
+            }
+
+            background = parsedBackground;
+        }
+
+        if (options.Margin is int margin && !RenderSettingsResolver.IsValidMargin(margin))
+        {
+            error = $"margin must be between {RenderSettingsResolver.MinMargin} and {RenderSettingsResolver.MaxMargin} pixels: {margin}";
+            return false;
+        }
+
+        if (options.Padding is int padding && !RenderSettingsResolver.IsValidPadding(padding))
+        {
+            error = $"padding must be between {RenderSettingsResolver.MinPadding} and {RenderSettingsResolver.MaxPadding} pixels: {padding}";
+            return false;
+        }
+
+        style = new RenderStyleOverrides(
+            options.WindowTitle is null ? null : RenderSettingsResolver.NormalizeWindowTitle(options.WindowTitle),
+            background,
+            options.Margin,
+            options.Padding);
         return true;
     }
 

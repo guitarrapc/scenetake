@@ -35,6 +35,7 @@ try
     failures += Run("PostRunsAndStaleMp4GoesWhenEncodeFails", () => PostRunsAndStaleMp4GoesWhenEncodeFails(scenetake, repoRoot, work));
     failures += Run("StaleMp4GoesWhenCastIsBad", () => StaleMp4GoesWhenCastIsBad(scenetake, repoRoot, work));
     failures += Run("CliRulesForValuesAndFormats", () => CliRulesForValuesAndFormats(scenetake, repoRoot, work));
+    failures += Run("CliRulesForWindowStyle", () => CliRulesForWindowStyle(scenetake, repoRoot, work));
     failures += Run("HelpDescribesEveryOption", () => HelpDescribesEveryOption(scenetake, repoRoot, work));
     failures += Run("InitWritesStepsForItsShell", () => InitWritesStepsForItsShell(scenetake, work));
     failures += Run("SubcommandsNeverReplaceTheirInput", () => SubcommandsNeverReplaceTheirInput(scenetake, repoRoot, work));
@@ -667,12 +668,71 @@ static bool CliRulesForValuesAndFormats(string scenetake, string repoRoot, strin
     return ok;
 }
 
+// --window-title, --background, --margin, and --padding: ranges, duplicates, an empty title, an image relative to
+// the current folder, and an image with cast output, which a cast cannot keep. The SVG shows what each set.
+static bool CliRulesForWindowStyle(string scenetake, string repoRoot, string work)
+{
+    var scenario = WriteScenario(work, "style.yaml");
+    var image = Path.Combine(work, "wallpaper.png");
+    File.WriteAllBytes(image, Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="));
+    var cases = new (string[] Args, string Expected)[]
+    {
+        (["svg", "--margin", "201", "samples/basic.cast"], "margin must be between 0 and 200 pixels: 201"),
+        (["svg", "--padding", "-1", "samples/basic.cast"], "padding must be between 0 and 100 pixels: -1"),
+        (["svg", "--padding", "4", "--padding", "5", "samples/basic.cast"], "duplicate option: --padding"),
+        (["svg", "--background", "#12345", "samples/basic.cast"], "invalid background color (expected #rgb or #rrggbb): #12345"),
+        (["svg", "--background", "#111 #222 #333 #444 #555", "samples/basic.cast"], "background takes at most 4 colors"),
+        (["svg", "--background", "no-such.png", "samples/basic.cast"], "background image not found: no-such.png"),
+        (["svg", "--background", "notes.txt", "samples/basic.cast"], "or a .png, .jpg, .gif, or .webp file: notes.txt"),
+        (["--background", image, scenario], "--background with an image file requires --format svg or mp4"),
+        (["svg", "--window-title", "a", "--window-title", "b", "samples/basic.cast"], "duplicate option: --window-title"),
+    };
+
+    var ok = true;
+    foreach (var (args, expected) in cases)
+    {
+        var (exit, stderr) = Exec(scenetake, repoRoot, args);
+        if (exit != 1 || !stderr.Contains(expected, StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine($"  {string.Join(' ', args)}: exit {exit}, expected \"{expected}\" in:{Environment.NewLine}{stderr}");
+            ok = false;
+        }
+    }
+
+    var svg = Path.Combine(work, "style.svg");
+    var (styledExit, styledStderr) = Exec(scenetake, repoRoot,
+        ["svg", "--window", "macos", "--window-title", "Styled <demo>", "--background", "#1e3c72,#2a5298", "--margin", "40", "--padding", "12", "samples/basic.cast", svg]);
+    var styled = styledExit == 0 ? File.ReadAllText(svg) : "";
+    ok &= Check(styledExit == 0 && styled.Contains(">Styled &lt;demo&gt;</text>", StringComparison.Ordinal)
+        && styled.Contains("<linearGradient id=\"desktop\"", StringComparison.Ordinal),
+        $"styled svg: exit {styledExit}: {styledStderr}");
+
+    // An empty title hides the cast's own title ("Basic Demo").
+    var (hiddenExit, _) = Exec(scenetake, repoRoot, ["svg", "--window", "macos", "--window-title=", "samples/basic.cast", svg]);
+    ok &= Check(hiddenExit == 0 && !File.ReadAllText(svg).Contains("Basic Demo</text>", StringComparison.Ordinal), "--window-title= did not hide the title");
+    var (shownExit, _) = Exec(scenetake, repoRoot, ["svg", "--window", "macos", "samples/basic.cast", svg]);
+    ok &= Check(shownExit == 0 && File.ReadAllText(svg).Contains(">Basic Demo</text>", StringComparison.Ordinal), "the cast's title is not in the title bar");
+
+    // An image path is relative to the current folder, and the SVG embeds it.
+    var (imageExit, imageStderr) = Exec(scenetake, work, ["svg", "--background", "wallpaper.png", Path.Combine(repoRoot, "samples", "basic.cast"), svg]);
+    ok &= Check(imageExit == 0 && File.ReadAllText(svg).Contains("href=\"data:image/png;base64,", StringComparison.Ordinal), $"image background: exit {imageExit}: {imageStderr}");
+    return ok;
+
+    static bool Check(bool condition, string message)
+    {
+        if (!condition)
+            Console.Error.WriteLine($"  {message}");
+        return condition;
+    }
+}
+
 static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string work)
 {
     // --help prints, on stdout, what every option of that command does; usage after an error stays short,
     // on stderr, and points to --help. The option lists here follow the parsers, so an option added there
     // and left out of the help fails this test.
-    string[] render = ["--font-size N", "--font-family FAMILIES", "--theme dark|light", "--window none|macos|windows"];
+    string[] render = ["--font-size N", "--font-family FAMILIES", "--theme dark|light", "--window none|macos|windows",
+        "--window-title TEXT", "--background VALUE", "--margin N", "--padding N"];
     string[] mp4 = ["--fps N", "--crf N", "--max-size WxH", "--size WxH", "--font-file PATH", "SCENETAKE_FFMPEG"];
     var commands = new (string[] Args, string[] Options)[]
     {

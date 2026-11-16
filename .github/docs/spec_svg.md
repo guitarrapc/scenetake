@@ -201,9 +201,56 @@ Does **not** scale with `font-size` (matches real OS window chrome). Tuned at de
 
 #### Samples
 
-- `samples/theme.yaml` — color demo, no chrome.
-- `samples/theme-macos.yaml` — `window: macos`, `preset: dark`.
-- `samples/theme-windows.yaml` — `window: windows`, `preset: dark`.
+- `samples/theme.yaml` — color demo, no chrome, `preset: light` on a light gradient.
+- `samples/theme-macos.yaml` — `window: macos`, `preset: dark`, on a gradient.
+- `samples/theme-windows.yaml` — `window: windows`, `preset: dark`, on a gradient.
+- `samples/showcase/fetch.yaml` — `window: macos` on a three-color gradient, with the scenario's title in the bar.
+- `samples/showcase/vim.yaml` — `window: macos` on an image, `../background.webp` (`samples/background.webp`), with `margin: 64`.
+- `samples/scenario_format.yaml` — every setting below.
+
+### Window title, background, margin, and padding
+
+A demo for a README or a post often sits better in a titled window on a background, as a screenshot of a desktop would. These four settings shape the canvas around the terminal. They follow the other render settings: **CLI > cast header > default**. The scenario path writes the scenario's values, with the CLI's on top, into the cast header.
+
+| Setting | Scenario | CLI | Cast header (v3 `tags`) | Default | Values |
+|---|---|---|---|---|---|
+| Title | `render.window-title` | `--window-title TEXT` | `st:window-title=TEXT` | The cast's `title` (the scenario's `title`) | Text without control characters, at most 256 characters. Empty shows no title. |
+| Background | `render.background` | `--background VALUE` | `st:background=#rrggbb …`, colors only | None: the canvas outside the terminal is transparent | One color, 2–4 colors for a gradient, or a `.png`, `.jpg`, `.gif`, or `.webp` file of at most 8 MB |
+| Margin | `render.margin` | `--margin N` | `st:margin=N` | 8 px; 12 px with chrome; 32 px with a background | 0–200 px around the terminal or window |
+| Padding | `render.padding` | `--padding N` | `st:padding=N` | From the font size: 10 × 4 px at 16 px | 0–100 px between the terminal's edge and its text, on every side |
+
+An unknown value is an error on the scenario path and the CLI. An invalid cast tag warns once and is left out.
+
+#### Title
+
+- **Only with chrome.** Without `window`, the title is not drawn.
+- **Font:** the terminal's font family at 13 px, so the SVG and the mp4 measure it alike: a cell is 13 × 0.62 = 8.06 px, and a wide character takes two.
+- **Place:** macOS centers it over the whole bar, as Terminal.app does. Windows starts it 14 px from the left. Its baseline is 21.5 px below the window's top edge.
+- **Room:** macOS keeps the buttons' width and a 10 px gap clear on both sides (92 px each), so a centered title never meets the buttons. Windows keeps 14 px on the left and the buttons with a 10 px gap on the right. A longer title is cut between characters and ends in `…`. With room for fewer than two cells, there is no title.
+- **Colors** follow the chrome palette:
+
+| Chrome | Dark terminal | Light terminal |
+|---|---|---|
+| macOS | `#c8c8c8` | `#4a4a4a` |
+| Windows | `#d6d6d6` | `#333333` |
+
+- **Default from the cast's title.** A scenario names itself in `title`, and a window shows a title. Chrome used to show none, so every committed sample with chrome and a title changed when the title came.
+- **Resizing:** the title belongs to each chrome layer, so a window that a resize event narrows cuts it again.
+
+#### Background
+
+- **Covers the whole canvas**, behind the window and its margin. A margin of 0 leaves no background in view.
+- **A gradient** runs from the canvas's top-left corner to its bottom-right one (`x1=0 y1=0 x2=1 y2=1` in bounding-box units), with the colors at even steps.
+- **Colors** are `#rgb` or `#rrggbb`, separated by spaces or commas. `#rgb` is stored as `#rrggbb`: the mp4 renderer reads only the long form.
+- **An image** is embedded in the SVG as a `data:` URI, scaled to cover the canvas and cropped to it, centered (`preserveAspectRatio="xMidYMid slice"`). A browser shows an `<img>` SVG without loading anything else, so a file reference would show nothing on GitHub. The 8 MB limit keeps one photo from making every recording that large.
+- **An image path** is relative to the scenario file's folder in `render.background`, as `cwd` is, and to the current folder on the CLI.
+- **An image is not stored in the cast**, which names no file of the computer it was recorded on ([spec_cast.md](spec_cast.md)). The scenario path passes it to the SVG and mp4 it renders from the cast. `--format cast` with an image is an error, because the cast alone would lose it.
+- **The playground** reads no files. The page gives it each image with a name, and a background finds an image by its file name, so a scenario's `../background.webp` works unchanged ([spec_playground.md](spec_playground.md)).
+
+#### Margin and padding
+
+- **Margin** sets the outer margin, which with chrome also holds the shadow. Below 12 px with chrome, the shadow is cut at the canvas edge.
+- **Padding** replaces both inner paddings with one value. The terminal background and the mask grow with it, so text keeps its distance from the window's edge.
 
 ## Failure Behavior
 
@@ -282,6 +329,7 @@ Run: `dotnet run tests/terminal_tests.cs` (and sibling test scripts). CI runs al
 
 ## Lessons Learned
 
+- **One more element per chrome layer renamed timing classes.** Short class names go to the most-used timing first, and the title adds a use to each chrome layer's timing. Re-rendering the committed samples on 2026-11-16 changed only the title line in `theme-macos`, `devtools`, and `vim`. In `demo`, `quickstart`, `theme-windows`, and `sl`, it also swapped the names of some timing classes, with the same drawing. A sample's SVG is compared byte for byte with the playground's replay, so all of them were rendered again from their casts.
 - Row-diff layers keep typing-heavy casts small (46KB for `basic.cast`). Full-screen redraws emit one layer per changed row.
 - **Where the bytes went.** Before the row encoding change, a full-screen matrix SVG spent about 113 bytes per `<text>` for 1.26 characters on average. Because matrix paints its own black background, it also had a background `<rect>` per text run. Those two were 57% and 40% of the file.
 - **Choose the encoding per row.** A glyph-list encoding applied to every row made the typing demo 19% larger, because prose is cheaper as runs. Choosing per row made every sample smaller.

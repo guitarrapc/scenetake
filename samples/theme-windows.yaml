@@ -13,6 +13,7 @@ settings:
 render:
   font-size: 16
   window: windows
+  background: "#0a2e6e #1f6fd1"
   theme:
     preset: dark
 

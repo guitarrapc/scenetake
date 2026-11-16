@@ -19,6 +19,7 @@ public static partial class PlaygroundInterop
     private static StepOutputs s_outputs = new() { Scenetake = "", Os = "", Shell = "", Width = 0, Height = 0, Steps = [] };
     private static byte[] s_cast = [];
     private static byte[] s_svg = [];
+    private static readonly Dictionary<string, byte[]> s_images = new(StringComparer.Ordinal);
 
     [JSExport]
     public static string GetProductVersion()
@@ -50,6 +51,34 @@ public static partial class PlaygroundInterop
                 writer.WriteNumber("height", outputs.Height);
                 writer.WriteNumber("steps", outputs.Steps.Count);
             });
+        }
+        catch (Exception ex)
+        {
+            return ErrorJson(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Keeps <paramref name="data"/> as the image <paramref name="name"/>, which a background in the YAML or the
+    /// options names. A name set again replaces its image. Returns an empty object, or an error. The name is a file
+    /// name without a folder: a background finds an image by the file name of its path.
+    /// </summary>
+    [JSExport]
+    public static string SetImage(string? name, byte[]? data)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(name) || name != name.Trim() || name.IndexOfAny(['/', '\\']) >= 0)
+                return ErrorJson($"invalid image name: '{name}'");
+            if (!RenderSettingsResolver.IsBackgroundImageName(name))
+                return ErrorJson($"a background image must be a .png, .jpg, .gif, or .webp file: {name}");
+            if (data is null || data.Length == 0)
+                return ErrorJson($"the image is empty: {name}");
+            if (data.LongLength > RenderSettingsResolver.MaxBackgroundImageBytes)
+                return ErrorJson($"the image is larger than {RenderSettingsResolver.MaxBackgroundImageBytes / (1024 * 1024)} MB, and every SVG embeds it: {name}");
+
+            s_images[name] = data;
+            return "{}";
         }
         catch (Exception ex)
         {
@@ -122,7 +151,12 @@ public static partial class PlaygroundInterop
             Window: String(root, "window"),
             FontSize: Int(root, "fontSize"),
             FontFamily: String(root, "fontFamily"),
-            MaxFps: Int(root, "maxFps"));
+            MaxFps: Int(root, "maxFps"),
+            WindowTitle: String(root, "windowTitle"),
+            Background: String(root, "background"),
+            Margin: Int(root, "margin"),
+            Padding: Int(root, "padding"),
+            Images: s_images);
 
         static string? String(JsonElement root, string name) =>
             root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString() is { Length: > 0 } text ? text : null;

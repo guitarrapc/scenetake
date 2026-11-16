@@ -16,9 +16,9 @@ Sample scenarios for scenetake. Use this page to quickly see each scenario’s *
 | [pty](#pty) | TTY-dependent command with `pty: true` (`matrix`) | [pty.yaml](pty.yaml) | [cast](pty.cast) · [gif](pty.gif) · [svg](pty.svg) |
 | [interactive-pty](#interactive-pty) | Host-terminal interactive session (`interactive: true`) | [interactive-pty.yaml](interactive-pty.yaml) | [cast](interactive-pty.cast) · [gif](interactive-pty.gif) · [svg](interactive-pty.svg) |
 | [password-prompt](#password-prompt) | Typing a sudo password in an interactive step (Linux / macOS) | [password-prompt.yaml](password-prompt.yaml) | [cast](password-prompt.cast) · [gif](password-prompt.gif) · [svg](password-prompt.svg) |
-| [theme](#theme) | Light theme, 16 / 256 colors | [theme.yaml](theme.yaml) | [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
-| [theme-macos](#theme-macos) | macOS window chrome | [theme-macos.yaml](theme-macos.yaml) | [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
-| [theme-windows](#theme-windows) | Windows window chrome | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
+| [theme](#theme) | Light theme, 16 / 256 colors, gradient background | [theme.yaml](theme.yaml) | [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
+| [theme-macos](#theme-macos) | macOS window chrome on a gradient | [theme-macos.yaml](theme-macos.yaml) | [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
+| [theme-windows](#theme-windows) | Windows window chrome on a gradient | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
 | [resize](#resize) | Terminal resize events (cast only) | [resize.cast](resize.cast) | [gif](resize.gif) · [svg](resize.svg) |
 
 ### Showcase
@@ -33,6 +33,7 @@ Demos of popular terminal tools, for the README gallery and the playground. They
 | sl | The steam locomotive, drawn with curses | [sl.yaml](showcase/sl.yaml) | [cast](showcase/sl.cast) · [svg](showcase/sl.svg) |
 | nyancat | A full-screen truecolor animation, stopped by `timeout` | [nyancat.yaml](showcase/nyancat.yaml) | [cast](showcase/nyancat.cast) · [svg](showcase/nyancat.svg) |
 | vim | `vim` edited by `keys`, then `git diff` | [vim.yaml](showcase/vim.yaml) | [cast](showcase/vim.cast) · [svg](showcase/vim.svg) |
+| welcome | The playground's first screen: the scenetake logo with `oh-my-logo`, and `git log --graph`, in a macOS window on an image | [welcome.yaml](showcase/welcome.yaml) | [cast](showcase/welcome.cast) · [svg](showcase/welcome.svg) |
 
 ## Regenerate
 
@@ -206,6 +207,7 @@ scenetake --format svg samples/password-prompt.yaml out/password-prompt
 **Purpose:** **`render.theme`** in the SVG / cast header (light preset) and ANSI color rendering.
 
 - `render.font-size` / `theme.preset: light`
+- `render.background`: a two-color gradient around the terminal (the GIF from agg has none)
 - 16-color and 256-color `printf` output
 
 | GIF | SVG |
@@ -220,7 +222,7 @@ scenetake --format svg samples/theme.yaml
 
 ## theme-macos
 
-**Purpose:** **`render.window: macos`** window chrome with the dark theme.
+**Purpose:** **`render.window: macos`** window chrome with the dark theme, on a **`render.background`** gradient, with the scenario title in the title bar. The GIF from agg has no chrome or background.
 
 | GIF | SVG |
 |-----|-----|
@@ -234,7 +236,7 @@ scenetake --format svg samples/theme-macos.yaml
 
 ## theme-windows
 
-**Purpose:** **`render.window: windows`** window chrome with the dark theme.
+**Purpose:** **`render.window: windows`** window chrome with the dark theme, on a **`render.background`** gradient, with the scenario title in the title bar. The GIF from agg has no chrome or background.
 
 | GIF | SVG |
 |-----|-----|

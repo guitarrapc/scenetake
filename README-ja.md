@@ -49,9 +49,23 @@ steps:
 | --- | --- |
 | ![](samples/basic.gif) | ![](samples/basic.svg) |
 
-SVG 出力ではフォント、ライト/ダークテーマ、ウィンドウ枠（`macos` / `windows`）を指定できます。
+SVG と mp4 の出力では、フォント、ライト/ダークテーマのほか、ターミナルを囲むウィンドウを次の設定で変えられます。どれもシナリオの `render` キーとコマンドラインのフラグの両方で指定できます。
 
-| macOS | Windows |
+| `render` キー | フラグ | 設定する内容 |
+| --- | --- | --- |
+| `window` | `--window` | macOS か Windows のタイトルバー（`macos` / `windows`） |
+| `window-title` | `--window-title` | タイトルバーの文字。既定はシナリオの `title`。`""` で非表示 |
+| `background` | `--background` | ウィンドウの周りを埋めるもの。1 色（`"#1e3c72"`）、左上から右下へのグラデーションになる 2〜4 色（`"#1e3c72 #2a5298"`）、または `.png`、`.jpg`、`.gif`、`.webp` の画像ファイル |
+| `margin` | `--margin` | ウィンドウの周りの余白（ピクセル、0〜200）。背景があるときの既定は 32 |
+| `padding` | `--padding` | ターミナルの端と文字の間の余白（ピクセル、0〜100） |
+
+`background` を指定しなければ、見えるのはウィンドウだけです。SVG の余白は透明で、mp4 はウィンドウだけの映像になります。背景は、作ったページの外へ持ち出すときに役立ちます。
+
+- **X や Reddit に投稿する動画。** 背景付きの mp4 は、ターミナルを切り抜いた映像ではなく、デスクトップのスクリーンショットのように見えます（agg で作る GIF にはウィンドウ枠も背景も付きません）。
+- **サイズを決めた動画。** `--size 1920x1080` では、余った部分をターミナルの背景色ではなく背景で埋め、ウィンドウを中央に置きます。
+- **置き先の色がわからないページ。** GitHub の README は、読む人の設定でライトにもダークにもなります。背景を付ければ、どちらでも同じ見た目になります。
+
+README の本文に並べるデモは、たいてい背景なしで十分です。ページの色になじみ、ファイルも小さく済みます。画像の背景は SVG ごとに埋め込まれるので、横幅 1000〜1600 ピクセル程度の WebP か JPEG を使ってください。
 | --- | --- |
 | ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
 
@@ -64,7 +78,7 @@ SVG 出力ではフォント、ライト/ダークテーマ、ウィンドウ枠
 | ![](samples/showcase/fetch.svg) | ![](samples/showcase/devtools.svg) |
 | [**figlet、lolcat、toilet**](samples/showcase/logo.yaml) | [**sl**](samples/showcase/sl.yaml) |
 | ![](samples/showcase/logo.svg) | ![](samples/showcase/sl.svg) |
-| [**`keys` で操作する vim と git diff**](samples/showcase/vim.yaml) | |
+| [**`keys` で操作する vim と git diff（背景は画像）**](samples/showcase/vim.yaml) | |
 | ![](samples/showcase/vim.svg) | |
 
 [nyancat](samples/showcase/nyancat.yaml)（96 × 26 セルのトゥルーカラーアニメーション、`timeout` で停止）:
@@ -124,6 +138,9 @@ scenetake --format svg scenario.yaml
 
 # SVG のスタイル: フォント、テーマ、ウィンドウ枠、フレーム上限
 scenetake --format svg scenario.yaml --font-size 20 --font-family "'Noto Sans Mono', ui-monospace" --theme light --window macos
+
+# タイトル付きのウィンドウをグラデーションの上に置き、文字の周りの余白を広げる
+scenetake --format svg scenario.yaml --window macos --window-title "my-cli demo" --background "#1e3c72 #2a5298" --padding 16
 
 # 既存の cast ファイルを SVG に変換（v2 / v3 対応）
 scenetake svg scenario.cast
@@ -427,6 +444,10 @@ render:                          # Optional display metadata for cast header and
   theme:
     preset: dark                 # dark | light; optional fg / bg / palette overrides
   window: macos                  # none | macos | windows
+  window-title: "scenario_format.yaml"  # title bar text; default: the top-level title, "" for none
+  background: "#0f2027 #2c5364"  # one color, 2-4 colors for a gradient, or a .png/.jpg/.gif/.webp file
+  margin: 24                     # px around the window (default 8, 12 with a window, 32 with a background)
+  padding: 12                    # px between the terminal edge and its text (default from font-size)
 
 settings:                        # Defaults for all steps; map-form steps can override per key
   prompt: "$ "

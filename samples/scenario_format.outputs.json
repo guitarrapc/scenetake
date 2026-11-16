@@ -12,7 +12,7 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 4939895,
+          "ticks": 4306770,
           "out": "Hello, World!\n"
         }
       ]
@@ -23,11 +23,11 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 4695372,
+          "ticks": 4368426,
           "out": "name\tversion\n"
         },
         {
-          "ticks": 4695610,
+          "ticks": 4369123,
           "out": "scenetake\t1.0\n"
         }
       ]
@@ -38,7 +38,7 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 4701843,
+          "ticks": 4036572,
           "out": "typing slowly...\n"
         }
       ]
@@ -55,43 +55,43 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 5739826,
+          "ticks": 4759963,
           "out": "\r\nPinging 127.0.0.1 "
         },
         {
-          "ticks": 5740076,
+          "ticks": 4760547,
           "out": "with 32 bytes of data:\r\n"
         },
         {
-          "ticks": 5743220,
+          "ticks": 4763288,
           "out": "Reply from 127.0.0.1: "
         },
         {
-          "ticks": 5743318,
+          "ticks": 4763448,
           "out": "bytes=32 time<1ms TTL=128\r\n"
         },
         {
-          "ticks": 15749677,
+          "ticks": 14776217,
           "out": "Reply from 127.0.0.1: "
         },
         {
-          "ticks": 15749949,
+          "ticks": 14776744,
           "out": "bytes=32 time<1ms TTL=128\r\n"
         },
         {
-          "ticks": 25764563,
+          "ticks": 24782663,
           "out": "Reply from 127.0.0.1: "
         },
         {
-          "ticks": 25764788,
+          "ticks": 24783095,
           "out": "bytes=32 time<1ms TTL=128\r\n"
         },
         {
-          "ticks": 35771370,
+          "ticks": 34793500,
           "out": "Reply from 127.0.0.1: "
         },
         {
-          "ticks": 35771671,
+          "ticks": 34794217,
           "out": "bytes=32 time<1ms TTL=128\r\n\r\nPing statistics for 127.0.0.1:\r\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),\r\nApproximate round trip times in milli-seconds:\r\n    Minimum = 0ms, Maximum = 0ms, Average = 0ms\r\n"
         }
       ]
@@ -102,47 +102,43 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 5344124,
+          "ticks": 4594266,
           "out": "\r\nPinging 127.0.0.1 "
         },
         {
-          "ticks": 5344336,
+          "ticks": 4594664,
           "out": "with 32 bytes of data:\r\n"
         },
         {
-          "ticks": 5347470,
+          "ticks": 4596998,
           "out": "Reply from 127.0.0.1: "
         },
         {
-          "ticks": 5347579,
-          "out": "bytes=32 time<1ms "
-        },
-        {
-          "ticks": 5347758,
-          "out": "TTL=128\r\n"
-        },
-        {
-          "ticks": 15356331,
-          "out": "Reply from 127.0.0.1: "
-        },
-        {
-          "ticks": 15356648,
+          "ticks": 4597629,
           "out": "bytes=32 time<1ms TTL=128\r\n"
         },
         {
-          "ticks": 25364929,
+          "ticks": 14608459,
           "out": "Reply from 127.0.0.1: "
         },
         {
-          "ticks": 25365206,
+          "ticks": 14609608,
           "out": "bytes=32 time<1ms TTL=128\r\n"
         },
         {
-          "ticks": 35370770,
+          "ticks": 24617685,
           "out": "Reply from 127.0.0.1: "
         },
         {
-          "ticks": 35371037,
+          "ticks": 24618043,
+          "out": "bytes=32 time<1ms TTL=128\r\n"
+        },
+        {
+          "ticks": 34628779,
+          "out": "Reply from 127.0.0.1: "
+        },
+        {
+          "ticks": 34629198,
           "out": "bytes=32 time<1ms TTL=128\r\n\r\nPing statistics for 127.0.0.1:\r\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),\r\nApproximate round trip times in milli-seconds:\r\n    Minimum = 0ms, Maximum = 0ms, Average = 0ms\r\n"
         }
       ]
@@ -157,11 +153,11 @@
       },
       "chunks": [
         {
-          "ticks": 4431306,
+          "ticks": 3802985,
           "data": "VGhpcyBjb21tYW5kIHJ1bnMgaW4gYSBQVFksIHNvIG91dHB1dCBhcHBlYXJzIGltbWVkaWF0ZWx5IGFuZCBjYW4gaW5jbHVkZSBpbnRlcmENChtbMjM7ODBIYWN0aXZlIGZlYXR1cmVzIGxpa2UgY29sb3JzIGFuZCBwcm9ncmVzcyBiYXJzLg0K"
         },
         {
-          "ticks": 4881924,
+          "ticks": 3954357,
           "data": "G1s/OTAwMWwbWz8xMDA0bA=="
         }
       ]
@@ -176,59 +172,59 @@
       },
       "chunks": [
         {
-          "ticks": 4501903,
+          "ticks": 3764348,
           "data": "WW91ciBuYW1lPyA="
         },
         {
-          "ticks": 5002618,
+          "ticks": 5011238,
           "data": "cw=="
         },
         {
-          "ticks": 5405521,
+          "ticks": 5501858,
           "data": "Yw=="
         },
         {
-          "ticks": 5838123,
+          "ticks": 5963878,
           "data": "ZQ=="
         },
         {
-          "ticks": 6141455,
+          "ticks": 6290784,
           "data": "bg=="
         },
         {
-          "ticks": 6549768,
+          "ticks": 6592905,
           "data": "ZQ=="
         },
         {
-          "ticks": 6981208,
+          "ticks": 6985924,
           "data": "dA=="
         },
         {
-          "ticks": 7362888,
+          "ticks": 7469348,
           "data": "YQ=="
         },
         {
-          "ticks": 7868208,
+          "ticks": 7773984,
           "data": "aw=="
         },
         {
-          "ticks": 8332825,
+          "ticks": 8115187,
           "data": "ZQ=="
         },
         {
-          "ticks": 8704460,
+          "ticks": 8478852,
           "data": "DQo="
         },
         {
-          "ticks": 8705932,
+          "ticks": 8480128,
           "data": "SGVsbG8sIHNjZW5ldGFrZQ=="
         },
         {
-          "ticks": 8787697,
+          "ticks": 8560500,
           "data": "DQo="
         },
         {
-          "ticks": 8898496,
+          "ticks": 8823332,
           "data": "G1s/OTAwMWwbWz8xMDA0bA=="
         }
       ]
@@ -239,7 +235,7 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 4754509,
+          "ticks": 3779406,
           "out": "done\n"
         }
       ]
@@ -250,11 +246,11 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 4573894,
+          "ticks": 3875981,
           "out": "line1 alpha\n"
         },
         {
-          "ticks": 4574139,
+          "ticks": 3876394,
           "out": "line2 beta gamma\nline3\n"
         }
       ]
@@ -265,7 +261,7 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 4061273,
+          "ticks": 3752598,
           "err": "plain stderr\n"
         }
       ]
@@ -276,7 +272,7 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 4488562,
+          "ticks": 3767915,
           "err": "bright yellow stderr\n"
         }
       ]
@@ -287,7 +283,7 @@
       "exitCode": 0,
       "chunks": [
         {
-          "ticks": 4577346,
+          "ticks": 3930377,
           "out": "Done!\n"
         }
       ]

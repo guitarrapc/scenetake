@@ -27,6 +27,19 @@ Unknown keys have no exemption, including compose-style `x-` keys. VYaml skips a
 
 Only the kebab-case spelling takes effect. Another spelling, such as `typing_speed` or `TypingSpeed`, has no effect anywhere, which is what the warning says.
 
+### Unquoted colors
+
+YAML reads `#` after a space as the start of a comment. `background: #1e3c72` is therefore a key with no value, and the scenario used to run without the color and without a word. scenetake warns, with the unknown-key warnings and in the same way:
+
+| Key | Takes | Warning, for `key: #1e3c72` |
+|---|---|---|
+| `background`, `fg`, `bg`, `palette` | A color | `line N: 'background' has no value: YAML reads '#1e3c72' as a comment. Quote the color: background: "#1e3c72"` |
+| `stderr-color`, `run-highlight`, `color` (in `highlight`) | A style, which takes a hex color as `fg:#rrggbb` ([spec_highlight.md](spec_highlight.md)) | `line N: 'color' has no value: YAML reads '#1e3c72' as a comment. Quote the style: color: "fg:#1e3c72"` |
+
+- **When it warns:** the line has one of these keys, a space, then `#` and 3 or 6 hex digits; and the parsed scenario has that key with no value somewhere. The second condition keeps a `#fff` inside a script block (`run: |`) from counting.
+- **When it does not:** a quoted color, `key:#1e3c72` (no space, so no comment), and a comment that does not start with a color, such as `palette: # 16 colors go here`.
+- The playground lists the warning with its other warnings.
+
 ### Value types
 
 A value that cannot be read as the type of its key stops the run before any command runs. The error names the key and the value, for example `'settings.typing-speed' must be a number of seconds, such as 0.5, not '50ms'.` The check covers the top level, `settings`, `render`, and `render.theme`. Each key there takes a number, a whole number, `true` or `false`, text, a list, or a mapping.
@@ -123,6 +136,10 @@ Display metadata for the cast header. Written on every run. Header mapping: [spe
 | `theme.bg` | from preset | Optional background override, `#rgb` or `#rrggbb` |
 | `theme.palette` | from preset | Optional palette override: 16 colors, `#rgb` or `#rrggbb`, separated by `:` |
 | `window` | omitted (`none`) | Optional window chrome: `macos` or `windows` |
+| `window-title` | the top-level `title` | Text in the window's title bar. `""` shows none. Drawn only with `window`. |
+| `background` | omitted (transparent) | One color, 2–4 colors for a gradient, or a `.png`, `.jpg`, `.gif`, or `.webp` file relative to the scenario file's folder. An image needs `--format svg` or `mp4`. |
+| `margin` | 8; 12 with `window`; 32 with `background` | Pixels around the terminal or window, `0`–`200` |
+| `padding` | from `font-size` | Pixels between the terminal's edge and its text, `0`–`100` |
 
 `settings` controls recording. `render` controls presentation. CLI may override `font-size`, `font-family`, `window`, and theme preset. See [spec_cli.md](spec_cli.md).
 

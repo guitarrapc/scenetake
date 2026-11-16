@@ -96,8 +96,22 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
   - the bar color follows the light or dark terminal background;
   - macOS has three traffic-light circles on the left, Windows three square buttons on the right;
   - sizes are fixed pixels and do not scale with `font-size`.
-- **Left out:** the SVG's outer margin, drop shadow, rounded corners, and outer border. Video has no transparency, so the margin would need some made-up background color. The bar instead runs flush with the top edge of the frame, the way terminal recorders usually draw a window bar.
+- **Title:** the same text, font size, color, place, and cut as the SVG's ([spec_svg.md](spec_svg.md) → Window title, background, margin, and padding). Its glyphs come from the terminal's font at 13 px, in whole 8-pixel cells.
+- **Without a background:** the SVG's outer margin, drop shadow, rounded corners, and outer border are left out. Video has no transparency, so the margin would need some made-up background color. The bar instead runs flush with the top edge of the frame, the way terminal recorders usually draw a window bar. `--margin` has nothing to show and does not apply.
+- **On a background:** the window stands `margin` pixels in (32 by default), with the SVG's 1-pixel border and rounded corners, anti-aliased. The drop shadow is still left out: the SVG's is the shadow of a 1-pixel outline at 22% opacity, too faint to repay drawing it.
 - **Resizing:** the bar spans the full canvas width and does not follow terminal resize events.
+
+### Background
+
+`--background` (or `render.background`, or `st:background` in the cast header) fills the frame around the window, as in the SVG:
+
+| Value | Drawn |
+|---|---|
+| One color | That color |
+| 2–4 colors | A gradient from the top-left corner to the bottom-right one. A pixel's place on it is (x/width + y/height) / 2, as in the SVG's gradient in bounding-box units. |
+| An image file | Decoded by ffmpeg to the frame size: scaled to cover it and cropped to it, centered, as the SVG's `xMidYMid slice` does |
+
+The background is drawn once per video and copied into each frame before the window.
 
 ### Downscaling
 
@@ -111,6 +125,7 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
 - **A larger terminal** is padded to the frame's shape, then scaled down to `W×H` with lanczos, as with `--max-size`. 200×60 (2020×1208) is padded to 2148×1208 and scaled to 1920×1080; the text area ends up 1806 pixels wide with about 57 pixels on each side.
 - **A smaller terminal is never enlarged.** 80×24 sits in the middle of 1920×1080. A scale such as 2.2× blurs text, and a larger `--font-size` makes text larger while keeping it sharp.
 - **Window chrome:** the title bar stays at the top edge and spans the frame. The padding goes around the terminal below it, so no strip of background appears above the bar.
+- **With a background:** the frame shows more background, and the window, with its margin, stays centered. 10×3 at 16px with macOS chrome is a 120×102 window; in 1920×1080 it starts at 900, 489.
 - **Even sides:** yuv420p needs even sides. An odd `W` or `H` is an error rather than rounded, because the output must be the size asked for.
 - `--size` and `--max-size` are an error together: `--size` already sets the output size.
 - **Render only.** The terminal's columns and rows stay as recorded, and the program sees the same terminal. `--size` works on existing casts through the `mp4` subcommand. The README lists the columns and rows that fill common resolutions.

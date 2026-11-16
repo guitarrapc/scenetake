@@ -797,7 +797,7 @@ internal sealed class ScreenBuffer
             _ => -1
         };
 
-    private static bool IsWideCodePoint(int cp) => cp switch
+    internal static bool IsWideCodePoint(int cp) => cp switch
     {
         0x2611 or 0x2705 or 0x274C or 0x2753 or 0x2754 or 0x2755 or 0x2757 => true,
         >= 0x1100 and <= 0x115F => true,

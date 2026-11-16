@@ -16,9 +16,9 @@ scenetake のサンプル集です。各シナリオの**目的**と**生成物*
 | [pty](#pty) | `pty: true` で TTY 依存コマンド（`matrix`）を録画 | [pty.yaml](pty.yaml) | [cast](pty.cast) · [gif](pty.gif) · [svg](pty.svg) |
 | [interactive-pty](#interactive-pty) | ホスト端末での対話録画（`interactive: true`） | [interactive-pty.yaml](interactive-pty.yaml) | [cast](interactive-pty.cast) · [gif](interactive-pty.gif) · [svg](interactive-pty.svg) |
 | [password-prompt](#password-prompt) | 対話ステップで sudo のパスワードを入力（Linux / macOS） | [password-prompt.yaml](password-prompt.yaml) | [cast](password-prompt.cast) · [gif](password-prompt.gif) · [svg](password-prompt.svg) |
-| [theme](#theme) | light テーマ・16 / 256 色 | [theme.yaml](theme.yaml) | [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
-| [theme-macos](#theme-macos) | macOS ウィンドウ chrome | [theme-macos.yaml](theme-macos.yaml) | [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
-| [theme-windows](#theme-windows) | Windows ウィンドウ chrome | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
+| [theme](#theme) | light テーマ・16 / 256 色・グラデーション背景 | [theme.yaml](theme.yaml) | [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
+| [theme-macos](#theme-macos) | macOS ウィンドウ chrome とグラデーション背景 | [theme-macos.yaml](theme-macos.yaml) | [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
+| [theme-windows](#theme-windows) | Windows ウィンドウ chrome とグラデーション背景 | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
 | [resize](#resize) | ターミナル resize イベント（cast のみ） | [resize.cast](resize.cast) | [gif](resize.gif) · [svg](resize.svg) |
 
 ### ショーケース
@@ -33,6 +33,7 @@ scenetake のサンプル集です。各シナリオの**目的**と**生成物*
 | sl | curses で描く SL | [sl.yaml](showcase/sl.yaml) | [cast](showcase/sl.cast) · [svg](showcase/sl.svg) |
 | nyancat | 全画面のトゥルーカラーアニメーション、`timeout` で停止 | [nyancat.yaml](showcase/nyancat.yaml) | [cast](showcase/nyancat.cast) · [svg](showcase/nyancat.svg) |
 | vim | `keys` で `vim` を編集し、`git diff` で確認 | [vim.yaml](showcase/vim.yaml) | [cast](showcase/vim.cast) · [svg](showcase/vim.svg) |
+| welcome | プレイグラウンドの初期画面。`oh-my-logo` の scenetake ロゴと `git log --graph` を、画像の上の macOS ウィンドウで表示 | [welcome.yaml](showcase/welcome.yaml) | [cast](showcase/welcome.cast) · [svg](showcase/welcome.svg) |
 
 ## 再生成
 
@@ -206,6 +207,7 @@ scenetake --format svg samples/password-prompt.yaml out/password-prompt
 **目的:** SVG / cast ヘッダーの **`render.theme`**（light プリセット）と ANSI 色の見え方。
 
 - `render.font-size` / `theme.preset: light`
+- `render.background`: ターミナルの周りに 2 色のグラデーション（agg の GIF には付かない）
 - 16 色・256 色の printf 出力
 
 | GIF | SVG |
@@ -220,7 +222,7 @@ scenetake --format svg samples/theme.yaml
 
 ## theme-macos
 
-**目的:** **`render.window: macos`** ウィンドウ chrome + dark テーマ。
+**目的:** **`render.window: macos`** ウィンドウ chrome + dark テーマを **`render.background`** のグラデーションの上に置き、タイトルバーにシナリオの title を表示。agg の GIF にはウィンドウ枠も背景も付かない。
 
 | GIF | SVG |
 |-----|-----|
@@ -234,7 +236,7 @@ scenetake --format svg samples/theme-macos.yaml
 
 ## theme-windows
 
-**目的:** **`render.window: windows`** ウィンドウ chrome + dark テーマ。
+**目的:** **`render.window: windows`** ウィンドウ chrome + dark テーマを **`render.background`** のグラデーションの上に置き、タイトルバーにシナリオの title を表示。agg の GIF にはウィンドウ枠も背景も付かない。
 
 | GIF | SVG |
 |-----|-----|

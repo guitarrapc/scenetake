@@ -49,9 +49,23 @@ steps:
 | --- | --- |
 | ![](samples/basic.gif) | ![](samples/basic.svg) |
 
-SVG output supports custom font, light/dark theme, and optional window chrome (`macos` / `windows`).
+SVG and mp4 output support a custom font, a light or dark theme, and these settings for the window around the terminal. Each is a `render` key in the scenario and a flag on the command line:
 
-| macOS | Windows |
+| `render` key | Flag | What it sets |
+| --- | --- | --- |
+| `window` | `--window` | A macOS or Windows title bar (`macos` / `windows`) |
+| `window-title` | `--window-title` | Text in the title bar. Default: the scenario's `title`. `""` shows none. |
+| `background` | `--background` | What fills the space around the window: a color (`"#1e3c72"`), 2–4 colors for a gradient from the top-left corner (`"#1e3c72 #2a5298"`), or a `.png`, `.jpg`, `.gif`, or `.webp` file |
+| `margin` | `--margin` | Pixels around the window, 0–200. Default 32 with a background. |
+| `padding` | `--padding` | Pixels between the terminal's edge and its text, 0–100 |
+
+Without `background`, only the window shows: the SVG's margin is transparent, and an mp4 is the window alone. A background helps when the output leaves the page it was made for:
+
+- **Videos for X or Reddit.** An mp4 with a background looks like a desktop screenshot instead of a cropped terminal. (A GIF made with agg has no window or background.)
+- **Fixed-size video.** With `--size 1920x1080`, the background fills the 16:9 frame and the window sits in the middle, instead of padding in the terminal's color.
+- **Pages whose color you do not know.** A GitHub README is light or dark depending on the reader. A background looks the same in both.
+
+Demos inside README text usually need none: the page color fits, and the file stays small. An image background is embedded in every SVG, so prefer a WebP or JPEG about 1000–1600 pixels wide.
 | --- | --- |
 | ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
 
@@ -64,7 +78,7 @@ Each recording below is a scenario in [`samples/showcase`](samples/showcase), ru
 | ![](samples/showcase/fetch.svg) | ![](samples/showcase/devtools.svg) |
 | [**figlet, lolcat, and toilet**](samples/showcase/logo.yaml) | [**sl**](samples/showcase/sl.yaml) |
 | ![](samples/showcase/logo.svg) | ![](samples/showcase/sl.svg) |
-| [**vim and git diff, typed by `keys`**](samples/showcase/vim.yaml) | |
+| [**vim and git diff, typed by `keys`, on an image background**](samples/showcase/vim.yaml) | |
 | ![](samples/showcase/vim.svg) | |
 
 [nyancat](samples/showcase/nyancat.yaml), 96 × 26 cells of truecolor animation, stopped by `timeout`:
@@ -124,6 +138,9 @@ scenetake --format svg scenario.yaml
 
 # SVG styling: font, theme, window chrome, frame cap
 scenetake --format svg scenario.yaml --font-size 20 --font-family "'Noto Sans Mono', ui-monospace" --theme light --window macos
+
+# A titled window on a gradient, with more room around the text
+scenetake --format svg scenario.yaml --window macos --window-title "my-cli demo" --background "#1e3c72 #2a5298" --padding 16
 
 # Convert an existing cast file to SVG (v2 or v3)
 scenetake svg scenario.cast
@@ -424,6 +441,10 @@ render:                          # Optional display metadata for cast header and
   theme:
     preset: dark                 # dark | light; optional fg / bg / palette overrides
   window: macos                  # none | macos | windows
+  window-title: "scenario_format.yaml"  # title bar text; default: the top-level title, "" for none
+  background: "#0f2027 #2c5364"  # one color, 2-4 colors for a gradient, or a .png/.jpg/.gif/.webp file
+  margin: 24                     # px around the window (default 8, 12 with a window, 32 with a background)
+  padding: 12                    # px between the terminal edge and its text (default from font-size)
 
 settings:                        # Defaults for all steps; map-form steps can override per key
   prompt: "$ "

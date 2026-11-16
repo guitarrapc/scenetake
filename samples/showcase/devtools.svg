@@ -219,6 +219,7 @@ text { dominant-baseline: alphabetic; }
 <rect class="l av viewport-chrome-0" x="12" y="12" width="813.6" height="562" rx="4" ry="4" fill="none" stroke="#404040" stroke-width="1" filter="url(#window-shadow)"/>
 <path class="l av viewport-chrome-0" d="M 16,12 H 821.6 Q 825.6,12 825.6,16 V 46 H 12 V 16 Q 12,12 16,12 Z" fill="#2d2d2d"/>
 <line class="l av viewport-chrome-0" x1="12" y1="46" x2="825.6" y2="46" stroke="#404040" stroke-width="1"/>
+<text class="l av viewport-chrome-0" x="26" y="33.5" style="font-size:13px" fill="#d6d6d6">Developer tools</text>
 <rect class="l av viewport-chrome-0" x="749.6" y="21" width="17" height="17" rx="2.55" ry="2.55" fill="#8a8a8a"/>
 <rect class="l av viewport-chrome-0" x="772.1" y="21" width="17" height="17" rx="2.55" ry="2.55" fill="#8a8a8a"/>
 <rect class="l av viewport-chrome-0" x="794.6" y="21" width="17" height="17" rx="2.55" ry="2.55" fill="#8a8a8a"/>

@@ -12,24 +12,50 @@ using StbTrueTypeSharp;
 /// </summary>
 internal readonly record struct RasterLayout(
     int Cols, int Rows, int CellWidth, int CellHeight, int Baseline, int PadX, int PadY, int Width, int Height, int FontSize,
-    WindowStyle Window, int TitleBarHeight)
+    WindowStyle Window, int TitleBarHeight, int WindowX = 0, int WindowY = 0, int WindowWidth = 0, int WindowHeight = 0, bool Desktop = false)
 {
-    internal static RasterLayout Create(int fontSize, int cols, int rows, WindowStyle window = WindowStyle.None)
+    /// <param name="padding">Pixels between the terminal's edge and its text, or null for the default from the font size.</param>
+    /// <param name="margin">Pixels of background around the window when <paramref name="desktop"/> is set, or null for the default.</param>
+    /// <param name="desktop">
+    /// Whether a background surrounds the window. Without one the window is the whole frame, as video has no
+    /// transparency to show around it, and <paramref name="margin"/> does not apply.
+    /// </param>
+    internal static RasterLayout Create(int fontSize, int cols, int rows, WindowStyle window = WindowStyle.None, int? padding = null, int? margin = null, bool desktop = false)
     {
         var cellWidth = Math.Max(1, Round(fontSize * SvgFrameRenderer.CharWidthFactor));
         var cellHeight = Math.Max(1, Round(fontSize * SvgFrameRenderer.LineHeightFactor));
         var baseline = Math.Clamp(Round(fontSize * SvgFrameRenderer.BaselineFactor), 1, cellHeight);
-        var (padH, padV) = SvgFrameRenderer.ResolveInnerPadding(fontSize);
+        var (padH, padV) = SvgFrameRenderer.ResolveInnerPadding(fontSize, padding);
         var padX = Round(padH);
         var padY = Round(padV);
         var titleBar = window == WindowStyle.None ? 0 : Round(SvgFrameRenderer.ChromeTitleBarHeight);
-        var width = cols * cellWidth + padX * 2;
-        var height = titleBar + rows * cellHeight + padY * 2;
-        width += width & 1;
-        height += height & 1;
-        CheckRawFrame(width, height, "use a smaller --font-size or terminal size");
-        return new RasterLayout(cols, rows, cellWidth, cellHeight, baseline, padX, padY, width, height, fontSize, window, titleBar);
+        var windowWidth = cols * cellWidth + padX * 2;
+        var windowHeight = titleBar + rows * cellHeight + padY * 2;
+        if (!desktop)
+        {
+            var width = windowWidth + (windowWidth & 1);
+            var height = windowHeight + (windowHeight & 1);
+            CheckRawFrame(width, height, "use a smaller --font-size or terminal size");
+            return new RasterLayout(cols, rows, cellWidth, cellHeight, baseline, padX, padY, width, height, fontSize, window, titleBar, 0, 0, width, height);
+        }
+
+        var outer = Round(SvgFrameRenderer.ResolveMargin(margin, hasBackground: true, styleDefault: 0));
+        var frameWidth = windowWidth + outer * 2;
+        var frameHeight = windowHeight + outer * 2;
+        frameWidth += frameWidth & 1;
+        frameHeight += frameHeight & 1;
+        CheckRawFrame(frameWidth, frameHeight, "use a smaller --font-size, terminal size, or --margin");
+        return new RasterLayout(cols, rows, cellWidth, cellHeight, baseline, padX, padY, frameWidth, frameHeight, fontSize, window, titleBar,
+            outer, outer, windowWidth, windowHeight, Desktop: true);
     }
+
+    /// <summary>The window's corner radius: the chrome's, or square for a terminal without chrome.</summary>
+    internal int CornerRadius => Window switch
+    {
+        WindowStyle.Macos => Round(SvgFrameRenderer.ChromeMacCornerRadius),
+        WindowStyle.Windows => Round(SvgFrameRenderer.ChromeWindowsCornerRadius),
+        _ => 0,
+    };
 
     /// <summary>
     /// This layout inside a <c>--size</c> frame. A terminal that fits is centered and the rest is padding
@@ -39,9 +65,10 @@ internal readonly record struct RasterLayout(
     /// </summary>
     internal RasterLayout FitFrame(int frameWidth, int frameHeight)
     {
-        // The terminal before Create rounds it to even sizes.
-        long terminalWidth = Cols * CellWidth + PadX * 2;
-        long terminalHeight = TitleBarHeight + Rows * CellHeight + PadY * 2;
+        // The terminal before Create rounds it to even sizes. With a background, the window and its margin: the
+        // larger frame shows more background, and the window stays centered.
+        long terminalWidth = Desktop ? Width : Cols * CellWidth + PadX * 2;
+        long terminalHeight = Desktop ? Height : TitleBarHeight + Rows * CellHeight + PadY * 2;
         long width = frameWidth, height = frameHeight;
         if (terminalWidth > frameWidth || terminalHeight > frameHeight)
         {
@@ -63,12 +90,25 @@ internal readonly record struct RasterLayout(
 
         CheckRawFrame(width, height,
             $"--size {frameWidth}x{frameHeight} pads the {terminalWidth}x{terminalHeight} terminal to its shape before scaling; use a --size closer to the terminal's shape");
+        if (Desktop)
+        {
+            return this with
+            {
+                WindowX = WindowX + (int)((width - terminalWidth) / 2),
+                WindowY = WindowY + (int)((height - terminalHeight) / 2),
+                Width = (int)width,
+                Height = (int)height,
+            };
+        }
+
         return this with
         {
             PadX = PadX + (int)((width - terminalWidth) / 2),
             PadY = PadY + (int)((height - terminalHeight) / 2),
             Width = (int)width,
             Height = (int)height,
+            WindowWidth = (int)width,
+            WindowHeight = (int)height,
         };
     }
 
@@ -83,9 +123,9 @@ internal readonly record struct RasterLayout(
             throw new FrameTooLargeException($"an mp4 frame of {width}x{height} pixels is too large for ffmpeg; {advice}");
     }
 
-    internal int CellX(int col) => PadX + col * CellWidth;
+    internal int CellX(int col) => WindowX + PadX + col * CellWidth;
 
-    internal int RowY(int row) => TitleBarHeight + PadY + row * CellHeight;
+    internal int RowY(int row) => WindowY + TitleBarHeight + PadY + row * CellHeight;
 
     private static int Round(double value) => (int)Math.Round(value, MidpointRounding.AwayFromZero);
 }
@@ -1273,13 +1313,30 @@ internal sealed class FrameRasterizer
     private readonly Dictionary<string, (byte R, byte G, byte B)> _colors = new(StringComparer.OrdinalIgnoreCase);
     private readonly ScreenCell[][] _drawn;
     private readonly bool[] _rowValid;
+    private readonly byte[]? _desktop;
+    private readonly GlyphSource? _titleGlyphs;
+    private readonly int _titleCellWidth;
+    private readonly string? _title;
     private (int Row, int Col)? _cursor;
 
-    internal FrameRasterizer(RasterLayout layout, TerminalTheme theme, GlyphSource glyphs)
+    /// <param name="desktop">The background around the window as RGB24 pixels of the whole frame, when the layout has one.</param>
+    /// <param name="titleGlyphs">Glyphs at the title's size, with <paramref name="titleCellWidth"/> per cell, when <paramref name="title"/> shows.</param>
+    internal FrameRasterizer(
+        RasterLayout layout,
+        TerminalTheme theme,
+        GlyphSource glyphs,
+        byte[]? desktop = null,
+        GlyphSource? titleGlyphs = null,
+        int titleCellWidth = 0,
+        string? title = null)
     {
         _layout = layout;
         _theme = theme;
         _glyphs = glyphs;
+        _desktop = desktop;
+        _titleGlyphs = titleGlyphs;
+        _titleCellWidth = titleCellWidth;
+        _title = title;
         _background = ParseColor(theme.Background);
         Pixels = new byte[layout.Width * layout.Height * 3];
         _drawn = new ScreenCell[layout.Rows][];
@@ -1292,33 +1349,73 @@ internal sealed class FrameRasterizer
     /// <summary>RGB24 pixels, row-major, <see cref="RasterLayout.Width"/> × <see cref="RasterLayout.Height"/>.</summary>
     internal byte[] Pixels { get; }
 
-    /// <summary>Fills the frame with the theme background, draws the window chrome if any, and forgets what was drawn.</summary>
+    /// <summary>
+    /// Fills the frame with the theme background, or draws the background and the window on it, then the window
+    /// chrome if any, and forgets what was drawn.
+    /// </summary>
     internal void Clear()
     {
-        FillRect(0, 0, _layout.Width, _layout.Height, _background);
+        if (_desktop is not null)
+        {
+            _desktop.CopyTo(Pixels, 0);
+            DrawWindowBody();
+        }
+        else
+        {
+            FillRect(0, 0, _layout.Width, _layout.Height, _background);
+        }
+
         if (_layout.Window != WindowStyle.None)
             DrawChrome();
         Array.Clear(_rowValid);
         _cursor = null;
     }
 
+    /// <summary>The window on the background: the theme background inside, and with chrome a 1-pixel border and rounded corners, as in the SVG.</summary>
+    private void DrawWindowBody()
+    {
+        var (x, y, width, height) = (_layout.WindowX, _layout.WindowY, _layout.WindowWidth, _layout.WindowHeight);
+        if (_layout.Window == WindowStyle.None)
+        {
+            FillRect(x, y, width, height, _background);
+            return;
+        }
+
+        var palette = SvgFrameRenderer.ResolveChromePalette(_layout.Window, _theme.Background);
+        var radius = _layout.CornerRadius;
+        FillRoundedRect(x, y, width, height, radius, ParseColor(palette.Border), roundBottom: true);
+        FillRoundedRect(x + 1, y + 1, width - 2, height - 2, Math.Max(radius - 1, 0), _background, roundBottom: true);
+    }
+
     /// <summary>
-    /// The SVG title bar and buttons, with the same palette and fixed-pixel geometry. Video has
-    /// no transparency, so the SVG's outer margin, drop shadow, rounded corners, and outer border
-    /// are left out and the title bar runs flush with the top edge of the frame.
+    /// The SVG title bar, title, and buttons, with the same palette and fixed-pixel geometry. On a background
+    /// the bar has the window's rounded top corners inside its border. Without one, video has no transparency,
+    /// so the SVG's outer margin, drop shadow, rounded corners, and outer border are left out and the title bar
+    /// runs flush with the top edge of the frame. The SVG's shadow is left out on a background too.
     /// </summary>
     private void DrawChrome()
     {
         var palette = SvgFrameRenderer.ResolveChromePalette(_layout.Window, _theme.Background);
+        var (x, y, width) = (_layout.WindowX, _layout.WindowY, _layout.WindowWidth);
         var bar = _layout.TitleBarHeight;
-        FillRect(0, 0, _layout.Width, bar - 1, ParseColor(palette.TitleBarBg));
-        FillRect(0, bar - 1, _layout.Width, 1, ParseColor(palette.Border));
+        if (_layout.Desktop)
+        {
+            FillRoundedRect(x + 1, y + 1, width - 2, bar - 2, Math.Max(_layout.CornerRadius - 1, 0), ParseColor(palette.TitleBarBg), roundBottom: false);
+            FillRect(x + 1, y + bar - 1, width - 2, 1, ParseColor(palette.Border));
+        }
+        else
+        {
+            FillRect(x, y, width, bar - 1, ParseColor(palette.TitleBarBg));
+            FillRect(x, y + bar - 1, width, 1, ParseColor(palette.Border));
+        }
+
+        DrawTitle(palette);
 
         if (_layout.Window == WindowStyle.Macos)
         {
             var radius = SvgFrameRenderer.MacButtonDiameter / 2;
-            var cx = SvgFrameRenderer.ChromeSidePadding + radius;
-            var cy = SvgFrameRenderer.ChromeTopPadding + radius;
+            var cx = x + SvgFrameRenderer.ChromeSidePadding + radius;
+            var cy = y + SvgFrameRenderer.ChromeTopPadding + radius;
             foreach (var color in SvgFrameRenderer.MacButtonColors)
             {
                 var centerX = cx;
@@ -1332,8 +1429,8 @@ internal sealed class FrameRasterizer
 
         var size = SvgFrameRenderer.WinButtonSize;
         var corner = SvgFrameRenderer.WinButtonCornerRadius;
-        var top = SvgFrameRenderer.ChromeTopPadding;
-        var left = _layout.Width - SvgFrameRenderer.ChromeSidePadding - size * 3 - SvgFrameRenderer.WinButtonGap * 2;
+        var top = y + SvgFrameRenderer.ChromeTopPadding;
+        var left = x + width - SvgFrameRenderer.ChromeSidePadding - size * 3 - SvgFrameRenderer.WinButtonGap * 2;
         var buttonColor = ParseColor(palette.WinButton);
         for (var i = 0; i < 3; i++)
         {
@@ -1347,6 +1444,61 @@ internal sealed class FrameRasterizer
             });
             left += size + SvgFrameRenderer.WinButtonGap;
         }
+    }
+
+    /// <summary>The window title in the bar, cut as the SVG cuts it (<see cref="SvgFrameRenderer.FitWindowTitle"/>).</summary>
+    private void DrawTitle(SvgFrameRenderer.ChromePalette palette)
+    {
+        if (_titleGlyphs is null || SvgFrameRenderer.FitWindowTitle(_title, _layout.Window, _layout.WindowWidth) is not { } fitted)
+            return;
+
+        var elements = new List<(string Text, int Cells)>();
+        var cells = 0;
+        var enumerator = StringInfo.GetTextElementEnumerator(fitted.Text);
+        while (enumerator.MoveNext())
+        {
+            var element = enumerator.GetTextElement();
+            var span = Rune.TryGetRuneAt(element, 0, out var rune) && ScreenBuffer.IsWideCodePoint(rune.Value) ? 2 : 1;
+            elements.Add((element, span));
+            cells += span;
+        }
+
+        double left = _layout.WindowX + fitted.X - (fitted.Centered ? cells * _titleCellWidth / 2.0 : 0);
+        var x = (int)Math.Round(left, MidpointRounding.AwayFromZero);
+        var baseline = _layout.WindowY + (int)Math.Round(SvgFrameRenderer.ChromeTitleBaseline, MidpointRounding.AwayFromZero);
+        var color = ParseColor(palette.TitleText);
+        foreach (var (element, span) in elements)
+        {
+            var glyph = _titleGlyphs.Get(element, bold: false, italic: false, span);
+            if (glyph.Width != 0)
+                Blit(glyph, x, baseline, _layout.WindowY, _layout.WindowY + _layout.TitleBarHeight - 1, color);
+            x += span * _titleCellWidth;
+        }
+    }
+
+    /// <summary>A rectangle with rounded corners, anti-aliased; <paramref name="roundBottom"/> false keeps the bottom corners square.</summary>
+    private void FillRoundedRect(int x, int y, int width, int height, int radius, (byte R, byte G, byte B) color, bool roundBottom)
+    {
+        if (width <= 0 || height <= 0)
+            return;
+        if (radius <= 0)
+        {
+            FillRect(x, y, width, height, color);
+            return;
+        }
+
+        double left = x, top = y, right = x + width, bottom = y + height, r = radius;
+        FillShape(left, top, right, bottom, color, (px, py) =>
+        {
+            var nearTop = py < top + r;
+            var nearBottom = roundBottom && py > bottom - r;
+            if (!nearTop && !nearBottom)
+                return true;
+
+            var cx = Math.Clamp(px, left + r, right - r);
+            var cy = nearTop ? top + r : bottom - r;
+            return (px - cx) * (px - cx) + (py - cy) * (py - cy) <= r * r;
+        });
     }
 
     /// <summary>Fills the pixels of a shape inside the given bounds, anti-aliased by 4×4 supersampling.</summary>
@@ -1397,7 +1549,9 @@ internal sealed class FrameRasterizer
     {
         var top = _layout.RowY(row);
         var height = _layout.CellHeight;
-        FillRect(0, top, _layout.Width, height, _background);
+        // Inside the window, and inside its border when it stands on a background.
+        var inset = _layout.Desktop && _layout.Window != WindowStyle.None ? 1 : 0;
+        FillRect(_layout.WindowX + inset, top, _layout.WindowWidth - inset * 2, height, _background);
 
         // Backgrounds first, then glyphs, as in the SVG: a glyph may overhang its neighbor.
         var lastUnderlined = -1;
@@ -1509,5 +1663,54 @@ internal sealed class FrameRasterizer
         pixels[offset] = (byte)(pixels[offset] + (color.R - pixels[offset]) * alpha / 255);
         pixels[offset + 1] = (byte)(pixels[offset + 1] + (color.G - pixels[offset + 1]) * alpha / 255);
         pixels[offset + 2] = (byte)(pixels[offset + 2] + (color.B - pixels[offset + 2]) * alpha / 255);
+    }
+}
+
+/// <summary>
+/// The background around the window as RGB24 pixels of the whole frame, drawn once per video: one color, or a
+/// gradient whose stops are spread from the top-left corner to the bottom-right one, as the SVG's linear gradient
+/// in bounding-box units draws it, or an image decoded to the frame size.
+/// </summary>
+internal static class DesktopRaster
+{
+    /// <param name="decodeImage">Decodes the image to RGB24 pixels of the given width and height, covering the frame and cropped to it.</param>
+    internal static byte[] Render(RasterLayout layout, BackgroundSpec background, Func<int, int, byte[]> decodeImage)
+    {
+        var (width, height) = (layout.Width, layout.Height);
+        if (background.ImagePath is not null)
+            return decodeImage(width, height);
+
+        var pixels = new byte[width * height * 3];
+        var stops = background.Colors.Select(static color =>
+            CellColors.TryParseHexColor(color, out var r, out var g, out var b) ? (R: (double)r, G: (double)g, B: (double)b) : (R: 0d, G: 0d, B: 0d)).ToArray();
+        if (stops.Length == 1)
+        {
+            for (var i = 0; i < pixels.Length; i += 3)
+            {
+                pixels[i] = (byte)stops[0].R;
+                pixels[i + 1] = (byte)stops[0].G;
+                pixels[i + 2] = (byte)stops[0].B;
+            }
+
+            return pixels;
+        }
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                // In bounding-box units the gradient line runs from (0,0) to (1,1), so a point's offset is (u + v) / 2.
+                var t = ((x + 0.5) / width + (y + 0.5) / height) / 2 * (stops.Length - 1);
+                var index = Math.Min((int)t, stops.Length - 2);
+                var f = t - index;
+                var (a, b) = (stops[index], stops[index + 1]);
+                var offset = (y * width + x) * 3;
+                pixels[offset] = (byte)Math.Round(a.R + (b.R - a.R) * f);
+                pixels[offset + 1] = (byte)Math.Round(a.G + (b.G - a.G) * f);
+                pixels[offset + 2] = (byte)Math.Round(a.B + (b.B - a.B) * f);
+            }
+        }
+
+        return pixels;
     }
 }

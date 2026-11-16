@@ -93,7 +93,7 @@ if (args[0] is "svg")
         return 0;
     }
 
-    if (!TryParseSvgArgs(args, out var castArg, out var svgOutputArg, out var svgFontSize, out var svgFontFamily, out var svgThemePreset, out var svgWindow, out var svgMaxFps, out var svgError))
+    if (!TryParseSvgArgs(args, out var castArg, out var svgOutputArg, out var svgFontSize, out var svgFontFamily, out var svgThemePreset, out var svgWindow, out var svgMaxFps, out var svgStyle, out var svgError))
     {
         Console.Error.WriteLine($"Error: {svgError}");
         PrintSvgUsage();
@@ -139,6 +139,7 @@ if (args[0] is "svg")
             return 1;
         }
 
+        svgRenderSettings = svgStyle.ToOverrides().Apply(svgRenderSettings);
         SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath, recording.LoopDuration);
         Console.Error.WriteLine($"Written: {FormatDisplayPath(svgOutputPath)}  ({recording.Events.Count} events, {recording.LoopDuration:F1}s)");
         if (SvgRender.SizeWarning(new FileInfo(svgOutputPath).Length, svgRenderSettings.MaxFps, fromCast: true) is { } svgSizeWarning)
@@ -168,7 +169,7 @@ if (args[0] is "mp4")
         return 0;
     }
 
-    if (!TryParseMp4Args(args, out var mp4CastArg, out var mp4OutputArg, out var mp4FontSize, out var mp4FontFamily, out var mp4ThemePreset, out var mp4Window, out var mp4Options, out var mp4Error))
+    if (!TryParseMp4Args(args, out var mp4CastArg, out var mp4OutputArg, out var mp4FontSize, out var mp4FontFamily, out var mp4ThemePreset, out var mp4Window, out var mp4Options, out var mp4Style, out var mp4Error))
     {
         Console.Error.WriteLine($"Error: {mp4Error}");
         PrintMp4Usage();
@@ -219,6 +220,7 @@ if (args[0] is "mp4")
             return 1;
         }
 
+        mp4RenderSettings = mp4Style.ToOverrides().Apply(mp4RenderSettings);
         var result = Mp4Render.WriteMp4(recording.Events, recording.Width, recording.Height, mp4RenderSettings, mp4Options.ToSettings(), mp4OutputPath, mp4Ffmpeg, recording.LoopDuration);
         PrintMp4Written(mp4OutputPath, result);
         Console.Error.WriteLine($"Done: {FormatDisplayPath(mp4OutputPath)}");
@@ -254,7 +256,7 @@ if (args[0] is "-h" or "--help")
     return 0;
 }
 
-if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runError))
+if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runStyle, out var runError))
 {
     Console.Error.WriteLine($"Error: {runError}");
     PrintUsage();
@@ -296,7 +298,7 @@ catch (Exception ex)
 foreach (var unknownKey in FindUnknownScenarioKeys(yaml))
     Console.Error.WriteLine($"Warning: {unknownKey}");
 
-if (!RenderSettingsResolver.TryResolve(scenario, runThemePreset, out var renderSettings, out var themeError))
+if (!RenderSettingsResolver.TryResolve(scenario, runThemePreset, out var renderSettings, out var themeError, BackgroundImageSource.FromFolder(Path.GetDirectoryName(scenarioPath)!)))
 {
     Console.Error.WriteLine($"Error: {themeError}");
     PrintUsage();
@@ -383,6 +385,14 @@ if (runWindow is WindowStyle runWindowValue)
     renderSettings = renderSettings with { Window = runWindowValue };
 if (runMaxFps is int runMaxFpsValue)
     renderSettings = renderSettings with { MaxFps = runMaxFpsValue };
+renderSettings = runStyle.ToOverrides().Apply(renderSettings);
+
+// A YAML background image needs SVG or mp4 output: the cast keeps background colors only.
+if (outputFormat == OutputFormat.Cast && renderSettings.Background?.ImagePath is not null)
+{
+    Console.Error.WriteLine("Error: render.background with an image file requires --format svg or mp4: a cast keeps colors only");
+    return 1;
+}
 
 // mp4 needs ffmpeg, a font, and a frame size that ffmpeg and x264 accept. Check them before running
 // anything, so a long recording does not fail at the end.
@@ -398,7 +408,7 @@ if (outputFormat == OutputFormat.Mp4)
     try
     {
         var mp4Settings = runMp4Options.ToSettings();
-        var layout = Mp4Render.CreateLayout(renderSettings.FontSize, scenarioWidth, scenarioHeight, renderSettings.Window, mp4Settings);
+        var layout = Mp4Render.CreateLayout(renderSettings, scenarioWidth, scenarioHeight, mp4Settings);
         Mp4Render.OutputSize(layout, mp4Settings);
         GlyphSource.Create(renderSettings.FontFamily, runMp4Options.FontFile, layout);
     }
@@ -539,7 +549,7 @@ if (outputFormat == OutputFormat.Svg)
     try
     {
         var written = CastReader.Read(outputPath);
-        var svgSettings = written.RenderSettings with { MaxFps = renderSettings.MaxFps };
+        var svgSettings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings) with { MaxFps = renderSettings.MaxFps };
         SvgRender.WriteSvg(written.Events, written.Width, written.Height, svgSettings, svgPath!, written.LoopDuration);
         Console.Error.WriteLine($"Written: {FormatDisplayPath(svgPath!)}");
         if (SvgRender.SizeWarning(new FileInfo(svgPath!).Length, svgSettings.MaxFps, fromCast: false) is { } svgSizeWarning)
@@ -559,7 +569,7 @@ if (outputFormat == OutputFormat.Mp4)
     {
         // WriteMp4 encodes to a temporary file and renames it, so a failure leaves no partial .mp4.
         var written = CastReader.Read(outputPath);
-        var result = Mp4Render.WriteMp4(written.Events, written.Width, written.Height, written.RenderSettings, runMp4Options.ToSettings(), mp4Path!, ffmpegPath!, written.LoopDuration);
+        var result = Mp4Render.WriteMp4(written.Events, written.Width, written.Height, RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings), runMp4Options.ToSettings(), mp4Path!, ffmpegPath!, written.LoopDuration);
         PrintMp4Written(mp4Path!, result);
     }
     catch (Exception ex)
@@ -665,9 +675,11 @@ static bool TryParseSvgArgs(
     out string? themePresetOverride,
     out WindowStyle? windowOverride,
     out int? maxFpsOverride,
+    out StyleOptions style,
     out string error)
 {
     castPath = "";
+    style = new StyleOptions();
     outputPath = null;
     fontSizeOverride = null;
     fontFamilyOverride = null;
@@ -708,6 +720,13 @@ static bool TryParseSvgArgs(
         }
 
         if (TryConsumeMaxFpsArg(args, ref i, ref maxFpsOverride, out error))
+        {
+            if (error.Length != 0)
+                return false;
+            continue;
+        }
+
+        if (TryConsumeStyleArg(args, ref i, style, out error))
         {
             if (error.Length != 0)
                 return false;
@@ -756,9 +775,11 @@ static bool TryParseRunArgs(
     out WindowStyle? windowOverride,
     out int? maxFpsOverride,
     out Mp4Options mp4Options,
+    out StyleOptions style,
     out string error)
 {
     scenarioPath = "";
+    style = new StyleOptions();
     outputPath = null;
     outputFormat = OutputFormat.Cast;
     verbose = false;
@@ -828,6 +849,13 @@ static bool TryParseRunArgs(
             continue;
         }
 
+        if (TryConsumeStyleArg(args, ref i, style, out error))
+        {
+            if (error.Length != 0)
+                return false;
+            continue;
+        }
+
         if (arg == "--format")
         {
             if (i + 1 >= args.Length)
@@ -887,6 +915,13 @@ static bool TryParseRunArgs(
     if (outputFormat == OutputFormat.Cast && maxFpsOverride.HasValue)
     {
         error = "--max-fps requires --format svg";
+        return false;
+    }
+
+    // A cast keeps background colors but names no image file, so an image would be lost without a word.
+    if (outputFormat == OutputFormat.Cast && style.Background?.ImagePath is not null)
+    {
+        error = "--background with an image file requires --format svg or mp4: a cast keeps colors only";
         return false;
     }
 
@@ -2145,6 +2180,77 @@ static void DeleteFileIfExists(string path)
 }
 
 /// <summary>Matches <paramref name="name"/> as <c>--name value</c> or <c>--name=value</c>. Returns true when it matched, with error set when the value is missing.</summary>
+/// <summary>
+/// Reads <c>args[i]</c> and its value when it is <c>--window-title</c>, <c>--background</c>, <c>--margin</c>, or
+/// <c>--padding</c>, and returns whether it was. A problem with the value goes to <paramref name="error"/>. A
+/// background image path is relative to the current folder.
+/// </summary>
+static bool TryConsumeStyleArg(string[] args, ref int i, StyleOptions style, out string error)
+{
+    error = "";
+    var arg = args[i];
+
+    // An empty title hides the cast's title, so `--window-title ""` and `--window-title=` are values.
+    if (arg == "--window-title" || arg.StartsWith("--window-title=", StringComparison.Ordinal))
+    {
+        string title;
+        if (arg != "--window-title")
+        {
+            title = arg["--window-title=".Length..];
+        }
+        else if (i + 1 < args.Length && !args[i + 1].StartsWith("--", StringComparison.Ordinal))
+        {
+            title = args[++i];
+        }
+        else
+        {
+            error = "--window-title requires a value (\"\" hides the title)";
+            return true;
+        }
+
+        if (style.WindowTitle is not null)
+            error = "duplicate option: --window-title";
+        else
+            style.WindowTitle = RenderSettingsResolver.NormalizeWindowTitle(title);
+        return true;
+    }
+
+    if (TryTakeOptionValue(args, ref i, "--background", out var background, out error))
+    {
+        if (error.Length != 0)
+            return true;
+        if (style.Background is not null)
+            error = "duplicate option: --background";
+        else if (RenderSettingsResolver.TryParseBackground(background, BackgroundImageSource.FromFolder(Directory.GetCurrentDirectory()), out var parsed, out error))
+            style.Background = parsed;
+        return true;
+    }
+
+    if (TryTakeOptionValue(args, ref i, "--margin", out var margin, out error))
+    {
+        if (error.Length != 0)
+            return true;
+        if (style.Margin is not null)
+            error = "duplicate option: --margin";
+        else if (RenderSettingsResolver.TryParseMargin(margin, out var parsed, out error))
+            style.Margin = parsed;
+        return true;
+    }
+
+    if (TryTakeOptionValue(args, ref i, "--padding", out var padding, out error))
+    {
+        if (error.Length != 0)
+            return true;
+        if (style.Padding is not null)
+            error = "duplicate option: --padding";
+        else if (RenderSettingsResolver.TryParsePadding(padding, out var parsed, out error))
+            style.Padding = parsed;
+        return true;
+    }
+
+    return false;
+}
+
 static bool TryTakeOptionValue(string[] args, ref int i, string name, out string value, out string error)
 {
     value = "";
@@ -2235,9 +2341,11 @@ static bool TryParseMp4Args(
     out string? themePresetOverride,
     out WindowStyle? windowOverride,
     out Mp4Options mp4Options,
+    out StyleOptions style,
     out string error)
 {
     castPath = "";
+    style = new StyleOptions();
     outputPath = null;
     fontSizeOverride = null;
     fontFamilyOverride = null;
@@ -2253,7 +2361,8 @@ static bool TryParseMp4Args(
             || TryConsumeFontFamilyArg(args, ref i, ref fontFamilyOverride, out error)
             || TryConsumeThemeArg(args, ref i, ref themePresetOverride, out error)
             || TryConsumeWindowArg(args, ref i, ref windowOverride, out error)
-            || TryConsumeMp4Arg(args, ref i, mp4Options, out error))
+            || TryConsumeMp4Arg(args, ref i, mp4Options, out error)
+            || TryConsumeStyleArg(args, ref i, style, out error))
         {
             if (error.Length != 0)
                 return false;
@@ -2365,6 +2474,20 @@ enum OutputFormat
 }
 
 /// <summary>mp4 options from the command line. Unset values take the <see cref="Mp4Settings"/> defaults.</summary>
+/// <summary>
+/// <c>--window-title</c>, <c>--background</c>, <c>--margin</c>, and <c>--padding</c>, which the scenario path and the
+/// svg and mp4 commands share. Each replaces the scenario's or the cast's value.
+/// </summary>
+sealed class StyleOptions
+{
+    internal string? WindowTitle { get; set; }
+    internal BackgroundSpec? Background { get; set; }
+    internal int? Margin { get; set; }
+    internal int? Padding { get; set; }
+
+    internal RenderStyleOverrides ToOverrides() => new(WindowTitle, Background, Margin, Padding);
+}
+
 sealed class Mp4Options
 {
     internal int? Fps { get; set; }
@@ -2453,6 +2576,15 @@ static class HelpText
         + """
               --window none|macos|windows
                                        Draw a window title bar around the terminal (default none)
+              --window-title TEXT      Text in the title bar (default: the title the scenario or cast has).
+                                       "" shows none.
+              --background VALUE       Fill around the terminal: a color such as #1e3c72, 2-4 colors for a
+                                       gradient from the top-left corner ("#1e3c72 #2a5298"), or a .png,
+                                       .jpg, .gif or .webp file that covers it. A cast keeps colors only.
+              --margin N               Pixels around the terminal or window, 0-200 (default 8, 12 with a
+                                       window, 32 with a background; mp4 has a margin only with a background)
+              --padding N              Pixels between the terminal's edge and its text, 0-100 (default from
+                                       the font size)
 
             """;
 
