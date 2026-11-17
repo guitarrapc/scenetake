@@ -29,14 +29,22 @@ internal sealed class SecretMasker
 
     // This file avoids LINQ, tuples in collections, and other generics over value types: Native AOT compiles a copy of
     // such code for each value type, and the first version of this masker cost 84 KB of binary.
-    private readonly string[] _literals;
-    private readonly string[] _literalLabels;
+    private string[] _literals;
+    private string[] _literalLabels;
     private readonly bool _auto;
     private readonly Dictionary<string, int> _counts = new(StringComparer.Ordinal);
 
     private SecretMasker(List<string> literals, List<string> labels, bool auto)
     {
-        // Longest first, so a listed text that contains another one is hidden as a whole. The lists are short.
+        SortLongestFirst(literals, labels);
+        _literals = literals.ToArray();
+        _literalLabels = labels.ToArray();
+        _auto = auto;
+    }
+
+    // Longest first, so a listed text that contains another one is hidden as a whole. The lists are short.
+    private static void SortLongestFirst(List<string> literals, List<string> labels)
+    {
         for (var i = 1; i < literals.Count; i++)
         {
             for (var j = i; j > 0 && literals[j].Length > literals[j - 1].Length; j--)
@@ -45,10 +53,36 @@ internal sealed class SecretMasker
                 (labels[j], labels[j - 1]) = (labels[j - 1], labels[j]);
             }
         }
+    }
 
+    /// <summary>
+    /// Adds the values of secret variables that a command exported for the steps after it (ShellState), so a later
+    /// command that prints one shows stars, as for the variables scenetake started with. Only with mask-auto.
+    /// </summary>
+    internal void Learn(List<KeyValuePair<string, string?>>? environment)
+    {
+        if (!_auto || environment is null || environment.Count == 0)
+            return;
+
+        var literals = new List<string>(_literals);
+        var labels = new List<string>(_literalLabels);
+        var added = false;
+        foreach (var (name, value) in environment)
+        {
+            if (value is { Length: >= MinEnvironmentValueLength } && IsSecretKey(name) && !IsNonSecretValue(value) && !literals.Contains(value))
+            {
+                literals.Add(value);
+                labels.Add("environment value");
+                added = true;
+            }
+        }
+
+        if (!added)
+            return;
+
+        SortLongestFirst(literals, labels);
         _literals = literals.ToArray();
         _literalLabels = labels.ToArray();
-        _auto = auto;
     }
 
     /// <summary>

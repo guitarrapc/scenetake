@@ -21,7 +21,7 @@ scenetake records scenarios, converts casts to SVG or mp4, and creates starter Y
 | `scenetake --version` | Print version |
 
 ```bash
-scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]
+scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--save-keys FILE] [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]
 scenetake svg [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] <input.cast> [output]
 scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output]
 scenetake png [--at TIME] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output]
@@ -54,7 +54,8 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 | Option | Commands | Behavior |
 |---|---|---|
 | `--verbose` | scenario path only | Show successful `pre`/`post` labels and phase markers, and the exception type and stack when an error stops the recording. See [spec_pre_post.md](spec_pre_post.md). |
-| `--strict` | scenario path only | For CI. Stop at the first recorded step that exits non-zero without `continue-on-error: true`. Skip later steps, preserve existing output files, and write no cast, SVG or mp4. Run `post`. Exit `1`. If a `post` command fails, return that command's exit code. The `svg` and `mp4` subcommands report it as an unknown option. See [spec_scenario.md](spec_scenario.md) → Step exit codes. |
+| `--strict` | scenario path only | For CI. Stop at the first recorded step that exits non-zero without `continue-on-error: true`. Skip later steps, preserve existing output files, and write no cast, SVG or mp4 (only the `--save-keys` file). Run `post`. Exit `1`. If a `post` command fails, return that command's exit code. The `svg` and `mp4` subcommands report it as an unknown option. See [spec_scenario.md](spec_scenario.md) → Step exit codes. |
+| `--save-keys FILE` | scenario path only | Write the keys typed in the `interactive: true` steps to FILE as `keys` entries that replay them. Written even when the recording stops at a later step. A scenario without an interactive step is an error before `pre`. `capture` reports it as an unknown option. On Windows a password typed in a step is saved too. See [spec_pty.md](spec_pty.md) → Saving the keys of an interactive step. |
 | `--format cast\|svg\|mp4\|png\|gif` | scenario path only | Default `cast`. `svg` also writes `.svg`, `mp4` also writes `.mp4`, `png` also writes `.png`, and `gif` also writes `.gif`. See [spec_svg.md](spec_svg.md), [spec_mp4.md](spec_mp4.md), [spec_png.md](spec_png.md), and [spec_gif.md](spec_gif.md). |
 | `--at TIME` | scenario (`--format svg` or `png`), `svg`, `png` | One screen: the one shown `TIME` seconds into the recording (decimals allowed, `0` or more), or `end` for the final screen. A time past the end gives the final screen, and a time before the first output an empty terminal. With SVG it makes a still SVG without animation ([spec_svg.md](spec_svg.md) → Still SVG). A PNG shows the final screen without it. Not stored in the cast. |
 | `--font-size N` | scenario, `svg` | `1`–`128`. Scenario path: overrides `render.font-size` in the written cast header and SVG. `svg`: render-only override (CLI > cast header > default `16`). See [spec_cast.md](spec_cast.md). |
@@ -109,7 +110,7 @@ The output folder must exist as well. When the scenario has `pre` commands, the 
 
 ## Logging
 
-Progress and status use stderr (`Loading:`, `Written:`, `Done:`). Paths use `/` separators and are relative to the current directory where possible. Paths on another Windows drive, for example, remain absolute. Scenario runs always show step `running:` lines.
+Progress and status use stderr (`Loading:`, `Written:`, `Done:`). Paths use `/` separators and are relative to the current directory where possible. Paths on another Windows drive, for example, remain absolute. Scenario runs always show step `running:` lines, and `running (show: none):` for a step that is not recorded. A shell that carries no state between commands gets one `Note:` line after `Using shell:` ([spec_scenario.md](spec_scenario.md) → Shell state across steps).
 
 Each `Written:` line gives the file's size in pixels, so a reader can tell what the demo fits, such as a README or a 1920x1080 video, without opening it:
 
@@ -175,7 +176,8 @@ Previously, cast parsing reported a JSON error before the hint. Failed conversio
 | Success | `0` |
 | Parse / validation error, missing file, cast/SVG/mp4 write failure, ffmpeg missing or without libx264 | `1` (or command-specific for `pre`/`post`) |
 | Failed `pre` or `post` command | Failed command's exit code |
-| `--strict` and a recorded step exited non-zero without `continue-on-error: true` | `1`, with nothing written, after `post` has run (a failing `post` returns its own code) |
+| `--strict` and a recorded step exited non-zero without `continue-on-error: true` | `1`, with nothing written but the `--save-keys` file, after `post` has run (a failing `post` returns its own code) |
+| The `--save-keys` file could not be written | `1`, after the other outputs |
 
 Without `--strict`, recorded step exit codes do not affect the process exit code. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
 

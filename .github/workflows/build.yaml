@@ -177,6 +177,12 @@ jobs:
           dotnet run tests/step_input_test.cs
           dotnet run tests/secret_mask_test.cs
           dotnet run tests/canvas_fit_test.cs
+          # Shell state runs the published binary in each OS's bash and pwsh: macOS has bash 3.2, whose dumps differ.
+          binary_name="scenetake"
+          if [[ "${{ matrix.rid }}" == win-* ]]; then
+            binary_name="scenetake.exe"
+          fi
+          SCENETAKE_BIN="$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}/$binary_name" dotnet run tests/shell_state_test.cs
 
       - name: Upload macOS binary
         if: ${{ startsWith(matrix.rid, 'osx-') }}

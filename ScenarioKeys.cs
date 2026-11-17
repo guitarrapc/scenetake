@@ -19,13 +19,14 @@ internal static class ScenarioKeys
         "run-highlight", "highlight", "stderr-color",
         "pty", "interactive", "normalize-typing", "continue-on-error",
         "keys", "timeout",
+        "show", "clear",
     ];
 
     /// <summary>The keys a <c>highlight</c> entry reads.</summary>
     internal static readonly string[] Highlight = ["color", "at"];
 
     /// <summary>The keys a <c>keys</c> entry reads.</summary>
-    internal static readonly string[] KeyEntry = ["sleep", "type", "key"];
+    internal static readonly string[] KeyEntry = ["sleep", "wait", "type", "key"];
 
     /// <summary>The keys of the typed sections, taken from the classes that read them.</summary>
     internal sealed record Known(

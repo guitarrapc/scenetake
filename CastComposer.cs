@@ -9,6 +9,9 @@ using System.Text;
 /// </summary>
 internal static partial class ScenarioCast
 {
+    /// <summary>What a <c>clear: true</c> step writes: the cursor home, then the screen erased, as <c>clear</c> writes for xterm.</summary>
+    internal const string ClearScreen = "\u001b[H\u001b[2J";
+
     /// <summary>
     /// Records the scenario's steps as cast events. <paramref name="run"/> gives each step's output: the CLI
     /// runs the command, and the playground takes the output recorded in an outputs file.
@@ -36,7 +39,57 @@ internal static partial class ScenarioCast
         for (var i = 0; i < steps.Count; i++)
         {
             var command = ParseCommand(steps[i]);
+            if (command.Clear)
+            {
+                // A clear step clears the screen as `clear` does, without a command: the same in a terminal
+                // without TERM, on every OS, and in the playground, which runs nothing.
+                if (events.Count == 0)
+                    t += preDelay;
+                events.Add(CastEvent.Output(Math.Round(t, 6), ClearScreen));
+                if (TryFormatNameComment(command.Name, "clear", out var clearNameLine, out var clearNameText))
+                {
+                    // The cursor is home, so the comment needs no line break before it.
+                    var clearMasker = options.Masker;
+                    events.Add(CastEvent.Marker(Math.Round(t, 6), clearMasker?.MaskText(clearNameText) ?? clearNameText));
+                    events.Add(CastEvent.Output(Math.Round(t, 6), clearMasker?.MaskText(clearNameLine) ?? clearNameLine));
+                    t += 0.05;
+                }
+
+                t += GetDouble(command.Extra, postDelay, "post-delay");
+                t += GetDouble(command.Extra, preDelay, "pre-delay");
+                continue;
+            }
+
             if (string.IsNullOrWhiteSpace(command.Cmd)) continue;
+
+            var show = GetStepShow(command.Extra);
+            if (show == StepShow.None)
+            {
+                // The command runs between the steps around it, as pre runs before them, and the recording shows
+                // nothing of it. Nothing it does reaches the cast or the outputs file, so the playground skips it.
+                if (options.LogRunning)
+                    Console.Error.WriteLine($"  running (show: none): {command.Cmd}");
+                var hiddenPty = GetBool(command.Extra, false, "pty");
+                var hiddenInteractive = GetBool(command.Extra, false, "interactive");
+                var hiddenSpeed = GetDouble(command.Extra, speed, "typing-speed");
+                var hidden = await run(new StepStart(
+                    i, command, hiddenPty, hiddenInteractive,
+                    scenario.Width ?? RenderSettingsResolver.DefaultTerminalCols,
+                    scenario.Height ?? RenderSettingsResolver.DefaultTerminalRows,
+                    null)
+                {
+                    Keys = BuildKeyActions(command.Extra, hiddenSpeed, GetDouble(command.Extra, jitter, "typing-jitter"), rng),
+                    Timeout = GetStepTimeout(command.Extra),
+                    Show = StepShow.None,
+                });
+                if (hiddenInteractive && hidden.PtyInputChunks is { } hiddenInput)
+                    options.SavedKeys?.Add(new SavedStepKeys(i + 1, command.Cmd, hiddenSpeed, hiddenInput, hidden.HiddenInputTimes ?? []));
+                // The steps after it rely on what it prepares, and the recording would not show why they fail, so a
+                // failure stops the recording, with or without --strict, as a failing pre command does.
+                if (hidden.ExitCode != 0 && !GetBool(command.Extra, false, "continue-on-error"))
+                    return (events, new FailedStep(i + 1, command.Cmd, hidden.ExitCode, FailureOutputTail(hidden)) { Hidden = true });
+                continue;
+            }
 
             var cmdSpeed  = GetDouble(command.Extra, speed, "typing-speed");
             var cmdJitter = GetDouble(command.Extra, jitter, "typing-jitter");
@@ -66,7 +119,9 @@ internal static partial class ScenarioCast
                 t += 0.05;
             }
 
-            EmitTypedCommand(events, ref t, prompt, masker?.MaskText(command.Cmd) ?? command.Cmd, cmdSpeed, cmdJitter, rng, hasRunHighlight, runHighlightStyle);
+            // show: output leaves out the prompt and the typing: the output appears as if the program drew it by itself.
+            if (show == StepShow.All)
+                EmitTypedCommand(events, ref t, prompt, masker?.MaskText(command.Cmd) ?? command.Cmd, cmdSpeed, cmdJitter, rng, hasRunHighlight, runHighlightStyle);
 
             if (options.LogRunning)
                 Console.Error.WriteLine($"  running: {command.Cmd}");
@@ -85,7 +140,11 @@ internal static partial class ScenarioCast
             {
                 Keys = keys,
                 Timeout = GetStepTimeout(command.Extra),
+                Show = show,
             });
+            // Before the exit code is looked at: a --strict stop at this step keeps what the person typed too.
+            if (useInteractive && execution.PtyInputChunks is { } typedInput)
+                options.SavedKeys?.Add(new SavedStepKeys(i + 1, command.Cmd, cmdSpeed, typedInput, execution.HiddenInputTimes ?? []));
             // A step that is meant to fail (a demo of an error) says so with continue-on-error: no warning, and
             // --strict goes on. Any other failure is a warning, or with --strict the end of the recording: later
             // steps may depend on this one, and they run real commands.
@@ -965,7 +1024,17 @@ internal sealed class GenerateOptions
     /// outputs file (<see cref="SecretMasker"/>). Null hides nothing.
     /// </summary>
     internal SecretMasker? Masker { get; init; }
+
+    /// <summary>Receives the keys typed in each interactive step, for --save-keys. Null keeps none.</summary>
+    internal List<SavedStepKeys>? SavedKeys { get; init; }
 }
+
+/// <summary>
+/// The keys a person typed in one interactive step, for --save-keys (RecordedKeys turns them into YAML).
+/// <paramref name="Number"/> is the step's 1-based position. <paramref name="HiddenInput"/> holds when each key that
+/// was not recorded, because the program read a password, was typed.
+/// </summary>
+internal sealed record SavedStepKeys(int Number, string Run, double TypingSpeed, IReadOnlyList<TimedBytes> Input, IReadOnlyList<TimeSpan> HiddenInput);
 
 /// <summary>Runs one step, or finds its recorded output, and returns what the command printed.</summary>
 internal delegate Task<CommandExecution> StepRunner(StepStart step);
@@ -988,6 +1057,9 @@ internal readonly record struct StepStart(
 
     /// <summary>Seconds after which the step's command is stopped (<c>timeout</c>), or null.</summary>
     internal double? Timeout { get; init; }
+
+    /// <summary>What the step shows (<c>show</c>). A step with <see cref="StepShow.None"/> is run and not recorded: the playground skips it.</summary>
+    internal StepShow Show { get; init; }
 }
 
 /// <summary>Output that is already timed: each chunk's time since the command started, and where the step ends.</summary>
@@ -1011,6 +1083,12 @@ internal readonly record struct CommandExecution(
     /// <summary>Playground: the line that stands for output the outputs file does not have.</summary>
     internal string? Placeholder { get; init; }
 
+    /// <summary>
+    /// Interactive steps: when each key that <see cref="PtyInputChunks"/> leaves out was typed, because the program
+    /// read a password. The keys themselves are never kept.
+    /// </summary>
+    internal IReadOnlyList<TimeSpan>? HiddenInputTimes { get; init; }
+
     public static CommandExecution FromPipeStream(
         string stdout,
         string stderr,
@@ -1025,4 +1103,8 @@ internal readonly record struct CommandExecution(
 /// The step that stopped a --strict run: it exited non-zero without <c>continue-on-error</c>. <paramref name="Number"/>
 /// is 1-based, as in other step messages; <paramref name="OutputTail"/> holds its last output lines as plain text.
 /// </summary>
-record FailedStep(int Number, string Cmd, int ExitCode, IReadOnlyList<string> OutputTail);
+record FailedStep(int Number, string Cmd, int ExitCode, IReadOnlyList<string> OutputTail)
+{
+    /// <summary>A <c>show: none</c> step, which stops the recording when it fails, with or without --strict.</summary>
+    internal bool Hidden { get; init; }
+}

@@ -457,6 +457,10 @@ internal sealed class StepOutputsReplay
 
     internal CommandExecution Run(StepStart step)
     {
+        // A step that shows nothing was not recorded: it takes no recorded output, and the steps list leaves it out.
+        if (step.Show == StepShow.None)
+            return new CommandExecution(0, false, "", "", null, null, []);
+
         var kind = step.UseInteractive ? RecordedStepKind.Interactive : step.UsePty ? RecordedStepKind.Pty : RecordedStepKind.Pipe;
         var key = (step.Command.Cmd, kind);
         if (!_recorded.TryGetValue(key, out var recorded))
