@@ -34,6 +34,7 @@
 #:include StepChunks.cs
 #:include StepOutputs.cs
 #:include ShellState.cs
+#:include BackgroundSteps.cs
 
 using MiniPty;
 using MiniPty.Capture;
@@ -745,6 +746,10 @@ using var shellState = ShellState.Create(shell.FileName, IsPowerShellLaunch(shel
 if (shellState is null && (scenario.Pre?.Count ?? 0) + (scenario.Steps?.Count ?? 0) + (scenario.Post?.Count ?? 0) > 1)
     Console.Error.WriteLine($"Note: in {shell.DisplayName}, each command starts in a new shell: cd, variables, functions, and aliases do not carry over to the next step. bash and PowerShell carry them.");
 
+// The commands of background steps, such as a server that later steps call. They are stopped after the last step,
+// and before post on every path, so post can clean up what they used.
+using var backgroundSteps = new BackgroundSteps();
+
 var preExitCode = await RunScenarioCommandsAsync(scenario.Pre, "pre", scenario.Cwd, shell, shellState, verbose);
 if (preExitCode != 0)
     return preExitCode;
@@ -753,6 +758,7 @@ if (preExitCode != 0)
 async Task<int> StopAfterPreAsync(string error)
 {
     Console.Error.WriteLine($"Error: {error}");
+    backgroundSteps.StopAll();
     var cleanupExitCode = await RunScenarioCommandsAsync(scenario.Post, "post", scenario.Cwd, shell, shellState, verbose);
     return cleanupExitCode != 0 ? cleanupExitCode : 1;
 }
@@ -833,10 +839,13 @@ try
     };
     (events, strictFailure) = await GenerateAsync(scenario, deterministicSeed, generateOptions, step => AfterStep(step switch
     {
+        { Background: true } => RunBackgroundAsync(step, scenario.Cwd, shell, shellState, backgroundSteps),
         { UseInteractive: true } => RunInteractivePtyAsync(step.Command.Cmd, scenario.Cwd, shell, shellState, step.Width, step.Height, verbose),
         { UsePty: true } when step.Keys.Count > 0 || step.Timeout is not null => RunPtyWithInputAsync(step, scenario.Cwd, shell, shellState, verbose),
         _ => RunCommandCoreAsync(step.Command.Cmd, scenario.Cwd, shell, shellState, step.UsePty, step.Width, step.Height, verbose, step.PtyStartCursor, step.Timeout),
     }));
+    // The steps are over: what ran in the background is no longer needed, and post comes after the outputs.
+    backgroundSteps.StopAll();
 }
 catch (Exception ex)
 {
@@ -1843,6 +1852,8 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
 
     using var proc = new Process { StartInfo = psi };
     proc.Start();
+    // A step that may be stopped runs in a job on Windows, which ends what the tree kill misses (ProcessJob).
+    using var job = timeout is null ? null : ProcessJob.TryCreate(proc);
     var readTask = PipeStreamCapture.ReadAsync(proc);
     var stopped = false;
     if (timeout is { } seconds)
@@ -1859,7 +1870,10 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
             stopped = true;
             try
             {
-                proc.Kill(entireProcessTree: true);
+                if (job is not null)
+                    job.Terminate();
+                else
+                    proc.Kill(entireProcessTree: true);
             }
             catch (InvalidOperationException)
             {
@@ -2279,15 +2293,45 @@ static void PrintScenarioCommandFailure(string phase, string cmd, int exitCode)
 /// </summary>
 static string FormatStrictFailure(FailedStep failure)
 {
-    var builder = new StringBuilder(failure.Hidden
-        ? $"step {failure.Number} (show: none) exited {failure.ExitCode}, and the steps after it may rely on it: {failure.Cmd}"
+    var builder = new StringBuilder(
+        failure.Background ? $"background step {failure.Number} {failure.Problem}: {failure.Cmd}"
+        : failure.Hidden ? $"step {failure.Number} (show: none) exited {failure.ExitCode}, and the steps after it may rely on it: {failure.Cmd}"
         : $"--strict stopped at step {failure.Number}, which exited {failure.ExitCode}: {failure.Cmd}");
     foreach (var line in failure.OutputTail)
         builder.Append(Environment.NewLine).Append("  | ").Append(line);
-    builder.Append(Environment.NewLine).Append(failure.Hidden
-        ? "Nothing was written. Set 'continue-on-error: true' on the step if it may fail."
+    builder.Append(Environment.NewLine).Append(
+        failure.Background ? "Nothing was written. Set 'continue-on-error: true' on the step if the steps after it can do without it, or raise 'wait-timeout'."
+        : failure.Hidden ? "Nothing was written. Set 'continue-on-error: true' on the step if it may fail."
         : "Nothing was written. Set 'continue-on-error: true' on a step that is meant to fail.");
     return builder.ToString();
+}
+
+/// <summary>
+/// Starts a <c>background: true</c> step's command as a pipe step would start, with the shell state so far, and waits
+/// until it is ready (<see cref="BackgroundSteps.StartAsync"/>).
+/// </summary>
+static Task<CommandExecution> RunBackgroundAsync(StepStart step, string? cwd, ShellLaunch shell, ShellState? state, BackgroundSteps background)
+{
+    var prepared = state?.PrepareDetached(step.Command.Cmd) ?? new PreparedCommand(step.Command.Cmd, null);
+    var psi = new ProcessStartInfo(shell.FileName)
+    {
+        UseShellExecute = false,
+        CreateNoWindow = true,
+    };
+    foreach (var arg in shell.Arguments)
+        psi.ArgumentList.Add(arg);
+    psi.ArgumentList.Add(OperatingSystem.IsWindows() && IsPowerShellLaunch(shell) ? PowerShellUtf8OutputPrefix + prepared.Command : prepared.Command);
+    if (!string.IsNullOrWhiteSpace(cwd))
+        psi.WorkingDirectory = cwd;
+    foreach (var (name, value) in ChildEnvironment(prepared))
+    {
+        if (value is null)
+            psi.Environment.Remove(name);
+        else
+            psi.Environment[name] = value;
+    }
+
+    return background.StartAsync(step.Index + 1, step.Command.Cmd, IsStepFlagSet(step.Command.Extra, "continue-on-error"), psi, step.WaitFor, step.WaitLimit);
 }
 
 static void ReportShellStateWarnings(ShellState? state)

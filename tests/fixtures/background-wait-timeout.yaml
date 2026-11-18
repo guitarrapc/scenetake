@@ -1,0 +1,17 @@
+# A background step whose wait text does not come within wait-timeout stops the recording, and the command is ended
+# (spec_scenario.md → Background steps).
+title: "background step waits too long"
+shell: bash
+settings:
+  typing-speed: 0.001
+  pre-delay: 0
+  post-delay: 0
+steps:
+  - echo before
+  - run: echo "working"; sleep 60
+    background: true
+    wait: "never printed"
+    wait-timeout: 1
+  - echo after
+post:
+  - echo post-ran

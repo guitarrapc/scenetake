@@ -1,0 +1,22 @@
+# A background step keeps running while the next steps record, and stops before post (spec_scenario.md → Background
+# steps). Run from the repository root by tests/shell_state_test.cs.
+title: "background step (bash)"
+width: 80
+height: 10
+shell: bash
+settings:
+  typing-speed: 0.001
+  pre-delay: 0
+  post-delay: 0
+pre:
+  - export COUNTER_DIR="$(mktemp -d)"
+steps:
+  - run: cd "$COUNTER_DIR" && export STEP=counted
+    show: none
+  # It gets the folder and the variable of the steps before it.
+  - run: echo "ready in $(basename "$PWD") as $STEP"; i=0; while :; do i=$((i+1)); echo "$i" > counter.txt; sleep 0.2; done
+    background: true
+    wait: "as counted"
+  - sleep 1; test -s counter.txt && echo "counter is running"
+post:
+  - a=$(cat "$COUNTER_DIR/counter.txt"); sleep 1; b=$(cat "$COUNTER_DIR/counter.txt"); if [ "$a" = "$b" ]; then echo "post sees it stopped"; else echo "post sees it running"; fi; rm -rf "$COUNTER_DIR"

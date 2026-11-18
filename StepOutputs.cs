@@ -457,8 +457,9 @@ internal sealed class StepOutputsReplay
 
     internal CommandExecution Run(StepStart step)
     {
-        // A step that shows nothing was not recorded: it takes no recorded output, and the steps list leaves it out.
-        if (step.Show == StepShow.None)
+        // A step that shows nothing, a background step among them, was not recorded: it takes no recorded output, and
+        // the steps list leaves it out.
+        if (step.Show == StepShow.None || step.Background)
             return new CommandExecution(0, false, "", "", null, null, []);
 
         var kind = step.UseInteractive ? RecordedStepKind.Interactive : step.UsePty ? RecordedStepKind.Pty : RecordedStepKind.Pipe;

@@ -382,13 +382,16 @@ docker rm $id
 
 With `shell: bash` or PowerShell, the steps read like one terminal session. A `cd`, an `export`, a variable, a function, or an alias in one step holds in the steps after it, and in `post`. `pre` works the same way, so `source .venv/bin/activate` there carries into the recording. Other shells (zsh, sh, fish, cmd) start each step afresh.
 
-Two step keys shape the session:
+A few step keys shape the session:
 
 ```yaml
 steps:
   - run: git clone https://github.com/me/app && cd app && npm install
     show: none              # Run without recording it: setup between scenes
-  - npm run build           # Runs in app, where the step before left off
+  - run: npm run dev
+    background: true        # Start it and go on while it runs: a server for the steps below
+    wait: "Local:"          # The next step starts when its output shows this
+  - curl -s localhost:5173/api/hello   # Runs in app, where the steps before left off
   - run: figlet "Deploy"
     show: output            # The output without the prompt and the typing
   - clear: true             # Clear the screen without typing a command
@@ -397,6 +400,7 @@ steps:
 ```
 
 - `show: none` runs the step without recording it, and takes no time in the recording. If it fails, the recording stops, as with `pre`. Set `continue-on-error: true` if it may fail.
+- `background: true` starts the command and leaves it running without recording it. With `wait`, the next step starts once the command prints that text, waiting up to `wait-timeout` seconds (default 30). If it exits first or the text does not come, the recording stops. scenetake ends the command, with everything it started, after the last step and before `post`.
 - `show: output` shows the output without the prompt and the typed command: a title, a banner, or a screen that is already open.
 - `clear: true` clears the screen. It needs neither `TERM` nor a `clear` command, so it works the same in CI.
 

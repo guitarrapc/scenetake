@@ -254,6 +254,9 @@ Map-form steps recognize:
 | `keys` | no | Requires `pty: true`, and does not apply to `interactive: true`. A list of entries that scenetake writes to the PTY while the command runs, in order. Each entry has `sleep` (seconds to wait first), `wait` (text to wait for in the output), `type` (text), or `key` (a key name), and not both `type` and `key`. `--save-keys` writes these entries from what a person types in an interactive step. Behavior and key names: [spec_pty.md](spec_pty.md#keys-and-timeout) → Keys and timeout. |
 | `timeout` | no | Seconds, above 0. When the command is still running after that time, scenetake stops it: in a PTY with Ctrl+C first, in a pipe by ending its process tree. A stop by timeout is not a failure: no exit-code warning, and `--strict` goes on. Does not apply to `interactive: true`. See [spec_pty.md](spec_pty.md#keys-and-timeout) → Keys and timeout. |
 | `show` | no | Default `all`. What the recording shows of the step: `all` (the prompt, the typed command, and the output), `output` (the comment line and the output, without the prompt and the typing), or `none` (nothing). Case does not matter. See What a step shows below. |
+| `background` | no | Default `false`. `true` starts the command and goes on while it runs, such as a server that later steps call. It is not recorded, and stops before `post`. See Background steps below. |
+| `wait` | no | Requires `background: true`. Text the command prints when it is ready, such as `Listening on`. The next step starts when the output shows it. |
+| `wait-timeout` | no | Requires `wait`. Seconds above 0 to wait for the text. Default `30`. |
 
 Coloring value formats, range grammar, and validation: [spec_highlight.md](spec_highlight.md). Coloring does not apply to PTY-captured output.
 
@@ -269,6 +272,27 @@ Coloring value formats, range grammar, and validation: [spec_highlight.md](spec_
 - **A failing `show: none` step stops the recording,** with or without `--strict`, unless it sets `continue-on-error: true`. No cast is written, and `post` runs. The steps after it rely on what it prepares, and the recording would not show why they fail. The error names the step and its last output lines.
 - The keys that change only how a step looks are errors with `show: none`: `name`, `run-highlight`, `highlight`, `stderr-color`, `pre-delay`, `post-delay`, `execution-duration`, and the output-timing keys. `run-highlight` is an error with `show: output`, which types nothing. `pty`, `keys`, `timeout`, `interactive`, and `continue-on-error` work with every value.
 - A scenario whose steps all show nothing has no steps to record, which is an error.
+
+### Background steps
+
+A step with `background: true` starts its command and lets the next steps run while it does: a development server that a later `curl` calls, a file watcher, a mock API. The recording shows nothing of it, and it takes no time in the cast.
+
+```yaml
+steps:
+  - run: npm run dev
+    background: true
+    wait: "Local:"          # the next step starts when the output shows this
+    wait-timeout: 60        # default 30 seconds
+  - curl -s localhost:5173/api/hello
+```
+
+- **Start.** The command runs as a pipe step does, with the shell state so far (Shell state across steps below): it starts in the folder and with the variables of the steps before it. What it changes itself does not carry, because it has not ended. Its stdin is closed, so it never reads the keyboard.
+- **Ready.** Without `wait`, the next step starts at once. With `wait`, scenetake reads stdout and stderr as they come and starts the next step when either shows the text, compared as a `keys` entry's `wait` compares ([spec_pty.md](spec_pty.md#wait)): without escape sequences, with runs of spaces and line breaks as one space. stderr shows `ready after 1.2 s: "Local:"`.
+- **Not ready.** When the command exits before the text, or the text does not come within `wait-timeout`, the recording stops, as for a failing `show: none` step: no cast, `post` runs, exit `1`. The error says which (`exited 1 before it printed "Local:"`, `did not print "Local:" within 30 s`) and shows the command's last output lines. With `continue-on-error: true` it is a warning instead, and the steps go on.
+- **Stop.** After the last step, before the cast is written, scenetake ends each background command with every process it started, and stderr shows `stopped (background): ...`. It also ends them before `post` when the recording stops with an error, and when scenetake itself is stopped with Ctrl+C. A command that exited by itself with a non-zero code before the end gets a warning, unless the step sets `continue-on-error: true`.
+- **Keys.** A background step takes `wait`, `wait-timeout`, and `continue-on-error` only. Every other step key, `name` and `show` included, is an error: the step is never typed or recorded, and has no terminal of its own.
+- **Why `wait` is 30 seconds by default** and not the 10 of a `keys` wait: a server or a build watcher compiles before it listens, which takes longer than a prompt takes to appear.
+- **Why the stop is not graceful.** A pipe has no terminal to press Ctrl+C in, so the processes are ended, as a pipe step's `timeout` ends them. A command that must clean up on exit does that in `post`.
 
 ### Clear steps
 
@@ -287,6 +311,7 @@ Recorded `steps` (pipe redirect or `pty: true`) observe the child exit code when
 | Non-zero exit, step sets `continue-on-error: true` | No warning. Recording continues, with `--strict` too |
 | Non-zero exit with `--strict` | Recording stops at this step. Later steps do not run. No cast. `post` runs. Exit `1`, or the failing `post` command's code |
 | Non-zero exit of a `show: none` step without `continue-on-error: true` | Recording stops at this step, with or without `--strict`. The rest as for `--strict` |
+| A `background: true` step that exits before its `wait` text, or does not print it in time, without `continue-on-error: true` | The same |
 | Fatal error (for example PTY spawn failure or output drain timeout) | Recording stops. No cast. `post` runs. Exit `1`, or the failing `post` command's code. See [spec_pty.md](spec_pty.md) |
 
 scenetake exits `0` after a successful cast write even when individual steps exited non-zero, unless `--strict`, `pre`, `post`, SVG, or another fatal error stops it. Failed command output can remain in the cast as legitimate demo content.
@@ -320,6 +345,7 @@ So `source .venv/bin/activate`, `nvm use 20`, and `. ./env.ps1` work for the ste
 - **Not carried:** shell options (`set -e`, `shopt`), traps, background jobs (`&`), history, the directory stack, and PowerShell modules from `Import-Module`. Variables the shell sets by itself, such as `RANDOM`, `SECONDS`, `PIPESTATUS`, `LASTEXITCODE`, and `$Matches`, are not carried either.
 - **Only what the commands changed.** Each command starts as a fresh shell, with its login files. The state is the difference between that fresh shell and the shell when the command ended, added up over the commands. What the login files set is never carried, so it cannot pile up.
 - **A failed command still carries.** As in a terminal, `cd app && false` leaves the next step in `app`. A command stopped by `timeout` carries nothing: what it changed before the stop is dropped, so a stop never leaves the next step somewhere unplanned. A command that replaces its shell (`exec`) or sets its own EXIT trap (bash) also carries nothing.
+- **A background command** gets the state so far and carries none back: it has not ended when the next step starts.
 - **A folder that no longer exists:** the next command starts in the scenario's `cwd` (or the caller's folder), and stderr shows `Warning: could not return to <folder>: it no longer exists or cannot be entered`.
 - **Child shells are not affected.** A bash script that a step runs reads the caller's own `BASH_ENV`, not scenetake's, and sees the exported variables only, as in a terminal.
 - **Aliases in bash** expand in the steps after the step that defines one. bash does not expand aliases in a shell that runs a command unless `expand_aliases` is set, so scenetake sets it then. Aliases from the login files then expand too, as in an interactive terminal. Before a step defines an alias, nothing changes.
@@ -348,7 +374,7 @@ PTY steps need none of this: ConPTY translates everything to UTF-8. On Linux and
 3. Derive the deterministic seed and timestamp. Resolve the shell (see Shell resolution below).
 4. Execute `pre` commands. From here on, each command gets the shell state of the ones before it (Shell state across steps).
 5. Repeat all output checks, including the folder check, because `pre` may change the outputs. On failure, skip recording and rendering, but run `post`.
-6. Execute `steps`. Record those that show something, and run those with `show: none` without recording them.
+6. Execute `steps`. Record those that show something, and run those with `show: none` without recording them. Start `background: true` steps and leave them running. After the last step, end the background commands.
 7. Write the cast file, including `render` metadata. If recording or writing fails, skip rendering, but run `post`.
 8. Render SVG or mp4 when selected. See [spec_svg.md](spec_svg.md) and [spec_mp4.md](spec_mp4.md).
 9. Execute `post` commands.
@@ -440,4 +466,5 @@ Template commands must run in the selected shell. `scenetake init --shell bash|p
 - **PowerShell needed the exit code made again.** A save after the command changed `-Command`'s exit code: a failing native command and `Write-Error` exited `0`, because the save was the last statement. `$?` read right after the user's last line, and `exit 1` when it is false, give the codes a plain run gives. Saving from the `PowerShell.Exiting` event left the exit code alone, but the event's action raced the process exit and saved in one case of six.
 - **PowerShell's error display depends on the line layout.** With the user's command on a line of its own inside `try {`, `throw 'boom'` showed a `Line | 2 |` block instead of `Exception: boom`. With the restore on the first line and the save after the last, every runtime error in nine cases showed as in a plain run.
 - **bash 5.2 and bash 3.2 dump values differently.** bash 5.2 writes a value with a line break as `$'a\nb'`, on one line; bash 3.2, macOS's `/bin/bash`, writes the break inside double quotes. The dump is read as statements that end at a line break outside quotes.
+- **Ending the process tree missed Git Bash's processes.** With the state's EXIT trap set, bash runs a command such as `sleep 60` in a child, and Git Bash's fork emulation leaves that process with a parent that has already exited. `Kill(entireProcessTree)` follows parents, so it ended bash and missed `sleep`, which held the pipes open: a pipe step stopped by `timeout` after 1 second waited 30 for its `sleep 30`, and a background `sleep 60` outlived scenetake (2026-11-18). On Windows a stopped pipe step and every background command now run in a job object, which holds every process started inside it, whatever its parent, and ends them all. The job also ends them when scenetake exits. A PTY step was not affected: Ctrl+C and the closed pseudo console reach every process attached to it.
 - **The login files' aliases must not start expanding.** Git Bash's login files define aliases such as `ls`, which a shell that runs a command does not expand. Setting `expand_aliases` whenever an alias exists would have changed what `ls` prints in every Git Bash recording, so it is set only after a step defines an alias.

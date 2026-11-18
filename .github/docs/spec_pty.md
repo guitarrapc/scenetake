@@ -135,9 +135,10 @@ Seconds from the command's start, above 0. When the command is still running the
 | Step | At the timeout | If it is still running |
 |---|---|---|
 | PTY | Ctrl+C, as a person would press it, so a TUI can leave the alternate screen and restore the terminal. The recording shows that. | SIGTERM after 2 seconds. Ended 1 second after that. |
-| Pipe | Its process tree ends. What it printed so far is its output. | — |
+| Pipe | Its process tree ends. On Windows every process it started ends, through a job object, including one whose parent has exited. What it printed so far is its output. | — |
 
 - stderr shows `stopped after N s (timeout)`.
+- **Why a job object on Windows.** Git Bash runs a command in a child whose parent then exits, once the shell has an EXIT trap, which the shell state sets ([spec_scenario.md](spec_scenario.md) → Shell state across steps). Ending the process tree missed that child, which held the pipes open: a step stopped after 1 second waited 30 for its `sleep 30`.
 - **A stop is no failure.** The author asked for it, so its exit code (130, or a signal's) is recorded as 0: no warning, and `--strict` goes on.
 
 #### Errors

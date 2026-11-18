@@ -20,6 +20,7 @@ internal static class ScenarioKeys
         "pty", "interactive", "normalize-typing", "continue-on-error",
         "keys", "timeout",
         "show", "clear",
+        "background", "wait", "wait-timeout",
     ];
 
     /// <summary>The keys a <c>highlight</c> entry reads.</summary>

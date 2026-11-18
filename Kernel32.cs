@@ -29,7 +29,71 @@ internal static unsafe class Kernel32
     private static readonly delegate* unmanaged<uint, uint, byte*, int, char*, int, int> MultiByteToWideCharExport =
         (delegate* unmanaged<uint, uint, byte*, int, char*, int, int>)Export("MultiByteToWideChar");
 
+    private static readonly delegate* unmanaged<nint, char*, nint> CreateJobObjectWExport =
+        (delegate* unmanaged<nint, char*, nint>)Export("CreateJobObjectW");
+
+    private static readonly delegate* unmanaged<nint, int, void*, uint, int> SetInformationJobObjectExport =
+        (delegate* unmanaged<nint, int, void*, uint, int>)Export("SetInformationJobObject");
+
+    private static readonly delegate* unmanaged<nint, nint, int> AssignProcessToJobObjectExport =
+        (delegate* unmanaged<nint, nint, int>)Export("AssignProcessToJobObject");
+
+    private static readonly delegate* unmanaged<nint, uint, int> TerminateJobObjectExport =
+        (delegate* unmanaged<nint, uint, int>)Export("TerminateJobObject");
+
+    private static readonly delegate* unmanaged<nint, int> CloseHandleExport =
+        (delegate* unmanaged<nint, int>)Export("CloseHandle");
+
     private static nint Export(string name) => NativeLibrary.GetExport(Library, name);
+
+    // JobObjectExtendedLimitInformation, and the limit that ends every process in the job when its last handle closes.
+    private const int JobObjectExtendedLimitInformation = 9;
+    private const uint JobObjectLimitKillOnJobClose = 0x2000;
+
+    /// <summary>A job object that ends its processes when its handle closes, or 0 when one cannot be made.</summary>
+    internal static nint CreateKillOnCloseJob()
+    {
+        var job = CreateJobObjectWExport(0, null);
+        if (job == 0)
+            return 0;
+
+        var limits = new JobObjectExtendedLimits();
+        limits.Basic.LimitFlags = JobObjectLimitKillOnJobClose;
+        if (SetInformationJobObjectExport(job, JobObjectExtendedLimitInformation, &limits, (uint)sizeof(JobObjectExtendedLimits)) == 0)
+        {
+            CloseHandleExport(job);
+            return 0;
+        }
+
+        return job;
+    }
+
+    internal static bool AssignProcessToJobObject(nint job, nint process) => AssignProcessToJobObjectExport(job, process) != 0;
+
+    internal static bool TerminateJobObject(nint job, uint exitCode) => TerminateJobObjectExport(job, exitCode) != 0;
+
+    internal static void CloseHandle(nint handle) => CloseHandleExport(handle);
+
+    /// <summary>JOBOBJECT_EXTENDED_LIMIT_INFORMATION. SIZE_T and ULONG_PTR are pointer-sized, so nint gives their alignment.</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    private struct JobObjectExtendedLimits
+    {
+        public JobObjectBasicLimits Basic;
+        public ulong ReadOperationCount, WriteOperationCount, OtherOperationCount, ReadTransferCount, WriteTransferCount, OtherTransferCount;
+        public nint ProcessMemoryLimit, JobMemoryLimit, PeakProcessMemoryUsed, PeakJobMemoryUsed;
+    }
+
+    /// <summary>JOBOBJECT_BASIC_LIMIT_INFORMATION.</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    private struct JobObjectBasicLimits
+    {
+        public long PerProcessUserTimeLimit, PerJobUserTimeLimit;
+        public uint LimitFlags;
+        public nint MinimumWorkingSetSize, MaximumWorkingSetSize;
+        public uint ActiveProcessLimit;
+        public nint Affinity;
+        public uint PriorityClass, SchedulingClass;
+    }
 
     /// <summary>Opens <paramref name="fileName"/>; the handle is invalid when it cannot be opened.</summary>
     internal static SafeFileHandle CreateFile(string fileName, uint desiredAccess, uint shareMode, uint creationDisposition, uint flagsAndAttributes)
@@ -89,6 +153,55 @@ internal static unsafe class Kernel32
         fixed (byte* source = bytes)
         fixed (char* destination = chars)
             return MultiByteToWideCharExport(codePage, 0, source, bytes.Length, destination, chars.Length);
+    }
+}
+
+/// <summary>
+/// The processes of one command on Windows, held in a job object, so that ending the job ends them all. Ending the
+/// process tree misses a process whose parent has exited: Git Bash's fork emulation leaves one when the shell runs a
+/// command in a child, as it does with an EXIT trap set, and that process kept the pipes open until it ended by
+/// itself. A process started inside the job stays in it. The job ends its processes when it is disposed, and when
+/// scenetake exits, even by Ctrl+C. Elsewhere, and when Windows refuses a job, <see cref="TryCreate"/> gives null and
+/// the caller ends the process tree as before.
+/// </summary>
+internal sealed class ProcessJob : IDisposable
+{
+    private nint _handle;
+
+    private ProcessJob(nint handle) => _handle = handle;
+
+    /// <summary>A job that holds <paramref name="process"/> and what it starts, or null.</summary>
+    internal static ProcessJob? TryCreate(System.Diagnostics.Process process)
+    {
+        if (!OperatingSystem.IsWindows())
+            return null;
+
+        var handle = Kernel32.CreateKillOnCloseJob();
+        if (handle == 0)
+            return null;
+
+        // The command has just started: a shell reads its login files before it starts anything.
+        if (!Kernel32.AssignProcessToJobObject(handle, process.SafeHandle.DangerousGetHandle()))
+        {
+            Kernel32.CloseHandle(handle);
+            return null;
+        }
+
+        return new ProcessJob(handle);
+    }
+
+    /// <summary>Ends every process in the job.</summary>
+    internal void Terminate()
+    {
+        if (_handle != 0)
+            Kernel32.TerminateJobObject(_handle, 1);
+    }
+
+    public void Dispose()
+    {
+        var handle = Interlocked.Exchange(ref _handle, 0);
+        if (handle != 0)
+            Kernel32.CloseHandle(handle);
     }
 }
 

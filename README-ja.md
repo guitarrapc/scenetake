@@ -378,13 +378,16 @@ docker rm $id
 
 `shell: bash` か PowerShell では、ステップがひと続きのターミナルセッションとして動きます。あるステップの `cd`、`export`、変数、関数、エイリアスは、後のステップと `post` にも引き継がれます。`pre` も同じなので、`pre` で `source .venv/bin/activate` すれば録画するステップでも効きます。ほかのシェル（zsh、sh、fish、cmd）では、ステップごとに新しいシェルで始まります。
 
-セッションの組み立てには、次の 2 つのキーを使います。
+セッションの組み立てには、次のキーを使います。
 
 ```yaml
 steps:
   - run: git clone https://github.com/me/app && cd app && npm install
     show: none              # 録画せずに実行する（場面の間の準備）
-  - npm run build           # 前のステップの続き（app フォルダ）で実行される
+  - run: npm run dev
+    background: true        # 起動して、動かしたまま次へ進む（後のステップが呼ぶサーバー）
+    wait: "Local:"          # 出力にこの文字が出たら次のステップを始める
+  - curl -s localhost:5173/api/hello   # 前のステップの続き（app フォルダ）で実行される
   - run: figlet "Deploy"
     show: output            # プロンプトと入力を出さず、出力だけ見せる
   - clear: true             # コマンドを入力せずに画面を消す
@@ -393,6 +396,7 @@ steps:
 ```
 
 - `show: none` は録画せずに実行し、録画の時間も使いません。失敗すると `pre` と同じく録画を止めます。失敗してもよい場合は `continue-on-error: true` を付けてください。
+- `background: true` はコマンドを起動し、録画せずに動かしたままにします。`wait` を付けると、その文字が出力に出るまで最大 `wait-timeout` 秒（既定 30 秒）待ってから次のステップを始めます。先に終了したり文字が出なかったりすると、録画を止めます。最後のステップの後、`post` の前に、そのコマンドが起動したものごと終了させます。
 - `show: output` は、プロンプトと入力したコマンドを出さずに出力だけを見せます。タイトル、バナー、すでに開いている画面に使います。
 - `clear: true` は画面を消します。`TERM` も `clear` コマンドも要らないので、CI でも同じように動きます。
 

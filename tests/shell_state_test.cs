@@ -19,9 +19,9 @@
 #:include ../PlaygroundRender.cs
 #:include ../ShellState.cs
 
-// Shell state across steps, and the step keys show and clear (.github/docs/spec_scenario.md → Shell state across
-// steps, steps). The unit tests need only the sources. The integration tests record fixtures with a published binary
-// (SCENETAKE_BIN) and need bash, on Windows Git Bash; the PowerShell one also needs pwsh.
+// Shell state across steps, and the step keys show, clear, and background (.github/docs/spec_scenario.md → Shell
+// state across steps, steps). The unit tests need only the sources. The integration tests record fixtures with a
+// published binary (SCENETAKE_BIN) and need bash, on Windows Git Bash; the PowerShell one also needs pwsh.
 
 using System.Diagnostics;
 using System.Text;
@@ -45,9 +45,18 @@ failures += Run("PlaygroundComposesShowAndClear", PlaygroundComposesShowAndClear
 failures += Run("HiddenStepFailureStops", () => HiddenStepFailureStops(continueOnError: false));
 failures += Run("HiddenStepContinueOnError", () => HiddenStepFailureStops(continueOnError: true));
 failures += Run("MaskerLearnsExportedSecrets", MaskerLearnsExportedSecrets);
+failures += Run("BackgroundErrors", BackgroundErrors);
+failures += Run("BackgroundStepStartsAndRecordsNothing", BackgroundStepStartsAndRecordsNothing);
+failures += Run("BackgroundProblemStops", () => BackgroundProblemStops(continueOnError: false));
+failures += Run("BackgroundProblemContinueOnError", () => BackgroundProblemStops(continueOnError: true));
+failures += Run("PlaygroundSkipsBackground", PlaygroundSkipsBackground);
 failures += Run("IntegrationBashCarriesState", () => IntegrationBashCarriesState(repoRoot));
 failures += Run("IntegrationPowerShellCarriesState", () => IntegrationPowerShellCarriesState(repoRoot));
 failures += Run("IntegrationHiddenStepFailureStops", () => IntegrationHiddenStepFailureStops(repoRoot));
+failures += Run("IntegrationBackgroundRunsUntilPost", () => IntegrationBackgroundRunsUntilPost(repoRoot));
+failures += Run("IntegrationBackgroundExitStops", () => IntegrationBackgroundExitStops(repoRoot));
+failures += Run("IntegrationBackgroundWaitTimeoutStops", () => IntegrationBackgroundWaitTimeoutStops(repoRoot));
+failures += Run("IntegrationBackgroundContinueOnError", () => IntegrationBackgroundContinueOnError(repoRoot));
 
 if (failures > 0)
 {
@@ -301,14 +310,191 @@ static bool MaskerLearnsExportedSecrets()
         && Expect(off.MaskText("correct-horse-battery-staple") == "correct-horse-battery-staple", "mask-auto: false learned a value");
 }
 
+static bool BackgroundErrors()
+{
+    var ok = true;
+    ok &= ExpectError("- run: serve\n  wait: Listening", "Step 1 key 'wait' applies to a 'background: true' step");
+    ok &= ExpectError("- run: serve\n  wait-timeout: 5", "Step 1 key 'wait-timeout' applies to a 'background: true' step");
+    ok &= ExpectError("- run: serve\n  background: maybe", "Step 1 key 'background' must be true or false");
+    ok &= ExpectError("- run: serve\n  background: true\n  pty: true", "Step 1 key 'pty' does not apply to a 'background: true' step");
+    ok &= ExpectError("- run: serve\n  background: true\n  show: output", "Step 1 key 'show' does not apply to a 'background: true' step");
+    ok &= ExpectError("- run: serve\n  background: true\n  timeout: 5", "Step 1 key 'timeout' does not apply to a 'background: true' step");
+    ok &= ExpectError("- run: serve\n  background: true\n  name: Server", "Step 1 key 'name' does not apply to a 'background: true' step");
+    ok &= ExpectError("- run: serve\n  background: true\n  wait-timeout: 5", "Step 1 key 'wait-timeout' needs 'wait'");
+    ok &= ExpectError("- run: serve\n  background: true\n  wait: ready\n  wait-timeout: 0", "Step 1 key 'wait-timeout' must be a number of seconds above 0");
+    ok &= ExpectError("- run: serve\n  background: true\n  wait: \"  \"", "Step 1 key 'wait' must be text the command prints");
+    ok &= ExpectError("- run: serve\n  background: true", "The scenario has no steps to record");
+    ok &= ExpectError("- run: serve\n  background: true\n  wait: Listening on\n  wait-timeout: 60\n  continue-on-error: true\n- run: watch\n  background: false\n- curl localhost", null);
+    return ok;
+
+    static bool ExpectError(string steps, string? expected)
+    {
+        var yaml = "steps:\n" + string.Join('\n', steps.Split('\n').Select(static line => "  " + line));
+        var error = FindStepKeyError(ParseScenario(yaml));
+        return expected is null
+            ? Expect(error is null, $"unexpected error: {error}")
+            : Expect(error is not null && error.StartsWith(expected, StringComparison.Ordinal), $"expected '{expected}', got '{error}'");
+    }
+}
+
+static bool BackgroundStepStartsAndRecordsNothing()
+{
+    const string yaml = """
+        steps:
+          - run: serve
+            background: true
+            wait: Listening on
+          - run: watch
+            background: true
+            wait: ready
+            wait-timeout: 5
+          - run: worker
+            background: true
+          - curl localhost
+        """;
+    var started = new List<StepStart>();
+    var (events, failure) = GenerateAsync(ParseScenario(yaml), 1, new GenerateOptions { LogRunning = false }, step =>
+    {
+        started.Add(step);
+        return Task.FromResult(step.Background
+            ? CommandExecution.FromPipe("", "", 0)
+            : CommandExecution.FromPipeStream("ok\n", "", 0, [new PipeStreamChunk(TimeSpan.Zero, false, "ok\n")]));
+    }).GetAwaiter().GetResult();
+
+    var output = string.Concat(events.Where(static e => e.Kind == CastEventKind.Output).Select(static e => e.Data));
+    return Expect(failure is null, $"failure: {failure}")
+        && Expect(started.Count == 4, $"started: {started.Count}")
+        && Expect(started[0] is { Background: true, WaitFor: "Listening on", WaitLimit: BackgroundWaitLimit, Show: StepShow.None }, $"serve: {started[0]}")
+        && Expect(started[1] is { Background: true, WaitFor: "ready", WaitLimit: 5 }, $"watch: {started[1]}")
+        && Expect(started[2] is { Background: true, WaitFor: null }, $"worker: {started[2]}")
+        && Expect(!started[3].Background, "curl ran in the background")
+        && Expect(!output.Contains("serve", StringComparison.Ordinal) && !output.Contains("worker", StringComparison.Ordinal), "a background step was typed")
+        && Expect(output.Contains("ok", StringComparison.Ordinal), "the step after it");
+}
+
+static bool BackgroundProblemStops(bool continueOnError)
+{
+    var yaml = $"""
+        steps:
+          - run: serve
+            background: true
+            wait: Listening
+            continue-on-error: {(continueOnError ? "true" : "false")}
+          - curl localhost
+        """;
+    var started = new List<string>();
+    var (_, failure) = GenerateAsync(ParseScenario(yaml), 1, new GenerateOptions { LogRunning = false }, step =>
+    {
+        started.Add(step.Command.Cmd);
+        return Task.FromResult(step.Background
+            ? CommandExecution.FromPipe("port in use\n", "", 3) with { BackgroundProblem = "exited 3 before it printed \"Listening\"" }
+            : CommandExecution.FromPipe("ok\n", "", 0));
+    }).GetAwaiter().GetResult();
+
+    if (continueOnError)
+        return Expect(failure is null, "continue-on-error stopped the recording") && Expect(started.Count == 2, string.Join(", ", started));
+
+    return Expect(failure is { Background: true, Number: 1, ExitCode: 3, Problem: "exited 3 before it printed \"Listening\"" }, $"failure: {failure}")
+        && Expect(failure!.OutputTail.SequenceEqual(["port in use"]), string.Join(" | ", failure.OutputTail))
+        && Expect(started.Count == 1, "a step ran after the background step failed");
+}
+
+// The playground runs nothing: a background step takes no recorded output, and the steps list leaves it out.
+static bool PlaygroundSkipsBackground()
+{
+    const string yaml = """
+        width: 40
+        height: 6
+        steps:
+          - run: serve
+            background: true
+            wait: Listening
+          - curl localhost
+        """;
+    var outputs = new StepOutputs
+    {
+        Scenetake = "test",
+        Os = "linux",
+        Shell = "bash",
+        Width = 40,
+        Height = 6,
+        Steps = [RecordedStep.Pipe("curl localhost", 0, [new PipeStreamChunk(TimeSpan.Zero, false, "hello\n")])],
+    };
+    var result = PlaygroundRender.RenderScenario(yaml, outputs, new PlaygroundOptions(), renderSvg: false);
+    var output = result.Cast is null ? "" : CastOutput(Encoding.UTF8.GetString(result.Cast));
+    return Expect(result.Error is null, $"render failed: {result.Error}")
+        && Expect(result.Steps.Count == 1 && result.Steps[0] is { Run: "curl localhost", Recorded: true }, $"steps: {string.Join(", ", result.Steps.Select(static s => s.Run))}")
+        && Expect(!output.Contains("serve", StringComparison.Ordinal) && output.Contains("hello", StringComparison.Ordinal), Show(output));
+}
+
+static bool IntegrationBackgroundRunsUntilPost(string repoRoot)
+{
+    if (!TryGetBinary(out var bin))
+        return true;
+
+    var run = RunFixture(bin, repoRoot, "background-bash.yaml");
+    return Expect(run.ExitCode == 0, $"exit {run.ExitCode}\n{run.Stderr}")
+        && Expect(run.Stderr.Contains("ready after", StringComparison.Ordinal), $"the wait for the state's variable: {run.Stderr}")
+        && Expect(run.Text.Contains("counter is running", StringComparison.Ordinal), $"the next step: {Show(run.Text)}")
+        && Expect(run.Stderr.Contains("stopped (background)", StringComparison.Ordinal), "the stop")
+        && Expect(run.Stderr.Contains("post sees it stopped", StringComparison.Ordinal), $"post: {run.Stderr}")
+        && Expect(!run.Text.Contains("while :", StringComparison.Ordinal), "the background command was recorded");
+}
+
+static bool IntegrationBackgroundExitStops(string repoRoot)
+{
+    if (!TryGetBinary(out var bin))
+        return true;
+
+    var run = RunFixture(bin, repoRoot, "background-exits.yaml");
+    return Expect(run.ExitCode == 1, $"exit {run.ExitCode}\n{run.Stderr}")
+        && Expect(run.Stderr.Contains("background step 2 exited 3 before it printed \"never printed\"", StringComparison.Ordinal), run.Stderr)
+        && Expect(run.Stderr.Contains("| starting", StringComparison.Ordinal), "the output tail")
+        && Expect(run.Stderr.Contains("post-ran", StringComparison.Ordinal), "post did not run")
+        && Expect(!run.Stderr.Contains("running: echo after", StringComparison.Ordinal), "a step ran after it")
+        && Expect(run.Text.Length == 0, "a cast was written");
+}
+
+static bool IntegrationBackgroundWaitTimeoutStops(string repoRoot)
+{
+    if (!TryGetBinary(out var bin))
+        return true;
+
+    var stopwatch = Stopwatch.StartNew();
+    var run = RunFixture(bin, repoRoot, "background-wait-timeout.yaml");
+    stopwatch.Stop();
+    return Expect(run.ExitCode == 1, $"exit {run.ExitCode}\n{run.Stderr}")
+        && Expect(run.Stderr.Contains("background step 2 did not print \"never printed\" within 1 s", StringComparison.Ordinal), run.Stderr)
+        && Expect(run.Stderr.Contains("| working", StringComparison.Ordinal), "the output tail")
+        && Expect(run.Stderr.Contains("post-ran", StringComparison.Ordinal), "post did not run")
+        // The command sleeps 60 s: it was ended, not waited for.
+        && Expect(stopwatch.Elapsed < TimeSpan.FromSeconds(30), $"took {stopwatch.Elapsed.TotalSeconds:0.0} s");
+}
+
+static bool IntegrationBackgroundContinueOnError(string repoRoot)
+{
+    if (!TryGetBinary(out var bin))
+        return true;
+
+    var run = RunFixture(bin, repoRoot, "background-continue.yaml");
+    return Expect(run.ExitCode == 0, $"exit {run.ExitCode}\n{run.Stderr}")
+        && Expect(run.Stderr.Contains("Warning: background step 1 exited 3 before it printed \"never printed\", and the steps go on (continue-on-error)", StringComparison.Ordinal), run.Stderr)
+        && Expect(run.Text.Contains("after", StringComparison.Ordinal), "the next step");
+}
+
 static bool IntegrationBashCarriesState(string repoRoot)
 {
     if (!TryGetBinary(out var bin))
         return true;
 
+    var stopwatch = Stopwatch.StartNew();
     var run = RunFixture(bin, repoRoot, "shell-state-bash.yaml");
+    stopwatch.Stop();
     var text = run.Text;
     return Expect(run.ExitCode == 0, $"exit {run.ExitCode}\n{run.Stderr}")
+        // Two steps sleep 30 s and are stopped after 1 s: a stop that misses the sleep waits for it.
+        && Expect(stopwatch.Elapsed < TimeSpan.FromSeconds(25), $"took {stopwatch.Elapsed.TotalSeconds:0.0} s")
+        && Expect(text.Contains("after-pty-timeout=fixtures", StringComparison.Ordinal), "a stopped PTY step changed the folder")
         && Expect(text.Contains("start=tests", StringComparison.Ordinal), "pre's cd")
         && Expect(text.Contains("now=fixtures", StringComparison.Ordinal), "a step's cd")
         && Expect(text.Contains("demo=carried plain=plain-value pre=pre-value", StringComparison.Ordinal), "variables")

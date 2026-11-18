@@ -17,6 +17,7 @@ internal abstract class ShellState : IDisposable
 {
     private readonly string _root;
     private int _count;
+    private int _detached;
     private readonly List<string> _warnings = [];
     private readonly List<KeyValuePair<string, string?>> _exports = [];
 
@@ -48,6 +49,18 @@ internal abstract class ShellState : IDisposable
     internal PreparedCommand Prepare(string command)
     {
         var folder = Path.Combine(_root, (++_count).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        Directory.CreateDirectory(folder);
+        return Prepare(command, folder);
+    }
+
+    /// <summary>
+    /// Like <see cref="Prepare"/>, for a command that keeps running while the next ones start (<c>background: true</c>):
+    /// it gets the state so far, and what it changes is never taken. Its folder stays until <see cref="Dispose"/>,
+    /// because the shell reads its scripts when it starts and writes its state when it ends.
+    /// </summary>
+    internal PreparedCommand PrepareDetached(string command)
+    {
+        var folder = Path.Combine(_root, "background-" + (++_detached).ToString(System.Globalization.CultureInfo.InvariantCulture));
         Directory.CreateDirectory(folder);
         return Prepare(command, folder);
     }

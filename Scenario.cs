@@ -202,6 +202,12 @@ internal static partial class ScenarioCast
             if (string.IsNullOrWhiteSpace(command.Cmd))
                 continue;
 
+            if (FindBackgroundError(command, index + 1, out var background) is { } backgroundError)
+                return backgroundError;
+            // A background step runs without being recorded, and takes none of the keys checked below.
+            if (background)
+                continue;
+
             if (FindShowError(command, index + 1, out var show) is { } showError)
                 return showError;
             // A step that shows nothing is a step to run, not to record.
@@ -266,6 +272,74 @@ internal static partial class ScenarioCast
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Seconds a background step waits for its <c>wait</c> text without <c>wait-timeout</c>. A server or a build
+    /// watcher takes longer to start than a prompt takes to appear, so this is longer than <see cref="KeyWaitLimit"/>.
+    /// </summary>
+    internal const double BackgroundWaitLimit = 30.0;
+
+    // The keys a background step reads besides run.
+    private static readonly string[] BackgroundStepKeys = ["background", "wait", "wait-timeout", "continue-on-error"];
+
+    /// <summary>
+    /// Whether a step sets <c>background: true</c>, and the error for its keys: <c>wait</c> and <c>wait-timeout</c>
+    /// apply to a background step only, and a background step, which is never recorded, takes no other key. Null when
+    /// the step is fine. <paramref name="number"/> is the step's 1-based position.
+    /// </summary>
+    internal static string? FindBackgroundError(CommandEntry command, int number, out bool background)
+    {
+        background = false;
+        var extra = command.Extra;
+        if (extra.TryGetValue("background", out var value) && value is not null)
+        {
+            if (value is bool flag)
+                background = flag;
+            else if (!(value is string text && bool.TryParse(text, out background)))
+                return $"Step {number} key 'background' must be true or false, not {DescribeValue(value)}.";
+        }
+
+        var hasWait = extra.TryGetValue("wait", out var wait) && wait is not null;
+        var hasWaitTimeout = extra.TryGetValue("wait-timeout", out var waitTimeout) && waitTimeout is not null;
+        if (!background)
+        {
+            if (hasWait)
+                return $"Step {number} key 'wait' applies to a 'background: true' step. To wait for text in a PTY step, use a keys entry: keys: [{{wait: \"...\"}}].";
+            if (hasWaitTimeout)
+                return $"Step {number} key 'wait-timeout' applies to a 'background: true' step with 'wait'.";
+            return null;
+        }
+
+        if (command.Name is not null)
+            return $"Step {number} key 'name' does not apply to a 'background: true' step, which runs without appearing in the recording.";
+        foreach (var key in extra.Keys)
+        {
+            if (Array.IndexOf(BackgroundStepKeys, key) < 0 && Array.IndexOf(ScenarioKeys.Step, key) >= 0)
+                return $"Step {number} key '{key}' does not apply to a 'background: true' step, which runs without appearing in the recording and takes only 'wait', 'wait-timeout', and 'continue-on-error'.";
+        }
+
+        if (hasWait && (TextToType(wait) is not { } waitText || !HasPrintable(waitText)))
+            return $"Step {number} key 'wait' must be text the command prints when it is ready, such as \"Listening on\", not {DescribeValue(wait)}.";
+        if (hasWaitTimeout)
+        {
+            if (!hasWait)
+                return $"Step {number} key 'wait-timeout' needs 'wait': without a text to wait for, the step goes on as soon as the command starts.";
+            if (!TryReadSeconds(waitTimeout, out var seconds) || seconds <= 0)
+                return $"Step {number} key 'wait-timeout' must be a number of seconds above 0, such as 60, not {DescribeValue(waitTimeout)}.";
+        }
+
+        return null;
+    }
+
+    /// <summary>The text a background step waits for, or null, and how long it waits. <see cref="FindBackgroundError"/> checks both.</summary>
+    internal static (string? Text, double Limit) GetBackgroundWait(Dictionary<string, object?> extra)
+    {
+        var text = extra.TryGetValue("wait", out var wait) && TextToType(wait) is { Length: > 0 } waitText ? waitText : null;
+        var limit = extra.TryGetValue("wait-timeout", out var waitTimeout) && TryReadSeconds(waitTimeout, out var seconds) && seconds > 0
+            ? seconds
+            : BackgroundWaitLimit;
+        return (text, limit);
     }
 
     /// <summary>What a step shows (<see cref="FindShowError"/> checks the value first): <see cref="StepShow.All"/> when it sets nothing.</summary>

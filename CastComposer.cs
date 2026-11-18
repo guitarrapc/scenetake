@@ -62,6 +62,36 @@ internal static partial class ScenarioCast
 
             if (string.IsNullOrWhiteSpace(command.Cmd)) continue;
 
+            if (IsStepFlagSet(command.Extra, "background"))
+            {
+                // The command starts and keeps running while the next steps record, such as a server that a later
+                // step calls, and is stopped before post. With wait, the next step starts when its output shows the
+                // text. The recording shows nothing of it, and the playground skips it.
+                if (options.LogRunning)
+                    Console.Error.WriteLine($"  starting (background): {command.Cmd}");
+                var (waitFor, waitLimit) = GetBackgroundWait(command.Extra);
+                var started = await run(new StepStart(
+                    i, command, false, false,
+                    scenario.Width ?? RenderSettingsResolver.DefaultTerminalCols,
+                    scenario.Height ?? RenderSettingsResolver.DefaultTerminalRows,
+                    null)
+                {
+                    Show = StepShow.None,
+                    Background = true,
+                    WaitFor = waitFor,
+                    WaitLimit = waitLimit,
+                });
+                if (started.BackgroundProblem is { } problem)
+                {
+                    // The steps after it call what it starts, so they would fail in the recording without saying why.
+                    if (!GetBool(command.Extra, false, "continue-on-error"))
+                        return (events, new FailedStep(i + 1, command.Cmd, started.ExitCode, FailureOutputTail(started)) { Background = true, Problem = problem });
+                    Console.Error.WriteLine($"Warning: background step {i + 1} {problem}, and the steps go on (continue-on-error): {command.Cmd}");
+                }
+
+                continue;
+            }
+
             var show = GetStepShow(command.Extra);
             if (show == StepShow.None)
             {
@@ -1060,6 +1090,15 @@ internal readonly record struct StepStart(
 
     /// <summary>What the step shows (<c>show</c>). A step with <see cref="StepShow.None"/> is run and not recorded: the playground skips it.</summary>
     internal StepShow Show { get; init; }
+
+    /// <summary>A <c>background: true</c> step: its command keeps running after the runner returns, until it is stopped before post.</summary>
+    internal bool Background { get; init; }
+
+    /// <summary>For a background step, the text its output shows when it is ready (<c>wait</c>), or null to go on at once.</summary>
+    internal string? WaitFor { get; init; }
+
+    /// <summary>For a background step, the seconds it waits for <see cref="WaitFor"/> (<c>wait-timeout</c>).</summary>
+    internal double WaitLimit { get; init; }
 }
 
 /// <summary>Output that is already timed: each chunk's time since the command started, and where the step ends.</summary>
@@ -1082,6 +1121,12 @@ internal readonly record struct CommandExecution(
 
     /// <summary>Playground: the line that stands for output the outputs file does not have.</summary>
     internal string? Placeholder { get; init; }
+
+    /// <summary>
+    /// A background step that did not get ready: what went wrong, such as <c>did not print "Listening" within 30 s</c>.
+    /// Null when it started, and printed its <c>wait</c> text when it has one.
+    /// </summary>
+    internal string? BackgroundProblem { get; init; }
 
     /// <summary>
     /// Interactive steps: when each key that <see cref="PtyInputChunks"/> leaves out was typed, because the program
@@ -1107,4 +1152,10 @@ record FailedStep(int Number, string Cmd, int ExitCode, IReadOnlyList<string> Ou
 {
     /// <summary>A <c>show: none</c> step, which stops the recording when it fails, with or without --strict.</summary>
     internal bool Hidden { get; init; }
+
+    /// <summary>A <c>background: true</c> step that did not get ready, which stops the recording too. <see cref="Problem"/> says why.</summary>
+    internal bool Background { get; init; }
+
+    /// <summary>For <see cref="Background"/>: what went wrong, such as <c>exited 1 before it printed "Listening"</c>.</summary>
+    internal string? Problem { get; init; }
 }
