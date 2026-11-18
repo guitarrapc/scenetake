@@ -257,6 +257,7 @@ Map-form steps recognize:
 | `background` | no | Default `false`. `true` starts the command and goes on while it runs, such as a server that later steps call. It is not recorded, and stops before `post`. See Background steps below. |
 | `wait` | no | Requires `background: true`. Text the command prints when it is ready, such as `Listening on`. The next step starts when the output shows it. |
 | `wait-timeout` | no | Requires `wait`. Seconds above 0 to wait for the text. Default `30`. |
+| `keep-output` | no | Default `false`. `true` shows the step's output from the earlier cast at the output path, even when the command now prints something else. The command still runs. See Recording again below. |
 
 Coloring value formats, range grammar, and validation: [spec_highlight.md](spec_highlight.md). Coloring does not apply to PTY-captured output.
 
@@ -270,7 +271,7 @@ Coloring value formats, range grammar, and validation: [spec_highlight.md](spec_
 
 - A `show: none` step runs as `pre` does, between the steps around it. Its folder, variables, functions, and aliases carry to the next step (Shell state across steps below). It is not in the cast or the outputs file, and the playground skips it.
 - **A failing `show: none` step stops the recording,** with or without `--strict`, unless it sets `continue-on-error: true`. No cast is written, and `post` runs. The steps after it rely on what it prepares, and the recording would not show why they fail. The error names the step and its last output lines.
-- The keys that change only how a step looks are errors with `show: none`: `name`, `run-highlight`, `highlight`, `stderr-color`, `pre-delay`, `post-delay`, `execution-duration`, and the output-timing keys. `run-highlight` is an error with `show: output`, which types nothing. `pty`, `keys`, `timeout`, `interactive`, and `continue-on-error` work with every value.
+- The keys that change only how a step looks are errors with `show: none`: `name`, `run-highlight`, `highlight`, `stderr-color`, `pre-delay`, `post-delay`, `execution-duration`, the output-timing keys, and `keep-output`. `run-highlight` is an error with `show: output`, which types nothing. `pty`, `keys`, `timeout`, `interactive`, and `continue-on-error` work with every value.
 - A scenario whose steps all show nothing has no steps to record, which is an error.
 
 ### Background steps
@@ -420,9 +421,39 @@ On Windows:
 
 Deterministic seed and timestamp are derived from the whole YAML file (normalized line endings). Any change to the file may change cast metadata and typing jitter, even for keys that do not produce cast events (such as `pre`/`post`).
 
-Instant pipe output produces identical casts across runs if commands print identical output. PTY, interactive, and stream output use wall-clock timing. Their output events and the interval to the next event can differ between runs.
+Instant pipe output produces identical casts across runs if commands print identical output. PTY, interactive, and stream output use wall-clock timing. Their output events and the interval to the next event can differ between runs, unless the run records again to an earlier cast (Recording again below).
 
 After each such step, recording resumes at the next whole millisecond. This keeps subsequent timing stable after that first interval. Without this adjustment, fractional milliseconds could change later typing intervals by 1ms. Cast intervals use differences between rounded absolute times ([spec_cast.md](spec_cast.md) → Event time).
+
+## Recording again
+
+A demo is recorded again and again: after a tool update, in CI, or after a change to one step. Each recording used to differ from the one before even when nothing changed. PTY output is timed by the wall clock, so a step that printed the same text moved by a few milliseconds, and so did the SVG. Output that changes on every run, such as a date, a commit hash, or a random ID, changed it too. A diff appeared on every recording, and the real changes were hard to find.
+
+So a recording compares each step with the cast that is already at its output path, written by an earlier recording:
+
+| The step | What the cast gets |
+|---|---|
+| Prints the same as in the earlier cast | The earlier events, with their timing |
+| Prints something else | This run's events |
+| Prints something else, and sets `keep-output: true` | The earlier events, with their timing |
+| Is not in the earlier cast (new, or its `run` changed) | This run's events |
+
+- **The same output gives the same files.** A scenario recorded again with nothing changed gives the same cast byte for byte, and so the same SVG. Only the steps whose output changed differ.
+- **What is compared.** The step's output as the cast shows it, after masking and coloring, joined across events, so a PTY that splits the same text into other reads still prints the same. A new `highlight` or `stderr-color` changes the output, so the step takes this run's events.
+- **What the YAML times still applies.** The prompt, typing, comments, and delays come from the YAML, so a new typing speed takes effect while each step's output keeps its timing. A step whose output-timing keys changed (`execution-duration`, `stream-output`, `max-duration`, `silence-threshold`, `max-idle`, `normalize-typing`, `timeout`, and for a step that types keys, its typing and `keys`) takes this run's timing, or the new key would have no effect.
+- **A step is found** by its `run` text, by pipe, pty, or interactive, and by `show`, in order: the second step that runs the same command finds the second one. A step that moved keeps its timing.
+- **`keep-output: true`** is for a step whose output changes on every run and does not need to stay current. The command still runs, because the steps after it may need what it does. A failing command still warns, and stops the recording with `--strict`, so a broken command is not hidden behind an old output. A kept step keeps its earlier colors too: remove the key for one recording to take a new `highlight`. Pipe output, which appears at once, takes this run's time.
+- **The CLI says what happened**, after the cast's `Written:` line: `Compared with the earlier cast: 4 of 5 steps printed the same, 1 changed`, then each changed and new step. A first recording says nothing, unless a step sets `keep-output`, which then has nothing to keep.
+- **Starting afresh.** Delete the cast. A cast without the tag below, from an earlier scenetake or another tool, is not compared, and the CLI says so once.
+- **`--replay`** compares the same way. The playground has no earlier cast, and lists `keep-output` as not applied.
+
+**Where the steps are.** The cast's `st:steps` tag holds, for each recorded step, a hash of how it is found, a hash of its output-timing keys, whether the clock times its output, its first event and event count, and its start and end in milliseconds ([spec_cast.md](spec_cast.md) → Header). Players ignore it.
+
+**Why the cast, not the outputs file.** The cast is written on every recording, next to the SVG, and is usually committed with it, so CI can compare without another file. The outputs file is written only with `--save-outputs`, holds PTY output as base64, which a diff cannot show, and repeats what the cast holds. A step's events in the cast are also what the viewer sees, which is the right thing to compare.
+
+**Why `keep-output` and not a pattern to replace.** A replacement such as `in *s` → `in 0.42s` keeps the rest of a step current, but needs a pattern language (no regular expressions: they would add hundreds of kilobytes to the Native AOT binary), can change the width of a full-screen program's lines, and makes the author find each changing value. `keep-output` covers the common case, a step that changes as a whole, with one key. A value can often be fixed at its source instead: `GIT_AUTHOR_DATE` and `GIT_COMMITTER_DATE` exported in a `show: none` step give the same commits the same hashes on every recording, and `TZ` fixes the time zone.
+
+**Not chosen.** Timing PTY output by its text alone needs no earlier cast, but TUI motion and spinners would no longer play at real speed. Rounding output times to a grid still flips at the grid's edges. Comparing SVGs cannot tell a timing difference from a change.
 
 ## Init Template
 
@@ -477,3 +508,6 @@ Template commands must run in the selected shell. `scenetake init --shell bash|p
 - **The user's zsh startup files are read at the top level, not from a function.** A file read from a function makes its `typeset` statements local to that function, so `typeset -U path` or `typeset FOO=bar` in `.zprofile` would vanish when the function returns. Many users' `.zshenv` moves `ZDOTDIR` to another folder, so each of scenetake's files takes the user's `ZDOTDIR` as the last file left it before pointing it back.
 - **The sh family writes quotes three ways.** A quote in a value comes out as `'it'"'"'s'` (dash, busybox ash), `'it'\''s'` (mksh, bash as sh), or `$'it\'s'` (ksh93). dash and ash write a line break inside single quotes. Each shell reads its own `set` output back, so a statement is restored as written, and only a secret's value for masking is unquoted.
 - **The login files' aliases must not start expanding.** Git Bash's login files define aliases such as `ls`, which a shell that runs a command does not expand. Setting `expand_aliases` whenever an alias exists would have changed what `ls` prints in every Git Bash recording, so it is set only after a step defines an alias.
+- **Kept events land at whole milliseconds from the step's start** (2026-11-18). The cast writer carries rounding error from interval to interval, so each interval is the difference of two rounded absolute times. Placing the earlier events at their earlier offsets in whole milliseconds, and moving every later event by a whole number of milliseconds and rounding it to the microsecond again, gives the earlier file byte for byte. Offsets in fractions of a millisecond moved intervals by 1 ms.
+- **The OSC filter drops events, so the steps' event indices follow it.** An event that held only a ConPTY title is removed after the steps are composed, which moved every later step's first event. The filter reports where each event went, and the step ranges are taken through that map before the cast is compared and written.
+- **A step that moved is 1 ms off a fresh recording, not off the earlier cast.** After a new step before it, a kept step keeps every interval of the earlier cast, its first output included, while a fresh recording of the same output can round its first event 1 ms the other way. The comparison is with the earlier cast, so that is the one to match.

@@ -132,6 +132,7 @@ The UI lists these keys as not applied when the scenario sets them.
 | `pre`, `post` | No command runs. Their output is never in a cast. |
 | Timing and typing keys of an interactive step | Its output is stored already timed ([Contents](#contents)). The UI does not list these. |
 | `keys`, `timeout` | No command runs to type into, wait for, or stop. The recorded output already holds what they did. The playground still draws the typing delays of `type`, so later steps type as on the CLI. A `wait` draws none. The UI does not list these. |
+| `keep-output` | There is no earlier cast in the browser to keep the output of, so each step shows its recorded output ([spec_scenario.md](spec_scenario.md#recording-again) → Recording again). The cast the playground writes has the same `st:steps` tag as the CLI's. |
 
 ### Exit codes, warnings, and errors
 

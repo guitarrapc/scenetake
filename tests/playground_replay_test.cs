@@ -13,6 +13,7 @@
 #:include ../Scenario.cs
 #:include ../Highlight.cs
 #:include ../CastComposer.cs
+#:include ../Rerecord.cs
 #:include ../SecretMask.cs
 #:include ../StepChunks.cs
 #:include ../StepOutputs.cs
@@ -507,8 +508,11 @@ static bool NotAppliedKeysAreListed()
     var yaml = "width: 80\nheight: 24\nshell: pwsh\ncwd: work\npre:\n  - mkdir work\nsteps:\n  - echo hi\n";
     var result = Render(yaml, outputs);
     var sameShell = Render("width: 80\nheight: 24\nshell: bash\nsteps:\n  - echo hi\n", outputs);
+    // The browser has no earlier cast to keep the output of.
+    var keep = Render("width: 80\nheight: 24\nshell: bash\nsteps:\n  - run: echo hi\n    keep-output: true\n", outputs);
     return Expect(result.NotApplied.Count == 3, string.Join("; ", result.NotApplied))
-        & Expect(sameShell.NotApplied.Count == 0, "the recording's own shell is no note: " + string.Join("; ", sameShell.NotApplied));
+        & Expect(sameShell.NotApplied.Count == 0, "the recording's own shell is no note: " + string.Join("; ", sameShell.NotApplied))
+        & Expect(keep.NotApplied is [{ } note] && note.StartsWith("keep-output:", StringComparison.Ordinal), "keep-output: " + string.Join("; ", keep.NotApplied));
 }
 
 // YAML reads `key: #1e3c72` as a key with no value and a comment, so the color was lost without a word. The CLI and

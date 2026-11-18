@@ -236,7 +236,7 @@ internal static partial class ScenarioCast
     private static readonly string[] ShownOnlyKeys =
     [
         "name", "run-highlight", "highlight", "stderr-color", "pre-delay", "post-delay", "execution-duration",
-        "stream-output", "max-duration", "silence-threshold", "max-idle",
+        "stream-output", "max-duration", "silence-threshold", "max-idle", "keep-output",
     ];
 
     // The keys a clear step reads besides clear: it shows a comment line and takes time, but runs nothing.

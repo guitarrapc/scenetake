@@ -35,6 +35,7 @@
 #:include StepOutputs.cs
 #:include ShellState.cs
 #:include BackgroundSteps.cs
+#:include Rerecord.cs
 
 using MiniPty;
 using MiniPty.Capture;
@@ -865,6 +866,11 @@ string? SaveKeys()
     return null;
 }
 
+// The cast an earlier recording wrote here: a step that prints what it printed then keeps its events and timing,
+// so recording an unchanged scenario again gives the same cast and SVG (spec_scenario.md → Recording again).
+var previousCast = PreviousCast.TryRead(outputPath, out var previousCastProblem);
+var stepSlots = new List<StepSlot>();
+
 Console.Error.WriteLine("Generating cast...");
 List<CastEvent> events;
 FailedStep? strictFailure;
@@ -878,6 +884,7 @@ try
         Record = recordedSteps,
         Masker = masker,
         SavedKeys = savedKeys,
+        Slots = stepSlots,
     };
     (events, strictFailure) = await GenerateAsync(scenario, deterministicSeed, generateOptions, step => AfterStep(step switch
     {
@@ -913,11 +920,14 @@ if (strictFailure is not null)
 
 // OSC titles and similar sequences are never drawn, but a committed cast handed them to every reader:
 // ConPTY sets the title to the shell's full path, often under C:\Users\<name>.
-events = CastOscFilter.RemovePrivateSequences(events);
+var filterMap = new int[events.Count + 1];
+events = CastOscFilter.RemovePrivateSequences(events, filterMap);
+var rerecorded = Rerecording.Apply(events, Rerecording.MapIndices(stepSlots, filterMap), previousCast);
+events = rerecorded.Events;
 
 try
 {
-    WriteCast(scenario, events, outputPath, ShellEnvName(shell.FileName), deterministicTimestamp, renderSettings);
+    WriteCast(scenario, events, outputPath, ShellEnvName(shell.FileName), deterministicTimestamp, renderSettings, rerecorded.Slots);
 }
 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 {
@@ -933,6 +943,8 @@ var duration = events.Count > 0 ? events[^1].Time : 0.0;
 // With the cast as the only output, its line also says how large an SVG or mp4 of it would be.
 var convertedSizes = outputFormat == OutputFormat.Cast ? $", {DescribeConvertedSizes(events, scenarioWidth, scenarioHeight, renderSettings)}" : "";
 Console.Error.WriteLine($"Written: {FormatDisplayPath(outputPath)}  ({events.Count} events, {duration:F1}s{convertedSizes})");
+foreach (var line in Rerecording.Describe(rerecorded, previousCast is not null, previousCastProblem, FormatDisplayPath(outputPath)))
+    Console.Error.WriteLine(line);
 
 if (recordedSteps is not null)
 {
@@ -987,6 +999,9 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
     // The outputs were masked when they were recorded. Masking again hides what the YAML adds, such as a new
     // settings.mask text, and the secrets in this machine's environment.
     var replayMasker = SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment());
+    // As when recording: a step whose output is the same as in the cast here keeps its events, and keep-output keeps them.
+    var replayPrevious = PreviousCast.TryRead(outputPath, out var replayPreviousProblem);
+    var replaySlots = new List<StepSlot>();
     Console.Error.WriteLine("Generating cast...");
     var (replayed, failure) = await GenerateAsync(scenario, deterministicSeed, new GenerateOptions
     {
@@ -995,6 +1010,7 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
         TrackPtyCursor = replay.TrackPtyCursor,
         LogRunning = false,
         Masker = replayMasker,
+        Slots = replaySlots,
     }, replay.RunAsync);
 
     var missing = replay.Steps.Where(static step => !step.Recorded).ToList();
@@ -1020,10 +1036,13 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
         return 1;
     }
 
-    replayed = CastOscFilter.RemovePrivateSequences(replayed);
+    var replayMap = new int[replayed.Count + 1];
+    replayed = CastOscFilter.RemovePrivateSequences(replayed, replayMap);
+    var replayRerecorded = Rerecording.Apply(replayed, Rerecording.MapIndices(replaySlots, replayMap), replayPrevious);
+    replayed = replayRerecorded.Events;
     try
     {
-        WriteCast(scenario, replayed, outputPath, outputs.Shell, deterministicTimestamp, renderSettings);
+        WriteCast(scenario, replayed, outputPath, outputs.Shell, deterministicTimestamp, renderSettings, replayRerecorded.Slots);
     }
     catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
     {
@@ -1037,6 +1056,8 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
     var replayDuration = replayed.Count > 0 ? replayed[^1].Time : 0.0;
     var replaySizes = outputFormat == OutputFormat.Cast ? $", {DescribeConvertedSizes(replayed, scenarioWidth, scenarioHeight, renderSettings)}" : "";
     Console.Error.WriteLine($"Written: {FormatDisplayPath(outputPath)}  ({replayed.Count} events, {replayDuration:F1}s{replaySizes})");
+    foreach (var line in Rerecording.Describe(replayRerecorded, replayPrevious is not null, replayPreviousProblem, FormatDisplayPath(outputPath)))
+        Console.Error.WriteLine(line);
 
     var renderExitCode = RenderFromCast(outputFormat, outputPath, svgPath, mp4Path, pngPath, gifPath, renderSettings, runMp4Options, runStillAt, ffmpegPath);
     if (renderExitCode != 0)

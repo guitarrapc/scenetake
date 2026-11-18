@@ -1944,7 +1944,14 @@ internal static class CastOscFilter
         DropEscape, // ESC inside a dropped OSC.
     }
 
-    internal static List<CastEvent> RemovePrivateSequences(List<CastEvent> events)
+    internal static List<CastEvent> RemovePrivateSequences(List<CastEvent> events) => RemovePrivateSequences(events, null);
+
+    /// <summary>
+    /// <see cref="RemovePrivateSequences(List{CastEvent})"/>, which drops an event that held nothing else.
+    /// <paramref name="indexMap"/>, when given, has one more entry than <paramref name="events"/>, and receives for each
+    /// event the index in the result where it, or the event after it, went, and the result's count at the end.
+    /// </summary>
+    internal static List<CastEvent> RemovePrivateSequences(List<CastEvent> events, int[]? indexMap)
     {
         var state = State.Ground;
         var pending = new List<byte>(16);
@@ -1952,6 +1959,8 @@ internal static class CastOscFilter
         var result = new List<CastEvent>(events.Count);
         for (var index = 0; index < events.Count; index++)
         {
+            if (indexMap is not null)
+                indexMap[index] = result.Count;
             var ev = events[index];
             if (ev.Kind != CastEventKind.Output)
             {
@@ -1985,6 +1994,8 @@ internal static class CastOscFilter
         }
 
         // An ESC or an OSC still open when the recording ends shows nothing, so it is dropped.
+        if (indexMap is not null)
+            indexMap[events.Count] = result.Count;
         return result;
     }
 

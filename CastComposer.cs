@@ -186,6 +186,7 @@ internal static partial class ScenarioCast
             }
 
             var commandStart = t;
+            var outputFirst = events.Count;
             if (execution.Placeholder is { } placeholder)
             {
                 // The playground has no output for this command. The line stands where its output would be,
@@ -247,8 +248,32 @@ internal static partial class ScenarioCast
             // times rounded to milliseconds, so that fraction moved later typed intervals by 1ms, and a cast
             // regenerated from the same scenario differed on lines after the step. Going on from a whole
             // millisecond keeps them the same; only the output and the first interval after it still differ.
-            if (execution.IsPty || cmdCastTiming.UsesStreamEmission())
+            var clock = execution.IsPty || cmdCastTiming.UsesStreamEmission();
+            if (clock)
                 t = CeilingToMillisecond(t);
+
+            // Where the step's output is, for the cast's st:steps tag: recording again to the same file keeps a step
+            // that prints the same, with its timing, so only the steps whose output changed differ (Rerecording).
+            options.Slots?.Add(new StepSlot(
+                i + 1,
+                command.Cmd,
+                Rerecording.StepId(usePty, useInteractive, show, command.Cmd),
+                Rerecording.TimingHash(
+                    cmdExecutionDuration,
+                    cmdCastTiming,
+                    normalizeTyping,
+                    GetStepTimeout(command.Extra),
+                    useInteractive || keys.Count > 0,
+                    cmdSpeed,
+                    cmdJitter,
+                    command.Extra.GetValueOrDefault("keys")),
+                clock,
+                GetBool(command.Extra, false, "keep-output"),
+                outputFirst,
+                events.Count - outputFirst,
+                commandStart,
+                t,
+                commandStart + cmdExecutionDuration));
 
             t += cmdPost;
             t += cmdPre;
@@ -801,20 +826,25 @@ internal static partial class ScenarioCast
         string outputPath,
         string shellName,
         long timestamp,
-        ResolvedRenderSettings renderSettings)
+        ResolvedRenderSettings renderSettings,
+        IReadOnlyList<StepSlot>? slots = null)
     {
         using var writer = new StreamWriter(outputPath, append: false, encoding: new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-        WriteCast(writer, scenario, events, shellName, timestamp, renderSettings);
+        WriteCast(writer, scenario, events, shellName, timestamp, renderSettings, slots);
     }
 
-    /// <summary>Writes the cast to <paramref name="writer"/>; <paramref name="shellName"/> is the header's env.SHELL (<see cref="ShellEnvName"/>).</summary>
+    /// <summary>
+    /// Writes the cast to <paramref name="writer"/>; <paramref name="shellName"/> is the header's env.SHELL (<see cref="ShellEnvName"/>).
+    /// <paramref name="slots"/> become the st:steps tag, which the next recording to the same file reads (<see cref="Rerecording"/>).
+    /// </summary>
     internal static void WriteCast(
         TextWriter writer,
         Scenario scenario,
         List<CastEvent> events,
         string shellName,
         long timestamp,
-        ResolvedRenderSettings renderSettings)
+        ResolvedRenderSettings renderSettings,
+        IReadOnlyList<StepSlot>? slots = null)
     {
         writer.NewLine = "\n";
 
@@ -861,6 +891,8 @@ internal static partial class ScenarioCast
             tags.Add(RenderSettingsResolver.CropLeftTagPrefix + renderSettings.Crop.Left.ToString(CultureInfo.InvariantCulture));
         if (renderSettings.Crop.Right > 0)
             tags.Add(RenderSettingsResolver.CropRightTagPrefix + renderSettings.Crop.Right.ToString(CultureInfo.InvariantCulture));
+        if (slots is { Count: > 0 })
+            tags.Add(Rerecording.FormatTag(slots));
         var tagsJson = string.Join(",", tags.ConvertAll(static tag => JsonEscape.JsonString(tag)));
         writer.WriteLine(
             $"{{\"version\":3,\"term\":{{\"cols\":{width},\"rows\":{height}" +
@@ -1057,6 +1089,9 @@ internal sealed class GenerateOptions
 
     /// <summary>Receives the keys typed in each interactive step, for --save-keys. Null keeps none.</summary>
     internal List<SavedStepKeys>? SavedKeys { get; init; }
+
+    /// <summary>Receives where each recorded step's output is in the cast (<see cref="StepSlot"/>), for its st:steps tag. Null keeps none.</summary>
+    internal List<StepSlot>? Slots { get; init; }
 }
 
 /// <summary>
