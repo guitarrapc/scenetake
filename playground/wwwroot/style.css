@@ -490,7 +490,8 @@ main {
   tab-size: 2;
 }
 
-.drop.drop--over {
+.drop.drop--over,
+.editor-host.drop--over {
   border-color: var(--accent);
 }
 

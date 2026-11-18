@@ -18,7 +18,14 @@ const state = {
   images: [],
   options: {},
   outputsInfo: null,
+  // Reset loads this YAML again: the sample's, or the reader's own.
   sampleYaml: '',
+  // The name of the reader's own outputs file without .outputs.json, while one is loaded instead of a sample's.
+  own: '',
+  // Counts the outputs files loaded, so a render for an earlier one is dropped.
+  outputsLoads: 0,
+  // The name of a YAML the reader opened while a sample's outputs file is loaded, for a hint in the step notes.
+  yamlWithoutOutputs: '',
   alive: true,
   ready: false,
 };
@@ -169,7 +176,7 @@ const castView = {
 };
 
 function scenarioKey() {
-  return JSON.stringify([state.sample, getYaml(), state.options]);
+  return JSON.stringify([state.sample, state.outputsLoads, getYaml(), state.options]);
 }
 
 async function renderScenario() {
@@ -290,6 +297,8 @@ function renderStepNotes(steps) {
     if (!step.recorded) notes.push(`${name}: no recording has this run text, so the preview shows a placeholder line.`);
     for (const notice of step.notices ?? []) notes.push(`${name}: ${notice}.`);
   }
+  if (state.yamlWithoutOutputs && (steps ?? []).some((step) => !step.recorded))
+    notes.push(`${state.yamlWithoutOutputs} replays the ${state.sample} sample's recording. Open its .outputs.json too, which scenetake --save-outputs writes.`);
   renderList($('step-notes'), 'Steps that differ from the recording', notes);
 }
 
@@ -393,12 +402,60 @@ async function selectSample(name, yaml) {
   const reply = await request('loadOutputs', { json: outputsJson });
   if (reply.meta.error) throw new Error(`samples/${name}.outputs.json: ${reply.meta.error}`);
   state.sample = name;
+  state.own = '';
+  state.yamlWithoutOutputs = '';
+  state.outputsLoads++;
   state.sampleYaml = sampleYaml;
-  state.outputsInfo = reply.meta;
+  showOutputsInfo(reply.meta);
+  $('sample-select').querySelector('option[data-own]')?.remove();
   $('sample-select').value = name;
-  $('recording-info').textContent =
-    ` ${reply.meta.scenetake} (${reply.meta.shell} on ${osName(reply.meta.os)}, terminal ${reply.meta.width}×${reply.meta.height})`;
   setYaml(yaml ?? sampleYaml);
+  scheduleScenarioRender(0);
+}
+
+function showOutputsInfo(meta) {
+  state.outputsInfo = meta;
+  $('recording-info').textContent = ` ${meta.scenetake} (${meta.shell} on ${osName(meta.os)}, terminal ${meta.width}×${meta.height})`;
+}
+
+/**
+ * Opens the reader's own files: a scenario YAML, and the outputs file that `scenetake --save-outputs` wrote for it,
+ * told apart by extension, or by a leading `{` for another name. Either one alone is taken too: a YAML alone replays
+ * the outputs already loaded, and an outputs file alone replays into the YAML in the editor. Nothing is uploaded.
+ */
+async function openOwnFiles(files) {
+  let yaml = null;
+  let outputs = null;
+  for (const file of files ?? []) {
+    const text = await file.text();
+    const json = /\.json$/i.test(file.name) || (!/\.ya?ml$/i.test(file.name) && text.trimStart().startsWith('{'));
+    if (json) outputs = { name: file.name, text };
+    else yaml = { name: file.name, text };
+  }
+  if (!yaml && !outputs) return;
+
+  if (outputs) {
+    const reply = await request('loadOutputs', { json: outputs.text });
+    if (reply.meta.error) throw new Error(`${outputs.name}: ${reply.meta.error}`);
+    state.sample = '';
+    state.own = outputs.name.replace(/(\.outputs)?\.json$/i, '') || 'scenario';
+    state.outputsLoads++;
+    showOutputsInfo(reply.meta);
+    const select = $('sample-select');
+    let option = select.querySelector('option[data-own]');
+    if (!option) {
+      option = document.createElement('option');
+      option.dataset.own = '';
+      option.value = '';
+      select.prepend(option);
+    }
+    option.textContent = `your file — ${outputs.name}`;
+    select.value = '';
+  }
+
+  if (yaml) setYaml(yaml.text);
+  if (outputs || state.own) state.sampleYaml = getYaml();
+  state.yamlWithoutOutputs = !state.own ? yaml.name : '';
   scheduleScenarioRender(0);
 }
 
@@ -633,9 +690,10 @@ function download(bytesOrText, fileName, type) {
 
 let castFileName = 'recording';
 
-$('download-yaml').addEventListener('click', () => download(getYaml(), `${state.sample || 'scenario'}.yaml`, 'text/yaml'));
-$('download-cast').addEventListener('click', () => scenarioView.cast && download(scenarioView.cast, `${state.sample || 'scenario'}.cast`, 'application/x-asciicast'));
-$('download-svg').addEventListener('click', () => scenarioView.svg && download(scenarioView.svg, `${state.sample || 'scenario'}.svg`, 'image/svg+xml'));
+const scenarioFileName = () => state.sample || state.own || 'scenario';
+$('download-yaml').addEventListener('click', () => download(getYaml(), `${scenarioFileName()}.yaml`, 'text/yaml'));
+$('download-cast').addEventListener('click', () => scenarioView.cast && download(scenarioView.cast, `${scenarioFileName()}.cast`, 'application/x-asciicast'));
+$('download-svg').addEventListener('click', () => scenarioView.svg && download(scenarioView.svg, `${scenarioFileName()}.svg`, 'image/svg+xml'));
 $('cast-download-svg').addEventListener('click', () => castView.svg && download(castView.svg, `${castFileName}.svg`, 'image/svg+xml'));
 $('replay-btn').addEventListener('click', () => showSvg(scenarioView));
 $('cast-replay-btn').addEventListener('click', () => showSvg(castView));
@@ -704,15 +762,47 @@ for (const view of [scenarioView, castView]) {
 }
 
 $('sample-select').addEventListener('change', (event) => {
+  // The reader's own file is the empty value: choosing it again keeps what is loaded.
+  if (!event.target.value) return;
   selectSample(event.target.value).catch((error) => showError(scenarioView, error.message));
 });
 
+$('own-files').addEventListener('change', (event) => {
+  openOwnFiles([...(event.target.files ?? [])]).catch((error) => showError(scenarioView, error.message));
+  event.target.value = '';
+});
+
+// Files dropped on the editor open as with Open files…, instead of CodeMirror inserting their text. A text drag
+// inside the editor still moves the text.
+const editorHost = $('editor-host');
+const dragsFiles = (event) => [...(event.dataTransfer?.types ?? [])].includes('Files');
+editorHost.addEventListener('dragover', (event) => {
+  if (!dragsFiles(event)) return;
+  event.preventDefault();
+  event.stopPropagation();
+  editorHost.classList.add('drop--over');
+}, true);
+editorHost.addEventListener('dragleave', () => editorHost.classList.remove('drop--over'), true);
+editorHost.addEventListener('drop', (event) => {
+  if (!dragsFiles(event)) return;
+  event.preventDefault();
+  event.stopPropagation();
+  editorHost.classList.remove('drop--over');
+  openOwnFiles([...(event.dataTransfer?.files ?? [])]).catch((error) => showError(scenarioView, error.message));
+}, true);
+
 $('reset-btn').addEventListener('click', () => {
+  if (!state.own) state.yamlWithoutOutputs = '';
   setYaml(state.sampleYaml);
   scheduleScenarioRender(0);
 });
 
 $('share-btn').addEventListener('click', async () => {
+  // A link names a published sample, whose outputs file the page fetches. The reader's own file is in no link.
+  if (state.own) {
+    scenarioView.status.textContent = 'A link cannot carry your outputs file. Download the .yaml, and share it with the .outputs.json.';
+    return;
+  }
   try {
     const hash = await encodeShare({ sample: state.sample, yaml: getYaml(), tab: state.tab, options: state.options });
     if (hash.length > MAX_SHARE_HASH_LENGTH) {

@@ -14,7 +14,7 @@ A browser cannot start processes, so it cannot run a scenario's commands. If the
 
 ### In scope
 
-- **Scenario tab.** The reader edits a sample scenario. The playground composes the cast in the browser from the sample's recorded outputs, then renders the SVG from that cast. Edits to these keys take effect: prompt, simulated typing, `name` comments, `run-highlight`, `highlight`, `stderr-color`, output timing keys, `render`, `title`, and terminal size.
+- **Scenario tab.** The reader edits a sample scenario, or opens their own with the outputs file that `scenetake --save-outputs` wrote. The playground composes the cast in the browser from the recorded outputs, then renders the SVG from that cast. Edits to these keys take effect: prompt, simulated typing, `name` comments, `run-highlight`, `highlight`, `stderr-color`, output timing keys, `render`, `title`, and terminal size.
 - **Cast tab.** The reader converts a local `.cast` file (v2 or v3) to SVG in the browser, as `scenetake svg` does.
 - **Render options** that match the CLI flags: `--theme`, `--window`, `--font-size`, `--font-family`, and `--max-fps`.
 - Downloads of the `.yaml`, `.cast`, and `.svg` files, and a share URL.
@@ -25,7 +25,6 @@ A browser cannot start processes, so it cannot run a scenario's commands. If the
 - Running commands, including `pre` and `post`.
 - mp4, PNG, and GIF output. mp4 and GIF need ffmpeg and system fonts ([spec_mp4.md](spec_mp4.md), [spec_gif.md](spec_gif.md)), and a PNG needs system fonts ([spec_png.md](spec_png.md)). The page gives the command for each place to share instead ([Both tabs](#both-tabs)).
 - `--strict` and `init`.
-- Recorded outputs of the reader's own scenarios. The outputs file format does not prevent this, so it can be added later.
 
 ## Architecture
 
@@ -50,7 +49,7 @@ The playground is a .NET WebAssembly build of the same source files that the CLI
 
 ### Producing
 
-- `--save-outputs FILE`, or the environment variable `SCENETAKE_OUTPUTS`, makes the scenario path write the outputs file there, from the same run as the cast. The file is written only when the cast is written. `samples/regenerate.cs` sets the variable for every sample. A sample recorded by hand, such as `password-prompt`, sets it by hand. The CLI's `--replay` reads the same file ([spec_cli.md](spec_cli.md) → Replay), so a reader's own outputs file works there, though the page still lists only the samples.
+- `--save-outputs FILE`, or the environment variable `SCENETAKE_OUTPUTS`, makes the scenario path write the outputs file there, from the same run as the cast. The file is written only when the cast is written. `samples/regenerate.cs` sets the variable for every sample. A sample recorded by hand, such as `password-prompt`, sets it by hand. The CLI's `--replay` reads the same file ([spec_cli.md](spec_cli.md) → Replay), and the page opens a reader's own with **Open files…** ([Scenario tab](#scenario-tab)).
 - The showcase samples in `samples/showcase/` run tools that a Windows maintainer seldom has, such as fastfetch, bat, sl, and nyancat. `samples/showcase/record.sh` records them on Linux in a container built from `samples/showcase/Dockerfile`, with a Linux scenetake and `SCENETAKE_OUTPUTS`. The container sees `samples/` read-only around the showcase folder, so a showcase scenario can name a file there: `vim.yaml` names `../background.webp`. `regenerate.cs` reads only `samples/*.yaml`, so it never tries to run them. The playground publishes both folders into one sample folder, and the publish fails when two samples share a name.
 - **Why a container.** It holds the tools at known versions and a small git project with fixed commit dates, so a new recording differs only where the tools changed. The README gallery shows these samples.
 - **Why the same run.** A cast and an outputs file from two runs can disagree: `curl` headers and `git log` dates change between runs. The playground would then not reproduce the committed sample.
@@ -172,6 +171,7 @@ Below 960 px the panel comes after the editor and starts closed, unless a share 
 | Feature | Behavior |
 |---|---|
 | Sample selector | Lists each sample in `samples/` or `samples/showcase/` that has both a `.yaml` file and an `.outputs.json` file, with a short note on what it shows, such as `pty — a full-screen TUI in a PTY`. A sample without a note shows its name only. Selecting a sample loads both files. The default is `welcome`, listed first; the others follow in name order. Reset loads the sample's YAML again. |
+| Your own files | **Open files…**, or files dropped on the editor, open the reader's scenario YAML and the outputs file that `scenetake --save-outputs` wrote for it, told apart by `.json` and `.yaml` / `.yml`, or by a leading `{`. The selector then shows `your file — <name>.outputs.json`, and Reset loads the opened YAML again. An outputs file alone replays into the YAML in the editor. A YAML alone replays the loaded sample's recording, and the step notes say to open its outputs file too. A file that is not an outputs file is an error that names it. The files are read in the browser and never uploaded. Choosing a sample leaves them. **Why:** the reader tunes the look of their own demo with a live preview, after one run of the commands. Dropped files open this way instead of CodeMirror inserting their text. |
 | First screen | `samples/showcase/welcome.yaml`: the scenetake logo (`oh-my-logo SCENETAKE dawn --filled`: block letters, cyan to blue) and a colored `git log --graph`, in a macOS window on `background.webp`. Its YAML is short and commented, so a reader sees what each key does. **Why:** it was `basic`, plain text on the default theme, which showed little of what scenetake makes. A `toilet` and `lolcat` banner came first; oh-my-logo's filled letters stand out more, with a shorter command. The first screen is also the link preview ([Link preview](#link-preview-ogp)). |
 | YAML editor | CodeMirror 5 in YAML mode. Without CodeMirror (a blocked CDN), a plain text area. |
 | Live render | Composes the cast and the SVG 500 ms after the last edit, at once after a paste. Editing never waits for a render. A result that arrives after a newer edit is dropped, and the newer state is rendered. |
@@ -250,6 +250,7 @@ A link to the page shows a large image on X, Slack, Discord, and other sites, as
 - The URL holds only the sample's name, not its outputs file. An outputs file can be large: `pty` records full-screen PTY output. The page fetches the file from the site. A sample that no longer exists falls back to the default sample.
 - A hash over 16384 characters is not written; the page suggests downloading the YAML instead.
 - Cast tab input is not shared. Local cast files can be large, and they can be private.
+- The reader's own outputs file is not shared, for the same reasons. With one loaded, Copy link copies nothing and says to share the downloaded `.yaml` with the `.outputs.json`.
 - A background image is not shared either, for the same reasons. The options keep its name ([Background images](#render-options)).
 
 ## Deployment
