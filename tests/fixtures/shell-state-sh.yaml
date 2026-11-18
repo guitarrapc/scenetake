@@ -30,6 +30,11 @@ steps:
       echo first
       nosuchcommand
     continue-on-error: true
+  # The same lines in a plain sh: the error above must name the line this one names (bash 3.2 as sh names line 1).
+  - run: |
+      sh -c 'echo plain
+      nosuchplain'
+    continue-on-error: true
   - exit 3
   # Stopped by its timeout, the step leaves the state as it was.
   - run: cd / && sleep 30

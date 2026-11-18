@@ -619,7 +619,7 @@ static bool IntegrationBashCarriesState(string repoRoot)
         && Expect(text.Contains("hello alias", StringComparison.Ordinal) && text.Contains("hello function", StringComparison.Ordinal), "the alias and the function")
         && Expect(text.Contains("child=[][][carried]", StringComparison.Ordinal), "a child bash saw more than the exported variables")
         && Expect(text.Contains("demo=[unset]", StringComparison.Ordinal), "unset")
-        && Expect(text.Contains("line 2: nosuchcommand", StringComparison.Ordinal), $"the error's line number: {Show(text)}")
+        && Expect(ErrorLine(text, "nosuchcommand") is { } line && line == ErrorLine(text, "nosuchplain"), $"the error's line number: {Show(text)}")
         && Expect(run.Stderr.Contains("step exited 3: exit 3", StringComparison.Ordinal), "the exit code")
         && Expect(text.Contains("after-timeout=fixtures", StringComparison.Ordinal), "a stopped step changed the folder")
         && Expect(!text.Contains("correct-horse-battery-staple", StringComparison.Ordinal) && text.Contains("[****", StringComparison.Ordinal), "an exported secret was not hidden");
@@ -718,7 +718,7 @@ static bool IntegrationShCarriesState(string repoRoot)
         && Expect(text.Contains("no-function", StringComparison.Ordinal), "a function carried")
         && Expect(text.Contains("child=[][carried]", StringComparison.Ordinal), "a child sh saw more than the exported variables")
         && Expect(text.Contains("demo=[unset]", StringComparison.Ordinal), "unset")
-        && Expect(text.Contains("nosuchcommand", StringComparison.Ordinal) && !Regex.IsMatch(text, @"(:|line) 1: nosuchcommand"), $"the error's line number: {Show(text)}")
+        && Expect(ErrorLine(text, "nosuchcommand") is { } line && line == ErrorLine(text, "nosuchplain"), $"the error's line number: {Show(text)}")
         && Expect(run.Stderr.Contains("step exited 3: exit 3", StringComparison.Ordinal), "the exit code")
         && Expect(text.Contains("after-timeout=fixtures", StringComparison.Ordinal) && text.Contains("after-pty-timeout=fixtures", StringComparison.Ordinal), "a stopped step changed the folder")
         && Expect(!text.Contains("correct-horse-battery-staple", StringComparison.Ordinal) && text.Contains("[****", StringComparison.Ordinal), "an exported secret was not hidden");
@@ -735,6 +735,15 @@ static bool IntegrationHiddenStepFailureStops(string repoRoot)
         && Expect(run.Stderr.Contains("| preparing", StringComparison.Ordinal), "the output tail")
         && Expect(run.Stderr.Contains("post-ran", StringComparison.Ordinal), "post did not run")
         && Expect(run.Text.Length == 0, "a cast was written");
+}
+
+// The line number in the error for a command the shell could not find: 2 in "bash: line 2: ", "sh: 2: ", and
+// "ksh93[2]: ". ksh93 writes "sh: line 2: " in a plain run and "sh[2]: " with an EXIT trap set, so only the number
+// is compared. Empty when the shell writes none, as busybox ash does, and null when no line names the command.
+static string? ErrorLine(string text, string command)
+{
+    var match = Regex.Match(text, "^(.*)" + command + ":", RegexOptions.Multiline);
+    return match.Success ? Regex.Match(match.Groups[1].Value, @"(\d+)\D*$").Groups[1].Value : null;
 }
 
 static bool TryGetBinary(out string bin)

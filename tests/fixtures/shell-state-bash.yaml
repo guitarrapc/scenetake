@@ -28,6 +28,11 @@ steps:
       echo first
       nosuchcommand
     continue-on-error: true
+  # The same lines in a plain bash: the error above must name the line this one names (bash 3.2 names line 1).
+  - run: |
+      bash -c 'echo plain
+      nosuchplain'
+    continue-on-error: true
   - exit 3
   # Stopped by its timeout, the step leaves the state as it was. With the state's EXIT trap, Git Bash runs sleep in a
   # child whose parent exits, so ending the process tree missed it, and the run waited 30 s for the open pipe.

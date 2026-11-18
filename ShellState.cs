@@ -212,11 +212,14 @@ internal sealed class BashState : ShellState
         script.Append("if [ -n \"$__SCENETAKE_USER_BASH_ENV\" ]; then BASH_ENV=$__SCENETAKE_USER_BASH_ENV; else unset BASH_ENV; fi\n");
         script.Append("unset __SCENETAKE_STATE_DIR __SCENETAKE_USER_BASH_ENV\n");
         script.Append("if [ -n \"${BASH_ENV-}\" ]; then . \"$BASH_ENV\"; fi\n");
+        // bash 3, macOS's /bin/bash, writes `declare -p` without names as NAME=value, without the attributes, so it
+        // gets each name. The loop runs in a subshell, which has every variable of the shell.
+        script.Append("__scenetake_vars() { if (( BASH_VERSINFO[0] > 3 )); then builtin declare -p; else builtin compgen -v | while IFS= builtin read -r __scenetake_name; do builtin declare -p \"$__scenetake_name\"; done; fi; }\n");
         // The shell as the login files left it. The state is the difference from it.
-        script.Append("{ builtin declare -p >|\"$__scenetake_dir/base.vars\"; builtin declare -f >|\"$__scenetake_dir/base.funcs\"; builtin alias -p >|\"$__scenetake_dir/base.alias\"; } 2>/dev/null\n");
+        script.Append("{ __scenetake_vars >|\"$__scenetake_dir/base.vars\"; builtin declare -f >|\"$__scenetake_dir/base.funcs\"; builtin alias -p >|\"$__scenetake_dir/base.alias\"; } 2>/dev/null\n");
         // In a || list, set -e from the caller's BASH_ENV does not stop the shell at a statement that fails.
         script.Append("{\n").Append(restore).Append(":\n} 2>>\"$__scenetake_dir/restore.err\" || :\n");
-        script.Append("__scenetake_save() { { builtin declare -p >|\"$__scenetake_dir/final.vars\"; builtin declare -f >|\"$__scenetake_dir/final.funcs\"; builtin alias -p >|\"$__scenetake_dir/final.alias\"; builtin printf '%s' \"$PWD\" >|\"$__scenetake_dir/final.pwd\"; } 2>/dev/null; }\n");
+        script.Append("__scenetake_save() { { __scenetake_vars >|\"$__scenetake_dir/final.vars\"; builtin declare -f >|\"$__scenetake_dir/final.funcs\"; builtin alias -p >|\"$__scenetake_dir/final.alias\"; builtin printf '%s' \"$PWD\" >|\"$__scenetake_dir/final.pwd\"; } 2>/dev/null; }\n");
         script.Append("builtin trap __scenetake_save EXIT\n");
         return script.ToString();
     }
