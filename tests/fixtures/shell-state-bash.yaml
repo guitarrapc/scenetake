@@ -1,0 +1,48 @@
+# What a command leaves in its bash shell reaches the next one (spec_scenario.md → Shell state across steps).
+# Run from the repository root by tests/shell_state_test.cs.
+title: "shell state (bash)"
+width: 100
+height: 40
+shell: bash
+settings:
+  typing-speed: 0.001
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+pre:
+  - export FROM_PRE=pre-value; cd tests
+steps:
+  - echo "start=$(basename "$PWD")"
+  - cd fixtures
+  - echo "now=$(basename "$PWD")"
+  - export DEMO=carried; PLAIN=plain-value
+  - echo "demo=$DEMO plain=$PLAIN pre=$FROM_PRE"
+  - greet() { echo "hello $1"; }; alias hi='greet alias'
+  - hi
+  - greet function
+  # A child bash reads the caller's BASH_ENV, not scenetake's: it sees exported variables only.
+  - bash -c 'echo "child=[$(type -t greet)][$PLAIN][$DEMO]"'
+  - unset DEMO
+  - echo "demo=[${DEMO-unset}]"
+  - run: |
+      echo first
+      nosuchcommand
+    continue-on-error: true
+  # The same lines in a plain bash: the error above must name the line this one names (bash 3.2 names line 1).
+  - run: |
+      bash -c 'echo plain
+      nosuchplain'
+    continue-on-error: true
+  - exit 3
+  # Stopped by its timeout, the step leaves the state as it was. With the state's EXIT trap, Git Bash runs sleep in a
+  # child whose parent exits, so ending the process tree missed it, and the run waited 30 s for the open pipe.
+  - run: cd / && sleep 30
+    timeout: 1
+  - echo "after-timeout=$(basename "$PWD")"
+  - run: cd / && sleep 30
+    pty: true
+    timeout: 1
+  - echo "after-pty-timeout=$(basename "$PWD")"
+  - run: export MY_API_KEY=correct-horse-battery-staple
+    show: none
+  - echo "[$MY_API_KEY]"

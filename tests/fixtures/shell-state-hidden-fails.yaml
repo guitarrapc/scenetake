@@ -1,0 +1,14 @@
+# A show: none step that fails stops the recording, and post still runs (spec_scenario.md → steps).
+title: "hidden step fails"
+shell: bash
+settings:
+  typing-speed: 0.001
+  pre-delay: 0
+  post-delay: 0
+steps:
+  - echo before
+  - run: echo preparing; exit 4
+    show: none
+  - echo after
+post:
+  - echo post-ran

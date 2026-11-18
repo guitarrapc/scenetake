@@ -23,6 +23,8 @@
 #:include CastTimingPipeline.cs
 #:include PipeStreamCapture.cs
 #:include InteractivePtyInput.cs
+#:include KeyRecording.cs
+#:include OutputWait.cs
 #:include Kernel32.cs
 #:include ScenarioKeys.cs
 #:include Scenario.cs
@@ -31,6 +33,8 @@
 #:include SecretMask.cs
 #:include StepChunks.cs
 #:include StepOutputs.cs
+#:include ShellState.cs
+#:include BackgroundSteps.cs
 
 using MiniPty;
 using MiniPty.Capture;
@@ -466,7 +470,7 @@ if (args[0] is "capture" && args.Length > 1 && args[1] is "-h" or "--help")
 }
 
 // `capture` comes here too: it records the one-step scenario that its command makes, without a file.
-if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runStyle, out var runStillAt, out var capture, out var runError))
+if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runStyle, out var runStillAt, out var capture, out var saveKeysArg, out var saveOutputsArg, out var replayArg, out var runError))
 {
     Console.Error.WriteLine($"Error: {runError}");
     if (args[0] is "capture")
@@ -540,11 +544,37 @@ if (FindStepKeyError(scenario) is { } stepKeyError)
     return 1;
 }
 
+// --replay takes each step's output from an outputs file that --save-outputs wrote, and runs no command, so the
+// look can change without running the commands again. It is read before anything else needs it.
+var replayPath = replayArg is null ? null : Path.GetFullPath(replayArg);
+StepOutputs? replayOutputs = null;
+if (replayPath is not null)
+{
+    try
+    {
+        replayOutputs = StepOutputs.Parse(File.ReadAllText(replayPath, Encoding.UTF8));
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException)
+    {
+        Console.Error.WriteLine($"Error: cannot read the outputs file {FormatDisplayPath(replayPath)}: {ex.Message}");
+        return 1;
+    }
+}
+
 // An interactive step needs scenetake's own stdin and stdout to be a terminal. Checking it here stops
-// the run before pre and the steps before it, which otherwise ran only to be thrown away.
-if ((Console.IsInputRedirected || Console.IsOutputRedirected) && HasInteractiveStep(scenario))
+// the run before pre and the steps before it, which otherwise ran only to be thrown away. A replay types nothing.
+if (replayOutputs is null && (Console.IsInputRedirected || Console.IsOutputRedirected) && HasInteractiveStep(scenario))
 {
     Console.Error.WriteLine($"Error: {InteractiveNeedsTerminalError}");
+    return 1;
+}
+
+// --save-keys writes what a person types in the interactive steps. Without one there would be nothing to write,
+// which is better said before the recording than after it.
+var saveKeysPath = saveKeysArg is null ? null : Path.GetFullPath(saveKeysArg);
+if (saveKeysPath is not null && !HasInteractiveStep(scenario))
+{
+    Console.Error.WriteLine("Error: --save-keys saves the keys typed in 'interactive: true' steps, and this scenario has none.");
     return 1;
 }
 
@@ -556,7 +586,8 @@ if (scenario.Cwd is not null && scenario.Cwd.Contains('\0'))
     return 1;
 }
 
-if (!string.IsNullOrWhiteSpace(scenario.Cwd))
+// A replay runs nothing in cwd, so a scenario replays on a machine without that folder.
+if (replayOutputs is null && !string.IsNullOrWhiteSpace(scenario.Cwd))
 {
     // A relative cwd is resolved against the scenario file's folder, so a scenario runs in the same
     // folder wherever scenetake is started from. It used to follow the current directory, and
@@ -585,10 +616,31 @@ if (!string.IsNullOrWhiteSpace(scenario.Cwd))
 
 // The cast is written only after pre and the recording, so the outputs are checked first. When pre
 // has commands, their folder is checked after pre instead, because pre may create it.
-var preHasCommands = scenario.Pre?.Any(command => !string.IsNullOrWhiteSpace(command)) == true;
-if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path, pngPath, gifPath], out var outputPathError, requireFolder: !preHasCommands))
+var preHasCommands = replayOutputs is null && scenario.Pre?.Any(command => !string.IsNullOrWhiteSpace(command)) == true;
+var saveOutputsPath = saveOutputsArg is null ? null : Path.GetFullPath(saveOutputsArg);
+if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path, pngPath, gifPath, saveKeysPath, saveOutputsPath], out var outputPathError, requireFolder: !preHasCommands))
 {
     Console.Error.WriteLine($"Error: {outputPathError}");
+    return 1;
+}
+
+foreach (var (option, path, others) in new[]
+{
+    ("--save-keys", saveKeysPath, new[] { outputPath, svgPath, mp4Path, pngPath, gifPath, saveOutputsPath }),
+    ("--save-outputs", saveOutputsPath, new[] { outputPath, svgPath, mp4Path, pngPath, gifPath }),
+})
+{
+    if (path is not null && others.Any(other => other is not null && IsSamePath(other, path)))
+    {
+        Console.Error.WriteLine($"Error: {option} would write over another output: {FormatDisplayPath(path)}");
+        return 1;
+    }
+}
+
+// The outputs that a replay writes would replace the file it reads from.
+if (replayPath is not null && new[] { outputPath, svgPath, mp4Path, pngPath, gifPath }.Any(path => path is not null && IsSamePath(path, replayPath)))
+{
+    Console.Error.WriteLine($"Error: --replay reads the file that an output would write over: {FormatDisplayPath(replayPath)}");
     return 1;
 }
 
@@ -708,6 +760,9 @@ if (outputFormat == OutputFormat.Gif)
 var deterministicSeed = ComputeDeterministicSeed(yaml);
 var deterministicTimestamp = ComputeDeterministicTimestamp(deterministicSeed);
 
+if (replayOutputs is not null)
+    return await ReplayAsync(replayOutputs, replayPath!);
+
 ShellLaunch shell;
 try
 {
@@ -721,7 +776,23 @@ catch (InvalidOperationException ex)
 
 Console.Error.WriteLine($"Using shell: {shell.DisplayName}");
 
-var preExitCode = await RunScenarioCommandsAsync(scenario.Pre, "pre", scenario.Cwd, shell, verbose);
+// What each command leaves in its shell (the folder, variables, functions, aliases) goes on to the next one, from
+// pre through the steps to post, as in a terminal. The sh family carries the folder and variables only, and other
+// shells than bash, zsh, and PowerShell start each command afresh.
+using var shellState = ShellState.Create(shell.FileName, IsPowerShellLaunch(shell));
+if ((scenario.Pre?.Count ?? 0) + (scenario.Steps?.Count ?? 0) + (scenario.Post?.Count ?? 0) > 1)
+{
+    if (shellState is null)
+        Console.Error.WriteLine($"Note: in {shell.DisplayName}, each command starts in a new shell: cd, variables, functions, and aliases do not carry over to the next step. bash, zsh, and PowerShell carry them.");
+    else if (!shellState.CarriesFunctionsAndAliases)
+        Console.Error.WriteLine($"Note: in {shell.DisplayName}, cd and variables carry over to the next step, but functions and aliases do not. bash, zsh, and PowerShell carry them too.");
+}
+
+// The commands of background steps, such as a server that later steps call. They are stopped after the last step,
+// and before post on every path, so post can clean up what they used.
+using var backgroundSteps = new BackgroundSteps();
+
+var preExitCode = await RunScenarioCommandsAsync(scenario.Pre, "pre", scenario.Cwd, shell, shellState, verbose);
 if (preExitCode != 0)
     return preExitCode;
 
@@ -729,14 +800,15 @@ if (preExitCode != 0)
 async Task<int> StopAfterPreAsync(string error)
 {
     Console.Error.WriteLine($"Error: {error}");
-    var cleanupExitCode = await RunScenarioCommandsAsync(scenario.Post, "post", scenario.Cwd, shell, verbose);
+    backgroundSteps.StopAll();
+    var cleanupExitCode = await RunScenarioCommandsAsync(scenario.Post, "post", scenario.Cwd, shell, shellState, verbose);
     return cleanupExitCode != 0 ? cleanupExitCode : 1;
 }
 
 // pre may create the output folder, or put a directory or a link to the input where an output goes, so
 // every output check runs again. Found here, they stop the run before the recording, instead of failing
 // the cast write or overwriting the input.
-if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path, pngPath, gifPath], out var outputCheckError))
+if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path, pngPath, gifPath, saveKeysPath], out var outputCheckError))
     return await StopAfterPreAsync(outputCheckError);
 
 // pre or the steps may install fonts. The mp4 render scans again when it starts, instead of using
@@ -746,13 +818,52 @@ FontCatalog.Rescan();
 if (verbose)
     PrintPhase("steps");
 
-// SCENETAKE_OUTPUTS names the outputs file that samples/regenerate.cs writes for the playground: what each step
-// printed in this run, which the playground replays because a browser cannot run commands. It is not in --help.
-var outputsFileArg = Environment.GetEnvironmentVariable(StepOutputs.EnvironmentVariable);
+// --save-outputs names the outputs file: what each step printed in this run, which --replay and the playground
+// replay. SCENETAKE_OUTPUTS does the same for samples/regenerate.cs, which sets it for every sample.
+var outputsFileArg = saveOutputsPath ?? Environment.GetEnvironmentVariable(StepOutputs.EnvironmentVariable);
 List<RecordedStep>? recordedSteps = string.IsNullOrWhiteSpace(outputsFileArg) ? null : [];
 
 // The commands inherit scenetake's environment, so a secret variable's value is hidden wherever a step prints it.
+// So is one that pre or a step exports for the commands after it.
 var masker = SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment());
+masker?.Learn(shellState?.TakeExports());
+
+// After each step: what the shell state could not restore, and the secrets the step exported, before its output is masked.
+async Task<CommandExecution> AfterStep(Task<CommandExecution> running)
+{
+    var execution = await running;
+    ReportShellStateWarnings(shellState);
+    masker?.Learn(shellState?.TakeExports());
+    return execution;
+}
+
+// The keys a person types in the interactive steps, for --save-keys. They are written even when the recording
+// stops at a later step: getting them again would mean doing the whole session again.
+List<SavedStepKeys>? savedKeys = saveKeysPath is null ? null : [];
+string? SaveKeys()
+{
+    if (saveKeysPath is null || savedKeys is null)
+        return null;
+    if (savedKeys.Count == 0)
+    {
+        // The recording stopped before an interactive step ran.
+        Console.Error.WriteLine("Warning: --save-keys wrote nothing: no interactive step ran.");
+        return null;
+    }
+
+    try
+    {
+        // Windows reports no input mode, so a password was saved like any other key, and the file says so.
+        File.WriteAllText(saveKeysPath, RecordedKeys.FormatFile(Path.GetFileName(scenarioPath), savedKeys, everyKeySaved: OperatingSystem.IsWindows()), new UTF8Encoding(false));
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+    {
+        return $"cannot write the keys: {ex.Message}";
+    }
+
+    Console.Error.WriteLine($"Written: {FormatDisplayPath(saveKeysPath)}  (keys of {savedKeys.Count} interactive step{(savedKeys.Count == 1 ? "" : "s")})");
+    return null;
+}
 
 Console.Error.WriteLine("Generating cast...");
 List<CastEvent> events;
@@ -766,23 +877,35 @@ try
         TrackPtyCursor = OperatingSystem.IsWindows(),
         Record = recordedSteps,
         Masker = masker,
+        SavedKeys = savedKeys,
     };
-    (events, strictFailure) = await GenerateAsync(scenario, deterministicSeed, generateOptions, step => step switch
+    (events, strictFailure) = await GenerateAsync(scenario, deterministicSeed, generateOptions, step => AfterStep(step switch
     {
-        { UseInteractive: true } => RunInteractivePtyAsync(step.Command.Cmd, scenario.Cwd, shell, step.Width, step.Height, verbose),
-        { UsePty: true } when step.Keys.Count > 0 || step.Timeout is not null => RunPtyWithInputAsync(step, scenario.Cwd, shell, verbose),
-        _ => RunCommandCoreAsync(step.Command.Cmd, scenario.Cwd, shell, step.UsePty, step.Width, step.Height, verbose, step.PtyStartCursor, step.Timeout),
-    });
+        { Background: true } => RunBackgroundAsync(step, scenario.Cwd, shell, shellState, backgroundSteps),
+        { UseInteractive: true } => RunInteractivePtyAsync(step.Command.Cmd, scenario.Cwd, shell, shellState, step.Width, step.Height, verbose),
+        { UsePty: true } when step.Keys.Count > 0 || step.Timeout is not null => RunPtyWithInputAsync(step, scenario.Cwd, shell, shellState, verbose),
+        _ => RunCommandCoreAsync(step.Command.Cmd, scenario.Cwd, shell, shellState, step.UsePty, step.Width, step.Height, verbose, step.PtyStartCursor, step.Timeout),
+    }));
+    // The steps are over: what ran in the background is no longer needed, and post comes after the outputs.
+    backgroundSteps.StopAll();
 }
 catch (Exception ex)
 {
     // A step can fail in many ways, such as a command the PTY cannot start, or a working folder that an
     // earlier step removed. Each stops the recording, and post must still run. --verbose keeps the type
     // and stack, which an unexpected exception needs.
+    if (SaveKeys() is { } keysError)
+        Console.Error.WriteLine($"Error: {keysError}");
     return await StopAfterPreAsync(verbose ? ex.ToString() : ex.Message);
 }
 
-// --strict stopped at a failing step. Nothing is written, as for any error that stops the recording, so
+// The keys first, so nothing below that stops the run loses them. A failure to write them fails the run at the
+// end, after the other outputs.
+var keysWriteError = SaveKeys();
+if (keysWriteError is not null)
+    Console.Error.WriteLine($"Error: {keysWriteError}");
+
+// --strict stopped at a failing step. Nothing else is written, as for any error that stops the recording, so
 // the outputs of an earlier run stay as they were, and post runs. The cast is not there to show why the
 // step failed, so the end of its output is part of the error.
 if (strictFailure is not null)
@@ -834,103 +957,182 @@ if (recordedSteps is not null)
     Console.Error.WriteLine($"Written: {FormatDisplayPath(outputsFilePath)}");
 }
 
-// SVG and mp4 are rendered from the cast as written, not from the in-memory events. The cast stores
-// millisecond times, so only the cast gives the same output as `scenetake svg|mp4 <cast>`. The header
-// carries the font, theme, and window overrides. --max-fps is not stored, so it is applied again.
-var exitCode = 0;
-if (outputFormat == OutputFormat.Svg)
-{
-    try
-    {
-        var written = CastReader.Read(outputPath);
-        var svgSettings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings) with { MaxFps = renderSettings.MaxFps };
-        SvgRender.WriteSvg(written.Events, written.Width, written.Height, svgSettings, svgPath!, written.LoopDuration, runStillAt);
-        PrintSvgWritten(svgPath!, written, svgSettings, runStillAt);
-        if (SvgRender.SizeWarning(new FileInfo(svgPath!).Length, svgSettings.MaxFps, fromCast: false) is { } svgSizeWarning)
-            Console.Error.WriteLine($"Warning: {svgSizeWarning}");
-    }
-    catch (Exception ex)
-    {
-        DeleteFileIfExists(svgPath!);
-        Console.Error.WriteLine($"Error: SVG render failed: {ex.Message}");
-        exitCode = 1;
-    }
-}
+var exitCode = RenderFromCast(outputFormat, outputPath, svgPath, mp4Path, pngPath, gifPath, renderSettings, runMp4Options, runStillAt, ffmpegPath);
+if (keysWriteError is not null)
+    exitCode = 1;
 
-if (outputFormat == OutputFormat.Mp4)
-{
-    try
-    {
-        // WriteMp4 encodes to a temporary file and renames it, so a failure leaves no partial .mp4.
-        var written = CastReader.Read(outputPath);
-        var result = Mp4Render.WriteMp4(written.Events, written.Width, written.Height, RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings), runMp4Options.ToSettings(), mp4Path!, ffmpegPath!, written.LoopDuration);
-        PrintMp4Written(mp4Path!, result);
-    }
-    catch (Exception ex)
-    {
-        // An .mp4 from an earlier run no longer matches the new cast.
-        DeleteFileIfExists(mp4Path!);
-        Console.Error.WriteLine($"Error: mp4 render failed: {ex.Message}");
-        exitCode = 1;
-    }
-}
-
-if (outputFormat == OutputFormat.Png)
-{
-    try
-    {
-        // Drawn from the cast as written, as SVG and mp4 are.
-        var written = CastReader.Read(outputPath);
-        var pngSettings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings);
-        var at = runStillAt ?? double.PositiveInfinity;
-        var result = PngRender.WritePng(written.Events, written.Width, written.Height, pngSettings, at, pngPath!, runMp4Options.FontFile, ffmpegPath);
-        PrintPngWritten(pngPath!, result, at);
-    }
-    catch (Exception ex)
-    {
-        // A .png from an earlier run no longer matches the new cast.
-        DeleteFileIfExists(pngPath!);
-        Console.Error.WriteLine($"Error: PNG render failed: {ex.Message}");
-        exitCode = 1;
-    }
-}
-
-if (outputFormat == OutputFormat.Gif)
-{
-    try
-    {
-        // WriteGif encodes to a temporary file and renames it, as WriteMp4 does.
-        var written = CastReader.Read(outputPath);
-        var result = GifRender.WriteGif(written.Events, written.Width, written.Height, RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings), runMp4Options.ToGifSettings(), gifPath!, ffmpegPath!, written.LoopDuration);
-        PrintGifWritten(gifPath!, result, fromCast: false);
-    }
-    catch (Exception ex)
-    {
-        // A .gif from an earlier run no longer matches the new cast.
-        DeleteFileIfExists(gifPath!);
-        Console.Error.WriteLine($"Error: GIF render failed: {ex.Message}");
-        exitCode = 1;
-    }
-}
-
-var postExitCode = await RunScenarioCommandsAsync(scenario.Post, "post", scenario.Cwd, shell, verbose);
+var postExitCode = await RunScenarioCommandsAsync(scenario.Post, "post", scenario.Cwd, shell, shellState, verbose);
 if (postExitCode != 0)
     return postExitCode;
 
 if (exitCode != 0)
     return exitCode;
 
-if (outputFormat == OutputFormat.Svg)
-    Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(svgPath!)}");
-else if (outputFormat == OutputFormat.Mp4)
-    Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(mp4Path!)}");
-else if (outputFormat == OutputFormat.Png)
-    Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(pngPath!)}");
-else if (outputFormat == OutputFormat.Gif)
-    Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(gifPath!)}");
-else
-    Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}");
+PrintDone(outputPath, svgPath ?? mp4Path ?? pngPath ?? gifPath);
 return 0;
+
+// --replay: each step takes the output that the outputs file recorded for it, as in the playground, and no command
+// runs, so pre, post, show: none, and background steps are skipped. What changes how the steps look takes effect:
+// typing, prompt, comments, highlights, timing, render, and the order of the steps. A step whose run text is not in
+// the file stops the replay: its output would have to be made up.
+async Task<int> ReplayAsync(StepOutputs outputs, string path)
+{
+    Console.Error.WriteLine($"Replaying: {FormatDisplayPath(path)}  (recorded by scenetake {outputs.Scenetake} on {outputs.Os} with {outputs.Shell}, {outputs.Width}x{outputs.Height}). No command runs.");
+    if (scenario.Pre is { Count: > 0 } || scenario.Post is { Count: > 0 })
+        Console.Error.WriteLine("Note: pre and post do not run in a replay.");
+    if (!string.IsNullOrWhiteSpace(scenario.Shell) && !string.Equals(ShellEnvName(scenario.Shell.Trim()), outputs.Shell, StringComparison.OrdinalIgnoreCase))
+        Console.Error.WriteLine($"Warning: shell has no effect in a replay: the outputs were recorded with {outputs.Shell}");
+
+    var replay = new StepOutputsReplay(outputs);
+    // The outputs were masked when they were recorded. Masking again hides what the YAML adds, such as a new
+    // settings.mask text, and the secrets in this machine's environment.
+    var replayMasker = SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment());
+    Console.Error.WriteLine("Generating cast...");
+    var (replayed, failure) = await GenerateAsync(scenario, deterministicSeed, new GenerateOptions
+    {
+        Verbose = verbose,
+        Strict = strict,
+        TrackPtyCursor = replay.TrackPtyCursor,
+        LogRunning = false,
+        Masker = replayMasker,
+    }, replay.RunAsync);
+
+    var missing = replay.Steps.Where(static step => !step.Recorded).ToList();
+    if (missing.Count > 0)
+    {
+        var error = new StringBuilder($"--replay: {FormatDisplayPath(path)} has no output for {(missing.Count == 1 ? "this step" : "these steps")}:");
+        foreach (var step in missing)
+            error.Append(Environment.NewLine).Append($"  step {step.Index + 1} ({step.Kind}): {step.Run}");
+        error.Append(Environment.NewLine).Append("A step matches a recorded one by its run text and by pipe, pty, or interactive. Record again with --save-outputs after changing a command. Nothing was written.");
+        Console.Error.WriteLine($"Error: {error}");
+        return 1;
+    }
+
+    foreach (var step in replay.Steps)
+    {
+        foreach (var notice in step.Notices)
+            Console.Error.WriteLine($"Warning: step {step.Index + 1} was {notice}");
+    }
+
+    if (failure is not null)
+    {
+        Console.Error.WriteLine($"Error: {FormatStrictFailure(failure)}");
+        return 1;
+    }
+
+    replayed = CastOscFilter.RemovePrivateSequences(replayed);
+    try
+    {
+        WriteCast(scenario, replayed, outputPath, outputs.Shell, deterministicTimestamp, renderSettings);
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+    {
+        Console.Error.WriteLine($"Error: cannot write the cast: {ex.Message}");
+        return 1;
+    }
+
+    if (replayMasker?.Summary() is { } replayMaskSummary)
+        Console.Error.WriteLine($"{replayMaskSummary} (settings.mask-auto: false turns off the automatic ones)");
+
+    var replayDuration = replayed.Count > 0 ? replayed[^1].Time : 0.0;
+    var replaySizes = outputFormat == OutputFormat.Cast ? $", {DescribeConvertedSizes(replayed, scenarioWidth, scenarioHeight, renderSettings)}" : "";
+    Console.Error.WriteLine($"Written: {FormatDisplayPath(outputPath)}  ({replayed.Count} events, {replayDuration:F1}s{replaySizes})");
+
+    var renderExitCode = RenderFromCast(outputFormat, outputPath, svgPath, mp4Path, pngPath, gifPath, renderSettings, runMp4Options, runStillAt, ffmpegPath);
+    if (renderExitCode != 0)
+        return renderExitCode;
+
+    PrintDone(outputPath, svgPath ?? mp4Path ?? pngPath ?? gifPath);
+    return 0;
+}
+
+// SVG and mp4 are rendered from the cast as written, not from the in-memory events. The cast stores
+// millisecond times, so only the cast gives the same output as `scenetake svg|mp4 <cast>`. The header
+// carries the font, theme, and window overrides. --max-fps is not stored, so it is applied again.
+// Returns 1 when the render failed, which removes that output.
+static int RenderFromCast(OutputFormat outputFormat, string outputPath, string? svgPath, string? mp4Path, string? pngPath, string? gifPath, ResolvedRenderSettings renderSettings, Mp4Options runMp4Options, double? runStillAt, string? ffmpegPath)
+{
+    if (outputFormat == OutputFormat.Svg)
+    {
+        try
+        {
+            var written = CastReader.Read(outputPath);
+            var svgSettings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings) with { MaxFps = renderSettings.MaxFps };
+            SvgRender.WriteSvg(written.Events, written.Width, written.Height, svgSettings, svgPath!, written.LoopDuration, runStillAt);
+            PrintSvgWritten(svgPath!, written, svgSettings, runStillAt);
+            if (SvgRender.SizeWarning(new FileInfo(svgPath!).Length, svgSettings.MaxFps, fromCast: false) is { } svgSizeWarning)
+                Console.Error.WriteLine($"Warning: {svgSizeWarning}");
+        }
+        catch (Exception ex)
+        {
+            DeleteFileIfExists(svgPath!);
+            Console.Error.WriteLine($"Error: SVG render failed: {ex.Message}");
+            return 1;
+        }
+    }
+
+    if (outputFormat == OutputFormat.Mp4)
+    {
+        try
+        {
+            // WriteMp4 encodes to a temporary file and renames it, so a failure leaves no partial .mp4.
+            var written = CastReader.Read(outputPath);
+            var result = Mp4Render.WriteMp4(written.Events, written.Width, written.Height, RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings), runMp4Options.ToSettings(), mp4Path!, ffmpegPath!, written.LoopDuration);
+            PrintMp4Written(mp4Path!, result);
+        }
+        catch (Exception ex)
+        {
+            // An .mp4 from an earlier run no longer matches the new cast.
+            DeleteFileIfExists(mp4Path!);
+            Console.Error.WriteLine($"Error: mp4 render failed: {ex.Message}");
+            return 1;
+        }
+    }
+
+    if (outputFormat == OutputFormat.Png)
+    {
+        try
+        {
+            // Drawn from the cast as written, as SVG and mp4 are.
+            var written = CastReader.Read(outputPath);
+            var pngSettings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings);
+            var at = runStillAt ?? double.PositiveInfinity;
+            var result = PngRender.WritePng(written.Events, written.Width, written.Height, pngSettings, at, pngPath!, runMp4Options.FontFile, ffmpegPath);
+            PrintPngWritten(pngPath!, result, at);
+        }
+        catch (Exception ex)
+        {
+            // A .png from an earlier run no longer matches the new cast.
+            DeleteFileIfExists(pngPath!);
+            Console.Error.WriteLine($"Error: PNG render failed: {ex.Message}");
+            return 1;
+        }
+    }
+
+    if (outputFormat == OutputFormat.Gif)
+    {
+        try
+        {
+            // WriteGif encodes to a temporary file and renames it, as WriteMp4 does.
+            var written = CastReader.Read(outputPath);
+            var result = GifRender.WriteGif(written.Events, written.Width, written.Height, RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings), runMp4Options.ToGifSettings(), gifPath!, ffmpegPath!, written.LoopDuration);
+            PrintGifWritten(gifPath!, result, fromCast: false);
+        }
+        catch (Exception ex)
+        {
+            // A .gif from an earlier run no longer matches the new cast.
+            DeleteFileIfExists(gifPath!);
+            Console.Error.WriteLine($"Error: GIF render failed: {ex.Message}");
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+// The cast and the --format output, when there is one.
+static void PrintDone(string castPath, string? renderedPath) =>
+    Console.Error.WriteLine(renderedPath is null ? $"Done: {FormatDisplayPath(castPath)}" : $"Done: {FormatDisplayPath(castPath)}, {FormatDisplayPath(renderedPath)}");
 
 static string FormatDisplayPath(string fullPath) =>
     Path.GetRelativePath(Directory.GetCurrentDirectory(), fullPath).Replace('\\', '/');
@@ -1139,11 +1341,17 @@ static bool TryParseRunArgs(
     out StyleOptions style,
     out double? stillAt,
     out CaptureRequest? capture,
+    out string? saveKeysPath,
+    out string? saveOutputsPath,
+    out string? replayPath,
     out string error)
 {
     scenarioPath = "";
     style = new StyleOptions();
     outputPath = null;
+    saveKeysPath = null;
+    saveOutputsPath = null;
+    replayPath = null;
     // `capture` records one command given here instead of a scenario file. It writes an SVG unless --format says
     // otherwise: it is for a quick image, and the cast stays next to it for other formats.
     var captureMode = args.Length > 0 && args[0] == "capture";
@@ -1178,6 +1386,35 @@ static bool TryParseRunArgs(
                     return false;
                 continue;
             }
+        }
+        // capture has no interactive step, so it has no keys to save.
+        else if (TryTakeOptionValue(args, ref i, "--save-keys", out var keysPath, out error))
+        {
+            if (error.Length == 0 && saveKeysPath is not null)
+                error = "duplicate option: --save-keys";
+            if (error.Length != 0)
+                return false;
+            saveKeysPath = keysPath;
+            continue;
+        }
+        // capture records a command, not a scenario file, so it has no YAML to replay its outputs into.
+        else if (TryTakeOptionValue(args, ref i, "--save-outputs", out var outputsPath, out error))
+        {
+            if (error.Length == 0 && saveOutputsPath is not null)
+                error = "duplicate option: --save-outputs";
+            if (error.Length != 0)
+                return false;
+            saveOutputsPath = outputsPath;
+            continue;
+        }
+        else if (TryTakeOptionValue(args, ref i, "--replay", out var replayFile, out error))
+        {
+            if (error.Length == 0 && replayPath is not null)
+                error = "duplicate option: --replay";
+            if (error.Length != 0)
+                return false;
+            replayPath = replayFile;
+            continue;
         }
 
         if (arg == "--verbose")
@@ -1350,6 +1587,19 @@ static bool TryParseRunArgs(
     if (outputFormat == OutputFormat.Cast && style.Background?.ImagePath is not null)
     {
         error = "--background with an image file requires --format svg, mp4, png, or gif: a cast keeps colors only";
+        return false;
+    }
+
+    // A replay runs no command: no step prints anything new, and no one types.
+    if (replayPath is not null && saveOutputsPath is not null)
+    {
+        error = "--save-outputs saves what the commands print, and --replay runs none: record without --replay to save new outputs";
+        return false;
+    }
+
+    if (replayPath is not null && saveKeysPath is not null)
+    {
+        error = "--save-keys saves the keys typed in interactive steps, and --replay runs none";
         return false;
     }
 
@@ -1699,25 +1949,26 @@ static bool TryConsumeAtArg(string[] args, ref int i, ref double? at, out string
 
 
 
-static Task<CommandExecution> RunCommand(string cmd, string? cwd, ShellLaunch shell) =>
-    RunCommandCoreAsync(cmd, cwd, shell, false, 120, 24);
+static Task<CommandExecution> RunCommand(string cmd, string? cwd, ShellLaunch shell, ShellState? state) =>
+    RunCommandCoreAsync(cmd, cwd, shell, state, false, 120, 24);
 
 /// <param name="ptyStartCursor">
 /// For a PTY step on Windows, the recording's cursor as a 1-based row and column. ConPTY then starts drawing
 /// there (<see cref="PtyStartInfo.InheritCursor"/>) instead of on an empty screen of its own. Null elsewhere.
 /// </param>
 /// <param name="timeout">For a pipe step, seconds after which its process tree is ended (<c>timeout</c>). A PTY step with a timeout runs in <see cref="RunPtyWithInputAsync"/>.</param>
-static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd, ShellLaunch shell, bool usePty, int width, int height, bool verbose = false, (int Row, int Column)? ptyStartCursor = null, double? timeout = null)
+static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd, ShellLaunch shell, ShellState? state, bool usePty, int width, int height, bool verbose = false, (int Row, int Column)? ptyStartCursor = null, double? timeout = null)
 {
+    var prepared = PrepareCommand(state, cmd);
     if (usePty)
     {
         var result = await PtyCapture.RunAsync(new PtyStartInfo
         {
             FileName = shell.FileName,
-            Arguments = BuildPtyShellArguments(shell, cmd),
+            Arguments = BuildPtyShellArguments(shell, prepared.Command),
             WorkingDirectory = cwd,
             Size = new(width, height),
-            Environment = CreateChildEnvironmentOverlay(),
+            Environment = ChildEnvironment(prepared),
             // ConPTY asks for the cursor position (ESC[6n) and holds the child's output until a report comes.
             // The report is written up front, so nothing waits, and ConPTY consumes it before the child reads.
             InheritCursor = ptyStartCursor is not null,
@@ -1730,6 +1981,7 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
                 SendEofAfterInput = false,
             },
         });
+        state?.Complete(keep: true);
         if (verbose)
             Console.Error.WriteLine($"scenetake: pty verbose: chunks={result.Chunks.Count} bytes={result.Output.Length}");
         return new CommandExecution(result.ExitCode, true, "", "", ToTimedBytes(result.Chunks), null, null);
@@ -1744,13 +1996,21 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
     };
     foreach (var arg in shell.Arguments)
         psi.ArgumentList.Add(arg);
-    psi.ArgumentList.Add(OperatingSystem.IsWindows() && IsPowerShellLaunch(shell) ? PowerShellUtf8OutputPrefix + cmd : cmd);
+    psi.ArgumentList.Add(OperatingSystem.IsWindows() && IsPowerShellLaunch(shell) ? PowerShellUtf8OutputPrefix + prepared.Command : prepared.Command);
     if (!string.IsNullOrWhiteSpace(cwd)) psi.WorkingDirectory = cwd;
-    foreach (var (name, value) in CreateChildEnvironmentOverlay())
-        psi.Environment[name] = value;
+    foreach (var (name, value) in ChildEnvironment(prepared))
+    {
+        // A null value removes the variable from the child's environment.
+        if (value is null)
+            psi.Environment.Remove(name);
+        else
+            psi.Environment[name] = value;
+    }
 
     using var proc = new Process { StartInfo = psi };
     proc.Start();
+    // A step that may be stopped runs in a job on Windows, which ends what the tree kill misses (ProcessJob).
+    using var job = timeout is null ? null : ProcessJob.TryCreate(proc);
     var readTask = PipeStreamCapture.ReadAsync(proc);
     var stopped = false;
     if (timeout is { } seconds)
@@ -1767,7 +2027,10 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
             stopped = true;
             try
             {
-                proc.Kill(entireProcessTree: true);
+                if (job is not null)
+                    job.Terminate();
+                else
+                    proc.Kill(entireProcessTree: true);
             }
             catch (InvalidOperationException)
             {
@@ -1780,6 +2043,8 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
 
     var pipeChunks = await readTask;
     await proc.WaitForExitAsync();
+    // A command that scenetake stopped leaves the state as it was.
+    state?.Complete(keep: !stopped);
     var (stdout, stderr) = CollectPipeOutputs(pipeChunks);
     // The author asked for the stop, so the exit code it causes is no failure.
     return CommandExecution.FromPipeStream(stdout, stderr, stopped ? 0 : proc.ExitCode, pipeChunks);
@@ -1793,32 +2058,43 @@ static void PrintTimeoutStop(double seconds) =>
 /// time while recording the output, and stops the command when its timeout passes. Steps without either keep
 /// <see cref="PtyCapture"/>, so their recordings stay as they were.
 /// </summary>
-static async Task<CommandExecution> RunPtyWithInputAsync(StepStart step, string? cwd, ShellLaunch shell, bool verbose)
+static async Task<CommandExecution> RunPtyWithInputAsync(StepStart step, string? cwd, ShellLaunch shell, ShellState? state, bool verbose)
 {
     if (!Pty.IsSupported)
         throw new InvalidOperationException("PTY is not supported on this operating system.");
 
+    var prepared = PrepareCommand(state, step.Command.Cmd);
     var session = Pty.Start(new PtyStartInfo
     {
         FileName = shell.FileName,
-        Arguments = BuildPtyShellArguments(shell, step.Command.Cmd),
+        Arguments = BuildPtyShellArguments(shell, prepared.Command),
         WorkingDirectory = cwd,
         Size = new(step.Width, step.Height),
-        Environment = CreateChildEnvironmentOverlay(),
+        Environment = ChildEnvironment(prepared),
         InheritCursor = step.PtyStartCursor is not null,
     });
     try
     {
         var stopwatch = Stopwatch.StartNew();
         var chunks = new List<PtyCaptureChunk>();
-        var pump = PumpPtyOutputAsync(session, chunks, stopwatch);
+        // Only a step whose keys wait for text reads its output as text.
+        PtyOutputWatcher? output = null;
+        foreach (var key in step.Keys)
+        {
+            if (key.Wait is not null)
+            {
+                output = new PtyOutputWatcher();
+                break;
+            }
+        }
+        var pump = PumpPtyOutputAsync(session, chunks, stopwatch, output);
         // As in RunCommandCoreAsync: ConPTY waits for this report before it draws, and consumes it before the child reads.
         if (step.PtyStartCursor is { } cursor)
             await session.WriteInputAsync($"\u001b[{cursor.Row};{cursor.Column}R", Encoding.UTF8);
 
         var exit = session.WaitForExitAsync();
         using var stopKeys = new CancellationTokenSource();
-        var keys = WriteKeysAsync(session, step.Keys, exit, stopwatch, stopKeys.Token);
+        var keys = WriteKeysAsync(session, step, exit, stopwatch, output, stopKeys.Token);
         var stopped = false;
         if (step.Timeout is { } timeout)
         {
@@ -1852,6 +2128,8 @@ static async Task<CommandExecution> RunPtyWithInputAsync(StepStart step, string?
             session.Dispose();
         await pump;
 
+        // A command that scenetake stopped leaves the state as it was.
+        state?.Complete(keep: !stopped);
         if (verbose)
             Console.Error.WriteLine($"scenetake: pty verbose: chunks={chunks.Count} keys={step.Keys.Count} stopped={stopped}");
         return new CommandExecution(stopped ? 0 : status.ExitCode, true, "", "", ToTimedBytes(chunks), null, null);
@@ -1862,12 +2140,15 @@ static async Task<CommandExecution> RunPtyWithInputAsync(StepStart step, string?
     }
 }
 
-static async Task PumpPtyOutputAsync(PtySession session, List<PtyCaptureChunk> chunks, Stopwatch stopwatch)
+static async Task PumpPtyOutputAsync(PtySession session, List<PtyCaptureChunk> chunks, Stopwatch stopwatch, PtyOutputWatcher? output = null)
 {
     try
     {
         await foreach (var chunk in session.ReadOutputAsync().ConfigureAwait(false))
+        {
             chunks.Add(new PtyCaptureChunk(stopwatch.Elapsed, chunk.Data.ToArray()));
+            output?.Append(chunk.Data.Span);
+        }
     }
     catch (ObjectDisposedException)
     {
@@ -1877,12 +2158,13 @@ static async Task PumpPtyOutputAsync(PtySession session, List<PtyCaptureChunk> c
 
 /// <summary>
 /// Writes each key at its time since the command started. Times are kept against the start, so a slow write does
-/// not push the later keys back. Stops when the command exits, as a person stops typing into a closed program.
+/// not push the later keys back. A wait for text restarts the count where the text appeared. Stops when the
+/// command exits, as a person stops typing into a closed program.
 /// </summary>
-static async Task WriteKeysAsync(PtySession session, IReadOnlyList<ScenarioCast.KeyAction> keys, Task exit, Stopwatch stopwatch, CancellationToken cancel)
+static async Task WriteKeysAsync(PtySession session, StepStart step, Task exit, Stopwatch stopwatch, PtyOutputWatcher? output, CancellationToken cancel)
 {
     var due = 0.0;
-    foreach (var key in keys)
+    foreach (var key in step.Keys)
     {
         due += key.Delay;
         var wait = due - stopwatch.Elapsed.TotalSeconds;
@@ -1896,6 +2178,29 @@ static async Task WriteKeysAsync(PtySession session, IReadOnlyList<ScenarioCast.
 
         if (exit.IsCompleted)
             return;
+
+        if (key.Wait is { } text && output is not null)
+        {
+            // With a timeout the step waits until it. Without one a wait gives up after a while, so a text that
+            // never appears does not hold the recording up forever.
+            var found = output.WaitAsync(text);
+            var limit = Task.Delay(step.Timeout is null ? TimeSpan.FromSeconds(ScenarioCast.KeyWaitLimit) : Timeout.InfiniteTimeSpan, cancel);
+            var first = await Task.WhenAny(found, exit, limit);
+            if (first != found)
+            {
+                output.StopWaiting();
+                if (first == exit)
+                    return;
+                cancel.ThrowIfCancellationRequested();
+                Console.Error.WriteLine($"Warning: step {step.Index + 1} keys entry {key.Entry} waited {ScenarioCast.KeyWaitLimit:0} s for {JsonEscape.JsonString(text)} and goes on without it. Give the step a 'timeout' to wait longer.");
+            }
+
+            due = stopwatch.Elapsed.TotalSeconds;
+            continue;
+        }
+
+        // A later wait looks for the answer to this key, not for what came before it.
+        output?.Clear();
         try
         {
             await session.WriteInputAsync(key.Text, Encoding.UTF8, cancel);
@@ -1960,6 +2265,7 @@ static async Task<CommandExecution> RunInteractivePtyAsync(
     string cmd,
     string? cwd,
     ShellLaunch shell,
+    ShellState? state,
     int width,
     int height,
     bool verbose)
@@ -1972,19 +2278,21 @@ static async Task<CommandExecution> RunInteractivePtyAsync(
         throw new InvalidOperationException(InteractiveNeedsTerminalError);
     }
 
+    var prepared = PrepareCommand(state, cmd);
     using var session = Pty.Start(new PtyStartInfo
     {
         FileName = shell.FileName,
-        Arguments = BuildPtyShellArguments(shell, cmd),
+        Arguments = BuildPtyShellArguments(shell, prepared.Command),
         WorkingDirectory = cwd,
         Size = new(width, height),
-        Environment = CreateChildEnvironmentOverlay(),
+        Environment = ChildEnvironment(prepared),
     });
 
     var stopwatch = Stopwatch.StartNew();
     var chunks = new List<PtyCaptureChunk>();
     var inputChunks = new List<PtyInputChunk>();
-    var inputRecorder = new InteractivePtyInputRecorder(stopwatch, inputChunks, () => session.InputMode);
+    var hiddenInput = new List<TimeSpan>();
+    var inputRecorder = new InteractivePtyInputRecorder(stopwatch, inputChunks, () => session.InputMode, hiddenInput);
     var pumpTask = PumpInteractiveOutputAsync(session, chunks, stopwatch, verbose);
 
     Console.Error.WriteLine("  attaching host terminal for interactive PTY input...");
@@ -2014,12 +2322,16 @@ static async Task<CommandExecution> RunInteractivePtyAsync(
     if (!OperatingSystem.IsWindows())
         ResetUnixHostCursorColumn();
 
+    state?.Complete(keep: true);
     if (verbose)
     {
         Console.Error.WriteLine($"scenetake: interactive pty verbose: chunks={chunks.Count} input={inputChunks.Count}");
     }
 
-    return new CommandExecution(exitCode, true, "", "", ToTimedBytes(chunks), inputChunks.ConvertAll(static chunk => new TimedBytes(chunk.Time, chunk.Data)), null);
+    return new CommandExecution(exitCode, true, "", "", ToTimedBytes(chunks), inputChunks.ConvertAll(static chunk => new TimedBytes(chunk.Time, chunk.Data)), null)
+    {
+        HiddenInputTimes = hiddenInput,
+    };
 }
 
 static async Task PumpInteractiveOutputAsync(
@@ -2072,7 +2384,7 @@ static string[] BuildPtyShellArguments(ShellLaunch shell, string cmd)
     return [.. shell.Arguments, cmd];
 }
 
-static async Task<int> RunScenarioCommandsAsync(List<string>? commands, string phase, string? cwd, ShellLaunch shell, bool verbose)
+static async Task<int> RunScenarioCommandsAsync(List<string>? commands, string phase, string? cwd, ShellLaunch shell, ShellState? state, bool verbose)
 {
     if (commands is null || commands.Count == 0)
         return 0;
@@ -2098,7 +2410,8 @@ static async Task<int> RunScenarioCommandsAsync(List<string>? commands, string p
         CommandExecution execution;
         try
         {
-            execution = await RunCommand(cmd, cwd, shell);
+            execution = await RunCommand(cmd, cwd, shell, state);
+            ReportShellStateWarnings(state);
         }
         catch (Exception ex)
         {
@@ -2131,14 +2444,76 @@ static void PrintScenarioCommandFailure(string phase, string cmd, int exitCode)
 }
 
 
-/// <summary>The error for a --strict run that stopped at <paramref name="failure"/>, without the "Error: " prefix.</summary>
+/// <summary>
+/// The error for a run that stopped at <paramref name="failure"/>: a --strict run, or a <c>show: none</c> step that
+/// failed. Without the "Error: " prefix.
+/// </summary>
 static string FormatStrictFailure(FailedStep failure)
 {
-    var builder = new StringBuilder($"--strict stopped at step {failure.Number}, which exited {failure.ExitCode}: {failure.Cmd}");
+    var builder = new StringBuilder(
+        failure.Background ? $"background step {failure.Number} {failure.Problem}: {failure.Cmd}"
+        : failure.Hidden ? $"step {failure.Number} (show: none) exited {failure.ExitCode}, and the steps after it may rely on it: {failure.Cmd}"
+        : $"--strict stopped at step {failure.Number}, which exited {failure.ExitCode}: {failure.Cmd}");
     foreach (var line in failure.OutputTail)
         builder.Append(Environment.NewLine).Append("  | ").Append(line);
-    builder.Append(Environment.NewLine).Append("Nothing was written. Set 'continue-on-error: true' on a step that is meant to fail.");
+    builder.Append(Environment.NewLine).Append(
+        failure.Background ? "Nothing was written. Set 'continue-on-error: true' on the step if the steps after it can do without it, or raise 'wait-timeout'."
+        : failure.Hidden ? "Nothing was written. Set 'continue-on-error: true' on the step if it may fail."
+        : "Nothing was written. Set 'continue-on-error: true' on a step that is meant to fail.");
     return builder.ToString();
+}
+
+/// <summary>
+/// Starts a <c>background: true</c> step's command as a pipe step would start, with the shell state so far, and waits
+/// until it is ready (<see cref="BackgroundSteps.StartAsync"/>).
+/// </summary>
+static Task<CommandExecution> RunBackgroundAsync(StepStart step, string? cwd, ShellLaunch shell, ShellState? state, BackgroundSteps background)
+{
+    var prepared = state?.PrepareDetached(step.Command.Cmd) ?? new PreparedCommand(step.Command.Cmd, null);
+    var psi = new ProcessStartInfo(shell.FileName)
+    {
+        UseShellExecute = false,
+        CreateNoWindow = true,
+    };
+    foreach (var arg in shell.Arguments)
+        psi.ArgumentList.Add(arg);
+    psi.ArgumentList.Add(OperatingSystem.IsWindows() && IsPowerShellLaunch(shell) ? PowerShellUtf8OutputPrefix + prepared.Command : prepared.Command);
+    if (!string.IsNullOrWhiteSpace(cwd))
+        psi.WorkingDirectory = cwd;
+    foreach (var (name, value) in ChildEnvironment(prepared))
+    {
+        if (value is null)
+            psi.Environment.Remove(name);
+        else
+            psi.Environment[name] = value;
+    }
+
+    return background.StartAsync(step.Index + 1, step.Command.Cmd, IsStepFlagSet(step.Command.Extra, "continue-on-error"), psi, step.WaitFor, step.WaitLimit);
+}
+
+static void ReportShellStateWarnings(ShellState? state)
+{
+    if (state is null)
+        return;
+    foreach (var warning in state.TakeWarnings())
+        Console.Error.WriteLine($"Warning: {warning}");
+}
+
+/// <summary>The command to start for <paramref name="cmd"/>: as it is, or with the shell state of the commands before it.</summary>
+static PreparedCommand PrepareCommand(ShellState? state, string cmd) =>
+    state?.Prepare(cmd) ?? new PreparedCommand(cmd, null);
+
+/// <summary>The variables every command gets, with those that carry the shell state.</summary>
+static Dictionary<string, string?> ChildEnvironment(PreparedCommand prepared)
+{
+    var environment = CreateChildEnvironmentOverlay();
+    if (prepared.Environment is { } extra)
+    {
+        foreach (var (name, value) in extra)
+            environment[name] = value;
+    }
+
+    return environment;
 }
 
 
@@ -2473,7 +2848,7 @@ static string CreateInitialScenarioYaml(string? shell)
 
 static void PrintUsage()
 {
-    Console.Error.WriteLine("Usage: scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
+    Console.Error.WriteLine("Usage: scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--save-keys FILE] [--save-outputs FILE] [--replay FILE] [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
     Console.Error.WriteLine("       scenetake svg [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
     Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
     Console.Error.WriteLine("       scenetake png [--at TIME] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output.png]");
@@ -3694,14 +4069,25 @@ static class HelpText
                   --format cast|svg|mp4|png|gif
                                            Write only the cast (cast, the default), or the cast and an SVG,
                                            an mp4, a PNG, or a GIF rendered from it
+                  --save-keys FILE         Write the keys typed in the 'interactive: true' steps to FILE as
+                                           'keys' entries, which replay them without a person. Written even
+                                           when the run stops at a later step. On Windows a password typed
+                                           in a step is saved too.
+                  --save-outputs FILE      Write what each step printed to FILE (JSON), for --replay.
+                                           Secrets are hidden as in the cast.
+                  --replay FILE            Run no command: take each step's output from FILE, written by
+                                           --save-outputs. Changes to typing, comments, highlights, timing,
+                                           and render apply. A step whose run changed needs a new recording.
+                                           pre and post do not run.
 
                 """)
         + RecordingRest;
 
     private const string RecordingRest = """
           --strict                 Stop at the first step that exits non-zero unless it sets
-                                   'continue-on-error: true'. Write no output and run post.
-                                   Exit 1. If a post command fails, return that command's exit code.
+                                   'continue-on-error: true'. Write no output but the --save-keys
+                                   file, and run post. Exit 1. If a post command fails, return that
+                                   command's exit code.
           --verbose                Show pre and post labels and phase markers, and the type and stack
                                    of an error that stops the run
 

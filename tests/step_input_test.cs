@@ -35,11 +35,15 @@ failures += Run("KeyNamesGiveTerminalBytes", KeyNamesGiveTerminalBytes);
 failures += Run("StepInputErrors", StepInputErrors);
 failures += Run("ValidStepInputHasNoError", ValidStepInputHasNoError);
 failures += Run("KeyActionsTimeKeysAndTyping", KeyActionsTimeKeysAndTyping);
+failures += Run("KeyActionsWaitForText", KeyActionsWaitForText);
 failures += Run("KeyEntryKeysAreChecked", KeyEntryKeysAreChecked);
 failures += Run("PlaygroundIgnoresKeysAndTimeout", PlaygroundIgnoresKeysAndTimeout);
 failures += Run("IntegrationKeysReachTheCommand", () => IntegrationKeysReachTheCommand(repoRoot));
 failures += Run("IntegrationTimeoutStopsCommands", () => IntegrationTimeoutStopsCommands(repoRoot));
 failures += Run("IntegrationKeysWithoutPtyStopBeforeRecording", () => IntegrationKeysWithoutPtyStopBeforeRecording(repoRoot));
+failures += Run("IntegrationWaitTypesWhenTheTextAppears", () => IntegrationWaitTypesWhenTheTextAppears(repoRoot));
+failures += Run("IntegrationWaitGivesUp", () => IntegrationWaitGivesUp(repoRoot));
+failures += Run("IntegrationSaveKeysNeedsAnInteractiveStep", () => IntegrationSaveKeysNeedsAnInteractiveStep(repoRoot));
 
 if (failures > 0)
 {
@@ -110,8 +114,8 @@ static bool StepInputErrors()
         ("- run: cat\n  timeout: true", "must be a number of seconds above 0, such as 5, not 'true'"),
         ("- run: cat\n  timeout: [5]", "must be a number of seconds above 0, such as 5, not a list"),
         ("- run: cat\n  pty: true\n  keys: enter", "Step 1 key 'keys' must be a list"),
-        ("- run: cat\n  pty: true\n  keys: [enter]", "Step 1 keys entry 1 must be a mapping with 'sleep', 'type', or 'key'"),
-        ("- run: cat\n  pty: true\n  keys: [{kye: q}]", "Step 1 keys entry 1 needs 'sleep', 'type', or 'key'"),
+        ("- run: cat\n  pty: true\n  keys: [enter]", "Step 1 keys entry 1 must be a mapping with 'sleep', 'wait', 'type', or 'key'"),
+        ("- run: cat\n  pty: true\n  keys: [{kye: q}]", "Step 1 keys entry 1 needs 'sleep', 'wait', 'type', or 'key'"),
         ("- run: cat\n  pty: true\n  keys: [{type: a, key: enter}]", "Step 1 keys entry 1 has both 'type' and 'key'"),
         ("- run: cat\n  pty: true\n  keys: [{sleep: -1}]", "Step 1 keys entry 1 'sleep' must be a number of seconds"),
         ("- run: cat\n  pty: true\n  keys: [{sleep: 1s}]", "'sleep' must be a number of seconds, such as 0.5, not '1s'"),
@@ -119,6 +123,11 @@ static bool StepInputErrors()
         ("- run: cat\n  pty: true\n  keys: [{type: [a, b]}]", "'type' must be text to type, not a list"),
         ("- run: cat\n  pty: true\n  keys: [{key: entr}]", "Step 1 keys entry 1 has an unknown key 'entr'. Use a name such as enter"),
         ("- echo first\n- run: cat\n  pty: true\n  keys: [{sleep: 1}, {key: ctrl+1}]", "Step 2 keys entry 2 has an unknown key 'ctrl+1'"),
+        ("- run: cat\n  pty: true\n  keys: [{wait: ''}]", "Step 1 keys entry 1 'wait' must be text the program prints, such as \"[y/N]\", not ''"),
+        // Spaces and line breaks at the ends do not count when the output is matched, so they alone match nothing.
+        ("- run: cat\n  pty: true\n  keys: [{wait: \"  \\n\"}]", "Step 1 keys entry 1 'wait' must be text the program prints"),
+        ("- run: cat\n  pty: true\n  keys: [{wait: [a]}]", "'wait' must be text the program prints, such as \"[y/N]\", not a list"),
+        ("- run: cat\n  pty: true\n  keys: [{wait: {a: b}}]", "'wait' must be text the program prints"),
     };
 
     var ok = true;
@@ -146,6 +155,12 @@ static bool ValidStepInputHasNoError()
               - type: ":q"
               - type: 42
               - key: ctrl+c
+              - wait: "[y/N]"
+                type: "y\n"
+              - sleep: 1
+                wait: 42
+                key: enter
+              - wait: "done"
           - run: ping localhost
             timeout: 3
         """;
@@ -192,6 +207,54 @@ static bool KeyActionsTimeKeysAndTyping()
     var random = new Random(7);
     var none = BuildKeyActions(ParseCommand("echo hi").Extra, 0.1, 0.05, random);
     ok &= Expect(none.Count == 0 && random.Next() == new Random(7).Next(), "a step without keys drew from the random sequence");
+    return ok;
+}
+
+static bool KeyActionsWaitForText()
+{
+    const string withWaits = """
+        steps:
+          - run: setup
+            pty: true
+            keys:
+              - sleep: 1
+                wait: "Continue? [y/N]"
+                type: "yn"
+              - wait: 42
+              - key: enter
+              - sleep: 0.5
+        """;
+    var actions = BuildKeyActions(ParseCommand(ParseScenario(withWaits).Steps![0]).Extra, speed: 0.1, jitter: 0, new Random(1));
+    var expected = new (double Delay, string Text, string? Wait, int Entry)[]
+    {
+        (1, "", "Continue? [y/N]", 1),   // the sleep, then the wait, which writes nothing
+        (0, "y", null, 1),               // typing starts when the text is there
+        (0.1, "n", null, 1),
+        (0.1, "", "42", 2),              // a number is text too, and the wait after typed text waits one typing delay
+        (0, "\r", null, 3),
+    };
+
+    var ok = Expect(actions.Count == expected.Length, $"expected {expected.Length} actions, got {actions.Count}: {string.Join(", ", actions.Select(a => $"{a.Delay}:{Show(a.Text)}:{Show(a.Wait)}:{a.Entry}"))}");
+    for (var i = 0; ok && i < expected.Length; i++)
+    {
+        var (delay, text, wait, entry) = expected[i];
+        ok &= Expect(Math.Abs(actions[i].Delay - delay) < 1e-9 && actions[i].Text == text && actions[i].Wait == wait && actions[i].Entry == entry,
+            $"action {i + 1}: got {actions[i].Delay}:{Show(actions[i].Text)}:{Show(actions[i].Wait)}:{actions[i].Entry}, expected {delay}:{Show(text)}:{Show(wait)}:{entry}");
+    }
+
+    // A wait draws no typing delay, so the steps after it type as they would without it.
+    var withRandom = new Random(7);
+    BuildKeyActions(ParseCommand(ParseScenario(withWaits).Steps![0]).Extra, 0.1, 0.05, withRandom);
+    var withoutRandom = new Random(7);
+    BuildKeyActions(ParseCommand(ParseScenario("""
+        steps:
+          - run: setup
+            pty: true
+            keys:
+              - type: "yn"
+              - key: enter
+        """).Steps![0]).Extra, 0.1, 0.05, withoutRandom);
+    ok &= Expect(withRandom.Next() == withoutRandom.Next(), "a wait drew from the random sequence");
     return ok;
 }
 
@@ -314,6 +377,56 @@ static bool IntegrationKeysWithoutPtyStopBeforeRecording(string repoRoot)
         && Expect(!run.Stderr.Contains("running:", StringComparison.Ordinal), "a step ran before the error");
 }
 
+static bool IntegrationWaitTypesWhenTheTextAppears(string repoRoot)
+{
+    if (!TryGetBinary(out var bin))
+        return true;
+
+    var run = RunFixture(bin, repoRoot, "step-input-wait.yaml");
+    var ok = Expect(run.ExitCode == 0, $"exit {run.ExitCode}: {run.Stderr}");
+    // Typed at once, the answer would go to the read before the prompt, and the prompt would get nothing.
+    ok &= Expect(run.Text.Contains("hello:abc early:.", StringComparison.Ordinal),
+        $"the answer was not typed after the prompt; cast text: {run.Text}");
+    // Each wait for the same prompt finds a prompt of its own: a second wait that matched the first prompt again
+    // would type b before the second early read, which would take it.
+    ok &= Expect(run.Text.Contains("got:a\r", StringComparison.Ordinal) && run.Text.Contains("got:b\r", StringComparison.Ordinal),
+        $"a prompt did not get its answer; cast text: {run.Text}");
+    ok &= Expect(!run.Stderr.Contains("goes on without it", StringComparison.Ordinal), $"a wait gave up: {run.Stderr}");
+    return ok;
+}
+
+static bool IntegrationWaitGivesUp(string repoRoot)
+{
+    if (!TryGetBinary(out var bin))
+        return true;
+
+    var run = RunFixture(bin, repoRoot, "step-input-wait-missing.yaml");
+    var ok = Expect(run.ExitCode == 0, $"exit {run.ExitCode}: {run.Stderr}");
+    // Without a timeout the wait gives up after 10 s and the keys go on: Ctrl+C ends the sleep.
+    ok &= Expect(run.Stderr.Contains("Warning: step 1 keys entry 1 waited 10 s for \"never printed\" and goes on without it", StringComparison.Ordinal),
+        $"no warning for the wait that gave up: {run.Stderr}");
+    // With a timeout the wait lasts until it, and the stop is no warning.
+    ok &= Expect(run.Stderr.Contains("stopped after 2 s (timeout)", StringComparison.Ordinal), $"the step timeout did not stop the wait: {run.Stderr}");
+    ok &= Expect(Regex.Matches(run.Stderr, "goes on without it").Count == 1, $"the step with a timeout gave up its wait: {run.Stderr}");
+    ok &= Expect(run.Text.Contains("after-waits", StringComparison.Ordinal), "the step after the waits did not run");
+    // 10 s, the 2 s timeout, typing, startup. Without the limit the first sleep alone takes 30 s.
+    ok &= Expect(run.Elapsed < TimeSpan.FromSeconds(28), $"took {run.Elapsed.TotalSeconds:F1} s");
+    return ok;
+}
+
+static bool IntegrationSaveKeysNeedsAnInteractiveStep(string repoRoot)
+{
+    if (!TryGetBinary(out var bin))
+        return true;
+
+    var keys = Path.Combine(Path.GetTempPath(), $"scenetake-keys-{Guid.NewGuid():N}.yaml");
+    var run = RunFixture(bin, repoRoot, "step-input-keys.yaml", "--save-keys", keys);
+    return Expect(run.ExitCode != 0, "--save-keys without an interactive step recorded")
+        && Expect(run.Stderr.Contains("--save-keys saves the keys typed in 'interactive: true' steps, and this scenario has none", StringComparison.Ordinal), $"stderr: {run.Stderr}")
+        && Expect(!run.Stderr.Contains("running:", StringComparison.Ordinal), "a step ran before the error")
+        && Expect(!File.Exists(keys), "a keys file was written");
+}
+
 static bool TryGetBinary(out string bin)
 {
     bin = Environment.GetEnvironmentVariable("SCENETAKE_BIN") ?? "";
@@ -324,7 +437,7 @@ static bool TryGetBinary(out string bin)
     return false;
 }
 
-static (int ExitCode, string Stderr, string Text, TimeSpan Elapsed) RunFixture(string bin, string repoRoot, string fixture)
+static (int ExitCode, string Stderr, string Text, TimeSpan Elapsed) RunFixture(string bin, string repoRoot, string fixture, params string[] options)
 {
     var stem = Path.Combine(Path.GetTempPath(), $"scenetake-step-input-{Guid.NewGuid():N}");
     var psi = new ProcessStartInfo(bin)
@@ -334,6 +447,8 @@ static (int ExitCode, string Stderr, string Text, TimeSpan Elapsed) RunFixture(s
         UseShellExecute = false,
         WorkingDirectory = repoRoot,
     };
+    foreach (var option in options)
+        psi.ArgumentList.Add(option);
     psi.ArgumentList.Add(Path.Combine("tests", "fixtures", fixture));
     psi.ArgumentList.Add(stem);
 

@@ -158,10 +158,27 @@ jobs:
           fi
           bash scripts/smoke-binary.sh "$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}/$binary_name"
 
+      # The zsh integration test in tests/shell_state_test.cs skips when zsh is not on PATH.
+      - name: Install zsh (Linux)
+        if: ${{ startsWith(matrix.rid, 'linux-') && !startsWith(matrix.rid, 'linux-musl-') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v zsh >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends zsh
+          fi
+          zsh --version
+
       - name: Test sources
         if: ${{ !startsWith(matrix.rid, 'linux-musl-') }}
         shell: bash
         run: |
+          binary_name="scenetake"
+          if [[ "${{ matrix.rid }}" == win-* ]]; then
+            binary_name="scenetake.exe"
+          fi
+          scenetake_bin="$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}/$binary_name"
           dotnet run tests/terminal_tests.cs
           dotnet run tests/json_escape_test.cs
           dotnet run tests/pty_timing_test.cs
@@ -173,10 +190,13 @@ jobs:
           dotnet run tests/window_chrome_test.cs
           dotnet run tests/mp4_render_test.cs
           dotnet run tests/pipe_output_decoder_test.cs
-          dotnet run tests/playground_replay_test.cs
+          # With the published binary it also records a scenario, and replays it with the CLI's --replay.
+          SCENETAKE_BIN="$scenetake_bin" dotnet run tests/playground_replay_test.cs
           dotnet run tests/step_input_test.cs
           dotnet run tests/secret_mask_test.cs
           dotnet run tests/canvas_fit_test.cs
+          # Shell state runs the published binary in each OS's bash and pwsh: macOS has bash 3.2, whose dumps differ.
+          SCENETAKE_BIN="$scenetake_bin" dotnet run tests/shell_state_test.cs
 
       - name: Upload macOS binary
         if: ${{ startsWith(matrix.rid, 'osx-') }}
@@ -259,12 +279,31 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      # ffmpeg comes from a GitHub release, pinned by digest, and not from apt: on 2026-11-18 the Ubuntu mirror was so
+      # slow that apt-get took over 9 minutes for ffmpeg's 87 packages, twice, and the job timed out. The release tag
+      # b6.1.1 is the npm package's version. It holds John Van Sickle's static ffmpeg 7.0.2 with libx264.
+      # The runner image has the DejaVu fonts, so apt runs only if a later image drops them.
       - name: Install ffmpeg and fonts
         shell: bash
         run: |
           set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ffmpeg fonts-dejavu-core
+          ffmpeg_dir="$RUNNER_TEMP/ffmpeg"
+          mkdir -p "$ffmpeg_dir"
+          cd "$ffmpeg_dir"
+          base_url="https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1"
+          curl -fsSL --retry 3 -o ffmpeg.gz "$base_url/ffmpeg-linux-x64.gz"
+          curl -fsSL --retry 3 -o ffprobe.gz "$base_url/ffprobe-linux-x64.gz"
+          printf '%s  %s\n' \
+            bfe8a8fc511530457b528c48d77b5737527b504a3797a9bc4866aeca69c2dffa ffmpeg.gz \
+            25d9b6ccb05e3d9de9e04e31e2506d8dd7f9f0418981965ac6df12e8d3afd067 ffprobe.gz | sha256sum -c -
+          gunzip ffmpeg.gz ffprobe.gz
+          chmod +x ffmpeg ffprobe
+          echo "$ffmpeg_dir" >> "$GITHUB_PATH"
+          ./ffmpeg -version
+          if [[ ! -f /usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf ]]; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends fonts-dejavu-core
+          fi
 
       - name: Publish NativeAOT binary
         shell: bash

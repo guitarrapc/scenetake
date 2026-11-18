@@ -1,0 +1,23 @@
+title: "step input: wait"
+width: 60
+height: 8
+shell: bash
+
+steps:
+  # The prompt comes after a second, and a read before it takes anything typed earlier. The wait types the answer
+  # once the prompt is there, so the prompt gets it. Typed at once, it would go to the early read.
+  - run: sleep 1; read -r -t 0.3 early; read -r -p "name? " name; echo "hello:$name early:$early."
+    pty: true
+    timeout: 6
+    keys:
+      - wait: "name?"
+        type: "abc\n"
+  # The same prompt twice: each wait finds a prompt of its own.
+  - run: for i in 1 2; do sleep 0.5; read -r -t 0.2 early; read -r -p "next? " x; echo "got:$x$early"; done
+    pty: true
+    timeout: 6
+    keys:
+      - wait: "next?"
+        type: "a\n"
+      - wait: "next?"
+        type: "b\n"

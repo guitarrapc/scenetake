@@ -14,12 +14,14 @@ Failed recorded steps can still be legitimate demo content. Setup and teardown f
 
 - Top-level `pre` (before `steps`) and `post` (last: after the cast write and any render, or as soon as the run stops with an error after `pre` succeeded).
 - Same resolved `shell` and `cwd` as `steps`.
+- The shell state carries through them, with bash, zsh, PowerShell, and (folder and variables only) the sh family: a `cd` or `export` in `pre` holds for the steps, and `post` starts where the last step left off ([spec_scenario.md](spec_scenario.md) → Shell state across steps).
+- `post` runs after every `background: true` command has ended, so it can remove what they used ([spec_scenario.md](spec_scenario.md) → Background steps).
 - stdout/stderr visible in the CLI. Command text and output never written to the cast.
 - Fail-fast for `pre` and `post`.
 
 ### Out of scope
 
-- Step-level `pre` or `post`. Map/object entries.
+- Step-level `pre` or `post`. Map/object entries. A step with `show: none` runs between the steps the way a `pre` command runs before them, and stops the recording when it fails ([spec_scenario.md](spec_scenario.md) → What a step shows).
 - Coloring, timing, or display metadata on `pre`/`post` commands.
 - Recording, retrying, or continuing past a failed `pre`/`post` command.
 
@@ -33,6 +35,8 @@ YAML structure for `pre`/`post`: [spec_scenario.md](spec_scenario.md). CLI loggi
 | `pre` | Stop immediately. Skip `steps`, cast writing, and `post`. Return the failed command's exit code. |
 | Output validation after `pre` | Skip recording and cast writing. Run `post`. Exit `1`, or return the failed `post` command's code. See [spec_cli.md](spec_cli.md) → Output Paths. |
 | Recorded step exit | Normally, warn on non-zero exits and continue. `continue-on-error: true` suppresses the warning. `--strict` stops unexpected failures. See [spec_scenario.md](spec_scenario.md) → Step exit codes. |
+| `show: none` step exit | Stop recording, with or without `--strict`, unless the step sets `continue-on-error: true`. Skip cast writing. Run `post`. Exit `1`, or return the failed `post` command's code. |
+| `background: true` step not ready | The same: the command exited before its `wait` text, or the text did not come within `wait-timeout`. |
 | Fatal recording error | Skip cast writing. Run `post`. Exit `1`, or return the failed `post` command's code. Examples include PTY startup failure or loss of a required terminal. |
 | Cast write | Run `post`. Exit `1`, or return the failed `post` command's code. |
 | `post` | Stop immediately. Skip remaining `post` commands and retain the cast. Return the failed command's exit code. |

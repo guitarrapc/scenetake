@@ -248,7 +248,8 @@ docker rm $id
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
 # シナリオを実行して cast（既定）、cast + SVG、cast + mp4、cast + PNG、または cast + GIF を生成
-scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--at TIME]
+scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--save-keys FILE] [--at TIME]
+  [--save-outputs FILE] [--replay FILE]
   [--font-size N] [--font-family FAMILIES] [--theme NAME]
   [--window none|macos|windows] [--max-fps N]
   [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH]
@@ -277,7 +278,7 @@ scenetake gif [--fps N] [--max-size WxH | --size WxH] [--no-loop] [--font-size N
 
 `--max-fps` は SVG アニメーションのフレームレート上限です（`0` = オフ、cast のタイミングをそのまま使用）。`--format svg` 時と `svg` サブコマンドで有効です。
 
-`--strict` は CI 向けです。`continue-on-error: true` を指定していない録画ステップが 0 以外で終了すると、録画を停止します。後続のステップは実行せず、出力も書きません。前回の出力ファイルはそのまま残し、`post` を実行します。終了コードは通常 `1` です。`post` のコマンドが失敗した場合は、そのコマンドの終了コードを返します。
+`--strict` は CI 向けです。`continue-on-error: true` を指定していない録画ステップが 0 以外で終了すると、録画を停止します。後続のステップは実行せず、`--save-keys` のファイル以外の出力は書きません。前回の出力ファイルはそのまま残し、`post` を実行します。終了コードは通常 `1` です。`post` のコマンドが失敗した場合は、そのコマンドの終了コードを返します。
 
 エラーには、そのステップが最後に出力した数行を表示します。エラーのデモのように失敗するのが正しいステップには `continue-on-error: true` を付けます。
 
@@ -374,6 +375,49 @@ docker rm $id
 
 `BIZ UDGothic`（OFL、Google Fonts で配布）は一例です。ほかの CJK フォントでも、そのファミリー名を指定すれば使えます。
 
+## ステップをひと続きのセッションとして書く
+
+`shell: bash`、`zsh`、PowerShell では、ステップがひと続きのターミナルセッションとして動きます。あるステップの `cd`、`export`、変数、関数、エイリアスは、後のステップと `post` にも引き継がれます。`pre` も同じなので、`pre` で `source .venv/bin/activate` すれば録画するステップでも効きます。`sh`（dash、ash、ksh）では `cd` と変数を引き継ぎ、関数とエイリアスは引き継ぎません。ほかのシェル（fish、cmd）では、ステップごとに新しいシェルで始まります。
+
+セッションの組み立てには、次のキーを使います。
+
+```yaml
+steps:
+  - run: git clone https://github.com/me/app && cd app && npm install
+    show: none              # 録画せずに実行する（場面の間の準備）
+  - run: npm run dev
+    background: true        # 起動して、動かしたまま次へ進む（後のステップが呼ぶサーバー）
+    wait: "Local:"          # 出力にこの文字が出たら次のステップを始める
+  - curl -s localhost:5173/api/hello   # 前のステップの続き（app フォルダ）で実行される
+  - run: figlet "Deploy"
+    show: output            # プロンプトと入力を出さず、出力だけ見せる
+  - clear: true             # コマンドを入力せずに画面を消す
+    name: "Scene 2"         # 消した画面の先頭に出すコメント（省略可）
+  - ./deploy.sh
+```
+
+- `show: none` は録画せずに実行し、録画の時間も使いません。失敗すると `pre` と同じく録画を止めます。失敗してもよい場合は `continue-on-error: true` を付けてください。
+- `background: true` はコマンドを起動し、録画せずに動かしたままにします。`wait` を付けると、その文字が出力に出るまで最大 `wait-timeout` 秒（既定 30 秒）待ってから次のステップを始めます。先に終了したり文字が出なかったりすると、録画を止めます。最後のステップの後、`post` の前に、そのコマンドが起動したものごと終了させます。
+- `show: output` は、プロンプトと入力したコマンドを出さずに出力だけを見せます。タイトル、バナー、すでに開いている画面に使います。
+- `clear: true` は画面を消します。`TERM` も `clear` コマンドも要らないので、CI でも同じように動きます。
+
+詳しくは [spec_scenario.md](.github/docs/spec_scenario.md#shell-state-across-steps) の Shell state across steps を参照してください。
+
+## 実行し直さずに見た目を変える
+
+`--save-outputs` で一度録画しておけば、`--replay` で入力速度、コメント、色付け、テーマ、出力形式を何度でも調整できます。replay はコマンドを実行しないので、遅いビルド、外部 API、毎回変わる出力も録画したときのままです。
+
+```bash
+scenetake --save-outputs demo.outputs.json demo.yaml                 # コマンドを一度だけ実行する
+scenetake --replay demo.outputs.json --format svg demo.yaml          # 何も実行しない
+scenetake --replay demo.outputs.json --format mp4 --theme dracula demo.yaml
+```
+
+- YAML を変えなければ、録画したときと同じ cast がバイト単位で同じに出ます。
+- ステップは `run` の文字列で記録と対応づけます。`run` を変えたステップや新しいステップがあると、そのステップの一覧を出して止まります。それらは録画し直してください。
+- replay では `pre`、`post`、`show: none` のステップ、`background` のステップは実行しません。
+- outputs ファイルは cast と同じく秘密情報を隠してあるので、YAML と並べてコミットできます。
+
 ## 出力モード
 
 出力モードは、通常出力、ストリーム出力、TUI出力、対話型アプリケーション出力の4種類があります。モードはstepごとに切り替えられます。
@@ -444,9 +488,10 @@ steps:
     pty: true
     timeout: 30             # 保険。30 秒たったら Ctrl+C
     keys:                   # 上から順に PTY へ書き込む
-      - sleep: 1.5          # 先に待つ秒数
+      - wait: "greet.py"    # 出力にこの文字が出るまで待つ
         type: "/return\n"   # 文字列。タイピングの間隔で 1 文字ずつ送る。改行は Enter
-      - type: "O# Say hello"
+      - sleep: 0.5          # 先に待つ秒数
+        type: "O# Say hello"
       - key: escape         # enter、tab、up、page-down、f1、ctrl+c、alt+x など
       - type: ":wq\n"
   - run: nyancat
@@ -458,6 +503,8 @@ steps:
 | --- | --- |
 | 名前付き | `enter`、`tab`、`space`、`backspace`、`escape`（`esc`）、`up`、`down`、`left`、`right`、`home`、`end`、`page-up`、`page-down`、`insert`、`delete`、`f1`〜`f12` |
 | 組み合わせ | `ctrl+` と英字 1 文字（例：`ctrl+c`）、`alt+` と ASCII 文字 1 文字（例：`alt+x`） |
+
+`wait` は、前のキーより後にプログラムが出力した文字から、色などのエスケープシーケンスを除いて探します。改行と続いた空白は 1 つの空白として扱います。プログラムにかかる時間は環境で変わるので、`sleep` で見込むより `wait` のほうがキーを送る時機がずれません。`timeout` がないステップでは、10 秒待っても出なければ警告を出して先へ進みます。
 
 [samples/showcase/vim.yaml](samples/showcase/vim.yaml) と [spec_pty.md](.github/docs/spec_pty.md#keys-and-timeout) の Keys and timeout を参照してください。
 
@@ -482,6 +529,29 @@ steps:
 | GIF | SVG |
 | --- | --- |
 | ![](samples/interactive-pty.gif) | ![](samples/interactive-pty.svg) |
+
+`--save-keys` で入力したキーを保存すると、次からは人がいなくても同じ操作で録れます。
+
+```bash
+scenetake --save-keys keys.yaml demo.yaml
+```
+
+対話ステップごとに、押したキーを `keys` の形で `keys.yaml` に書き出します。続けて打った文字は 1 つの `type`、それ以外のキーは `key`、間は `sleep` になります。ステップの `interactive: true` をこれに置き換えると、次の実行からは保存した操作を再生します。時間が一定しない処理を待つところは、`sleep` を出力の文字を待つ `wait` に変えてください。
+
+```yaml
+  - run: "vim README.md"
+    pty: true
+    keys:
+      - sleep: 1.2
+        type: "Go"
+      - sleep: 0.8
+        type: "Edited with scenetake"
+      - key: escape
+      - sleep: 0.6
+        type: ":wq\n"
+```
+
+> [!NOTE] Unix では、プログラムがパスワードを読んでいる間のキーは保存せず、その位置にコメントを残します。パスワードを書き足すときは、`wait: "Password:"` のようにプロンプトを待ってから入力してください。先に送ると、エコーが止まる前に端末へ届いて表示されます。Windows ではパスワードを読んでいるかどうかが scenetake に分からないため、パスワードも含めてすべてのキーを保存します。
 
 > [!WARNING] `pty: true` では stdout と stderr はバイトストリームに統合されるため、その step に `stderr-color` やパイプ向けの `highlight` は適用されません。[samples/interactive-pty.yaml](samples/interactive-pty.yaml) と [spec_pty.md](.github/docs/spec_pty.md) の Interactive PTY を参照してください。
 

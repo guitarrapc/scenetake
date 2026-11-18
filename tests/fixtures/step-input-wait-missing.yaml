@@ -1,0 +1,20 @@
+title: "step input: wait for text that never appears"
+width: 60
+height: 8
+shell: bash
+
+steps:
+  # No timeout: the wait gives up after 10 s with a warning, and Ctrl+C ends the sleep.
+  - run: echo started; sleep 30
+    pty: true
+    continue-on-error: true
+    keys:
+      - wait: "never printed"
+      - key: ctrl+c
+  # A timeout: the wait lasts until it, and the timeout stops the command.
+  - run: echo second; sleep 30
+    pty: true
+    timeout: 2
+    keys:
+      - wait: "never printed"
+  - echo after-waits

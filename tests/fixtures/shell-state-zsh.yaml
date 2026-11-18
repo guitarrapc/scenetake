@@ -1,0 +1,46 @@
+# What a command leaves in its zsh shell reaches the next one (spec_scenario.md → Shell state across steps).
+# Run from the repository root by tests/shell_state_test.cs, with HOME set to a folder of login files: .zshenv moves
+# ZDOTDIR, .zprofile puts /usr/bin first in PATH, and .zlogin sets FROM_ZLOGIN.
+title: "shell state (zsh)"
+width: 100
+height: 40
+shell: zsh
+settings:
+  typing-speed: 0.001
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+pre:
+  - export FROM_PRE=pre-value; cd tests
+steps:
+  - echo "start=$(basename "$PWD")"
+  - cd fixtures
+  - echo "now=$(basename "$PWD")"
+  - export DEMO=carried; PLAIN=plain-value; typeset -A colors=(sky blue)
+  - echo "demo=$DEMO plain=$PLAIN pre=$FROM_PRE sky=$colors[sky]"
+  - greet() { echo "hello $1"; }; alias hi='greet alias'; alias -g LOUD='| tr a-z A-Z'
+  - hi
+  - greet function LOUD
+  # A child zsh reads the user's startup files, not scenetake's: it sees exported variables only.
+  - zsh -c 'echo "child=[${+functions[greet]}][$PLAIN][$DEMO][${ZDOTDIR-unset}]"'
+  - unset DEMO; unalias hi
+  - echo "demo=[${DEMO-unset}] hi=[${+aliases[hi]}]"
+  # The restore comes after .zprofile, which puts /usr/bin first, as path_helper does on macOS.
+  - export PATH="/opt/scenetake-step:$PATH"
+  - echo "first=$path[1] login=$FROM_ZLOGIN"
+  - run: |
+      echo first
+      nosuchcommand
+    continue-on-error: true
+  - exit 3
+  # Stopped by its timeout, the step leaves the state as it was.
+  - run: cd / && sleep 30
+    timeout: 1
+  - echo "after-timeout=$(basename "$PWD")"
+  - run: cd / && sleep 30
+    pty: true
+    timeout: 1
+  - echo "after-pty-timeout=$(basename "$PWD")"
+  - run: export MY_API_KEY=correct-horse-battery-staple
+    show: none
+  - echo "[$MY_API_KEY]"

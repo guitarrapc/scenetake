@@ -1,0 +1,15 @@
+# A background step that exits before its wait text stops the recording (spec_scenario.md → Background steps).
+title: "background step exits"
+shell: bash
+settings:
+  typing-speed: 0.001
+  pre-delay: 0
+  post-delay: 0
+steps:
+  - echo before
+  - run: echo "starting"; exit 3
+    background: true
+    wait: "never printed"
+  - echo after
+post:
+  - echo post-ran

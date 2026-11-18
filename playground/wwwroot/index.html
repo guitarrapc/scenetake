@@ -82,6 +82,9 @@
               <select id="sample-select" aria-label="Sample scenario"></select>
             </label>
             <button type="button" id="reset-btn" class="btn btn--quiet" title="Load the sample's YAML again">Reset</button>
+            <label class="btn btn--quiet" for="own-files"
+              title="Open your .yaml and the .outputs.json that scenetake --save-outputs wrote. They stay in your browser.">Open files…</label>
+            <input id="own-files" type="file" multiple accept=".yaml,.yml,.json,application/json,application/yaml,text/yaml" hidden />
             <span class="spacer"></span>
             <button type="button" id="share-btn" class="btn" title="Copy a URL that opens this scenario">Copy link</button>
           </div>
@@ -89,9 +92,12 @@
             <textarea id="yaml-input" spellcheck="false" aria-label="Scenario YAML"></textarea>
           </div>
           <p class="note">Commands do not run in the browser. Each step replays the output that its command printed
-            when the sample was recorded with scenetake<span id="recording-info"></span>. A step whose <code>run</code> text has no recording shows a
+            when it was recorded with scenetake<span id="recording-info"></span>. A step whose <code>run</code> text has no recording shows a
             line that says so. Demos operated from the keyboard, such as Copilot CLI and vim, are on the
             <strong>Cast → SVG</strong> tab.</p>
+          <p class="note">To tune your own demo, record it once with
+            <code>scenetake --save-outputs demo.outputs.json demo.yaml</code>, then open both files here with
+            <strong>Open files…</strong> or drop them on the editor. They are read in your browser and not uploaded.</p>
         </div>
 
         <div class="column column--result">

@@ -1,0 +1,29 @@
+# What a command leaves in its PowerShell session reaches the next one (spec_scenario.md → Shell state across steps).
+# Run from the repository root by tests/shell_state_test.cs.
+title: "shell state (pwsh)"
+width: 100
+height: 40
+shell: pwsh
+settings:
+  typing-speed: 0.001
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+pre:
+  - $env:FROM_PRE = 'pre-value'; Set-Location tests
+steps:
+  - '"start=$(Split-Path -Leaf (Get-Location).Path)"'
+  - Set-Location fixtures
+  - '"now=$(Split-Path -Leaf (Get-Location).Path)"'
+  - $plain = 'plain-value'; $env:DEMO = 'carried'
+  - '"demo=$env:DEMO plain=$plain pre=$env:FROM_PRE"'
+  - function Greet { "hello $args" }; Set-Alias hi Greet
+  - hi alias
+  - Remove-Item env:DEMO
+  - '"demo=[$env:DEMO]"'
+  - $ErrorActionPreference = 'Stop'
+  - '"pref=$ErrorActionPreference"'
+  - run: throw 'boom'
+    continue-on-error: true
+  - exit 7
+  - '"after-exit=$plain"'

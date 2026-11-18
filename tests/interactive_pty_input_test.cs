@@ -85,8 +85,9 @@ static bool OnForwardedInput_IgnoresEmptySpan()
 static bool OnForwardedInput_SkipsKeysWhileChildReadsPassword()
 {
     var chunks = new List<PtyInputChunk>();
+    var hidden = new List<TimeSpan>();
     PtyInputMode? mode = new PtyInputMode(Echo: false, Canonical: true);
-    var recorder = new InteractivePtyInputRecorder(Stopwatch.StartNew(), chunks, () => mode);
+    var recorder = new InteractivePtyInputRecorder(Stopwatch.StartNew(), chunks, () => mode, hidden);
 
     recorder.OnForwardedInput(TimeSpan.Zero, "secret"u8);
     recorder.OnForwardedInput(TimeSpan.Zero, "\x7f"u8);
@@ -94,7 +95,9 @@ static bool OnForwardedInput_SkipsKeysWhileChildReadsPassword()
     mode = new PtyInputMode(Echo: true, Canonical: true);
     recorder.OnForwardedInput(TimeSpan.Zero, "ls"u8);
 
-    return chunks.Count == 1 && Encoding.UTF8.GetString(chunks[0].Data.Span) == "ls";
+    // --save-keys learns when the password was typed, never what it was.
+    return chunks.Count == 1 && Encoding.UTF8.GetString(chunks[0].Data.Span) == "ls"
+        && hidden.Count == 3 && hidden[0] <= hidden[2] && hidden[2] <= chunks[0].Time;
 }
 
 // Echo off alone is not a password read: vim and a shell's line editor turn echo and canonical mode off and draw the

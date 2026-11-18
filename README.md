@@ -248,7 +248,8 @@ docker rm $id
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
 # Run scenario to generate cast (default), cast + SVG, cast + mp4, cast + PNG, or cast + GIF
-scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--at TIME]
+scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--save-keys FILE] [--at TIME]
+  [--save-outputs FILE] [--replay FILE]
   [--font-size N] [--font-family FAMILIES] [--theme NAME]
   [--window none|macos|windows] [--max-fps N]
   [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH]
@@ -277,7 +278,7 @@ scenetake gif [--fps N] [--max-size WxH | --size WxH] [--no-loop] [--font-size N
 
 `--max-fps` caps SVG animation frame rate (`0` = off, use full cast timing). It applies when `--format svg` is set or on the `svg` subcommand.
 
-`--strict` is for CI. Unless a step sets `continue-on-error: true`, scenetake stops at the first recorded step that exits non-zero. Later steps do not run, and scenetake writes no output. Existing output files stay, and `post` runs. Scenetake exits `1` unless a `post` command fails, in which case it returns that command's exit code.
+`--strict` is for CI. Unless a step sets `continue-on-error: true`, scenetake stops at the first recorded step that exits non-zero. Later steps do not run, and scenetake writes no output except the `--save-keys` file. Existing output files stay, and `post` runs. Scenetake exits `1` unless a `post` command fails, in which case it returns that command's exit code.
 
 The error shows the last lines the step printed. Set `continue-on-error: true` on a step that is meant to fail, such as an error demo.
 
@@ -378,6 +379,49 @@ docker rm $id
 
 `BIZ UDGothic` (OFL, available on Google Fonts) is one example. Any CJK font works when you pass its family name.
 
+## Steps as one session
+
+With `shell: bash`, `zsh`, or PowerShell, the steps read like one terminal session. A `cd`, an `export`, a variable, a function, or an alias in one step holds in the steps after it, and in `post`. `pre` works the same way, so `source .venv/bin/activate` there carries into the recording. `sh` (dash, ash, ksh) carries `cd` and variables, but not functions or aliases. Other shells (fish, cmd) start each step afresh.
+
+A few step keys shape the session:
+
+```yaml
+steps:
+  - run: git clone https://github.com/me/app && cd app && npm install
+    show: none              # Run without recording it: setup between scenes
+  - run: npm run dev
+    background: true        # Start it and go on while it runs: a server for the steps below
+    wait: "Local:"          # The next step starts when its output shows this
+  - curl -s localhost:5173/api/hello   # Runs in app, where the steps before left off
+  - run: figlet "Deploy"
+    show: output            # The output without the prompt and the typing
+  - clear: true             # Clear the screen without typing a command
+    name: "Scene 2"         # Optional comment line at the top
+  - ./deploy.sh
+```
+
+- `show: none` runs the step without recording it, and takes no time in the recording. If it fails, the recording stops, as with `pre`. Set `continue-on-error: true` if it may fail.
+- `background: true` starts the command and leaves it running without recording it. With `wait`, the next step starts once the command prints that text, waiting up to `wait-timeout` seconds (default 30). If it exits first or the text does not come, the recording stops. scenetake ends the command, with everything it started, after the last step and before `post`.
+- `show: output` shows the output without the prompt and the typed command: a title, a banner, or a screen that is already open.
+- `clear: true` clears the screen. It needs neither `TERM` nor a `clear` command, so it works the same in CI.
+
+See [spec_scenario.md](.github/docs/spec_scenario.md#shell-state-across-steps) → Shell state across steps.
+
+## Change the look without running again
+
+Record once with `--save-outputs`, then tune the typing, comments, highlights, theme, or format with `--replay`. A replay runs no command, so a slow build, an external API, or output that changes every run stays as recorded.
+
+```bash
+scenetake --save-outputs demo.outputs.json demo.yaml                 # runs the commands once
+scenetake --replay demo.outputs.json --format svg demo.yaml          # runs nothing
+scenetake --replay demo.outputs.json --format mp4 --theme dracula demo.yaml
+```
+
+- With the YAML unchanged, a replay gives the recorded cast byte for byte.
+- A step matches its recorded output by its `run` text. A step whose `run` changed, or a new one, stops the replay with a list of those steps: record again for them.
+- `pre`, `post`, `show: none`, and `background` steps do not run in a replay.
+- The outputs file hides secrets as the cast does, so it can be committed next to the YAML.
+
 ## Output modes
 
 There are four output modes: ordinary output, stream output, TUI output, and interactive application output. You can switch mode per step.
@@ -448,9 +492,10 @@ steps:
     pty: true
     timeout: 30             # Ctrl+C after 30 seconds
     keys:                   # Written to the PTY in order
-      - sleep: 1.5          # Seconds to wait first
+      - wait: "greet.py"    # Wait until the output shows this text
         type: "/return\n"   # Text, one character per typing delay, a line break (\n) is Enter
-      - type: "O# Say hello"
+      - sleep: 0.5          # Seconds to wait first
+        type: "O# Say hello"
       - key: escape         # enter, tab, up, page-down, f1, ctrl+c, alt+x...
       - type: ":wq\n"
   - run: nyancat
@@ -462,6 +507,8 @@ steps:
 | --- | --- |
 | Named | `enter`, `tab`, `space`, `backspace`, `escape` (`esc`), `up`, `down`, `left`, `right`, `home`, `end`, `page-up`, `page-down`, `insert`, `delete`, `f1`–`f12` |
 | Combination | `ctrl+` and one letter, such as `ctrl+c`; `alt+` and one ASCII character, such as `alt+x` |
+
+`wait` looks for its text in what the program printed after the previous key, without colors or other escape sequences. Line breaks and runs of spaces count as one space. A program can take longer on another machine, so a `wait` keeps the keys in step where a `sleep` would guess. Without `timeout`, a wait gives up after 10 seconds with a warning.
 
 See [samples/showcase/vim.yaml](samples/showcase/vim.yaml) and [spec_pty.md](.github/docs/spec_pty.md#keys-and-timeout) → Keys and timeout.
 
@@ -486,6 +533,29 @@ steps:
 | GIF | SVG |
 | --- | --- |
 | ![](samples/interactive-pty.gif) | ![](samples/interactive-pty.svg) |
+
+To record the session again without you, save the keys you type with `--save-keys`:
+
+```bash
+scenetake --save-keys keys.yaml demo.yaml
+```
+
+scenetake writes the keys of each interactive step to `keys.yaml` as `keys` entries: characters typed in a row become one `type`, other keys a `key`, and each pause a `sleep`. Replace `interactive: true` in the step with them, and later runs replay the session. Where a program takes a varying time, change a `sleep` to a `wait` for text it prints.
+
+```yaml
+  - run: "vim README.md"
+    pty: true
+    keys:
+      - sleep: 1.2
+        type: "Go"
+      - sleep: 0.8
+        type: "Edited with scenetake"
+      - key: escape
+      - sleep: 0.6
+        type: ":wq\n"
+```
+
+> [!NOTE] On Unix, keys typed while a program reads a password are not saved, and a comment marks where they belong. Add the password there after a `wait` for its prompt, such as `wait: "Password:"`: typed earlier, it would reach the terminal before echo is off, and show. Windows cannot tell scenetake when a program reads a password, so on Windows the file holds every key, a password too.
 
 > [!WARNING] With `pty: true`, stdout and stderr are merged into one byte stream, so `stderr-color` and pipe-style `highlight` do not apply to that step. See [samples/interactive-pty.yaml](samples/interactive-pty.yaml) and Interactive PTY in [spec_pty.md](.github/docs/spec_pty.md).
 

@@ -18,13 +18,14 @@
 #:include ../StepOutputs.cs
 #:include ../PlaygroundRender.cs
 
-// The playground replays outputs files instead of running commands (.github/docs/spec_playground.md). These tests
-// check that a replay gives the CLI's cast and SVG byte for byte, that steps match recorded output by run text,
-// kind, and occurrence, and that an outputs file keeps no OSC text that the cast leaves out.
+// The playground and the CLI's --replay replay outputs files instead of running commands
+// (.github/docs/spec_playground.md, spec_cli.md → Replay). These tests check that a replay gives the CLI's cast and
+// SVG byte for byte, that steps match recorded output by run text, kind, and occurrence, and that an outputs file
+// keeps no OSC text that the cast leaves out.
 //
 // Usage (from repository root):
 //   dotnet run tests/playground_replay_test.cs
-//   SCENETAKE_BIN=/path/to/scenetake dotnet run tests/playground_replay_test.cs   # also records a scenario
+//   SCENETAKE_BIN=/path/to/scenetake dotnet run tests/playground_replay_test.cs   # also records, and replays with the CLI
 
 using System.Diagnostics;
 using System.Text;
@@ -53,9 +54,15 @@ failures += Run("BackgroundImagesComeFromThePage", BackgroundImagesComeFromThePa
 
 var scenetake = Environment.GetEnvironmentVariable("SCENETAKE_BIN");
 if (!string.IsNullOrWhiteSpace(scenetake) && File.Exists(scenetake))
+{
     failures += Run("RecordedScenarioReplaysToSameCast", () => RecordedScenarioReplaysToSameCast(scenetake, repoRoot));
+    failures += Run("CliReplayGivesSameCast", () => CliReplayGivesSameCast(scenetake, repoRoot));
+    failures += Run("CliReplayRefusesWhatItCannotReplay", () => CliReplayRefusesWhatItCannotReplay(scenetake, repoRoot));
+}
 else
-    Console.Error.WriteLine("skip RecordedScenarioReplaysToSameCast: set SCENETAKE_BIN to a scenetake binary");
+{
+    Console.Error.WriteLine("skip RecordedScenarioReplaysToSameCast, CliReplayGivesSameCast, CliReplayRefusesWhatItCannotReplay: set SCENETAKE_BIN to a scenetake binary");
+}
 
 if (failures > 0)
 {
@@ -172,6 +179,100 @@ static bool RecordedScenarioReplaysToSameCast(string scenetake, string repoRoot)
         Directory.Delete(work, recursive: true);
     }
 }
+
+// The CLI's --save-outputs writes the outputs file, and --replay composes the cast from it without running a command:
+// with the YAML unchanged, the cast and SVG are the recording's byte for byte. A change to how the steps look applies.
+static bool CliReplayGivesSameCast(string scenetake, string repoRoot)
+{
+    var work = Directory.CreateTempSubdirectory("scenetake-cli-replay-").FullName;
+    try
+    {
+        var yamlPath = Path.Combine(repoRoot, "tests", "fixtures", "playground-replay.yaml");
+        var outputsPath = Path.Combine(work, "demo.outputs.json");
+        var recorded = RunCli(scenetake, "--format", "svg", "--save-outputs", outputsPath, yamlPath, Path.Combine(work, "recorded"));
+        if (!Expect(recorded.ExitCode == 0 && File.Exists(outputsPath), $"record: exit {recorded.ExitCode}\n{recorded.Stderr}"))
+            return false;
+
+        var replayed = RunCli(scenetake, "--format", "svg", "--replay", outputsPath, yamlPath, Path.Combine(work, "replayed"));
+        var ok = Expect(replayed.ExitCode == 0, $"replay: exit {replayed.ExitCode}\n{replayed.Stderr}");
+        ok &= Expect(replayed.Stderr.Contains("Replaying: ", StringComparison.Ordinal) && !replayed.Stderr.Contains("running:", StringComparison.Ordinal), $"a command ran: {replayed.Stderr}");
+        ok &= SameBytes("cast", File.ReadAllBytes(Path.Combine(work, "recorded.cast")), File.ReadAllBytes(Path.Combine(work, "replayed.cast")));
+        ok &= SameBytes("svg", File.ReadAllBytes(Path.Combine(work, "recorded.svg")), File.ReadAllBytes(Path.Combine(work, "replayed.svg")));
+
+        // Slower typing, another comment, and another theme: the same outputs, another look.
+        var yaml = File.ReadAllText(yamlPath, Encoding.UTF8);
+        var editedPath = Path.Combine(work, "edited.yaml");
+        File.WriteAllText(editedPath, yaml.Replace("typing-speed: 0.01", "typing-speed: 0.05").Replace("name: streamed", "name: streamed slowly"), new UTF8Encoding(false));
+        var edited = RunCli(scenetake, "--replay", outputsPath, "--theme", "dracula", editedPath, Path.Combine(work, "edited"));
+        ok &= Expect(edited.ExitCode == 0, $"edited replay: exit {edited.ExitCode}\n{edited.Stderr}");
+        var editedCast = File.ReadAllText(Path.Combine(work, "edited.cast"), Encoding.UTF8);
+        ok &= Expect(editedCast.Contains("streamed slowly", StringComparison.Ordinal) && editedCast.Contains("line 3", StringComparison.Ordinal), "the edited comment and the recorded output");
+        ok &= Expect(CastDuration(editedCast) > CastDuration(File.ReadAllText(Path.Combine(work, "recorded.cast"), Encoding.UTF8)), "slower typing made the cast longer");
+        return ok;
+    }
+    finally
+    {
+        Directory.Delete(work, recursive: true);
+    }
+}
+
+// A step that the outputs file has no output for stops the replay before anything is written, and options that need a
+// command to run are refused.
+static bool CliReplayRefusesWhatItCannotReplay(string scenetake, string repoRoot)
+{
+    var work = Directory.CreateTempSubdirectory("scenetake-cli-replay-").FullName;
+    try
+    {
+        var yamlPath = Path.Combine(work, "demo.yaml");
+        File.WriteAllText(yamlPath, "shell: bash\nsettings:\n  typing-speed: 0.001\n  typing-jitter: 0\nsteps:\n  - echo one\n  - echo two\n", new UTF8Encoding(false));
+        var outputsPath = Path.Combine(work, "demo.outputs.json");
+        var recorded = RunCli(scenetake, "--save-outputs", outputsPath, yamlPath);
+        if (!Expect(recorded.ExitCode == 0, $"record: exit {recorded.ExitCode}\n{recorded.Stderr}"))
+            return false;
+
+        var editedPath = Path.Combine(work, "edited.yaml");
+        File.WriteAllText(editedPath, "shell: bash\nsteps:\n  - echo one\n  - echo changed\n  - run: echo one\n    pty: true\n", new UTF8Encoding(false));
+        var missing = RunCli(scenetake, "--replay", outputsPath, editedPath);
+        var ok = Expect(missing.ExitCode == 1, $"exit {missing.ExitCode}");
+        ok &= Expect(missing.Stderr.Contains("has no output for these steps:", StringComparison.Ordinal)
+            && missing.Stderr.Contains("step 2 (pipe): echo changed", StringComparison.Ordinal)
+            && missing.Stderr.Contains("step 3 (pty): echo one", StringComparison.Ordinal), missing.Stderr);
+        ok &= Expect(!File.Exists(Path.Combine(work, "edited.cast")), "a cast was written");
+
+        ok &= ExpectRefused(RunCli(scenetake, "--replay", outputsPath, "--save-outputs", Path.Combine(work, "again.json"), yamlPath), "--save-outputs saves what the commands print, and --replay runs none");
+        ok &= ExpectRefused(RunCli(scenetake, "--replay", outputsPath, "--save-keys", Path.Combine(work, "keys.yaml"), yamlPath), "--save-keys saves the keys typed in interactive steps, and --replay runs none");
+        ok &= ExpectRefused(RunCli(scenetake, "--replay", Path.Combine(work, "none.json"), yamlPath), "cannot read the outputs file");
+        ok &= ExpectRefused(RunCli(scenetake, "--replay", yamlPath, yamlPath), "cannot read the outputs file");
+        ok &= ExpectRefused(RunCli(scenetake, "--save-outputs", Path.Combine(work, "demo.cast"), yamlPath), "--save-outputs would write over another output");
+        ok &= ExpectRefused(RunCli(scenetake, "capture", "--replay", outputsPath, "--", "echo", "hi"), "unknown option: --replay");
+        return ok;
+    }
+    finally
+    {
+        Directory.Delete(work, recursive: true);
+    }
+
+    static bool ExpectRefused((int ExitCode, string Stderr) run, string message) =>
+        Expect(run.ExitCode == 1 && run.Stderr.Contains(message, StringComparison.Ordinal), $"expected exit 1 with \"{message}\": exit {run.ExitCode}\n{run.Stderr}");
+}
+
+static (int ExitCode, string Stderr) RunCli(string scenetake, params string[] args)
+{
+    var psi = new ProcessStartInfo(scenetake) { UseShellExecute = false, RedirectStandardError = true, RedirectStandardOutput = true, RedirectStandardInput = true };
+    foreach (var arg in args)
+        psi.ArgumentList.Add(arg);
+    using var process = Process.Start(psi)!;
+    process.StandardInput.Close();
+    var stdout = process.StandardOutput.ReadToEndAsync();
+    var stderr = process.StandardError.ReadToEnd();
+    process.WaitForExit();
+    return (process.ExitCode, stderr + stdout.Result);
+}
+
+// A cast's length: each event line after the header starts with the time since the event before it.
+static double CastDuration(string cast) =>
+    cast.TrimEnd('\n').Split('\n').Skip(1)
+        .Sum(static line => double.Parse(line[1..line.IndexOf(',')], System.Globalization.CultureInfo.InvariantCulture));
 
 // A chunk sequence and its masked copy give the same events after CastOscFilter, also when an OSC is split
 // between chunks or a chunk holds nothing but an OSC.

@@ -176,6 +176,13 @@ internal static partial class ScenarioCast
             var step = steps[index];
             if (step is Dictionary<object, object?> map)
             {
+                if (map.ContainsKey("clear"))
+                {
+                    if (FindClearStepError(map, index + 1) is { } clearError)
+                        return clearError;
+                    continue;
+                }
+
                 // YAML reads an unquoted command that holds ": ", such as `- echo key: value`, as a mapping.
                 // Without run it used to be skipped with no message, so the recording lost that command.
                 if (!map.TryGetValue("run", out var run))
@@ -194,7 +201,18 @@ internal static partial class ScenarioCast
             var command = ParseCommand(step);
             if (string.IsNullOrWhiteSpace(command.Cmd))
                 continue;
-            recorded++;
+
+            if (FindBackgroundError(command, index + 1, out var background) is { } backgroundError)
+                return backgroundError;
+            // A background step runs without being recorded, and takes none of the keys checked below.
+            if (background)
+                continue;
+
+            if (FindShowError(command, index + 1, out var show) is { } showError)
+                return showError;
+            // A step that shows nothing is a step to run, not to record.
+            if (show != StepShow.None)
+                recorded++;
 
             // GetBool warns about a value it cannot read, and the recording reads these keys again.
             var usePty = IsStepFlagSet(command.Extra, "pty");
@@ -214,6 +232,152 @@ internal static partial class ScenarioCast
         return null;
     }
 
+    // Keys that change how a step looks in the recording, which a step that shows nothing does not have.
+    private static readonly string[] ShownOnlyKeys =
+    [
+        "name", "run-highlight", "highlight", "stderr-color", "pre-delay", "post-delay", "execution-duration",
+        "stream-output", "max-duration", "silence-threshold", "max-idle",
+    ];
+
+    // The keys a clear step reads besides clear: it shows a comment line and takes time, but runs nothing.
+    private static readonly string[] ClearStepKeys = ["clear", "name", "pre-delay", "post-delay"];
+
+    /// <summary>
+    /// What a step shows: <c>show: all</c> (the default) types the command and shows its output; <c>show: output</c>
+    /// shows the output without the prompt and typing; <c>show: none</c> runs the command without recording it.
+    /// The error for a value that is not one of those, or for a key that the value leaves without effect; null when
+    /// the step is fine. <paramref name="number"/> is the step's 1-based position.
+    /// </summary>
+    internal static string? FindShowError(CommandEntry command, int number, out StepShow show)
+    {
+        show = StepShow.All;
+        var extra = command.Extra;
+        if (!extra.TryGetValue("show", out var value) || value is null)
+            return null;
+
+        if (value is not string text || !TryParseShow(text, out show))
+            return $"Step {number} key 'show' must be all, output, or none, not {DescribeValue(value)}.";
+
+        if (show == StepShow.None)
+        {
+            foreach (var key in ShownOnlyKeys)
+            {
+                if (key == "name" ? command.Name is not null : extra.ContainsKey(key))
+                    return $"Step {number} key '{key}' has no effect with 'show: none': the step runs without appearing in the recording, and takes no time in it.";
+            }
+        }
+        else if (show == StepShow.Output && extra.ContainsKey("run-highlight"))
+        {
+            return $"Step {number} key 'run-highlight' styles the typed command, which 'show: output' leaves out.";
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Seconds a background step waits for its <c>wait</c> text without <c>wait-timeout</c>. A server or a build
+    /// watcher takes longer to start than a prompt takes to appear, so this is longer than <see cref="KeyWaitLimit"/>.
+    /// </summary>
+    internal const double BackgroundWaitLimit = 30.0;
+
+    // The keys a background step reads besides run.
+    private static readonly string[] BackgroundStepKeys = ["background", "wait", "wait-timeout", "continue-on-error"];
+
+    /// <summary>
+    /// Whether a step sets <c>background: true</c>, and the error for its keys: <c>wait</c> and <c>wait-timeout</c>
+    /// apply to a background step only, and a background step, which is never recorded, takes no other key. Null when
+    /// the step is fine. <paramref name="number"/> is the step's 1-based position.
+    /// </summary>
+    internal static string? FindBackgroundError(CommandEntry command, int number, out bool background)
+    {
+        background = false;
+        var extra = command.Extra;
+        if (extra.TryGetValue("background", out var value) && value is not null)
+        {
+            if (value is bool flag)
+                background = flag;
+            else if (!(value is string text && bool.TryParse(text, out background)))
+                return $"Step {number} key 'background' must be true or false, not {DescribeValue(value)}.";
+        }
+
+        var hasWait = extra.TryGetValue("wait", out var wait) && wait is not null;
+        var hasWaitTimeout = extra.TryGetValue("wait-timeout", out var waitTimeout) && waitTimeout is not null;
+        if (!background)
+        {
+            if (hasWait)
+                return $"Step {number} key 'wait' applies to a 'background: true' step. To wait for text in a PTY step, use a keys entry: keys: [{{wait: \"...\"}}].";
+            if (hasWaitTimeout)
+                return $"Step {number} key 'wait-timeout' applies to a 'background: true' step with 'wait'.";
+            return null;
+        }
+
+        if (command.Name is not null)
+            return $"Step {number} key 'name' does not apply to a 'background: true' step, which runs without appearing in the recording.";
+        foreach (var key in extra.Keys)
+        {
+            if (Array.IndexOf(BackgroundStepKeys, key) < 0 && Array.IndexOf(ScenarioKeys.Step, key) >= 0)
+                return $"Step {number} key '{key}' does not apply to a 'background: true' step, which runs without appearing in the recording and takes only 'wait', 'wait-timeout', and 'continue-on-error'.";
+        }
+
+        if (hasWait && (TextToType(wait) is not { } waitText || !HasPrintable(waitText)))
+            return $"Step {number} key 'wait' must be text the command prints when it is ready, such as \"Listening on\", not {DescribeValue(wait)}.";
+        if (hasWaitTimeout)
+        {
+            if (!hasWait)
+                return $"Step {number} key 'wait-timeout' needs 'wait': without a text to wait for, the step goes on as soon as the command starts.";
+            if (!TryReadSeconds(waitTimeout, out var seconds) || seconds <= 0)
+                return $"Step {number} key 'wait-timeout' must be a number of seconds above 0, such as 60, not {DescribeValue(waitTimeout)}.";
+        }
+
+        return null;
+    }
+
+    /// <summary>The text a background step waits for, or null, and how long it waits. <see cref="FindBackgroundError"/> checks both.</summary>
+    internal static (string? Text, double Limit) GetBackgroundWait(Dictionary<string, object?> extra)
+    {
+        var text = extra.TryGetValue("wait", out var wait) && TextToType(wait) is { Length: > 0 } waitText ? waitText : null;
+        var limit = extra.TryGetValue("wait-timeout", out var waitTimeout) && TryReadSeconds(waitTimeout, out var seconds) && seconds > 0
+            ? seconds
+            : BackgroundWaitLimit;
+        return (text, limit);
+    }
+
+    /// <summary>What a step shows (<see cref="FindShowError"/> checks the value first): <see cref="StepShow.All"/> when it sets nothing.</summary>
+    internal static StepShow GetStepShow(Dictionary<string, object?> extra) =>
+        extra.TryGetValue("show", out var value) && value is string text && TryParseShow(text, out var show) ? show : StepShow.All;
+
+    private static bool TryParseShow(string text, out StepShow show)
+    {
+        show = text.Trim().ToLowerInvariant() switch
+        {
+            "all" => StepShow.All,
+            "output" => StepShow.Output,
+            "none" => StepShow.None,
+            _ => (StepShow)(-1),
+        };
+        return show >= StepShow.All;
+    }
+
+    /// <summary>The error for a <c>clear</c> step: one that sets <c>clear: true</c>, no <c>run</c>, and only the keys it reads.</summary>
+    private static string? FindClearStepError(Dictionary<object, object?> map, int number)
+    {
+        if (map.ContainsKey("run"))
+            return $"Step {number} has both 'run' and 'clear'. A 'clear: true' step clears the screen and runs nothing: put the command in a step of its own.";
+
+        var value = map["clear"];
+        if (value is not true && !(value is string text && bool.TryParse(text, out var parsed) && parsed))
+            return $"Step {number} key 'clear' must be true, not {DescribeValue(value)}. Leave the step out to keep the screen.";
+
+        foreach (var key in map.Keys)
+        {
+            var name = key?.ToString() ?? "";
+            if (Array.IndexOf(ClearStepKeys, name) < 0 && Array.IndexOf(ScenarioKeys.Step, name) >= 0)
+                return $"Step {number} key '{name}' does not apply to a 'clear: true' step, which takes only 'name', 'pre-delay', and 'post-delay'.";
+        }
+
+        return null;
+    }
+
     /// <summary>Whether a step that will be recorded sets <c>interactive: true</c>.</summary>
     internal static bool HasInteractiveStep(Scenario scenario) =>
         (scenario.Steps ?? []).Select(ParseCommand).Any(command => !string.IsNullOrWhiteSpace(command.Cmd) && IsStepFlagSet(command.Extra, "interactive"));
@@ -229,6 +393,7 @@ internal static partial class ScenarioCast
             var extra = new Dictionary<string, object?>(map.Count);
             var cmd = "";
             string? name = null;
+            var clear = false;
             foreach (var (rawKey, value) in map)
             {
                 var key = rawKey?.ToString() ?? "";
@@ -240,13 +405,16 @@ internal static partial class ScenarioCast
                     case "name":
                         name = value?.ToString();
                         break;
+                    case "clear" when !map.ContainsKey("run"):
+                        clear = value is true || (value is string text && bool.TryParse(text, out var parsed) && parsed);
+                        break;
                     default:
                         extra[key] = value;
                         break;
                 }
             }
 
-            return new CommandEntry { Cmd = cmd, Name = name, Extra = extra };
+            return new CommandEntry { Cmd = cmd, Name = name, Extra = extra, Clear = clear };
         }
         return new CommandEntry();
     }
@@ -318,10 +486,17 @@ internal static partial class ScenarioCast
     };
 
     /// <summary>
-    /// A step's input for its PTY: wait <paramref name="Delay"/> seconds after the previous action (or the
-    /// command's start), then write <paramref name="Text"/>.
+    /// Seconds a <c>wait</c> entry waits for its text in a step without <c>timeout</c>. Then it gives up with a
+    /// warning and goes on, so a text the program never prints does not stop the recording.
     /// </summary>
-    internal readonly record struct KeyAction(double Delay, string Text);
+    internal const double KeyWaitLimit = 10.0;
+
+    /// <summary>
+    /// A step's input for its PTY: wait <paramref name="Delay"/> seconds after the previous action (or the
+    /// command's start), then write <paramref name="Text"/>. With <paramref name="Wait"/> set it writes nothing:
+    /// it waits until the output shows that text. <paramref name="Entry"/> is the 1-based <c>keys</c> entry, for messages.
+    /// </summary>
+    internal readonly record struct KeyAction(double Delay, string Text, string? Wait = null, int Entry = 0);
 
     /// <summary>
     /// The bytes a key name stands for: a name from the table above, <c>ctrl+</c> and a letter, or <c>alt+</c>
@@ -373,17 +548,21 @@ internal static partial class ScenarioCast
         {
             var where = $"Step {number} keys entry {i + 1}";
             if (list[i] is not Dictionary<object, object?> entry)
-                return $"{where} must be a mapping with 'sleep', 'type', or 'key', such as {{key: enter}}, not {DescribeValue(list[i])}.";
+                return $"{where} must be a mapping with 'sleep', 'wait', 'type', or 'key', such as {{key: enter}}, not {DescribeValue(list[i])}.";
 
             var hasSleep = entry.TryGetValue("sleep", out var sleep);
+            var hasWait = entry.TryGetValue("wait", out var waitFor);
             var hasType = entry.TryGetValue("type", out var type);
             var hasKey = entry.TryGetValue("key", out var key);
-            if (!hasSleep && !hasType && !hasKey)
-                return $"{where} needs 'sleep', 'type', or 'key'.";
+            if (!hasSleep && !hasWait && !hasType && !hasKey)
+                return $"{where} needs 'sleep', 'wait', 'type', or 'key'.";
             if (hasType && hasKey)
                 return $"{where} has both 'type' and 'key'. Put each in an entry of its own.";
             if (hasSleep && (!TryReadSeconds(sleep, out var wait) || wait < 0))
                 return $"{where} 'sleep' must be a number of seconds, such as 0.5, not {DescribeValue(sleep)}.";
+            // The output is matched without control characters and spaces at the ends, so text made only of them matches nothing.
+            if (hasWait && (TextToType(waitFor) is not { } waitText || !HasPrintable(waitText)))
+                return $"{where} 'wait' must be text the program prints, such as \"[y/N]\", not {DescribeValue(waitFor)}.";
             if (hasType && string.IsNullOrEmpty(TextToType(type)))
                 return $"{where} 'type' must be text to type, not {DescribeValue(type)}.";
             if (hasKey && (key is not string name || KeyText(name) is null))
@@ -394,10 +573,11 @@ internal static partial class ScenarioCast
     }
 
     /// <summary>
-    /// A step's <c>keys</c> as timed writes. <c>sleep</c> adds to the wait before the next write. <c>type</c> writes
-    /// one character at a time, each after a typing delay drawn as for a typed command, and a line break in it is
-    /// Enter. Assumes <see cref="FindStepInputError"/> accepted the step. The playground draws the same delays, so
-    /// the typing of later steps stays the same as on the CLI.
+    /// A step's <c>keys</c> as timed writes. <c>sleep</c> adds to the wait before the next write. <c>wait</c> comes
+    /// after it and is an action of its own, which writes nothing. <c>type</c> writes one character at a time, each
+    /// after a typing delay drawn as for a typed command, and a line break in it is Enter. Assumes
+    /// <see cref="FindStepInputError"/> accepted the step. The playground draws the same delays, so the typing of
+    /// later steps stays the same as on the CLI. A wait draws none.
     /// </summary>
     internal static IReadOnlyList<KeyAction> BuildKeyActions(Dictionary<string, object?> extra, double speed, double jitter, Random rng)
     {
@@ -406,17 +586,24 @@ internal static partial class ScenarioCast
 
         var actions = new List<KeyAction>();
         var wait = 0.0;
-        foreach (var item in list)
+        for (var index = 0; index < list.Count; index++)
         {
-            if (item is not Dictionary<object, object?> entry)
+            if (list[index] is not Dictionary<object, object?> entry)
                 continue;
 
+            var number = index + 1;
             if (entry.TryGetValue("sleep", out var sleep) && TryReadSeconds(sleep, out var seconds) && seconds > 0)
                 wait += seconds;
 
+            if (entry.TryGetValue("wait", out var waitFor) && TextToType(waitFor) is { Length: > 0 } waitText)
+            {
+                actions.Add(new KeyAction(wait, "", waitText, number));
+                wait = 0;
+            }
+
             if (entry.TryGetValue("key", out var key) && key is string name && KeyText(name) is { } keyText)
             {
-                actions.Add(new KeyAction(wait, keyText));
+                actions.Add(new KeyAction(wait, keyText, Entry: number));
                 wait = 0;
             }
             else if (entry.TryGetValue("type", out var type) && TextToType(type) is { Length: > 0 } text)
@@ -426,7 +613,7 @@ internal static partial class ScenarioCast
                 {
                     var length = StringInfo.GetNextTextElementLength(normalized.AsSpan(i));
                     var element = normalized.Substring(i, length);
-                    actions.Add(new KeyAction(wait, element == "\n" ? "\r" : element));
+                    actions.Add(new KeyAction(wait, element == "\n" ? "\r" : element, Entry: number));
                     wait = Math.Max(speed + rng.NextDouble() * 2 * jitter - jitter, 0.005);
                     i += length;
                 }
@@ -434,6 +621,17 @@ internal static partial class ScenarioCast
         }
 
         return actions;
+    }
+
+    private static bool HasPrintable(string text)
+    {
+        foreach (var c in text)
+        {
+            if (!char.IsWhiteSpace(c) && !char.IsControl(c))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>The text of a <c>type</c> value: YAML reads <c>type: 42</c> as a number, which is still text to type.</summary>
@@ -539,4 +737,20 @@ public class CommandEntry
     public string Cmd { get; set; } = "";
     public string? Name { get; set; }
     public Dictionary<string, object?> Extra { get; set; } = new();
+
+    /// <summary>A <c>clear: true</c> step: it clears the screen and runs nothing.</summary>
+    public bool Clear { get; set; }
+}
+
+/// <summary>What a step shows in the recording (<c>show</c>).</summary>
+internal enum StepShow
+{
+    /// <summary>The prompt, the typed command, and its output: what a step always showed.</summary>
+    All,
+
+    /// <summary>The output only, without the prompt and typing: a banner, a title, or a screen that is already open.</summary>
+    Output,
+
+    /// <summary>Nothing: the command runs, as pre does, between the steps around it, and takes no time in the recording.</summary>
+    None,
 }

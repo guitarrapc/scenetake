@@ -251,10 +251,54 @@ Map-form steps recognize:
 | `interactive` | no | default `false`. Requires `pty: true`. Human operates the host terminal until the child exits. Recording behavior: [spec_pty.md](spec_pty.md) → Interactive PTY |
 | `continue-on-error` | no | Default `false`. Allow a non-zero step exit without a warning, including with `--strict`. Use for expected failures. See Step exit codes. |
 | `normalize-typing` | no | Default `false`. Requires `interactive: true`. Adjust visible typing to `typing-speed` during host-input windows. Remove Backspace corrections. Other output keeps wall-clock timing ([spec_pty.md](spec_pty.md) → Interactive PTY). |
-| `keys` | no | Requires `pty: true`, and does not apply to `interactive: true`. A list of entries that scenetake writes to the PTY while the command runs, in order. Each entry has `sleep` (seconds to wait first), `type` (text), or `key` (a key name), or `sleep` with one of the other two. Behavior and key names: [spec_pty.md](spec_pty.md#keys-and-timeout) → Keys and timeout. |
+| `keys` | no | Requires `pty: true`, and does not apply to `interactive: true`. A list of entries that scenetake writes to the PTY while the command runs, in order. Each entry has `sleep` (seconds to wait first), `wait` (text to wait for in the output), `type` (text), or `key` (a key name), and not both `type` and `key`. `--save-keys` writes these entries from what a person types in an interactive step. Behavior and key names: [spec_pty.md](spec_pty.md#keys-and-timeout) → Keys and timeout. |
 | `timeout` | no | Seconds, above 0. When the command is still running after that time, scenetake stops it: in a PTY with Ctrl+C first, in a pipe by ending its process tree. A stop by timeout is not a failure: no exit-code warning, and `--strict` goes on. Does not apply to `interactive: true`. See [spec_pty.md](spec_pty.md#keys-and-timeout) → Keys and timeout. |
+| `show` | no | Default `all`. What the recording shows of the step: `all` (the prompt, the typed command, and the output), `output` (the comment line and the output, without the prompt and the typing), or `none` (nothing). Case does not matter. See What a step shows below. |
+| `background` | no | Default `false`. `true` starts the command and goes on while it runs, such as a server that later steps call. It is not recorded, and stops before `post`. See Background steps below. |
+| `wait` | no | Requires `background: true`. Text the command prints when it is ready, such as `Listening on`. The next step starts when the output shows it. |
+| `wait-timeout` | no | Requires `wait`. Seconds above 0 to wait for the text. Default `30`. |
 
 Coloring value formats, range grammar, and validation: [spec_highlight.md](spec_highlight.md). Coloring does not apply to PTY-captured output.
+
+### What a step shows
+
+| `show` | Prompt and typing | Output | Time in the cast | For |
+|---|---|---|---|---|
+| `all` | Yes | Yes | Yes | A command the viewer watches being typed, as before |
+| `output` | No | Yes | Yes | A title or a banner (`figlet`, `printf`), or a program that is already open on the screen |
+| `none` | No | No | None | A step that prepares the next ones between scenes: create a file, clone a repository, `cd`, `export` |
+
+- A `show: none` step runs as `pre` does, between the steps around it. Its folder, variables, functions, and aliases carry to the next step (Shell state across steps below). It is not in the cast or the outputs file, and the playground skips it.
+- **A failing `show: none` step stops the recording,** with or without `--strict`, unless it sets `continue-on-error: true`. No cast is written, and `post` runs. The steps after it rely on what it prepares, and the recording would not show why they fail. The error names the step and its last output lines.
+- The keys that change only how a step looks are errors with `show: none`: `name`, `run-highlight`, `highlight`, `stderr-color`, `pre-delay`, `post-delay`, `execution-duration`, and the output-timing keys. `run-highlight` is an error with `show: output`, which types nothing. `pty`, `keys`, `timeout`, `interactive`, and `continue-on-error` work with every value.
+- A scenario whose steps all show nothing has no steps to record, which is an error.
+
+### Background steps
+
+A step with `background: true` starts its command and lets the next steps run while it does: a development server that a later `curl` calls, a file watcher, a mock API. The recording shows nothing of it, and it takes no time in the cast.
+
+```yaml
+steps:
+  - run: npm run dev
+    background: true
+    wait: "Local:"          # the next step starts when the output shows this
+    wait-timeout: 60        # default 30 seconds
+  - curl -s localhost:5173/api/hello
+```
+
+- **Start.** The command runs as a pipe step does, with the shell state so far (Shell state across steps below): it starts in the folder and with the variables of the steps before it. What it changes itself does not carry, because it has not ended. Its stdin is closed, so it never reads the keyboard.
+- **Ready.** Without `wait`, the next step starts at once. With `wait`, scenetake reads stdout and stderr as they come and starts the next step when either shows the text, compared as a `keys` entry's `wait` compares ([spec_pty.md](spec_pty.md#wait)): without escape sequences, with runs of spaces and line breaks as one space. stderr shows `ready after 1.2 s: "Local:"`.
+- **Not ready.** When the command exits before the text, or the text does not come within `wait-timeout`, the recording stops, as for a failing `show: none` step: no cast, `post` runs, exit `1`. The error says which (`exited 1 before it printed "Local:"`, `did not print "Local:" within 30 s`) and shows the command's last output lines. With `continue-on-error: true` it is a warning instead, and the steps go on.
+- **Stop.** After the last step, before the cast is written, scenetake ends each background command with every process it started, and stderr shows `stopped (background): ...`. It also ends them before `post` when the recording stops with an error, and when scenetake itself is stopped with Ctrl+C. A command that exited by itself with a non-zero code before the end gets a warning, unless the step sets `continue-on-error: true`.
+- **Keys.** A background step takes `wait`, `wait-timeout`, and `continue-on-error` only. Every other step key, `name` and `show` included, is an error: the step is never typed or recorded, and has no terminal of its own.
+- **Why `wait` is 30 seconds by default** and not the 10 of a `keys` wait: a server or a build watcher compiles before it listens, which takes longer than a prompt takes to appear.
+- **Why the stop is not graceful.** A pipe has no terminal to press Ctrl+C in, so the processes are ended, as a pipe step's `timeout` ends them. A command that must clean up on exit does that in `post`.
+
+### Clear steps
+
+A step `- clear: true` clears the screen and moves the cursor to the top left, as `clear` does, without running a command. It writes `ESC [H ESC [2J` into the cast, so it works without `TERM`, on every OS, and in the playground. It takes `name`, which prints a comment line at the top of the cleared screen, and `pre-delay` and `post-delay`. Any other step key, `run` with `clear`, or a value other than `true` is an error.
+
+- **Why not `run: clear`.** That types the command, and `clear` fails in a pipe without `TERM`, as in CI. With `show: output` it would still depend on the host's terminal database, and on Windows on the shell.
 
 ## Step exit codes
 
@@ -266,6 +310,8 @@ Recorded `steps` (pipe redirect or `pty: true`) observe the child exit code when
 | Non-zero exit | Warning on stderr. Recording continues. Later steps still run |
 | Non-zero exit, step sets `continue-on-error: true` | No warning. Recording continues, with `--strict` too |
 | Non-zero exit with `--strict` | Recording stops at this step. Later steps do not run. No cast. `post` runs. Exit `1`, or the failing `post` command's code |
+| Non-zero exit of a `show: none` step without `continue-on-error: true` | Recording stops at this step, with or without `--strict`. The rest as for `--strict` |
+| A `background: true` step that exits before its `wait` text, or does not print it in time, without `continue-on-error: true` | The same |
 | Fatal error (for example PTY spawn failure or output drain timeout) | Recording stops. No cast. `post` runs. Exit `1`, or the failing `post` command's code. See [spec_pty.md](spec_pty.md) |
 
 scenetake exits `0` after a successful cast write even when individual steps exited non-zero, unless `--strict`, `pre`, `post`, SVG, or another fatal error stops it. Failed command output can remain in the cast as legitimate demo content.
@@ -282,6 +328,38 @@ The recording uses a pipe or PTY. Cast players and the built-in SVG renderer sup
 
 A command that needs another value sets it itself, for example `COLORTERM= tool` in bash or `$env:COLORTERM = ''; tool` in pwsh.
 
+## Shell state across steps
+
+Each command, in `pre`, `steps`, and `post`, runs in a shell of its own, as always. With bash, zsh, and PowerShell, what one command leaves in its shell carries to the next one, in order from the first `pre` command to the last `post` command. The sh family (sh, dash, ash, ksh, ksh93, mksh) carries the folder and the variables:
+
+| Carried | bash | zsh | sh family | PowerShell |
+|---|---|---|---|---|
+| Folder | `cd`, `pushd` | `cd`, `pushd` | `cd` | `Set-Location` |
+| Environment variables, set, changed, or removed | `export`, `unset` | `export`, `unset` | `export`, `unset` | `$env:NAME = ...`, `Remove-Item env:NAME` |
+| Shell variables | `NAME=value`, arrays | `NAME=value`, arrays, associative arrays | `NAME=value` | `$name = ...` in the session, and changed `$...Preference` variables |
+| Functions | `name() { ...; }`, exported ones stay exported | `name() { ...; }` | not carried | `function Name { ... }` |
+| Aliases | `alias name=...` | `alias`, `alias -g`, `alias -s` | not carried | `Set-Alias` |
+
+So `source .venv/bin/activate`, `nvm use 20`, and `. ./env.ps1` work for the steps after them, as in a terminal.
+
+- **Not carried:** shell options (`set -e`, `shopt`, `setopt`), traps, background jobs (`&`), history, the directory stack, and PowerShell modules from `Import-Module`. Variables the shell sets by itself, such as `RANDOM`, `SECONDS`, `PIPESTATUS`, `pipestatus`, `LASTEXITCODE`, and `$Matches`, are not carried either.
+- **Only what the commands changed.** Each command starts as a fresh shell, with its login files. The state is the difference between that fresh shell and the shell when the command ended, added up over the commands. What the login files set is never carried, so it cannot pile up.
+- **A failed command still carries.** As in a terminal, `cd app && false` leaves the next step in `app`. A command stopped by `timeout` carries nothing: what it changed before the stop is dropped, so a stop never leaves the next step somewhere unplanned. A command that replaces its shell (`exec`) or sets its own EXIT trap (bash, zsh, the sh family) also carries nothing.
+- **A background command** gets the state so far and carries none back: it has not ended when the next step starts.
+- **A folder that no longer exists:** the next command starts in the scenario's `cwd` (or the caller's folder), and stderr shows `Warning: could not return to <folder>: it no longer exists or cannot be entered`.
+- **Child shells are not affected.** A bash script that a step runs reads the caller's own `BASH_ENV`, not scenetake's, and a zsh that a step starts reads the user's startup files from the user's `ZDOTDIR`. Both see the exported variables only, as in a terminal.
+- **Aliases in bash** expand in the steps after the step that defines one. bash does not expand aliases in a shell that runs a command unless `expand_aliases` is set, so scenetake sets it then. Aliases from the login files then expand too, as in an interactive terminal. Before a step defines an alias, nothing changes. zsh expands aliases in every shell, so nothing changes there.
+- **Why the sh family carries no functions or aliases.** dash and ash have no command that lists functions. An alias must be defined before the line that uses it, and the restore shares the command's first line (below). stderr says so once at the start when the scenario has more than one command: `Note: in dash, cd and variables carry over to the next step, but functions and aliases do not. ...`.
+- **Secrets.** A secret-looking variable that a command exports, such as `export API_KEY=...` in a `show: none` step, is hidden in later output as one scenetake started with is ([Masking secrets](#masking-secrets)). The state lives in a temporary folder that only the user can read, removed when scenetake exits.
+- **Other shells** (fish, cmd, nu, tcsh) start each command afresh, as before. stderr says so once at the start when the scenario has more than one command: `Note: in fish, each command starts in a new shell: ...`.
+
+How it works, briefly:
+
+- **bash** reads a script through `BASH_ENV` after its login files, before the command. The script notes the fresh shell, restores the state, and sets an EXIT trap that writes `declare -p` (for each name in bash 3), `declare -f`, `alias -p`, and the folder. scenetake compares the two and writes the next script. The command's text is unchanged, so the line numbers in its error messages (`bash: line 2: ...`) stay the user's.
+- **zsh** gets `ZDOTDIR` set to a folder of scenetake's startup files. Each reads the user's file of the same name from the user's `ZDOTDIR` (or `HOME`), then points `ZDOTDIR` back, so zsh comes back for the next one. After the last login file (`.zlogin`) the script notes the fresh shell, gives `ZDOTDIR` back to the user, restores the state, and sets an EXIT trap that writes `typeset -p`, the `functions` and alias tables, and the folder. The command's text is unchanged, so its error lines (`zsh:2: command not found: ...`) stay the user's. The restore comes after every login file because macOS's `/etc/zprofile` runs `path_helper`, which puts the system folders first in `PATH` again: a `PATH` that a step set would lose to it if restored earlier. A shell that is not a login shell, as on Windows, or a startup file that turns off `rcs`, ends the chain early, and the state is restored there.
+- **The sh family** gets `. '<state>/restore.sh'; ` before the command, on its first line, so the line numbers in its error messages (`dash: 2: ...`, `ksh93[2]: ...`) stay the user's. The script notes the fresh shell, restores the state, and sets an EXIT trap that writes `set`, `export -p`, and the folder. A shell started as `sh` reads no `BASH_ENV` even when it is bash, as `/bin/sh` is on macOS, so it gets this way too.
+- **PowerShell** gets the restore on the command's first line and a `finally` with the save after its last, with the state in a CliXml file. The exit code is made again from `$?`, as `-Command` makes it, so `exit 7`, a failing native command (`1`), `Write-Error` (`1`), and `throw` (`1`) end as before. Errors show as before, such as `Exception: boom`. A syntax error in the command shows the wrapper's text, as the UTF-8 prefix on Windows already does.
+
 ### Output encoding on Windows
 
 Windows pipe output, including `pre` and `post`, uses the same decoding regardless of the caller's terminal code page. Each child has its own console with the system OEM code page, such as 932 on Japanese Windows. Tools can write either UTF-8 or that console code page. Git, MSYS tools, and most cross-platform CLIs use UTF-8. Cmd, ping, and other Windows console tools use the console code page. PowerShell also uses it unless configured otherwise.
@@ -297,9 +375,9 @@ PTY steps need none of this: ConPTY translates everything to UTF-8. On Linux and
 1. Read the YAML file. Warn about unknown keys. Resolve render settings.
 2. Validate the scenario and outputs (see Pre-execution checks below). Stop on failure before any command runs.
 3. Derive the deterministic seed and timestamp. Resolve the shell (see Shell resolution below).
-4. Execute `pre` commands.
+4. Execute `pre` commands. From here on, each command gets the shell state of the ones before it (Shell state across steps).
 5. Repeat all output checks, including the folder check, because `pre` may change the outputs. On failure, skip recording and rendering, but run `post`.
-6. Execute and record `steps`.
+6. Execute `steps`. Record those that show something, and run those with `show: none` without recording them. Start `background: true` steps and leave them running. After the last step, end the background commands.
 7. Write the cast file, including `render` metadata. If recording or writing fails, skip rendering, but run `post`.
 8. Render SVG or mp4 when selected. See [spec_svg.md](spec_svg.md) and [spec_mp4.md](spec_mp4.md).
 9. Execute `post` commands.
@@ -386,3 +464,16 @@ Template commands must run in the selected shell. `scenetake init --shell bash|p
 - **The starter template must match its shell.** Bash redirection caused a ParserError in Windows pwsh, and Windows lacked `printf`. The template now uses commands for the default shell. `--shell` supports other choices, including Git Bash on Windows and PowerShell on Unix. The generated file names the selected shell.
 - **Unix PowerShell needs PowerShell arguments.** Unix launches previously passed `-lc`, which PowerShell rejected with exit code 64. Pipe and PTY steps now pass `-NoLogo -NoProfile -Command`.
 - **The default width was too wide for a README.** Without `width`, a scenario got 120 columns: an SVG 1226 pixels wide (2.4 : 1), which a GitHub README of about 830 pixels showed at two thirds, with 11-pixel text. The default is now 80 × 24, the classic terminal size: 830 × 504 as SVG and 820 × 488 as mp4, shown at its own size. Every sample sets its size, so none changed.
+- **A scenario could not be written as a terminal session.** Each step ran in a fresh shell, so `cd /` then `pwd` printed the caller's folder, `export` and `alias` were gone in the next step, and `source .venv/bin/activate` did nothing for later steps (checked 2026-11-18). Authors wrote `cd app && ...` in every step, which the viewer saw. None of the 53 scenarios in the repository changed folder or environment between steps, so carrying the state changed none of them.
+- **bash reads `BASH_ENV` after its login files** with `-lc`, in Git Bash and on Linux, so a restored `PATH`, such as a virtual environment's, stays ahead of what `/etc/profile` adds. The EXIT trap runs after a lone external command too: with a trap set, bash does not `exec` the command in place of itself.
+- **PowerShell needed the exit code made again.** A save after the command changed `-Command`'s exit code: a failing native command and `Write-Error` exited `0`, because the save was the last statement. `$?` read right after the user's last line, and `exit 1` when it is false, give the codes a plain run gives. Saving from the `PowerShell.Exiting` event left the exit code alone, but the event's action raced the process exit and saved in one case of six.
+- **PowerShell's error display depends on the line layout.** With the user's command on a line of its own inside `try {`, `throw 'boom'` showed a `Line | 2 |` block instead of `Exception: boom`. With the restore on the first line and the save after the last, every runtime error in nine cases showed as in a plain run.
+- **bash 5.2 and bash 3.2 dump values differently.** bash 5.2 writes a value with a line break as `$'a\nb'`, on one line. bash 3.2, macOS's `/bin/bash`, writes the break inside double quotes. The dump is read as statements that end at a line break outside quotes.
+- **bash 3.2 writes `declare -p` without names as `NAME=value`.** It leaves out the attributes, such as `-x` for an exported variable, and no line starts with `declare`, so on macOS no variable carried, while the folder, the functions, and the aliases did. The tests passed on Linux and Windows, and the first CI run on macOS found it (2026-11-18). bash 3 now gets `declare -p` for each name that `compgen -v` lists, which writes `declare -x NAME="value"` as bash 5 does. The same run showed that bash 3.2 names one line less in the errors of a `-c` command (`bash: line 1:` for the second line), in a plain run too. So the tests compare the line in a step's error with the line that the same shell names for the same lines without scenetake.
+- **ksh93 writes its error lines another way when an EXIT trap is set.** A plain `ksh93 -c` writes `sh: line 2: ...`, and with the state's EXIT trap it writes `sh[2]: ...`. The number is the same.
+- **Ending the process tree missed Git Bash's processes.** With the state's EXIT trap set, bash runs a command such as `sleep 60` in a child, and Git Bash's fork emulation leaves that process with a parent that has already exited. `Kill(entireProcessTree)` follows parents, so it ended bash and missed `sleep`, which held the pipes open: a pipe step stopped by `timeout` after 1 second waited 30 for its `sleep 30`, and a background `sleep 60` outlived scenetake (2026-11-18). On Windows a stopped pipe step and every background command now run in a job object, which holds every process started inside it, whatever its parent, and ends them all. The job also ends them when scenetake exits. A PTY step was not affected: Ctrl+C and the closed pseudo console reach every process attached to it.
+- **zsh's `zshexit` hook missed a lone external command; the EXIT trap does not** (zsh 5.9, 2026-11-18). Without an EXIT trap, `zsh -lc '/bin/false'` runs the command in place of itself, and no hook runs after it. With a trap set, zsh waits for the command and runs the trap, as bash does. Neither runs after `exec`.
+- **zsh writes the dump differently inside a function.** `typeset -p` in a function writes each global as `typeset -g`, and `argv` as the function's arguments, so the dump before the command and the one in the EXIT trap are both written from the same function. A tied pair such as `PATH` and `path` is two statements, `export -T PATH path=( ... )` and `typeset -g -aT PATH path=( ... )`. Both are restored together, which zsh reads without an error.
+- **The user's zsh startup files are read at the top level, not from a function.** A file read from a function makes its `typeset` statements local to that function, so `typeset -U path` or `typeset FOO=bar` in `.zprofile` would vanish when the function returns. Many users' `.zshenv` moves `ZDOTDIR` to another folder, so each of scenetake's files takes the user's `ZDOTDIR` as the last file left it before pointing it back.
+- **The sh family writes quotes three ways.** A quote in a value comes out as `'it'"'"'s'` (dash, busybox ash), `'it'\''s'` (mksh, bash as sh), or `$'it\'s'` (ksh93). dash and ash write a line break inside single quotes. Each shell reads its own `set` output back, so a statement is restored as written, and only a secret's value for masking is unquoted.
+- **The login files' aliases must not start expanding.** Git Bash's login files define aliases such as `ls`, which a shell that runs a command does not expand. Setting `expand_aliases` whenever an alias exists would have changed what `ls` prints in every Git Bash recording, so it is set only after a step defines an alias.

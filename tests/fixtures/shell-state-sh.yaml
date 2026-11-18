@@ -1,0 +1,49 @@
+# What a command leaves in its sh shell reaches the next one: the folder and the variables, not functions or
+# aliases (spec_scenario.md → Shell state across steps). Run from the repository root by tests/shell_state_test.cs.
+title: "shell state (sh)"
+width: 100
+height: 40
+shell: sh
+settings:
+  typing-speed: 0.001
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+pre:
+  - export FROM_PRE=pre-value; cd tests
+steps:
+  - echo "start=$(basename "$PWD")"
+  - cd fixtures
+  - echo "now=$(basename "$PWD")"
+  - run: |
+      export DEMO=carried; PLAIN=plain-value; NOTE="it's
+      two lines"
+  - echo "demo=$DEMO plain=$PLAIN pre=$FROM_PRE"
+  - printf 'note=[%s]\n' "$NOTE"
+  - greet() { echo hello; }
+  - command -v greet >/dev/null || echo "no-function"
+  # A child sh sees exported variables only.
+  - sh -c 'echo "child=[$PLAIN][$DEMO]"'
+  - unset DEMO
+  - echo "demo=[${DEMO-unset}]"
+  - run: |
+      echo first
+      nosuchcommand
+    continue-on-error: true
+  # The same lines in a plain sh: the error above must name the line this one names (bash 3.2 as sh names line 1).
+  - run: |
+      sh -c 'echo plain
+      nosuchplain'
+    continue-on-error: true
+  - exit 3
+  # Stopped by its timeout, the step leaves the state as it was.
+  - run: cd / && sleep 30
+    timeout: 1
+  - echo "after-timeout=$(basename "$PWD")"
+  - run: cd / && sleep 30
+    pty: true
+    timeout: 1
+  - echo "after-pty-timeout=$(basename "$PWD")"
+  - run: export MY_API_KEY=correct-horse-battery-staple
+    show: none
+  - echo "[$MY_API_KEY]"

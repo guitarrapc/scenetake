@@ -1,0 +1,13 @@
+# With continue-on-error, a background step that does not get ready is a warning, and the recording goes on.
+title: "background step may fail"
+shell: bash
+settings:
+  typing-speed: 0.001
+  pre-delay: 0
+  post-delay: 0
+steps:
+  - run: echo "starting"; exit 3
+    background: true
+    wait: "never printed"
+    continue-on-error: true
+  - echo after
