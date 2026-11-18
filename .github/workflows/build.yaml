@@ -158,6 +158,18 @@ jobs:
           fi
           bash scripts/smoke-binary.sh "$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}/$binary_name"
 
+      # The zsh integration test in tests/shell_state_test.cs skips when zsh is not on PATH.
+      - name: Install zsh (Linux)
+        if: ${{ startsWith(matrix.rid, 'linux-') && !startsWith(matrix.rid, 'linux-musl-') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v zsh >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends zsh
+          fi
+          zsh --version
+
       - name: Test sources
         if: ${{ !startsWith(matrix.rid, 'linux-musl-') }}
         shell: bash
