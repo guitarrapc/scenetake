@@ -7,11 +7,12 @@ using System.Text;
 /// terminal session: <c>cd app</c>, then <c>npm test</c>.
 /// </summary>
 /// <remarks>
-/// bash reads the state through <c>BASH_ENV</c> and saves it from an EXIT trap, so the command's text, and the
-/// line numbers in its error messages, stay as written. PowerShell gets the state on the command's first line and
-/// saves it in a <c>finally</c> on its last. Other shells get none: <see cref="Create"/> returns null for them.
-/// Each command has a folder of its own under a private temporary folder, which holds secrets a step exported,
-/// and which <see cref="Dispose"/> removes.
+/// bash reads the state through <c>BASH_ENV</c>, and zsh through startup files that scenetake puts in
+/// <c>ZDOTDIR</c>. Both save it from an EXIT trap, so the command's text, and the line numbers in its error
+/// messages, stay as written. PowerShell gets the state on the command's first line and saves it in a
+/// <c>finally</c> on its last. The sh family gets it on the command's first line too, without functions or aliases.
+/// Other shells get none: <see cref="Create"/> returns null for them. Each command has a folder of its own under a
+/// private temporary folder, which holds secrets a step exported, and which <see cref="Dispose"/> removes.
 /// </remarks>
 internal abstract class ShellState : IDisposable
 {
@@ -38,12 +39,25 @@ internal abstract class ShellState : IDisposable
             return new PowerShellState();
 
         var name = Path.GetFileName(fileName);
-        if (OperatingSystem.IsWindows() && name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-            name = name[..^4];
-        return string.Equals(name, "bash", OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)
-            ? new BashState()
-            : null;
+        if (OperatingSystem.IsWindows())
+        {
+            if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                name = name[..^4];
+            name = name.ToLowerInvariant();
+        }
+
+        return name switch
+        {
+            "bash" => new BashState(),
+            "zsh" => new ZshState(),
+            // A shell started as sh reads no BASH_ENV even when it is bash, as /bin/sh is on macOS.
+            "sh" or "dash" or "ash" or "ksh" or "ksh93" or "mksh" => new PosixShellState(),
+            _ => null,
+        };
     }
+
+    /// <summary>False for a shell that carries the folder and the variables only.</summary>
+    internal virtual bool CarriesFunctionsAndAliases => true;
 
     /// <summary>The command to start in place of <paramref name="command"/>, and the variables to add to its environment.</summary>
     internal PreparedCommand Prepare(string command)
@@ -311,41 +325,8 @@ internal static class BashDump
     internal static Dictionary<string, string> SplitDeclarations(string dump)
     {
         var statements = new Dictionary<string, string>(StringComparer.Ordinal);
-        var start = 0;
-        var quote = '\0';
-        for (var i = 0; i <= dump.Length; i++)
+        foreach (var statement in ShellText.SplitStatements(dump))
         {
-            if (i < dump.Length)
-            {
-                var c = dump[i];
-                if (quote == '\0')
-                {
-                    if (c is '"' or '\'')
-                    {
-                        // $'...' takes backslash escapes, as "..." does; a plain '...' takes none.
-                        quote = c == '\'' && i > 0 && dump[i - 1] == '$' ? '$' : c;
-                        continue;
-                    }
-
-                    if (c != '\n')
-                        continue;
-                }
-                else
-                {
-                    if (c == '\\' && quote is '"' or '$')
-                    {
-                        i++;
-                        continue;
-                    }
-
-                    if ((quote == '"' && c == '"') || (quote is '\'' or '$' && c == '\''))
-                        quote = '\0';
-                    continue;
-                }
-            }
-
-            var statement = dump[start..Math.Min(i, dump.Length)].TrimEnd('\r');
-            start = i + 1;
             if (DeclarationName(statement) is { } name)
                 statements[name] = statement;
         }
@@ -504,6 +485,530 @@ internal static class BashDump
 
     /// <summary>A bash word for <paramref name="text"/>: single quotes, with each quote in it written as <c>'\''</c>.</summary>
     internal static string Quote(string text) => "'" + text.Replace("'", "'\\''") + "'";
+}
+
+/// <summary>Reads what shells print for reinput: <c>declare -p</c>, <c>typeset -p</c>, <c>set</c>, <c>export -p</c>.</summary>
+internal static class ShellText
+{
+    /// <summary>
+    /// The statements of a dump. A statement ends at a line break outside quotes: dash writes a value with a line
+    /// break inside single quotes, and bash 3.2 inside double quotes.
+    /// </summary>
+    internal static List<string> SplitStatements(string dump)
+    {
+        var statements = new List<string>();
+        var start = 0;
+        var quote = '\0';
+        for (var i = 0; i <= dump.Length; i++)
+        {
+            if (i < dump.Length)
+            {
+                var c = dump[i];
+                if (quote == '\0')
+                {
+                    if (c == '\\')
+                    {
+                        i++;
+                        continue;
+                    }
+
+                    if (c is '"' or '\'')
+                    {
+                        // $'...' takes backslash escapes, as "..." does; a plain '...' takes none.
+                        quote = c == '\'' && i > 0 && dump[i - 1] == '$' ? '$' : c;
+                        continue;
+                    }
+
+                    if (c != '\n')
+                        continue;
+                }
+                else
+                {
+                    if (c == '\\' && quote is '"' or '$')
+                    {
+                        i++;
+                        continue;
+                    }
+
+                    if ((quote == '"' && c == '"') || (quote is '\'' or '$' && c == '\''))
+                        quote = '\0';
+                    continue;
+                }
+            }
+
+            var statement = dump[start..Math.Min(i, dump.Length)].TrimEnd('\r');
+            start = i + 1;
+            if (statement.Length > 0)
+                statements.Add(statement);
+        }
+
+        return statements;
+    }
+
+    /// <summary>
+    /// The text a shell word stands for. The word may join quoted parts, as the shells write a quote in a value:
+    /// <c>'it'\''s'</c> (bash, mksh, zsh), <c>'it'"'"'s'</c> (dash), <c>$'it\'s'</c> (ksh93).
+    /// </summary>
+    internal static string Unquote(ReadOnlySpan<char> word)
+    {
+        var text = new StringBuilder(word.Length);
+        for (var i = 0; i < word.Length; i++)
+        {
+            var c = word[i];
+            if (c == '\'')
+            {
+                var close = word[(i + 1)..].IndexOf('\'');
+                var end = close < 0 ? word.Length : i + 1 + close;
+                text.Append(word[(i + 1)..end]);
+                i = end;
+            }
+            else if (c == '$' && i + 1 < word.Length && word[i + 1] == '\'')
+            {
+                for (i += 2; i < word.Length && word[i] != '\''; i++)
+                {
+                    if (word[i] != '\\' || i + 1 >= word.Length)
+                    {
+                        text.Append(word[i]);
+                        continue;
+                    }
+
+                    i++;
+                    text.Append(word[i] switch
+                    {
+                        'n' => '\n', 't' => '\t', 'r' => '\r', 'e' or 'E' => '\u001b', 'a' => '\a', 'b' => '\b', 'f' => '\f', 'v' => '\v',
+                        _ => word[i],
+                    });
+                }
+            }
+            else if (c == '"')
+            {
+                for (i++; i < word.Length && word[i] != '"'; i++)
+                {
+                    if (word[i] == '\\' && i + 1 < word.Length && word[i + 1] is '"' or '\\' or '$' or '`' or '\n')
+                        i++;
+                    text.Append(word[i]);
+                }
+            }
+            else if (c == '\\' && i + 1 < word.Length)
+            {
+                i++;
+                text.Append(word[i]);
+            }
+            else
+            {
+                text.Append(c);
+            }
+        }
+
+        return text.ToString();
+    }
+
+    /// <summary>The value of a <c>name=value</c> word or statement, unquoted, or null for none or an array.</summary>
+    internal static string? AssignedValue(string statement)
+    {
+        var equals = statement.IndexOf('=');
+        if (equals < 0)
+            return null;
+
+        var value = statement.AsSpan(equals + 1);
+        return value.Length > 0 && value[0] == '(' ? null : Unquote(value);
+    }
+
+    /// <summary>True for a shell variable name: a letter or <c>_</c>, then letters, digits, and <c>_</c>.</summary>
+    internal static bool IsName(ReadOnlySpan<char> name)
+    {
+        if (name.Length == 0 || !(char.IsAsciiLetter(name[0]) || name[0] == '_'))
+            return false;
+
+        foreach (var c in name)
+        {
+            if (!(char.IsAsciiLetterOrDigit(c) || c == '_'))
+                return false;
+        }
+
+        return true;
+    }
+}
+
+/// <summary>
+/// zsh: scenetake points <c>ZDOTDIR</c> at the command's folder, which holds startup files of its own. Each one reads
+/// the user's file of the same name, with the user's ZDOTDIR, then points ZDOTDIR back, so zsh comes back for the next
+/// one. After the last, <c>finish.zsh</c> notes the shell, restores the state, and sets an EXIT trap that saves it, as
+/// bash's script does. The restore comes after every login file because macOS's /etc/zprofile runs path_helper, which
+/// puts the system folders first in PATH again.
+/// </summary>
+internal sealed class ZshState : ShellState
+{
+    // The restore statements for the next command, cumulative since pre's first command.
+    private string _restore = "";
+    private readonly string? _userZdotdir = Environment.GetEnvironmentVariable("ZDOTDIR");
+
+    protected override PreparedCommand Prepare(string command, string folder)
+    {
+        foreach (var (name, text) in BuildFiles(ScriptPath(folder), _userZdotdir, _restore))
+            File.WriteAllText(Path.Combine(folder, name), text, new UTF8Encoding(false));
+        return new PreparedCommand(command, new(StringComparer.Ordinal) { ["ZDOTDIR"] = ScriptPath(folder) });
+    }
+
+    protected override void Take(string folder, List<KeyValuePair<string, string?>> exports)
+    {
+        string Read(string name) => File.ReadAllText(Path.Combine(folder, name));
+        // No final.pwd: the EXIT trap did not run (exec, or the command's own EXIT trap). The state stays as it was.
+        if (!File.Exists(Path.Combine(folder, "final.pwd")) || !File.Exists(Path.Combine(folder, "base.vars")))
+            return;
+
+        _restore = ZshDump.BuildRestore(
+            Read("base.vars"), Read("final.vars"),
+            Read("base.funcs"), Read("final.funcs"),
+            Read("base.alias"), Read("final.alias"),
+            Read("final.pwd"),
+            exports);
+    }
+
+    /// <summary>
+    /// The startup files in the command's folder. zsh reads .zshenv, then for a login shell .zprofile and .zlogin,
+    /// each from ZDOTDIR. A file that turns off the rcs option, or a shell that is not a login shell, as on Windows,
+    /// ends the chain early: the state is restored there instead. Every line keeps quiet: what zsh prints here would
+    /// be recorded.
+    /// </summary>
+    internal static List<(string Name, string Text)> BuildFiles(string folder, string? userZdotdir, string restore)
+    {
+        // A user file reads ZDOTDIR as zsh gives it: unset, or the value scenetake started with.
+        var user = string.IsNullOrEmpty(userZdotdir) ? "builtin unset ZDOTDIR\n" : "ZDOTDIR=" + BashDump.Quote(userZdotdir) + "\n";
+        const string Back = "if [[ -n $__scenetake_zdotdir ]]; then ZDOTDIR=$__scenetake_zdotdir; else builtin unset ZDOTDIR; fi\n";
+        const string Away = "__scenetake_zdotdir=${ZDOTDIR-}; ZDOTDIR=$__scenetake_dir";
+        const string Finish = "builtin source -- \"$__scenetake_dir/finish.zsh\"";
+        static string ReadUser(string file) => $"if [[ -r ${{ZDOTDIR:-$HOME}}/{file} ]]; then builtin source -- \"${{ZDOTDIR:-$HOME}}/{file}\"; fi\n";
+
+        var zshenv = "# Written by scenetake: zsh reads this in place of your .zshenv, and the next startup files from here too (ShellState.cs).\n" +
+                     "__scenetake_dir=" + BashDump.Quote(folder) + "\n" +
+                     user +
+                     ReadUser(".zshenv") +
+                     $"if [[ -o login && -o rcs ]]; then {Away}; else {Finish}; fi\n";
+        var zprofile = "# Written by scenetake: reads your .zprofile (ShellState.cs).\n" +
+                       Back +
+                       ReadUser(".zprofile") +
+                       $"if [[ -o rcs ]]; then {Away}; else {Finish}; fi\n";
+        var zlogin = "# Written by scenetake: reads your .zlogin, then restores the state (ShellState.cs).\n" +
+                     Back +
+                     ReadUser(".zlogin") +
+                     Finish + "\n";
+
+        var finish = new StringBuilder();
+        finish.Append("# Written by scenetake: the state of the commands before this one (ShellState.cs).\n");
+        finish.Append("builtin unset __scenetake_zdotdir\n");
+        // The dumps run with zsh's own options, whatever the steps set. Both run in this function, so both write
+        // the global variables as typeset -g, and argv is the function's.
+        finish.Append("__scenetake_dump() {\n");
+        finish.Append("  builtin emulate -L zsh\n");
+        finish.Append("  builtin typeset -p >|\"$__scenetake_dir/$1.vars\" 2>/dev/null\n");
+        finish.Append("  builtin local __scenetake_k\n");
+        finish.Append("  { for __scenetake_k in ${(ok)functions}; do builtin print -r -- \"functions[${(q)__scenetake_k}]=${(q)functions[$__scenetake_k]}\"; done } >|\"$__scenetake_dir/$1.funcs\" 2>/dev/null\n");
+        finish.Append("  { for __scenetake_k in ${(ok)aliases}; do builtin print -r -- \"aliases[${(q)__scenetake_k}]=${(q)aliases[$__scenetake_k]}\"; done\n");
+        finish.Append("    for __scenetake_k in ${(ok)galiases}; do builtin print -r -- \"galiases[${(q)__scenetake_k}]=${(q)galiases[$__scenetake_k]}\"; done\n");
+        finish.Append("    for __scenetake_k in ${(ok)saliases}; do builtin print -r -- \"saliases[${(q)__scenetake_k}]=${(q)saliases[$__scenetake_k]}\"; done } >|\"$__scenetake_dir/$1.alias\" 2>/dev/null\n");
+        finish.Append("}\n");
+        finish.Append("__scenetake_dump base\n");
+        finish.Append("{\n").Append(restore).Append(":\n} 2>>\"$__scenetake_dir/restore.err\" || :\n");
+        finish.Append("__scenetake_save() { __scenetake_dump final; builtin print -rn -- \"$PWD\" >|\"$__scenetake_dir/final.pwd\" 2>/dev/null; }\n");
+        finish.Append("builtin trap __scenetake_save EXIT\n");
+
+        return [(".zshenv", zshenv), (".zprofile", zprofile), (".zlogin", zlogin), ("finish.zsh", finish.ToString())];
+    }
+}
+
+/// <summary>
+/// Reads the dumps of zsh's <c>typeset -p</c> and of its <c>functions</c>, <c>aliases</c>, <c>galiases</c>, and
+/// <c>saliases</c> tables, and writes the statements that make a fresh shell look like the saved one.
+/// </summary>
+internal static class ZshDump
+{
+    // Variables that zsh changes by itself, or that belong to the shell rather than to the steps. ZDOTDIR is
+    // scenetake's own while zsh starts.
+    private static readonly HashSet<string> SkippedVariables = new(StringComparer.Ordinal)
+    {
+        "0", "_", "ARGC", "COLUMNS", "EPOCHREALTIME", "EPOCHSECONDS", "ERRNO", "HISTCMD", "LINENO", "LINES", "OPTARG",
+        "OPTIND", "PPID", "PWD", "RANDOM", "SECONDS", "SHLVL", "TRY_BLOCK_ERROR", "TRY_BLOCK_INTERRUPT", "TTY", "TTYIDLE",
+        "ZDOTDIR", "ZSH_ARGZERO", "ZSH_EVAL_CONTEXT", "ZSH_EXECUTION_STRING", "ZSH_SUBSHELL", "argv", "epochtime",
+        "funcfiletrace", "funcsourcetrace", "funcstack", "functrace", "pipestatus", "status", "zsh_eval_context",
+    };
+
+    internal static bool IsSkippedVariable(string name) =>
+        SkippedVariables.Contains(name) || name.StartsWith("__scenetake", StringComparison.Ordinal);
+
+    /// <summary>
+    /// The statements that restore what changed between the base dumps (the shell after its login files) and the
+    /// final ones (the shell at exit): the folder, the variables, the functions, then the aliases. Exported
+    /// variables that changed are added to <paramref name="exports"/>.
+    /// </summary>
+    internal static string BuildRestore(
+        string baseVars, string finalVars,
+        string baseFunctions, string finalFunctions,
+        string baseAliases, string finalAliases,
+        string folder,
+        List<KeyValuePair<string, string?>> exports)
+    {
+        var restore = new StringBuilder();
+        // -q runs no chpwd hook, which could print.
+        restore.Append("builtin cd -q -- ").Append(BashDump.Quote(folder)).Append(" || builtin print -r -- ")
+            .Append(BashDump.Quote($"could not return to {folder}: it no longer exists or cannot be entered")).Append(" >&2\n");
+
+        var before = SplitDeclarations(baseVars);
+        var after = SplitDeclarations(finalVars);
+        foreach (var (name, statement) in after)
+        {
+            if (IsSkippedVariable(name) || (before.TryGetValue(name, out var old) && old == statement))
+                continue;
+            restore.Append(statement).Append('\n');
+            if (statement.StartsWith("export ", StringComparison.Ordinal) && !statement.Contains('\n'))
+                exports.Add(new(name, ShellText.AssignedValue(statement)));
+        }
+
+        foreach (var name in before.Keys)
+        {
+            if (!after.ContainsKey(name) && !IsSkippedVariable(name))
+                restore.Append("builtin unset -v -- ").Append(BashDump.Quote(name)).Append('\n');
+        }
+
+        AppendEntries(restore, SplitEntries(baseFunctions), SplitEntries(finalFunctions));
+        AppendEntries(restore, SplitEntries(baseAliases), SplitEntries(finalAliases));
+        return restore.ToString();
+    }
+
+    /// <summary>
+    /// The statements of a <c>typeset -p</c> dump by variable name. A tied pair, such as PATH and path, is two
+    /// statements under the array's name, kept together.
+    /// </summary>
+    internal static Dictionary<string, string> SplitDeclarations(string dump)
+    {
+        var statements = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var statement in ShellText.SplitStatements(dump))
+        {
+            if (DeclarationName(statement) is not { } name)
+                continue;
+            statements[name] = statements.TryGetValue(name, out var first) ? first + "\n" + statement : statement;
+        }
+
+        return statements;
+    }
+
+    /// <summary>
+    /// The variable a <c>typeset</c> or <c>export</c> statement sets: <c>typeset -g foo=bar</c> gives foo, and
+    /// <c>export -T PATH path=( ... )</c> gives path. Null for another line.
+    /// </summary>
+    internal static string? DeclarationName(string statement)
+    {
+        ReadOnlySpan<char> rest;
+        if (statement.StartsWith("typeset ", StringComparison.Ordinal))
+            rest = statement.AsSpan(8);
+        else if (statement.StartsWith("export ", StringComparison.Ordinal))
+            rest = statement.AsSpan(7);
+        else
+            return null;
+
+        // The options, such as -g, -a, -i10, or -aT.
+        while (rest.Length > 0 && rest[0] == '-')
+        {
+            var space = rest.IndexOf(' ');
+            if (space < 0)
+                return null;
+            rest = rest[(space + 1)..];
+        }
+
+        var end = rest.IndexOfAny('=', ' ');
+        if (end < 0)
+            return rest.Length > 0 ? rest.ToString() : null;
+        if (rest[end] == '=')
+            return end > 0 ? rest[..end].ToString() : null;
+
+        // A tied pair: the scalar's name, then the array's, which takes the value.
+        var next = rest[(end + 1)..];
+        var equals = next.IndexOfAny('=', ' ');
+        return equals > 0 && next[equals] == '=' ? next[..equals].ToString() : rest[..end].ToString();
+    }
+
+    /// <summary>The lines of a functions or aliases dump, <c>functions[name]=body</c>, by the part before <c>=</c>.</summary>
+    internal static Dictionary<string, string> SplitEntries(string dump)
+    {
+        var entries = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var raw in dump.Split('\n'))
+        {
+            var line = raw.TrimEnd('\r');
+            var open = line.IndexOf('[');
+            var close = line.IndexOf("]=", StringComparison.Ordinal);
+            if (open > 0 && close > open)
+                entries[line[..(close + 1)]] = line;
+        }
+
+        return entries;
+    }
+
+    private static void AppendEntries(StringBuilder restore, Dictionary<string, string> before, Dictionary<string, string> after)
+    {
+        foreach (var (key, line) in after)
+        {
+            if (!IsOwnEntry(key) && (!before.TryGetValue(key, out var old) || old != line))
+                restore.Append(line).Append('\n');
+        }
+
+        foreach (var key in before.Keys)
+        {
+            if (!after.ContainsKey(key) && !IsOwnEntry(key) && RemoveEntry(key) is { } remove)
+                restore.Append(remove).Append('\n');
+        }
+    }
+
+    private static bool IsOwnEntry(string key) => key.StartsWith("functions[__scenetake", StringComparison.Ordinal);
+
+    // The name is quoted as the dump quoted it, which unfunction and unalias read as zsh does.
+    private static string? RemoveEntry(string key)
+    {
+        var open = key.IndexOf('[');
+        var name = key[(open + 1)..^1];
+        return key[..open] switch
+        {
+            "functions" => "builtin unfunction -- " + name,
+            "aliases" or "galiases" => "builtin unalias -- " + name,
+            "saliases" => "builtin unalias -s -- " + name,
+            _ => null,
+        };
+    }
+}
+
+/// <summary>
+/// The sh family (dash, ash, ksh, mksh, and bash started as sh): a shell that runs a command reads no startup file
+/// after its login files, so the restore goes on the command's first line, as for PowerShell, and the line numbers
+/// stay. It carries the folder and the variables only: dash and ash cannot list their functions, and an alias that
+/// the first line defines is not used on that line.
+/// </summary>
+internal sealed class PosixShellState : ShellState
+{
+    // The restore statements for the next command, cumulative since pre's first command.
+    private string _restore = "";
+
+    internal override bool CarriesFunctionsAndAliases => false;
+
+    protected override PreparedCommand Prepare(string command, string folder)
+    {
+        var script = Path.Combine(folder, "restore.sh");
+        File.WriteAllText(script, BuildScript(ScriptPath(folder), _restore), new UTF8Encoding(false));
+        return new PreparedCommand(". " + BashDump.Quote(ScriptPath(script)) + "; " + command, null);
+    }
+
+    protected override void Take(string folder, List<KeyValuePair<string, string?>> exports)
+    {
+        string Read(string name) => File.ReadAllText(Path.Combine(folder, name));
+        // No final.pwd: the EXIT trap did not run (exec, or the command's own EXIT trap). The state stays as it was.
+        if (!File.Exists(Path.Combine(folder, "final.pwd")) || !File.Exists(Path.Combine(folder, "base.vars")))
+            return;
+
+        _restore = PosixShellDump.BuildRestore(
+            Read("base.vars"), Read("final.vars"),
+            Read("base.exports"), Read("final.exports"),
+            Read("final.pwd"),
+            exports);
+    }
+
+    /// <summary>The script the command's first line reads. Every line keeps quiet: what the shell prints here would be recorded.</summary>
+    internal static string BuildScript(string folder, string restore)
+    {
+        // dash has no `builtin`. `command` passes over a function named cd or printf, and special built-ins, such as
+        // set, export, unset, and trap, come before functions anyway.
+        var script = new StringBuilder();
+        script.Append("# Written by scenetake: the state of the commands before this one (ShellState.cs).\n");
+        script.Append("__scenetake_dir=").Append(BashDump.Quote(folder)).Append('\n');
+        script.Append("__scenetake_dump() { { set >|\"$__scenetake_dir/$1.vars\"; export -p >|\"$__scenetake_dir/$1.exports\"; } 2>/dev/null; }\n");
+        script.Append("__scenetake_dump base\n");
+        script.Append("{\n").Append(restore).Append(":\n} 2>>\"$__scenetake_dir/restore.err\" || :\n");
+        script.Append("__scenetake_save() { __scenetake_dump final; command printf '%s' \"$PWD\" >|\"$__scenetake_dir/final.pwd\" 2>/dev/null; }\n");
+        script.Append("trap __scenetake_save EXIT\n");
+        return script.ToString();
+    }
+}
+
+/// <summary>Reads the dumps of <c>set</c> and <c>export -p</c>, and writes the statements that make a fresh shell look like the saved one.</summary>
+internal static class PosixShellDump
+{
+    /// <summary>
+    /// The statements that restore what changed between the base dumps (the shell after its login files) and the
+    /// final ones (the shell at exit): the folder, the variables, then what is exported. Exported variables that
+    /// changed are added to <paramref name="exports"/>.
+    /// </summary>
+    internal static string BuildRestore(
+        string baseVars, string finalVars,
+        string baseExports, string finalExports,
+        string folder,
+        List<KeyValuePair<string, string?>> exports)
+    {
+        var restore = new StringBuilder();
+        restore.Append("command cd -- ").Append(BashDump.Quote(folder)).Append(" || command printf '%s\\n' ")
+            .Append(BashDump.Quote($"could not return to {folder}: it no longer exists or cannot be entered")).Append(" >&2\n");
+
+        // Each shell writes its values in quotes that it reads back, so a statement is restored as written.
+        var before = SplitAssignments(baseVars);
+        var after = SplitAssignments(finalVars);
+        foreach (var (name, statement) in after)
+        {
+            if (!BashDump.IsSkippedVariable(name) && !(before.TryGetValue(name, out var old) && old == statement))
+                restore.Append(statement).Append('\n');
+        }
+
+        foreach (var name in before.Keys)
+        {
+            if (!after.ContainsKey(name) && !BashDump.IsSkippedVariable(name))
+                restore.Append("unset -v ").Append(name).Append('\n');
+        }
+
+        var exportedBefore = SplitExports(baseExports);
+        foreach (var (name, statement) in SplitExports(finalExports))
+        {
+            if (BashDump.IsSkippedVariable(name) || (exportedBefore.TryGetValue(name, out var old) && old == statement))
+                continue;
+            restore.Append("export ").Append(name).Append('\n');
+            exports.Add(new(name, ShellText.AssignedValue(statement) ?? (after.TryGetValue(name, out var assignment) ? ShellText.AssignedValue(assignment) : null)));
+        }
+
+        return restore.ToString();
+    }
+
+    /// <summary>The <c>name=value</c> statements of a <c>set</c> dump by name. Other lines, such as a function bash lists, are left out.</summary>
+    internal static Dictionary<string, string> SplitAssignments(string dump)
+    {
+        var statements = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var statement in ShellText.SplitStatements(dump))
+        {
+            var equals = statement.IndexOf('=');
+            if (equals > 0 && ShellText.IsName(statement.AsSpan(0, equals)))
+                statements[statement[..equals]] = statement;
+        }
+
+        return statements;
+    }
+
+    /// <summary>The statements of an <c>export -p</c> dump by name: <c>export NAME='value'</c>, or <c>export NAME</c> without a value.</summary>
+    internal static Dictionary<string, string> SplitExports(string dump)
+    {
+        var statements = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var statement in ShellText.SplitStatements(dump))
+        {
+            if (!statement.StartsWith("export ", StringComparison.Ordinal))
+                continue;
+
+            var rest = statement.AsSpan(7);
+            while (rest.Length > 0 && rest[0] == '-')
+            {
+                var space = rest.IndexOf(' ');
+                rest = space < 0 ? [] : rest[(space + 1)..];
+            }
+
+            var end = rest.IndexOfAny('=', ' ');
+            var name = end < 0 ? rest : rest[..end];
+            if (ShellText.IsName(name))
+                statements[name.ToString()] = statement;
+        }
+
+        return statements;
+    }
 }
 
 /// <summary>

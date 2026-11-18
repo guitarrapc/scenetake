@@ -14,7 +14,7 @@ Failed recorded steps can still be legitimate demo content. Setup and teardown f
 
 - Top-level `pre` (before `steps`) and `post` (last: after the cast write and any render, or as soon as the run stops with an error after `pre` succeeded).
 - Same resolved `shell` and `cwd` as `steps`.
-- The shell state carries through them, with bash and PowerShell: a `cd` or `export` in `pre` holds for the steps, and `post` starts where the last step left off ([spec_scenario.md](spec_scenario.md) → Shell state across steps).
+- The shell state carries through them, with bash, zsh, PowerShell, and (folder and variables only) the sh family: a `cd` or `export` in `pre` holds for the steps, and `post` starts where the last step left off ([spec_scenario.md](spec_scenario.md) → Shell state across steps).
 - `post` runs after every `background: true` command has ended, so it can remove what they used ([spec_scenario.md](spec_scenario.md) → Background steps).
 - stdout/stderr visible in the CLI. Command text and output never written to the cast.
 - Fail-fast for `pre` and `post`.

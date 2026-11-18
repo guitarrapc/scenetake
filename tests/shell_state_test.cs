@@ -21,7 +21,8 @@
 
 // Shell state across steps, and the step keys show, clear, and background (.github/docs/spec_scenario.md → Shell
 // state across steps, steps). The unit tests need only the sources. The integration tests record fixtures with a
-// published binary (SCENETAKE_BIN) and need bash, on Windows Git Bash; the PowerShell one also needs pwsh.
+// published binary (SCENETAKE_BIN) and need bash, on Windows Git Bash. The PowerShell, zsh, and sh ones skip when
+// the shell is not on PATH.
 
 using System.Diagnostics;
 using System.Text;
@@ -37,7 +38,12 @@ failures += Run("ScalarValuesAreUnquoted", ScalarValuesAreUnquoted);
 failures += Run("RestoreCarriesWhatChanged", RestoreCarriesWhatChanged);
 failures += Run("LoginAliasesDoNotTurnOnExpansion", LoginAliasesDoNotTurnOnExpansion);
 failures += Run("QuoteKeepsSingleQuotes", QuoteKeepsSingleQuotes);
-failures += Run("StateOnlyForBashAndPowerShell", StateOnlyForBashAndPowerShell);
+failures += Run("StateForEachShell", StateForEachShell);
+failures += Run("ShellRestoreSharesFirstLine", ShellRestoreSharesFirstLine);
+failures += Run("UnquoteJoinsParts", UnquoteJoinsParts);
+failures += Run("ZshDeclarationsByName", ZshDeclarationsByName);
+failures += Run("ZshRestoreCarriesWhatChanged", ZshRestoreCarriesWhatChanged);
+failures += Run("PosixShellRestoreCarriesWhatChanged", PosixShellRestoreCarriesWhatChanged);
 failures += Run("PowerShellWrapsOnFirstAndLastLine", PowerShellWrapsOnFirstAndLastLine);
 failures += Run("ShowAndClearErrors", ShowAndClearErrors);
 failures += Run("ShowAndClearAreKnownKeys", ShowAndClearAreKnownKeys);
@@ -52,6 +58,8 @@ failures += Run("BackgroundProblemContinueOnError", () => BackgroundProblemStops
 failures += Run("PlaygroundSkipsBackground", PlaygroundSkipsBackground);
 failures += Run("IntegrationBashCarriesState", () => IntegrationBashCarriesState(repoRoot));
 failures += Run("IntegrationPowerShellCarriesState", () => IntegrationPowerShellCarriesState(repoRoot));
+failures += Run("IntegrationZshCarriesState", () => IntegrationZshCarriesState(repoRoot));
+failures += Run("IntegrationShCarriesState", () => IntegrationShCarriesState(repoRoot));
 failures += Run("IntegrationHiddenStepFailureStops", () => IntegrationHiddenStepFailureStops(repoRoot));
 failures += Run("IntegrationBackgroundRunsUntilPost", () => IntegrationBackgroundRunsUntilPost(repoRoot));
 failures += Run("IntegrationBackgroundExitStops", () => IntegrationBackgroundExitStops(repoRoot));
@@ -160,21 +168,131 @@ static bool QuoteKeepsSingleQuotes() =>
     Expect(BashDump.Quote("it's") == "'it'\\''s'", BashDump.Quote("it's"))
     && Expect(PowerShellState.Literal("it's") == "'it''s'", PowerShellState.Literal("it's"));
 
-static bool StateOnlyForBashAndPowerShell()
+static bool StateForEachShell()
 {
     using var bash = ShellState.Create(OperatingSystem.IsWindows() ? @"C:\Program Files\Git\usr\bin\bash.exe" : "/bin/bash", isPowerShell: false);
     using var pwsh = ShellState.Create("pwsh", isPowerShell: true);
-    using var zsh = ShellState.Create("zsh", isPowerShell: false);
-    using var sh = ShellState.Create("/bin/sh", isPowerShell: false);
+    using var zsh = ShellState.Create("/bin/zsh", isPowerShell: false);
     var ok = Expect(bash is BashState, "bash");
     ok &= Expect(pwsh is PowerShellState, "pwsh");
-    ok &= Expect(zsh is null && sh is null, "other shells carry nothing");
+    ok &= Expect(zsh is ZshState, "zsh");
+    foreach (var name in new[] { "/bin/sh", "dash", "ash", "ksh", "ksh93", "mksh" })
+    {
+        using var sh = ShellState.Create(name, isPowerShell: false);
+        ok &= Expect(sh is PosixShellState { CarriesFunctionsAndAliases: false }, $"{name}: the sh family");
+    }
+
+    foreach (var name in new[] { "fish", "tcsh", "cmd", "nu" })
+    {
+        using var other = ShellState.Create(name, isPowerShell: false);
+        ok &= Expect(other is null, $"{name} carries nothing");
+    }
 
     // bash: the command is unchanged, and BASH_ENV names the restore script.
     var prepared = bash!.Prepare("echo hi");
     ok &= Expect(prepared.Command == "echo hi", prepared.Command);
     ok &= Expect(prepared.Environment is { } env && env.TryGetValue("BASH_ENV", out var script) && File.Exists(script!), "BASH_ENV script");
+
+    // zsh: the command is unchanged, and ZDOTDIR is a folder of startup files.
+    prepared = zsh!.Prepare("echo hi");
+    ok &= Expect(prepared.Command == "echo hi", prepared.Command);
+    ok &= Expect(prepared.Environment is { } zshEnv && zshEnv.TryGetValue("ZDOTDIR", out var folder) && zshEnv.Count == 1
+        && new[] { ".zshenv", ".zprofile", ".zlogin", "finish.zsh" }.All(name => File.Exists(Path.Combine(folder!, name))), "ZDOTDIR folder");
     return ok;
+}
+
+// sh: the restore shares the first line, so the user's lines keep their numbers.
+static bool ShellRestoreSharesFirstLine()
+{
+    using var state = ShellState.Create("dash", isPowerShell: false)!;
+    var prepared = state.Prepare("echo one\nnosuchcommand");
+    var lines = prepared.Command.Split('\n');
+    var script = Regex.Match(lines[0], "^\\. '([^']+)'; ").Groups[1].Value;
+    return Expect(prepared.Environment is null, "no environment")
+        && Expect(lines.Length == 2, $"lines: {lines.Length}")
+        && Expect(lines[0].EndsWith("; echo one", StringComparison.Ordinal) && File.Exists(script), lines[0])
+        && Expect(lines[1] == "nosuchcommand", lines[1]);
+}
+
+static bool UnquoteJoinsParts() =>
+    Expect(ShellText.Unquote("'it'\\''s'") == "it's", "bash and zsh")
+    && Expect(ShellText.Unquote("'it'\"'\"'s'") == "it's", "dash")
+    && Expect(ShellText.Unquote("$'it\\'s'") == "it's", "ksh93")
+    && Expect(ShellText.Unquote("$'x\\ny\\tz'") == "x\ny\tz", "dollar quotes")
+    && Expect(ShellText.Unquote("\"a \\\"b\\\" \\$c\"") == "a \"b\" $c", "double quotes")
+    && Expect(ShellText.Unquote("plain\\ word") == "plain word", "a backslash")
+    && Expect(ShellText.AssignedValue("export T='s 3'") == "s 3", "export -p")
+    && Expect(ShellText.AssignedValue("arr=([0]=\"a\")") is null, "an array");
+
+// zsh writes one statement per line, $'...' for a line break, and a tied pair such as PATH and path as two.
+static bool ZshDeclarationsByName()
+{
+    const string dump = "typeset -g foo=bar\n"
+        + "export -T PATH path=( /usr/bin /bin )\n"
+        + "typeset -g -aT PATH path=( /usr/bin /bin )\n"
+        + "typeset -g -A h=( [k]='v w' )\n"
+        + "export E=$'line1\\nline2'\n"
+        + "typeset -g -i10 RANDOM=5\n"
+        + "typeset -g declared\n";
+    var map = ZshDump.SplitDeclarations(dump);
+    return Expect(map.Count == 6, $"names: {string.Join(" | ", map.Keys)}")
+        && Expect(map["path"] == "export -T PATH path=( /usr/bin /bin )\ntypeset -g -aT PATH path=( /usr/bin /bin )", $"path: {map["path"]}")
+        && Expect(map["foo"] == "typeset -g foo=bar", map["foo"])
+        && Expect(map["h"] == "typeset -g -A h=( [k]='v w' )", map["h"])
+        && Expect(map.ContainsKey("E") && map.ContainsKey("RANDOM") && map.ContainsKey("declared"), "E, RANDOM, declared")
+        && Expect(ZshDump.DeclarationName("echo hi") is null, "another line");
+}
+
+static bool ZshRestoreCarriesWhatChanged()
+{
+    const string baseVars = "export -T PATH path=( /usr/bin )\ntypeset -g -aT PATH path=( /usr/bin )\ntypeset -g KEEP=same\ntypeset -g GONE=x\ntypeset -g -i10 RANDOM=1\ntypeset -g -a argv=( base )\n";
+    const string finalVars = "export -T PATH path=( /venv/bin /usr/bin )\ntypeset -g -aT PATH path=( /venv/bin /usr/bin )\ntypeset -g KEEP=same\nexport API_TOKEN='it'\\''s-secret'\ntypeset -g -i10 RANDOM=2\ntypeset -g -a argv=( final )\ntypeset -g __scenetake_dir=/tmp/x\nexport OLDPWD=/home\n";
+    const string baseFunctions = "functions[old]=:\nfunctions[__scenetake_dump]=:\n";
+    const string finalFunctions = "functions[greet]=$'\\techo hi'\nfunctions[__scenetake_dump]=:\nfunctions[__scenetake_save]=:\n";
+    const string baseAliases = "aliases[run-help]=man\ngaliases[G]=\\|\\ grep\nsaliases[txt]=cat\n";
+    const string finalAliases = "aliases[hi]=greet\naliases[run-help]=man\n";
+    var exports = new List<KeyValuePair<string, string?>>();
+    var restore = ZshDump.BuildRestore(baseVars, finalVars, baseFunctions, finalFunctions, baseAliases, finalAliases, "/work/it's", exports);
+
+    return Expect(restore.StartsWith("builtin cd -q -- '/work/it'\\''s'", StringComparison.Ordinal), $"cd first: {restore}")
+        && Expect(restore.Contains("export -T PATH path=( /venv/bin /usr/bin )\ntypeset -g -aT PATH path=( /venv/bin /usr/bin )\n", StringComparison.Ordinal), "the changed tied pair")
+        && Expect(restore.Contains("export API_TOKEN='it'\\''s-secret'\n", StringComparison.Ordinal), "new variable")
+        && Expect(restore.Contains("export OLDPWD=/home\n", StringComparison.Ordinal), "OLDPWD, for cd -")
+        && Expect(!restore.Contains("KEEP", StringComparison.Ordinal), "an unchanged variable")
+        && Expect(restore.Contains("builtin unset -v -- 'GONE'\n", StringComparison.Ordinal), "a removed variable")
+        && Expect(!restore.Contains("RANDOM", StringComparison.Ordinal) && !restore.Contains("argv", StringComparison.Ordinal), "a variable zsh changes by itself")
+        && Expect(!restore.Contains("__scenetake", StringComparison.Ordinal), "scenetake's own names")
+        && Expect(restore.Contains("functions[greet]=$'\\techo hi'\n", StringComparison.Ordinal), "a new function")
+        && Expect(restore.Contains("builtin unfunction -- old\n", StringComparison.Ordinal), "a removed function")
+        && Expect(restore.Contains("aliases[hi]=greet\n", StringComparison.Ordinal) && !restore.Contains("run-help", StringComparison.Ordinal), "only the new alias")
+        && Expect(restore.Contains("builtin unalias -- G\n", StringComparison.Ordinal) && restore.Contains("builtin unalias -s -- txt\n", StringComparison.Ordinal), "removed global and suffix aliases")
+        && Expect(restore.IndexOf("export -T PATH", StringComparison.Ordinal) < restore.IndexOf("functions[greet]", StringComparison.Ordinal)
+            && restore.IndexOf("functions[greet]", StringComparison.Ordinal) < restore.IndexOf("aliases[hi]", StringComparison.Ordinal), "variables, then functions, then aliases")
+        && Expect(exports.Count == 2 && exports.Any(static e => e.Key == "API_TOKEN" && e.Value == "it's-secret") && exports.Any(static e => e.Key == "OLDPWD"),
+            $"exports: {string.Join(", ", exports.Select(static e => $"{e.Key}={e.Value}"))}");
+}
+
+// dash writes a quote as '"'"' and a line break inside the quotes; export -p lists the exported names again.
+static bool PosixShellRestoreCarriesWhatChanged()
+{
+    const string baseVars = "HOME='/root'\nIFS=' \t\n'\nKEEP='same'\nGONE='x'\nPS1='$ '\n";
+    const string finalVars = "HOME='/root'\nIFS=' \t\n'\nKEEP='same'\nNOTE='it'\"'\"'s\ntwo lines'\nAPI_TOKEN='s3cr3t value'\nPS1='$ '\n_='/bin/true'\n__scenetake_dir='/tmp/x'\nOLDPWD='/home'\n";
+    const string baseExports = "export HOME='/root'\nexport KEEP='same'\n";
+    const string finalExports = "export API_TOKEN='s3cr3t value'\nexport HOME='/root'\nexport KEEP='same'\nexport MARK\n";
+    var exports = new List<KeyValuePair<string, string?>>();
+    var restore = PosixShellDump.BuildRestore(baseVars, finalVars, baseExports, finalExports, "/work/it's", exports);
+
+    return Expect(restore.StartsWith("command cd -- '/work/it'\\''s'", StringComparison.Ordinal), $"cd first: {restore}")
+        && Expect(restore.Contains("NOTE='it'\"'\"'s\ntwo lines'\n", StringComparison.Ordinal), "a value with a quote and a line break")
+        && Expect(restore.Contains("API_TOKEN='s3cr3t value'\n", StringComparison.Ordinal) && restore.Contains("export API_TOKEN\n", StringComparison.Ordinal), "a new exported variable")
+        && Expect(restore.Contains("export MARK\n", StringComparison.Ordinal), "an exported name without a value")
+        && Expect(restore.Contains("OLDPWD='/home'\n", StringComparison.Ordinal), "OLDPWD, for cd -")
+        && Expect(!restore.Contains("KEEP", StringComparison.Ordinal) && !restore.Contains("HOME", StringComparison.Ordinal), "an unchanged variable")
+        && Expect(restore.Contains("unset -v GONE\n", StringComparison.Ordinal), "a removed variable")
+        && Expect(!restore.Contains("_=", StringComparison.Ordinal) && !restore.Contains("__scenetake", StringComparison.Ordinal), "the shell's and scenetake's own names")
+        && Expect(restore.IndexOf("API_TOKEN='", StringComparison.Ordinal) < restore.IndexOf("export API_TOKEN", StringComparison.Ordinal), "the value before export")
+        && Expect(exports.Count == 2 && exports.Any(static e => e.Key == "API_TOKEN" && e.Value == "s3cr3t value") && exports.Any(static e => e.Key == "MARK" && e.Value is null),
+            $"exports: {string.Join(", ", exports.Select(static e => $"{e.Key}={e.Value}"))}");
 }
 
 // The user's lines keep their numbers: the restore shares the first line, and the save comes after the last.
@@ -531,6 +649,81 @@ static bool IntegrationPowerShellCarriesState(string repoRoot)
         && Expect(text.Contains("after-exit=plain-value", StringComparison.Ordinal), "exit dropped the state");
 }
 
+// HOME is a folder of login files that move ZDOTDIR and reorder PATH, as many users' files and macOS's path_helper do.
+static bool IntegrationZshCarriesState(string repoRoot)
+{
+    if (!TryGetBinary(out var bin))
+        return true;
+    if (OperatingSystem.IsWindows() || !IsOnPath("zsh"))
+    {
+        Console.Error.WriteLine("  skip: zsh is not on PATH");
+        return true;
+    }
+
+    var home = Path.Combine(Path.GetTempPath(), $"scenetake-zsh-home-{Guid.NewGuid():N}");
+    Directory.CreateDirectory(Path.Combine(home, "zdot"));
+    try
+    {
+        File.WriteAllText(Path.Combine(home, ".zshenv"), "export ZDOTDIR=\"$HOME/zdot\"\n");
+        File.WriteAllText(Path.Combine(home, "zdot", ".zprofile"), "path=(/usr/bin ${path:#/usr/bin})\n");
+        File.WriteAllText(Path.Combine(home, "zdot", ".zlogin"), "FROM_ZLOGIN=login-value\n");
+
+        var stopwatch = Stopwatch.StartNew();
+        var run = RunFixture(bin, repoRoot, "shell-state-zsh.yaml", new() { ["HOME"] = home, ["ZDOTDIR"] = null });
+        stopwatch.Stop();
+        var text = run.Text;
+        return Expect(run.ExitCode == 0, $"exit {run.ExitCode}\n{run.Stderr}")
+            && Expect(!run.Stderr.Contains("Note:", StringComparison.Ordinal), "a note about the shell")
+            && Expect(stopwatch.Elapsed < TimeSpan.FromSeconds(25), $"took {stopwatch.Elapsed.TotalSeconds:0.0} s")
+            && Expect(text.Contains("start=tests", StringComparison.Ordinal), $"pre's cd: {Show(text)}")
+            && Expect(text.Contains("now=fixtures", StringComparison.Ordinal), "a step's cd")
+            && Expect(text.Contains("demo=carried plain=plain-value pre=pre-value sky=blue", StringComparison.Ordinal), "variables")
+            && Expect(text.Contains("hello alias", StringComparison.Ordinal) && text.Contains("HELLO FUNCTION", StringComparison.Ordinal), "the alias, the global alias, and the function")
+            && Expect(text.Contains($"child=[0][][carried][{home}/zdot]", StringComparison.Ordinal), "a child zsh saw more than the exported variables, or another ZDOTDIR")
+            && Expect(text.Contains("demo=[unset] hi=[0]", StringComparison.Ordinal), "unset and unalias")
+            && Expect(text.Contains("first=/opt/scenetake-step login=login-value", StringComparison.Ordinal), "the step's PATH after the login files, or the login files did not run")
+            && Expect(text.Contains(":2: command not found: nosuchcommand", StringComparison.Ordinal), "the error's line number")
+            && Expect(run.Stderr.Contains("step exited 3: exit 3", StringComparison.Ordinal), "the exit code")
+            && Expect(text.Contains("after-timeout=fixtures", StringComparison.Ordinal) && text.Contains("after-pty-timeout=fixtures", StringComparison.Ordinal), "a stopped step changed the folder")
+            && Expect(!text.Contains("correct-horse-battery-staple", StringComparison.Ordinal) && text.Contains("[****", StringComparison.Ordinal), "an exported secret was not hidden");
+    }
+    finally
+    {
+        Directory.Delete(home, recursive: true);
+    }
+}
+
+// sh is dash on Debian and Ubuntu, bash in POSIX mode on macOS, and Git's sh on Windows.
+static bool IntegrationShCarriesState(string repoRoot)
+{
+    if (!TryGetBinary(out var bin))
+        return true;
+    if (!IsOnPath("sh"))
+    {
+        Console.Error.WriteLine("  skip: sh is not on PATH");
+        return true;
+    }
+
+    var stopwatch = Stopwatch.StartNew();
+    var run = RunFixture(bin, repoRoot, "shell-state-sh.yaml");
+    stopwatch.Stop();
+    var text = run.Text;
+    return Expect(run.ExitCode == 0, $"exit {run.ExitCode}\n{run.Stderr}")
+        && Expect(run.Stderr.Contains("Note: in sh, cd and variables carry over to the next step, but functions and aliases do not.", StringComparison.Ordinal), "the note")
+        && Expect(stopwatch.Elapsed < TimeSpan.FromSeconds(25), $"took {stopwatch.Elapsed.TotalSeconds:0.0} s")
+        && Expect(text.Contains("start=tests", StringComparison.Ordinal), $"pre's cd: {Show(text)}")
+        && Expect(text.Contains("now=fixtures", StringComparison.Ordinal), "a step's cd")
+        && Expect(text.Contains("demo=carried plain=plain-value pre=pre-value", StringComparison.Ordinal), "variables")
+        && Expect(text.Contains("note=[it's\ntwo lines]", StringComparison.Ordinal), "a value with a quote and a line break")
+        && Expect(text.Contains("no-function", StringComparison.Ordinal), "a function carried")
+        && Expect(text.Contains("child=[][carried]", StringComparison.Ordinal), "a child sh saw more than the exported variables")
+        && Expect(text.Contains("demo=[unset]", StringComparison.Ordinal), "unset")
+        && Expect(text.Contains("nosuchcommand", StringComparison.Ordinal) && !Regex.IsMatch(text, @"(:|line) 1: nosuchcommand"), $"the error's line number: {Show(text)}")
+        && Expect(run.Stderr.Contains("step exited 3: exit 3", StringComparison.Ordinal), "the exit code")
+        && Expect(text.Contains("after-timeout=fixtures", StringComparison.Ordinal) && text.Contains("after-pty-timeout=fixtures", StringComparison.Ordinal), "a stopped step changed the folder")
+        && Expect(!text.Contains("correct-horse-battery-staple", StringComparison.Ordinal) && text.Contains("[****", StringComparison.Ordinal), "an exported secret was not hidden");
+}
+
 static bool IntegrationHiddenStepFailureStops(string repoRoot)
 {
     if (!TryGetBinary(out var bin))
@@ -565,7 +758,8 @@ static bool IsOnPath(string name)
     return false;
 }
 
-static (int ExitCode, string Stderr, string Text) RunFixture(string bin, string repoRoot, string fixture)
+// environment: variables to set for scenetake, a null value removes one.
+static (int ExitCode, string Stderr, string Text) RunFixture(string bin, string repoRoot, string fixture, Dictionary<string, string?>? environment = null)
 {
     var stem = Path.Combine(Path.GetTempPath(), $"scenetake-shell-state-{Guid.NewGuid():N}");
     var psi = new ProcessStartInfo(bin)
@@ -575,6 +769,13 @@ static (int ExitCode, string Stderr, string Text) RunFixture(string bin, string 
         UseShellExecute = false,
         WorkingDirectory = repoRoot,
     };
+    foreach (var (name, value) in environment ?? [])
+    {
+        if (value is null)
+            psi.Environment.Remove(name);
+        else
+            psi.Environment[name] = value;
+    }
     psi.ArgumentList.Add(Path.Combine("tests", "fixtures", fixture));
     psi.ArgumentList.Add(stem);
 

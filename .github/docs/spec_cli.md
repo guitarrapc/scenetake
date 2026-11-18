@@ -110,7 +110,7 @@ The output folder must exist as well. When the scenario has `pre` commands, the 
 
 ## Logging
 
-Progress and status use stderr (`Loading:`, `Written:`, `Done:`). Paths use `/` separators and are relative to the current directory where possible. Paths on another Windows drive, for example, remain absolute. Scenario runs always show step `running:` lines, and `running (show: none):` for a step that is not recorded. A background step shows `starting (background):`, `ready after N s: "text"` when it has `wait`, and `stopped (background):` when it is ended after the steps. A shell that carries no state between commands gets one `Note:` line after `Using shell:` ([spec_scenario.md](spec_scenario.md) → Shell state across steps).
+Progress and status use stderr (`Loading:`, `Written:`, `Done:`). Paths use `/` separators and are relative to the current directory where possible. Paths on another Windows drive, for example, remain absolute. Scenario runs always show step `running:` lines, and `running (show: none):` for a step that is not recorded. A background step shows `starting (background):`, `ready after N s: "text"` when it has `wait`, and `stopped (background):` when it is ended after the steps. A shell that carries no state between commands, or only the folder and variables (the sh family), gets one `Note:` line after `Using shell:` ([spec_scenario.md](spec_scenario.md) → Shell state across steps).
 
 Each `Written:` line gives the file's size in pixels, so a reader can tell what the demo fits, such as a README or a 1920x1080 video, without opening it:
 

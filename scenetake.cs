@@ -741,10 +741,16 @@ catch (InvalidOperationException ex)
 Console.Error.WriteLine($"Using shell: {shell.DisplayName}");
 
 // What each command leaves in its shell (the folder, variables, functions, aliases) goes on to the next one, from
-// pre through the steps to post, as in a terminal. Other shells than bash and PowerShell start each command afresh.
+// pre through the steps to post, as in a terminal. The sh family carries the folder and variables only, and other
+// shells than bash, zsh, and PowerShell start each command afresh.
 using var shellState = ShellState.Create(shell.FileName, IsPowerShellLaunch(shell));
-if (shellState is null && (scenario.Pre?.Count ?? 0) + (scenario.Steps?.Count ?? 0) + (scenario.Post?.Count ?? 0) > 1)
-    Console.Error.WriteLine($"Note: in {shell.DisplayName}, each command starts in a new shell: cd, variables, functions, and aliases do not carry over to the next step. bash and PowerShell carry them.");
+if ((scenario.Pre?.Count ?? 0) + (scenario.Steps?.Count ?? 0) + (scenario.Post?.Count ?? 0) > 1)
+{
+    if (shellState is null)
+        Console.Error.WriteLine($"Note: in {shell.DisplayName}, each command starts in a new shell: cd, variables, functions, and aliases do not carry over to the next step. bash, zsh, and PowerShell carry them.");
+    else if (!shellState.CarriesFunctionsAndAliases)
+        Console.Error.WriteLine($"Note: in {shell.DisplayName}, cd and variables carry over to the next step, but functions and aliases do not. bash, zsh, and PowerShell carry them too.");
+}
 
 // The commands of background steps, such as a server that later steps call. They are stopped after the last step,
 // and before post on every path, so post can clean up what they used.

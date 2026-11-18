@@ -380,7 +380,7 @@ docker rm $id
 
 ## Steps as one session
 
-With `shell: bash` or PowerShell, the steps read like one terminal session. A `cd`, an `export`, a variable, a function, or an alias in one step holds in the steps after it, and in `post`. `pre` works the same way, so `source .venv/bin/activate` there carries into the recording. Other shells (zsh, sh, fish, cmd) start each step afresh.
+With `shell: bash`, `zsh`, or PowerShell, the steps read like one terminal session. A `cd`, an `export`, a variable, a function, or an alias in one step holds in the steps after it, and in `post`. `pre` works the same way, so `source .venv/bin/activate` there carries into the recording. `sh` (dash, ash, ksh) carries `cd` and variables, but not functions or aliases. Other shells (fish, cmd) start each step afresh.
 
 A few step keys shape the session:
 
