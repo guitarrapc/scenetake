@@ -249,6 +249,7 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
 # Run scenario to generate cast (default), cast + SVG, cast + mp4, cast + PNG, or cast + GIF
 scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--save-keys FILE] [--at TIME]
+  [--save-outputs FILE] [--replay FILE]
   [--font-size N] [--font-family FAMILIES] [--theme NAME]
   [--window none|macos|windows] [--max-fps N]
   [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH]
@@ -405,6 +406,21 @@ steps:
 - `clear: true` clears the screen. It needs neither `TERM` nor a `clear` command, so it works the same in CI.
 
 See [spec_scenario.md](.github/docs/spec_scenario.md#shell-state-across-steps) → Shell state across steps.
+
+## Change the look without running again
+
+Record once with `--save-outputs`, then tune the typing, comments, highlights, theme, or format with `--replay`. A replay runs no command, so a slow build, an external API, or output that changes every run stays as recorded.
+
+```bash
+scenetake --save-outputs demo.outputs.json demo.yaml                 # runs the commands once
+scenetake --replay demo.outputs.json --format svg demo.yaml          # runs nothing
+scenetake --replay demo.outputs.json --format mp4 --theme dracula demo.yaml
+```
+
+- With the YAML unchanged, a replay gives the recorded cast byte for byte.
+- A step matches its recorded output by its `run` text. A step whose `run` changed, or a new one, stops the replay with a list of those steps: record again for them.
+- `pre`, `post`, `show: none`, and `background` steps do not run in a replay.
+- The outputs file hides secrets as the cast does, so it can be committed next to the YAML.
 
 ## Output modes
 

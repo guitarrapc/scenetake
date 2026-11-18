@@ -470,7 +470,7 @@ if (args[0] is "capture" && args.Length > 1 && args[1] is "-h" or "--help")
 }
 
 // `capture` comes here too: it records the one-step scenario that its command makes, without a file.
-if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runStyle, out var runStillAt, out var capture, out var saveKeysArg, out var runError))
+if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runStyle, out var runStillAt, out var capture, out var saveKeysArg, out var saveOutputsArg, out var replayArg, out var runError))
 {
     Console.Error.WriteLine($"Error: {runError}");
     if (args[0] is "capture")
@@ -544,9 +544,26 @@ if (FindStepKeyError(scenario) is { } stepKeyError)
     return 1;
 }
 
+// --replay takes each step's output from an outputs file that --save-outputs wrote, and runs no command, so the
+// look can change without running the commands again. It is read before anything else needs it.
+var replayPath = replayArg is null ? null : Path.GetFullPath(replayArg);
+StepOutputs? replayOutputs = null;
+if (replayPath is not null)
+{
+    try
+    {
+        replayOutputs = StepOutputs.Parse(File.ReadAllText(replayPath, Encoding.UTF8));
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException)
+    {
+        Console.Error.WriteLine($"Error: cannot read the outputs file {FormatDisplayPath(replayPath)}: {ex.Message}");
+        return 1;
+    }
+}
+
 // An interactive step needs scenetake's own stdin and stdout to be a terminal. Checking it here stops
-// the run before pre and the steps before it, which otherwise ran only to be thrown away.
-if ((Console.IsInputRedirected || Console.IsOutputRedirected) && HasInteractiveStep(scenario))
+// the run before pre and the steps before it, which otherwise ran only to be thrown away. A replay types nothing.
+if (replayOutputs is null && (Console.IsInputRedirected || Console.IsOutputRedirected) && HasInteractiveStep(scenario))
 {
     Console.Error.WriteLine($"Error: {InteractiveNeedsTerminalError}");
     return 1;
@@ -569,7 +586,8 @@ if (scenario.Cwd is not null && scenario.Cwd.Contains('\0'))
     return 1;
 }
 
-if (!string.IsNullOrWhiteSpace(scenario.Cwd))
+// A replay runs nothing in cwd, so a scenario replays on a machine without that folder.
+if (replayOutputs is null && !string.IsNullOrWhiteSpace(scenario.Cwd))
 {
     // A relative cwd is resolved against the scenario file's folder, so a scenario runs in the same
     // folder wherever scenetake is started from. It used to follow the current directory, and
@@ -598,16 +616,31 @@ if (!string.IsNullOrWhiteSpace(scenario.Cwd))
 
 // The cast is written only after pre and the recording, so the outputs are checked first. When pre
 // has commands, their folder is checked after pre instead, because pre may create it.
-var preHasCommands = scenario.Pre?.Any(command => !string.IsNullOrWhiteSpace(command)) == true;
-if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path, pngPath, gifPath, saveKeysPath], out var outputPathError, requireFolder: !preHasCommands))
+var preHasCommands = replayOutputs is null && scenario.Pre?.Any(command => !string.IsNullOrWhiteSpace(command)) == true;
+var saveOutputsPath = saveOutputsArg is null ? null : Path.GetFullPath(saveOutputsArg);
+if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path, pngPath, gifPath, saveKeysPath, saveOutputsPath], out var outputPathError, requireFolder: !preHasCommands))
 {
     Console.Error.WriteLine($"Error: {outputPathError}");
     return 1;
 }
 
-if (saveKeysPath is not null && new[] { outputPath, svgPath, mp4Path, pngPath, gifPath }.Any(path => path is not null && IsSamePath(path, saveKeysPath)))
+foreach (var (option, path, others) in new[]
 {
-    Console.Error.WriteLine($"Error: --save-keys would write over another output: {FormatDisplayPath(saveKeysPath)}");
+    ("--save-keys", saveKeysPath, new[] { outputPath, svgPath, mp4Path, pngPath, gifPath, saveOutputsPath }),
+    ("--save-outputs", saveOutputsPath, new[] { outputPath, svgPath, mp4Path, pngPath, gifPath }),
+})
+{
+    if (path is not null && others.Any(other => other is not null && IsSamePath(other, path)))
+    {
+        Console.Error.WriteLine($"Error: {option} would write over another output: {FormatDisplayPath(path)}");
+        return 1;
+    }
+}
+
+// The outputs that a replay writes would replace the file it reads from.
+if (replayPath is not null && new[] { outputPath, svgPath, mp4Path, pngPath, gifPath }.Any(path => path is not null && IsSamePath(path, replayPath)))
+{
+    Console.Error.WriteLine($"Error: --replay reads the file that an output would write over: {FormatDisplayPath(replayPath)}");
     return 1;
 }
 
@@ -727,6 +760,9 @@ if (outputFormat == OutputFormat.Gif)
 var deterministicSeed = ComputeDeterministicSeed(yaml);
 var deterministicTimestamp = ComputeDeterministicTimestamp(deterministicSeed);
 
+if (replayOutputs is not null)
+    return await ReplayAsync(replayOutputs, replayPath!);
+
 ShellLaunch shell;
 try
 {
@@ -782,9 +818,9 @@ FontCatalog.Rescan();
 if (verbose)
     PrintPhase("steps");
 
-// SCENETAKE_OUTPUTS names the outputs file that samples/regenerate.cs writes for the playground: what each step
-// printed in this run, which the playground replays because a browser cannot run commands. It is not in --help.
-var outputsFileArg = Environment.GetEnvironmentVariable(StepOutputs.EnvironmentVariable);
+// --save-outputs names the outputs file: what each step printed in this run, which --replay and the playground
+// replay. SCENETAKE_OUTPUTS does the same for samples/regenerate.cs, which sets it for every sample.
+var outputsFileArg = saveOutputsPath ?? Environment.GetEnvironmentVariable(StepOutputs.EnvironmentVariable);
 List<RecordedStep>? recordedSteps = string.IsNullOrWhiteSpace(outputsFileArg) ? null : [];
 
 // The commands inherit scenetake's environment, so a secret variable's value is hidden wherever a step prints it.
@@ -921,84 +957,9 @@ if (recordedSteps is not null)
     Console.Error.WriteLine($"Written: {FormatDisplayPath(outputsFilePath)}");
 }
 
-// SVG and mp4 are rendered from the cast as written, not from the in-memory events. The cast stores
-// millisecond times, so only the cast gives the same output as `scenetake svg|mp4 <cast>`. The header
-// carries the font, theme, and window overrides. --max-fps is not stored, so it is applied again.
-var exitCode = keysWriteError is null ? 0 : 1;
-if (outputFormat == OutputFormat.Svg)
-{
-    try
-    {
-        var written = CastReader.Read(outputPath);
-        var svgSettings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings) with { MaxFps = renderSettings.MaxFps };
-        SvgRender.WriteSvg(written.Events, written.Width, written.Height, svgSettings, svgPath!, written.LoopDuration, runStillAt);
-        PrintSvgWritten(svgPath!, written, svgSettings, runStillAt);
-        if (SvgRender.SizeWarning(new FileInfo(svgPath!).Length, svgSettings.MaxFps, fromCast: false) is { } svgSizeWarning)
-            Console.Error.WriteLine($"Warning: {svgSizeWarning}");
-    }
-    catch (Exception ex)
-    {
-        DeleteFileIfExists(svgPath!);
-        Console.Error.WriteLine($"Error: SVG render failed: {ex.Message}");
-        exitCode = 1;
-    }
-}
-
-if (outputFormat == OutputFormat.Mp4)
-{
-    try
-    {
-        // WriteMp4 encodes to a temporary file and renames it, so a failure leaves no partial .mp4.
-        var written = CastReader.Read(outputPath);
-        var result = Mp4Render.WriteMp4(written.Events, written.Width, written.Height, RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings), runMp4Options.ToSettings(), mp4Path!, ffmpegPath!, written.LoopDuration);
-        PrintMp4Written(mp4Path!, result);
-    }
-    catch (Exception ex)
-    {
-        // An .mp4 from an earlier run no longer matches the new cast.
-        DeleteFileIfExists(mp4Path!);
-        Console.Error.WriteLine($"Error: mp4 render failed: {ex.Message}");
-        exitCode = 1;
-    }
-}
-
-if (outputFormat == OutputFormat.Png)
-{
-    try
-    {
-        // Drawn from the cast as written, as SVG and mp4 are.
-        var written = CastReader.Read(outputPath);
-        var pngSettings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings);
-        var at = runStillAt ?? double.PositiveInfinity;
-        var result = PngRender.WritePng(written.Events, written.Width, written.Height, pngSettings, at, pngPath!, runMp4Options.FontFile, ffmpegPath);
-        PrintPngWritten(pngPath!, result, at);
-    }
-    catch (Exception ex)
-    {
-        // A .png from an earlier run no longer matches the new cast.
-        DeleteFileIfExists(pngPath!);
-        Console.Error.WriteLine($"Error: PNG render failed: {ex.Message}");
-        exitCode = 1;
-    }
-}
-
-if (outputFormat == OutputFormat.Gif)
-{
-    try
-    {
-        // WriteGif encodes to a temporary file and renames it, as WriteMp4 does.
-        var written = CastReader.Read(outputPath);
-        var result = GifRender.WriteGif(written.Events, written.Width, written.Height, RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings), runMp4Options.ToGifSettings(), gifPath!, ffmpegPath!, written.LoopDuration);
-        PrintGifWritten(gifPath!, result, fromCast: false);
-    }
-    catch (Exception ex)
-    {
-        // A .gif from an earlier run no longer matches the new cast.
-        DeleteFileIfExists(gifPath!);
-        Console.Error.WriteLine($"Error: GIF render failed: {ex.Message}");
-        exitCode = 1;
-    }
-}
+var exitCode = RenderFromCast(outputFormat, outputPath, svgPath, mp4Path, pngPath, gifPath, renderSettings, runMp4Options, runStillAt, ffmpegPath);
+if (keysWriteError is not null)
+    exitCode = 1;
 
 var postExitCode = await RunScenarioCommandsAsync(scenario.Post, "post", scenario.Cwd, shell, shellState, verbose);
 if (postExitCode != 0)
@@ -1007,17 +968,171 @@ if (postExitCode != 0)
 if (exitCode != 0)
     return exitCode;
 
-if (outputFormat == OutputFormat.Svg)
-    Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(svgPath!)}");
-else if (outputFormat == OutputFormat.Mp4)
-    Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(mp4Path!)}");
-else if (outputFormat == OutputFormat.Png)
-    Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(pngPath!)}");
-else if (outputFormat == OutputFormat.Gif)
-    Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}, {FormatDisplayPath(gifPath!)}");
-else
-    Console.Error.WriteLine($"Done: {FormatDisplayPath(outputPath)}");
+PrintDone(outputPath, svgPath ?? mp4Path ?? pngPath ?? gifPath);
 return 0;
+
+// --replay: each step takes the output that the outputs file recorded for it, as in the playground, and no command
+// runs, so pre, post, show: none, and background steps are skipped. What changes how the steps look takes effect:
+// typing, prompt, comments, highlights, timing, render, and the order of the steps. A step whose run text is not in
+// the file stops the replay: its output would have to be made up.
+async Task<int> ReplayAsync(StepOutputs outputs, string path)
+{
+    Console.Error.WriteLine($"Replaying: {FormatDisplayPath(path)}  (recorded by scenetake {outputs.Scenetake} on {outputs.Os} with {outputs.Shell}, {outputs.Width}x{outputs.Height}). No command runs.");
+    if (scenario.Pre is { Count: > 0 } || scenario.Post is { Count: > 0 })
+        Console.Error.WriteLine("Note: pre and post do not run in a replay.");
+    if (!string.IsNullOrWhiteSpace(scenario.Shell) && !string.Equals(ShellEnvName(scenario.Shell.Trim()), outputs.Shell, StringComparison.OrdinalIgnoreCase))
+        Console.Error.WriteLine($"Warning: shell has no effect in a replay: the outputs were recorded with {outputs.Shell}");
+
+    var replay = new StepOutputsReplay(outputs);
+    // The outputs were masked when they were recorded. Masking again hides what the YAML adds, such as a new
+    // settings.mask text, and the secrets in this machine's environment.
+    var replayMasker = SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment());
+    Console.Error.WriteLine("Generating cast...");
+    var (replayed, failure) = await GenerateAsync(scenario, deterministicSeed, new GenerateOptions
+    {
+        Verbose = verbose,
+        Strict = strict,
+        TrackPtyCursor = replay.TrackPtyCursor,
+        LogRunning = false,
+        Masker = replayMasker,
+    }, replay.RunAsync);
+
+    var missing = replay.Steps.Where(static step => !step.Recorded).ToList();
+    if (missing.Count > 0)
+    {
+        var error = new StringBuilder($"--replay: {FormatDisplayPath(path)} has no output for {(missing.Count == 1 ? "this step" : "these steps")}:");
+        foreach (var step in missing)
+            error.Append(Environment.NewLine).Append($"  step {step.Index + 1} ({step.Kind}): {step.Run}");
+        error.Append(Environment.NewLine).Append("A step matches a recorded one by its run text and by pipe, pty, or interactive. Record again with --save-outputs after changing a command. Nothing was written.");
+        Console.Error.WriteLine($"Error: {error}");
+        return 1;
+    }
+
+    foreach (var step in replay.Steps)
+    {
+        foreach (var notice in step.Notices)
+            Console.Error.WriteLine($"Warning: step {step.Index + 1} was {notice}");
+    }
+
+    if (failure is not null)
+    {
+        Console.Error.WriteLine($"Error: {FormatStrictFailure(failure)}");
+        return 1;
+    }
+
+    replayed = CastOscFilter.RemovePrivateSequences(replayed);
+    try
+    {
+        WriteCast(scenario, replayed, outputPath, outputs.Shell, deterministicTimestamp, renderSettings);
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+    {
+        Console.Error.WriteLine($"Error: cannot write the cast: {ex.Message}");
+        return 1;
+    }
+
+    if (replayMasker?.Summary() is { } replayMaskSummary)
+        Console.Error.WriteLine($"{replayMaskSummary} (settings.mask-auto: false turns off the automatic ones)");
+
+    var replayDuration = replayed.Count > 0 ? replayed[^1].Time : 0.0;
+    var replaySizes = outputFormat == OutputFormat.Cast ? $", {DescribeConvertedSizes(replayed, scenarioWidth, scenarioHeight, renderSettings)}" : "";
+    Console.Error.WriteLine($"Written: {FormatDisplayPath(outputPath)}  ({replayed.Count} events, {replayDuration:F1}s{replaySizes})");
+
+    var renderExitCode = RenderFromCast(outputFormat, outputPath, svgPath, mp4Path, pngPath, gifPath, renderSettings, runMp4Options, runStillAt, ffmpegPath);
+    if (renderExitCode != 0)
+        return renderExitCode;
+
+    PrintDone(outputPath, svgPath ?? mp4Path ?? pngPath ?? gifPath);
+    return 0;
+}
+
+// SVG and mp4 are rendered from the cast as written, not from the in-memory events. The cast stores
+// millisecond times, so only the cast gives the same output as `scenetake svg|mp4 <cast>`. The header
+// carries the font, theme, and window overrides. --max-fps is not stored, so it is applied again.
+// Returns 1 when the render failed, which removes that output.
+static int RenderFromCast(OutputFormat outputFormat, string outputPath, string? svgPath, string? mp4Path, string? pngPath, string? gifPath, ResolvedRenderSettings renderSettings, Mp4Options runMp4Options, double? runStillAt, string? ffmpegPath)
+{
+    if (outputFormat == OutputFormat.Svg)
+    {
+        try
+        {
+            var written = CastReader.Read(outputPath);
+            var svgSettings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings) with { MaxFps = renderSettings.MaxFps };
+            SvgRender.WriteSvg(written.Events, written.Width, written.Height, svgSettings, svgPath!, written.LoopDuration, runStillAt);
+            PrintSvgWritten(svgPath!, written, svgSettings, runStillAt);
+            if (SvgRender.SizeWarning(new FileInfo(svgPath!).Length, svgSettings.MaxFps, fromCast: false) is { } svgSizeWarning)
+                Console.Error.WriteLine($"Warning: {svgSizeWarning}");
+        }
+        catch (Exception ex)
+        {
+            DeleteFileIfExists(svgPath!);
+            Console.Error.WriteLine($"Error: SVG render failed: {ex.Message}");
+            return 1;
+        }
+    }
+
+    if (outputFormat == OutputFormat.Mp4)
+    {
+        try
+        {
+            // WriteMp4 encodes to a temporary file and renames it, so a failure leaves no partial .mp4.
+            var written = CastReader.Read(outputPath);
+            var result = Mp4Render.WriteMp4(written.Events, written.Width, written.Height, RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings), runMp4Options.ToSettings(), mp4Path!, ffmpegPath!, written.LoopDuration);
+            PrintMp4Written(mp4Path!, result);
+        }
+        catch (Exception ex)
+        {
+            // An .mp4 from an earlier run no longer matches the new cast.
+            DeleteFileIfExists(mp4Path!);
+            Console.Error.WriteLine($"Error: mp4 render failed: {ex.Message}");
+            return 1;
+        }
+    }
+
+    if (outputFormat == OutputFormat.Png)
+    {
+        try
+        {
+            // Drawn from the cast as written, as SVG and mp4 are.
+            var written = CastReader.Read(outputPath);
+            var pngSettings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings);
+            var at = runStillAt ?? double.PositiveInfinity;
+            var result = PngRender.WritePng(written.Events, written.Width, written.Height, pngSettings, at, pngPath!, runMp4Options.FontFile, ffmpegPath);
+            PrintPngWritten(pngPath!, result, at);
+        }
+        catch (Exception ex)
+        {
+            // A .png from an earlier run no longer matches the new cast.
+            DeleteFileIfExists(pngPath!);
+            Console.Error.WriteLine($"Error: PNG render failed: {ex.Message}");
+            return 1;
+        }
+    }
+
+    if (outputFormat == OutputFormat.Gif)
+    {
+        try
+        {
+            // WriteGif encodes to a temporary file and renames it, as WriteMp4 does.
+            var written = CastReader.Read(outputPath);
+            var result = GifRender.WriteGif(written.Events, written.Width, written.Height, RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings), runMp4Options.ToGifSettings(), gifPath!, ffmpegPath!, written.LoopDuration);
+            PrintGifWritten(gifPath!, result, fromCast: false);
+        }
+        catch (Exception ex)
+        {
+            // A .gif from an earlier run no longer matches the new cast.
+            DeleteFileIfExists(gifPath!);
+            Console.Error.WriteLine($"Error: GIF render failed: {ex.Message}");
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+// The cast and the --format output, when there is one.
+static void PrintDone(string castPath, string? renderedPath) =>
+    Console.Error.WriteLine(renderedPath is null ? $"Done: {FormatDisplayPath(castPath)}" : $"Done: {FormatDisplayPath(castPath)}, {FormatDisplayPath(renderedPath)}");
 
 static string FormatDisplayPath(string fullPath) =>
     Path.GetRelativePath(Directory.GetCurrentDirectory(), fullPath).Replace('\\', '/');
@@ -1227,12 +1342,16 @@ static bool TryParseRunArgs(
     out double? stillAt,
     out CaptureRequest? capture,
     out string? saveKeysPath,
+    out string? saveOutputsPath,
+    out string? replayPath,
     out string error)
 {
     scenarioPath = "";
     style = new StyleOptions();
     outputPath = null;
     saveKeysPath = null;
+    saveOutputsPath = null;
+    replayPath = null;
     // `capture` records one command given here instead of a scenario file. It writes an SVG unless --format says
     // otherwise: it is for a quick image, and the cast stays next to it for other formats.
     var captureMode = args.Length > 0 && args[0] == "capture";
@@ -1276,6 +1395,25 @@ static bool TryParseRunArgs(
             if (error.Length != 0)
                 return false;
             saveKeysPath = keysPath;
+            continue;
+        }
+        // capture records a command, not a scenario file, so it has no YAML to replay its outputs into.
+        else if (TryTakeOptionValue(args, ref i, "--save-outputs", out var outputsPath, out error))
+        {
+            if (error.Length == 0 && saveOutputsPath is not null)
+                error = "duplicate option: --save-outputs";
+            if (error.Length != 0)
+                return false;
+            saveOutputsPath = outputsPath;
+            continue;
+        }
+        else if (TryTakeOptionValue(args, ref i, "--replay", out var replayFile, out error))
+        {
+            if (error.Length == 0 && replayPath is not null)
+                error = "duplicate option: --replay";
+            if (error.Length != 0)
+                return false;
+            replayPath = replayFile;
             continue;
         }
 
@@ -1449,6 +1587,19 @@ static bool TryParseRunArgs(
     if (outputFormat == OutputFormat.Cast && style.Background?.ImagePath is not null)
     {
         error = "--background with an image file requires --format svg, mp4, png, or gif: a cast keeps colors only";
+        return false;
+    }
+
+    // A replay runs no command: no step prints anything new, and no one types.
+    if (replayPath is not null && saveOutputsPath is not null)
+    {
+        error = "--save-outputs saves what the commands print, and --replay runs none: record without --replay to save new outputs";
+        return false;
+    }
+
+    if (replayPath is not null && saveKeysPath is not null)
+    {
+        error = "--save-keys saves the keys typed in interactive steps, and --replay runs none";
         return false;
     }
 
@@ -2697,7 +2848,7 @@ static string CreateInitialScenarioYaml(string? shell)
 
 static void PrintUsage()
 {
-    Console.Error.WriteLine("Usage: scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--save-keys FILE] [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
+    Console.Error.WriteLine("Usage: scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--save-keys FILE] [--save-outputs FILE] [--replay FILE] [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
     Console.Error.WriteLine("       scenetake svg [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
     Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
     Console.Error.WriteLine("       scenetake png [--at TIME] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output.png]");
@@ -3922,6 +4073,12 @@ static class HelpText
                                            'keys' entries, which replay them without a person. Written even
                                            when the run stops at a later step. On Windows a password typed
                                            in a step is saved too.
+                  --save-outputs FILE      Write what each step printed to FILE (JSON), for --replay.
+                                           Secrets are hidden as in the cast.
+                  --replay FILE            Run no command: take each step's output from FILE, written by
+                                           --save-outputs. Changes to typing, comments, highlights, timing,
+                                           and render apply. A step whose run changed needs a new recording.
+                                           pre and post do not run.
 
                 """)
         + RecordingRest;

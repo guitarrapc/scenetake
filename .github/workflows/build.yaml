@@ -162,6 +162,11 @@ jobs:
         if: ${{ !startsWith(matrix.rid, 'linux-musl-') }}
         shell: bash
         run: |
+          binary_name="scenetake"
+          if [[ "${{ matrix.rid }}" == win-* ]]; then
+            binary_name="scenetake.exe"
+          fi
+          scenetake_bin="$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}/$binary_name"
           dotnet run tests/terminal_tests.cs
           dotnet run tests/json_escape_test.cs
           dotnet run tests/pty_timing_test.cs
@@ -173,16 +178,13 @@ jobs:
           dotnet run tests/window_chrome_test.cs
           dotnet run tests/mp4_render_test.cs
           dotnet run tests/pipe_output_decoder_test.cs
-          dotnet run tests/playground_replay_test.cs
+          # With the published binary it also records a scenario, and replays it with the CLI's --replay.
+          SCENETAKE_BIN="$scenetake_bin" dotnet run tests/playground_replay_test.cs
           dotnet run tests/step_input_test.cs
           dotnet run tests/secret_mask_test.cs
           dotnet run tests/canvas_fit_test.cs
           # Shell state runs the published binary in each OS's bash and pwsh: macOS has bash 3.2, whose dumps differ.
-          binary_name="scenetake"
-          if [[ "${{ matrix.rid }}" == win-* ]]; then
-            binary_name="scenetake.exe"
-          fi
-          SCENETAKE_BIN="$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}/$binary_name" dotnet run tests/shell_state_test.cs
+          SCENETAKE_BIN="$scenetake_bin" dotnet run tests/shell_state_test.cs
 
       - name: Upload macOS binary
         if: ${{ startsWith(matrix.rid, 'osx-') }}

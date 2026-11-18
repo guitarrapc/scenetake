@@ -249,6 +249,7 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
 # シナリオを実行して cast（既定）、cast + SVG、cast + mp4、cast + PNG、または cast + GIF を生成
 scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--save-keys FILE] [--at TIME]
+  [--save-outputs FILE] [--replay FILE]
   [--font-size N] [--font-family FAMILIES] [--theme NAME]
   [--window none|macos|windows] [--max-fps N]
   [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH]
@@ -401,6 +402,21 @@ steps:
 - `clear: true` は画面を消します。`TERM` も `clear` コマンドも要らないので、CI でも同じように動きます。
 
 詳しくは [spec_scenario.md](.github/docs/spec_scenario.md#shell-state-across-steps) の Shell state across steps を参照してください。
+
+## 実行し直さずに見た目を変える
+
+`--save-outputs` で一度録画しておけば、`--replay` で入力速度、コメント、色付け、テーマ、出力形式を何度でも調整できます。replay はコマンドを実行しないので、遅いビルド、外部 API、毎回変わる出力も録画したときのままです。
+
+```bash
+scenetake --save-outputs demo.outputs.json demo.yaml                 # コマンドを一度だけ実行する
+scenetake --replay demo.outputs.json --format svg demo.yaml          # 何も実行しない
+scenetake --replay demo.outputs.json --format mp4 --theme dracula demo.yaml
+```
+
+- YAML を変えなければ、録画したときと同じ cast がバイト単位で同じに出ます。
+- ステップは `run` の文字列で記録と対応づけます。`run` を変えたステップや新しいステップがあると、そのステップの一覧を出して止まります。それらは録画し直してください。
+- replay では `pre`、`post`、`show: none` のステップ、`background` のステップは実行しません。
+- outputs ファイルは cast と同じく秘密情報を隠してあるので、YAML と並べてコミットできます。
 
 ## 出力モード
 
