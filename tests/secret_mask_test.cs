@@ -56,6 +56,9 @@ failures += Run("SecretKeyNames", SecretKeyNames);
 failures += Run("SettingsKeysParse", SettingsKeysParse);
 failures += Run("RecordingHidesCommandCommentAndOutput", RecordingHidesCommandCommentAndOutput);
 failures += Run("ReplayTypesTheRunAsRecorded", ReplayTypesTheRunAsRecorded);
+failures += Run("HighlightsStayOutOfEscapeSequences", HighlightsStayOutOfEscapeSequences);
+failures += Run("HighlightInsideATitleLeavesNoSecretInTheCast", HighlightInsideATitleLeavesNoSecretInTheCast);
+failures += Run("StreamedHighlightLeavesTitlesWhole", StreamedHighlightLeavesTitlesWhole);
 
 if (failures > 0)
 {
@@ -720,3 +723,49 @@ static string PlaygroundText(PlaygroundResult result) => result.Cast is { } byte
         .Select(static line => System.Text.Json.JsonDocument.Parse(line).RootElement)
         .Where(static ev => ev[1].GetString() == "o").Select(static ev => ev[2].GetString()))
     : result.Error ?? "";
+
+static bool HighlightsStayOutOfEscapeSequences()
+{
+    // A highlight paints columns of the output as written, escape sequences included. A color written inside a
+    // sequence would end it early, so the change waits for the byte after the sequence.
+    const string Red = "\u001b[31m";
+    const string Reset = "\u001b[0m";
+    static string Paint(string output, string at) => ApplyHighlights(output, [new HighlightSpec(Red, [at])], "cmd");
+    var title = "\u001b]0;title API_KEY=abcdefgh\u0007done";
+    return Same("range inside a title", title, Paint(title, "1:3-5"))
+        & Same("range from inside a title", "\u001b]0;title API_KEY=abcdefgh\u0007" + Red + "done" + Reset, Paint(title, "1:3-"))
+        & Same("range from inside a color", "ab\u001b[31m" + Red + "c" + Reset + "d\u001b[0mef", Paint("ab\u001b[31mcd\u001b[0mef", "1:4-8"))
+        & Same("title open at the end of the line", Red + "\u001b]0;ti\ntle\u0007" + Reset + "X\nY", Paint("\u001b]0;ti\ntle\u0007X\nY", "1"))
+        & Same("title with a C1 control, which the cast drops up to BEL", "\u001b]0;t\u0085secret\u0007" + Red + "done" + Reset, Paint("\u001b]0;t\u0085secret\u0007done", "1:8-"))
+        & Same("plain text", "a" + Red + "bc" + Reset + "d\ne" + Red + "fg" + Reset + "h", Paint("abcd\nefgh", "1-2:2-3"));
+}
+
+static bool HighlightInsideATitleLeavesNoSecretInTheCast()
+{
+    // The cast filter ends a title at the first ESC, so a color written inside one would show the rest of it, which
+    // the masker skipped as part of the title.
+    var ok = true;
+    foreach (var stream in new[] { "", "    stream-output: true\n" })
+    {
+        var text = "\u001b]0;title API_KEY=abcdefgh\u0007done\n";
+        var cast = RecordOneStep("  - run: printf something\n    highlight:\n      - at: \"1:3-5\"\n        color: red\n" + stream,
+            CommandExecution.FromPipeStream(text, "", 0, [new PipeStreamChunk(TimeSpan.Zero, false, text)]));
+        ok &= Expect(!cast.Contains("abcdefgh", StringComparison.Ordinal), $"{(stream.Length == 0 ? "instant" : "streamed")}: the cast holds the value: {Show(cast)}");
+    }
+
+    return ok;
+}
+
+static bool StreamedHighlightLeavesTitlesWhole()
+{
+    // A streamed step's highlighted text is cut back into its reads, and each part closes the color it opened. The
+    // first read ends inside a title, so a cut at its end would close the color inside the title and show the rest.
+    var reads = new PipeStreamChunk[]
+    {
+        new(TimeSpan.FromMilliseconds(100), false, "\u001b7\u001b]0;API_KEY=abc"),
+        new(TimeSpan.FromMilliseconds(400), false, "defgh\u0007done\n"),
+    };
+    var cast = RecordOneStep("  - run: printf something\n    stream-output: true\n    highlight:\n      - at: \"1\"\n        color: green\n",
+        CommandExecution.FromPipeStream(string.Concat(reads.Select(static read => read.Text)), "", 0, reads));
+    return Expect(!cast.Contains("defgh", StringComparison.Ordinal), $"the cast holds the end of the title: {Show(cast)}");
+}

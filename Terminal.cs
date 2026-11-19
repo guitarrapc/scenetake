@@ -1957,6 +1957,83 @@ internal readonly record struct CastEvent(
 }
 
 /// <summary>
+/// Where escape sequences start and end in output text, read as SecretMasker reads a stream: a control string ends at
+/// the earliest byte where the cast filter, the SVG renderer, or the terminal that plays the cast ends it. Code that
+/// writes a color into output after masking keeps it out of a sequence: a color inside one would end it early and
+/// show text that the masker skipped.
+/// </summary>
+internal static class EscapeSequences
+{
+    /// <summary>
+    /// For each place in <paramref name="text"/>, and the place after it, whether it falls after a sequence's ESC and
+    /// before its end.
+    /// </summary>
+    internal static bool[] Inside(string text)
+    {
+        var inside = new bool[text.Length + 1];
+        for (var i = text.IndexOf('\u001b'); i >= 0 && i < text.Length; i = text.IndexOf('\u001b', i))
+        {
+            var end = End(text, i);
+            for (var k = i + 1; k < end; k++)
+                inside[k] = true;
+            i = end;
+        }
+
+        return inside;
+    }
+
+    /// <summary>Where the sequence whose ESC is at <paramref name="i"/> ends, or the end of the text when nothing ends it.</summary>
+    internal static int End(string text, int i)
+    {
+        if (i + 1 >= text.Length)
+            return text.Length;
+
+        var kind = text[i + 1];
+        var j = i + 2;
+        switch (kind)
+        {
+            case '\u001b':
+                return i + 1;
+            case '[':
+                while (j < text.Length && text[j] is >= ' ' and <= '?')
+                    j++;
+                return j >= text.Length ? text.Length : text[j] == '\u001b' ? j : j + 1;
+            case ']' or 'P' or 'X' or '^' or '_':
+                // An OSC that the cast drops ends where the cast filter ends it, which is not at a C1 control.
+                var kept = kind != ']' || KeepsOsc(text, j);
+                for (; j < text.Length; j++)
+                {
+                    var c = text[j];
+                    if (c is '\u0007' or '\u0018' or '\u001a')
+                        return j + 1;
+                    if (c == '\u001b')
+                        return j + 1 < text.Length && text[j + 1] == '\\' ? j + 2 : j;
+                    if (kept && c is >= '\u0080' and <= '\u009f')
+                        return c == '\u009c' ? j + 1 : j;
+                }
+
+                return text.Length;
+            case >= ' ' and <= '/':
+                j = i + 1;
+                while (j < text.Length && text[j] is >= ' ' and <= '/')
+                    j++;
+                return j < text.Length && text[j] == '\u001b' ? j : Math.Min(j + 1, text.Length);
+            default:
+                return i + 2;
+        }
+    }
+
+    private static bool KeepsOsc(string text, int start)
+    {
+        var code = 0;
+        var digits = 0;
+        while (digits < CastOscFilter.MaxCodeDigits && start + digits < text.Length && text[start + digits] is >= '0' and <= '9')
+            code = code * 10 + (text[start + digits++] - '0');
+        return digits > 0 && CastOscFilter.IsColorCode(code);
+    }
+}
+
+/// <summary>
 /// Removes OSC sequences that a recording never shows but that can carry local paths, host names, or
 /// other private text: window titles (OSC 0/1/2), which ConPTY sets to the started shell's full path and
 /// vim to the edited file's folder, the working directory (OSC 7, ConEmu OSC 9;9), shell integration
@@ -1968,8 +2045,8 @@ internal readonly record struct CastEvent(
 /// The output events are one terminal stream, and a PTY read can end inside a sequence, so the scan
 /// carries its state from one event to the next. Only 7-bit sequences are recognized: ESC ] starts one,
 /// and BEL, CAN, SUB, ESC \, or the ESC of another sequence ends it. SecretMasker, which skips a removed
-/// OSC, and OscMasker, which hides one in the outputs file, end it at the same byte, so the three change
-/// together.
+/// OSC, OscMasker, which hides one in the outputs file, and EscapeSequences, which keeps highlight colors out
+/// of one, end it at the same byte, so they change together.
 /// </remarks>
 internal static class CastOscFilter
 {
