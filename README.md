@@ -712,7 +712,7 @@ post:
 
 ### Masking secrets
 
-A recording is made to be shared, so scenetake hides secrets before it writes anything: the cast, SVG, mp4, PNG, and GIF never hold them. Each hidden character becomes `*`, so lines keep their width and a full-screen program's screen stays in place.
+A recording is made to be shared, so scenetake hides secrets before it writes anything: the cast, SVG, mp4, PNG, and GIF never show them. Each hidden character becomes `*`, so lines keep their width and a full-screen program's screen stays in place.
 
 ```yaml
 settings:

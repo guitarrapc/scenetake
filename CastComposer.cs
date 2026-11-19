@@ -239,7 +239,10 @@ internal static partial class ScenarioCast
             }
             else
             {
-                var pipeChunks = masker?.MaskPipe(execution.PipeStreamChunks!) ?? execution.PipeStreamChunks!;
+                var cuts = masker is not null && cmdCastTiming.UsesStreamEmission()
+                    ? StreamedPipeCuts(execution.PipeStreamChunks!, cmdStderrStyle)
+                    : null;
+                var pipeChunks = masker?.MaskPipe(execution.PipeStreamChunks!, cuts) ?? execution.PipeStreamChunks!;
                 options.Record?.Add(RecordedStep.Pipe(command.Cmd, execution.ExitCode, pipeChunks, maskedRun));
                 t = EmitPipeStepOutput(
                     events,
@@ -650,39 +653,128 @@ internal static partial class ScenarioCast
         var timedChunks = new List<(double Time, string Text)>(chunks.Count);
         for (var i = 0; i < chunks.Count; i++)
         {
-            var chunk = chunks[i];
+            var chunk = WithoutSplitCr(chunks, i);
             var adjusted = PtyCastTiming.AdjustChunkSeconds(chunk.Time.TotalSeconds, startupOffset);
-            // A CRLF split between two reads of a stream is one line break: each half alone would become one. The
-            // color of a stderr read would hide the line feed from a check made later.
-            if (chunk.Text.EndsWith('\r') && NextOfStream(chunks, i) is { } next && next.Text.StartsWith('\n'))
-                chunk = chunk with { Text = chunk.Text[..^1] };
             timedChunks.Add((adjusted, FormatPipeChunkText(chunk, stderrStyle)));
         }
 
         return timedChunks;
-
-        static PipeStreamChunk? NextOfStream(IReadOnlyList<PipeStreamChunk> chunks, int index)
-        {
-            for (var i = index + 1; i < chunks.Count; i++)
-            {
-                if (chunks[i].IsStderr == chunks[index].IsStderr)
-                    return chunks[i];
-            }
-
-            return null;
-        }
     }
 
-    internal static string FormatPipeChunkText(PipeStreamChunk chunk, string stderrStyle)
+    // A CRLF split between two reads of a stream is one line break: each half alone would become one. The color of a
+    // stderr read would hide the line feed from a check made later. So the CR leaves the first read.
+    private static PipeStreamChunk WithoutSplitCr(IReadOnlyList<PipeStreamChunk> chunks, int index)
     {
-        if (!chunk.IsStderr)
-            return chunk.Text;
+        var chunk = chunks[index];
+        if (!chunk.Text.EndsWith('\r'))
+            return chunk;
 
-        if (string.IsNullOrEmpty(stderrStyle) || ContainsAnsiSgr(chunk.Text))
-            return chunk.Text;
+        for (var i = index + 1; i < chunks.Count; i++)
+        {
+            if (chunks[i].IsStderr == chunk.IsStderr)
+                return chunks[i].Text.StartsWith('\n') ? chunk with { Text = chunk.Text[..^1] } : chunk;
+        }
 
-        return WrapWithStylePreserveTrailingNewlines(chunk.Text, stderrStyle);
+        return chunk;
     }
+
+    /// <summary>
+    /// For each read of a streamed pipe step, where the cast writes a byte that ends a sequence the read's stream left
+    /// open. The masker reads each stream as one, so it is told where. A place that ends nothing is left out: the
+    /// masker would read the rest of a string as text and join it to the text after.
+    /// </summary>
+    internal static PipeReadCuts[] StreamedPipeCuts(IReadOnlyList<PipeStreamChunk> chunks, string stderrStyle)
+    {
+        var cuts = new PipeReadCuts[chunks.Count];
+        // For stdout [0] and stderr [1]: the escape sequence that the stream has left open so far, which can span
+        // reads, and whether the other stream's reads since the last one end it in the cast.
+        var pending = new[] { "", "" };
+        var open = new OpenSequence[2];
+        var started = new bool[2];
+        var ended = new bool[2];
+        for (var i = 0; i < chunks.Count; i++)
+        {
+            var chunk = WithoutSplitCr(chunks, i);
+            var own = chunk.IsStderr ? 1 : 0;
+            var colored = IsColoredStderr(chunk, stderrStyle);
+            if (colored)
+                cuts[i] = PipeReadCuts.Before | PipeReadCuts.AfterText;
+            else if (started[own] && ended[own])
+                cuts[i] = PipeReadCuts.Before;
+
+            var other = 1 - own;
+            if (started[other] && !ended[other])
+                ended[other] = colored || Ends(open[other], chunk.Text);
+            started[own] = true;
+            ended[own] = false;
+            // The color around a colored read ends whatever it leaves open.
+            var text = cuts[i] == PipeReadCuts.None ? pending[own] + chunk.Text : chunk.Text;
+            open[own] = colored ? OpenSequence.None : OpenAtEnd(text);
+            pending[own] = open[own] == OpenSequence.None ? "" : text[text.LastIndexOf('\u001b')..];
+        }
+
+        return cuts;
+    }
+
+    internal static string FormatPipeChunkText(PipeStreamChunk chunk, string stderrStyle) =>
+        IsColoredStderr(chunk, stderrStyle) ? WrapWithStylePreserveTrailingNewlines(chunk.Text, stderrStyle) : chunk.Text;
+
+    // What a stream leaves open for the bytes after it. A control string counts as None: the bytes that end one (ESC,
+    // BEL, CAN, SUB) change nothing in the ground state, so a cut there costs nothing.
+    private enum OpenSequence : byte
+    {
+        None,
+        LoneEscape,
+        Escape, // with intermediates
+        Csi,
+    }
+
+    private static OpenSequence OpenAtEnd(string text)
+    {
+        var i = text.LastIndexOf('\u001b') + 1;
+        if (i == 0)
+            return OpenSequence.None;
+        if (i == text.Length)
+            return OpenSequence.LoneEscape;
+
+        var csi = text[i] == '[';
+        if (!csi && text[i] is not (>= ' ' and <= '/'))
+            return OpenSequence.None;
+
+        var last = csi ? '?' : '/';
+        i++;
+        while (i < text.Length && text[i] >= ' ' && text[i] <= last)
+            i++;
+        return i < text.Length ? OpenSequence.None : csi ? OpenSequence.Csi : OpenSequence.Escape;
+    }
+
+    // Whether text, written between two reads of a stream, ends what the first one left open, or takes the place of the
+    // byte after a lone ESC. Either way the stream's next read no longer goes on as it would alone. ESC, CAN, and SUB
+    // end anything. Other C0 controls run inside an escape without ending it. An escape with intermediates goes on
+    // through more of them, and a CSI goes on through its parameter bytes.
+    private static bool Ends(OpenSequence open, string text)
+    {
+        foreach (var c in text)
+        {
+            if (c is '\u001b' or '\u0018' or '\u001a')
+                return true;
+            var ends = open switch
+            {
+                OpenSequence.None => c == '\u0007',
+                OpenSequence.LoneEscape => c >= ' ' && c != '\u007f',
+                OpenSequence.Escape => c >= '0' && c != '\u007f',
+                _ => c >= '@' && c != '\u007f',
+            };
+            if (ends)
+                return true;
+        }
+
+        return false;
+    }
+
+    // A stderr read without colors of its own gets the step's stderr color.
+    private static bool IsColoredStderr(PipeStreamChunk chunk, string stderrStyle) =>
+        chunk.IsStderr && !string.IsNullOrEmpty(stderrStyle) && chunk.Text.Length > 0 && !ContainsAnsiSgr(chunk.Text);
 
     internal static void ApplyCastTimingToChunks(List<(double Time, string Text)> chunks, CastTimingSettings timing)
     {
@@ -1204,6 +1296,21 @@ internal readonly record struct StepStart(
 
     /// <summary>For a background step, the seconds it waits for <see cref="WaitFor"/> (<c>wait-timeout</c>).</summary>
     internal double WaitLimit { get; init; }
+}
+
+/// <summary>
+/// Where the cast of a streamed pipe step writes a byte that ends a sequence the stream left open, around one read.
+/// </summary>
+[Flags]
+internal enum PipeReadCuts : byte
+{
+    None = 0,
+
+    /// <summary>Before the read: its color, or reads of the other stream that end the sequence.</summary>
+    Before = 1,
+
+    /// <summary>After the read's text, before its last line breaks: the end of its color.</summary>
+    AfterText = 2,
 }
 
 /// <summary>Output that is already timed: each chunk's time since the command started, and where the step ends.</summary>

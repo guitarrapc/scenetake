@@ -38,6 +38,7 @@ failures += Run("UndefinedSoftFontCodeIsBlank", UndefinedSoftFontCodeIsBlank);
 failures += Run("SoftFontMatrixSizeFromData", SoftFontMatrixSizeFromData);
 failures += Run("SoftFontEraseControl", SoftFontEraseControl);
 failures += Run("OtherDcsStaySkipped", OtherDcsStaySkipped);
+failures += Run("SosPmApcStringsPrintNothing", SosPmApcStringsPrintNothing);
 failures += Run("SoftGlyphCellsDifferFromText", SoftGlyphCellsDifferFromText);
 failures += Run("SaveRestoreKeepsCharsets", SaveRestoreKeepsCharsets);
 failures += Run("ResetDropsSoftFonts", ResetDropsSoftFonts);
@@ -646,6 +647,27 @@ static bool OtherDcsStaySkipped()
     parser.Process("\u001bP$qm\u001b\\A\u001bPq#0;2;0;0;0#0~~{{\u001b\\B\u001bP1;1{@\u001b\\C");
 
     return RowText(buffer, 0) == "ABC" && buffer.GetCell(0, 2).Glyph is null;
+}
+
+static bool SosPmApcStringsPrintNothing()
+{
+    // An inline image's data (APC), a privacy message (PM), and SOS are strings like DCS. The masker does not search
+    // their data, so drawing it would show text that was never masked.
+    var theme = DarkTheme();
+    var buffer = new ScreenBuffer(10, 4, theme);
+    var parser = new AnsiParser(buffer, theme);
+    parser.Process("A\u001b_Ga=T;QUJD\u001b\\B\u001b^pm\u001b\\C\u001bXsos\u001b\\D\r\n");
+    // A string cut off by CAN, SUB, or another sequence hides only itself, as in a terminal. BEL ends it too.
+    parser.Process("E\u001b_Gdata\u001b[1mF\u001b_x\u0018G\u001b^y\u001aH\u001bXz\u0007I\r\n");
+    // A read that ends inside the string, or on an ESC in it, waits for the next one.
+    parser.Process("\u001b_Gda");
+    parser.Process("ta\u001b");
+    parser.Process("\\J\r\n");
+    // A program that asks tmux to pass a sequence through writes each ESC in it twice. The first one does nothing, so
+    // the DCS after it is still a string.
+    parser.Process("\u001b\u001bPq API\u001b\\K");
+
+    return RowText(buffer, 0) == "ABCD" && RowText(buffer, 1) == "EFGHI" && RowText(buffer, 2) == "J" && RowText(buffer, 3) == "K";
 }
 
 static bool SoftGlyphCellsDifferFromText()

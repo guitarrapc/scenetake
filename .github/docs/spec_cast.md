@@ -90,7 +90,7 @@ v3 comment lines (`# ...`) are ignored on read.
 
 ### Sequences left out
 
-`o` events omit OSC sequences (`ESC ]` … `BEL` or `ESC \`) except those for colors. These sequences draw no text in terminals or scenetake's renderers. Several can expose details about the recording machine:
+`o` events omit OSC sequences (`ESC ]` up to `BEL` or `ESC \`, or cut off earlier by CAN, SUB, or the ESC of another sequence) except those for colors. These sequences draw no text in terminals or scenetake's renderers. Several can expose details about the recording machine:
 
 | OSC | Carries |
 |---|---|
@@ -100,7 +100,7 @@ v3 comment lines (`# ...`) are ignored on read.
 | `8` (hyperlinks) | The link target, such as `file://host/home/user/…` from `ls --hyperlink`. The link text stays. |
 | `52` (clipboard) | Clipboard content. |
 
-Color OSCs remain: `4`, `5`, `10`–`19`, `104`, `105`, `110`–`119`. Scenetake removes all other OSCs, including sequences without a number. It tracks sequences across the events of a step, and a sequence still open when the step ends is dropped with it. Empty events are removed, except the final event, which preserves recording length. Only 7-bit sequences are recognized. Visible command output, including `pwd` and prompts with paths, remains unchanged.
+Color OSCs remain: `4`, `5`, `10`–`19`, `104`, `105`, `110`–`119`. Scenetake removes all other OSCs, including sequences without a number. It tracks sequences across the events of a step, and a removed sequence still open when the step ends is removed up to there. Empty events are removed, except the final event, which preserves recording length. Only 7-bit sequences are recognized. Visible command output, including `pwd` and prompts with paths, remains unchanged.
 
 ### Recording boundary
 

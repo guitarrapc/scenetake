@@ -375,7 +375,7 @@ internal sealed class OscMasker
                     continue;
 
                 case State.Code:
-                    if (c is >= '0' and <= '9' && _digits < 6)
+                    if (c is >= '0' and <= '9' && _digits < CastOscFilter.MaxCodeDigits)
                     {
                         _code = _code * 10 + (c - '0');
                         _digits++;

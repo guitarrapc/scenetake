@@ -1208,6 +1208,13 @@ internal sealed class AnsiParser
                 return TrySkipOsc(input, index + 2, out endIndex);
             case (byte)'P':
                 return TryHandleDcs(input, index + 2, out endIndex);
+            case (byte)'X' or (byte)'^' or (byte)'_':
+                return TrySkipString(input, index + 2, out endIndex);
+            case 0x1B:
+                // A terminal starts again at the second ESC. A program that asks tmux to pass a sequence through
+                // writes each ESC in it twice.
+                endIndex = index;
+                return true;
             case >= 0x20 and <= 0x2F:
                 return TryHandleIntermediateEscape(input, index, out endIndex);
             case (byte)'7':
@@ -1301,6 +1308,37 @@ internal sealed class AnsiParser
         var bodyEnd = input[endIndex] == 0x07 ? endIndex : endIndex - 1;
         _charsets.TryLoadSoftFont(input[start..bodyEnd]);
         return true;
+    }
+
+    /// <summary>
+    /// SOS, PM, or APC (an inline image): a string whose data is not text. Besides BEL and ST, it ends where a terminal
+    /// cuts it off, at CAN, SUB, or the ESC of another sequence. A string that a program left open then hides the
+    /// output only up to the next sequence, as in a terminal, not to the end of the recording.
+    /// </summary>
+    private static bool TrySkipString(ReadOnlySpan<byte> input, int start, out int endIndex)
+    {
+        for (var i = start; i < input.Length; i++)
+        {
+            var b = input[i];
+            if (b is 0x07 or 0x18 or 0x1A)
+            {
+                endIndex = i;
+                return true;
+            }
+
+            if (b == 0x1B)
+            {
+                if (i + 1 >= input.Length)
+                    break;
+
+                // ESC \ is the string's own end. Any other ESC starts the next sequence, which is read next.
+                endIndex = input[i + 1] == (byte)'\\' ? i + 1 : i - 1;
+                return true;
+            }
+        }
+
+        endIndex = start;
+        return false;
     }
 
     private static bool TrySkipOsc(ReadOnlySpan<byte> input, int start, out int endIndex, bool caretTerminator = false)
@@ -1928,8 +1966,10 @@ internal readonly record struct CastEvent(
 /// </summary>
 /// <remarks>
 /// The output events are one terminal stream, and a PTY read can end inside a sequence, so the scan
-/// carries its state from one event to the next. Only 7-bit sequences (ESC ], ended by BEL or ESC \) are
-/// recognized.
+/// carries its state from one event to the next. Only 7-bit sequences are recognized: ESC ] starts one,
+/// and BEL, CAN, SUB, ESC \, or the ESC of another sequence ends it. SecretMasker, which skips a removed
+/// OSC, and OscMasker, which hides one in the outputs file, end it at the same byte, so the three change
+/// together.
 /// </remarks>
 internal static class CastOscFilter
 {
@@ -1943,6 +1983,9 @@ internal static class CastOscFilter
         Drop,
         DropEscape, // ESC inside a dropped OSC.
     }
+
+    // An OSC code is decided on its first digits, so a long run of digits is not held. Color codes have three at most.
+    internal const int MaxCodeDigits = 6;
 
     internal static List<CastEvent> RemovePrivateSequences(List<CastEvent> events) => RemovePrivateSequences(events, null);
 
@@ -2078,7 +2121,7 @@ internal static class CastOscFilter
                     break;
 
                 case State.Code:
-                    if (b is >= (byte)'0' and <= (byte)'9' && pending.Count < 2 + 6)
+                    if (b is >= (byte)'0' and <= (byte)'9' && pending.Count < 2 + MaxCodeDigits)
                     {
                         pending.Add(b);
                         break;
@@ -2154,15 +2197,19 @@ internal static class CastOscFilter
     }
 
     /// <summary>Whether the held ESC ] and digits name a color OSC, which is kept.</summary>
-    private static bool IsKept(List<byte> pending)
-    {
-        if (pending.Count <= 2)
-            return false;
+    private static bool IsKept(List<byte> pending) => KeepsOsc(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(pending)[2..]);
 
+    /// <summary>
+    /// Whether the filter keeps an OSC whose bytes after ESC ] are <paramref name="body"/>: its code, the first digits
+    /// up to <see cref="MaxCodeDigits"/>, names a color change.
+    /// </summary>
+    internal static bool KeepsOsc(ReadOnlySpan<byte> body)
+    {
         var code = 0;
-        for (var i = 2; i < pending.Count; i++)
-            code = code * 10 + (pending[i] - '0');
-        return IsColorCode(code);
+        var digits = 0;
+        while (digits < MaxCodeDigits && digits < body.Length && body[digits] is >= (byte)'0' and <= (byte)'9')
+            code = code * 10 + (body[digits++] - '0');
+        return digits > 0 && IsColorCode(code);
     }
 
     /// <summary>Whether an OSC with this number changes a color, which the filter keeps.</summary>
