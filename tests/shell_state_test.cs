@@ -38,6 +38,7 @@ failures += Run("DeclarationsSplitOutsideQuotes", DeclarationsSplitOutsideQuotes
 failures += Run("ScalarValuesAreUnquoted", ScalarValuesAreUnquoted);
 failures += Run("RestoreCarriesWhatChanged", RestoreCarriesWhatChanged);
 failures += Run("LoginAliasesDoNotTurnOnExpansion", LoginAliasesDoNotTurnOnExpansion);
+failures += Run("LoginAliasesStayOffWithStepAlias", LoginAliasesStayOffWithStepAlias);
 failures += Run("QuoteKeepsSingleQuotes", QuoteKeepsSingleQuotes);
 failures += Run("StateForEachShell", StateForEachShell);
 failures += Run("ShellRestoreSharesFirstLine", ShellRestoreSharesFirstLine);
@@ -58,6 +59,7 @@ failures += Run("BackgroundProblemStops", () => BackgroundProblemStops(continueO
 failures += Run("BackgroundProblemContinueOnError", () => BackgroundProblemStops(continueOnError: true));
 failures += Run("PlaygroundSkipsBackground", PlaygroundSkipsBackground);
 failures += Run("IntegrationBashCarriesState", () => IntegrationBashCarriesState(repoRoot));
+failures += Run("IntegrationBashLoginAliasesStayOff", () => IntegrationBashLoginAliasesStayOff(repoRoot));
 failures += Run("IntegrationPowerShellCarriesState", () => IntegrationPowerShellCarriesState(repoRoot));
 failures += Run("IntegrationZshCarriesState", () => IntegrationZshCarriesState(repoRoot));
 failures += Run("IntegrationShCarriesState", () => IntegrationShCarriesState(repoRoot));
@@ -163,6 +165,27 @@ static bool LoginAliasesDoNotTurnOnExpansion()
     var restore = BashDump.BuildRestore("", "", "", "", aliases, aliases, "/work", []);
     return Expect(!restore.Contains("expand_aliases", StringComparison.Ordinal), restore)
         && Expect(!restore.Contains("alias ", StringComparison.Ordinal), restore);
+}
+
+// Once a step defines an alias, expansion is on, and the login files' aliases would expand with it: Git Bash's
+// node='winpty node.exe' then failed in a pipe with "stdin is not a tty". They are removed, in the step after the
+// one that defines the alias and in every later one, and a login alias that a step redefined stays.
+static bool LoginAliasesStayOffWithStepAlias()
+{
+    const string login = "alias ls='ls -F --color=auto'\nalias node='winpty node.exe'\nalias ll='ls -l'\n";
+    // The step that defines hi and redefines ll ran with the login aliases still defined.
+    var first = BashDump.BuildRestore("", "", "", "", login,
+        "alias hi='echo hi'\nalias ll='ls -la'\nalias ls='ls -F --color=auto'\nalias node='winpty node.exe'\n", "/work", []);
+    // The next step: its fresh shell has the login aliases again, and the restore removed them before it ended.
+    var next = BashDump.BuildRestore("", "", "", "", login, "alias hi='echo hi'\nalias ll='ls -la'\n", "/work", []);
+
+    bool Check(string restore, string which) =>
+        Expect(restore.Contains("alias hi='echo hi'\n", StringComparison.Ordinal), $"{which}: the step's alias\n{restore}")
+        && Expect(restore.Contains("alias ll='ls -la'\n", StringComparison.Ordinal) && !restore.Contains("unalias 'll'", StringComparison.Ordinal), $"{which}: a redefined login alias\n{restore}")
+        && Expect(restore.Contains("builtin unalias 'ls'\n", StringComparison.Ordinal) && restore.Contains("builtin unalias 'node'\n", StringComparison.Ordinal), $"{which}: the login aliases\n{restore}")
+        && Expect(restore.EndsWith("builtin shopt -s expand_aliases\n", StringComparison.Ordinal), $"{which}: expansion after the aliases\n{restore}");
+
+    return Check(first, "first") && Check(next, "next");
 }
 
 static bool QuoteKeepsSingleQuotes() =>
@@ -624,6 +647,33 @@ static bool IntegrationBashCarriesState(string repoRoot)
         && Expect(run.Stderr.Contains("step exited 3: exit 3", StringComparison.Ordinal), "the exit code")
         && Expect(text.Contains("after-timeout=fixtures", StringComparison.Ordinal), "a stopped step changed the folder")
         && Expect(!text.Contains("correct-horse-battery-staple", StringComparison.Ordinal) && text.Contains("[****", StringComparison.Ordinal), "an exported secret was not hidden");
+}
+
+// HOME is a folder whose .bash_profile defines aliases. Before the fix, a step's alias turned expansion on for them
+// too, as Git Bash's node='winpty node.exe' then failed in a pipe with "stdin is not a tty".
+static bool IntegrationBashLoginAliasesStayOff(string repoRoot)
+{
+    if (!TryGetBinary(out var bin))
+        return true;
+
+    var home = Path.Combine(Path.GetTempPath(), $"scenetake-bash-home-{Guid.NewGuid():N}");
+    Directory.CreateDirectory(home);
+    try
+    {
+        File.WriteAllText(Path.Combine(home, ".bash_profile"), "alias login_only='echo login-alias-expanded'\nalias date='echo login-date-alias'\n");
+        var run = RunFixture(bin, repoRoot, "shell-state-bash-login-alias.yaml", new() { ["HOME"] = home });
+        var text = run.Text;
+        return Expect(run.ExitCode == 0, $"exit {run.ExitCode}\n{run.Stderr}")
+            && Expect(Regex.Matches(text, @"year=\d{4}").Count == 2, $"date ran as the login alias: {Show(text)}")
+            && Expect(text.Contains("step-alias", StringComparison.Ordinal), "the step's alias")
+            && Expect(text.Contains("login-only-off", StringComparison.Ordinal) && !text.Contains("login-alias-expanded", StringComparison.Ordinal), "a login alias expanded")
+            && Expect(!text.Contains("login-date-alias", StringComparison.Ordinal), "the login alias for date expanded")
+            && Expect(text.Contains("step-date", StringComparison.Ordinal), "a step's alias that redefines a login alias");
+    }
+    finally
+    {
+        Directory.Delete(home, recursive: true);
+    }
 }
 
 static bool IntegrationPowerShellCarriesState(string repoRoot)

@@ -313,10 +313,21 @@ internal static class BashDump
                 restore.Append("builtin unalias ").Append(Quote(name)).Append('\n');
         }
 
-        // A shell that runs a command expands aliases only when told to. Only an alias a step defined turns that on:
-        // Git Bash's login files define aliases such as ls, which commands did not expand before.
+        // A shell that runs a command expands aliases only when told to. Only an alias a step defined turns that on,
+        // and then only the steps' aliases expand: the login files' own are removed first. Git Bash's login files
+        // define ls (ls -F --color=auto) and, in a terminal, node as winpty node.exe, which fails without a console
+        // ("stdin is not a tty"). A command keeps running as it did before a step defined an alias. A login alias
+        // that a step redefined is the step's, and stays.
         if (stepAlias)
+        {
+            foreach (var (name, line) in aliasesAfter)
+            {
+                if (aliasesBefore.TryGetValue(name, out var old) && old == line)
+                    restore.Append("builtin unalias ").Append(Quote(name)).Append('\n');
+            }
+
             restore.Append("builtin shopt -s expand_aliases\n");
+        }
 
         return restore.ToString();
     }

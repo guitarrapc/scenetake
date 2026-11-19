@@ -1,0 +1,20 @@
+# The login files' aliases do not expand in the steps, also after a step defines an alias (spec_scenario.md → Shell
+# state across steps). Run from the repository root by tests/shell_state_test.cs, with a HOME whose .bash_profile
+# defines login_only, and date as Git Bash's login files define node (winpty node.exe).
+title: "login aliases (bash)"
+width: 100
+height: 20
+shell: bash
+settings:
+  typing-speed: 0.001
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+steps:
+  - date +year=%Y
+  - alias hi='echo step-alias'
+  - hi
+  - date +year=%Y
+  - login_only || echo "login-only-off"
+  - alias date='echo step-date'
+  - date
