@@ -88,7 +88,8 @@ if (args[0] is "init")
     }
 
     Directory.CreateDirectory(Path.GetDirectoryName(initPath) ?? ".");
-    File.WriteAllText(initPath, CreateInitialScenarioYaml(initShell), Encoding.UTF8);
+    // Without a BOM, as every file scenetake writes: a BOM shows as stray bytes in cat, diff, and some editors.
+    File.WriteAllText(initPath, CreateInitialScenarioYaml(initShell), new UTF8Encoding(false));
     Console.Error.WriteLine($"Created: {FormatDisplayPath(initPath)}");
     return 0;
 }
@@ -962,7 +963,7 @@ if (keysWriteError is not null)
 // the outputs of an earlier run stay as they were, and post runs. The cast is not there to show why the
 // step failed, so the end of its output is part of the error.
 if (strictFailure is not null)
-    return await StopAfterPreAsync(FormatStrictFailure(strictFailure));
+    return await StopAfterPreAsync(FormatStrictFailure(strictFailure, capture));
 
 // OSC titles and similar sequences are never drawn, but a committed cast handed them to every reader:
 // ConPTY sets the title to the shell's full path, often under C:\Users\<name>.
@@ -2585,19 +2586,23 @@ static void PrintScenarioCommandFailure(string phase, string cmd, int exitCode)
 
 /// <summary>
 /// The error for a run that stopped at <paramref name="failure"/>: a --strict run, or a <c>show: none</c> step that
-/// failed. Without the "Error: " prefix.
+/// failed. Without the "Error: " prefix. A <paramref name="capture"/> has one command and no step to set
+/// <c>continue-on-error</c> on, so its error speaks of the command, and of the scenario file it may have written.
 /// </summary>
-static string FormatStrictFailure(FailedStep failure)
+static string FormatStrictFailure(FailedStep failure, CaptureRequest? capture = null)
 {
+    var plainCapture = capture is not null && !failure.Background && !failure.Hidden;
     var builder = new StringBuilder(
         failure.Background ? $"background step {failure.Number} {failure.Problem}: {failure.Cmd}"
         : failure.Hidden ? $"step {failure.Number} (show: none) exited {failure.ExitCode}, and the steps after it may rely on it: {failure.Cmd}"
+        : plainCapture ? $"--strict stopped: the command exited {failure.ExitCode}: {failure.Cmd}"
         : $"--strict stopped at step {failure.Number}, which exited {failure.ExitCode}: {failure.Cmd}");
     foreach (var line in failure.OutputTail)
         builder.Append(Environment.NewLine).Append("  | ").Append(line);
     builder.Append(Environment.NewLine).Append(
         failure.Background ? "Nothing was written. Set 'continue-on-error: true' on the step if the steps after it can do without it, or raise 'wait-timeout'."
         : failure.Hidden ? "Nothing was written. Set 'continue-on-error: true' on the step if it may fail."
+        : plainCapture ? $"{(capture!.SavePath is not null ? "Nothing was written but the scenario." : "Nothing was written.")} Without --strict, the recording keeps a command that fails."
         : "Nothing was written. Set 'continue-on-error: true' on a step that is meant to fail.");
     return builder.ToString();
 }
@@ -2917,6 +2922,15 @@ static string CreateInitialScenarioYaml(string? shell)
         : """
             run: echo "stderr sample" 1>&2   # With shell: pwsh, use: "[Console]::Error.WriteLine('stderr sample')"
         """;
+    // The keys step is a comment: a prompt that waits for input would hold up the first recording wherever the
+    // keys go astray, and the reader meets keys and wait where they edit the file.
+    var promptRun = powerShellSyntax
+        ? """
+          #   run: $name = Read-Host 'Your name?'; "Hello, $name"
+        """
+        : """
+          #   run: read -r -p "Your name? " name; echo "Hello, $name"
+        """;
     return $"""
     # scenetake starter scenario. Edit the values below and add commands under steps.
     title: "My App"            # Optional cast title
@@ -2925,14 +2939,18 @@ static string CreateInitialScenarioYaml(string? shell)
     # cwd: /your/path            # Optional working directory for pre, steps, and post. A relative path is relative to this file
     {shellLine}
 
-    # Optional SVG rendering metadata. Written to the cast header (v3 tags / term.theme) and used by --format svg.
+    # Optional look of the SVG, mp4, PNG, and GIF. The cast keeps it too (an image background aside), so the svg,
+    # mp4, png, and gif commands draw the cast the same way later. Options such as --theme override it.
     # render:
     #   font-size: 16
     #   font-family: '"JetBrains Mono", Consolas, monospace'
     #   theme:
-    #     preset: dark
+    #     preset: dark               # Also light, nord, dracula, github-dark, and more: scenetake --help lists them
     #     fg: "#d0d0d0"
     #     bg: "#282c34"
+    #   window: macos                # A title bar around the terminal: none, macos, or windows
+    #   background: "#1e3c72 #2a5298"  # Around the window: a color, 2-4 colors for a gradient, or an image file
+    #   fit: height                  # The default: no empty rows below the content. none draws the whole terminal
 
     # Default settings for all steps. Can be overridden per step by using a mapping with "run" and timing keys.
     settings:
@@ -2947,6 +2965,9 @@ static string CreateInitialScenarioYaml(string? shell)
       # max-duration: 15             # Cap step output timeline, and also enables stream emit.
       # silence-threshold: {DefaultSilenceThreshold}       # Stream mode: collapse idle gaps longer than this (seconds).
       # max-idle: {DefaultMaxIdle}                # Stream mode: collapsed idle gap duration (seconds).
+      # mask:                        # Texts to hide wherever the recording shows them, as *, such as a host name.
+      #   - "internal.example.com"
+      # mask-auto: true              # The default: also hide tokens, KEY=value secrets, passwords in URLs, and more.
 
     # Optional setup commands. They run before steps, but are not recorded in the cast.
     # pre:
@@ -2977,6 +2998,15 @@ static string CreateInitialScenarioYaml(string? shell)
       - name: "run in a PTY"
         run: echo "Running in a PTY, which is useful for TUI app and tty-based output"
         pty: true
+      # A step that answers a prompt: keys types into the program, so the step needs pty: true. To type the keys
+      # yourself, set interactive: true instead, and scenetake --save-keys keys.yaml <this file> saves them as keys.
+      # - name: "answer a prompt"
+    {promptRun}
+      #   pty: true
+      #   timeout: 10                # Ctrl+C after 10 seconds, if the program still runs
+      #   keys:
+      #     - wait: "Your name?"     # Wait until the program prints this text
+      #       type: "scenetake\n"    # Then type it. \n is Enter
 
     # Optional teardown commands. They run last and are not recorded in the cast.
     # post:
@@ -4263,15 +4293,23 @@ static class HelpText
 
         """;
 
-    /// <summary>The recording options. <c>capture</c> writes an SVG when no format is given, a scenario only the cast.</summary>
+    /// <summary>
+    /// The recording options. <c>capture</c> writes an SVG when no format is given, a scenario only the cast. A
+    /// capture has no steps of its own to set <c>continue-on-error</c> on, no <c>post</c>, and no interactive step,
+    /// so its <c>--strict</c> and <c>--verbose</c> say only what applies to one command.
+    /// </summary>
     internal static string Recording(bool capture = false) =>
-        (capture
+        capture
             ? """
                 Recording:
                   --format cast|svg|mp4|png|gif
                                            Write the cast and an SVG (svg, the default), an mp4, a PNG, or a
                                            GIF rendered from it, or only the cast (cast). One format a run:
                                            convert the cast for others, such as 'scenetake gif git.cast'.
+                  --strict                 Write nothing, and exit 1, if the command exits non-zero (default:
+                                           record it, with a warning). A --save-scenario file stays.
+                  --verbose                Show phase markers, and the type and stack of an error that stops
+                                           the run
 
                 """
             : """
@@ -4290,19 +4328,14 @@ static class HelpText
                                            --save-outputs. Changes to typing, comments, highlights, timing,
                                            and render apply. A step whose run changed needs a new recording.
                                            pre and post do not run.
+                  --strict                 Stop at the first step that exits non-zero unless it sets
+                                           'continue-on-error: true'. Write no output but the --save-keys
+                                           file, and run post. Exit 1. If a post command fails, return that
+                                           command's exit code.
+                  --verbose                Show pre and post labels and phase markers, and the type and stack
+                                           of an error that stops the run
 
-                """)
-        + RecordingRest;
-
-    private const string RecordingRest = """
-          --strict                 Stop at the first step that exits non-zero unless it sets
-                                   'continue-on-error: true'. Write no output but the --save-keys
-                                   file, and run post. Exit 1. If a post command fails, return that
-                                   command's exit code.
-          --verbose                Show pre and post labels and phase markers, and the type and stack
-                                   of an error that stops the run
-
-        """;
+                """;
 
     /// <summary>
     /// The rendering options. On a scenario they override its <c>render</c> settings, the theme only as a

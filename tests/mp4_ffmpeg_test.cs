@@ -753,6 +753,18 @@ static bool CaptureRecordsOneCommand(string scenetake, string work)
     ok &= Check(existsExit == 1 && existsStderr.Contains("saved/demo.yaml already exists", StringComparison.Ordinal) && File.ReadAllText(saved) == savedText,
         $"--save-scenario keeps a file: exit {existsExit}{Environment.NewLine}{existsStderr}");
 
+    // --strict on one command speaks of the command: a capture has no step to set continue-on-error on, and a
+    // --save-scenario file, written before the command ran, stays.
+    var failing = Path.Combine(directory, "failing.yaml");
+    var (strictSavedExit, strictSavedStderr) = Exec(scenetake, directory, ["capture", "--strict", "--pipe", "--save-scenario", failing, "--", "exit", "3"]);
+    ok &= Check(strictSavedExit == 1 && strictSavedStderr.Contains("Error: --strict stopped: the command exited 3: exit 3", StringComparison.Ordinal)
+        && strictSavedStderr.Contains("Nothing was written but the scenario. Without --strict, the recording keeps a command that fails.", StringComparison.Ordinal)
+        && !strictSavedStderr.Contains("continue-on-error", StringComparison.Ordinal) && File.Exists(failing) && !File.Exists(Path.ChangeExtension(failing, ".cast")),
+        $"capture --strict --save-scenario: exit {strictSavedExit}{Environment.NewLine}{strictSavedStderr}");
+    var (strictExit, strictStderr) = Exec(scenetake, directory, ["capture", "--strict", "--pipe", "-o", "strict", "--", "exit", "3"]);
+    ok &= Check(strictExit == 1 && strictStderr.Contains("Nothing was written. Without --strict, the recording keeps a command that fails.", StringComparison.Ordinal)
+        && !File.Exists(Path.Combine(directory, "strict.cast")), $"capture --strict: exit {strictExit}{Environment.NewLine}{strictStderr}");
+
     foreach (var (args, error) in new (string[] Args, string Error)[]
     {
         (["capture"], "capture needs a command"),
@@ -806,6 +818,20 @@ static bool InitWritesStepsForItsShell(string scenetake, string work)
         if (exit != 0 || !shellOk || !lines.Any(line => line.Trim() == stderrStep || line.Trim().StartsWith(stderrStep + " ", StringComparison.Ordinal)))
         {
             Console.Error.WriteLine($"  {name}: exit {exit}{Environment.NewLine}{stderr}{string.Join(Environment.NewLine, lines)}");
+            written = false;
+            continue;
+        }
+
+        // UTF-8 without a BOM, as the other files scenetake writes. And the reader who starts from init meets
+        // the window, the background, fit, masking, and keys with wait, as comments to take up.
+        var bytes = File.ReadAllBytes(path);
+        var commented = lines.Where(line => line.TrimStart().StartsWith('#')).Select(line => line.TrimStart('#', ' ')).ToList();
+        var missing = new[] { "window: ", "background: ", "fit: ", "mask: ", "mask-auto: ", "keys: ", "- wait: " }
+            .Where(key => !commented.Any(line => line.StartsWith(key, StringComparison.Ordinal) || line.StartsWith(key.TrimEnd(), StringComparison.Ordinal)))
+            .ToList();
+        if (bytes is [0xEF, 0xBB, 0xBF, ..] || missing.Count != 0)
+        {
+            Console.Error.WriteLine($"  {name}: BOM {bytes is [0xEF, 0xBB, 0xBF, ..]}, keys missing from the comments: {string.Join(", ", missing)}");
             written = false;
             continue;
         }
@@ -1174,6 +1200,18 @@ static bool HelpDescribesEveryOption(string scenetake, string repoRoot, string w
         if (pngHelp.Contains(option, StringComparison.Ordinal))
         {
             Console.Error.WriteLine($"  png --help lists {option}, which png rejects");
+            ok = false;
+        }
+    }
+
+    // capture has one command: no step to set continue-on-error on, no pre or post, no interactive step for
+    // --save-keys. Its help said all three, from the scenario's --strict text, and a reader looked for them.
+    var (_, captureHelp, _) = ExecCapture(scenetake, repoRoot, ["capture", "--help"]);
+    foreach (var text in new[] { "continue-on-error", "--save-keys", "post" })
+    {
+        if (captureHelp.Contains(text, StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine($"  capture --help mentions {text}, which a capture does not have");
             ok = false;
         }
     }
