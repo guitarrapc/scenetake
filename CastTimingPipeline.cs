@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Text;
 using System.Runtime.InteropServices;
 
@@ -161,7 +162,45 @@ internal static class CastTimingPipeline
         }
 
         result.Add((currentTime, ConcatUtf8(buffers, currentLength)));
+        MoveSplitCharactersForward(result);
         return result;
+    }
+
+    // A read can end inside a character. Its first bytes go to the next chunk, because each event is written as text
+    // of its own: the two halves would each become U+FFFD, and the same output read otherwise would look different.
+    private static void MoveSplitCharactersForward(List<(double Time, byte[] Data)> chunks)
+    {
+        for (var i = 0; i < chunks.Count - 1; i++)
+        {
+            var (time, data) = chunks[i];
+            var split = IncompleteTailLength(data);
+            if (split == 0)
+                continue;
+
+            var (nextTime, nextData) = chunks[i + 1];
+            var joined = new byte[split + nextData.Length];
+            data.AsSpan(data.Length - split).CopyTo(joined);
+            nextData.CopyTo(joined, split);
+            chunks[i + 1] = (nextTime, joined);
+            if (split == data.Length)
+                chunks.RemoveAt(i--);
+            else
+                chunks[i] = (time, data[..^split]);
+        }
+    }
+
+    private static int IncompleteTailLength(ReadOnlySpan<byte> data)
+    {
+        for (var length = 1; length <= Math.Min(3, data.Length); length++)
+        {
+            var value = data[^length];
+            if (value < 0x80)
+                return 0;
+            if (value >= 0xC0)
+                return Rune.DecodeFromUtf8(data[^length..], out _, out _) == OperationStatus.NeedMoreData ? length : 0;
+        }
+
+        return 0;
     }
 
     internal static void MergeBurstGaps(Span<double> times, ReadOnlySpan<double> originalSeconds, double burstThreshold)
@@ -198,79 +237,49 @@ internal static class CastTimingPipeline
 
 internal static class HighlightSplitter
 {
+    /// <summary>
+    /// The highlighted text cut back into the reads it came from, by visible characters. A sequence counts as no
+    /// characters, by the same rules as the highlighting (<see cref="EscapeSequences"/>), so a cut falls only right
+    /// after a visible character, never inside a sequence where the color that a part closes would end it. Each read
+    /// is counted within the joined output, since one can end inside a sequence. The last part runs to the end of the
+    /// text, with the sequences after the last visible character, such as one that shows the cursor again.
+    /// </summary>
     internal static List<string> SplitByRawSegments(string highlighted, IReadOnlyList<string> rawSegments)
     {
+        var raw = string.Concat(rawSegments);
+        var rawInside = EscapeSequences.Inside(raw);
         var results = new List<string>(rawSegments.Count);
         var visibleStart = 0;
-        foreach (var raw in rawSegments)
+        var offset = 0;
+        for (var k = 0; k < rawSegments.Count; k++)
         {
-            var length = VisibleLength(NormalizeToLf(raw));
-            var visibleEnd = visibleStart + length;
+            var visibleEnd = k == rawSegments.Count - 1
+                ? int.MaxValue
+                : visibleStart + VisibleLength(raw, rawInside, offset, rawSegments[k].Length);
             results.Add(ExtractVisibleRange(highlighted, visibleStart, visibleEnd));
             visibleStart = visibleEnd;
+            offset += rawSegments[k].Length;
         }
 
         return results;
     }
 
-    private static int VisibleLength(string text)
+    // The visible characters of raw[start..start+length], as the highlighting counts them after it turned each CR and
+    // CRLF into one LF. A CR that ends a sequence leaves its place to the LF after it, which then ends the sequence.
+    private static int VisibleLength(string raw, bool[] inside, int start, int length)
     {
         var visible = 0;
-        for (var i = 0; i < text.Length; i++)
+        for (var i = start; i < start + length; i++)
         {
-            if (text[i] == '\u001b')
-            {
-                i = SkipAnsiSequence(text, i) - 1;
+            var c = raw[i];
+            if (c == '\u001b' || inside[i]
+                || (c == '\r' && i + 1 < raw.Length && raw[i + 1] == '\n')
+                || (c == '\n' && i > 0 && raw[i - 1] == '\r' && inside[i - 1]))
                 continue;
-            }
-
             visible++;
         }
 
         return visible;
-    }
-
-    private static int SkipAnsiSequence(string text, int index)
-    {
-        var end = index + 1;
-        if (end < text.Length && text[end] == '[')
-        {
-            end++;
-            while (end < text.Length)
-            {
-                var ch = text[end];
-                if ((uint)(ch - '0') <= 9 || ch == ';')
-                {
-                    end++;
-                    continue;
-                }
-
-                if (ch is >= 'A' and <= 'Z' or >= 'a' and <= 'z')
-                {
-                    end++;
-                    break;
-                }
-
-                end++;
-                break;
-            }
-
-            return end;
-        }
-
-        while (end < text.Length)
-        {
-            var ch = text[end];
-            if (ch is >= 'A' and <= 'Z' or >= 'a' and <= 'z')
-            {
-                end++;
-                break;
-            }
-
-            end++;
-        }
-
-        return end;
     }
 
     private static string ExtractVisibleRange(string text, int visibleStart, int visibleEnd)
@@ -286,17 +295,15 @@ internal static class HighlightSplitter
         {
             if (text[index] == '\u001b')
             {
-                var end = SkipAnsiSequence(text, index);
+                var end = EscapeSequences.End(text, index);
                 if (IsSgrSequence(text, index, end))
                 {
-                    if (ContainsReset(text, index, end))
-                    {
+                    // `0;32` resets and then sets green, so the part after a cut needs it again.
+                    ReadSgr(text, index, end, out var resets, out var sets);
+                    if (resets)
                         activeSgr.Clear();
-                    }
-                    else
-                    {
+                    if (sets)
                         activeSgr.Append(text, index, end - index);
-                    }
                 }
 
                 if (visible >= visibleStart)
@@ -330,40 +337,72 @@ internal static class HighlightSplitter
         return sb.ToString();
     }
 
-    private static bool IsSgrSequence(string text, int start, int end) =>
-        end > start + 2 && text[start] == '\u001b' && text[start + 1] == '[' && text[end - 1] == 'm';
-
-    private static bool ContainsReset(string text, int start, int end)
+    // ESC [ params m, where params are digits, semicolons, and colons. A private marker such as `>` makes it another
+    // sequence that also ends in m.
+    private static bool IsSgrSequence(string text, int start, int end)
     {
-        var span = text.AsSpan(start, end - start);
-        var i = 2; // skip ESC[
-        var hasDigits = false;
-        var hasCurrentValue = false;
-        var value = 0;
-        while (i < span.Length - 1) // final 'm'
+        if (end <= start + 2 || text[start] != '\u001b' || text[start + 1] != '[' || text[end - 1] != 'm')
+            return false;
+        for (var i = start + 2; i < end - 1; i++)
         {
-            var ch = span[i++];
-            if ((uint)(ch - '0') <= 9)
-            {
-                hasDigits = true;
-                hasCurrentValue = true;
-                value = value * 10 + (ch - '0');
-                continue;
-            }
-
-            if (ch == ';')
-            {
-                if (!hasCurrentValue || value == 0)
-                    return true;
-                value = 0;
-                hasCurrentValue = false;
-                continue;
-            }
-
-            return true;
+            if (text[i] is not ((>= '0' and <= '9') or ';' or ':'))
+                return false;
         }
 
-        return !hasDigits || !hasCurrentValue || value == 0;
+        return true;
+    }
+
+    // Whether an SGR resets (a parameter that is empty or 0) and whether it sets anything. The values after 38, 48, or
+    // 58 belong to that color, so a 0 among them, as in `38;2;255;0;0`, is no reset. A colon starts sub-parameters of
+    // the one before it, such as the underline style in `4:3`.
+    private static void ReadSgr(string text, int start, int end, out bool resets, out bool sets)
+    {
+        resets = false;
+        sets = false;
+        var colorSelector = false; // after 38, 48, or 58: the 5 or 2 that says how many color values follow
+        var colorValues = 0;
+        var i = start + 2;
+        while (true)
+        {
+            var value = 0;
+            var hasValue = false;
+            var hasSubParameters = false;
+            for (; i < end - 1 && text[i] != ';'; i++)
+            {
+                if (text[i] == ':')
+                {
+                    hasSubParameters = true;
+                }
+                else if (!hasSubParameters)
+                {
+                    hasValue = true;
+                    value = Math.Min(value * 10 + (text[i] - '0'), 1000);
+                }
+            }
+
+            if (colorValues > 0)
+            {
+                colorValues--;
+            }
+            else if (colorSelector)
+            {
+                colorValues = value == 5 ? 1 : value == 2 ? 3 : 0;
+                colorSelector = false;
+            }
+            else if (!hasValue || value == 0)
+            {
+                resets = true;
+            }
+            else
+            {
+                sets = true;
+                colorSelector = value is 38 or 48 or 58 && !hasSubParameters;
+            }
+
+            if (i >= end - 1)
+                return;
+            i++;
+        }
     }
 
     private static bool EndsWithReset(StringBuilder sb)
@@ -379,28 +418,5 @@ internal static class HighlightSplitter
         }
 
         return true;
-    }
-
-    private static string NormalizeToLf(string text)
-    {
-        if (text.IndexOf('\r') < 0)
-            return text;
-
-        var sb = new System.Text.StringBuilder(text.Length);
-        for (var i = 0; i < text.Length; i++)
-        {
-            var ch = text[i];
-            if (ch == '\r')
-            {
-                sb.Append('\n');
-                if (i + 1 < text.Length && text[i + 1] == '\n')
-                    i++;
-                continue;
-            }
-
-            sb.Append(ch);
-        }
-
-        return sb.ToString();
     }
 }

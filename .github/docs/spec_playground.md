@@ -71,6 +71,7 @@ Each step entry:
 | Field | Holds |
 |---|---|
 | `run` | The command text as typed |
+| `maskedRun` | Only when masking changed `run`: the text after masking. A replay types it as the step's command, and it identifies the step in the cast's `st:steps` tag, because a replay may not know the secret ([spec_scenario.md](spec_scenario.md#recording-again) → Recording again) |
 | `kind` | `pipe`, `pty`, or `interactive` |
 | `exitCode` | The command's exit code |
 | `cursor` | Non-interactive PTY steps on Windows only: the start cursor that scenetake reported to ConPTY, as `row` and `column` ([spec_pty.md](spec_pty.md)) |
@@ -132,6 +133,7 @@ The UI lists these keys as not applied when the scenario sets them.
 | `pre`, `post` | No command runs. Their output is never in a cast. |
 | Timing and typing keys of an interactive step | Its output is stored already timed ([Contents](#contents)). The UI does not list these. |
 | `keys`, `timeout` | No command runs to type into, wait for, or stop. The recorded output already holds what they did. The playground still draws the typing delays of `type`, so later steps type as on the CLI. A `wait` draws none. The UI does not list these. |
+| `keep-output` | There is no earlier cast in the browser to keep the output of, so each step shows its recorded output ([spec_scenario.md](spec_scenario.md#recording-again) → Recording again). The cast the playground writes has the same `st:steps` tag as the CLI's. |
 
 ### Exit codes, warnings, and errors
 

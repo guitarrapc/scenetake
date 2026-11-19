@@ -63,6 +63,8 @@ Every cast file written by the scenario path includes render metadata in the hea
 | `env.SHELL` | resolved shell's file name | Name only, without its folder and without `.exe`: `bash`, `pwsh`, `cmd`, also when the scenario gives a path. A cast is shared, and the folder is often under the user's home (`C:\Users\<name>\scoop\...`). `TERM` is represented by `term.type`. |
 | `tags` | `st:font-size=N`, `st:font-family=…`, `st:window=macos\|windows`, `st:window-title=…`, `st:background=#rrggbb …`, `st:margin=N`, `st:padding=N`, `st:opacity=N`, `st:blur=N`, `st:loop=true\|false`, `st:end-hold=N`, `st:fade-out=N`, `st:fit=height\|width\|both`, `st:crop-top=N`, `st:crop-bottom=N`, `st:crop-left=N`, `st:crop-right=N` | SVG and mp4 render metadata. `st:window` is omitted when window chrome is off. The other fourteen are written only when the scenario or the CLI sets them, `st:fit` only when it is not the default `height`, and each `st:crop-*` only when it is above 0. Without `st:window-title`, the title bar shows `title`. `st:background` holds colors only: a cast never names an image file. Unknown tags are ignored by external tools. |
 
+A cast that a scenario records also has `st:steps=…`: the cast's event count and where its last event is, then for each recorded step, a hash of its masked `run` text and kind, a hash of its output-timing keys, `c` or `d` for whether the clock times its output, its first event and event count, and its start and end in milliseconds. The next recording to the same file reads it to compare each step ([spec_scenario.md](spec_scenario.md#recording-again) → Recording again). It is not render metadata: rendering ignores it.
+
 On read, v2 headers use top-level `width`, `height`, and `theme` only. Render metadata defaults apply unless overridden by CLI: v3 `st:font-size` / `st:font-family` / `st:window` / `st:window-title` / `st:background` / `st:margin` / `st:padding` / `st:opacity` / `st:blur` / `st:loop` / `st:end-hold` / `st:fade-out` / `st:fit` / `st:crop-*` in `tags`. Invalid `st:` render tags warn once each and fall back to defaults. An invalid `theme` color, or a palette that is not 16 colors, falls back to the defaults without a warning. A missing or out-of-range terminal size is an error. This holds wherever a cast is read: the `svg` and `mp4` subcommands, and the scenario path's SVG and mp4 output.
 
 ## Event Stream
@@ -88,7 +90,7 @@ v3 comment lines (`# ...`) are ignored on read.
 
 ### Sequences left out
 
-`o` events omit OSC sequences (`ESC ]` … `BEL` or `ESC \`) except those for colors. These sequences draw no text in terminals or scenetake's renderers. Several can expose details about the recording machine:
+`o` events omit OSC sequences (`ESC ]` up to `BEL` or `ESC \`, or cut off earlier by CAN, SUB, or the ESC of another sequence) except those for colors. These sequences draw no text in terminals or scenetake's renderers. Several can expose details about the recording machine:
 
 | OSC | Carries |
 |---|---|
@@ -98,7 +100,7 @@ v3 comment lines (`# ...`) are ignored on read.
 | `8` (hyperlinks) | The link target, such as `file://host/home/user/…` from `ls --hyperlink`. The link text stays. |
 | `52` (clipboard) | Clipboard content. |
 
-Color OSCs remain: `4`, `5`, `10`–`19`, `104`, `105`, `110`–`119`. Scenetake removes all other OSCs, including sequences without a number. It tracks sequences across PTY event boundaries. Empty events are removed, except the final event, which preserves recording length. Only 7-bit sequences are recognized. Visible command output, including `pwd` and prompts with paths, remains unchanged.
+Color OSCs remain: `4`, `5`, `10`–`19`, `104`, `105`, `110`–`119`. Scenetake removes all other OSCs, including sequences without a number. It tracks sequences across the events of a step, and a removed sequence still open when the step ends is removed up to there. Empty events are removed, except the final event, which preserves recording length. Only 7-bit sequences are recognized. Visible command output, including `pwd` and prompts with paths, remains unchanged.
 
 ### Recording boundary
 

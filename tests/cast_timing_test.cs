@@ -2,6 +2,7 @@
 #:property TargetFramework=net10.0
 #:property Nullable=enable
 #:property ImplicitUsings=enable
+#:include ../Terminal.cs
 #:include ../CastTimingPipeline.cs
 
 var failures = 0;
@@ -16,6 +17,12 @@ failures += Run("CoalesceTimedUtf8Merges", CoalesceTimedUtf8Merges);
 failures += Run("MergeBurstGapsCollapses", MergeBurstGapsCollapses);
 failures += Run("HighlightSplitterPreservesSegments", HighlightSplitterPreservesSegments);
 failures += Run("HighlightSplitterKeepsSgrAcrossBoundary", HighlightSplitterKeepsSgrAcrossBoundary);
+failures += Run("HighlightSplitterNeverCutsInsideASequence", HighlightSplitterNeverCutsInsideASequence);
+failures += Run("HighlightSplitterCountsReadsInTheJoinedOutput", HighlightSplitterCountsReadsInTheJoinedOutput);
+failures += Run("HighlightSplitterKeepsTheSequencesAtTheEnd", HighlightSplitterKeepsTheSequencesAtTheEnd);
+failures += Run("HighlightSplitterKeepsColonColors", HighlightSplitterKeepsColonColors);
+failures += Run("HighlightSplitterKeepsExtendedColors", HighlightSplitterKeepsExtendedColors);
+failures += Run("HighlightSplitterCountsACrlfOnce", HighlightSplitterCountsACrlfOnce);
 
 return failures == 0 ? 0 : 1;
 
@@ -145,3 +152,62 @@ static bool HighlightSplitterKeepsSgrAcrossBoundary()
         && split[1].Contains("world", StringComparison.Ordinal)
         && split[1].Contains("\u001b[0m", StringComparison.Ordinal);
 }
+
+static bool HighlightSplitterNeverCutsInsideASequence()
+{
+    // The first read ends inside a title, so it has no visible characters of its own. A cut after its last byte would
+    // put the color's reset inside the title, which would end it there and show the rest.
+    var highlighted = "\u001b[32m\u001b7\u001b]0;API_KEY=abcdefgh\u0007done\u001b[0m\n";
+    var split = HighlightSplitter.SplitByRawSegments(highlighted, ["\u001b7\u001b]0;API_KEY=abc", "defgh\u0007done\n"]);
+    return split.Count == 2
+        && string.Concat(split).Contains("\u001b]0;API_KEY=abcdefgh\u0007", StringComparison.Ordinal)
+        && split[1].Contains("done", StringComparison.Ordinal);
+}
+
+static bool HighlightSplitterCountsReadsInTheJoinedOutput()
+{
+    // The title runs from the first read into the second, so the second read's own text before its BEL is not
+    // visible. Counted alone it would be, and "c" would go with the second read. A CR that ends a sequence becomes the
+    // LF after it in the highlighted text.
+    var title = HighlightSplitter.SplitByRawSegments("a\u001b]0;title\u0007bc", ["a\u001b]0;t", "itle\u0007b", "c"]);
+    var cr = HighlightSplitter.SplitByRawSegments("a\u001b\nbc", ["a\u001b\r\n", "b", "c"]);
+    return title.Count == 3 && title[1].EndsWith('b') && title[2] == "c"
+        && cr.Count == 3 && cr[1].EndsWith('b') && cr[2] == "c";
+}
+
+static bool HighlightSplitterKeepsTheSequencesAtTheEnd()
+{
+    // A sequence after the last visible character, such as one that shows the cursor again, belongs to the last read.
+    var one = HighlightSplitter.SplitByRawSegments("\u001b[32mdone\u001b[0m\n\u001b[?25h", ["done\n\u001b[?25h"]);
+    var two = HighlightSplitter.SplitByRawSegments("\u001b[32mdone\u001b[0m\n\u001b[?25h", ["done\n", "\u001b[?25h"]);
+    return one[0].EndsWith("\u001b[?25h", StringComparison.Ordinal) && two[1] == "\u001b[?25h";
+}
+
+static bool HighlightSplitterKeepsColonColors()
+{
+    // An underline style written with a colon is no reset, so the second read still opens the highlight's green.
+    var split = HighlightSplitter.SplitByRawSegments("\u001b[32mab\u001b[4:3mc\u001b[1mdef\u001b[0m", ["ab\u001b[4:3mc\u001b[1md", "ef"]);
+    return split.Count == 2 && split[1].StartsWith("\u001b[32m", StringComparison.Ordinal);
+}
+
+static bool HighlightSplitterKeepsExtendedColors()
+{
+    // The 0 values of a 256 or RGB color are no reset, `0;32` resets and then sets green, and `>4;2m` is no color at
+    // all. The part after each cut opens the color that is active there again.
+    static string Second(string highlighted, string first, string second) => HighlightSplitter.SplitByRawSegments(highlighted, [first, second])[1];
+    // An underline before each color shows that the color did not reset what came before it.
+    return Second("\u001b[4mA\u001b[38;2;255;0;0mERR\u001b[1m: bad\u001b[0m", "\u001b[4mA\u001b[38;2;255;0;0mERR\u001b[1m: b", "ad\u001b[0m").StartsWith("\u001b[4m\u001b[38;2;255;0;0m\u001b[1m", StringComparison.Ordinal)
+        && Second("\u001b[4mA\u001b[38;5;0mab\u001b[1mcd\u001b[0m", "\u001b[4mA\u001b[38;5;0mab\u001b[1mc", "d\u001b[0m").StartsWith("\u001b[4m\u001b[38;5;0m\u001b[1m", StringComparison.Ordinal)
+        && Second("\u001b[0;32mPASS\u001b[1m ok\u001b[0m", "\u001b[0;32mPASS\u001b[1m o", "k\u001b[0m").StartsWith("\u001b[0;32m\u001b[1m", StringComparison.Ordinal)
+        && Second("\u001b[32mab\u001b[>4;2mcd\u001b[0m", "\u001b[32mab\u001b[>4;2mc", "d\u001b[0m").StartsWith("\u001b[32md", StringComparison.Ordinal);
+}
+
+static bool HighlightSplitterCountsACrlfOnce()
+{
+    // The highlighting turns CRLF into one LF, so a read that ends with one counts it once.
+    var split = HighlightSplitter.SplitByRawSegments("one\ntwo\n", ["one\r\n", "two\n"]);
+    return split.Count == 2 && split[0] == "one\n" && split[1] == "two\n";
+}
+
+// Terminal.cs needs this type, which the CLI defines with its theme presets.
+internal readonly record struct ResolvedTheme(string Fg, string Bg, string Palette);

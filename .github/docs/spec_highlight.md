@@ -170,6 +170,8 @@ Line and column numbers are 1-based.
 
 Reverse spans are normalized (`9-5` -> `5-9`, `20-10` -> `10-20`).
 
+Columns count the characters of the output as written, escape sequences included. A style never starts or ends inside an escape sequence: a change that falls inside one waits for the first character after it, on the same line or a later one. A color written inside a sequence would end it early, and the rest of it, such as a window title, would show as text that secret masking skipped ([spec_scenario.md](spec_scenario.md) → Masking secrets). A sequence ends where the masker ends it, or with the output when nothing ends it. In a streamed step the highlighted text is cut back into its reads at visible characters, counted by the same rules across reads, so the color that each read closes and opens again stays outside a sequence too.
+
 Informal parse:
 
 ```text
@@ -249,6 +251,7 @@ steps:
 - A unified color palette across output/input/comment/stderr reduces cognitive load.
 - Allowing style composition and raw SGR gives advanced users full ANSI control while preserving simple color-name defaults.
 - Treating existing stderr ANSI as authoritative avoids clobbering tool-provided intent.
+- **A highlight painted inside an escape sequence showed a secret** (2026-11-19). Highlights are painted after masking, by column. A range that started inside a window title wrote a color there, the cast filter ended the title at its ESC, and the rest of the title, which the masker had skipped, showed in clear. Columns still count escape sequences, so committed scenarios keep their ranges. A streamed step had the same leak where its reads were cut back apart: the splitter read `ESC 7 ESC ] 0 ; A` as one sequence up to the first letter, counted the rest of the title as visible, and closed its color inside it.
 
 ## Related documents
 
@@ -261,6 +264,7 @@ steps:
 
 | Date | Change |
 |---|---|
+| 2026-11-19 | A highlight no longer starts or ends a style inside an escape sequence, also where a streamed step is cut back into its reads. Those reads now keep the sequences after the last visible character, and a read after a cut opens 256-color, RGB, and colon-form colors again. |
 | 2026-06-18 | Added true-color RGB support via `fg:#rrggbb`, `bg:#rrggbb`, `fg:#rgb`, `bg:#rgb`, `fg:r,g,b`, `bg:r,g,b`, `38;2;r;g;b`, and `48;2;r;g;b`. |
 | 2026-06-17 | Added 256-color index support via `fg:<0-255>`, `bg:<0-255>`, `38;5;n`, and `48;5;n`. |
 | 2026-06-17 | Extended color values to style strings (bold/underline/background/bright) and SGR literal input across `highlight`, `run-highlight`, `stderr-color`, and `name` prefix. |

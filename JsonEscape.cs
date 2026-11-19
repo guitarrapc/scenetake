@@ -7,6 +7,10 @@ internal static class JsonEscape
 {
     internal const int CharWriteChunk = 256;
 
+    // Written the same from text and from bytes, so a cast read back and written again keeps its bytes.
+    const char ReplacementChar = '�';
+    const string ReplacementEscape = "\\uFFFD";
+
     internal static void WriteJsonString(TextWriter writer, ReadOnlySpan<char> s)
     {
         writer.Write('"');
@@ -49,13 +53,15 @@ internal static class JsonEscape
             var status = Rune.DecodeFromUtf8(utf8[index..], out var rune, out var consumed);
             if (status != OperationStatus.Done)
             {
-                writer.Write("\\uFFFD");
+                writer.Write(ReplacementEscape);
                 index++;
                 continue;
             }
 
             if (rune.Value < 0x20)
                 WriteJsonUnicodeEscape(writer, esc, rune.Value);
+            else if (rune.Value == ReplacementChar)
+                writer.Write(ReplacementEscape);
             else
             {
                 rune.TryEncodeToUtf16(runeChars, out var charCount);
@@ -113,7 +119,7 @@ internal static class JsonEscape
     }
 
     static bool NeedsJsonEscapeOrControl(char c) =>
-        c < 0x20 || c is '"' or '\\' or '\b' or '\f' or '\n' or '\r' or '\t';
+        c < 0x20 || c is '"' or '\\' or '\b' or '\f' or '\n' or '\r' or '\t' or ReplacementChar;
 
     static void TryWriteJsonEscape(TextWriter writer, Span<char> esc, char c)
     {
@@ -126,6 +132,7 @@ internal static class JsonEscape
             case '\n': writer.Write("\\n"); break;
             case '\r': writer.Write("\\r"); break;
             case '\t': writer.Write("\\t"); break;
+            case ReplacementChar: writer.Write(ReplacementEscape); break;
             default: WriteJsonUnicodeEscape(writer, esc, c); break;
         }
     }

@@ -27,14 +27,22 @@ internal sealed class RecordedStep
     internal IReadOnlyList<TimedBytes> PtyChunks { get; init; } = [];
     internal ComposedPtyOutput? Composed { get; init; }
 
-    internal static RecordedStep Pipe(string run, int exitCode, IReadOnlyList<PipeStreamChunk> chunks) =>
-        new() { Run = run, Kind = RecordedStepKind.Pipe, ExitCode = exitCode, PipeChunks = chunks };
+    /// <summary>
+    /// The run text as the recording masked it, when masking changed it. A replay may not know the secret, such as one
+    /// that <c>pre</c> exported, and the cast's step ids must not depend on that.
+    /// </summary>
+    internal string? MaskedRun { get; init; }
 
-    internal static RecordedStep Pty(string run, int exitCode, (int Row, int Column)? cursor, IReadOnlyList<TimedBytes> chunks) =>
-        new() { Run = run, Kind = RecordedStepKind.Pty, ExitCode = exitCode, Cursor = cursor, PtyChunks = chunks };
+    private static string? ChangedText(string run, string? maskedRun) => maskedRun == run ? null : maskedRun;
 
-    internal static RecordedStep Interactive(string run, int exitCode, ComposedPtyOutput output) =>
-        new() { Run = run, Kind = RecordedStepKind.Interactive, ExitCode = exitCode, Composed = output };
+    internal static RecordedStep Pipe(string run, int exitCode, IReadOnlyList<PipeStreamChunk> chunks, string? maskedRun = null) =>
+        new() { Run = run, Kind = RecordedStepKind.Pipe, ExitCode = exitCode, PipeChunks = chunks, MaskedRun = ChangedText(run, maskedRun) };
+
+    internal static RecordedStep Pty(string run, int exitCode, (int Row, int Column)? cursor, IReadOnlyList<TimedBytes> chunks, string? maskedRun = null) =>
+        new() { Run = run, Kind = RecordedStepKind.Pty, ExitCode = exitCode, Cursor = cursor, PtyChunks = chunks, MaskedRun = ChangedText(run, maskedRun) };
+
+    internal static RecordedStep Interactive(string run, int exitCode, ComposedPtyOutput output, string? maskedRun = null) =>
+        new() { Run = run, Kind = RecordedStepKind.Interactive, ExitCode = exitCode, Composed = output, MaskedRun = ChangedText(run, maskedRun) };
 
     internal static string KindName(RecordedStepKind kind) => kind switch
     {
@@ -100,6 +108,8 @@ internal sealed class StepOutputs
     {
         writer.WriteStartObject();
         writer.WriteString("run", step.Run);
+        if (step.MaskedRun is { } maskedRun)
+            writer.WriteString("maskedRun", maskedRun);
         writer.WriteString("kind", RecordedStep.KindName(step.Kind));
         writer.WriteNumber("exitCode", step.ExitCode);
         if (step.Cursor is { } cursor)
@@ -214,6 +224,7 @@ internal sealed class StepOutputs
     private static RecordedStep ParseStep(JsonElement element)
     {
         var run = OptionalString(element, "run") ?? throw new FormatException("an outputs file step has no run");
+        var maskedRun = OptionalString(element, "maskedRun");
         var kind = OptionalString(element, "kind") switch
         {
             "pipe" => RecordedStepKind.Pipe,
@@ -246,7 +257,7 @@ internal sealed class StepOutputs
                     }
                 }
 
-                return RecordedStep.Pipe(run, exitCode, pipeChunks);
+                return RecordedStep.Pipe(run, exitCode, pipeChunks, maskedRun);
             }
 
             case RecordedStepKind.Pty:
@@ -258,7 +269,7 @@ internal sealed class StepOutputs
                         ptyChunks.Add(new TimedBytes(TimeSpan.FromTicks(chunk.GetProperty("ticks").GetInt64()), chunk.GetProperty("data").GetBytesFromBase64()));
                 }
 
-                return RecordedStep.Pty(run, exitCode, cursor, ptyChunks);
+                return RecordedStep.Pty(run, exitCode, cursor, ptyChunks, maskedRun);
             }
 
             default:
@@ -271,7 +282,7 @@ internal sealed class StepOutputs
                 }
 
                 var end = element.TryGetProperty("end", out var endElement) ? endElement.GetDouble() : 0;
-                return RecordedStep.Interactive(run, exitCode, new ComposedPtyOutput(output, end));
+                return RecordedStep.Interactive(run, exitCode, new ComposedPtyOutput(output, end), maskedRun);
             }
         }
     }
@@ -364,7 +375,7 @@ internal sealed class OscMasker
                     continue;
 
                 case State.Code:
-                    if (c is >= '0' and <= '9' && _digits < 6)
+                    if (c is >= '0' and <= '9' && _digits < CastOscFilter.MaxCodeDigits)
                     {
                         _code = _code * 10 + (c - '0');
                         _digits++;
@@ -455,6 +466,28 @@ internal sealed class StepOutputsReplay
 
     internal Task<CommandExecution> RunAsync(StepStart step) => Task.FromResult(Run(step));
 
+    /// <summary>
+    /// The run text as the recording masked it, for the step that <see cref="Run"/> takes next, or null when masking
+    /// changed nothing or the step was not recorded. The command is typed before the step runs, and a secret that pre
+    /// or an earlier step exported is known only to the recording.
+    /// </summary>
+    internal string? MaskedRun(string run, bool pty, bool interactive)
+    {
+        var key = (run, interactive ? RecordedStepKind.Interactive : pty ? RecordedStepKind.Pty : RecordedStepKind.Pipe);
+        if (_recorded.TryGetValue(key, out var recorded))
+            return recorded[Math.Min(_taken.GetValueOrDefault(key), recorded.Count - 1)].MaskedRun;
+
+        // A step whose pty or interactive changed since the recording has no output here, but the same run text was
+        // recorded under its other kind. Any masked copy of it shows what the recording hid.
+        foreach (var step in _outputs.Steps)
+        {
+            if (step.Run == run && step.MaskedRun is { } masked)
+                return masked;
+        }
+
+        return null;
+    }
+
     internal CommandExecution Run(StepStart step)
     {
         // A step that shows nothing, a background step among them, was not recorded: it takes no recorded output, and
@@ -483,9 +516,9 @@ internal sealed class StepOutputsReplay
 
         return kind switch
         {
-            RecordedStepKind.Pipe => new CommandExecution(source.ExitCode, false, "", "", null, null, source.PipeChunks),
-            RecordedStepKind.Pty => new CommandExecution(source.ExitCode, true, "", "", source.PtyChunks, null, null) { PtyLeadingInitRemoved = true },
-            _ => new CommandExecution(source.ExitCode, true, "", "", null, null, null) { ComposedOutput = source.Composed },
+            RecordedStepKind.Pipe => new CommandExecution(source.ExitCode, false, "", "", null, null, source.PipeChunks) { MaskedRun = source.MaskedRun },
+            RecordedStepKind.Pty => new CommandExecution(source.ExitCode, true, "", "", source.PtyChunks, null, null) { PtyLeadingInitRemoved = true, MaskedRun = source.MaskedRun },
+            _ => new CommandExecution(source.ExitCode, true, "", "", null, null, null) { ComposedOutput = source.Composed, MaskedRun = source.MaskedRun },
         };
     }
 }

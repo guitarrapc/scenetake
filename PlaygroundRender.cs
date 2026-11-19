@@ -117,6 +117,7 @@ internal static class PlaygroundRender
 
             var seed = ComputeDeterministicSeed(yaml);
             var timestamp = ComputeDeterministicTimestamp(seed);
+            var rerecorder = new Rerecorder(previous: null, masker: null);
             var generateOptions = new GenerateOptions
             {
                 TrackPtyCursor = replay.TrackPtyCursor,
@@ -124,14 +125,18 @@ internal static class PlaygroundRender
                 // The outputs were masked when they were recorded, with the recording machine's environment, which the
                 // browser does not have. Masking again hides only what the YAML adds, such as a new settings.mask text.
                 Masker = SecretMasker.ForScenario(scenario, environment: null),
+                Rerecorder = rerecorder,
+                Replay = replay,
             };
 
             // Every step's output is in memory, so the task has already completed.
             var (events, _) = GenerateAsync(scenario, seed, generateOptions, replay.RunAsync).GetAwaiter().GetResult();
-            events = CastOscFilter.RemovePrivateSequences(events);
+            var filterMap = new int[events.Count + 1];
+            events = CastOscFilter.RemovePrivateSequences(events, filterMap);
 
+            // The same st:steps tag as the CLI writes, so a cast from here gives the CLI's next recording its steps.
             using var castWriter = new StringWriter();
-            WriteCast(castWriter, scenario, events, outputs.Shell, timestamp, renderSettings);
+            WriteCast(castWriter, scenario, events, outputs.Shell, timestamp, renderSettings, Rerecording.MapIndices(rerecorder.Slots, filterMap));
             var castText = castWriter.ToString();
             cast = Encoding.UTF8.GetBytes(castText);
 
@@ -199,6 +204,8 @@ internal static class PlaygroundRender
             notes.Add("cwd: no command runs in the browser");
         if (scenario.Pre is { Count: > 0 } || scenario.Post is { Count: > 0 })
             notes.Add("pre, post: no command runs in the browser, and their output is never in a cast");
+        if ((scenario.Steps ?? []).Select(ParseCommand).Any(static command => IsStepFlagSet(command.Extra, "keep-output")))
+            notes.Add("keep-output: there is no earlier cast in the browser, so each step shows the recorded output");
         return notes;
     }
 

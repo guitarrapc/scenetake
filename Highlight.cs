@@ -591,13 +591,15 @@ internal static partial class ScenarioCast
             }
 
             var styles = CollectionsMarshal.AsSpan(stylesList);
+            var inside = EscapeSequences.Inside(text);
             var sb = new StringBuilder(text.Length + specs.Count * 16);
+            ushort current = 0;
             for (var i = 0; i < lineCount; i++)
             {
                 if (i > 0) sb.Append('\n');
                 var start = lineRanges[i * 2];
                 var length = lineRanges[i * 2 + 1];
-                AppendPaintedLine(sb, text.AsSpan(start, length), paint[i], styles);
+                AppendPaintedLine(sb, text.AsSpan(start, length), paint[i], styles, inside.AsSpan(start, length + 1), ref current);
             }
 
             return sb.ToString();
@@ -718,28 +720,37 @@ internal static partial class ScenarioCast
         }
     }
 
-    internal static void AppendPaintedLine(StringBuilder sb, ReadOnlySpan<char> line, ushort[]? row, ReadOnlySpan<string> styles)
+    /// <summary>
+    /// Appends one line with its painted columns. <paramref name="inside"/> has one more place than the line, for its
+    /// line break, and marks the places inside an escape sequence: a style written there would end the sequence early,
+    /// so the change waits for the first place after it, on this line or a later one (<paramref name="current"/>).
+    /// </summary>
+    internal static void AppendPaintedLine(StringBuilder sb, ReadOnlySpan<char> line, ushort[]? row, ReadOnlySpan<string> styles, ReadOnlySpan<bool> inside, ref ushort current)
     {
-        if (row is null)
+        if (row is null && current == 0)
         {
             sb.Append(line);
             return;
         }
 
-        ushort cur = 0;
         for (var i = 0; i < line.Length; i++)
         {
-            var next = row[i];
-            if (next != cur)
+            var next = row is null ? (ushort)0 : row[i];
+            if (next != current && !inside[i])
             {
-                if (cur != 0) sb.Append(SgrReset);
+                if (current != 0) sb.Append(SgrReset);
                 if (next != 0) sb.Append(styles[next]);
-                cur = next;
+                current = next;
             }
+
             sb.Append(line[i]);
         }
 
-        if (cur != 0) sb.Append(SgrReset);
+        if (current != 0 && !inside[line.Length])
+        {
+            sb.Append(SgrReset);
+            current = 0;
+        }
     }
 
     internal static ushort GetOrAddStyleId(Dictionary<string, ushort> styleIds, List<string> styles, string style)

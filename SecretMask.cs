@@ -11,9 +11,9 @@ using System.Text;
 /// </summary>
 /// <remarks>
 /// The masker reads a step's output as one stream, so a secret split across two reads is found. It skips color codes
-/// (SGR) and OSC sequences, so a secret that a tool colors in parts is found too. Other control sequences, such as
-/// cursor moves, end a run of text: text that a full-screen program draws in different places is not joined. A token
-/// keeps its recognizable prefix (<c>ghp_****</c>), and a pair keeps its key, so a reader still sees what was hidden.
+/// (SGR) and control strings such as OSC, so a secret that a tool colors in parts is found too. Cursor moves end a run
+/// of text: text that a full-screen program draws in different places is not joined. A token keeps its recognizable
+/// prefix (<c>ghp_****</c>), and a pair keeps its key, so a reader still sees what was hidden.
 /// Patterns are matched by hand-written scanners: a regular expression engine would add about half a megabyte to the
 /// Native AOT binary.
 /// </remarks>
@@ -163,6 +163,19 @@ internal sealed class SecretMasker
         return masked is null ? text : Encoding.UTF8.GetString(masked[0]);
     }
 
+    /// <summary><see cref="MaskText"/> for text the recording does not show, so <see cref="Counts"/> leaves it out.</summary>
+    internal string MaskUncounted(string text)
+    {
+        if (text.Length == 0)
+            return text;
+
+        var masked = MaskSegments([Encoding.UTF8.GetBytes(text)], count: false);
+        return masked is null ? text : Encoding.UTF8.GetString(masked[0]);
+    }
+
+    /// <summary>Whether masking would change <paramref name="text"/>. Text that was masked already has only stars left to hide.</summary>
+    internal bool Hides(string text) => !string.Equals(MaskUncounted(text), text, StringComparison.Ordinal);
+
     /// <summary>A PTY step's output chunks, read as one stream. The same list when nothing is hidden.</summary>
     internal IReadOnlyList<TimedBytes> MaskPty(IReadOnlyList<TimedBytes> chunks)
     {
@@ -199,9 +212,10 @@ internal sealed class SecretMasker
 
     /// <summary>
     /// A pipe step's output chunks. stdout and stderr are two streams, each read as a whole: a secret is never split
-    /// between them. The same list when nothing is hidden.
+    /// between them. <paramref name="cuts"/>, one per chunk, says where the cast ends a sequence that the chunk's
+    /// stream left open (<see cref="ScenarioCast.StreamedPipeCuts"/>). The same list when nothing is hidden.
     /// </summary>
-    internal IReadOnlyList<PipeStreamChunk> MaskPipe(IReadOnlyList<PipeStreamChunk> chunks)
+    internal IReadOnlyList<PipeStreamChunk> MaskPipe(IReadOnlyList<PipeStreamChunk> chunks, PipeReadCuts[]? cuts = null)
     {
         PipeStreamChunk[]? result = null;
         for (var pass = 0; pass < 2; pass++)
@@ -218,10 +232,27 @@ internal sealed class SecretMasker
                 continue;
 
             var segments = new ReadOnlyMemory<byte>[indices.Count];
+            var streamCuts = new List<int>();
+            var offset = 0;
             for (var k = 0; k < segments.Length; k++)
-                segments[k] = Encoding.UTF8.GetBytes(chunks[indices[k]].Text);
+            {
+                var bytes = Encoding.UTF8.GetBytes(chunks[indices[k]].Text);
+                segments[k] = bytes;
+                var at = cuts?[indices[k]] ?? PipeReadCuts.None;
+                if ((at & PipeReadCuts.Before) != 0)
+                    streamCuts.Add(offset);
+                if ((at & PipeReadCuts.AfterText) != 0)
+                {
+                    var end = bytes.Length;
+                    while (end > 0 && bytes[end - 1] is (byte)'\n' or (byte)'\r')
+                        end--;
+                    streamCuts.Add(offset + end);
+                }
 
-            var masked = MaskSegments(segments);
+                offset += bytes.Length;
+            }
+
+            var masked = MaskSegments(segments, cuts: streamCuts.ToArray());
             if (masked is null)
                 continue;
 
@@ -246,7 +277,7 @@ internal sealed class SecretMasker
     /// The segments with each hidden character replaced, one array per segment, or null when nothing is hidden. A
     /// character whose bytes are split between two segments is replaced in the first.
     /// </summary>
-    private byte[][]? MaskSegments(ReadOnlyMemory<byte>[] segments)
+    private byte[][]? MaskSegments(ReadOnlyMemory<byte>[] segments, bool count = true, int[]? cuts = null)
     {
         var total = 0;
         foreach (var segment in segments)
@@ -266,8 +297,8 @@ internal sealed class SecretMasker
 
         segmentStarts[^1] = total;
 
-        var text = VisibleText.Read(all);
-        var hidden = Find(text.Text);
+        var text = VisibleText.Read(all, cuts ?? []);
+        var hidden = Find(text.Text, count);
         if (hidden is null)
             return null;
 
@@ -319,7 +350,7 @@ internal sealed class SecretMasker
     }
 
     /// <summary>Which characters of <paramref name="text"/> to hide, or null when none.</summary>
-    private bool[]? Find(string text)
+    private bool[]? Find(string text, bool count = true)
     {
         bool[]? hidden = null;
 
@@ -337,7 +368,7 @@ internal sealed class SecretMasker
                 }
             }
 
-            if (added)
+            if (added && count)
                 _counts[label] = _counts.GetValueOrDefault(label) + 1;
         }
 
@@ -759,9 +790,9 @@ internal sealed class SecretMasker
     private static bool IsValueEnd(char c) => c is ' ' or '\n' or ',' or ';' or ')' or ']' or '}' or '>' or '"' or '\'' or '`';
 
     /// <summary>
-    /// The text a stream shows, with each character's place in the bytes. Color codes and OSC sequences are left out.
-    /// Line breaks and other control sequences become <c>\n</c>, and a cursor move to the right becomes spaces. Those
-    /// stand-ins have no bytes of their own (start −1), so they are never replaced.
+    /// The text a stream shows, with each character's place in the bytes. Color codes and control strings such as OSC
+    /// are left out. Controls that move the cursor, and most other sequences, become <c>\n</c>, and a cursor move to
+    /// the right becomes spaces. Those stand-ins have no bytes of their own (start −1), so they are never replaced.
     /// </summary>
     private sealed class VisibleText
     {
@@ -769,13 +800,16 @@ internal sealed class SecretMasker
         private readonly List<int> _starts;
         private readonly List<int> _lengths;
         private readonly List<int> _widths;
+        private readonly int[] _cuts;
+        private int _nextCut;
 
-        private VisibleText(int capacity)
+        private VisibleText(int capacity, int[] cuts)
         {
             _text = new StringBuilder(capacity);
             _starts = new List<int>(capacity);
             _lengths = new List<int>(capacity);
             _widths = new List<int>(capacity);
+            _cuts = cuts;
         }
 
         internal string Text { get; private set; } = "";
@@ -803,9 +837,13 @@ internal sealed class SecretMasker
             _lastIsBreak = true;
         }
 
-        internal static VisibleText Read(byte[] bytes)
+        /// <summary>
+        /// <paramref name="cuts"/>, in ascending order, are the places where the cast writes a byte from outside the
+        /// stream that ends a sequence the stream left open.
+        /// </summary>
+        internal static VisibleText Read(byte[] bytes, int[] cuts)
         {
-            var visible = new VisibleText(bytes.Length);
+            var visible = new VisibleText(bytes.Length, cuts);
             Span<char> chars = stackalloc char[2];
             var i = 0;
             while (i < bytes.Length)
@@ -819,9 +857,12 @@ internal sealed class SecretMasker
 
                 if (b < 0x20)
                 {
+                    // A control that moves the cursor ends a run of text. The others draw nothing, such as a BEL or
+                    // CAN that comes after its string has ended, or SO and SI, which pick the set the next letters
+                    // come from. `tput sgr0` writes SI after a color for some terminals.
                     if (b == (byte)'\t')
                         visible.Add(' ', -1, 0, 0);
-                    else
+                    else if (b is (byte)'\n' or (byte)'\r' or 0x08 or 0x0B or 0x0C)
                         visible.Break();
                     i++;
                     continue;
@@ -849,7 +890,11 @@ internal sealed class SecretMasker
 
                 if (rune.Value is >= 0x80 and <= 0x9F)
                 {
-                    visible.Break();
+                    // Of the C1 controls, only IND, NEL, and RI move the cursor in the terminal that plays the
+                    // cast. One that starts a sequence there is read past too: the SVG renderer draws the text
+                    // after it.
+                    if (rune.Value is 0x84 or 0x85 or 0x8D)
+                        visible.Break();
                 }
                 else
                 {
@@ -869,21 +914,49 @@ internal sealed class SecretMasker
             return visible;
         }
 
+        // The first cut after position, or the end of the bytes. SkipEscape calls it with growing positions.
+        private int NextCut(int position, int length)
+        {
+            while (_nextCut < _cuts.Length && _cuts[_nextCut] <= position)
+                _nextCut++;
+            return _nextCut < _cuts.Length ? _cuts[_nextCut] : length;
+        }
+
         private int SkipEscape(byte[] bytes, int i)
         {
             if (i + 1 >= bytes.Length)
                 return bytes.Length;
 
+            // At a cut the cast writes a byte from outside this stream, which ends a sequence that this stream left
+            // open.
+            var limit = NextCut(i, bytes.Length);
             var kind = bytes[i + 1];
+            if (limit == i + 1 || kind == 0x1B)
+            {
+                // A second ESC, or a byte that the cast writes at a cut, ends this one. A program that asks tmux to
+                // pass a sequence through writes each ESC in it twice.
+                return i + 1;
+            }
+
+            // CAN and SUB cancel the escape and draw nothing.
+            if (kind is 0x18 or 0x1A)
+                return i + 2;
+
             if (kind == (byte)'[')
             {
                 var j = i + 2;
-                while (j < bytes.Length && bytes[j] is >= 0x20 and <= 0x3F)
+                while (j < limit && bytes[j] is >= 0x20 and <= 0x3F)
                     j++;
-                if (j >= bytes.Length)
-                    return bytes.Length;
+                if (j >= limit)
+                    return limit;
 
+                // ESC starts the next sequence and CAN or SUB cancels this one. Either way it draws nothing.
                 var final = bytes[j];
+                if (final == 0x1B)
+                    return j;
+                if (final is 0x18 or 0x1A)
+                    return j + 1;
+
                 if (final == (byte)'C')
                 {
                     // ConPTY writes a run of spaces as a cursor move to the right: `KEY:\e[1Cvalue`.
@@ -891,46 +964,80 @@ internal sealed class SecretMasker
                     for (var k = 0; k < Math.Min(count, 512); k++)
                         Add(' ', -1, 0, 0);
                 }
-                else if (final is not ((byte)'m' or (byte)'X'))
+                else if (final is not ((byte)'m' or (byte)'X')
+                    && !(final == (byte)'K' && (j == i + 2 || (j == i + 3 && bytes[i + 2] == (byte)'0'))))
                 {
-                    // Colors (m) and erased cells (X) leave the text joined. Other sequences move the cursor or
-                    // change the screen.
+                    // Colors (m), erased cells (X), and an erase to the end of the line (K or 0K) leave the text
+                    // joined: a tool that colors matches can write `\e[K` after each color. Any other sequence ends a
+                    // run, as most move the cursor or change the screen, and 1K or 2K erases the text before.
                     Break();
                 }
 
                 return j + 1;
             }
 
-            if (kind == (byte)']')
+            if (kind is (byte)']' or (byte)'P' or (byte)'X' or (byte)'^' or (byte)'_')
             {
-                // OSC: titles, hyperlinks, colors. A hyperlink's text goes on after it, so it is skipped quietly.
-                var j = i + 2;
-                while (j < bytes.Length && bytes[j] != 0x07 && !(bytes[j] == 0x1B && j + 1 < bytes.Length && bytes[j + 1] == (byte)'\\'))
-                    j++;
-                return j >= bytes.Length ? bytes.Length : bytes[j] == 0x07 ? j + 1 : j + 2;
+                // OSC (titles, hyperlinks, colors), DCS, SOS, PM, APC (a soft font, an image): no player of the cast
+                // draws a character for one, so the text on either side shows in one piece.
+                var kept = kind != (byte)']' || CastOscFilter.KeepsOsc(bytes.AsSpan(i + 2, limit - i - 2));
+                var next = StringEnd(bytes, i + 2, limit, kept);
+                if (next >= 0)
+                    return next;
+
+                // Nothing ends it before the output does. An OSC that the cast drops shows nothing. Any other string
+                // was most likely cut off, and what follows is the program's own output, which the cast keeps.
+                return kept ? i + 2 : bytes.Length;
             }
 
-            if (kind is (byte)'P' or (byte)'X' or (byte)'^' or (byte)'_')
-            {
-                // DCS, SOS, PM, APC, such as a soft font: not text.
-                var j = i + 2;
-                while (j < bytes.Length && !(bytes[j] == 0x1B && j + 1 < bytes.Length && bytes[j + 1] == (byte)'\\'))
-                    j++;
-                Break();
-                return Math.Min(j + 2, bytes.Length);
-            }
+            // An ST whose string has already ended does nothing.
+            if (kind == (byte)'\\')
+                return i + 2;
 
             if (kind is >= 0x20 and <= 0x2F)
             {
                 // A character set choice such as ESC ( B, which curses writes inside text.
                 var j = i + 1;
-                while (j < bytes.Length && bytes[j] is >= 0x20 and <= 0x2F)
+                while (j < limit && bytes[j] is >= 0x20 and <= 0x2F)
                     j++;
-                return Math.Min(j + 1, bytes.Length);
+                return j < limit && bytes[j] == 0x1B ? j : Math.Min(j + 1, limit);
             }
 
             Break();
             return i + 2;
+        }
+
+        /// <summary>
+        /// Where the text after a control string starts, or −1 when nothing ends the string. It ends at the first byte
+        /// where anything that shows the cast ends it. The SVG renderer ends every string at BEL or ESC \. The cast
+        /// filter ends an OSC at BEL, CAN, SUB, ESC \, or the ESC of the next sequence. The terminal that plays the
+        /// cast ends a string at ESC, CAN, SUB, or a C1 control, but an OSC that the cast drops
+        /// (<paramref name="kept"/> false) never reaches it. A cut at <paramref name="limit"/> ends the string too. Ending a string later than
+        /// any of them would hide from the masker text that a viewer sees.
+        /// </summary>
+        private static int StringEnd(byte[] bytes, int start, int limit, bool kept)
+        {
+            for (var j = start; j < limit; j++)
+            {
+                var b = bytes[j];
+                if (b is 0x07 or 0x18 or 0x1A)
+                    return j + 1;
+
+                if (b == 0x1B)
+                {
+                    // An ESC at the end of the bytes ends nothing here: the cast filter drops one that ends the step.
+                    // In a pipe step the other stream may follow it, and then a kept string's data is searched too.
+                    if (j + 1 >= bytes.Length)
+                        return -1;
+                    return j + 1 < limit && bytes[j + 1] == (byte)'\\' ? j + 2 : j;
+                }
+
+                // U+0080 to U+009F in UTF-8. ST (U+009C) is the string's own end, and any other control is read next.
+                if (kept && b == 0xC2 && j + 1 < limit && bytes[j + 1] is >= 0x80 and <= 0x9F)
+                    return bytes[j + 1] == 0x9C ? j + 2 : j;
+            }
+
+            return limit < bytes.Length ? limit : -1;
         }
 
         private static int ParseCount(ReadOnlySpan<byte> parameters)

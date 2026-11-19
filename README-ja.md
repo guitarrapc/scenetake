@@ -418,6 +418,31 @@ scenetake --replay demo.outputs.json --format mp4 --theme dracula demo.yaml
 - replay では `pre`、`post`、`show: none` のステップ、`background` のステップは実行しません。
 - outputs ファイルは cast と同じく秘密情報を隠してあるので、YAML と並べてコミットできます。
 
+## 撮り直しても差分を出さない
+
+同じファイルに撮り直すと、すでにある cast とステップごとに比べます。前回と同じ出力のステップは、前回の出力とタイミングをそのまま使います。PTY の出力は実時間で記録されますが、出力が変わっていなければ cast も SVG も前回と同じになります。差分が出るのは出力が変わったステップだけで、scenetake はそのステップを表示します。
+
+```text
+Compared with the earlier cast: 4 of 5 steps printed the same, 1 changed
+  changed: step 3: npm test
+```
+
+日付、コミットハッシュ、ランダムな ID のように毎回変わる出力は、前回の出力を使い続けられます。
+
+```yaml
+steps:
+  - run: date
+    keep-output: true       # 前回の録画の出力を表示する。コマンドは実行する
+```
+
+- 前回の録画は、出力先にある cast です。SVG と一緒にコミットしておくと、CI でも比べられます。全ステップを撮り直すときは cast を消してください。
+- `keep-output` は、そのステップの色付けとタイミングも前回のままにします。新しい出力にしたいときは、一度だけキーを外して撮ってください。失敗したステップは今まで通り警告を出し、`--strict` では録画を止めます。あとから追加した `mask` は効きます。前回の出力にマスク対象の文字列があれば、今回の出力に置き換えます。
+- 端末サイズが違う cast とは比べません。`--save-outputs` を付けた録画も、その回の出力だけで作るので比べません。どちらも実行時に表示します。
+- ステップは `run` の文字列で前回と対応づけます。`run` を変えたステップは撮り直しになります。
+- 値そのものを固定できれば、ステップを最新のまま保てます。たとえば `show: none` のステップで `GIT_AUTHOR_DATE` と `GIT_COMMITTER_DATE` を export すると、同じ内容のコミットは毎回同じハッシュになり、`TZ` でタイムゾーンを固定できます。
+
+詳しくは [spec_scenario.md](.github/docs/spec_scenario.md#recording-again) の Recording again を参照してください。
+
 ## 出力モード
 
 出力モードは、通常出力、ストリーム出力、TUI出力、対話型アプリケーション出力の4種類があります。モードはstepごとに切り替えられます。
@@ -684,7 +709,7 @@ post:
 
 ### 秘密情報のマスク
 
-録画は共有するためのものなので、scenetake は書き出す前に秘密情報を隠します。cast、SVG、mp4、PNG、GIF のどれにも残りません。隠した文字は 1 文字ずつ `*` になるので、行の幅も全画面アプリの画面も崩れません。
+録画は共有するためのものなので、scenetake は書き出す前に秘密情報を隠します。cast、SVG、mp4、PNG、GIF のどれにも表示されません。隠した文字は 1 文字ずつ `*` になるので、行の幅も全画面アプリの画面も崩れません。
 
 ```yaml
 settings:

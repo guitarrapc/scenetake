@@ -138,9 +138,9 @@ text { dominant-baseline: alphabetic; }
 @keyframes ce{0.212986%{visibility:visible}}
 .dv{animation-delay:1.745s;animation-name:ce}
 .dw{animation-delay:1.776s;animation-name:co}
+.dx{animation-delay:1.818s;animation-name:cl}
 @keyframes cr{0.185504%{visibility:visible}}
-.dx{animation-delay:1.818s;animation-name:cr}
-.dy{animation-delay:1.845s;animation-name:cl}
+.dy{animation-delay:1.846s;animation-name:cr}
 .dz{animation-delay:1.873s;animation-name:c0}
 @keyframes d0{0.439712%{visibility:visible}}
 .d1{animation-delay:1.925s;animation-name:d0}

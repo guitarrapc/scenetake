@@ -422,6 +422,31 @@ scenetake --replay demo.outputs.json --format mp4 --theme dracula demo.yaml
 - `pre`, `post`, `show: none`, and `background` steps do not run in a replay.
 - The outputs file hides secrets as the cast does, so it can be committed next to the YAML.
 
+## Record again without noise
+
+Recording again to the same file compares each step with the cast already there. A step that prints what it printed before keeps its earlier output and timing, so a scenario whose output did not change gives the same cast and the same SVG, though PTY output is timed by the clock. Only the steps whose output changed differ, and scenetake lists them:
+
+```text
+Compared with the earlier cast: 4 of 5 steps printed the same, 1 changed
+  changed: step 3: npm test
+```
+
+A step whose output changes on every run, such as a date, a commit hash, or a random ID, can keep what it printed before:
+
+```yaml
+steps:
+  - run: date
+    keep-output: true       # Shows the earlier recording's output, and the command still runs
+```
+
+- The earlier recording is the cast at the output path. Commit it next to the SVG, so CI compares with it too. Delete it to record every step afresh.
+- `keep-output` keeps the step's colors and timing too. Remove it for one recording to take the new output. A step that fails still warns, and stops the recording with `--strict`. A new `mask` still applies: output that holds a masked text is replaced by what the step prints now.
+- A cast recorded in another terminal size is not compared, and neither is a recording that writes `--save-outputs`, which comes from that run alone. scenetake says so.
+- A step is found by its `run` text. A step whose `run` changed is recorded afresh.
+- A value can often be fixed at its source, which keeps the step current: `GIT_AUTHOR_DATE` and `GIT_COMMITTER_DATE` exported in a `show: none` step give the same commits the same hashes on every recording, and `TZ` fixes the time zone.
+
+See [spec_scenario.md](.github/docs/spec_scenario.md#recording-again) → Recording again.
+
 ## Output modes
 
 There are four output modes: ordinary output, stream output, TUI output, and interactive application output. You can switch mode per step.
@@ -687,7 +712,7 @@ post:
 
 ### Masking secrets
 
-A recording is made to be shared, so scenetake hides secrets before it writes anything: the cast, SVG, mp4, PNG, and GIF never hold them. Each hidden character becomes `*`, so lines keep their width and a full-screen program's screen stays in place.
+A recording is made to be shared, so scenetake hides secrets before it writes anything: the cast, SVG, mp4, PNG, and GIF never show them. Each hidden character becomes `*`, so lines keep their width and a full-screen program's screen stays in place.
 
 ```yaml
 settings:

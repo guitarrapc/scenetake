@@ -13,6 +13,7 @@
 #:include ../Scenario.cs
 #:include ../Highlight.cs
 #:include ../CastComposer.cs
+#:include ../Rerecord.cs
 #:include ../SecretMask.cs
 #:include ../StepChunks.cs
 #:include ../StepOutputs.cs

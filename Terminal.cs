@@ -1208,6 +1208,13 @@ internal sealed class AnsiParser
                 return TrySkipOsc(input, index + 2, out endIndex);
             case (byte)'P':
                 return TryHandleDcs(input, index + 2, out endIndex);
+            case (byte)'X' or (byte)'^' or (byte)'_':
+                return TrySkipString(input, index + 2, out endIndex);
+            case 0x1B:
+                // A terminal starts again at the second ESC. A program that asks tmux to pass a sequence through
+                // writes each ESC in it twice.
+                endIndex = index;
+                return true;
             case >= 0x20 and <= 0x2F:
                 return TryHandleIntermediateEscape(input, index, out endIndex);
             case (byte)'7':
@@ -1301,6 +1308,37 @@ internal sealed class AnsiParser
         var bodyEnd = input[endIndex] == 0x07 ? endIndex : endIndex - 1;
         _charsets.TryLoadSoftFont(input[start..bodyEnd]);
         return true;
+    }
+
+    /// <summary>
+    /// SOS, PM, or APC (an inline image): a string whose data is not text. Besides BEL and ST, it ends where a terminal
+    /// cuts it off, at CAN, SUB, or the ESC of another sequence. A string that a program left open then hides the
+    /// output only up to the next sequence, as in a terminal, not to the end of the recording.
+    /// </summary>
+    private static bool TrySkipString(ReadOnlySpan<byte> input, int start, out int endIndex)
+    {
+        for (var i = start; i < input.Length; i++)
+        {
+            var b = input[i];
+            if (b is 0x07 or 0x18 or 0x1A)
+            {
+                endIndex = i;
+                return true;
+            }
+
+            if (b == 0x1B)
+            {
+                if (i + 1 >= input.Length)
+                    break;
+
+                // ESC \ is the string's own end. Any other ESC starts the next sequence, which is read next.
+                endIndex = input[i + 1] == (byte)'\\' ? i + 1 : i - 1;
+                return true;
+            }
+        }
+
+        endIndex = start;
+        return false;
     }
 
     private static bool TrySkipOsc(ReadOnlySpan<byte> input, int start, out int endIndex, bool caretTerminator = false)
@@ -1919,6 +1957,83 @@ internal readonly record struct CastEvent(
 }
 
 /// <summary>
+/// Where escape sequences start and end in output text, read as SecretMasker reads a stream: a control string ends at
+/// the earliest byte where the cast filter, the SVG renderer, or the terminal that plays the cast ends it. Code that
+/// writes a color into output after masking keeps it out of a sequence: a color inside one would end it early and
+/// show text that the masker skipped.
+/// </summary>
+internal static class EscapeSequences
+{
+    /// <summary>
+    /// For each place in <paramref name="text"/>, and the place after it, whether it falls after a sequence's ESC and
+    /// before its end.
+    /// </summary>
+    internal static bool[] Inside(string text)
+    {
+        var inside = new bool[text.Length + 1];
+        for (var i = text.IndexOf('\u001b'); i >= 0 && i < text.Length; i = text.IndexOf('\u001b', i))
+        {
+            var end = End(text, i);
+            for (var k = i + 1; k < end; k++)
+                inside[k] = true;
+            i = end;
+        }
+
+        return inside;
+    }
+
+    /// <summary>Where the sequence whose ESC is at <paramref name="i"/> ends, or the end of the text when nothing ends it.</summary>
+    internal static int End(string text, int i)
+    {
+        if (i + 1 >= text.Length)
+            return text.Length;
+
+        var kind = text[i + 1];
+        var j = i + 2;
+        switch (kind)
+        {
+            case '\u001b':
+                return i + 1;
+            case '[':
+                while (j < text.Length && text[j] is >= ' ' and <= '?')
+                    j++;
+                return j >= text.Length ? text.Length : text[j] == '\u001b' ? j : j + 1;
+            case ']' or 'P' or 'X' or '^' or '_':
+                // An OSC that the cast drops ends where the cast filter ends it, which is not at a C1 control.
+                var kept = kind != ']' || KeepsOsc(text, j);
+                for (; j < text.Length; j++)
+                {
+                    var c = text[j];
+                    if (c is '\u0007' or '\u0018' or '\u001a')
+                        return j + 1;
+                    if (c == '\u001b')
+                        return j + 1 < text.Length && text[j + 1] == '\\' ? j + 2 : j;
+                    if (kept && c is >= '\u0080' and <= '\u009f')
+                        return c == '\u009c' ? j + 1 : j;
+                }
+
+                return text.Length;
+            case >= ' ' and <= '/':
+                j = i + 1;
+                while (j < text.Length && text[j] is >= ' ' and <= '/')
+                    j++;
+                return j < text.Length && text[j] == '\u001b' ? j : Math.Min(j + 1, text.Length);
+            default:
+                return i + 2;
+        }
+    }
+
+    private static bool KeepsOsc(string text, int start)
+    {
+        var code = 0;
+        var digits = 0;
+        while (digits < CastOscFilter.MaxCodeDigits && start + digits < text.Length && text[start + digits] is >= '0' and <= '9')
+            code = code * 10 + (text[start + digits++] - '0');
+        return digits > 0 && CastOscFilter.IsColorCode(code);
+    }
+}
+
+/// <summary>
 /// Removes OSC sequences that a recording never shows but that can carry local paths, host names, or
 /// other private text: window titles (OSC 0/1/2), which ConPTY sets to the started shell's full path and
 /// vim to the edited file's folder, the working directory (OSC 7, ConEmu OSC 9;9), shell integration
@@ -1928,8 +2043,10 @@ internal readonly record struct CastEvent(
 /// </summary>
 /// <remarks>
 /// The output events are one terminal stream, and a PTY read can end inside a sequence, so the scan
-/// carries its state from one event to the next. Only 7-bit sequences (ESC ], ended by BEL or ESC \) are
-/// recognized.
+/// carries its state from one event to the next. Only 7-bit sequences are recognized: ESC ] starts one,
+/// and BEL, CAN, SUB, ESC \, or the ESC of another sequence ends it. SecretMasker, which skips a removed
+/// OSC, OscMasker, which hides one in the outputs file, and EscapeSequences, which keeps highlight colors out
+/// of one, end it at the same byte, so they change together.
 /// </remarks>
 internal static class CastOscFilter
 {
@@ -1944,7 +2061,48 @@ internal static class CastOscFilter
         DropEscape, // ESC inside a dropped OSC.
     }
 
-    internal static List<CastEvent> RemovePrivateSequences(List<CastEvent> events)
+    // An OSC code is decided on its first digits, so a long run of digits is not held. Color codes have three at most.
+    internal const int MaxCodeDigits = 6;
+
+    internal static List<CastEvent> RemovePrivateSequences(List<CastEvent> events) => RemovePrivateSequences(events, null);
+
+    /// <summary>
+    /// <see cref="RemovePrivateSequences(List{CastEvent})"/>, which drops an event that held nothing else.
+    /// <paramref name="indexMap"/>, when given, has one more entry than <paramref name="events"/>, and receives for each
+    /// event the index in the result where it, or the event after it, went, and the result's count at the end.
+    /// </summary>
+    internal static List<CastEvent> RemovePrivateSequences(List<CastEvent> events, int[]? indexMap) =>
+        RemovePrivateSequences(events, indexMap, keepEmptyLast: true);
+
+    /// <summary>
+    /// Filters one step's output, the events from <paramref name="first"/> on, as soon as it is composed. What follows
+    /// is then laid out on what the cast shows, and a sequence the step leaves open ends with the step, so it cannot
+    /// swallow the next step's text.
+    /// </summary>
+    internal static void RemovePrivateSequencesFrom(List<CastEvent> events, int first)
+    {
+        var count = events.Count - first;
+        if (count == 0)
+            return;
+
+        var filtered = RemovePrivateSequences(events.GetRange(first, count), null, keepEmptyLast: false);
+        // An ESC left at the end starts nothing, and the filter of the whole cast would carry it into the next event.
+        while (filtered.Count > 0 && filtered[^1] is { Kind: CastEventKind.Output } last && EndsWithEscape(last))
+        {
+            filtered.RemoveAt(filtered.Count - 1);
+            var kept = last.HasUtf8Output ? CastEvent.OutputUtf8(last.Time, last.Utf8Output.Span[..^1].ToArray()) : CastEvent.Output(last.Time, last.Data[..^1]);
+            if (kept.HasUtf8Output ? !kept.Utf8Output.IsEmpty : kept.Data.Length > 0)
+                filtered.Add(kept);
+        }
+
+        events.RemoveRange(first, count);
+        events.AddRange(filtered);
+    }
+
+    private static bool EndsWithEscape(CastEvent ev) =>
+        ev.HasUtf8Output ? !ev.Utf8Output.IsEmpty && ev.Utf8Output.Span[^1] == 0x1B : ev.Data.EndsWith('\u001b');
+
+    private static List<CastEvent> RemovePrivateSequences(List<CastEvent> events, int[]? indexMap, bool keepEmptyLast)
     {
         var state = State.Ground;
         var pending = new List<byte>(16);
@@ -1952,6 +2110,8 @@ internal static class CastOscFilter
         var result = new List<CastEvent>(events.Count);
         for (var index = 0; index < events.Count; index++)
         {
+            if (indexMap is not null)
+                indexMap[index] = result.Count;
             var ev = events[index];
             if (ev.Kind != CastEventKind.Output)
             {
@@ -1977,7 +2137,7 @@ internal static class CastOscFilter
             {
                 result.Add(CastEvent.OutputUtf8(ev.Time, output.WrittenSpan.ToArray()));
             }
-            else if (index == events.Count - 1)
+            else if (keepEmptyLast && index == events.Count - 1)
             {
                 // The last event sets the recording's length, so it stays, empty.
                 result.Add(CastEvent.Output(ev.Time, ""));
@@ -1985,6 +2145,8 @@ internal static class CastOscFilter
         }
 
         // An ESC or an OSC still open when the recording ends shows nothing, so it is dropped.
+        if (indexMap is not null)
+            indexMap[events.Count] = result.Count;
         return result;
     }
 
@@ -2036,7 +2198,7 @@ internal static class CastOscFilter
                     break;
 
                 case State.Code:
-                    if (b is >= (byte)'0' and <= (byte)'9' && pending.Count < 2 + 6)
+                    if (b is >= (byte)'0' and <= (byte)'9' && pending.Count < 2 + MaxCodeDigits)
                     {
                         pending.Add(b);
                         break;
@@ -2112,15 +2274,19 @@ internal static class CastOscFilter
     }
 
     /// <summary>Whether the held ESC ] and digits name a color OSC, which is kept.</summary>
-    private static bool IsKept(List<byte> pending)
-    {
-        if (pending.Count <= 2)
-            return false;
+    private static bool IsKept(List<byte> pending) => KeepsOsc(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(pending)[2..]);
 
+    /// <summary>
+    /// Whether the filter keeps an OSC whose bytes after ESC ] are <paramref name="body"/>: its code, the first digits
+    /// up to <see cref="MaxCodeDigits"/>, names a color change.
+    /// </summary>
+    internal static bool KeepsOsc(ReadOnlySpan<byte> body)
+    {
         var code = 0;
-        for (var i = 2; i < pending.Count; i++)
-            code = code * 10 + (pending[i] - '0');
-        return IsColorCode(code);
+        var digits = 0;
+        while (digits < MaxCodeDigits && digits < body.Length && body[digits] is >= (byte)'0' and <= (byte)'9')
+            code = code * 10 + (body[digits++] - '0');
+        return digits > 0 && IsColorCode(code);
     }
 
     /// <summary>Whether an OSC with this number changes a color, which the filter keeps.</summary>
@@ -2164,9 +2330,12 @@ internal sealed class CastCursorTracker
     /// Plays the events added since the last call and returns the cursor as a 1-based row and column, the form
     /// of a cursor position report (<c>ESC[row;columnR</c>).
     /// </summary>
-    internal (int Row, int Column) Advance(IReadOnlyList<CastEvent> events)
+    internal (int Row, int Column) Advance(IReadOnlyList<CastEvent> events) => Advance(events, events.Count);
+
+    /// <summary>Plays the events before index <paramref name="end"/> that have not been played yet.</summary>
+    internal (int Row, int Column) Advance(IReadOnlyList<CastEvent> events, int end)
     {
-        for (; _next < events.Count; _next++)
+        for (; _next < end; _next++)
         {
             var castEvent = events[_next];
             if (castEvent.Kind == CastEventKind.Resize)

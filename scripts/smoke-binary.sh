@@ -46,6 +46,7 @@ dotnet run tests/stream_output_test.cs
 dotnet run tests/pty_test.cs
 dotnet run tests/interactive_pty_test.cs
 dotnet run tests/step_input_test.cs
+dotnet run tests/rerecord_test.cs
 # Runner images and the containers ship no ffmpeg, so these skip real encodes. The mp4 job runs them with ffmpeg.
 dotnet run tests/scenario_render_test.cs
 dotnet run tests/mp4_ffmpeg_test.cs
