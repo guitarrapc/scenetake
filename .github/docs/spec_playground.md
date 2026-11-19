@@ -208,7 +208,7 @@ Below 960 px the panel comes after the editor and starts closed, unless a share 
 
 Below 600 px each place is a block instead of a table row, so a command takes the screen's width: in three columns the agg command that the page showed before `scenetake gif` wrapped to 14 lines on a 375 px screen, and as a block it took 5.
 
-**Why `scenetake gif` and not agg.** The page used to give agg's command in Docker for GIFs. scenetake makes the GIF itself now, from the frames it draws for mp4, smaller than agg's for the samples ([spec_gif.md](spec_gif.md)), so a reader needs one tool. The README keeps the agg commands as another way.
+**Why `scenetake gif` and not agg.** The page used to give agg's command in Docker for GIFs. scenetake makes the GIF itself now, from the frames it draws for mp4, smaller than agg's for the samples ([spec_gif.md](spec_gif.md)), so a reader needs one tool. The README names agg as another way, with no commands: a reader who needs one tool should not read two.
 
 ## Site Layout
 
