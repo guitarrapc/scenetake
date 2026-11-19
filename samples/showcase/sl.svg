@@ -4,7 +4,7 @@
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
 .bg,rect:not([class]) { shape-rendering: crispEdges; }
-.l { visibility: hidden; animation: 12.135s step-start infinite; }
+.l { visibility: hidden; animation: 7.055s step-start infinite; }
 .c { fill: #d0d0d0; fill-opacity: 0.5; }
 .m{transform:translate(0,62.8px)}
 .n{transform:translate(0,102.8px)}
@@ -18,214 +18,198 @@ text { dominant-baseline: alphabetic; }
 .a{transform:translate(0,262.8px)}
 .b{transform:translate(0,282.8px)}
 .h{transform:translate(0,302.8px)}
-@keyframes e5{0.412032%{visibility:visible}}
-.e6{animation-delay:1.1s;animation-name:e5}
-@keyframes e7{0.321385%{visibility:visible}}
-.e8{animation-delay:1.15s;animation-name:e7}
-@keyframes e9{1.648126%{visibility:visible}}
-.fa{animation-delay:1.189s;animation-name:e9}
-@keyframes fb{0.313144%{visibility:visible}}
-.fc{animation-delay:1.389s;animation-name:fb}
-@keyframes o{0.329626%{visibility:visible}}
-.ei{animation-delay:1.427s;animation-name:o}
-.d9{animation-delay:1.467s;animation-name:o}
-.dl{animation-delay:1.507s;animation-name:o}
-.dm{animation-delay:1.547s;animation-name:o}
-.dn{animation-delay:1.587s;animation-name:o}
-@keyframes p{0.337866%{visibility:visible}}
-.r{animation-delay:1.627s;animation-name:p}
-.s{animation-delay:1.668s;animation-name:o}
-.t{animation-delay:1.708s;animation-name:o}
-.u{animation-delay:1.748s;animation-name:o}
-@keyframes q{1.326741%{visibility:visible}}
-.ej{animation-delay:1.788s;animation-name:q}
-.v{animation-delay:1.788s;animation-name:o}
-.w{animation-delay:1.828s;animation-name:p}
-.x{animation-delay:1.869s;animation-name:o}
-.y{animation-delay:1.909s;animation-name:o}
-.ek{animation-delay:1.949s;animation-name:q}
-.z{animation-delay:1.949s;animation-name:o}
-.aa{animation-delay:1.989s;animation-name:o}
-.ab{animation-delay:2.029s;animation-name:p}
-.ac{animation-delay:2.07s;animation-name:o}
-@keyframes ef{1.318501%{visibility:visible}}
-.el{animation-delay:2.11s;animation-name:ef}
-.ad{animation-delay:2.11s;animation-name:o}
-.ae{animation-delay:2.15s;animation-name:o}
-.af{animation-delay:2.19s;animation-name:o}
-.ag{animation-delay:2.23s;animation-name:o}
-.em{animation-delay:2.27s;animation-name:q}
-.ah{animation-delay:2.27s;animation-name:p}
-.ai{animation-delay:2.311s;animation-name:o}
-.aj{animation-delay:2.351s;animation-name:o}
-.ak{animation-delay:2.391s;animation-name:o}
-.en{animation-delay:2.431s;animation-name:q}
-.al{animation-delay:2.431s;animation-name:o}
-.am{animation-delay:2.471s;animation-name:o}
-.an{animation-delay:2.511s;animation-name:p}
-.ao{animation-delay:2.552s;animation-name:o}
-.eo{animation-delay:2.592s;animation-name:ef}
-.ap{animation-delay:2.592s;animation-name:o}
-.aq{animation-delay:2.632s;animation-name:o}
-.ar{animation-delay:2.672s;animation-name:o}
-.as{animation-delay:2.712s;animation-name:o}
-.ep{animation-delay:2.752s;animation-name:q}
-.at{animation-delay:2.752s;animation-name:p}
-.au{animation-delay:2.793s;animation-name:o}
-.av{animation-delay:2.833s;animation-name:o}
-.aw{animation-delay:2.873s;animation-name:o}
-.eq{animation-delay:2.913s;animation-name:q}
-.ax{animation-delay:2.913s;animation-name:o}
-.ay{animation-delay:2.953s;animation-name:o}
-.az{animation-delay:2.993s;animation-name:p}
-.a0{animation-delay:3.034s;animation-name:o}
-.er{animation-delay:3.074s;animation-name:ef}
-.a1{animation-delay:3.074s;animation-name:o}
-.a2{animation-delay:3.114s;animation-name:o}
-.a3{animation-delay:3.154s;animation-name:o}
-.a4{animation-delay:3.194s;animation-name:o}
-.es{animation-delay:3.234s;animation-name:q}
-.a5{animation-delay:3.234s;animation-name:p}
-.a6{animation-delay:3.275s;animation-name:o}
-.a7{animation-delay:3.315s;animation-name:o}
-.a8{animation-delay:3.355s;animation-name:o}
-.et{animation-delay:3.395s;animation-name:q}
-.a9{animation-delay:3.395s;animation-name:p}
-.ba{animation-delay:3.436s;animation-name:o}
-.bb{animation-delay:3.476s;animation-name:o}
-.bc{animation-delay:3.516s;animation-name:o}
-.eu{animation-delay:3.556s;animation-name:q}
-.bd{animation-delay:3.556s;animation-name:o}
-.be{animation-delay:3.596s;animation-name:p}
-.bf{animation-delay:3.637s;animation-name:o}
-.bh{animation-delay:3.677s;animation-name:o}
-.ev{animation-delay:3.717s;animation-name:q}
-.bi{animation-delay:3.717s;animation-name:o}
-.bj{animation-delay:3.757s;animation-name:o}
-.bk{animation-delay:3.797s;animation-name:o}
-.bl{animation-delay:3.837s;animation-name:p}
-.ew{animation-delay:3.878s;animation-name:ef}
-.bm{animation-delay:3.878s;animation-name:o}
-.bn{animation-delay:3.918s;animation-name:o}
-.bo{animation-delay:3.958s;animation-name:o}
-.bp{animation-delay:3.998s;animation-name:o}
-.ex{animation-delay:4.038s;animation-name:q}
-.bq{animation-delay:4.038s;animation-name:o}
-.br{animation-delay:4.078s;animation-name:p}
-.bs{animation-delay:4.119s;animation-name:o}
-.bt{animation-delay:4.159s;animation-name:o}
-.ey{animation-delay:4.199s;animation-name:q}
-.bu{animation-delay:4.199s;animation-name:o}
-.bv{animation-delay:4.239s;animation-name:o}
-.bw{animation-delay:4.279s;animation-name:p}
-.bx{animation-delay:4.32s;animation-name:o}
-.ez{animation-delay:4.36s;animation-name:ef}
-.by{animation-delay:4.36s;animation-name:o}
-.bz{animation-delay:4.4s;animation-name:o}
-.b0{animation-delay:4.44s;animation-name:o}
-.b1{animation-delay:4.48s;animation-name:o}
-.e0{animation-delay:4.52s;animation-name:q}
-.b2{animation-delay:4.52s;animation-name:p}
-.b3{animation-delay:4.561s;animation-name:o}
-.b4{animation-delay:4.601s;animation-name:o}
-.b5{animation-delay:4.641s;animation-name:o}
-.e1{animation-delay:4.681s;animation-name:q}
-.b6{animation-delay:4.681s;animation-name:o}
-.b7{animation-delay:4.721s;animation-name:p}
-.b8{animation-delay:4.762s;animation-name:o}
-.b9{animation-delay:4.802s;animation-name:o}
-.e2{animation-delay:4.842s;animation-name:ef}
-.ca{animation-delay:4.842s;animation-name:o}
-.cb{animation-delay:4.882s;animation-name:o}
-.cc{animation-delay:4.922s;animation-name:o}
-.cd{animation-delay:4.962s;animation-name:o}
-.e3{animation-delay:5.002s;animation-name:q}
-.ce{animation-delay:5.002s;animation-name:p}
-.cf{animation-delay:5.043s;animation-name:o}
-.cg{animation-delay:5.083s;animation-name:o}
-.ch{animation-delay:5.123s;animation-name:o}
-.ci{animation-delay:5.163s;animation-name:o}
-.cj{animation-delay:5.203s;animation-name:o}
-.ck{animation-delay:5.243s;animation-name:p}
-.cl{animation-delay:5.284s;animation-name:o}
-.cm{animation-delay:5.324s;animation-name:o}
-.cn{animation-delay:5.364s;animation-name:o}
-.co{animation-delay:5.404s;animation-name:o}
-.cp{animation-delay:5.444s;animation-name:o}
-.cq{animation-delay:5.484s;animation-name:o}
-.cr{animation-delay:5.524s;animation-name:p}
-.cs{animation-delay:5.565s;animation-name:o}
-.ct{animation-delay:5.605s;animation-name:o}
-.cu{animation-delay:5.645s;animation-name:o}
-.cv{animation-delay:5.685s;animation-name:o}
-.cw{animation-delay:5.725s;animation-name:o}
-.cx{animation-delay:5.765s;animation-name:p}
-.cy{animation-delay:5.806s;animation-name:o}
-.cz{animation-delay:5.846s;animation-name:o}
-.c0{animation-delay:5.886s;animation-name:o}
-.c1{animation-delay:5.926s;animation-name:o}
-.c2{animation-delay:5.966s;animation-name:o}
-.c3{animation-delay:6.006s;animation-name:o}
-.c4{animation-delay:6.046s;animation-name:p}
-.c5{animation-delay:6.087s;animation-name:o}
-.c6{animation-delay:6.127s;animation-name:o}
-.c7{animation-delay:6.167s;animation-name:o}
-.c8{animation-delay:6.207s;animation-name:o}
-.c9{animation-delay:6.247s;animation-name:o}
-.da{animation-delay:6.287s;animation-name:o}
-.db{animation-delay:6.327s;animation-name:p}
-.dc{animation-delay:6.368s;animation-name:o}
-.dd{animation-delay:6.408s;animation-name:o}
-.de{animation-delay:6.448s;animation-name:o}
-.df{animation-delay:6.488s;animation-name:o}
-.dg{animation-delay:6.528s;animation-name:o}
-.dh{animation-delay:6.568s;animation-name:p}
-.di{animation-delay:6.609s;animation-name:o}
-.dj{animation-delay:6.649s;animation-name:o}
-.do{animation-delay:6.689s;animation-name:o}
-.dp{animation-delay:6.729s;animation-name:o}
-.dq{animation-delay:6.769s;animation-name:o}
-.dr{animation-delay:6.809s;animation-name:p}
-.ds{animation-delay:6.85s;animation-name:o}
-.dt{animation-delay:6.89s;animation-name:o}
-.du{animation-delay:6.93s;animation-name:o}
-.dv{animation-delay:6.97s;animation-name:o}
-.dw{animation-delay:7.01s;animation-name:o}
-.dx{animation-delay:7.05s;animation-name:o}
-.dy{animation-delay:7.09s;animation-name:p}
-.dz{animation-delay:7.131s;animation-name:o}
-.d0{animation-delay:7.171s;animation-name:o}
-.d1{animation-delay:7.211s;animation-name:o}
-.d2{animation-delay:7.251s;animation-name:o}
-.d3{animation-delay:7.291s;animation-name:o}
-.d4{animation-delay:7.331s;animation-name:o}
-.d5{animation-delay:7.371s;animation-name:p}
-.d6{animation-delay:7.412s;animation-name:o}
-.d7{animation-delay:7.452s;animation-name:o}
-.d8{animation-delay:7.492s;animation-name:o}
-.ea{animation-delay:7.532s;animation-name:o}
-.eb{animation-delay:7.572s;animation-name:o}
-.ec{animation-delay:7.612s;animation-name:o}
-.ed{animation-delay:7.652s;animation-name:p}
-.ee{animation-delay:7.693s;animation-name:o}
-.eg{animation-delay:7.733s;animation-name:o}
-.eh{animation-delay:7.773s;animation-name:o}
-.e4{animation-delay:7.813s;animation-name:o}
-@keyframes fd{65.372888%{visibility:hidden}to{visibility:visible}}
-.fd{animation-name:fd}
-@keyframes fe{82.686444%{visibility:hidden}to{visibility:visible}}
-.fe{animation-name:fe}
-@keyframes ff{0.379069%{visibility:visible}}
-.fg{animation-delay:1.189s;animation-name:ff}
-@keyframes fh{1.269057%{visibility:visible}}
-.fi{animation-delay:1.235s;animation-name:fh}
-@keyframes fj{17.313556%{visibility:visible}}
-.fk{animation-delay:7.933s;animation-name:fj}
+@keyframes e5{0.5528%{visibility:visible}}
+.e6{animation-delay:0.504s;animation-name:e5}
+@keyframes o{0.56698%{visibility:visible}}
+.ei{animation-delay:0.543s;animation-name:o}
+.d9{animation-delay:0.583s;animation-name:o}
+@keyframes p{0.58115%{visibility:visible}}
+.dl{animation-delay:0.623s;animation-name:p}
+.dm{animation-delay:0.664s;animation-name:o}
+.dn{animation-delay:0.704s;animation-name:o}
+.r{animation-delay:0.744s;animation-name:o}
+.s{animation-delay:0.784s;animation-name:o}
+.t{animation-delay:0.824s;animation-name:o}
+.u{animation-delay:0.864s;animation-name:p}
+@keyframes eh{2.2679%{visibility:visible}}
+.ej{animation-delay:0.905s;animation-name:eh}
+.v{animation-delay:0.905s;animation-name:o}
+.w{animation-delay:0.945s;animation-name:o}
+.x{animation-delay:0.985s;animation-name:o}
+.y{animation-delay:1.025s;animation-name:o}
+@keyframes q{2.28207%{visibility:visible}}
+.ek{animation-delay:1.065s;animation-name:q}
+.z{animation-delay:1.065s;animation-name:p}
+.aa{animation-delay:1.106s;animation-name:o}
+.ab{animation-delay:1.146s;animation-name:o}
+.ac{animation-delay:1.186s;animation-name:o}
+.el{animation-delay:1.226s;animation-name:q}
+.ad{animation-delay:1.226s;animation-name:o}
+.ae{animation-delay:1.266s;animation-name:p}
+.af{animation-delay:1.307s;animation-name:o}
+.ag{animation-delay:1.347s;animation-name:o}
+.em{animation-delay:1.387s;animation-name:q}
+.ah{animation-delay:1.387s;animation-name:o}
+.ai{animation-delay:1.427s;animation-name:o}
+.aj{animation-delay:1.467s;animation-name:p}
+.ak{animation-delay:1.508s;animation-name:o}
+.en{animation-delay:1.548s;animation-name:q}
+.al{animation-delay:1.548s;animation-name:o}
+.am{animation-delay:1.588s;animation-name:o}
+.an{animation-delay:1.628s;animation-name:o}
+.ao{animation-delay:1.668s;animation-name:p}
+.eo{animation-delay:1.709s;animation-name:eh}
+.ap{animation-delay:1.709s;animation-name:o}
+.aq{animation-delay:1.749s;animation-name:o}
+.ar{animation-delay:1.789s;animation-name:o}
+.as{animation-delay:1.829s;animation-name:o}
+.ep{animation-delay:1.869s;animation-name:q}
+.at{animation-delay:1.869s;animation-name:p}
+.au{animation-delay:1.91s;animation-name:o}
+.av{animation-delay:1.95s;animation-name:o}
+.aw{animation-delay:1.99s;animation-name:o}
+.eq{animation-delay:2.03s;animation-name:q}
+.ax{animation-delay:2.03s;animation-name:o}
+.ay{animation-delay:2.07s;animation-name:p}
+.az{animation-delay:2.111s;animation-name:o}
+.a0{animation-delay:2.151s;animation-name:o}
+.er{animation-delay:2.191s;animation-name:q}
+.a1{animation-delay:2.191s;animation-name:o}
+.a2{animation-delay:2.231s;animation-name:o}
+.a3{animation-delay:2.271s;animation-name:p}
+.a4{animation-delay:2.312s;animation-name:o}
+.es{animation-delay:2.352s;animation-name:q}
+.a5{animation-delay:2.352s;animation-name:o}
+.a6{animation-delay:2.392s;animation-name:o}
+.a7{animation-delay:2.432s;animation-name:o}
+.a8{animation-delay:2.472s;animation-name:p}
+.et{animation-delay:2.513s;animation-name:q}
+.a9{animation-delay:2.513s;animation-name:o}
+.ba{animation-delay:2.553s;animation-name:o}
+.bb{animation-delay:2.593s;animation-name:o}
+.bc{animation-delay:2.633s;animation-name:p}
+.eu{animation-delay:2.674s;animation-name:eh}
+.bd{animation-delay:2.674s;animation-name:o}
+.be{animation-delay:2.714s;animation-name:o}
+.bf{animation-delay:2.754s;animation-name:o}
+.bh{animation-delay:2.794s;animation-name:o}
+.ev{animation-delay:2.834s;animation-name:q}
+.bi{animation-delay:2.834s;animation-name:p}
+.bj{animation-delay:2.875s;animation-name:o}
+.bk{animation-delay:2.915s;animation-name:o}
+.bl{animation-delay:2.955s;animation-name:o}
+.ew{animation-delay:2.995s;animation-name:q}
+.bm{animation-delay:2.995s;animation-name:p}
+.bn{animation-delay:3.036s;animation-name:o}
+.bo{animation-delay:3.076s;animation-name:o}
+.bp{animation-delay:3.116s;animation-name:o}
+.ex{animation-delay:3.156s;animation-name:q}
+.bq{animation-delay:3.156s;animation-name:o}
+.br{animation-delay:3.196s;animation-name:p}
+.bs{animation-delay:3.237s;animation-name:o}
+.bt{animation-delay:3.277s;animation-name:o}
+.ey{animation-delay:3.317s;animation-name:q}
+.bu{animation-delay:3.317s;animation-name:o}
+.bv{animation-delay:3.357s;animation-name:o}
+.bw{animation-delay:3.397s;animation-name:p}
+.bx{animation-delay:3.438s;animation-name:o}
+.ez{animation-delay:3.478s;animation-name:q}
+.by{animation-delay:3.478s;animation-name:o}
+.bz{animation-delay:3.518s;animation-name:o}
+.b0{animation-delay:3.558s;animation-name:o}
+.b1{animation-delay:3.598s;animation-name:p}
+.e0{animation-delay:3.639s;animation-name:q}
+.b2{animation-delay:3.639s;animation-name:o}
+.b3{animation-delay:3.679s;animation-name:o}
+.b4{animation-delay:3.719s;animation-name:o}
+.b5{animation-delay:3.759s;animation-name:p}
+.e1{animation-delay:3.8s;animation-name:eh}
+.b6{animation-delay:3.8s;animation-name:o}
+.b7{animation-delay:3.84s;animation-name:o}
+.b8{animation-delay:3.88s;animation-name:o}
+.b9{animation-delay:3.92s;animation-name:o}
+.e2{animation-delay:3.96s;animation-name:q}
+.ca{animation-delay:3.96s;animation-name:p}
+.cb{animation-delay:4.001s;animation-name:o}
+.cc{animation-delay:4.041s;animation-name:o}
+.cd{animation-delay:4.081s;animation-name:o}
+.e3{animation-delay:4.121s;animation-name:q}
+.ce{animation-delay:4.121s;animation-name:o}
+.cf{animation-delay:4.161s;animation-name:p}
+.cg{animation-delay:4.202s;animation-name:o}
+.ch{animation-delay:4.242s;animation-name:o}
+.ci{animation-delay:4.282s;animation-name:o}
+.cj{animation-delay:4.322s;animation-name:o}
+.ck{animation-delay:4.362s;animation-name:p}
+.cl{animation-delay:4.403s;animation-name:o}
+.cm{animation-delay:4.443s;animation-name:o}
+.cn{animation-delay:4.483s;animation-name:o}
+.co{animation-delay:4.523s;animation-name:p}
+.cp{animation-delay:4.564s;animation-name:o}
+.cq{animation-delay:4.604s;animation-name:o}
+.cr{animation-delay:4.644s;animation-name:o}
+.cs{animation-delay:4.684s;animation-name:o}
+.ct{animation-delay:4.724s;animation-name:o}
+.cu{animation-delay:4.764s;animation-name:p}
+.cv{animation-delay:4.805s;animation-name:o}
+.cw{animation-delay:4.845s;animation-name:o}
+.cx{animation-delay:4.885s;animation-name:o}
+.cy{animation-delay:4.925s;animation-name:o}
+.cz{animation-delay:4.965s;animation-name:p}
+.c0{animation-delay:5.006s;animation-name:o}
+.c1{animation-delay:5.046s;animation-name:o}
+.c2{animation-delay:5.086s;animation-name:o}
+.c3{animation-delay:5.126s;animation-name:o}
+.c4{animation-delay:5.166s;animation-name:o}
+.c5{animation-delay:5.206s;animation-name:p}
+.c6{animation-delay:5.247s;animation-name:o}
+.c7{animation-delay:5.287s;animation-name:o}
+.c8{animation-delay:5.327s;animation-name:o}
+.c9{animation-delay:5.367s;animation-name:o}
+.da{animation-delay:5.407s;animation-name:o}
+.db{animation-delay:5.447s;animation-name:p}
+.dc{animation-delay:5.488s;animation-name:o}
+.dd{animation-delay:5.528s;animation-name:o}
+.de{animation-delay:5.568s;animation-name:o}
+.df{animation-delay:5.608s;animation-name:o}
+.dg{animation-delay:5.648s;animation-name:p}
+.dh{animation-delay:5.689s;animation-name:o}
+.di{animation-delay:5.729s;animation-name:o}
+.dj{animation-delay:5.769s;animation-name:o}
+.do{animation-delay:5.809s;animation-name:o}
+.dp{animation-delay:5.849s;animation-name:p}
+.dq{animation-delay:5.89s;animation-name:o}
+.dr{animation-delay:5.93s;animation-name:o}
+.ds{animation-delay:5.97s;animation-name:o}
+.dt{animation-delay:6.01s;animation-name:o}
+.du{animation-delay:6.05s;animation-name:o}
+.dv{animation-delay:6.09s;animation-name:p}
+.dw{animation-delay:6.131s;animation-name:o}
+.dx{animation-delay:6.171s;animation-name:o}
+.dy{animation-delay:6.211s;animation-name:o}
+.dz{animation-delay:6.251s;animation-name:o}
+.d0{animation-delay:6.291s;animation-name:o}
+.d1{animation-delay:6.331s;animation-name:o}
+.d2{animation-delay:6.371s;animation-name:p}
+.d3{animation-delay:6.412s;animation-name:o}
+.d4{animation-delay:6.452s;animation-name:o}
+.d5{animation-delay:6.492s;animation-name:o}
+.d6{animation-delay:6.532s;animation-name:o}
+.d7{animation-delay:6.572s;animation-name:p}
+.d8{animation-delay:6.613s;animation-name:o}
+.ea{animation-delay:6.653s;animation-name:o}
+.eb{animation-delay:6.693s;animation-name:o}
+.ec{animation-delay:6.733s;animation-name:o}
+.ed{animation-delay:6.773s;animation-name:o}
+.ee{animation-delay:6.813s;animation-name:o}
+.ef{animation-delay:6.853s;animation-name:p}
+.eg{animation-delay:6.894s;animation-name:o}
+@keyframes e4{98.2849%{visibility:hidden}to{visibility:visible}}
+.e4{animation-name:e4}
 .dk{visibility:visible}
 </style>
 <defs>
 <filter id="window-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.22"/></filter>
-<rect id="c" class="c" width="9.92" height="20"/>
 <mask id="viewport-mask" x="0" y="0" width="837.6" height="386" maskUnits="userSpaceOnUse">
 <rect class="l dk viewport-mask-0" x="12" y="46" width="813.6" height="328" fill="white"/>
 </mask>
@@ -239,10 +223,7 @@ text { dominant-baseline: alphabetic; }
 <circle class="l dk viewport-chrome-0" cx="86" cy="29" r="8" fill="#28c840"/>
 <g mask="url(#viewport-mask)" fill="#d0d0d0">
 <rect class="bg l dk viewport-bg-0" x="12" y="46" width="813.6" height="328" fill="#282c34"/>
-<g class="l e6"><text x="22" y="62.8">$</text><use href="#c" x="41.84" y="50"/></g>
-<g class="l e8"><text x="22 41.84" y="62.8">$s</text><use href="#c" x="51.76" y="50"/></g>
-<text class="l fa" x="22 41.84 51.76" y="62.8">$sl</text>
-<text class="l fc" x="805.68" y="262.8">_</text>
+<text class="l e6" x="805.68" y="262.8">_</text>
 <text class="l ei" x="795.76 805.68" y="262.8">__</text>
 <text class="l ei" x="805.68" y="282.8">|</text>
 <text class="l d9" x="805.68" y="142.8">_</text>
@@ -361,7 +342,7 @@ text { dominant-baseline: alphabetic; }
 <text class="l y a" x="676.72" textLength="138.88">__/ =| o |=-~~</text>
 <text class="l y b" x="686.64" textLength="99.2">|/-=|___|=</text>
 <text class="l y h" x="696.56" textLength="119.04">\_/      \_O</text>
-<text class="l ek m" x="756.08 805.68">()</text>
+<text class="l ek" x="756.08 805.68" y="62.8">()</text>
 <text class="l ek" x="736.24" y="102.8" textLength="49.6">(@@@)</text>
 <text class="l z k" x="726.32" textLength="39.68">====</text>
 <text class="l z d" x="686.64" textLength="128.96">_D _|  |_____</text>
@@ -403,7 +384,7 @@ text { dominant-baseline: alphabetic; }
 <text class="l ac a" x="637.04" textLength="178.56">__/ =| o |=-~~\  /</text>
 <text class="l ac b" x="646.96" textLength="168.64">|/-=|___|=O=====O</text>
 <text class="l ac h" x="656.88" textLength="158.72">\_/      \__/  \</text>
-<text class="l el m" x="716.4" textLength="59.52">(@@@@)</text>
+<text class="l el" x="716.4" y="62.8" textLength="59.52">(@@@@)</text>
 <text class="l el" x="696.56 736.24" y="102.8">()</text>
 <text class="l ad k" x="686.64 696.56 706.48 716.4 805.68">====_</text>
 <text class="l ad d" x="646.96" textLength="158.72">_D _|  |_______/</text>
@@ -445,7 +426,7 @@ text { dominant-baseline: alphabetic; }
 <text class="l ag a" x="597.36" textLength="218.24">__/ =| o |=-~O=====O==</text>
 <text class="l ag b" x="607.28" textLength="208.32">|/-=|___|=    ||    |</text>
 <text class="l ag h" x="617.2" textLength="188.48">\_/      \__/  \__/</text>
-<text class="l em m" x="676.72 726.32">()</text>
+<text class="l em" x="676.72 726.32" y="62.8">()</text>
 <text class="l em" x="656.88" y="102.8" textLength="49.6">(@@@)</text>
 <text class="l ah k" x="646.96" textLength="168.64">====        _____</text>
 <text class="l ah d" x="607.28" textLength="158.72">_D _|  |_______/</text>
@@ -1471,7 +1452,7 @@ text { dominant-baseline: alphabetic; }
 <text class="l c8 a" x="22" textLength="406.72">_________|__|__________________________|_</text>
 <text class="l c8 b" x="22" textLength="386.88">\___/          |_D__D__D_|  |_D__D__D_|</text>
 <text class="l c8 h" x="22" textLength="376.96">/               \_/   \_/    \_/   \_/</text>
-<g class="l c9 k"><g id="r1232"><text x="22" textLength="109.12">___________</text></g></g>
+<g class="l c9 k"><g id="r1229"><text x="22" textLength="109.12">___________</text></g></g>
 <text class="l c9 d" x="22" textLength="109.12">|_________|</text>
 <text class="l c9 i" x="22" textLength="317.44">|___ ___|      _________________</text>
 <text class="l c9 j" x="22" textLength="386.88">||_| |_||     _|                \_____A</text>
@@ -1481,7 +1462,7 @@ text { dominant-baseline: alphabetic; }
 <text class="l c9 a" x="22" textLength="396.8">________|__|__________________________|_</text>
 <text class="l c9 b" x="22" textLength="376.96">___/          |_D__D__D_|  |_D__D__D_|</text>
 <text class="l c9 h" x="170.8" textLength="218.24">\_/   \_/    \_/   \_/</text>
-<g class="l da k"><g id="r1242"><text x="22" textLength="99.2">__________</text></g></g>
+<g class="l da k"><g id="r1239"><text x="22" textLength="99.2">__________</text></g></g>
 <text class="l da d" x="22" textLength="99.2">_________|</text>
 <text class="l da i" x="22" textLength="307.52">___ ___|      _________________</text>
 <text class="l da j" x="22" textLength="376.96">|_| |_||     _|                \_____A</text>
@@ -1491,7 +1472,7 @@ text { dominant-baseline: alphabetic; }
 <text class="l da a" x="22" textLength="386.88">_______|__|__________________________|_</text>
 <text class="l da b" x="22" textLength="367.04">__/          |_D__D__D_|  |_D__D__D_|</text>
 <text class="l da h" x="160.88" textLength="218.24">\_/   \_/    \_/   \_/</text>
-<g class="l db k"><g id="r1252"><text x="22" textLength="89.28">_________</text></g></g>
+<g class="l db k"><g id="r1249"><text x="22" textLength="89.28">_________</text></g></g>
 <text class="l db d" x="22" textLength="89.28">________|</text>
 <text class="l db i" x="22" textLength="297.6">__ ___|      _________________</text>
 <text class="l db j" x="22" textLength="367.04">_| |_||     _|                \_____A</text>
@@ -1609,144 +1590,144 @@ text { dominant-baseline: alphabetic; }
 <text class="l dr j" x="22" textLength="248">_|                \_____A</text>
 <text class="l dr e" x="260.08">|</text>
 <text class="l dr f" x="260.08">|</text>
-<g class="l dr g"><g id="r1370"><text x="22" textLength="257.92">________________________|_</text></g></g>
-<use href="#r1370" class="l dr a"/>
+<g class="l dr g"><g id="r1367"><text x="22" textLength="257.92">________________________|_</text></g></g>
+<use href="#r1367" class="l dr a"/>
 <text class="l dr b" x="22" textLength="238.08">|_D__D__D_|  |_D__D__D_|</text>
 <text class="l dr h" x="31.92" textLength="218.24">\_/   \_/    \_/   \_/</text>
 <text class="l ds i" x="22" textLength="168.64">_________________</text>
 <text class="l ds j" x="22" textLength="238.08">|                \_____A</text>
 <text class="l ds e" x="250.16">|</text>
 <text class="l ds f" x="250.16">|</text>
-<g class="l ds g"><g id="r1378"><text x="22" textLength="248">_______________________|_</text></g></g>
-<use href="#r1378" class="l ds a"/>
+<g class="l ds g"><g id="r1375"><text x="22" textLength="248">_______________________|_</text></g></g>
+<use href="#r1375" class="l ds a"/>
 <text class="l ds b" x="22" textLength="228.16">_D__D__D_|  |_D__D__D_|</text>
 <text class="l ds h" x="22" textLength="218.24">\_/   \_/    \_/   \_/</text>
 <text class="l dt i" x="22" textLength="158.72">________________</text>
 <text class="l dt j" x="180.72" textLength="69.44">\_____A</text>
 <text class="l dt e" x="240.24">|</text>
 <text class="l dt f" x="240.24">|</text>
-<g class="l dt g"><g id="r1386"><text x="22" textLength="238.08">______________________|_</text></g></g>
-<use href="#r1386" class="l dt a"/>
+<g class="l dt g"><g id="r1383"><text x="22" textLength="238.08">______________________|_</text></g></g>
+<use href="#r1383" class="l dt a"/>
 <text class="l dt b" x="22" textLength="218.24">D__D__D_|  |_D__D__D_|</text>
 <text class="l dt h" x="22" textLength="208.32">_/   \_/    \_/   \_/</text>
 <text class="l du i" x="22" textLength="148.8">_______________</text>
 <text class="l du j" x="170.8" textLength="69.44">\_____A</text>
 <text class="l du e" x="230.32">|</text>
 <text class="l du f" x="230.32">|</text>
-<g class="l du g"><g id="r1394"><text x="22" textLength="228.16">_____________________|_</text></g></g>
-<use href="#r1394" class="l du a"/>
+<g class="l du g"><g id="r1391"><text x="22" textLength="228.16">_____________________|_</text></g></g>
+<use href="#r1391" class="l du a"/>
 <text class="l du b" x="22" textLength="208.32">__D__D_|  |_D__D__D_|</text>
 <text class="l du h" x="22" textLength="198.4">/   \_/    \_/   \_/</text>
 <text class="l dv i" x="22" textLength="138.88">______________</text>
 <text class="l dv j" x="160.88" textLength="69.44">\_____A</text>
 <text class="l dv e" x="220.4">|</text>
 <text class="l dv f" x="220.4">|</text>
-<g class="l dv g"><g id="r1402"><text x="22" textLength="218.24">____________________|_</text></g></g>
-<use href="#r1402" class="l dv a"/>
+<g class="l dv g"><g id="r1399"><text x="22" textLength="218.24">____________________|_</text></g></g>
+<use href="#r1399" class="l dv a"/>
 <text class="l dv b" x="22" textLength="198.4">_D__D_|  |_D__D__D_|</text>
 <text class="l dv h" x="51.76" textLength="158.72">\_/    \_/   \_/</text>
 <text class="l dw i" x="22" textLength="128.96">_____________</text>
 <text class="l dw j" x="150.96" textLength="69.44">\_____A</text>
 <text class="l dw e" x="210.48">|</text>
 <text class="l dw f" x="210.48">|</text>
-<g class="l dw g"><g id="r1410"><text x="22" textLength="208.32">___________________|_</text></g></g>
-<use href="#r1410" class="l dw a"/>
+<g class="l dw g"><g id="r1407"><text x="22" textLength="208.32">___________________|_</text></g></g>
+<use href="#r1407" class="l dw a"/>
 <text class="l dw b" x="22" textLength="188.48">D__D_|  |_D__D__D_|</text>
 <text class="l dw h" x="41.84" textLength="158.72">\_/    \_/   \_/</text>
 <text class="l dx i" x="22" textLength="119.04">____________</text>
 <text class="l dx j" x="141.04" textLength="69.44">\_____A</text>
 <text class="l dx e" x="200.56">|</text>
 <text class="l dx f" x="200.56">|</text>
-<g class="l dx g"><g id="r1418"><text x="22" textLength="198.4">__________________|_</text></g></g>
-<use href="#r1418" class="l dx a"/>
+<g class="l dx g"><g id="r1415"><text x="22" textLength="198.4">__________________|_</text></g></g>
+<use href="#r1415" class="l dx a"/>
 <text class="l dx b" x="22" textLength="178.56">__D_|  |_D__D__D_|</text>
 <text class="l dx h" x="31.92" textLength="158.72">\_/    \_/   \_/</text>
-<use href="#r1232" class="l dy i"/>
+<use href="#r1229" class="l dy i"/>
 <text class="l dy j" x="131.12" textLength="69.44">\_____A</text>
 <text class="l dy e" x="190.64">|</text>
 <text class="l dy f" x="190.64">|</text>
-<g class="l dy g"><g id="r1426"><text x="22" textLength="188.48">_________________|_</text></g></g>
-<use href="#r1426" class="l dy a"/>
+<g class="l dy g"><g id="r1423"><text x="22" textLength="188.48">_________________|_</text></g></g>
+<use href="#r1423" class="l dy a"/>
 <text class="l dy b" x="22" textLength="168.64">_D_|  |_D__D__D_|</text>
 <text class="l dy h" x="22" textLength="158.72">\_/    \_/   \_/</text>
-<use href="#r1242" class="l dz i"/>
+<use href="#r1239" class="l dz i"/>
 <text class="l dz j" x="121.2" textLength="69.44">\_____A</text>
 <text class="l dz e" x="180.72">|</text>
 <text class="l dz f" x="180.72">|</text>
-<g class="l dz g"><g id="r1434"><text x="22" textLength="178.56">________________|_</text></g></g>
-<use href="#r1434" class="l dz a"/>
+<g class="l dz g"><g id="r1431"><text x="22" textLength="178.56">________________|_</text></g></g>
+<use href="#r1431" class="l dz a"/>
 <text class="l dz b" x="22" textLength="158.72">D_|  |_D__D__D_|</text>
 <text class="l dz h" x="22" textLength="148.8">_/    \_/   \_/</text>
-<use href="#r1252" class="l d0 i"/>
+<use href="#r1249" class="l d0 i"/>
 <text class="l d0 j" x="111.28" textLength="69.44">\_____A</text>
 <text class="l d0 e" x="170.8">|</text>
 <text class="l d0 f" x="170.8">|</text>
-<g class="l d0 g"><g id="r1442"><text x="22" textLength="168.64">_______________|_</text></g></g>
-<use href="#r1442" class="l d0 a"/>
+<g class="l d0 g"><g id="r1439"><text x="22" textLength="168.64">_______________|_</text></g></g>
+<use href="#r1439" class="l d0 a"/>
 <text class="l d0 b" x="22" textLength="148.8">_|  |_D__D__D_|</text>
 <text class="l d0 h" x="22" textLength="138.88">/    \_/   \_/</text>
 <text class="l d1 i" x="22" textLength="79.36">________</text>
 <text class="l d1 j" x="101.36" textLength="69.44">\_____A</text>
 <text class="l d1 e" x="160.88">|</text>
 <text class="l d1 f" x="160.88">|</text>
-<g class="l d1 g"><g id="r1450"><text x="22" textLength="158.72">______________|_</text></g></g>
-<use href="#r1450" class="l d1 a"/>
+<g class="l d1 g"><g id="r1447"><text x="22" textLength="158.72">______________|_</text></g></g>
+<use href="#r1447" class="l d1 a"/>
 <text class="l d1 b" x="22" textLength="138.88">|  |_D__D__D_|</text>
 <text class="l d1 h" x="61.68" textLength="89.28">\_/   \_/</text>
 <text class="l d2 i" x="22" textLength="69.44">_______</text>
 <text class="l d2 j" x="91.44" textLength="69.44">\_____A</text>
 <text class="l d2 e" x="150.96">|</text>
 <text class="l d2 f" x="150.96">|</text>
-<g class="l d2 g"><g id="r1458"><text x="22" textLength="148.8">_____________|_</text></g></g>
-<use href="#r1458" class="l d2 a"/>
+<g class="l d2 g"><g id="r1455"><text x="22" textLength="148.8">_____________|_</text></g></g>
+<use href="#r1455" class="l d2 a"/>
 <text class="l d2 b" x="41.84" textLength="109.12">|_D__D__D_|</text>
 <text class="l d2 h" x="51.76" textLength="89.28">\_/   \_/</text>
 <text class="l d3 i" x="22" textLength="59.52">______</text>
 <text class="l d3 j" x="81.52" textLength="69.44">\_____A</text>
 <text class="l d3 e" x="141.04">|</text>
 <text class="l d3 f" x="141.04">|</text>
-<g class="l d3 g"><g id="r1466"><text x="22" textLength="138.88">____________|_</text></g></g>
-<use href="#r1466" class="l d3 a"/>
+<g class="l d3 g"><g id="r1463"><text x="22" textLength="138.88">____________|_</text></g></g>
+<use href="#r1463" class="l d3 a"/>
 <text class="l d3 b" x="31.92" textLength="109.12">|_D__D__D_|</text>
 <text class="l d3 h" x="41.84" textLength="89.28">\_/   \_/</text>
 <text class="l d4 i" x="22" textLength="49.6">_____</text>
 <text class="l d4 j" x="71.6" textLength="69.44">\_____A</text>
 <text class="l d4 e" x="131.12">|</text>
 <text class="l d4 f" x="131.12">|</text>
-<g class="l d4 g"><g id="r1474"><text x="22" textLength="128.96">___________|_</text></g></g>
-<use href="#r1474" class="l d4 a"/>
+<g class="l d4 g"><g id="r1471"><text x="22" textLength="128.96">___________|_</text></g></g>
+<use href="#r1471" class="l d4 a"/>
 <text class="l d4 b" x="22" textLength="109.12">|_D__D__D_|</text>
 <text class="l d4 h" x="31.92" textLength="89.28">\_/   \_/</text>
 <text class="l d5 i" x="22 31.92 41.84 51.76">____</text>
 <text class="l d5 j" x="61.68" textLength="69.44">\_____A</text>
 <text class="l d5 e" x="121.2">|</text>
 <text class="l d5 f" x="121.2">|</text>
-<g class="l d5 g"><g id="r1482"><text x="22" textLength="119.04">__________|_</text></g></g>
-<use href="#r1482" class="l d5 a"/>
+<g class="l d5 g"><g id="r1479"><text x="22" textLength="119.04">__________|_</text></g></g>
+<use href="#r1479" class="l d5 a"/>
 <text class="l d5 b" x="22" textLength="99.2">_D__D__D_|</text>
 <text class="l d5 h" x="22" textLength="89.28">\_/   \_/</text>
 <text class="l d6 i" x="22 31.92 41.84">___</text>
 <text class="l d6 j" x="51.76" textLength="69.44">\_____A</text>
 <text class="l d6 e" x="111.28">|</text>
 <text class="l d6 f" x="111.28">|</text>
-<g class="l d6 g"><g id="r1490"><text x="22" textLength="109.12">_________|_</text></g></g>
-<use href="#r1490" class="l d6 a"/>
+<g class="l d6 g"><g id="r1487"><text x="22" textLength="109.12">_________|_</text></g></g>
+<use href="#r1487" class="l d6 a"/>
 <text class="l d6 b" x="22" textLength="89.28">D__D__D_|</text>
 <text class="l d6 h" x="22" textLength="79.36">_/   \_/</text>
 <text class="l d7 i" x="22 31.92">__</text>
 <text class="l d7 j" x="41.84" textLength="69.44">\_____A</text>
 <text class="l d7 e" x="101.36">|</text>
 <text class="l d7 f" x="101.36">|</text>
-<g class="l d7 g"><g id="r1498"><text x="22" textLength="99.2">________|_</text></g></g>
-<use href="#r1498" class="l d7 a"/>
+<g class="l d7 g"><g id="r1495"><text x="22" textLength="99.2">________|_</text></g></g>
+<use href="#r1495" class="l d7 a"/>
 <text class="l d7 b" x="22" textLength="79.36">__D__D_|</text>
 <text class="l d7 h" x="22 61.68 71.6 81.52">/\_/</text>
 <text class="l d8 i" x="22">_</text>
 <text class="l d8 j" x="31.92" textLength="69.44">\_____A</text>
 <text class="l d8 e" x="91.44">|</text>
 <text class="l d8 f" x="91.44">|</text>
-<g class="l d8 g"><g id="r1506"><text x="22" textLength="89.28">_______|_</text></g></g>
-<use href="#r1506" class="l d8 a"/>
+<g class="l d8 g"><g id="r1503"><text x="22" textLength="89.28">_______|_</text></g></g>
+<use href="#r1503" class="l d8 a"/>
 <text class="l d8 b" x="22" textLength="69.44">_D__D_|</text>
 <text class="l d8 h" x="51.76 61.68 71.6">\_/</text>
 <text class="l ea j" x="22" textLength="69.44">\_____A</text>
@@ -1784,24 +1765,19 @@ text { dominant-baseline: alphabetic; }
 <text class="l ee a" x="22 31.92 41.84 51.76">__|_</text>
 <text class="l ee b" x="22 31.92">_|</text>
 <text class="l ee h" x="22">/</text>
-<text class="l eg j" x="22 31.92">_A</text>
-<text class="l eg e" x="31.92">|</text>
-<text class="l eg f" x="31.92">|</text>
-<text class="l eg g" x="22 31.92 41.84">_|_</text>
-<text class="l eg a" x="22 31.92 41.84">_|_</text>
-<text class="l eg b" x="22">|</text>
-<text class="l eh j" x="22">A</text>
-<text class="l eh e" x="22">|</text>
-<text class="l eh f" x="22">|</text>
-<text class="l eh g" x="22 31.92">|_</text>
-<text class="l eh a" x="22 31.92">|_</text>
+<text class="l ef j" x="22 31.92">_A</text>
+<text class="l ef e" x="31.92">|</text>
+<text class="l ef f" x="31.92">|</text>
+<text class="l ef g" x="22 31.92 41.84">_|_</text>
+<text class="l ef a" x="22 31.92 41.84">_|_</text>
+<text class="l ef b" x="22">|</text>
+<text class="l eg j" x="22">A</text>
+<text class="l eg e" x="22">|</text>
+<text class="l eg f" x="22">|</text>
+<text class="l eg g" x="22 31.92">|_</text>
+<text class="l eg a" x="22 31.92">|_</text>
 <text class="l e4 g" x="22">_</text>
 <text class="l e4 a" x="22">_</text>
-<text class="l fd m" x="22 41.84 51.76">$sl</text>
-<g class="l fe"><text x="22" y="362.8">$</text><use href="#c" x="41.84" y="350"/></g>
-<use href="#c" x="61.68" y="50" class="l fg"/>
-<use href="#c" x="22" y="70" class="l fi"/>
-<use href="#c" x="22" y="350" class="l fk"/>
 </g>
 <rect class="l dk viewport-chrome-0" x="12.5" y="12.5" width="812.6" height="361" rx="7.5" ry="7.5" fill="none" stroke="#ffffff" stroke-opacity="0.16"/>
 </svg>

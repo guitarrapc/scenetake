@@ -3213,6 +3213,7 @@ internal static class InteractivePtyCastEmit
                 .ToList();
         }
 
+        // Null when no key was erased: then every echo stays, so no drawing order can make one go missing.
         var committedEcho = inputChunks is { Count: > 0 }
             ? BuildCommittedTypingEcho(inputChunks)
             : null;
@@ -3226,6 +3227,11 @@ internal static class InteractivePtyCastEmit
         {
             if (ShouldPassthroughWallClock(chunkTime, data.Span, inputWindows))
             {
+                // A program that draws its prompt with escape sequences, as copilot does, echoes a key with them, and
+                // that chunk stays as it is. The keys it shows are echoed, so the next plain echo is the key after them.
+                if (committedEcho is not null && IsInInputWindow(chunkTime, inputWindows))
+                    committedIndex += MatchCommittedPrefix(VisibleText(data.Span), committedEcho, committedIndex);
+
                 inTypingBurst = false;
                 var emitTime = result.Count > 0 ? Math.Max(result[^1].Time, chunkTime) : chunkTime;
                 emitClock = Math.Max(emitClock, emitTime);
@@ -3238,13 +3244,12 @@ internal static class InteractivePtyCastEmit
                 if (IsBackspaceEcho(data.Span))
                     continue;
 
-                if (committedIndex >= committedEcho.Count
-                    || !EchoMatchesCommitted(data.Span, committedEcho[committedIndex].Data.Span))
-                {
+                // An echo that is not the next keys typed is a key that was erased later, and it is left out.
+                var matched = MatchCommittedEcho(data.Span, committedEcho, committedIndex);
+                if (matched == 0)
                     continue;
-                }
 
-                committedIndex++;
+                committedIndex += matched;
             }
 
             if (!inTypingBurst)
@@ -3282,26 +3287,126 @@ internal static class InteractivePtyCastEmit
             chunks[i] = (emitTimes[i], chunks[i].OriginalTime, chunks[i].Data);
     }
 
-    private static List<(double Time, ReadOnlyMemory<byte> Data)> BuildCommittedTypingEcho(
+    /// <summary>
+    /// The keys that stay typed, in order, to tell an echo of a key erased later from the rest. Null when no key was
+    /// erased: matching echoes to keys can lose its place, as when a program draws an echo in the same write as other
+    /// output, and a lost place drops every echo after it, so it is done only when there is something to leave out.
+    /// </summary>
+    private static List<(double Time, ReadOnlyMemory<byte> Data)>? BuildCommittedTypingEcho(
         IReadOnlyList<(double Time, ReadOnlyMemory<byte> Data)> inputChunks)
     {
         var committed = new List<(double Time, ReadOnlyMemory<byte> Data)>();
+        var erased = 0;
         var ordered = inputChunks.ToArray();
         Array.Sort(ordered, (a, b) => a.Time.CompareTo(b.Time));
 
+        // On Windows the keys come as win32-input-mode records, which ConPTY asks the host terminal for. They are
+        // read as the characters they type first. A record that a read cuts ends in the next one.
+        var carry = Array.Empty<byte>();
+        char? highSurrogate = null;
         foreach (var (time, data) in ordered)
         {
-            AppendInputKeys(data.Span, committed, time);
+            var bytes = carry.Length == 0 ? data.Span : [.. carry, .. data.Span];
+            var keys = FromWin32InputMode(bytes, out var consumed, ref highSurrogate);
+            carry = bytes[consumed..].ToArray();
+            erased += AppendInputKeys(keys, committed, time);
         }
 
-        return committed;
+        if (carry.Length > 0)
+            erased += AppendInputKeys(carry, committed, ordered[^1].Time);
+
+        return erased > 0 ? committed : null;
     }
 
-    private static void AppendInputKeys(
+    /// <summary>
+    /// <paramref name="data"/> with each win32-input-mode record, <c>ESC [ Vk ; Sc ; Uc ; Kd ; Cs ; Rc _</c>, replaced
+    /// by the character it types: Uc, Rc times, for a key press. A release, or a key that types no character, gives
+    /// nothing. Other bytes stay. <paramref name="consumed"/> stops before a record that the data ends inside.
+    /// </summary>
+    private static byte[] FromWin32InputMode(ReadOnlySpan<byte> data, out int consumed, ref char? highSurrogate)
+    {
+        var output = new List<byte>(data.Length);
+        var i = 0;
+        while (i < data.Length)
+        {
+            if (data[i] != 0x1b || i + 1 >= data.Length || data[i + 1] != (byte)'[')
+            {
+                // A lone ESC at the end may start a record that the next read finishes.
+                if (data[i] == 0x1b && i + 1 >= data.Length)
+                    break;
+                output.Add(data[i++]);
+                continue;
+            }
+
+            var end = i + 2;
+            while (end < data.Length && (data[end] is >= (byte)'0' and <= (byte)'9' || data[end] == (byte)';'))
+                end++;
+            if (end >= data.Length)
+                break;
+            if (data[end] != (byte)'_')
+            {
+                output.Add(data[i++]);
+                continue;
+            }
+
+            // Fields left out take their defaults: Vk, Sc, Uc, Kd, and Cs 0, Rc 1.
+            Span<int> fields = [0, 0, 0, 0, 0, 1];
+            var field = 0;
+            var value = -1;
+            for (var k = i + 2; k <= end && field < fields.Length; k++)
+            {
+                if (data[k] is >= (byte)'0' and <= (byte)'9')
+                {
+                    value = Math.Min((value < 0 ? 0 : value) * 10 + (data[k] - '0'), 0xFFFF);
+                    continue;
+                }
+
+                if (value >= 0)
+                    fields[field] = value;
+                field++;
+                value = -1;
+            }
+
+            var (unicode, keyDown, repeat) = (fields[2], fields[3] == 1, Math.Clamp(fields[5], 1, 64));
+            if (keyDown && unicode != 0)
+            {
+                var c = (char)unicode;
+                if (char.IsHighSurrogate(c))
+                {
+                    highSurrogate = c;
+                }
+                else
+                {
+                    Span<char> chars = stackalloc char[2];
+                    var length = 0;
+                    if (char.IsLowSurrogate(c) && highSurrogate is { } high)
+                        chars[length++] = high;
+                    chars[length++] = c;
+                    highSurrogate = null;
+                    Span<byte> utf8 = stackalloc byte[8];
+                    var count = Encoding.UTF8.GetBytes(chars[..length], utf8);
+                    for (var r = 0; r < repeat; r++)
+                    {
+                        foreach (var b in utf8[..count])
+                            output.Add(b);
+                    }
+                }
+            }
+
+            i = end + 1;
+        }
+
+        consumed = i;
+        return output.ToArray();
+    }
+
+    /// <summary>Adds the keys <paramref name="data"/> types to <paramref name="committed"/>, and returns how many it erased.</summary>
+    private static int AppendInputKeys(
         ReadOnlySpan<byte> data,
         List<(double Time, ReadOnlyMemory<byte> Data)> committed,
         double time)
     {
+        var erased = 0;
         for (var i = 0; i < data.Length; i++)
         {
             var b = data[i];
@@ -3314,7 +3419,11 @@ internal static class InteractivePtyCastEmit
             if (b is 0x08 or 0x7f)
             {
                 if (committed.Count > 0)
+                {
                     committed.RemoveAt(committed.Count - 1);
+                    erased++;
+                }
+
                 continue;
             }
 
@@ -3339,10 +3448,76 @@ internal static class InteractivePtyCastEmit
             committed.Add((time, bytes.AsMemory()));
             i += consumed - 1;
         }
+
+        return erased;
     }
 
-    private static bool EchoMatchesCommitted(ReadOnlySpan<byte> echo, ReadOnlySpan<byte> committed) =>
-        echo.Length == committed.Length && echo.SequenceEqual(committed);
+    /// <summary>
+    /// How many keys from <paramref name="index"/> on <paramref name="echo"/> shows, or 0 when it is not those keys.
+    /// A program that is busy echoes several keys in one write.
+    /// </summary>
+    private static int MatchCommittedEcho(
+        ReadOnlySpan<byte> echo,
+        List<(double Time, ReadOnlyMemory<byte> Data)> committed,
+        int index)
+    {
+        var offset = 0;
+        var k = index;
+        while (offset < echo.Length && k < committed.Count)
+        {
+            var key = committed[k].Data.Span;
+            if (!echo[offset..].StartsWith(key))
+                return 0;
+            offset += key.Length;
+            k++;
+        }
+
+        return offset == echo.Length ? k - index : 0;
+    }
+
+    /// <summary>How many keys from <paramref name="index"/> on the start of <paramref name="text"/> shows.</summary>
+    private static int MatchCommittedPrefix(
+        ReadOnlySpan<byte> text,
+        List<(double Time, ReadOnlyMemory<byte> Data)> committed,
+        int index)
+    {
+        var offset = 0;
+        var k = index;
+        while (k < committed.Count && text[offset..].StartsWith(committed[k].Data.Span))
+        {
+            offset += committed[k].Data.Length;
+            k++;
+        }
+
+        return k - index;
+    }
+
+    /// <summary><paramref name="data"/> without escape sequences: CSI, OSC up to BEL or ST, and two-byte ones.</summary>
+    private static byte[] VisibleText(ReadOnlySpan<byte> data)
+    {
+        var text = new List<byte>(data.Length);
+        for (var i = 0; i < data.Length; i++)
+        {
+            if (data[i] != 0x1b)
+            {
+                text.Add(data[i]);
+                continue;
+            }
+
+            if (i + 1 < data.Length && data[i + 1] == (byte)']')
+            {
+                var end = i + 2;
+                while (end < data.Length && data[end] != 0x07 && !(data[end] == 0x1b && end + 1 < data.Length && data[end + 1] == (byte)'\\'))
+                    end++;
+                i = end < data.Length && data[end] == 0x1b ? end + 1 : end;
+                continue;
+            }
+
+            i += SkipEscapeSequence(data, i + 1);
+        }
+
+        return text.ToArray();
+    }
 
     private static bool IsBackspaceEcho(ReadOnlySpan<byte> data)
     {

@@ -17,6 +17,11 @@ failures += Run("OnForwardedInput_IgnoresEmptySpan", OnForwardedInput_IgnoresEmp
 failures += Run("OnForwardedInput_SkipsKeysWhileChildReadsPassword", OnForwardedInput_SkipsKeysWhileChildReadsPassword);
 failures += Run("OnForwardedInput_RecordsKeysInOtherInputModes", OnForwardedInput_RecordsKeysInOtherInputModes);
 failures += Run("NormalizeOutput_KeepsEchoAfterPasswordPrompt", NormalizeOutput_KeepsEchoAfterPasswordPrompt);
+failures += Run("NormalizeOutput_KeepsEchoOfWin32InputModeKeys", NormalizeOutput_KeepsEchoOfWin32InputModeKeys);
+failures += Run("NormalizeOutput_KeepsEchoOfWin32KeySplitAcrossReads", NormalizeOutput_KeepsEchoOfWin32KeySplitAcrossReads);
+failures += Run("NormalizeOutput_KeepsPlainEchoAfterEchoWithEscapes", NormalizeOutput_KeepsPlainEchoAfterEchoWithEscapes);
+failures += Run("NormalizeOutput_KeepsEchoOfSeveralKeysAtOnce", NormalizeOutput_KeepsEchoOfSeveralKeysAtOnce);
+failures += Run("NormalizeOutput_KeepsEveryEchoWithoutErasedKeys", NormalizeOutput_KeepsEveryEchoWithoutErasedKeys);
 failures += Run("BuildInputWindows_MergesBurst", BuildInputWindows_MergesBurst);
 failures += Run("NormalizeOutput_StripsBackspaceCorrections", NormalizeOutput_StripsBackspaceCorrections);
 failures += Run("NormalizeOutput_PreservesWallClockOutsideInput", NormalizeOutput_PreservesWallClockOutsideInput);
@@ -142,6 +147,125 @@ static bool NormalizeOutput_KeepsEchoAfterPasswordPrompt()
     var text = string.Concat(normalized.Select(c => Encoding.UTF8.GetString(c.Data.Span)));
 
     return text == "Password: \r\n$ ls";
+}
+
+// A win32-input-mode record, ESC [ Vk ; Sc ; Uc ; Kd ; Cs ; Rc _, for the key that types c: down, or up.
+static string Win32Key(char c, bool down) => $"\u001b[{(int)char.ToUpperInvariant(c)};0;{(int)c};{(down ? 1 : 0)};0;1_";
+
+static List<(double Time, ReadOnlyMemory<byte> Data)> Win32Input(double start, string text)
+{
+    var inputs = new List<(double Time, ReadOnlyMemory<byte> Data)>();
+    for (var i = 0; i < text.Length; i++)
+    {
+        var keys = Win32Key(text[i], down: true) + Win32Key(text[i], down: false);
+        inputs.Add((start + i * 0.1, Encoding.UTF8.GetBytes(keys).AsMemory()));
+    }
+
+    return inputs;
+}
+
+// On Windows the input log holds win32-input-mode records, which ConPTY asks the host for. The keys used to come out
+// as nothing, so every plain echo was taken for a key typed and erased, and dropped: copilot's prompt showed only its
+// first letter, which came with color codes.
+static bool NormalizeOutput_KeepsEchoOfWin32InputModeKeys()
+{
+    var inputs = Win32Input(1.0, "hi?");
+    // Backspace: Vk 8, Uc 8. The x it erases never shows.
+    inputs.Insert(2, (1.15, Encoding.UTF8.GetBytes("\u001b[88;0;120;1;0;1_\u001b[88;0;120;0;0;1_").AsMemory()));
+    inputs.Insert(3, (1.17, Encoding.UTF8.GetBytes("\u001b[8;14;8;1;0;1_\u001b[8;14;8;0;0;1_").AsMemory()));
+    var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (1.02, "h"u8.ToArray().AsMemory()),
+        (1.12, "i"u8.ToArray().AsMemory()),
+        (1.16, "x"u8.ToArray().AsMemory()),
+        (1.18, "\b \b"u8.ToArray().AsMemory()),
+        (1.22, "?"u8.ToArray().AsMemory()),
+    };
+
+    var windows = InteractivePtyCastEmit.BuildInputEchoWindows(inputs.Select(static i => i.Time).ToArray());
+    var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24, inputs);
+    return string.Concat(normalized.Select(c => Encoding.UTF8.GetString(c.Data.Span))) == "hi?";
+}
+
+// copilot drew the first key with escape sequences around it, and the keys after it as plain echoes. The first chunk
+// stays as it is, and the plain echoes after it are the keys that follow it, not keys typed and erased. The x that
+// Backspace erases is left out.
+static bool NormalizeOutput_KeepsPlainEchoAfterEchoWithEscapes()
+{
+    var inputs = Win32Input(1.0, "hex");
+    inputs.Add((1.3, Encoding.UTF8.GetBytes("\u001b[8;14;8;1;0;1_\u001b[8;14;8;0;0;1_").AsMemory()));
+    inputs.AddRange(Win32Input(1.4, "y"));
+    var first = "\u001b[?25lh\u001b[1m\u001b[24;34H@\u001b[22m files\u001b[22;4H\u001b[?25h";
+    var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (1.02, Encoding.UTF8.GetBytes(first).AsMemory()),
+        (1.12, "e"u8.ToArray().AsMemory()),
+        (1.22, "x"u8.ToArray().AsMemory()),
+        (1.32, "\b \b"u8.ToArray().AsMemory()),
+        (1.42, "y"u8.ToArray().AsMemory()),
+    };
+
+    var windows = InteractivePtyCastEmit.BuildInputEchoWindows(inputs.Select(static i => i.Time).ToArray());
+    var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24, inputs);
+    return string.Concat(normalized.Select(c => Encoding.UTF8.GetString(c.Data.Span))) == first + "ey";
+}
+
+// A record can end in the next read.
+static bool NormalizeOutput_KeepsEchoOfWin32KeySplitAcrossReads()
+{
+    var down = Win32Key('a', down: true);
+    var inputs = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (1.0, Encoding.UTF8.GetBytes(down[..5]).AsMemory()),
+        (1.01, Encoding.UTF8.GetBytes(down[5..] + Win32Key('a', down: false)).AsMemory()),
+    };
+    var output = new List<(double Time, ReadOnlyMemory<byte> Data)> { (1.05, "a"u8.ToArray().AsMemory()) };
+
+    var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0, 1.01]);
+    var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24, inputs);
+    return string.Concat(normalized.Select(c => Encoding.UTF8.GetString(c.Data.Span))) == "a";
+}
+
+// A program that is busy echoes several keys in one write. The echo is all of them, not one key typed and erased.
+static bool NormalizeOutput_KeepsEchoOfSeveralKeysAtOnce()
+{
+    var inputs = new List<(double Time, ReadOnlyMemory<byte> Data)>();
+    foreach (var (c, i) in "hellx\u007fo".Select((c, i) => (c, i)))
+        inputs.Add((1.0 + i * 0.05, new[] { (byte)c }.AsMemory()));
+    var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (1.02, "h"u8.ToArray().AsMemory()),
+        (1.2, "ell"u8.ToArray().AsMemory()),
+        (1.22, "x"u8.ToArray().AsMemory()),
+        (1.27, "\b \b"u8.ToArray().AsMemory()),
+        (1.32, "o"u8.ToArray().AsMemory()),
+    };
+
+    var windows = InteractivePtyCastEmit.BuildInputEchoWindows(inputs.Select(static i => i.Time).ToArray());
+    var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24, inputs);
+    return string.Concat(normalized.Select(c => Encoding.UTF8.GetString(c.Data.Span))) == "hello";
+}
+
+// copilot draws its logo animation while a question is typed, and an echo can come in the same write as a frame of it.
+// Nothing was erased, so no echo is left out, whatever order they came in. Matching them used to lose its place
+// after such a write, and every plain echo after it was dropped: "h e h w e" of "hello, how are you?".
+static bool NormalizeOutput_KeepsEveryEchoWithoutErasedKeys()
+{
+    var inputs = Win32Input(1.0, "hello");
+    var first = "\u001b[?25lh\u001b[1m\u001b[24;34H@\u001b[22m files\u001b[22;4H\u001b[?25h";
+    var frame = "\u001b[?25l\u001b[96m\u001b[7;6H▘▝ \u001b[m\u001b[22;4He\u001b[?25h";
+    var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
+    {
+        (1.02, Encoding.UTF8.GetBytes(first).AsMemory()),
+        (1.11, Encoding.UTF8.GetBytes(frame).AsMemory()),
+        (1.21, "l"u8.ToArray().AsMemory()),
+        (1.31, "l"u8.ToArray().AsMemory()),
+        (1.41, "o"u8.ToArray().AsMemory()),
+    };
+
+    var windows = InteractivePtyCastEmit.BuildInputEchoWindows(inputs.Select(static i => i.Time).ToArray());
+    var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24, inputs);
+    return string.Concat(normalized.Select(c => Encoding.UTF8.GetString(c.Data.Span))) == first + frame + "llo";
 }
 
 static bool BuildInputWindows_MergesBurst()

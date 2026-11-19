@@ -4,15 +4,17 @@ height: 16
 shell: bash
 
 settings:
-  prompt: "$ "
-  typing-speed: 0.05
-  pre-delay: 0.6
-  post-delay: 1.5
+  prompt: ""                # no prompt at the end either, so the loop is the train alone
+  pre-delay: 0
+  post-delay: 0
 
 render:
   window: macos
+  end-hold: 0               # start again as soon as the train has passed
 
 steps:
-  # sl draws a train across the alternate screen with curses, and returns when it has passed.
+  # sl draws a train across the alternate screen with curses, and returns when it has passed. Only its output shows,
+  # with no prompt and no typing, so the SVG loops the train alone.
   - run: sl
     pty: true
+    show: output
