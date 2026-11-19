@@ -1951,7 +1951,38 @@ internal static class CastOscFilter
     /// <paramref name="indexMap"/>, when given, has one more entry than <paramref name="events"/>, and receives for each
     /// event the index in the result where it, or the event after it, went, and the result's count at the end.
     /// </summary>
-    internal static List<CastEvent> RemovePrivateSequences(List<CastEvent> events, int[]? indexMap)
+    internal static List<CastEvent> RemovePrivateSequences(List<CastEvent> events, int[]? indexMap) =>
+        RemovePrivateSequences(events, indexMap, keepEmptyLast: true);
+
+    /// <summary>
+    /// Filters one step's output, the events from <paramref name="first"/> on, as soon as it is composed. What follows
+    /// is then laid out on what the cast shows, and a sequence the step leaves open ends with the step, so it cannot
+    /// swallow the next step's text.
+    /// </summary>
+    internal static void RemovePrivateSequencesFrom(List<CastEvent> events, int first)
+    {
+        var count = events.Count - first;
+        if (count == 0)
+            return;
+
+        var filtered = RemovePrivateSequences(events.GetRange(first, count), null, keepEmptyLast: false);
+        // An ESC left at the end starts nothing, and the filter of the whole cast would carry it into the next event.
+        while (filtered.Count > 0 && filtered[^1] is { Kind: CastEventKind.Output } last && EndsWithEscape(last))
+        {
+            filtered.RemoveAt(filtered.Count - 1);
+            var kept = last.HasUtf8Output ? CastEvent.OutputUtf8(last.Time, last.Utf8Output.Span[..^1].ToArray()) : CastEvent.Output(last.Time, last.Data[..^1]);
+            if (kept.HasUtf8Output ? !kept.Utf8Output.IsEmpty : kept.Data.Length > 0)
+                filtered.Add(kept);
+        }
+
+        events.RemoveRange(first, count);
+        events.AddRange(filtered);
+    }
+
+    private static bool EndsWithEscape(CastEvent ev) =>
+        ev.HasUtf8Output ? !ev.Utf8Output.IsEmpty && ev.Utf8Output.Span[^1] == 0x1B : ev.Data.EndsWith('\u001b');
+
+    private static List<CastEvent> RemovePrivateSequences(List<CastEvent> events, int[]? indexMap, bool keepEmptyLast)
     {
         var state = State.Ground;
         var pending = new List<byte>(16);
@@ -1986,7 +2017,7 @@ internal static class CastOscFilter
             {
                 result.Add(CastEvent.OutputUtf8(ev.Time, output.WrittenSpan.ToArray()));
             }
-            else if (index == events.Count - 1)
+            else if (keepEmptyLast && index == events.Count - 1)
             {
                 // The last event sets the recording's length, so it stays, empty.
                 result.Add(CastEvent.Output(ev.Time, ""));
@@ -2175,9 +2206,12 @@ internal sealed class CastCursorTracker
     /// Plays the events added since the last call and returns the cursor as a 1-based row and column, the form
     /// of a cursor position report (<c>ESC[row;columnR</c>).
     /// </summary>
-    internal (int Row, int Column) Advance(IReadOnlyList<CastEvent> events)
+    internal (int Row, int Column) Advance(IReadOnlyList<CastEvent> events) => Advance(events, events.Count);
+
+    /// <summary>Plays the events before index <paramref name="end"/> that have not been played yet.</summary>
+    internal (int Row, int Column) Advance(IReadOnlyList<CastEvent> events, int end)
     {
-        for (; _next < events.Count; _next++)
+        for (; _next < end; _next++)
         {
             var castEvent = events[_next];
             if (castEvent.Kind == CastEventKind.Resize)

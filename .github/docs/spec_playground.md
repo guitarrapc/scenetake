@@ -71,6 +71,7 @@ Each step entry:
 | Field | Holds |
 |---|---|
 | `run` | The command text as typed |
+| `maskedRun` | Only when masking changed `run`: the text after masking. It identifies the step in the cast's `st:steps` tag, because a replay may not know the secret ([spec_scenario.md](spec_scenario.md#recording-again) → Recording again) |
 | `kind` | `pipe`, `pty`, or `interactive` |
 | `exitCode` | The command's exit code |
 | `cursor` | Non-interactive PTY steps on Windows only: the start cursor that scenetake reported to ConPTY, as `row` and `column` ([spec_pty.md](spec_pty.md)) |

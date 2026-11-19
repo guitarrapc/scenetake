@@ -34,6 +34,9 @@ internal static partial class ScenarioCast
         var rng    = new Random(deterministicSeed);
         double t   = 0.5;
         CastCursorTracker? cursorTracker = null;
+        // Whether a step has been shown yet. It does not depend on what the step printed, so a step that printed
+        // nothing the cast keeps lays out the steps after it as in any other recording of the scenario.
+        var anyStepShown = false;
 
         var steps = scenario.Steps ?? [];
         for (var i = 0; i < steps.Count; i++)
@@ -43,8 +46,9 @@ internal static partial class ScenarioCast
             {
                 // A clear step clears the screen as `clear` does, without a command: the same in a terminal
                 // without TERM, on every OS, and in the playground, which runs nothing.
-                if (events.Count == 0)
+                if (!anyStepShown)
                     t += preDelay;
+                anyStepShown = true;
                 events.Add(CastEvent.Output(Math.Round(t, 6), ClearScreen));
                 if (TryFormatNameComment(command.Name, "clear", out var clearNameLine, out var clearNameText))
                 {
@@ -135,8 +139,9 @@ internal static partial class ScenarioCast
             var normalizeTyping = GetBool(command.Extra, false, "normalize-typing");
             var continueOnError = GetBool(command.Extra, false, "continue-on-error");
 
-            if (events.Count == 0)
+            if (!anyStepShown)
                 t += preDelay;
+            anyStepShown = true;
 
             // Secrets are hidden in everything the recording shows: the comment line, the typed command, and the
             // output below. The outputs file gets the hidden output too, so a replay never sees the secret.
@@ -187,6 +192,10 @@ internal static partial class ScenarioCast
 
             var commandStart = t;
             var outputFirst = events.Count;
+            // A replay starts from the text the recording masked, with what only the recording knew, such as an
+            // exported secret, and masks it again for what the YAML has added since.
+            var unmaskedRun = execution.MaskedRun ?? command.Cmd;
+            var maskedRun = masker?.MaskUncounted(unmaskedRun) ?? unmaskedRun;
             if (execution.Placeholder is { } placeholder)
             {
                 // The playground has no output for this command. The line stands where its output would be,
@@ -210,7 +219,7 @@ internal static partial class ScenarioCast
                     height,
                     options.Verbose);
                 composed = masker?.MaskComposed(composed) ?? composed;
-                options.Record?.Add(RecordedStep.Interactive(command.Cmd, execution.ExitCode, composed));
+                options.Record?.Add(RecordedStep.Interactive(command.Cmd, execution.ExitCode, composed, maskedRun));
                 t = EmitComposedPtyOutput(events, commandStart, composed);
             }
             else if (execution.IsPty)
@@ -219,7 +228,7 @@ internal static partial class ScenarioCast
                     ? execution.PtyByteChunks!
                     : RemovePtyLeadingInit(execution.PtyByteChunks!, options.Verbose);
                 chunks = masker?.MaskPty(chunks) ?? chunks;
-                options.Record?.Add(RecordedStep.Pty(command.Cmd, execution.ExitCode, ptyStartCursor, chunks));
+                options.Record?.Add(RecordedStep.Pty(command.Cmd, execution.ExitCode, ptyStartCursor, chunks, maskedRun));
                 t = EmitPtyStepOutput(
                     events,
                     commandStart,
@@ -231,7 +240,7 @@ internal static partial class ScenarioCast
             else
             {
                 var pipeChunks = masker?.MaskPipe(execution.PipeStreamChunks!) ?? execution.PipeStreamChunks!;
-                options.Record?.Add(RecordedStep.Pipe(command.Cmd, execution.ExitCode, pipeChunks));
+                options.Record?.Add(RecordedStep.Pipe(command.Cmd, execution.ExitCode, pipeChunks, maskedRun));
                 t = EmitPipeStepOutput(
                     events,
                     commandStart,
@@ -243,6 +252,8 @@ internal static partial class ScenarioCast
                     cmdCastTiming);
             }
 
+            CastOscFilter.RemovePrivateSequencesFrom(events, outputFirst);
+
             // Output timed by the wall clock (PTY, interactive, stream emit) ends at a time whose fraction of a
             // millisecond differs from run to run. The cast stores each interval as the difference of absolute
             // times rounded to milliseconds, so that fraction moved later typed intervals by 1ms, and a cast
@@ -252,34 +263,47 @@ internal static partial class ScenarioCast
             if (clock)
                 t = CeilingToMillisecond(t);
 
-            // Where the step's output is, for the cast's st:steps tag: recording again to the same file keeps a step
-            // that prints the same, with its timing, so only the steps whose output changed differ (Rerecording).
-            options.Slots?.Add(new StepSlot(
-                i + 1,
-                command.Cmd,
-                Rerecording.StepId(usePty, useInteractive, show, command.Cmd),
-                Rerecording.TimingHash(
-                    cmdExecutionDuration,
-                    cmdCastTiming,
-                    normalizeTyping,
-                    GetStepTimeout(command.Extra),
-                    useInteractive || keys.Count > 0,
-                    cmdSpeed,
-                    cmdJitter,
-                    command.Extra.GetValueOrDefault("keys")),
-                clock,
-                GetBool(command.Extra, false, "keep-output"),
-                outputFirst,
-                events.Count - outputFirst,
-                commandStart,
-                t,
-                commandStart + cmdExecutionDuration));
+            // Recording again to the same file keeps a step that prints the same, with its timing, so only the steps
+            // whose output changed differ. It happens here, so the steps after it are laid out on what the cast shows.
+            if (options.Rerecorder is { } rerecorder)
+            {
+                // Streamed pipe output is colored one read at a time, so its colors depend on how the reads fell.
+                var colorsFollowReads = clock && !execution.IsPty;
+                t = rerecorder.Finish(
+                    events,
+                    new StepSlot(
+                        i + 1,
+                        maskedRun,
+                        Rerecording.StepId(usePty, useInteractive, show, maskedRun),
+                        Rerecording.TimingHash(
+                            cmdExecutionDuration,
+                            cmdCastTiming,
+                            normalizeTyping,
+                            GetStepTimeout(command.Extra),
+                            useInteractive || keys.Count > 0,
+                            cmdSpeed,
+                            cmdJitter,
+                            command.Extra.GetValueOrDefault("keys"),
+                            masker,
+                            colorsFollowReads ? Rerecording.DescribeColors(cmdStderrStyle, cmdHighlights) : null),
+                        clock,
+                        GetBool(command.Extra, false, "keep-output"),
+                        outputFirst,
+                        events.Count - outputFirst,
+                        commandStart,
+                        t,
+                        commandStart + cmdExecutionDuration),
+                    ptyStartCursor,
+                    width,
+                    height,
+                    colorsFollowReads);
+            }
 
             t += cmdPost;
             t += cmdPre;
         }
 
-        if (events.Count > 0)
+        if (anyStepShown)
             events.Add(CastEvent.Output(Math.Round(t, 6), prompt));
 
         return (events, null);
@@ -624,14 +648,29 @@ internal static partial class ScenarioCast
     {
         var startupOffset = PtyCastTiming.ComputeStartupOffset(chunks[0].Time.TotalSeconds, executionDuration);
         var timedChunks = new List<(double Time, string Text)>(chunks.Count);
-        foreach (var chunk in chunks)
+        for (var i = 0; i < chunks.Count; i++)
         {
+            var chunk = chunks[i];
             var adjusted = PtyCastTiming.AdjustChunkSeconds(chunk.Time.TotalSeconds, startupOffset);
-            var text = FormatPipeChunkText(chunk, stderrStyle);
-            timedChunks.Add((adjusted, text));
+            // A CRLF split between two reads of a stream is one line break: each half alone would become one. The
+            // color of a stderr read would hide the line feed from a check made later.
+            if (chunk.Text.EndsWith('\r') && NextOfStream(chunks, i) is { } next && next.Text.StartsWith('\n'))
+                chunk = chunk with { Text = chunk.Text[..^1] };
+            timedChunks.Add((adjusted, FormatPipeChunkText(chunk, stderrStyle)));
         }
 
         return timedChunks;
+
+        static PipeStreamChunk? NextOfStream(IReadOnlyList<PipeStreamChunk> chunks, int index)
+        {
+            for (var i = index + 1; i < chunks.Count; i++)
+            {
+                if (chunks[i].IsStderr == chunks[index].IsStderr)
+                    return chunks[i];
+            }
+
+            return null;
+        }
     }
 
     internal static string FormatPipeChunkText(PipeStreamChunk chunk, string stderrStyle)
@@ -750,7 +789,11 @@ internal static partial class ScenarioCast
         if (highlights is null)
         {
             foreach (var (time, text) in coalesced)
-                events.Add(CastEvent.Output(Math.Round(commandStart + time, 6), NormalizeNewlines(text)));
+            {
+                if (text.Length > 0)
+                    events.Add(CastEvent.Output(Math.Round(commandStart + time, 6), NormalizeNewlines(text)));
+            }
+
             return;
         }
 
@@ -768,9 +811,12 @@ internal static partial class ScenarioCast
         var split = HighlightSplitter.SplitByRawSegments(highlighted, rawSegments);
         for (var i = 0; i < coalesced.Count; i++)
         {
-            events.Add(CastEvent.Output(
-                Math.Round(commandStart + coalesced[i].Time, 6),
-                NormalizeNewlines(split[i])));
+            if (split[i].Length > 0)
+            {
+                events.Add(CastEvent.Output(
+                    Math.Round(commandStart + coalesced[i].Time, 6),
+                    NormalizeNewlines(split[i])));
+            }
         }
     }
 
@@ -892,7 +938,7 @@ internal static partial class ScenarioCast
         if (renderSettings.Crop.Right > 0)
             tags.Add(RenderSettingsResolver.CropRightTagPrefix + renderSettings.Crop.Right.ToString(CultureInfo.InvariantCulture));
         if (slots is { Count: > 0 })
-            tags.Add(Rerecording.FormatTag(slots));
+            tags.Add(Rerecording.FormatTag(slots, events.Count, WrittenMilliseconds(events)));
         var tagsJson = string.Join(",", tags.ConvertAll(static tag => JsonEscape.JsonString(tag)));
         writer.WriteLine(
             $"{{\"version\":3,\"term\":{{\"cols\":{width},\"rows\":{height}" +
@@ -933,12 +979,36 @@ internal static partial class ScenarioCast
         writer.WriteLine(",\"x\",\"0\"]");
     }
 
+    /// <summary>Where the last event is in the file: the sum of the intervals <see cref="WriteCastInterval"/> writes for the events.</summary>
+    private static long WrittenMilliseconds(List<CastEvent> events)
+    {
+        var error = 0.0;
+        var previous = 0.0;
+        var total = 0L;
+        foreach (var ev in events)
+        {
+            total += (long)RoundIntervalToMilliseconds(ev.Time - previous, ref error);
+            previous = ev.Time;
+        }
+
+        return total;
+    }
+
+    // Carries the rounding error to the next interval, so the times do not drift from the exact ones. Event times are
+    // whole microseconds, so a time can sit exactly on half a millisecond. Without the first rounding, floating-point
+    // noise from the previous event's time would decide its side, and halves go up so that no interval is negative.
+    private static double RoundIntervalToMilliseconds(double exact, ref double error)
+    {
+        var scaled = Math.Round(exact * 1000.0 + error, 6);
+        var quantized = Math.Floor(scaled + 0.5);
+        error = scaled - quantized;
+        return quantized;
+    }
+
     internal static void WriteCastInterval(TextWriter writer, double exact, ref double error)
     {
         const double scale = 1000.0;
-        var scaled = exact * scale + error;
-        var quantized = Math.Round(scaled, MidpointRounding.AwayFromZero);
-        error = scaled - quantized;
+        var quantized = RoundIntervalToMilliseconds(exact, ref error);
         var seconds = quantized / scale;
         if (seconds == 0)
         {
@@ -1090,8 +1160,8 @@ internal sealed class GenerateOptions
     /// <summary>Receives the keys typed in each interactive step, for --save-keys. Null keeps none.</summary>
     internal List<SavedStepKeys>? SavedKeys { get; init; }
 
-    /// <summary>Receives where each recorded step's output is in the cast (<see cref="StepSlot"/>), for its st:steps tag. Null keeps none.</summary>
-    internal List<StepSlot>? Slots { get; init; }
+    /// <summary>Compares each step with the earlier cast, and keeps where its output is for the st:steps tag. Null does neither.</summary>
+    internal Rerecorder? Rerecorder { get; init; }
 }
 
 /// <summary>
@@ -1156,6 +1226,9 @@ internal readonly record struct CommandExecution(
 
     /// <summary>Playground: the line that stands for output the outputs file does not have.</summary>
     internal string? Placeholder { get; init; }
+
+    /// <summary>A replay: the step's run text as the recording masked it, when masking changed it.</summary>
+    internal string? MaskedRun { get; init; }
 
     /// <summary>
     /// A background step that did not get ready: what went wrong, such as <c>did not print "Listening" within 30 s</c>.

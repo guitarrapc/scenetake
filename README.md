@@ -440,7 +440,8 @@ steps:
 ```
 
 - The earlier recording is the cast at the output path. Commit it next to the SVG, so CI compares with it too. Delete it to record every step afresh.
-- `keep-output` keeps the step's colors and timing too. Remove it for one recording to take the new output. A step that fails still warns, and stops the recording with `--strict`.
+- `keep-output` keeps the step's colors and timing too. Remove it for one recording to take the new output. A step that fails still warns, and stops the recording with `--strict`. A new `mask` still applies: output that holds a masked text is replaced by what the step prints now.
+- A cast recorded in another terminal size is not compared, and neither is a recording that writes `--save-outputs`, which comes from that run alone. scenetake says so.
 - A step is found by its `run` text. A step whose `run` changed is recorded afresh.
 - A value can often be fixed at its source, which keeps the step current: `GIT_AUTHOR_DATE` and `GIT_COMMITTER_DATE` exported in a `show: none` step give the same commits the same hashes on every recording, and `TZ` fixes the time zone.
 

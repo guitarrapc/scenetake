@@ -56,9 +56,13 @@ internal sealed class StepSlot(
     /// <summary>Where output that the clock does not time appears: <see cref="Start"/> plus execution-duration.</summary>
     internal double InstantAt { get; } = instantAt;
 
-    /// <summary>The same step with its events elsewhere, or moved in time.</summary>
-    internal StepSlot With(int first, int count, double start, double end) =>
-        new(Number, Run, Id, Timing, Clock, KeepOutput, first, count, start, end, InstantAt + start - Start);
+    /// <summary>The same step with its events elsewhere: where the OSC filter left them.</summary>
+    internal StepSlot At(int first, int count) =>
+        new(Number, Run, Id, Timing, Clock, KeepOutput, first, count, Start, End, InstantAt);
+
+    /// <summary>The same step showing the earlier recording's output, with the timing keys of the events it now has.</summary>
+    internal StepSlot Reused(int count, double end, uint timing) =>
+        new(Number, Run, Id, timing, Clock, KeepOutput, First, count, Start, end, InstantAt);
 }
 
 /// <summary>A step as the earlier cast's <c>st:steps</c> tag has it. Times are whole milliseconds from the cast's start.</summary>
@@ -94,10 +98,11 @@ internal sealed class PreviousCast
     }
 
     /// <summary>
-    /// The cast at <paramref name="path"/>, or null: when there is no file, and when the file cannot be used, which
-    /// <paramref name="problem"/> then says, such as a cast without step ranges that an earlier scenetake wrote.
+    /// The cast at <paramref name="path"/>, or null: when there is no file, and when the file cannot be used for a
+    /// recording in a <paramref name="width"/> by <paramref name="height"/> terminal, which <paramref name="problem"/>
+    /// then says, such as a cast without step ranges that an earlier scenetake wrote.
     /// </summary>
-    internal static PreviousCast? TryRead(string path, out string? problem)
+    internal static PreviousCast? TryRead(string path, int width, int height, out string? problem)
     {
         problem = null;
         if (!File.Exists(path))
@@ -116,9 +121,10 @@ internal sealed class PreviousCast
 
         try
         {
-            return Parse(lines, out problem);
+            return Parse(lines, width, height, out problem);
         }
-        catch (JsonException)
+        // InvalidOperationException: a JSON string that holds half of a surrogate pair is valid JSON, but has no text.
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException)
         {
             problem = "it is not a cast that scenetake can read";
             return null;
@@ -126,7 +132,7 @@ internal sealed class PreviousCast
     }
 
     /// <summary>A cast held in memory, split into lines. Null, with <paramref name="problem"/>, when it cannot be used.</summary>
-    internal static PreviousCast? Parse(string[] lines, out string? problem)
+    internal static PreviousCast? Parse(string[] lines, int width, int height, out string? problem)
     {
         problem = null;
         var line = 0;
@@ -139,6 +145,8 @@ internal sealed class PreviousCast
         }
 
         string? tag = null;
+        var cols = width;
+        var rows = height;
         using (var header = JsonDocument.Parse(lines[line].TrimStart('﻿')))
         {
             if (header.RootElement.ValueKind != JsonValueKind.Object
@@ -149,6 +157,14 @@ internal sealed class PreviousCast
             {
                 problem = "it is not an asciicast v3 file";
                 return null;
+            }
+
+            if (header.RootElement.TryGetProperty("term", out var term) && term.ValueKind == JsonValueKind.Object)
+            {
+                if (term.TryGetProperty("cols", out var c) && c.ValueKind == JsonValueKind.Number && c.TryGetInt32(out var readCols))
+                    cols = readCols;
+                if (term.TryGetProperty("rows", out var r) && r.ValueKind == JsonValueKind.Number && r.TryGetInt32(out var readRows))
+                    rows = readRows;
             }
 
             if (header.RootElement.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Array)
@@ -168,6 +184,13 @@ internal sealed class PreviousCast
         if (tag is null)
         {
             problem = "it has no step ranges: an earlier scenetake or another tool wrote it";
+            return null;
+        }
+
+        // PTY output is laid out for its terminal, so what fits one size draws over other text in another.
+        if (cols != width || rows != height)
+        {
+            problem = $"it was recorded in a {cols}x{rows} terminal, and this one is {width}x{height}";
             return null;
         }
 
@@ -201,8 +224,8 @@ internal sealed class PreviousCast
                 case "m":
                     events.Add(CastEvent.Marker(time, data));
                     break;
-                case "r" when TryParseSize(data, out var width, out var height):
-                    events.Add(CastEvent.Resize(time, width, height));
+                case "r" when TryParseSize(data, out var resizeWidth, out var resizeHeight):
+                    events.Add(CastEvent.Resize(time, resizeWidth, resizeHeight));
                     break;
                 case "x":
                     continue;
@@ -214,9 +237,9 @@ internal sealed class PreviousCast
             ms.Add(now);
         }
 
-        if (!Rerecording.TryParseTag(tag, events.Count, out var steps))
+        if (!Rerecording.TryParseTag(tag, events.Count, ms.Count > 0 ? ms[^1] : 0, out var steps))
         {
-            problem = "its step ranges cannot be read";
+            problem = "its step ranges do not match its events";
             return null;
         }
 
@@ -266,57 +289,142 @@ internal sealed class PreviousCast
 
     /// <summary>The time of the event at <paramref name="index"/>, in whole milliseconds from the cast's start.</summary>
     internal long MsAt(int index) => _ms[index];
-}
 
-/// <summary>What recording again to an earlier cast did to each step. The lists hold the steps of <see cref="Slots"/>.</summary>
-internal sealed class RerecordResult(
-    List<CastEvent> events,
-    List<StepSlot> slots,
-    List<StepSlot> same,
-    List<StepSlot> kept,
-    List<StepSlot> changed,
-    List<StepSlot> added,
-    List<StepSlot> keepMissing)
-{
-    /// <summary>The cast's events, with the steps that kept their earlier events.</summary>
-    internal List<CastEvent> Events { get; } = events;
-
-    /// <summary>Every step, where its events are in <see cref="Events"/>: the st:steps tag.</summary>
-    internal List<StepSlot> Slots { get; } = slots;
-
-    /// <summary>The steps that printed the same as in the earlier cast.</summary>
-    internal List<StepSlot> Same { get; } = same;
-
-    /// <summary>The steps that printed something else and kept the earlier output (keep-output).</summary>
-    internal List<StepSlot> Kept { get; } = kept;
-
-    /// <summary>The steps that printed something else.</summary>
-    internal List<StepSlot> Changed { get; } = changed;
-
-    /// <summary>The steps that the earlier cast does not have, without keep-output.</summary>
-    internal List<StepSlot> Added { get; } = added;
-
-    /// <summary>The steps with keep-output that the earlier cast does not have.</summary>
-    internal List<StepSlot> KeepMissing { get; } = keepMissing;
+    /// <summary>Where the cursor was when the event at <paramref name="index"/> came: where that step started.</summary>
+    internal (int Row, int Column) CursorAt(int index, int width, int height) =>
+        new CastCursorTracker(width, height).Advance(_events, index);
 }
 
 /// <summary>
-/// Recording again to the file an earlier recording wrote. A step that prints what it printed then keeps the earlier
-/// events, with their timing, and a step with <c>keep-output: true</c> keeps them even when its output changed. So a
-/// scenario recorded again with nothing changed gives the same cast, and the same SVG, though PTY output is timed
-/// by the wall clock. Only the steps whose output changed differ.
+/// Compares each step of a recording with the earlier cast, as the step is composed. The steps after it are then laid
+/// out on what the cast shows: a <c>name</c> comment starts on the right line, and ConPTY gets the right cursor.
+/// A step that prints what it printed then keeps the earlier events, with their timing, and a step with
+/// <c>keep-output: true</c> keeps them even when its output changed. So a scenario recorded again with nothing changed
+/// gives the same cast, and the same SVG, though PTY output is timed by the wall clock.
 /// </summary>
+internal sealed class Rerecorder(PreviousCast? previous, SecretMasker? masker)
+{
+    /// <summary>Whether there is an earlier cast to compare with.</summary>
+    internal bool HasPrevious => previous is not null;
+
+    /// <summary>Every step, where its events are: the st:steps tag, after <see cref="Rerecording.MapIndices"/>.</summary>
+    internal List<StepSlot> Slots { get; } = [];
+
+    /// <summary>The steps that printed the same as in the earlier cast.</summary>
+    internal List<StepSlot> Same { get; } = [];
+
+    /// <summary>The steps that printed something else and kept the earlier output (keep-output).</summary>
+    internal List<StepSlot> Kept { get; } = [];
+
+    /// <summary>The steps that printed something else and show it.</summary>
+    internal List<StepSlot> Changed { get; } = [];
+
+    /// <summary>The steps that the earlier cast does not have, without keep-output.</summary>
+    internal List<StepSlot> Added { get; } = [];
+
+    /// <summary>The steps with keep-output that the earlier cast does not have.</summary>
+    internal List<StepSlot> KeepMissing { get; } = [];
+
+    /// <summary>The steps with keep-output whose earlier output holds text that is masked now. They are in <see cref="Changed"/> too.</summary>
+    internal List<StepSlot> KeepMasked { get; } = [];
+
+    /// <summary>The steps with keep-output that start elsewhere on the screen than their earlier output did. They are in <see cref="Changed"/> too.</summary>
+    internal List<StepSlot> KeepMoved { get; } = [];
+
+    /// <summary>
+    /// Takes a composed step, whose events are at the end of <paramref name="events"/>, and returns when it ends.
+    /// <paramref name="startCursor"/> is where ConPTY started, for a step that it ran. With
+    /// <paramref name="colorsFollowReads"/>, colors and carriage returns do not count as output.
+    /// </summary>
+    internal double Finish(List<CastEvent> events, StepSlot slot, (int Row, int Column)? startCursor, int width, int height, bool colorsFollowReads)
+    {
+        var earlier = previous?.Take(slot.Id);
+        if (earlier is null)
+        {
+            (slot.KeepOutput && previous is not null ? KeepMissing : Added).Add(slot);
+            Slots.Add(slot);
+            return slot.End;
+        }
+
+        var before = previous!.Text(earlier);
+        var printed = Rerecording.PrintedText(events, slot.First, slot.Count);
+        var same = colorsFollowReads
+            ? string.Equals(Rerecording.WithoutColors(printed), Rerecording.WithoutColors(before), StringComparison.Ordinal)
+            : string.Equals(printed, before, StringComparison.Ordinal);
+        var keep = slot.KeepOutput && !same && MayKeep(slot, earlier, before, startCursor, width, height);
+        (same ? Same : keep ? Kept : Changed).Add(slot);
+
+        if (slot.Clock && (keep || (same && (slot.KeepOutput || slot.Timing == earlier.Timing))))
+        {
+            // The earlier events, at their earlier offsets from the command's start, in whole milliseconds as the
+            // file has them. With nothing changed before the step, they land where they were.
+            events.RemoveRange(slot.First, slot.Count);
+            var startMs = Rerecording.ToMs(slot.Start);
+            for (var i = earlier.First; i < earlier.First + earlier.Count; i++)
+                events.Add(previous.EventAt(i) with { Time = (startMs + previous.MsAt(i) - earlier.StartMs) / 1000.0 });
+            var end = (startMs + earlier.EndMs - earlier.StartMs) / 1000.0;
+            // The timing keys of these events: a later recording without keep-output then sees what changed.
+            Slots.Add(slot.Reused(earlier.Count, end, earlier.Timing));
+            return end;
+        }
+
+        if (keep)
+        {
+            // Output that the clock does not time appears at once, so the earlier text takes this run's time.
+            var at = slot.Count > 0 ? events[slot.First].Time : Math.Round(slot.InstantAt, 6);
+            events.RemoveRange(slot.First, slot.Count);
+            if (before.Length > 0)
+                events.Add(CastEvent.Output(at, before));
+            Slots.Add(slot.Reused(events.Count - slot.First, slot.End, slot.Timing));
+            return slot.End;
+        }
+
+        Slots.Add(slot);
+        return slot.End;
+    }
+
+    private bool MayKeep(StepSlot slot, PreviousStep earlier, string before, (int Row, int Column)? startCursor, int width, int height)
+    {
+        // A mask added after the earlier recording must hide this text too, so the step shows its new, masked output.
+        if (masker?.Hides(before) == true)
+        {
+            KeepMasked.Add(slot);
+            return false;
+        }
+
+        // ConPTY writes rows counted from where it started, so the earlier output fits only the same place.
+        if (startCursor is { } cursor && previous!.CursorAt(earlier.First, width, height) != cursor)
+        {
+            KeepMoved.Add(slot);
+            return false;
+        }
+
+        return true;
+    }
+}
+
+/// <summary>The <c>st:steps</c> tag and what a recording says about comparing with the earlier cast (<see cref="Rerecorder"/>).</summary>
 internal static class Rerecording
 {
     internal const string TagPrefix = "st:steps=";
 
-    /// <summary>What finds a step in the earlier cast: its run text, how it runs, and what it shows.</summary>
-    internal static ulong StepId(bool pty, bool interactive, StepShow show, string run) =>
-        Fnv64($"{(interactive ? "interactive" : pty ? "pty" : "pipe")}\n{(show == StepShow.Output ? "output" : "all")}\n{run}");
+    /// <summary>
+    /// Why a recording that writes an outputs file is not compared: a replay of the file must give the cast, so both
+    /// come from this run.
+    /// </summary>
+    internal const string OutputsFileRecordsThisRun = "an outputs file keeps what each step prints now, so the cast does too";
+
+    /// <summary>
+    /// What finds a step in the earlier cast: its run text, how it runs, and what it shows. The cast is published, so
+    /// <paramref name="maskedRun"/> is the text after masking: a hash of a secret would let anyone test guesses of it.
+    /// </summary>
+    internal static ulong StepId(bool pty, bool interactive, StepShow show, string maskedRun) =>
+        Fnv64($"{(interactive ? "interactive" : pty ? "pty" : "pipe")}\n{(show == StepShow.Output ? "output" : "all")}\n{maskedRun}");
 
     /// <summary>
     /// The keys that time a step's output, hashed. A step whose output is the same keeps its earlier timing only when
-    /// these are the same too: otherwise a new execution-duration or max-duration would have no effect.
+    /// these are the same too: otherwise a new execution-duration or max-duration would have no effect. Typed text
+    /// counts by its length, which is what times the output, so the cast holds no hash of a typed password.
     /// </summary>
     internal static uint TimingHash(
         double executionDuration,
@@ -326,7 +434,9 @@ internal static class Rerecording
         bool typesKeys,
         double typingSpeed,
         double typingJitter,
-        object? keys)
+        object? keys,
+        SecretMasker? masker,
+        string? colors = null)
     {
         var text = new StringBuilder();
         text.Append(CultureInfo.InvariantCulture, $"{executionDuration:R}|{timing.SilenceThreshold:R}|{timing.MaxIdle:R}|{timing.MaxDuration:R}|{timing.StreamOutput}|{normalizeTyping}|{timeout:R}");
@@ -337,8 +447,58 @@ internal static class Rerecording
             Describe(text, keys);
         }
 
-        var hash = Fnv64(text.ToString());
+        // Output compared without its colors (WithoutColors) would otherwise keep them after a new color key.
+        if (colors is not null)
+            text.Append('|').Append(colors);
+
+        var described = text.ToString();
+        var hash = Fnv64(masker?.MaskUncounted(described) ?? described);
         return (uint)(hash ^ (hash >> 32));
+    }
+
+    /// <summary>The keys that color a pipe step's output, as text for <see cref="TimingHash"/>.</summary>
+    internal static string DescribeColors(string stderrStyle, List<HighlightSpec>? highlights)
+    {
+        var text = new StringBuilder(stderrStyle);
+        foreach (var highlight in highlights ?? [])
+        {
+            text.Append('|').Append(highlight.ColorOpen);
+            foreach (var at in highlight.At)
+                text.Append(',').Append(at);
+        }
+
+        return text.ToString();
+    }
+
+    /// <summary>
+    /// <paramref name="text"/> without color sequences and carriage returns. Streamed pipe output has them where the
+    /// reads fell, so two recordings of the same output can differ in nothing else.
+    /// </summary>
+    internal static string WithoutColors(string text)
+    {
+        var result = new StringBuilder(text.Length);
+        for (var i = 0; i < text.Length; i++)
+        {
+            var c = text[i];
+            if (c == '\r')
+                continue;
+
+            if (c == '\u001b' && i + 1 < text.Length && text[i + 1] == '[')
+            {
+                var end = i + 2;
+                while (end < text.Length && text[end] is >= '0' and <= '?')
+                    end++;
+                if (end < text.Length && text[end] == 'm')
+                {
+                    i = end;
+                    continue;
+                }
+            }
+
+            result.Append(c);
+        }
+
+        return result.ToString();
     }
 
     private static void Describe(StringBuilder text, object? value)
@@ -357,7 +517,10 @@ internal static class Rerecording
                 {
                     Describe(text, key);
                     text.Append(':');
-                    Describe(text, item);
+                    if (key is "type")
+                        text.Append(CultureInfo.InvariantCulture, $"{Convert.ToString(item, CultureInfo.InvariantCulture)?.Length}");
+                    else
+                        Describe(text, item);
                     text.Append(',');
                 }
 
@@ -382,11 +545,20 @@ internal static class Rerecording
         }
     }
 
+    // Line endings do not count: a checkout with CRLF has the same steps as one with LF.
     private static ulong Fnv64(string text)
     {
         var hash = 14695981039346656037UL;
-        foreach (var c in text)
+        for (var i = 0; i < text.Length; i++)
         {
+            var c = text[i];
+            if (c == '\r')
+            {
+                if (i + 1 < text.Length && text[i + 1] == '\n')
+                    i++;
+                c = '\n';
+            }
+
             hash ^= c;
             hash *= 1099511628211UL;
         }
@@ -394,15 +566,19 @@ internal static class Rerecording
         return hash;
     }
 
-    /// <summary>The <c>st:steps</c> tag: for each step, its id, timing hash, c or d (clock), first event, event count, and start and end in milliseconds.</summary>
-    internal static string FormatTag(IReadOnlyList<StepSlot> slots)
+    /// <summary>
+    /// The <c>st:steps</c> tag: how many events the cast has and where it ends in milliseconds, which tell whether the
+    /// cast was edited since, then for each step its id, timing hash, c or d (clock), first event, event count, and
+    /// start and end in milliseconds.
+    /// </summary>
+    internal static string FormatTag(IReadOnlyList<StepSlot> slots, int eventCount, long castMs)
     {
         var text = new StringBuilder(TagPrefix);
+        text.Append(eventCount.ToString(CultureInfo.InvariantCulture)).Append(':').Append(castMs.ToString(CultureInfo.InvariantCulture));
         for (var i = 0; i < slots.Count; i++)
         {
             var slot = slots[i];
-            if (i > 0)
-                text.Append(' ');
+            text.Append(' ');
             AppendHex(text, slot.Id, 16);
             text.Append(':');
             AppendHex(text, slot.Timing, 8);
@@ -439,13 +615,30 @@ internal static class Rerecording
         return true;
     }
 
-    /// <summary>Reads the tag's value after <see cref="TagPrefix"/>. False when an entry is malformed or names events the cast does not have.</summary>
-    internal static bool TryParseTag(string value, int eventCount, out List<PreviousStep> steps)
+    /// <summary>
+    /// Reads the tag's value after <see cref="TagPrefix"/>. False when it is malformed, or does not fit a cast of
+    /// <paramref name="eventCount"/> events that ends at <paramref name="castMs"/>: an edit moved the events it names.
+    /// </summary>
+    internal static bool TryParseTag(string value, int eventCount, long castMs, out List<PreviousStep> steps)
     {
         steps = [];
-        foreach (var entry in value.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        var entries = value.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (entries.Length == 0)
+            return false;
+
+        var cast = entries[0].Split(':');
+        if (cast.Length != 2
+            || !int.TryParse(cast[0], NumberStyles.None, CultureInfo.InvariantCulture, out var writtenCount)
+            || !long.TryParse(cast[1], NumberStyles.None, CultureInfo.InvariantCulture, out var writtenMs)
+            || writtenCount != eventCount
+            || writtenMs != castMs)
         {
-            var parts = entry.Split(':');
+            return false;
+        }
+
+        for (var e = 1; e < entries.Length; e++)
+        {
+            var parts = entries[e].Split(':');
             if (parts.Length != 7
                 || !TryParseHex(parts[0], 16, out var id)
                 || !TryParseHex(parts[1], 8, out var timing)
@@ -465,7 +658,8 @@ internal static class Rerecording
         return true;
     }
 
-    private static long ToMs(double seconds) => (long)Math.Round(seconds * 1000, MidpointRounding.AwayFromZero);
+    // As the cast writer rounds an event's time, so a step's start is never after the event that comes next.
+    internal static long ToMs(double seconds) => (long)Math.Floor(Math.Round(Math.Round(seconds, 6) * 1000, 6) + 0.5);
 
     /// <summary>
     /// The steps with their events where <see cref="CastOscFilter.RemovePrivateSequences(List{CastEvent}, int[])"/>
@@ -477,87 +671,17 @@ internal static class Rerecording
         foreach (var slot in slots)
         {
             var first = map[slot.First];
-            mapped.Add(slot.With(first, map[slot.First + slot.Count] - first, slot.Start, slot.End));
+            mapped.Add(slot.At(first, map[slot.First + slot.Count] - first));
         }
 
         return mapped;
     }
 
     /// <summary>
-    /// The cast's events with each step compared to the earlier cast. A step that prints the same as before, with the
-    /// same timing keys, keeps the earlier events, and the steps after it move with where it ends. A step with
-    /// keep-output keeps the earlier events whatever it printed. <paramref name="previous"/> null keeps every step as
-    /// recorded.
+    /// The text of a step's output events, joined, as the cast file will hold it: with U+FFFD for a byte that is not
+    /// UTF-8, as <see cref="JsonEscape.WriteJsonUtf8String"/> writes it.
     /// </summary>
-    internal static RerecordResult Apply(List<CastEvent> events, List<StepSlot> slots, PreviousCast? previous)
-    {
-        var result = new RerecordResult(new List<CastEvent>(events.Count), new List<StepSlot>(slots.Count), [], [], [], [], []);
-        var output = result.Events;
-        // How far the events after a kept step move: a whole number of milliseconds.
-        var shift = 0.0;
-        var next = 0;
-
-        foreach (var slot in slots)
-        {
-            for (; next < slot.First; next++)
-                output.Add(Moved(events[next], shift));
-
-            var start = slot.Start + shift;
-            var end = slot.End + shift;
-            var first = output.Count;
-            var earlier = previous?.Take(slot.Id);
-            if (earlier is { } step)
-            {
-                var same = string.Equals(Text(events, slot.First, slot.Count), previous!.Text(step), StringComparison.Ordinal);
-                if (slot.Clock && (slot.KeepOutput || (same && slot.Timing == step.Timing)))
-                {
-                    // The earlier events, at their earlier offsets from the command's start, in whole milliseconds as
-                    // the file has them. With nothing changed before the step, they land where they were.
-                    var startMs = ToMs(start);
-                    for (var i = step.First; i < step.First + step.Count; i++)
-                        output.Add(previous.EventAt(i) with { Time = (startMs + previous.MsAt(i) - step.StartMs) / 1000.0 });
-                    var keptEnd = (startMs + step.EndMs - step.StartMs) / 1000.0;
-                    shift = keptEnd - slot.End;
-                    end = keptEnd;
-                }
-                else if (!slot.Clock && slot.KeepOutput && !same)
-                {
-                    // Output that the clock does not time appears at once, so the earlier text takes this run's time.
-                    var text = previous.Text(step);
-                    if (text.Length > 0)
-                        output.Add(CastEvent.Output(slot.Count > 0 ? Moved(events[slot.First], shift).Time : Math.Round(slot.InstantAt + shift, 6), text));
-                }
-                else
-                {
-                    for (var i = slot.First; i < slot.First + slot.Count; i++)
-                        output.Add(Moved(events[i], shift));
-                }
-
-                (same ? result.Same : slot.KeepOutput ? result.Kept : result.Changed).Add(slot);
-            }
-            else
-            {
-                for (var i = slot.First; i < slot.First + slot.Count; i++)
-                    output.Add(Moved(events[i], shift));
-                (slot.KeepOutput && previous is not null ? result.KeepMissing : result.Added).Add(slot);
-            }
-
-            next = slot.First + slot.Count;
-            result.Slots.Add(slot.With(first, output.Count - first, start, end));
-        }
-
-        for (; next < events.Count; next++)
-            output.Add(Moved(events[next], shift));
-
-        return result;
-    }
-
-    // Rounding again to the microsecond, as the recording rounds, gives the time the earlier recording had.
-    private static CastEvent Moved(CastEvent ev, double shift) =>
-        shift == 0 ? ev : ev with { Time = Math.Round(ev.Time + shift, 6) };
-
-    /// <summary>The text of output events, joined, as the cast file holds it: a byte that is not UTF-8 is U+FFFD, as <see cref="JsonEscape.WriteJsonUtf8String"/> writes it.</summary>
-    private static string Text(List<CastEvent> events, int first, int count)
+    internal static string PrintedText(List<CastEvent> events, int first, int count)
     {
         var text = new StringBuilder();
         Span<char> chars = stackalloc char[2];
@@ -595,13 +719,15 @@ internal static class Rerecording
     /// What recording again did, for stderr: how many steps printed the same, kept their output, or changed, and the
     /// steps that changed. Empty for a first recording without keep-output.
     /// </summary>
-    internal static List<string> Describe(RerecordResult result, bool hadPrevious, string? problem, string castPath)
+    internal static List<string> Describe(Rerecorder result, string? problem, string castPath)
     {
         var lines = new List<string>();
         var keeps = result.Slots.Exists(static slot => slot.KeepOutput);
-        if (!hadPrevious)
+        if (!result.HasPrevious)
         {
-            if (problem is not null)
+            if (problem == OutputsFileRecordsThisRun)
+                lines.Add($"Note: the earlier {castPath} was not compared with this recording: {problem}.");
+            else if (problem is not null)
                 lines.Add($"Note: the earlier {castPath} was not compared with this recording: {problem}. The next recording compares with this one.");
             else if (keeps)
                 lines.Add($"Note: keep-output: there is no earlier cast at {castPath} yet, so every step shows what it printed now.");
@@ -627,6 +753,10 @@ internal static class Rerecording
             lines.Add($"  new: step {slot.Number}: {Shorten(slot.Run)}");
         foreach (var slot in result.KeepMissing)
             lines.Add($"Note: step {slot.Number} sets keep-output, but the earlier cast has no output of it, so it shows what it printed now: {Shorten(slot.Run)}");
+        foreach (var slot in result.KeepMasked)
+            lines.Add($"Note: step {slot.Number} sets keep-output, but its earlier output holds text that is masked now, so it shows what it printed now: {Shorten(slot.Run)}");
+        foreach (var slot in result.KeepMoved)
+            lines.Add($"Note: step {slot.Number} sets keep-output, but it starts at another place on the screen than its earlier output did, so it shows what it printed now: {Shorten(slot.Run)}");
         return lines;
     }
 

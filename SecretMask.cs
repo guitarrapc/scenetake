@@ -163,6 +163,19 @@ internal sealed class SecretMasker
         return masked is null ? text : Encoding.UTF8.GetString(masked[0]);
     }
 
+    /// <summary><see cref="MaskText"/> for text the recording does not show, so <see cref="Counts"/> leaves it out.</summary>
+    internal string MaskUncounted(string text)
+    {
+        if (text.Length == 0)
+            return text;
+
+        var masked = MaskSegments([Encoding.UTF8.GetBytes(text)], count: false);
+        return masked is null ? text : Encoding.UTF8.GetString(masked[0]);
+    }
+
+    /// <summary>Whether masking would change <paramref name="text"/>. Text that was masked already has only stars left to hide.</summary>
+    internal bool Hides(string text) => !string.Equals(MaskUncounted(text), text, StringComparison.Ordinal);
+
     /// <summary>A PTY step's output chunks, read as one stream. The same list when nothing is hidden.</summary>
     internal IReadOnlyList<TimedBytes> MaskPty(IReadOnlyList<TimedBytes> chunks)
     {
@@ -246,7 +259,7 @@ internal sealed class SecretMasker
     /// The segments with each hidden character replaced, one array per segment, or null when nothing is hidden. A
     /// character whose bytes are split between two segments is replaced in the first.
     /// </summary>
-    private byte[][]? MaskSegments(ReadOnlyMemory<byte>[] segments)
+    private byte[][]? MaskSegments(ReadOnlyMemory<byte>[] segments, bool count = true)
     {
         var total = 0;
         foreach (var segment in segments)
@@ -267,7 +280,7 @@ internal sealed class SecretMasker
         segmentStarts[^1] = total;
 
         var text = VisibleText.Read(all);
-        var hidden = Find(text.Text);
+        var hidden = Find(text.Text, count);
         if (hidden is null)
             return null;
 
@@ -319,7 +332,7 @@ internal sealed class SecretMasker
     }
 
     /// <summary>Which characters of <paramref name="text"/> to hide, or null when none.</summary>
-    private bool[]? Find(string text)
+    private bool[]? Find(string text, bool count = true)
     {
         bool[]? hidden = null;
 
@@ -337,7 +350,7 @@ internal sealed class SecretMasker
                 }
             }
 
-            if (added)
+            if (added && count)
                 _counts[label] = _counts.GetValueOrDefault(label) + 1;
         }
 

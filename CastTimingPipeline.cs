@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Text;
 using System.Runtime.InteropServices;
 
@@ -161,7 +162,45 @@ internal static class CastTimingPipeline
         }
 
         result.Add((currentTime, ConcatUtf8(buffers, currentLength)));
+        MoveSplitCharactersForward(result);
         return result;
+    }
+
+    // A read can end inside a character. Its first bytes go to the next chunk, because each event is written as text
+    // of its own: the two halves would each become U+FFFD, and the same output read otherwise would look different.
+    private static void MoveSplitCharactersForward(List<(double Time, byte[] Data)> chunks)
+    {
+        for (var i = 0; i < chunks.Count - 1; i++)
+        {
+            var (time, data) = chunks[i];
+            var split = IncompleteTailLength(data);
+            if (split == 0)
+                continue;
+
+            var (nextTime, nextData) = chunks[i + 1];
+            var joined = new byte[split + nextData.Length];
+            data.AsSpan(data.Length - split).CopyTo(joined);
+            nextData.CopyTo(joined, split);
+            chunks[i + 1] = (nextTime, joined);
+            if (split == data.Length)
+                chunks.RemoveAt(i--);
+            else
+                chunks[i] = (time, data[..^split]);
+        }
+    }
+
+    private static int IncompleteTailLength(ReadOnlySpan<byte> data)
+    {
+        for (var length = 1; length <= Math.Min(3, data.Length); length++)
+        {
+            var value = data[^length];
+            if (value < 0x80)
+                return 0;
+            if (value >= 0xC0)
+                return Rune.DecodeFromUtf8(data[^length..], out _, out _) == OperationStatus.NeedMoreData ? length : 0;
+        }
+
+        return 0;
     }
 
     internal static void MergeBurstGaps(Span<double> times, ReadOnlySpan<double> originalSeconds, double burstThreshold)
@@ -253,6 +292,22 @@ internal static class HighlightSplitter
 
                 end++;
                 break;
+            }
+
+            return end;
+        }
+
+        // ESC \ ends a string sequence, and an OSC runs to its BEL or ESC \. Neither stops at a letter.
+        if (end < text.Length && text[end] == '\\')
+            return end + 1;
+        if (end < text.Length && text[end] == ']')
+        {
+            for (end++; end < text.Length; end++)
+            {
+                if (text[end] == '\u0007')
+                    return end + 1;
+                if (text[end] == '\u001b' && end + 1 < text.Length && text[end + 1] == '\\')
+                    return end + 2;
             }
 
             return end;
