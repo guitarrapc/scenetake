@@ -155,8 +155,13 @@ internal static partial class ScenarioCast
             }
 
             // show: output leaves out the prompt and the typing: the output appears as if the program drew it by itself.
+            // A replay types the run text as the outputs file holds it, masked by the recording, which knew the
+            // secrets that pre and earlier steps exported. It masks it again for what the YAML has added.
             if (show == StepShow.All)
-                EmitTypedCommand(events, ref t, prompt, masker?.MaskText(command.Cmd) ?? command.Cmd, cmdSpeed, cmdJitter, rng, hasRunHighlight, runHighlightStyle);
+            {
+                var typed = options.Replay?.MaskedRun(command.Cmd, usePty, useInteractive) ?? command.Cmd;
+                EmitTypedCommand(events, ref t, prompt, masker?.MaskText(typed) ?? typed, cmdSpeed, cmdJitter, rng, hasRunHighlight, runHighlightStyle);
+            }
 
             if (options.LogRunning)
                 Console.Error.WriteLine($"  running: {command.Cmd}");
@@ -1254,6 +1259,12 @@ internal sealed class GenerateOptions
 
     /// <summary>Compares each step with the earlier cast, and keeps where its output is for the st:steps tag. Null does neither.</summary>
     internal Rerecorder? Rerecorder { get; init; }
+
+    /// <summary>
+    /// A replay of an outputs file, which gives each typed command as the file holds it, masked by the recording. Null
+    /// types the YAML's run text.
+    /// </summary>
+    internal StepOutputsReplay? Replay { get; init; }
 }
 
 /// <summary>

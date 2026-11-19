@@ -1101,16 +1101,23 @@ static bool IntegrationReplayFindsStepsWithExportedSecrets(string repoRoot) => W
       - run: echo "uses exportedsecret9" > /dev/null; echo fetched
         show: output
       - echo plain
+      - echo exportedsecret9 > /dev/null
     """, (bin, directory) =>
 {
-    // Only the recording knows the secret, which pre exported, so a replay must take the masked text from the file.
+    // Only the recording knows the secret, which pre exported, so a replay must take the masked text from the file:
+    // to find the step, and to type the last one as the recording did.
     var recorded = RunScenetake(bin, directory, "--save-outputs", "demo.outputs.json", "demo.yaml", "demo");
+    var cast = File.ReadAllText(Path.Combine(directory, "demo.cast"));
     var replay = RunScenetake(bin, directory, "--replay", "demo.outputs.json", "demo.yaml", "other");
     var onto = RunScenetake(bin, directory, "--replay", "demo.outputs.json", "demo.yaml", "demo");
-    var cast = File.ReadAllText(Path.Combine(directory, "demo.cast"));
+    // The cast types one character per event, so its output events are joined before looking for the secret.
+    var shown = string.Concat(cast.Split('\n').Skip(1).Where(static line => line.StartsWith('['))
+        .Select(static line => System.Text.Json.JsonDocument.Parse(line).RootElement)
+        .Where(static ev => ev[1].GetString() == "o").Select(static ev => ev[2].GetString()));
     return Expect(recorded.ExitCode == 0 && replay.ExitCode == 0 && onto.ExitCode == 0, $"exit {recorded.ExitCode}, {replay.ExitCode}, {onto.ExitCode}\n{recorded.Stderr}\n{replay.Stderr}")
-        && Expect(File.ReadAllText(Path.Combine(directory, "other.cast")) == cast, $"the replay differs: {FirstDifference(cast, File.ReadAllText(Path.Combine(directory, "other.cast")))}")
-        & Expect(onto.Stderr.Contains("all 2 steps printed the same", StringComparison.Ordinal), onto.Stderr)
+        && Expect(!shown.Contains("exportedsecret9", StringComparison.Ordinal) && shown.Contains("echo *************** > /dev/null", StringComparison.Ordinal), $"the recording types the secret: {shown}")
+        & Expect(File.ReadAllText(Path.Combine(directory, "other.cast")) == cast, $"the replay differs from the recording: {FirstDifference(cast, File.ReadAllText(Path.Combine(directory, "other.cast")))}")
+        & Expect(onto.Stderr.Contains("all 3 steps printed the same", StringComparison.Ordinal), onto.Stderr)
         & Expect(!onto.Stderr.Contains("new: step", StringComparison.Ordinal), onto.Stderr);
 });
 

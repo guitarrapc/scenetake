@@ -466,6 +466,28 @@ internal sealed class StepOutputsReplay
 
     internal Task<CommandExecution> RunAsync(StepStart step) => Task.FromResult(Run(step));
 
+    /// <summary>
+    /// The run text as the recording masked it, for the step that <see cref="Run"/> takes next, or null when masking
+    /// changed nothing or the step was not recorded. The command is typed before the step runs, and a secret that pre
+    /// or an earlier step exported is known only to the recording.
+    /// </summary>
+    internal string? MaskedRun(string run, bool pty, bool interactive)
+    {
+        var key = (run, interactive ? RecordedStepKind.Interactive : pty ? RecordedStepKind.Pty : RecordedStepKind.Pipe);
+        if (_recorded.TryGetValue(key, out var recorded))
+            return recorded[Math.Min(_taken.GetValueOrDefault(key), recorded.Count - 1)].MaskedRun;
+
+        // A step whose pty or interactive changed since the recording has no output here, but the same run text was
+        // recorded under its other kind. Any masked copy of it shows what the recording hid.
+        foreach (var step in _outputs.Steps)
+        {
+            if (step.Run == run && step.MaskedRun is { } masked)
+                return masked;
+        }
+
+        return null;
+    }
+
     internal CommandExecution Run(StepStart step)
     {
         // A step that shows nothing, a background step among them, was not recorded: it takes no recorded output, and

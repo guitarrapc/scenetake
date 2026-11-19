@@ -55,6 +55,7 @@ failures += Run("SummaryCountsByKind", SummaryCountsByKind);
 failures += Run("SecretKeyNames", SecretKeyNames);
 failures += Run("SettingsKeysParse", SettingsKeysParse);
 failures += Run("RecordingHidesCommandCommentAndOutput", RecordingHidesCommandCommentAndOutput);
+failures += Run("ReplayTypesTheRunAsRecorded", ReplayTypesTheRunAsRecorded);
 
 if (failures > 0)
 {
@@ -668,3 +669,54 @@ static bool RecordingHidesCommandCommentAndOutput()
         & Expect(!outputsJson.Contains("welcome, hunter2x", StringComparison.Ordinal) && outputsJson.Contains("welcome, ********", StringComparison.Ordinal),
             $"the outputs file holds the masked output: {outputsJson}");
 }
+
+static bool ReplayTypesTheRunAsRecorded()
+{
+    // A hidden step exports the secret halfway, as pre or a step can: the recording knows it only from then on, and a
+    // replay's masker never does, so only the outputs file can tell the replay what the recording typed. The same run
+    // text before and after the export makes the replay pick the recorded step it is about to take.
+    var secret = "exported" + "secret9";
+    var steps = $"  - echo {secret}\n  - run: export DEMO_API_TOKEN\n    show: none\n  - echo {secret}\n  - run: echo {secret} again\n    pty: true\n  - run: echo {secret} too\n    pty: true\n    interactive: true\n";
+    var yaml = "steps:\n" + steps;
+    var scenario = ParseScenario(yaml);
+    var recorded = new List<RecordedStep>();
+    var recordingMasker = SecretMasker.ForScenario(scenario, null)!;
+    var (recording, _) = GenerateAsync(scenario, 1, new GenerateOptions { LogRunning = false, Record = recorded, Masker = recordingMasker }, step =>
+    {
+        if (step.Show == StepShow.None)
+        {
+            recordingMasker.Learn([new KeyValuePair<string, string?>("DEMO_API_TOKEN", secret)]);
+            return Task.FromResult(new CommandExecution(0, false, "", "", null, null, []));
+        }
+
+        var output = Encoding.UTF8.GetBytes("fetched\r\n");
+        return Task.FromResult(step.UseInteractive
+            ? new CommandExecution(0, true, "", "", [new TimedBytes(TimeSpan.Zero, output)], [], null)
+            : step.UsePty
+                ? new CommandExecution(0, true, "", "", [new TimedBytes(TimeSpan.Zero, output)], null, null) { PtyLeadingInitRemoved = true }
+                : CommandExecution.FromPipeStream("fetched\n", "", 0, [new PipeStreamChunk(TimeSpan.Zero, false, "fetched\n")]));
+    }).GetAwaiter().GetResult();
+    var outputs = new StepOutputs { Scenetake = "test", Os = "linux", Shell = "bash", Width = 80, Height = 24, Steps = recorded };
+
+    var replay = new StepOutputsReplay(outputs);
+    var (replayed, _) = GenerateAsync(scenario, 1, new GenerateOptions { LogRunning = false, Masker = SecretMasker.ForScenario(scenario, null), Replay = replay }, replay.RunAsync).GetAwaiter().GetResult();
+    // The PTY step is a pipe step here: it has no recorded output, but its run text was masked all the same.
+    var playgroundCast = PlaygroundText(PlaygroundRender.RenderScenario(yaml.Replace("again\n    pty: true\n", "again\n"), outputs, new PlaygroundOptions()));
+
+    static string Text(List<CastEvent> events) => string.Concat(events.Select(static ev => ev.HasUtf8Output ? Encoding.UTF8.GetString(ev.Utf8Output.Span) : ev.Data));
+    var recordingText = Text(recording);
+    var stars = Stars(secret.Length);
+    return Expect(recordingText.Contains($"echo {secret}\r\n", StringComparison.Ordinal) && recordingText.Contains($"echo {stars}\r\n", StringComparison.Ordinal)
+            && recordingText.Contains($"echo {stars} again", StringComparison.Ordinal) && recordingText.Contains($"echo {stars} too", StringComparison.Ordinal),
+            $"the recording types the secret once, before the export: {Show(recordingText)}")
+        & Same("replay", recordingText, Text(replayed))
+        & Expect(playgroundCast.Contains($"echo {stars}\r\n", StringComparison.Ordinal) && playgroundCast.Contains($"echo {stars} again", StringComparison.Ordinal)
+            && playgroundCast.Contains($"echo {stars} too", StringComparison.Ordinal), $"the playground types the secret: {Show(playgroundCast)}");
+}
+
+// A playground cast's output events joined: the cast types one character per event.
+static string PlaygroundText(PlaygroundResult result) => result.Cast is { } bytes
+    ? string.Concat(Encoding.UTF8.GetString(bytes).Split('\n').Skip(1).Where(static line => line.StartsWith('['))
+        .Select(static line => System.Text.Json.JsonDocument.Parse(line).RootElement)
+        .Where(static ev => ev[1].GetString() == "o").Select(static ev => ev[2].GetString()))
+    : result.Error ?? "";

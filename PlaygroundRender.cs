@@ -126,6 +126,7 @@ internal static class PlaygroundRender
                 // browser does not have. Masking again hides only what the YAML adds, such as a new settings.mask text.
                 Masker = SecretMasker.ForScenario(scenario, environment: null),
                 Rerecorder = rerecorder,
+                Replay = replay,
             };
 
             // Every step's output is in memory, so the task has already completed.

@@ -1017,6 +1017,7 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
         LogRunning = false,
         Masker = replayMasker,
         Rerecorder = replayRerecorder,
+        Replay = replay,
     }, replay.RunAsync);
 
     var missing = replay.Steps.Where(static step => !step.Recorded).ToList();
