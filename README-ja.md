@@ -56,8 +56,8 @@ steps:
 | ![](samples/showcase/fetch.svg) | ![](samples/showcase/devtools.svg) |
 | [figlet、lolcat、toilet](samples/showcase/logo.yaml) | [sl](samples/showcase/sl.yaml) |
 | ![](samples/showcase/logo.svg) | ![](samples/showcase/sl.svg) |
-| [`keys`で操作するvimとgit diff（背景は画像）](samples/showcase/vim.yaml) | |
-| ![](samples/showcase/vim.svg) | |
+| [`keys`で操作するvimとgit diff（背景は画像）](samples/showcase/vim.yaml) | [トークンとパスワードを自動で隠す](samples/showcase/secrets.yaml) |
+| ![](samples/showcase/vim.svg) | ![](samples/showcase/secrets.svg) |
 
 ![](samples/showcase/nyancat.svg)
 

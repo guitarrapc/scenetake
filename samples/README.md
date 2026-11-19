@@ -32,6 +32,7 @@ Demos of well-known terminal tools, used in the README gallery and the playgroun
 | sl | The steam locomotive, drawn with curses | [yaml](showcase/sl.yaml) · [cast](showcase/sl.cast) · [svg](showcase/sl.svg) |
 | nyancat | A full-screen truecolor animation, stopped by `timeout` | [yaml](showcase/nyancat.yaml) · [cast](showcase/nyancat.cast) · [svg](showcase/nyancat.svg) |
 | vim | `vim` edited by `keys`, then `git diff` | [yaml](showcase/vim.yaml) · [cast](showcase/vim.cast) · [svg](showcase/vim.svg) |
+| secrets | A dummy token, a password in a URL, and a host name in `settings.mask`, hidden | [yaml](showcase/secrets.yaml) · [cast](showcase/secrets.cast) · [svg](showcase/secrets.svg) |
 | welcome | The playground's first screen | [yaml](showcase/welcome.yaml) · [cast](showcase/welcome.cast) · [svg](showcase/welcome.svg) |
 
 ## basic

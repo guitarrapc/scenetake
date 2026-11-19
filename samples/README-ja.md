@@ -32,6 +32,7 @@ scenetakeのサンプルシナリオです。`scenetake --format svg samples/bas
 | sl | cursesで描くSL | [yaml](showcase/sl.yaml) · [cast](showcase/sl.cast) · [svg](showcase/sl.svg) |
 | nyancat | 全画面のトゥルーカラーアニメーションを`timeout`で停止 | [yaml](showcase/nyancat.yaml) · [cast](showcase/nyancat.cast) · [svg](showcase/nyancat.svg) |
 | vim | `keys`で`vim`を編集し、`git diff`で確認 | [yaml](showcase/vim.yaml) · [cast](showcase/vim.cast) · [svg](showcase/vim.svg) |
+| secrets | ダミーのトークン、URL中のパスワード、`settings.mask`のホスト名を隠す | [yaml](showcase/secrets.yaml) · [cast](showcase/secrets.cast) · [svg](showcase/secrets.svg) |
 | welcome | プレイグラウンドの最初の画面 | [yaml](showcase/welcome.yaml) · [cast](showcase/welcome.cast) · [svg](showcase/welcome.svg) |
 
 ## basic

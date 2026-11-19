@@ -56,8 +56,8 @@ steps:
 | ![](samples/showcase/fetch.svg) | ![](samples/showcase/devtools.svg) |
 | [figlet, lolcat, and toilet](samples/showcase/logo.yaml) | [sl](samples/showcase/sl.yaml) |
 | ![](samples/showcase/logo.svg) | ![](samples/showcase/sl.svg) |
-| [vim and git diff, typed by `keys`, on an image background](samples/showcase/vim.yaml) | |
-| ![](samples/showcase/vim.svg) | |
+| [vim and git diff, typed by `keys`, on an image background](samples/showcase/vim.yaml) | [Tokens and passwords, masked](samples/showcase/secrets.yaml) |
+| ![](samples/showcase/vim.svg) | ![](samples/showcase/secrets.svg) |
 
 ![](samples/showcase/nyancat.svg)
 
