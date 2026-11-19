@@ -736,6 +736,23 @@ static bool CaptureRecordsOneCommand(string scenetake, string work)
     ok &= Check(wordsExit == 0 && wordsStderr.Contains(expectedLine, StringComparison.Ordinal) && wordsText.Contains("a b", StringComparison.Ordinal)
         && wordsText.Contains("it's", StringComparison.Ordinal), $"words: exit {wordsExit}{Environment.NewLine}{wordsStderr}{wordsText}");
 
+    // --save-scenario writes the scenario before the command runs, with the style options as render keys, names the
+    // files after it, and never replaces a file. Running the saved file gives the same SVG.
+    var saved = Path.Combine(directory, "saved", "demo.yaml");
+    var (saveExit, saveStderr) = Exec(scenetake, directory, ["capture", "--pipe", "--window", "macos", "--theme", "dracula", "--fit", "none", "--save-scenario", saved, "--", "echo", "a: b"]);
+    var savedText = File.Exists(saved) ? File.ReadAllText(saved) : "";
+    var savedSvg = Path.ChangeExtension(saved, ".svg");
+    var firstSvg = File.Exists(savedSvg) ? File.ReadAllText(savedSvg) : "";
+    ok &= Check(saveExit == 0 && savedText.Contains("render:\n  window: macos\n  fit: none\n  theme:\n    preset: \"dracula\"\n", StringComparison.Ordinal)
+        && savedText.Contains("  - run: \"echo 'a: b'\"\n", StringComparison.Ordinal) && !savedText.Contains("pty:", StringComparison.Ordinal)
+        && File.Exists(Path.ChangeExtension(saved, ".cast")) && firstSvg.Length > 0 && !File.Exists(Path.Combine(directory, "echo.svg")),
+        $"--save-scenario: exit {saveExit}{Environment.NewLine}{saveStderr}{savedText}");
+    var (againExit, againStderr) = Exec(scenetake, directory, ["--format", "svg", saved]);
+    ok &= Check(againExit == 0 && File.ReadAllText(savedSvg) == firstSvg, $"the saved scenario records the same SVG: exit {againExit}{Environment.NewLine}{againStderr}");
+    var (existsExit, existsStderr) = Exec(scenetake, directory, ["capture", "--save-scenario", saved, "--", "echo", "other"]);
+    ok &= Check(existsExit == 1 && existsStderr.Contains("saved/demo.yaml already exists", StringComparison.Ordinal) && File.ReadAllText(saved) == savedText,
+        $"--save-scenario keeps a file: exit {existsExit}{Environment.NewLine}{existsStderr}");
+
     foreach (var (args, error) in new (string[] Args, string Error)[]
     {
         (["capture"], "capture needs a command"),
@@ -743,6 +760,7 @@ static bool CaptureRecordsOneCommand(string scenetake, string work)
         (["capture", "one", "--", "two"], "give it as one argument or after --, not both"),
         (["capture", "--height", "600", "--", "x"], "--height must be a whole number of rows from 1 to 512: 600"),
         (["capture", "--timeout", "0", "--", "x"], "--timeout must be seconds above 0"),
+        (["capture", "--save-scenario", "a.yaml", "--save-scenario", "b.yaml", "--", "x"], "duplicate option: --save-scenario"),
     })
     {
         var (exit, stderr) = Exec(scenetake, directory, args);
@@ -864,7 +882,11 @@ static bool CliRulesForValuesAndFormats(string scenetake, string repoRoot, strin
     var castAsYaml = Path.Combine(work, "cast-named.yaml");
     File.Copy(Path.Combine(repoRoot, "samples", "basic.cast"), castAsYaml, overwrite: true);
     var (castYamlExit, castYamlStderr) = Exec(scenetake, repoRoot, ["svg", castAsYaml, Path.Combine(work, "cast-named.svg")]);
+    // A second --format used to replace the first without a word. Both spellings count, and nothing runs.
+    var (formatExit, formatStderr) = Exec(scenetake, repoRoot, ["--format", "svg", "--format=gif", scenario]);
     var ok = maxFpsExit == 1 && maxFpsStderr.Contains("--max-fps requires --format svg", StringComparison.Ordinal)
+        && formatExit == 1 && formatStderr.Contains("--format takes one format. Record once, then convert the cast for each other format", StringComparison.Ordinal)
+        && !formatStderr.Contains("Generating cast", StringComparison.Ordinal)
         && fontExit == 1 && fontStderr.Contains("--font-file requires a value", StringComparison.Ordinal)
         && fpsExit == 1 && fpsStderr.Contains("--fps must be between 1 and 60: 99", StringComparison.Ordinal)
         && yamlExit == 1 && yamlStderr.Contains("is a scenario, and svg converts a cast file. To record the scenario with an SVG, run: scenetake --format svg ", StringComparison.Ordinal)
@@ -874,7 +896,7 @@ static bool CliRulesForValuesAndFormats(string scenetake, string repoRoot, strin
         && ownOutputsKept
         && castYamlExit == 0;
     if (!ok)
-        Console.Error.WriteLine($"{maxFpsStderr}{fontStderr}{fpsStderr}{yamlStderr}{mp4YamlStderr}{castYamlStderr}");
+        Console.Error.WriteLine($"{maxFpsStderr}{fontStderr}{fpsStderr}{yamlStderr}{mp4YamlStderr}{castYamlStderr}{formatStderr}");
     return ok;
 }
 
@@ -1516,6 +1538,8 @@ static bool ScenarioErrorsStopBeforePre(string scenetake, string repoRoot, strin
         ("nosteps", "step:\n  - run: echo hi\n", "Error: The scenario has no steps to record"),
         ("emptysteps", "steps:\n  - \"\"\n", "Error: The scenario has no steps to record"),
         ("colon", "steps:\n  - echo hi\n  - echo key: value\n", "Error: Step 2 has no 'run' key (keys: echo key)"),
+        // A run whose command holds ": " is a YAML error. The message shows the line, quoted as it should be.
+        ("quote", "steps:\n  - run: echo \"answer: $a\"\n", "    - run: 'echo \"answer: $a\"'"),
         ("liststep", "steps:\n  - [echo, hi]\n", "Error: Step 1 must be a command string or a mapping with 'run', not a list"),
         ("interactive", "steps:\n  - run: echo hi\n  - run: echo two\n    pty: true\n    interactive: true\n", "Error: Interactive PTY steps require a real terminal"),
     };

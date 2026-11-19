@@ -17,6 +17,7 @@ Failed recorded steps can still be legitimate demo content. Setup and teardown f
 - The shell state carries through them, with bash, zsh, PowerShell, and (folder and variables only) the sh family: a `cd` or `export` in `pre` holds for the steps, and `post` starts where the last step left off ([spec_scenario.md](spec_scenario.md) → Shell state across steps).
 - `post` runs after every `background: true` command has ended, so it can remove what they used ([spec_scenario.md](spec_scenario.md) → Background steps).
 - stdout/stderr visible in the CLI. Command text and output never written to the cast.
+- stdin closed, as for a pipe step: a command that asks for input gets the end of input at once ([spec_scenario.md](spec_scenario.md) → Command Environment).
 - Fail-fast for `pre` and `post`.
 
 ### Out of scope

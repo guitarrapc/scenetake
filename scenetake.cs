@@ -488,6 +488,27 @@ if (capture is null && !File.Exists(scenarioPath))
     return 1;
 }
 
+// --save-scenario starts a scenario, as init does: it makes the folder, where the recording goes too, and never
+// replaces a scenario that may have been edited since.
+if (capture?.SavePath is not null)
+{
+    if (File.Exists(scenarioPath))
+    {
+        Console.Error.WriteLine($"Error: {FormatDisplayPath(scenarioPath)} already exists. Record it with: {RecordCommand(outputFormat, scenarioPath)}");
+        return 1;
+    }
+
+    try
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(scenarioPath)!);
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+    {
+        Console.Error.WriteLine($"Error: cannot write the scenario: {ex.Message}");
+        return 1;
+    }
+}
+
 var outputStem = RenderSettingsResolver.ResolveOutputStem(scenarioPath, outputArg);
 var outputPath = outputStem + ".cast";
 var svgPath = outputFormat == OutputFormat.Svg ? outputStem + ".svg" : null;
@@ -496,7 +517,7 @@ var pngPath = outputFormat == OutputFormat.Png ? outputStem + ".png" : null;
 var gifPath = outputFormat == OutputFormat.Gif ? outputStem + ".gif" : null;
 
 Console.Error.WriteLine(capture is null ? $"Loading: {FormatDisplayPath(scenarioPath)}" : $"Capturing: {capture.CommandLine}");
-string yaml;
+string? yaml = null;
 Scenario scenario;
 try
 {
@@ -509,6 +530,8 @@ catch (Exception ex)
     // and the YAML library throws several exception types for that, some of them not public, so no
     // narrower catch can name them all.
     Console.Error.WriteLine($"Error: cannot read {FormatDisplayPath(scenarioPath)}: {ex.Message}");
+    if (FindYamlQuoteHint(yaml, ex.Message) is { } quoteHint)
+        Console.Error.WriteLine(quoteHint);
     return 1;
 }
 
@@ -792,6 +815,22 @@ if ((scenario.Pre?.Count ?? 0) + (scenario.Steps?.Count ?? 0) + (scenario.Post?.
 // The commands of background steps, such as a server that later steps call. They are stopped after the last step,
 // and before post on every path, so post can clean up what they used.
 using var backgroundSteps = new BackgroundSteps();
+
+// capture --save-scenario: written before the command runs, so a recording that fails still leaves the scenario to fix.
+if (capture?.SavePath is not null)
+{
+    try
+    {
+        File.WriteAllText(scenarioPath, yaml, new UTF8Encoding(false));
+    }
+    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+    {
+        Console.Error.WriteLine($"Error: cannot write the scenario: {ex.Message}");
+        return 1;
+    }
+
+    Console.Error.WriteLine($"Written: {FormatDisplayPath(scenarioPath)}  (the scenario. Add steps to it, then record it again with: {RecordCommand(outputFormat, scenarioPath)})");
+}
 
 var preExitCode = await RunScenarioCommandsAsync(scenario.Pre, "pre", scenario.Cwd, shell, shellState, verbose);
 if (preExitCode != 0)
@@ -1163,6 +1202,48 @@ static void PrintDone(string castPath, string? renderedPath) =>
 static string FormatDisplayPath(string fullPath) =>
     Path.GetRelativePath(Directory.GetCurrentDirectory(), fullPath).Replace('\\', '/');
 
+/// <summary>
+/// The line and a fix for the YAML error a shell command most often causes: a command that holds <c>": "</c>, such as
+/// <c>run: echo "answer: $a"</c>, reads as a key in a key, and the library's message names only a line and a column.
+/// Null for other errors.
+/// </summary>
+static string? FindYamlQuoteHint(string? yaml, string message)
+{
+    const string LineLabel = "Line: ";
+    var at = message.IndexOf(LineLabel, StringComparison.Ordinal);
+    if (yaml is null || at < 0 || !message.Contains("Mapping values are not allowed", StringComparison.Ordinal))
+        return null;
+
+    var digits = at + LineLabel.Length;
+    var digitsEnd = digits;
+    while (digitsEnd < message.Length && char.IsAsciiDigit(message[digitsEnd]))
+        digitsEnd++;
+    var lines = yaml.Split('\n');
+    if (!int.TryParse(message.AsSpan(digits, digitsEnd - digits), NumberStyles.None, CultureInfo.InvariantCulture, out var number) || number < 1 || number > lines.Length)
+        return null;
+
+    var line = lines[number - 1].TrimEnd('\r');
+    var hint = new StringBuilder();
+    hint.Append(CultureInfo.InvariantCulture, $"  {number} | {line}").AppendLine();
+    hint.Append("A command that contains \": \" needs quotes. Put it in single quotes, with each ' inside written as ''");
+
+    // `key: value`, or `- key: value` in a list: the value is what to quote. A value that starts with a quote is
+    // quoted already, and its error lies elsewhere.
+    var keyEnd = line.IndexOf(": ", StringComparison.Ordinal);
+    var value = keyEnd < 0 ? "" : line[(keyEnd + 2)..].TrimStart();
+    if (value.Length != 0 && value[0] is not ('"' or '\''))
+    {
+        hint.Append(':').AppendLine();
+        hint.Append("  ").Append(line.AsSpan(0, keyEnd + 2)).Append('\'').Append(value.Replace("'", "''")).Append('\'');
+    }
+    else
+    {
+        hint.Append('.');
+    }
+
+    return hint.ToString();
+}
+
 static bool TryParseInitArgs(string[] args, out string? path, out string? shell, out string error)
 {
     path = null;
@@ -1383,6 +1464,7 @@ static bool TryParseRunArgs(
     var captureMode = args.Length > 0 && args[0] == "capture";
     capture = captureMode ? new CaptureRequest() : null;
     outputFormat = captureMode ? OutputFormat.Svg : OutputFormat.Cast;
+    var formatGiven = false;
     verbose = false;
     strict = false;
     fontSizeOverride = null;
@@ -1511,25 +1593,25 @@ static bool TryParseRunArgs(
             continue;
         }
 
-        if (arg == "--format")
+        if (arg == "--format" || arg.StartsWith("--format=", StringComparison.Ordinal))
         {
-            if (i + 1 >= args.Length)
+            // A second --format used to replace the first without a word, so `--format svg --format gif` wrote no SVG.
+            if (formatGiven)
+            {
+                error = "--format takes one format. Record once, then convert the cast for each other format, such as: scenetake gif <file>.cast";
+                return false;
+            }
+
+            if (arg == "--format" && i + 1 >= args.Length)
             {
                 error = "--format requires a value";
                 return false;
             }
 
-            if (!TryParseOutputFormat(args[++i], out outputFormat, out error))
+            if (!TryParseOutputFormat(arg == "--format" ? args[++i] : arg["--format=".Length..], out outputFormat, out error))
                 return false;
 
-            continue;
-        }
-
-        if (arg.StartsWith("--format=", StringComparison.Ordinal))
-        {
-            if (!TryParseOutputFormat(arg["--format=".Length..], out outputFormat, out error))
-                return false;
-
+            formatGiven = true;
             continue;
         }
 
@@ -1630,7 +1712,7 @@ static bool TryParseRunArgs(
     }
 
     if (capture is not null)
-        return capture.TryFinish(out scenarioPath, out error);
+        return capture.TryFinish(fontSizeOverride, fontFamilyOverride, themePresetOverride, windowOverride, style, out scenarioPath, out error);
 
     if (scenarioPath.Length != 0)
         return true;
@@ -1641,8 +1723,8 @@ static bool TryParseRunArgs(
 
 /// <summary>
 /// The options only <c>capture</c> takes: the terminal's <c>--width</c> and <c>--height</c>, <c>--shell</c>,
-/// <c>--timeout</c>, <c>--pipe</c>, and <c>-o</c> / <c>--output</c>, which names the files as the scenario path's
-/// [output] does.
+/// <c>--timeout</c>, <c>--pipe</c>, <c>-o</c> / <c>--output</c>, which names the files as the scenario path's
+/// [output] does, and <c>--save-scenario</c>, which writes the scenario it records.
 /// </summary>
 static bool TryConsumeCaptureArg(string[] args, ref int i, CaptureRequest capture, ref string? outputPath, out string error)
 {
@@ -1707,6 +1789,15 @@ static bool TryConsumeCaptureArg(string[] args, ref int i, CaptureRequest captur
             error = $"duplicate option: {name}";
         else if (error.Length == 0)
             outputPath = output;
+        return true;
+    }
+
+    if (TryTakeOptionValue(args, ref i, "--save-scenario", out var scenario, out error))
+    {
+        if (error.Length == 0 && capture.SavePath is not null)
+            error = "duplicate option: --save-scenario";
+        else if (error.Length == 0)
+            capture.SavePath = scenario;
         return true;
     }
 
@@ -1931,6 +2022,23 @@ static bool TryConsumeWindowArg(string[] args, ref int i, ref WindowStyle? windo
     return true;
 }
 
+/// <summary>The command that records <paramref name="scenarioPath"/> in <paramref name="format"/>, for a message.</summary>
+static string RecordCommand(OutputFormat format, string scenarioPath)
+{
+    var path = FormatDisplayPath(scenarioPath);
+    if (path.Contains(' '))
+        path = $"\"{path}\"";
+    var option = format switch
+    {
+        OutputFormat.Svg => "--format svg ",
+        OutputFormat.Mp4 => "--format mp4 ",
+        OutputFormat.Png => "--format png ",
+        OutputFormat.Gif => "--format gif ",
+        _ => "",
+    };
+    return $"scenetake {option}{path}";
+}
+
 static bool TryParseOutputFormat(string value, out OutputFormat format, out string error)
 {
     format = OutputFormat.Cast;
@@ -2015,6 +2123,7 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
 
     var psi = new ProcessStartInfo(shell.FileName)
     {
+        RedirectStandardInput  = true,
         RedirectStandardOutput = true,
         RedirectStandardError  = true,
         UseShellExecute        = false,
@@ -2035,6 +2144,10 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
 
     using var proc = new Process { StartInfo = psi };
     proc.Start();
+    // The command gets no input, as in CI. It used to read scenetake's own, so a command that asks, such as
+    // `read -p "Continue? "`, waited for a key while its prompt, captured for the recording, showed nowhere.
+    // pty: true with keys answers a prompt.
+    proc.StandardInput.Close();
     // A step that may be stopped runs in a job on Windows, which ends what the tree kill misses (ProcessJob).
     using var job = timeout is null ? null : ProcessJob.TryCreate(proc);
     var readTask = PipeStreamCapture.ReadAsync(proc);
@@ -3874,10 +3987,18 @@ sealed class CaptureRequest
     internal string Yaml { get; private set; } = "";
 
     /// <summary>
-    /// Builds the scenario, and the path a scenario file for it would have: the files are written next to it, in the
-    /// current folder, named after the command (<c>git status</c> writes <c>git.cast</c> and <c>git.svg</c>).
+    /// <c>--save-scenario</c>: where to write <see cref="Yaml"/>, so the capture goes on as a scenario that can take
+    /// more steps. The recording is then named after it, as running that file would name it.
     /// </summary>
-    internal bool TryFinish(out string scenarioPath, out string error)
+    internal string? SavePath { get; set; }
+
+    /// <summary>
+    /// Builds the scenario, and the path a scenario file for it would have: the files are written next to it, in the
+    /// current folder, named after the command (<c>git status</c> writes <c>git.cast</c> and <c>git.svg</c>), or the
+    /// <c>--save-scenario</c> file. The style options become its <c>render</c> keys, so the saved file records the
+    /// same look without them.
+    /// </summary>
+    internal bool TryFinish(int? fontSize, string? fontFamily, string? theme, WindowStyle? window, StyleOptions style, out string scenarioPath, out string error)
     {
         scenarioPath = "";
         error = "";
@@ -3894,6 +4015,10 @@ sealed class CaptureRequest
             return false;
         }
 
+        scenarioPath = SavePath is not null
+            ? Path.GetFullPath(SavePath)
+            : Path.Combine(Directory.GetCurrentDirectory(), OutputName() + ".yaml");
+
         var yaml = new StringBuilder();
         yaml.Append("title: ").Append(QuoteYaml(CommandLine)).Append('\n');
         if (Width is int width)
@@ -3902,15 +4027,68 @@ sealed class CaptureRequest
             yaml.Append("height: ").Append(height.ToString(CultureInfo.InvariantCulture)).Append('\n');
         if (Shell is not null)
             yaml.Append("shell: ").Append(QuoteYaml(Shell)).Append('\n');
+        AppendRender(yaml, fontSize, fontFamily, theme, window, style, Path.GetDirectoryName(scenarioPath)!);
         yaml.Append("steps:\n  - run: ").Append(QuoteYaml(CommandLine)).Append('\n');
         if (!Pipe)
             yaml.Append("    pty: true\n");
         if (Timeout is double timeout)
             yaml.Append("    timeout: ").Append(timeout.ToString("R", CultureInfo.InvariantCulture)).Append('\n');
         Yaml = yaml.ToString();
-
-        scenarioPath = Path.Combine(Directory.GetCurrentDirectory(), OutputName() + ".yaml");
         return true;
+    }
+
+    /// <summary>
+    /// The style options as <c>render</c> keys, in the order the README lists them, or nothing without any. An image
+    /// background is written relative to <paramref name="folder"/>, where the scenario reads it from.
+    /// </summary>
+    private static void AppendRender(StringBuilder yaml, int? fontSize, string? fontFamily, string? theme, WindowStyle? window, StyleOptions style, string folder)
+    {
+        var start = yaml.Length;
+        void Key(string name, string value) => yaml.Append("  ").Append(name).Append(": ").Append(value).Append('\n');
+        static string Number(double value) => value.ToString("R", CultureInfo.InvariantCulture);
+        static string Whole(int value) => value.ToString(CultureInfo.InvariantCulture);
+
+        if (fontSize is int size)
+            Key("font-size", Whole(size));
+        if (fontFamily is not null)
+            Key("font-family", QuoteYaml(fontFamily));
+        if (window is WindowStyle chrome)
+            Key("window", chrome switch { WindowStyle.Macos => "macos", WindowStyle.Windows => "windows", _ => "none" });
+        if (style.WindowTitle is not null)
+            Key("window-title", QuoteYaml(style.WindowTitle));
+        if (style.Background is { } background)
+        {
+            Key("background", QuoteYaml(background.ImagePath is { } image
+                ? Path.GetRelativePath(folder, image).Replace('\\', '/')
+                : string.Join(' ', background.Colors)));
+        }
+
+        if (style.Margin is int margin)
+            Key("margin", Whole(margin));
+        if (style.Padding is int padding)
+            Key("padding", Whole(padding));
+        if (style.Opacity is double opacity)
+            Key("opacity", Number(opacity));
+        if (style.Blur is int blur)
+            Key("blur", Whole(blur));
+        if (style.Loop is bool loop)
+            Key("loop", loop ? "true" : "false");
+        if (style.EndHold is double endHold)
+            Key("end-hold", Number(endHold));
+        if (style.FadeOut is double fadeOut)
+            Key("fade-out", Number(fadeOut));
+        if (style.Fit is FitMode fit)
+            Key("fit", fit switch { FitMode.None => "none", FitMode.Width => "width", FitMode.Both => "both", _ => "height" });
+        foreach (var edge in (ReadOnlySpan<string>)["top", "bottom", "left", "right"])
+        {
+            if (style.Crop(edge) is int cells)
+                Key("crop-" + edge, Whole(cells));
+        }
+
+        if (theme is not null)
+            yaml.Append("  theme:\n    preset: ").Append(QuoteYaml(theme)).Append('\n');
+        if (yaml.Length != start)
+            yaml.Insert(start, "render:\n");
     }
 
     /// <summary>
@@ -4061,7 +4239,8 @@ static class HelpText
         Records one command without a scenario file, as a scenario with that one step would: the
         command is typed, then its output follows. Without --format it writes an SVG, and the cast
         next to it. The files go to the current folder, named after the command ('git status'
-        writes git.cast and git.svg), unless -o names them.
+        writes git.cast and git.svg), unless -o names them. --save-scenario keeps it as a scenario
+        file, to add steps to and record again.
 
         """;
 
@@ -4077,6 +4256,10 @@ static class HelpText
                                    command that does not end by itself (default: none)
           -o, --output NAME        Name the files without an extension: '-o demo' writes demo.cast
                                    and demo.svg
+          --save-scenario FILE     Write the command as a scenario to FILE first, with the style
+                                   options as its render keys, and name the files after FILE.
+                                   'scenetake --format svg FILE' then records it again. FILE must
+                                   not exist.
 
         """;
 
@@ -4087,14 +4270,16 @@ static class HelpText
                 Recording:
                   --format cast|svg|mp4|png|gif
                                            Write the cast and an SVG (svg, the default), an mp4, a PNG, or a
-                                           GIF rendered from it, or only the cast (cast)
+                                           GIF rendered from it, or only the cast (cast). One format a run:
+                                           convert the cast for others, such as 'scenetake gif git.cast'.
 
                 """
             : """
                 Recording:
                   --format cast|svg|mp4|png|gif
                                            Write only the cast (cast, the default), or the cast and an SVG,
-                                           an mp4, a PNG, or a GIF rendered from it
+                                           an mp4, a PNG, or a GIF rendered from it. One format a run:
+                                           convert the cast for others, such as 'scenetake gif demo.cast'.
                   --save-keys FILE         Write the keys typed in the 'interactive: true' steps to FILE as
                                            'keys' entries, which replay them without a person. Written even
                                            when the run stops at a later step. On Windows a password typed

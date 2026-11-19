@@ -167,6 +167,9 @@ scenetake --format svg scenario.yaml
 scenetake capture -- git log --oneline -5
 scenetake capture --window macos -o help -- mycli --help
 
+# シナリオファイルとしても保存する。--window は render.window として書き込まれる
+scenetake capture --window macos --save-scenario help.yaml -- mycli --help
+
 # SVG のスタイル: フォント、テーマ、ウィンドウ枠、フレーム上限
 scenetake --format svg scenario.yaml --font-size 20 --font-family "'Noto Sans Mono', ui-monospace" --theme light --window macos
 
@@ -241,11 +244,16 @@ docker rm $id
 
 **Usage**
 
-`scenetake --help` は全コマンドとオプションの値の範囲・既定値を表示します。各コマンドのオプションは `scenetake svg --help`、`scenetake mp4 --help`、`scenetake png --help`、`scenetake gif --help`、`scenetake init --help` で確認できます。
+`scenetake --help` は全コマンドとオプションの値の範囲・既定値を表示します。各コマンドのオプションは `scenetake svg --help`、`scenetake mp4 --help`、`scenetake png --help`、`scenetake gif --help`、`scenetake capture --help`、`scenetake init --help` で確認できます。
 
 ```bash
 # 新しいシナリオファイルを初期化
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
+
+# シナリオファイルなしで 1 コマンドを録画（既定は SVG と cast）
+# --format とスタイルのオプションも使える
+scenetake capture [--width N] [--height N] [--shell NAME] [--pipe] [--timeout N]
+  [-o NAME] [--save-scenario FILE] -- <command>
 
 # シナリオを実行して cast（既定）、cast + SVG、cast + mp4、cast + PNG、または cast + GIF を生成
 scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--save-keys FILE] [--at TIME]
@@ -275,6 +283,8 @@ scenetake gif [--fps N] [--max-size WxH | --size WxH] [--no-loop] [--font-size N
   [--font-file PATH] [--theme NAME] [--window none|macos|windows]
   <input.cast> [output.gif]
 ```
+
+`--format` に指定できる形式は 1 つです。同じ録画からほかの形式を作るときは、`scenetake gif scenario.cast` のように cast を変換します。
 
 `--max-fps` は SVG アニメーションのフレームレート上限です（`0` = オフ、cast のタイミングをそのまま使用）。`--format svg` 時と `svg` サブコマンドで有効です。
 
@@ -306,7 +316,13 @@ mp4 は手元にインストールされたフォントで描画します。`fon
 
 **ターミナルサイズと解像度**
 
-`width` と `height` はターミナルの列数と行数です（cast ファイルでは `term.cols` と `term.rows`）。出力のピクセルサイズはこの値で決まります。既定の `font-size` 16 では次のとおりです。
+`width` と `height` はターミナルの列数と行数です（cast ファイルでは `term.cols` と `term.rows`）。出力のピクセルサイズはこの値で決まります。
+
+既定（`render.fit: height`）では出力より下の空き行を描かないため、下の表の `height` は録画で使った行数になります。16:9 の動画などでターミナル全体を描くときは `--fit none` を指定します。SVG と mp4 のサイズは録画のあとに表示されます。
+
+X や Reddit など 16:9 のプレイヤー向けには、`--fit none` で 80 × 23 にします。mp4 は 820×468 で 16:9 に近く、余白がほとんど出ません。
+
+既定の `font-size` 16 では次のとおりです。
 
 | 出力 | 幅（px） | 高さ（px） |
 | --- | --- | --- |
@@ -315,7 +331,7 @@ mp4 は手元にインストールされたフォントで描画します。`fon
 | SVG | `width × 9.92 + 36` | `height × 20 + 24` |
 | SVG（`--window` あり） | `width × 9.92 + 44` | `height × 20 + 66` |
 
-動画の解像度いっぱいに使うときは、収まる最大の `width` × `height` を指定します。`font-size` 16 での値は次のとおりです。
+動画の解像度いっぱいに使うときは、`--fit none` を指定し、収まる最大の `width` × `height` にします。`font-size` 16 での値は次のとおりです。
 
 | 解像度 | `width` × `height` → mp4 のサイズ | `--window` あり |
 | --- | --- | --- |
@@ -325,7 +341,7 @@ mp4 は手元にインストールされたフォントで描画します。`fon
 | 2560×1440（WQHD） | 254 × 71 → 2560×1428 | 254 × 69 → 2560×1422 |
 | 3840×2160（4K） | 382 × 107 → 3840×2148 | 382 × 105 → 3840×2142 |
 
-- デフォルト`80×24`は、mp4で`820×488`、SVGで`829.6×504`です。1920×1080動画を作るときは、列を増やすのではなく`--font-size` を上げます。`80×22`を`--font-size 36` にすると`1792×1006`でほぼ中央になります。
+- `--fit none` のとき、デフォルト`80×24`は、mp4で`820×488`、SVGで`829.6×504`です。1920×1080動画を作るときは、列を増やすのではなく`--font-size` を上げます。`80×22`を`--font-size 36` にすると`1792×1006`でほぼ中央になります。
 - 1 行は 20 ピクセルなので、高さはたいてい解像度より少し小さくなります。残りは `--size` で埋められます（後述）。
 - はじめから収まるサイズで録ると、大きく録って `--max-size` や `--size` で縮小するより文字がくっきりします。
 - `font-size` を大きくするとセルも大きくなり、収まる列数と行数は減ります。セルは幅 `font-size × 0.62`、高さ `font-size × 1.25` で、mp4 では整数ピクセルに丸めます。余白も `font-size` に応じて変わります。詳しくは [spec_mp4.md](.github/docs/spec_mp4.md#layout) の Layout を参照してください。
@@ -351,6 +367,7 @@ mp4 は手元にインストールされたフォントで描画します。`fon
 - `pre` / `post` は録画フロー外で setup / teardown コマンドを実行します。stdout/stderr は CLI に表示されますが、cast ファイルには一切書き込まれません。
 - `steps`:
   - 実際に実行されるため、ファイル変更や外部システムを操作するような副作用のあるコマンドは慎重に使ってください
+  - `: ` を含むコマンドは `run: 'echo "answer: $a"'` のように引用符で囲んでください。囲まないと YAML のエラーになります
   - ターミナルを必要とするコマンドは `pty: true` で pseudo-terminal capture を有効化できます。詳細は [PTY 録画](#pty-録画)。
   - 実行時間が長いコマンドは `execution-duration` で見やすく調整できます
   - 長い出力を自然にリプレイしたい場合（`docker build` や `sleep` を挟むステップなど）は、その step に `stream-output: true` と必要なら `max-duration` を指定します。デフォルトの pipe emit はタイピング演出のため一括表示のままです
@@ -450,6 +467,8 @@ steps:
 ### 通常出力
 
 通常のstepは、コマンドの stdout/stderr をキャプチャしてタイピング演出付きで記録します。このモードは単発出力のコマンドや、TTYを必要としないコマンドに適しています。出力に色がついていなくても、`highlight` や `stderr-color` で色を付けることができます。出力は、実際の出力に関わらず、一瞬で表示されます。
+
+通常のステップには入力がありません。`read` や `[y/N]` の確認のように入力を求めるコマンドは、空の答えを受け取ります。答えを入力するには `pty: true` と `keys` を使います（[TUI 出力](#tui-出力)）。
 
 ANSI 色指定のない stderr は既定で赤く表示します。git のブランチ変更、curl の進捗、`docker build` など、通常のメッセージを stderr に出すツールもあります。通常の文字色にするには、`settings` またはステップに `stderr-color: none` を指定してください。
 

@@ -1,0 +1,12 @@
+title: "step input: no input for a pipe step"
+width: 60
+height: 8
+shell: bash
+
+pre:
+  - read -r answer; echo "pre-read:[$answer]"
+
+steps:
+  # scenetake's own input stays open in the test. A step that reads it used to wait there, its prompt unseen.
+  - 'read -r -p "Continue? [y/N] " answer; echo "step-read:[$answer]"'
+  - echo after-read

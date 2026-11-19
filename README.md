@@ -167,6 +167,9 @@ scenetake --format svg scenario.yaml
 scenetake capture -- git log --oneline -5
 scenetake capture --window macos -o help -- mycli --help
 
+# Also save it as a scenario file. --window is written as render.window
+scenetake capture --window macos --save-scenario help.yaml -- mycli --help
+
 # SVG styling: font, theme, window chrome, frame cap
 scenetake --format svg scenario.yaml --font-size 20 --font-family "'Noto Sans Mono', ui-monospace" --theme light --window macos
 
@@ -241,11 +244,16 @@ docker rm $id
 
 **Usage**
 
-`scenetake --help` lists all commands and options, including ranges and defaults. Use `scenetake svg --help`, `scenetake mp4 --help`, `scenetake png --help`, `scenetake gif --help`, or `scenetake init --help` for command-specific options.
+`scenetake --help` lists all commands and options, including ranges and defaults. Use `scenetake svg --help`, `scenetake mp4 --help`, `scenetake png --help`, `scenetake gif --help`, `scenetake capture --help`, or `scenetake init --help` for command-specific options.
 
 ```bash
 # Initialize a new scenario file
 scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
+
+# Record one command without a scenario file (SVG and cast by default).
+# --format and the style options work here too
+scenetake capture [--width N] [--height N] [--shell NAME] [--pipe] [--timeout N]
+  [-o NAME] [--save-scenario FILE] -- <command>
 
 # Run scenario to generate cast (default), cast + SVG, cast + mp4, cast + PNG, or cast + GIF
 scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--save-keys FILE] [--at TIME]
@@ -276,6 +284,8 @@ scenetake gif [--fps N] [--max-size WxH | --size WxH] [--no-loop] [--font-size N
   <input.cast> [output.gif]
 ```
 
+`--format` takes one format. To get other formats from the same recording, convert the cast, for example `scenetake gif scenario.cast`.
+
 `--max-fps` caps SVG animation frame rate (`0` = off, use full cast timing). It applies when `--format svg` is set or on the `svg` subcommand.
 
 `--strict` is for CI. Unless a step sets `continue-on-error: true`, scenetake stops at the first recorded step that exits non-zero. Later steps do not run, and scenetake writes no output except the `--save-keys` file. Existing output files stay, and `post` runs. Scenetake exits `1` unless a `post` command fails, in which case it returns that command's exit code.
@@ -302,7 +312,11 @@ mp4 output runs [ffmpeg](https://ffmpeg.org/) with libx264 as a separate program
 
 **Terminal size and resolution**
 
-`width` and `height` set the terminal size in columns and rows (`term.cols` and `term.rows` in a cast file). The output's pixel size follows from them. At the default `font-size` of 16:
+`width` and `height` set the terminal size in columns and rows (`term.cols` and `term.rows` in a cast file). The output's pixel size follows from them.
+
+By default (`render.fit: height`), scenetake does not draw the empty rows below the output. `height` in the table below is then the number of rows that the recording uses. To draw the whole terminal, for example for a 16:9 video, use `--fit none`. scenetake prints the SVG and mp4 sizes after each recording.
+
+At the default `font-size` of 16:
 
 | Output | Pixel width | Pixel height |
 | --- | --- | --- |
@@ -314,10 +328,10 @@ mp4 output runs [ffmpeg](https://ffmpeg.org/) with libx264 as a separate program
 Tips for picking a size:
 
 - **README:** keep 80 columns. The SVG is about 830 pixels wide, which GitHub shows at its own size. At 120 columns it is shown at about two thirds, with 11-pixel text.
-- **X, Reddit, and other 16:9 players:** 80 × 23 is 820×468 as mp4, close to 16:9, so the player shows little border.
+- **X, Reddit, and other 16:9 players:** 80 × 23 with `--fit none` is 820×468 as mp4, close to 16:9, so the player shows little border.
 - **A 1920×1080 video that people read:** keep the terminal small and raise `--font-size` instead of adding columns. 80 × 22 at `--font-size 36` is 1792×1006, and `--size 1920x1080` centers it in the frame. 190 × 53 at the default size also fills 1920×1080, but its text is as small as on a desktop screen, which is hard to read on a phone.
 
-To fill a video resolution, use the largest `width` × `height` that fits. At `font-size` 16:
+To fill a video resolution, use `--fit none` and the largest `width` × `height` that fits. At `font-size` 16:
 
 | Resolution | `width` × `height` → mp4 size | With `--window` |
 | --- | --- | --- |
@@ -327,7 +341,7 @@ To fill a video resolution, use the largest `width` × `height` that fits. At `f
 | 2560×1440 (WQHD) | 254 × 71 → 2560×1428 | 254 × 69 → 2560×1422 |
 | 3840×2160 (4K) | 382 × 107 → 3840×2148 | 382 × 105 → 3840×2142 |
 
-- The default `80×24` is 820×488 as mp4 and 829.6×504 as SVG. For a 1920×1080 video, raise `--font-size` instead of adding columns. 80 × 22 at `--font-size 36` is 1792×1006, almost centered.
+- With `--fit none`, the default `80×24` is 820×488 as mp4 and 829.6×504 as SVG. For a 1920×1080 video, raise `--font-size` instead of adding columns. 80 × 22 at `--font-size 36` is 1792×1006, almost centered.
 - A row is 20 pixels tall, so the height usually ends a little short of the resolution. `--size` fills the rest (below).
 - Text stays sharper when the recording already fits than when `--max-size` or `--size` scales a larger one down.
 - A larger `font-size` makes each cell larger, so fewer columns and rows fit. A cell is `font-size × 0.62` wide and `font-size × 1.25` tall, rounded to whole pixels in mp4, and the padding also changes with `font-size`. See Layout in [spec_mp4.md](.github/docs/spec_mp4.md#layout).
@@ -353,6 +367,7 @@ To fill a video resolution, use the largest `width` × `height` that fits. At `f
 - `pre` / `post` run setup and teardown commands outside the recording flow. Their stdout/stderr are printed to the CLI, but are never written to the cast file.
 - `steps`:
   - Steps are executed for real, so use caution with commands that modify files or affect external systems.
+  - Quote a command that contains `: `, for example `run: 'echo "answer: $a"'`. Otherwise it is a YAML error.
   - Commands that need a terminal can opt into pseudo-terminal capture with `pty: true`. See [PTY recording](#pty-recording).
   - For long-running commands, use `execution-duration` to keep playback readable.
   - For natural replay of long output (`docker build`, staged `sleep`, …), set `stream-output: true` and optionally `max-duration` on that step. Default pipe emit stays instant for typing and short demos.
@@ -454,6 +469,8 @@ There are four output modes: ordinary output, stream output, TUI output, and int
 ### Ordinary output
 
 Ordinary steps capture command stdout/stderr and record them with simulated typing. This mode is suitable for one-shot commands and commands that do not require a TTY. Even if output has no color, you can apply color with `highlight` and `stderr-color`. Output appears instantly regardless of how long the real command took to print.
+
+Ordinary steps get no input. A command that asks for input, such as `read` or a `[y/N]` prompt, gets an empty answer. To answer a prompt, use `pty: true` with `keys` ([TUI output](#tui-output)).
 
 stderr without ANSI colors is red by default. Tools also use stderr for ordinary messages, such as git branch changes, curl progress, and `docker build` output. Set `stderr-color: none` under `settings` or on a step to use the normal text color.
 

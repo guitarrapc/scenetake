@@ -52,6 +52,7 @@ failures += Run("MaskAutoFalseHidesListedTextOnly", MaskAutoFalseHidesListedText
 failures += Run("MaskingTwiceChangesNothing", MaskingTwiceChangesNothing);
 failures += Run("PipeStreamsAreMaskedSeparately", PipeStreamsAreMaskedSeparately);
 failures += Run("SummaryCountsByKind", SummaryCountsByKind);
+failures += Run("OneTokenIsOneSecret", OneTokenIsOneSecret);
 failures += Run("SecretKeyNames", SecretKeyNames);
 failures += Run("SettingsKeysParse", SettingsKeysParse);
 failures += Run("RecordingHidesCommandCommentAndOutput", RecordingHidesCommandCommentAndOutput);
@@ -625,10 +626,24 @@ static bool PipeStreamsAreMaskedSeparately()
 
 static bool SummaryCountsByKind()
 {
+    // A text counts once however often it shows: "hello" twice is one secret.
     var masker = Masker("  mask:\n    - hello");
     masker.MaskText("hello API_KEY=abcd1234 and API_TOKEN=efgh5678 hello");
-    return Same("summary", "Masked 4 secrets: 2 key=value secret, 2 settings.mask", masker.Summary() ?? "(none)")
+    return Same("summary", "Masked 3 secrets: 2 key=value secrets, 1 settings.mask", masker.Summary() ?? "(none)")
         & Expect(Masker().Summary() is null, "nothing hidden gives no summary");
+}
+
+static bool OneTokenIsOneSecret()
+{
+    // The GitHub token finder hides what follows ghp_, and the key=value finder the whole value: one secret, of the
+    // kind found first. The command that prints it shows it once more, and it is still one.
+    var token = "gh" + "p_" + Repeat("aB3", 36);
+    var masker = Masker();
+    var typed = masker.MaskText($"echo \"GITHUB_TOKEN={token}\"");
+    var printed = MaskPty(masker, $"GITHUB_TOKEN={token}\r\n");
+    return Same("typed", $"echo \"GITHUB_TOKEN={Stars(40)}\"", typed)
+        & Same("printed", $"GITHUB_TOKEN={Stars(40)}\r\n", printed)
+        & Same("summary", "Masked 1 secret: 1 GitHub token", masker.Summary() ?? "(none)");
 }
 
 static bool SecretKeyNames()

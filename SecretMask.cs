@@ -33,6 +33,8 @@ internal sealed class SecretMasker
     private string[] _literalLabels;
     private readonly bool _auto;
     private readonly Dictionary<string, int> _counts = new(StringComparer.Ordinal);
+    // The secrets counted so far, so a value that shows again is not counted again.
+    private readonly HashSet<string> _counted = new(StringComparer.Ordinal);
 
     private SecretMasker(List<string> literals, List<string> labels, bool auto)
     {
@@ -128,10 +130,10 @@ internal sealed class SecretMasker
             yield return new((string)entry.Key, entry.Value as string);
     }
 
-    /// <summary>How many secrets were hidden, by kind, such as <c>GitHub token: 2</c>. Empty when nothing was.</summary>
+    /// <summary>How many different secrets were hidden, by kind, such as <c>GitHub token: 2</c>. Empty when nothing was.</summary>
     internal IReadOnlyDictionary<string, int> Counts => _counts;
 
-    /// <summary>A line for stderr that says what was hidden, such as <c>Masked 3 secrets: 2 key=value secret, 1 GitHub token</c>, or null.</summary>
+    /// <summary>A line for stderr that says what was hidden, such as <c>Masked 3 secrets: 2 key=value secrets, 1 GitHub token</c>, or null.</summary>
     internal string? Summary()
     {
         if (_counts.Count == 0)
@@ -147,10 +149,18 @@ internal sealed class SecretMasker
         foreach (var kind in kinds)
         {
             total += counts[kind];
-            text.Append(text.Length == 0 ? "" : ", ").Append(counts[kind]).Append(' ').Append(kind);
+            text.Append(text.Length == 0 ? "" : ", ").Append(counts[kind]).Append(' ').Append(counts[kind] == 1 ? kind : Plural(kind));
         }
 
         return $"Masked {total} secret{(total == 1 ? "" : "s")}: {text}";
+
+        // settings.mask is the key's name, which stays as it is.
+        static string Plural(string kind) => kind switch
+        {
+            "settings.mask" => kind,
+            "password in a URL" => "passwords in URLs",
+            _ => kind + "s",
+        };
     }
 
     /// <summary>Text that may hold escape sequences, such as a typed command or a step's comment line.</summary>
@@ -353,23 +363,33 @@ internal sealed class SecretMasker
     private bool[]? Find(string text, bool count = true)
     {
         bool[]? hidden = null;
+        // For the count: the kind of each hide, and which hide reached each character first (CountSecrets).
+        List<string>? kinds = null;
+        int[]? firstHide = null;
 
         // Line breaks and the spaces that stand for cursor moves have no bytes, so marking them changes nothing.
         void Hide(int start, int end, string label)
         {
-            var added = false;
+            var call = -1;
             for (var k = start; k < end; k++)
             {
                 hidden ??= new bool[text.Length];
-                if (!hidden[k])
-                {
-                    hidden[k] = true;
-                    added = true;
-                }
-            }
+                if (hidden[k])
+                    continue;
 
-            if (added && count)
-                _counts[label] = _counts.GetValueOrDefault(label) + 1;
+                hidden[k] = true;
+                if (!count)
+                    continue;
+
+                if (call < 0)
+                {
+                    kinds ??= [];
+                    call = kinds.Count;
+                    kinds.Add(label);
+                }
+
+                (firstHide ??= new int[text.Length])[k] = call;
+            }
         }
 
         for (var i = 0; i < _literals.Length; i++)
@@ -389,7 +409,37 @@ internal sealed class SecretMasker
             FindPairs(text, Hide);
         }
 
+        if (hidden is not null && kinds is not null && firstHide is not null)
+            CountSecrets(text, hidden, kinds, firstHide);
+
         return hidden;
+    }
+
+    /// <summary>
+    /// Counts each run of hidden characters as one secret, of the kind that hid its first character first. Two finders
+    /// that hide one value, as the GitHub token finder and the key=value finder do in <c>GITHUB_TOKEN=ghp_…</c>, find
+    /// one secret. A value counts once however often it shows, so a token typed in a command and printed by it is one.
+    /// </summary>
+    private void CountSecrets(string text, bool[] hidden, List<string> kinds, int[] firstHide)
+    {
+        for (var start = 0; start < hidden.Length; start++)
+        {
+            if (!hidden[start])
+                continue;
+
+            var end = start;
+            var first = int.MaxValue;
+            for (; end < hidden.Length && hidden[end]; end++)
+                first = Math.Min(first, firstHide[end]);
+
+            if (_counted.Add(text[start..end]))
+            {
+                var kind = kinds[first];
+                _counts[kind] = _counts.GetValueOrDefault(kind) + 1;
+            }
+
+            start = end;
+        }
     }
 
     private delegate void HideRange(int start, int end, string label);

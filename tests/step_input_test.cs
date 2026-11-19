@@ -41,6 +41,7 @@ failures += Run("KeyEntryKeysAreChecked", KeyEntryKeysAreChecked);
 failures += Run("PlaygroundIgnoresKeysAndTimeout", PlaygroundIgnoresKeysAndTimeout);
 failures += Run("IntegrationKeysReachTheCommand", () => IntegrationKeysReachTheCommand(repoRoot));
 failures += Run("IntegrationTimeoutStopsCommands", () => IntegrationTimeoutStopsCommands(repoRoot));
+failures += Run("IntegrationPipeStepGetsNoInput", () => IntegrationPipeStepGetsNoInput(repoRoot));
 failures += Run("IntegrationKeysWithoutPtyStopBeforeRecording", () => IntegrationKeysWithoutPtyStopBeforeRecording(repoRoot));
 failures += Run("IntegrationWaitTypesWhenTheTextAppears", () => IntegrationWaitTypesWhenTheTextAppears(repoRoot));
 failures += Run("IntegrationWaitGivesUp", () => IntegrationWaitGivesUp(repoRoot));
@@ -367,6 +368,22 @@ static bool IntegrationTimeoutStopsCommands(string repoRoot)
     return ok;
 }
 
+static bool IntegrationPipeStepGetsNoInput(string repoRoot)
+{
+    if (!TryGetBinary(out var bin))
+        return true;
+
+    // scenetake's input is a pipe that stays open with nothing in it, as a terminal is when no one types. pre and a
+    // step that read it get the end of input at once.
+    var run = RunFixtureWithInput(bin, repoRoot, "step-input-stdin.yaml", keepInputOpen: true, []);
+    var ok = Expect(run.ExitCode == 0, $"exit {run.ExitCode}: {run.Stderr}");
+    ok &= Expect(run.Elapsed < TimeSpan.FromSeconds(30), $"took {run.Elapsed.TotalSeconds:F1} s");
+    ok &= Expect(run.Text.Contains("step-read:[]", StringComparison.Ordinal) && run.Text.Contains("after-read", StringComparison.Ordinal),
+        $"cast text: {run.Text}");
+    ok &= Expect(run.Stderr.Contains("pre-read:[]", StringComparison.Ordinal), $"stderr: {run.Stderr}");
+    return ok;
+}
+
 static bool IntegrationKeysWithoutPtyStopBeforeRecording(string repoRoot)
 {
     if (!TryGetBinary(out var bin))
@@ -438,11 +455,16 @@ static bool TryGetBinary(out string bin)
     return false;
 }
 
-static (int ExitCode, string Stderr, string Text, TimeSpan Elapsed) RunFixture(string bin, string repoRoot, string fixture, params string[] options)
+static (int ExitCode, string Stderr, string Text, TimeSpan Elapsed) RunFixture(string bin, string repoRoot, string fixture, params string[] options) =>
+    RunFixtureWithInput(bin, repoRoot, fixture, keepInputOpen: false, options);
+
+// keepInputOpen: scenetake's input is a pipe that this process holds open and never writes to.
+static (int ExitCode, string Stderr, string Text, TimeSpan Elapsed) RunFixtureWithInput(string bin, string repoRoot, string fixture, bool keepInputOpen, string[] options)
 {
     var stem = Path.Combine(Path.GetTempPath(), $"scenetake-step-input-{Guid.NewGuid():N}");
     var psi = new ProcessStartInfo(bin)
     {
+        RedirectStandardInput = keepInputOpen,
         RedirectStandardOutput = true,
         RedirectStandardError = true,
         UseShellExecute = false,
