@@ -108,7 +108,10 @@ dotnet_diagnostic.TUnitAssertions0005.severity = error # should not be used with
 # =================
 # Test Projects
 # =================
-[tests/**/*.cs]
+# `tests/**.cs` also matches the test programs directly in tests/. `tests/**/*.cs` matches only files in a subfolder,
+# so CA2000 ran on every test program. Its dispose analysis follows the local functions of a top-level program, and on
+# tests/rerecord_test.cs it ran for more than 10 minutes and took 14 GB.
+[tests/**.cs]
 # CA2000: Tests use 'out var arena' and short-lived IDisposable patterns where
 # disposal is managed by test infrastructure or irrelevant for test scope.
 dotnet_diagnostic.CA2000.severity = none
