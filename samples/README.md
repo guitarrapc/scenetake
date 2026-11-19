@@ -2,282 +2,141 @@
 
 English | [日本語](README-ja.md)
 
-Sample scenarios for scenetake. Use this page to quickly see each scenario’s **purpose** and **outputs** (GIF / SVG).
+Sample scenarios for scenetake. Record one with a command such as `scenetake --format svg samples/basic.yaml`.
 
-## Index
+| Scenario | What it shows | Files |
+| --- | --- | --- |
+| [basic](#basic) | Getting started: typing, highlights, sleep, stderr color | [yaml](basic.yaml) · [cast](basic.cast) · [gif](basic.gif) · [svg](basic.svg) |
+| [scenario-format](#scenario-format) | The scenario format reference shown in the README | [yaml](scenario_format.yaml) · [cast](scenario_format.cast) · [svg](scenario_format.svg) |
+| [demo](#demo) | From YAML to a cast and a GIF | [yaml](demo.yaml) · [cast](demo.cast) · [gif](demo.gif) · [svg](demo.svg) |
+| [git](#git) | Real `git` command output | [yaml](git.yaml) · [cast](git.cast) · [gif](git.gif) · [svg](git.svg) |
+| [highlight](#highlight) | Colors for comments, typed commands, stdout, and stderr | [yaml](highlight.yaml) · [cast](highlight.cast) · [gif](highlight.gif) · [svg](highlight.svg) |
+| [pty](#pty) | `matrix` recorded with `pty: true` | [yaml](pty.yaml) · [cast](pty.cast) · [gif](pty.gif) · [svg](pty.svg) |
+| [interactive-pty](#interactive-pty) | Recording while you operate the app, with `interactive: true` | [yaml](interactive-pty.yaml) · [cast](interactive-pty.cast) · [gif](interactive-pty.gif) · [svg](interactive-pty.svg) |
+| [password-prompt](#password-prompt) | A `sudo` password kept out of the recording (Linux / macOS) | [yaml](password-prompt.yaml) · [cast](password-prompt.cast) · [gif](password-prompt.gif) · [svg](password-prompt.svg) |
+| [theme](#theme) | The light theme, 16 and 256 colors, a gradient background | [yaml](theme.yaml) · [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
+| [theme-macos](#theme-macos) | A macOS window over a gradient that shows through it | [yaml](theme-macos.yaml) · [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
+| [theme-windows](#theme-windows) | A Windows window over a gradient | [yaml](theme-windows.yaml) · [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
+| [translucent](#translucent) | A translucent, blurred window over an image | [yaml](translucent.yaml) · [cast](translucent.cast) · [gif](translucent.gif) · [svg](translucent.svg) |
+| [resize](#resize) | Terminal resizes (cast only) | [cast](resize.cast) · [gif](resize.gif) · [svg](resize.svg) |
 
-| Scenario | Purpose | Input | Outputs |
-|----------|---------|-------|---------|
-| [basic](#basic) | Getting started — typing, highlights, sleep | [basic.yaml](basic.yaml) | [cast](basic.cast) · [gif](basic.gif) · [svg](basic.svg) |
-| [scenario-format](#scenario-format) | Full scenario format reference (README embed) | [scenario_format.yaml](scenario_format.yaml) | [cast](scenario_format.cast) · [svg](scenario_format.svg) |
-| [demo](#demo) | README workflow (YAML → cast → GIF) | [demo.yaml](demo.yaml) | [cast](demo.cast) · [gif](demo.gif) · [svg](demo.svg) |
-| [git](#git) | Real `git` command demo | [git.yaml](git.yaml) | [cast](git.cast) · [gif](git.gif) · [svg](git.svg) |
-| [highlight](#highlight) | Comment, stdout, and stderr coloring | [highlight.yaml](highlight.yaml) | [cast](highlight.cast) · [gif](highlight.gif) · [svg](highlight.svg) |
-| [pty](#pty) | TTY-dependent command with `pty: true` (`matrix`) | [pty.yaml](pty.yaml) | [cast](pty.cast) · [gif](pty.gif) · [svg](pty.svg) |
-| [interactive-pty](#interactive-pty) | Host-terminal interactive session (`interactive: true`) | [interactive-pty.yaml](interactive-pty.yaml) | [cast](interactive-pty.cast) · [gif](interactive-pty.gif) · [svg](interactive-pty.svg) |
-| [password-prompt](#password-prompt) | Typing a sudo password in an interactive step (Linux / macOS) | [password-prompt.yaml](password-prompt.yaml) | [cast](password-prompt.cast) · [gif](password-prompt.gif) · [svg](password-prompt.svg) |
-| [theme](#theme) | Light theme, 16 / 256 colors, gradient background | [theme.yaml](theme.yaml) | [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
-| [theme-macos](#theme-macos) | macOS window chrome on a gradient | [theme-macos.yaml](theme-macos.yaml) | [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
-| [theme-windows](#theme-windows) | Windows window chrome on a gradient | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
-| [translucent](#translucent) | A translucent, blurred window over an image | [translucent.yaml](translucent.yaml) | [cast](translucent.cast) · [gif](translucent.gif) · [svg](translucent.svg) |
-| [resize](#resize) | Terminal resize events (cast only) | [resize.cast](resize.cast) | [gif](resize.gif) · [svg](resize.svg) |
+## Showcase
 
-### Showcase
+Demos of well-known terminal tools, used in the README gallery and the playground.
 
-Demos of popular terminal tools, for the README gallery and the playground. They run on Linux in a container that has the tools (see [Regenerate](#regenerate)).
+| Scenario | What it shows | Files |
+| --- | --- | --- |
+| fetch | `fastfetch` in a PTY, in a macOS window | [yaml](showcase/fetch.yaml) · [cast](showcase/fetch.cast) · [svg](showcase/fetch.svg) |
+| devtools | `bat`, `git log --graph`, and `jq` in color, in a Windows window | [yaml](showcase/devtools.yaml) · [cast](showcase/devtools.cast) · [svg](showcase/devtools.svg) |
+| logo | `figlet` with animated `lolcat`, and `toilet` | [yaml](showcase/logo.yaml) · [cast](showcase/logo.cast) · [svg](showcase/logo.svg) |
+| sl | The steam locomotive, drawn with curses | [yaml](showcase/sl.yaml) · [cast](showcase/sl.cast) · [svg](showcase/sl.svg) |
+| nyancat | A full-screen truecolor animation, stopped by `timeout` | [yaml](showcase/nyancat.yaml) · [cast](showcase/nyancat.cast) · [svg](showcase/nyancat.svg) |
+| vim | `vim` edited by `keys`, then `git diff` | [yaml](showcase/vim.yaml) · [cast](showcase/vim.cast) · [svg](showcase/vim.svg) |
+| welcome | The playground's first screen | [yaml](showcase/welcome.yaml) · [cast](showcase/welcome.cast) · [svg](showcase/welcome.svg) |
 
-| Scenario | Purpose | Input | Outputs |
-|----------|---------|-------|---------|
-| fetch | `fastfetch` in a PTY, macOS window chrome | [fetch.yaml](showcase/fetch.yaml) | [cast](showcase/fetch.cast) · [svg](showcase/fetch.svg) |
-| devtools | `bat`, `git log --graph`, and `jq` in color, Windows window chrome | [devtools.yaml](showcase/devtools.yaml) | [cast](showcase/devtools.cast) · [svg](showcase/devtools.svg) |
-| logo | `figlet` with animated `lolcat`, and `toilet` | [logo.yaml](showcase/logo.yaml) | [cast](showcase/logo.cast) · [svg](showcase/logo.svg) |
-| sl | The steam locomotive, drawn with curses | [sl.yaml](showcase/sl.yaml) | [cast](showcase/sl.cast) · [svg](showcase/sl.svg) |
-| nyancat | A full-screen truecolor animation, stopped by `timeout` | [nyancat.yaml](showcase/nyancat.yaml) | [cast](showcase/nyancat.cast) · [svg](showcase/nyancat.svg) |
-| vim | `vim` edited by `keys`, then `git diff` | [vim.yaml](showcase/vim.yaml) | [cast](showcase/vim.cast) · [svg](showcase/vim.svg) |
-| welcome | The playground's first screen: the scenetake logo with `oh-my-logo`, and `git log --graph`, in a macOS window on an image | [welcome.yaml](showcase/welcome.yaml) | [cast](showcase/welcome.cast) · [svg](showcase/welcome.svg) |
+## basic
+
+| GIF | SVG |
+| --- | --- |
+| ![](basic.gif) | ![](basic.svg) |
+
+## scenario-format
+
+![](scenario_format.svg)
+
+## demo
+
+| GIF | SVG |
+| --- | --- |
+| ![](demo.gif) | ![](demo.svg) |
+
+## git
+
+| GIF | SVG |
+| --- | --- |
+| ![](git.gif) | ![](git.svg) |
+
+## highlight
+
+| GIF | SVG |
+| --- | --- |
+| ![](highlight.gif) | ![](highlight.svg) |
+
+## pty
+
+Recording it again needs [`matrix`](https://github.com/guitarrapc/matrix).
+
+| GIF | SVG |
+| --- | --- |
+| ![](pty.gif) | ![](pty.svg) |
+
+## interactive-pty
+
+You operate `vim` in a real terminal to record it, so it is recorded again by hand.
+
+| GIF | SVG |
+| --- | --- |
+| ![](interactive-pty.gif) | ![](interactive-pty.svg) |
+
+## password-prompt
+
+`sudo` turns echo off, so the password stays out of the recording. Recording it again needs a real terminal and an account that may use `sudo`, so it is done by hand.
+
+| GIF | SVG |
+| --- | --- |
+| ![](password-prompt.gif) | ![](password-prompt.svg) |
+
+## theme
+
+| GIF | SVG |
+| --- | --- |
+| ![](theme.gif) | ![](theme.svg) |
+
+## theme-macos
+
+| GIF | SVG |
+| --- | --- |
+| ![](theme-macos.gif) | ![](theme-macos.svg) |
+
+## theme-windows
+
+| GIF | SVG |
+| --- | --- |
+| ![](theme-windows.gif) | ![](theme-windows.svg) |
+
+## translucent
+
+| GIF | SVG |
+| --- | --- |
+| ![](translucent.gif) | ![](translucent.svg) |
+
+## resize
+
+There is no YAML. Convert it with `scenetake svg samples/resize.cast`.
+
+| GIF | SVG |
+| --- | --- |
+| ![](resize.gif) | ![](resize.svg) |
 
 ## Regenerate
 
-Run from the repository root:
+Run these from the repository root. The GIFs need ffmpeg.
 
 ```bash
-# Regenerate .cast and .svg from every *.yaml, then the color theme previews, then a .gif of every cast
+# Make the casts, SVGs, color theme previews, and GIFs again from every scenario
 dotnet run samples/regenerate.cs
 
-# Only the color theme previews in theme-presets/ (palette.cast in each theme), which need no recording
+# Only the color theme previews
 dotnet run samples/regenerate.cs -- --theme-presets
 
-# Only the GIFs, from the casts as they are (scenetake gif, needs ffmpeg). Casts recorded by hand stay as they are.
+# Only the GIFs, from the casts as they are
 dotnet run samples/regenerate.cs -- --gifs
 ```
 
-The GIFs come from `scenetake gif`, so they have the window chrome and the background that the SVGs have. A cast keeps background colors but no image, so for a scenario whose `render.background` is an image (`translucent.yaml`), `regenerate.cs` passes the image again with `--background`.
-
-`regenerate.cs` reads only the scenarios in this folder. The showcase scenarios in `showcase/` need Linux tools, so `showcase/record.sh` records them in a container built from `showcase/Dockerfile`, on Linux or in WSL with Docker. It takes a folder that holds a linux-x64 scenetake:
+The showcase uses Linux tools, so `showcase/record.sh` records it in a container. Run it on Linux or in WSL with Docker, and pass a folder that holds a linux-x64 scenetake.
 
 ```bash
 dotnet publish scenetake.cs -c Release -r linux-x64 --self-contained -p:PublishAot=false -p:PublishSingleFile=true -o ~/scenetake-linux
 bash samples/showcase/record.sh ~/scenetake-linux            # every showcase scenario
 bash samples/showcase/record.sh ~/scenetake-linux fetch sl   # only these
-```
-
----
-
-## basic
-
-**Purpose:** Introductory sample covering core scenetake features.
-
-- Step name comments, typing animation, line highlights on `curl` output
-- `sleep` pause and default stderr color (red)
-
-| GIF | SVG |
-|-----|-----|
-| ![](basic.gif) | ![](basic.svg) |
-
-```bash
-scenetake --format svg samples/basic.yaml
-```
-
----
-
-## scenario-format
-
-**Purpose:** Runnable reference for the scenario YAML format embedded in the main README.
-
-- All top-level sections: metadata, `settings`, `render`, harmless `pre`/`post`, string and map `steps`
-- `run-highlight`, `highlight`, `stderr-color`, and a minimal `pty: true` echo step with fixed `printf` output (no git or file changes)
-- `render.window: macos` for README preview
-
-| SVG |
-|-----|
-| ![](scenario_format.svg) |
-
-```bash
-scenetake --format svg samples/scenario_format.yaml
-```
-
----
-
-## demo
-
-**Purpose:** Reproduce the README workflow from YAML through cast to GIF.
-
-- Show scenario with `cat` → generate cast with `scenetake` → GIF with `agg` (Docker)
-
-| GIF | SVG |
-|-----|-----|
-| ![](demo.gif) | ![](demo.svg) |
-
-```bash
-scenetake --format svg samples/demo.yaml
-```
-
----
-
-## git
-
-**Purpose:** Repository-style demo using real `git` command output.
-
-- `git status` / `log` / `branch` / `diff --stat`
-- Per-step `post-delay` and `typing-speed` tuning
-
-| GIF | SVG |
-|-----|-----|
-| ![](git.gif) | ![](git.svg) |
-
-```bash
-scenetake --format svg samples/git.yaml
-```
-
----
-
-## highlight
-
-**Purpose:** Comprehensive sample of scenetake coloring (SGR injected into cast events).
-
-- Comment line styles (`[style]` in `name`)
-- `run-highlight` (typed command color)
-- `highlight` (stdout line / range rules)
-- `stderr-color` (named colors and SGR literals)
-- 256-color index and true color
-
-| GIF | SVG |
-|-----|-----|
-| ![](highlight.gif) | ![](highlight.svg) |
-
-```bash
-scenetake --format svg samples/highlight.yaml
-```
-
----
-
-## pty
-
-**Purpose:** Record a TTY-dependent command in a real pseudo-terminal (`pty: true`).
-
-- Intro step with typing animation, then `matrix 5` with `pty: true` (simulated typing of the command, then PTY capture)
-- [`matrix`](https://github.com/guitarrapc/matrix) output also exercises SVG **Matrix rain contextual tint** (white highlights beside green render as bright green)
-- Requires the `matrix` CLI on `PATH` when regenerating
-- For a minimal `pty: true` example without extra dependencies, see the [pty demo step in scenario-format](#scenario-format)
-
-| GIF | SVG |
-|-----|-----|
-| ![](pty.gif) | ![](pty.svg) |
-
-```bash
-scenetake --format svg samples/pty.yaml
-```
-
----
-
-## interactive-pty
-
-**Purpose:** Record a step where **you** operate the TUI on the host terminal (`pty: true` + `interactive: true`).
-
-- Simulated typing of `run` is emitted on the cast timeline before the session starts
-- Wall-clock PTY output is buffered while you interact; step ends when the child exits (`:wq`, etc.)
-- Reference `.cast` / `.svg` / `.gif` are checked in; **regeneration is manual** — requires a real stdin/stdout TTY and tools such as `vim` on `PATH`
-
-| GIF | SVG |
-|-----|-----|
-| ![](interactive-pty.gif) | ![](interactive-pty.svg) |
-
-```bash
-scenetake --format svg samples/interactive-pty.yaml out/interactive-pty
-```
-
----
-
-## password-prompt
-
-**Purpose:** Type a `sudo` password during an interactive step and keep it out of the recording (Linux / macOS).
-
-- `sudo -k whoami` asks for the password every run; type it, then type a name at the `Your name:` prompt
-- sudo turns terminal echo off, so the password never reaches the PTY output, and the cast holds only PTY output
-- Keys typed at a password prompt are left out of scenetake's input log, so `normalize-typing` still re-times the name typed after it
-- Reference `.cast` / `.svg` / `.gif` were recorded in a disposable container as a throwaway user `demo`; **regeneration is manual** — requires a real stdin/stdout TTY and an account that may use `sudo`
-
-| GIF | SVG |
-|-----|-----|
-| ![](password-prompt.gif) | ![](password-prompt.svg) |
-
-```bash
-scenetake --format svg samples/password-prompt.yaml out/password-prompt
-```
-
----
-
-## theme
-
-**Purpose:** **`render.theme`** in the SVG / cast header (light preset) and ANSI color rendering.
-
-- `render.font-size` / `theme.preset: light`
-- `render.background`: a two-color gradient around the terminal
-- 16-color and 256-color `printf` output
-
-| GIF | SVG |
-|-----|-----|
-| ![](theme.gif) | ![](theme.svg) |
-
-```bash
-scenetake --format svg samples/theme.yaml
-```
-
----
-
-## theme-macos
-
-**Purpose:** **`render.window: macos`** window chrome with the dark theme, on a **`render.background`** gradient that tints the window through **`render.opacity: 0.85`**, with the scenario title in the title bar.
-
-| GIF | SVG |
-|-----|-----|
-| ![](theme-macos.gif) | ![](theme-macos.svg) |
-
-```bash
-scenetake --format svg samples/theme-macos.yaml
-```
-
----
-
-## theme-windows
-
-**Purpose:** **`render.window: windows`** window chrome with the dark theme, on a **`render.background`** gradient, with the scenario title in the title bar.
-
-| GIF | SVG |
-|-----|-----|
-| ![](theme-windows.gif) | ![](theme-windows.svg) |
-
-```bash
-scenetake --format svg samples/theme-windows.yaml
-```
-
----
-
-## translucent
-
-**Purpose:** a **`render.opacity`** window over a **`render.background`** image, with **`render.blur`**. The image shows through the terminal's background and the title bar, blurred, while the text and the badges that the output colors stay opaque. A gradient changes little: under a translucent window it only shifts the color, and a blur has no detail to soften, so an image shows the effect best. The GIF draws the blurred image with its 256 colors, without dithering.
-
-| GIF | SVG |
-|-----|-----|
-| ![](translucent.gif) | ![](translucent.svg) |
-
-```bash
-scenetake --format svg samples/translucent.yaml
-```
-
----
-
-## resize
-
-**Purpose:** See how SVG handles cast **`r` (resize)** events.
-
-- No YAML — hand-edited [resize.cast](resize.cast) only (40×8 → 80×12 → 50×6)
-- Viewport clipping on shrink and chrome resize behavior
-
-| GIF | SVG |
-|-----|-----|
-| ![](resize.gif) | ![](resize.svg) |
-
-```bash
-scenetake svg samples/resize.cast
 ```

@@ -2,282 +2,141 @@
 
 [English](README.md) | 日本語
 
-scenetake のサンプル集です。各シナリオの**目的**と**生成物**（GIF / SVG）を一覧で確認できます。
+scenetakeのサンプルシナリオです。`scenetake --format svg samples/basic.yaml`のように録画できます。
 
-## 一覧
+| シナリオ | 内容 | ファイル |
+| --- | --- | --- |
+| [basic](#basic) | 入門。タイピング、ハイライト、sleep、stderrの色 | [yaml](basic.yaml) · [cast](basic.cast) · [gif](basic.gif) · [svg](basic.svg) |
+| [scenario-format](#scenario-format) | READMEに載せているシナリオ形式のリファレンス | [yaml](scenario_format.yaml) · [cast](scenario_format.cast) · [svg](scenario_format.svg) |
+| [demo](#demo) | YAMLからcast、GIFを作るまでの流れ | [yaml](demo.yaml) · [cast](demo.cast) · [gif](demo.gif) · [svg](demo.svg) |
+| [git](#git) | 実際の`git`コマンドの出力 | [yaml](git.yaml) · [cast](git.cast) · [gif](git.gif) · [svg](git.svg) |
+| [highlight](#highlight) | コメント、入力したコマンド、stdout、stderrの色付け | [yaml](highlight.yaml) · [cast](highlight.cast) · [gif](highlight.gif) · [svg](highlight.svg) |
+| [pty](#pty) | `pty: true`で`matrix`を録画 | [yaml](pty.yaml) · [cast](pty.cast) · [gif](pty.gif) · [svg](pty.svg) |
+| [interactive-pty](#interactive-pty) | `interactive: true`で操作しながら録画 | [yaml](interactive-pty.yaml) · [cast](interactive-pty.cast) · [gif](interactive-pty.gif) · [svg](interactive-pty.svg) |
+| [password-prompt](#password-prompt) | `sudo`のパスワードを録画に残さない（Linux / macOS） | [yaml](password-prompt.yaml) · [cast](password-prompt.cast) · [gif](password-prompt.gif) · [svg](password-prompt.svg) |
+| [theme](#theme) | lightテーマ、16色と256色、グラデーションの背景 | [yaml](theme.yaml) · [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
+| [theme-macos](#theme-macos) | macOSのウィンドウ枠を、透けるグラデーションの上に | [yaml](theme-macos.yaml) · [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
+| [theme-windows](#theme-windows) | Windowsのウィンドウ枠を、グラデーションの上に | [yaml](theme-windows.yaml) · [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
+| [translucent](#translucent) | 画像の上に、半透明でぼかしたウィンドウ | [yaml](translucent.yaml) · [cast](translucent.cast) · [gif](translucent.gif) · [svg](translucent.svg) |
+| [resize](#resize) | ターミナルのリサイズ（castのみ） | [cast](resize.cast) · [gif](resize.gif) · [svg](resize.svg) |
 
-| シナリオ | 目的 | 入力 | 出力 |
-|----------|------|------|------|
-| [basic](#basic) | 入門・タイピング・ハイライト・sleep | [basic.yaml](basic.yaml) | [cast](basic.cast) · [gif](basic.gif) · [svg](basic.svg) |
-| [scenario-format](#scenario-format) | シナリオ形式の全体リファレンス（README 埋め込み） | [scenario_format.yaml](scenario_format.yaml) | [cast](scenario_format.cast) · [svg](scenario_format.svg) |
-| [demo](#demo) | README 用の一連のワークフロー | [demo.yaml](demo.yaml) | [cast](demo.cast) · [gif](demo.gif) · [svg](demo.svg) |
-| [git](#git) | 実コマンドの git デモ | [git.yaml](git.yaml) | [cast](git.cast) · [gif](git.gif) · [svg](git.svg) |
-| [highlight](#highlight) | コメント・stdout / stderr の色指定 | [highlight.yaml](highlight.yaml) | [cast](highlight.cast) · [gif](highlight.gif) · [svg](highlight.svg) |
-| [pty](#pty) | `pty: true` で TTY 依存コマンド（`matrix`）を録画 | [pty.yaml](pty.yaml) | [cast](pty.cast) · [gif](pty.gif) · [svg](pty.svg) |
-| [interactive-pty](#interactive-pty) | ホスト端末での対話録画（`interactive: true`） | [interactive-pty.yaml](interactive-pty.yaml) | [cast](interactive-pty.cast) · [gif](interactive-pty.gif) · [svg](interactive-pty.svg) |
-| [password-prompt](#password-prompt) | 対話ステップで sudo のパスワードを入力（Linux / macOS） | [password-prompt.yaml](password-prompt.yaml) | [cast](password-prompt.cast) · [gif](password-prompt.gif) · [svg](password-prompt.svg) |
-| [theme](#theme) | light テーマ・16 / 256 色・グラデーション背景 | [theme.yaml](theme.yaml) | [cast](theme.cast) · [gif](theme.gif) · [svg](theme.svg) |
-| [theme-macos](#theme-macos) | macOS ウィンドウ chrome とグラデーション背景 | [theme-macos.yaml](theme-macos.yaml) | [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
-| [theme-windows](#theme-windows) | Windows ウィンドウ chrome とグラデーション背景 | [theme-windows.yaml](theme-windows.yaml) | [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
-| [translucent](#translucent) | 画像の上の半透明でぼかしたウィンドウ | [translucent.yaml](translucent.yaml) | [cast](translucent.cast) · [gif](translucent.gif) · [svg](translucent.svg) |
-| [resize](#resize) | ターミナル resize イベント（cast のみ） | [resize.cast](resize.cast) | [gif](resize.gif) · [svg](resize.svg) |
+## ショーケース
 
-### ショーケース
+よく知られたターミナルツールのデモです。READMEのギャラリーとプレイグラウンドで使っています。
 
-よく知られたターミナルツールのデモです。README のギャラリーとプレイグラウンドで使います。ツールを入れたコンテナの中で、Linux で実行します（[再生成](#再生成)を参照）。
-
-| シナリオ | 目的 | 入力 | 出力 |
-|----------|------|------|------|
-| fetch | PTY で `fastfetch`、macOS のウィンドウ枠 | [fetch.yaml](showcase/fetch.yaml) | [cast](showcase/fetch.cast) · [svg](showcase/fetch.svg) |
-| devtools | `bat`、`git log --graph`、`jq` のカラー出力、Windows のウィンドウ枠 | [devtools.yaml](showcase/devtools.yaml) | [cast](showcase/devtools.cast) · [svg](showcase/devtools.svg) |
-| logo | `figlet` と動く `lolcat`、`toilet` | [logo.yaml](showcase/logo.yaml) | [cast](showcase/logo.cast) · [svg](showcase/logo.svg) |
-| sl | curses で描く SL | [sl.yaml](showcase/sl.yaml) | [cast](showcase/sl.cast) · [svg](showcase/sl.svg) |
-| nyancat | 全画面のトゥルーカラーアニメーション、`timeout` で停止 | [nyancat.yaml](showcase/nyancat.yaml) | [cast](showcase/nyancat.cast) · [svg](showcase/nyancat.svg) |
-| vim | `keys` で `vim` を編集し、`git diff` で確認 | [vim.yaml](showcase/vim.yaml) | [cast](showcase/vim.cast) · [svg](showcase/vim.svg) |
-| welcome | プレイグラウンドの初期画面。`oh-my-logo` の scenetake ロゴと `git log --graph` を、画像の上の macOS ウィンドウで表示 | [welcome.yaml](showcase/welcome.yaml) | [cast](showcase/welcome.cast) · [svg](showcase/welcome.svg) |
-
-## 再生成
-
-リポジトリルートで実行します。
-
-```bash
-# すべての *.yaml から .cast と .svg を再生成し、続けてカラーテーマの見本と、すべての cast の .gif も作る
-dotnet run samples/regenerate.cs
-
-# theme-presets/ のカラーテーマの見本だけを作る（palette.cast を各テーマで描画。録画は不要）
-dotnet run samples/regenerate.cs -- --theme-presets
-
-# GIF だけを今ある cast から作る（scenetake gif。ffmpeg が必要）。手で録画した cast はそのまま
-dotnet run samples/regenerate.cs -- --gifs
-```
-
-GIF は `scenetake gif` で作るので、SVG と同じウィンドウ枠と背景が付きます。cast は背景の色は持ちますが画像は持たないため、`render.background` が画像のシナリオ（`translucent.yaml`）では、`regenerate.cs` が `--background` で画像を渡し直します。
-
-`regenerate.cs` が読むのはこのフォルダのシナリオだけです。`showcase/` のシナリオは Linux のツールを使うため、`showcase/record.sh` が `showcase/Dockerfile` から作ったコンテナの中で録画します。Linux か、Docker のある WSL で実行してください。引数には linux-x64 の scenetake があるフォルダを渡します。
-
-```bash
-dotnet publish scenetake.cs -c Release -r linux-x64 --self-contained -p:PublishAot=false -p:PublishSingleFile=true -o ~/scenetake-linux
-bash samples/showcase/record.sh ~/scenetake-linux            # showcase のシナリオすべて
-bash samples/showcase/record.sh ~/scenetake-linux fetch sl   # 指定したものだけ
-```
-
----
+| シナリオ | 内容 | ファイル |
+| --- | --- | --- |
+| fetch | PTYで`fastfetch`、macOSのウィンドウ枠 | [yaml](showcase/fetch.yaml) · [cast](showcase/fetch.cast) · [svg](showcase/fetch.svg) |
+| devtools | `bat`、`git log --graph`、`jq`のカラー出力、Windowsのウィンドウ枠 | [yaml](showcase/devtools.yaml) · [cast](showcase/devtools.cast) · [svg](showcase/devtools.svg) |
+| logo | `figlet`と動く`lolcat`、`toilet` | [yaml](showcase/logo.yaml) · [cast](showcase/logo.cast) · [svg](showcase/logo.svg) |
+| sl | cursesで描くSL | [yaml](showcase/sl.yaml) · [cast](showcase/sl.cast) · [svg](showcase/sl.svg) |
+| nyancat | 全画面のトゥルーカラーアニメーションを`timeout`で停止 | [yaml](showcase/nyancat.yaml) · [cast](showcase/nyancat.cast) · [svg](showcase/nyancat.svg) |
+| vim | `keys`で`vim`を編集し、`git diff`で確認 | [yaml](showcase/vim.yaml) · [cast](showcase/vim.cast) · [svg](showcase/vim.svg) |
+| welcome | プレイグラウンドの最初の画面 | [yaml](showcase/welcome.yaml) · [cast](showcase/welcome.cast) · [svg](showcase/welcome.svg) |
 
 ## basic
 
-**目的:** scenetake の基本機能を一通り見る入門サンプル。
-
-- ステップ名コメント、タイピング演出、`curl` 出力の行ハイライト
-- `sleep` による待ち、`stderr` のデフォルト色（赤）
-
 | GIF | SVG |
-|-----|-----|
+| --- | --- |
 | ![](basic.gif) | ![](basic.svg) |
-
-```bash
-scenetake --format svg samples/basic.yaml
-```
-
----
 
 ## scenario-format
 
-**目的:** メイン README に埋め込んでいるシナリオ YAML 形式の実行可能リファレンス。
-
-- top-level 各セクション（メタデータ、`settings`、`render`、無害な `pre`/`post`、文字列 / マップ形式の `steps`）
-- 固定 `printf` 出力での `run-highlight` / `highlight` / `stderr-color`、および依存なしの最小 `pty: true` echo 例（git やファイル変更なし）
-- README プレビュー用に `render.window: macos`
-
-| SVG |
-|-----|
-| ![](scenario_format.svg) |
-
-```bash
-scenetake --format svg samples/scenario_format.yaml
-```
-
----
+![](scenario_format.svg)
 
 ## demo
 
-**目的:** README に載せる「YAML → cast → GIF」までの流れを再現するデモ。
-
-- `cat` でシナリオを表示 → `scenetake` で cast 生成 → `agg` で GIF 化（Docker）
-
 | GIF | SVG |
-|-----|-----|
+| --- | --- |
 | ![](demo.gif) | ![](demo.svg) |
-
-```bash
-scenetake --format svg samples/demo.yaml
-```
-
----
 
 ## git
 
-**目的:** 実際の `git` コマンド出力を記録した、リポジトリ向けデモ。
-
-- `git status` / `log` / `branch` / `diff --stat`
-- ステップごとの `post-delay`・`typing-speed` の調整例
-
 | GIF | SVG |
-|-----|-----|
+| --- | --- |
 | ![](git.gif) | ![](git.svg) |
-
-```bash
-scenetake --format svg samples/git.yaml
-```
-
----
 
 ## highlight
 
-**目的:** scenetake 固有の色付け（cast イベントへの SGR 注入）の総合サンプル。
-
-- コメント行の色（`name` の `[style]`）
-- `run-highlight`（入力コマンドの色）
-- `highlight`（stdout の行・範囲指定）
-- `stderr-color`（名前付き色・SGR リテラル）
-- 256 色インデックス・true color
-
 | GIF | SVG |
-|-----|-----|
+| --- | --- |
 | ![](highlight.gif) | ![](highlight.svg) |
-
-```bash
-scenetake --format svg samples/highlight.yaml
-```
-
----
 
 ## pty
 
-**目的:** 疑似端末（`pty: true`）で TTY 依存コマンドを録画するサンプル。
-
-- 導入 step はタイピング演出あり。その後 `matrix 5` を `pty: true` で実行（コマンドのタイピング演出のあと PTY キャプチャ）
-- [`matrix`](https://github.com/guitarrapc/matrix) の出力で SVG の **Matrix rain contextual tint**（緑の隣の白ハイライトを明るい緑で描画）も確認できる
-- 再生成時は `matrix` CLI が `PATH` に必要
-- 追加依存なしの最小 `pty: true` 例は [scenario-format の pty demo step](#scenario-format) を参照
+再生成には[`matrix`](https://github.com/guitarrapc/matrix)が必要です。
 
 | GIF | SVG |
-|-----|-----|
+| --- | --- |
 | ![](pty.gif) | ![](pty.svg) |
-
-```bash
-scenetake --format svg samples/pty.yaml
-```
-
----
 
 ## interactive-pty
 
-**目的:** ホスト端末で TUI を操作しながら録画する（`pty: true` + `interactive: true`）。
-
-- セッション開始前に `run` のタイピング演出を cast に記録
-- 操作中の PTY 出力を実時間でバッファし、子プロセス終了で step 終了（`:wq` など）
-- 参照用 `.cast` / `.svg` / `.gif` を同梱。**再生成は手動** — 実ターミナル（stdin/stdout TTY）と `vim` 等が必要
+実際のターミナルで`vim`を操作して録画するので、再生成は手動です。
 
 | GIF | SVG |
-|-----|-----|
+| --- | --- |
 | ![](interactive-pty.gif) | ![](interactive-pty.svg) |
-
-```bash
-scenetake --format svg samples/interactive-pty.yaml out/interactive-pty
-```
-
----
 
 ## password-prompt
 
-**目的:** 対話ステップで `sudo` のパスワードを入力し、録画に残さない（Linux / macOS）。
-
-- `sudo -k whoami` は毎回パスワードを求める。入力したら、続く `Your name:` に名前を入力する
-- sudo が端末のエコーを切るのでパスワードは PTY の出力に出ず、cast には PTY の出力しか記録されない
-- パスワード入力中のキーは scenetake の入力ログに残さないので、その後に入力した名前も `normalize-typing` でタイミングが整う
-- 参照用 `.cast` / `.svg` / `.gif` は使い捨てコンテナで、使い捨てユーザー `demo` として録画したもの。**再生成は手動** — 実ターミナル（stdin/stdout TTY）と `sudo` を使えるアカウントが必要
+`sudo`はエコーを切るので、パスワードは録画に残りません。実際のターミナルと`sudo`を使えるアカウントが必要なので、再生成は手動です。
 
 | GIF | SVG |
-|-----|-----|
+| --- | --- |
 | ![](password-prompt.gif) | ![](password-prompt.svg) |
-
-```bash
-scenetake --format svg samples/password-prompt.yaml out/password-prompt
-```
-
----
 
 ## theme
 
-**目的:** SVG / cast ヘッダーの **`render.theme`**（light プリセット）と ANSI 色の見え方。
-
-- `render.font-size` / `theme.preset: light`
-- `render.background`: ターミナルの周りに 2 色のグラデーション
-- 16 色・256 色の printf 出力
-
 | GIF | SVG |
-|-----|-----|
+| --- | --- |
 | ![](theme.gif) | ![](theme.svg) |
-
-```bash
-scenetake --format svg samples/theme.yaml
-```
-
----
 
 ## theme-macos
 
-**目的:** **`render.window: macos`** ウィンドウ chrome + dark テーマを **`render.background`** のグラデーションの上に置き、**`render.opacity: 0.85`** でグラデーションの色をウィンドウに透かし、タイトルバーにシナリオの title を表示。
-
 | GIF | SVG |
-|-----|-----|
+| --- | --- |
 | ![](theme-macos.gif) | ![](theme-macos.svg) |
-
-```bash
-scenetake --format svg samples/theme-macos.yaml
-```
-
----
 
 ## theme-windows
 
-**目的:** **`render.window: windows`** ウィンドウ chrome + dark テーマを **`render.background`** のグラデーションの上に置き、タイトルバーにシナリオの title を表示。
-
 | GIF | SVG |
-|-----|-----|
+| --- | --- |
 | ![](theme-windows.gif) | ![](theme-windows.svg) |
-
-```bash
-scenetake --format svg samples/theme-windows.yaml
-```
-
----
 
 ## translucent
 
-**目的:** **`render.background`** の画像の上に、**`render.opacity`** で半透明にし **`render.blur`** でぼかしたウィンドウを置く。ターミナルの背景とタイトルバー越しに画像がぼけて透け、文字と出力が色を付けたバッジは透けない。グラデーションでは変化が小さい。半透明にしても色が少し変わるだけで、ぼかす細部もないので、効果は画像で一番よく見える。GIF は、ぼかした画像を 256 色でディザなしに描く。
-
 | GIF | SVG |
-|-----|-----|
+| --- | --- |
 | ![](translucent.gif) | ![](translucent.svg) |
-
-```bash
-scenetake --format svg samples/translucent.yaml
-```
-
----
 
 ## resize
 
-**目的:** cast の **`r`（resize）イベント** を SVG がどう扱うかの確認用。
-
-- YAML はなく、手編集の [resize.cast](resize.cast) のみ（40×8 → 80×12 → 50×6）
-- 縮小時の viewport クリップと chrome 連動の確認向け
+YAMLはなく、`scenetake svg samples/resize.cast`で変換します。
 
 | GIF | SVG |
-|-----|-----|
+| --- | --- |
 | ![](resize.gif) | ![](resize.svg) |
 
+## 再生成
+
+リポジトリのルートで実行します。GIFの作成にはffmpegが必要です。
+
 ```bash
-scenetake svg samples/resize.cast
+# すべてのシナリオからcast、SVG、カラーテーマの見本、GIFを作り直す
+dotnet run samples/regenerate.cs
+
+# カラーテーマの見本だけ作る
+dotnet run samples/regenerate.cs -- --theme-presets
+
+# 今あるcastからGIFだけ作る
+dotnet run samples/regenerate.cs -- --gifs
+```
+
+ショーケースはLinuxのツールを使うので、`showcase/record.sh`がコンテナの中で録画します。LinuxかDockerのあるWSLで、linux-x64のscenetakeを置いたフォルダを渡して実行します。
+
+```bash
+dotnet publish scenetake.cs -c Release -r linux-x64 --self-contained -p:PublishAot=false -p:PublishSingleFile=true -o ~/scenetake-linux
+bash samples/showcase/record.sh ~/scenetake-linux            # すべて
+bash samples/showcase/record.sh ~/scenetake-linux fetch sl   # 指定したものだけ
 ```

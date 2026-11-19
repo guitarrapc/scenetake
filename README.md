@@ -1,6 +1,6 @@
 [![Build](https://github.com/guitarrapc/scenetake/actions/workflows/build.yaml/badge.svg)](https://github.com/guitarrapc/scenetake/actions/workflows/build.yaml)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
 [![NuGet](https://img.shields.io/nuget/v/scenetake.svg?label=scenetake%20nuget)](https://www.nuget.org/packages/scenetake)
 [![npm](https://img.shields.io/npm/v/scenetake.svg?label=scenetake%20npm)](https://www.npmjs.com/package/scenetake)
 
@@ -8,7 +8,9 @@
 
 English | [日本語](README-ja.md)
 
-scenetake runs the commands you write in YAML and records the terminal. It types the commands for you, so you never type them by hand. With the keys written down, it records TUIs and interactive apps too, and it hides tokens and other secrets before they reach the recording. The recording is an asciinema v3 `.cast` file, and scenetake can also write SVG, mp4, GIF, and PNG.
+scenetake makes terminal recordings from commands you write in a YAML scenario. It types the commands for you, so recording again and again is easy, and you can tell it which keys to press in TUIs and interactive apps.
+
+![](samples/showcase/welcome.svg)
 
 ```yaml
 title: "Basic Demo"
@@ -64,8 +66,13 @@ steps:
 Download a binary for Linux, macOS, or Windows from [Releases](https://github.com/guitarrapc/scenetake/releases), or install it with one of these. You do not need asciinema or a .NET runtime.
 
 ```sh
-dotnet tool install -g scenetake   # needs the .NET 10 SDK
+# dotnet tool
+dotnet tool install -g scenetake
+
+# npm
 npm install -g scenetake
+
+# scoop
 scoop bucket add guitarrapc https://github.com/guitarrapc/scoop-bucket
 scoop install scenetake
 ```
@@ -73,20 +80,21 @@ scoop install scenetake
 ![](samples/quickstart.svg)
 
 ```bash
-# Make a starter scenario, scenario.yaml
-scenetake init
-
-# Run it and write scenario.cast and scenario.svg
-scenetake --format svg scenario.yaml
-
 # Record one command without a scenario
 scenetake capture -- git log --oneline -5
 
-# Save the command as a scenario file
+# Make a scenario from a command
 scenetake capture --save-scenario help.yaml -- mycli --help
-```
 
-`scenetake --help` lists every option.
+# Make a scenario file, scenario.yaml
+scenetake init
+
+# Run the scenario and record it as scenario.svg (scenario.cast is written too)
+scenetake --format svg scenario.yaml
+
+# See every option
+scenetake --help
+```
 
 ## Output formats
 
@@ -100,7 +108,7 @@ scenetake capture --save-scenario help.yaml -- mycli --help
 
 Install ffmpeg with `winget install Gyan.FFmpeg`, `brew install ffmpeg`, or `sudo apt install ffmpeg`.
 
-## Look
+## Customize the look
 
 Set these with a `render` key in the scenario, or with the flag of the same name, such as `--window macos`.
 
@@ -178,7 +186,7 @@ steps:
 | --- | --- |
 | ![](samples/pty.gif) | ![](samples/pty.svg) |
 
-`keys` types keys, and `timeout` sets when to stop the command.
+`keys` sends keystrokes to the TUI, and `timeout` sets when to stop it.
 
 ```yaml
 steps:
@@ -215,7 +223,7 @@ scenetake --save-keys keys.yaml demo.yaml
 
 ## More features
 
-### One session
+### Across steps
 
 With bash, zsh, or PowerShell, a `cd` or an `export` carries to the steps after it.
 
@@ -230,9 +238,9 @@ steps:
   - clear: true             # Clear the screen
 ```
 
-### Change the look without running again
+### Change only the look, without running again
 
-Record once with `--save-outputs`. Then `--replay` changes the theme or the format without running any command.
+Combine `--save-outputs` and `--replay` to reuse the outputs of one recording and change only the theme or the format.
 
 ```bash
 scenetake --save-outputs demo.outputs.json demo.yaml
@@ -241,7 +249,7 @@ scenetake --replay demo.outputs.json --format mp4 --theme dracula demo.yaml
 
 ### Record again without noise
 
-When you record again, a step that prints what it printed before keeps the earlier recording. `keep-output: true` keeps output that changes every run.
+When you record again, a step whose output did not change reuses the earlier recording. To reuse the earlier output even for output that changes every run, such as `date`, set `keep-output: true`.
 
 ```text
 Compared with the earlier cast: 4 of 5 steps printed the same, 1 changed
@@ -250,7 +258,7 @@ Compared with the earlier cast: 4 of 5 steps printed the same, 1 changed
 
 ### Masking secrets
 
-scenetake replaces tokens, `API_KEY=…` values, passwords in URLs, private keys, and the values of secret environment variables such as `GITHUB_TOKEN` with `*`. Add other texts to hide under `mask`.
+scenetake replaces tokens, `API_KEY=…` values, passwords in URLs, private keys, and the values of secret environment variables such as `GITHUB_TOKEN` with `*`. Specify other texts to hide with `mask`.
 
 ```yaml
 settings:
@@ -260,11 +268,11 @@ settings:
 
 ### CI
 
-With `--strict`, a step whose command exits non-zero is an error. Set `continue-on-error: true` on a step that is meant to fail.
+Add `--strict` to make a non-zero exit from a step's command an error. Set `continue-on-error: true` on a step that is meant to fail.
 
 ## Scenario Format
 
-Only `steps` is required. The example below runs as is ([samples/scenario_format.yaml](samples/scenario_format.yaml)). Quote a command that contains `: `, for example `run: 'echo "answer: $a"'`. See [spec_scenario.md](.github/docs/spec_scenario.md) for every key.
+Only the `steps` key is required. Quote a command that contains `: `, for example `run: 'echo "answer: $a"'`. See [spec_scenario.md](.github/docs/spec_scenario.md) for every key.
 
 ![](samples/scenario_format.svg)
 
@@ -380,7 +388,3 @@ steps:
 post:
   - echo "demo complete (not recorded)"
 ```
-
-## Development
-
-Building, regenerating the samples, and releasing are in [CONTRIBUTING.md](CONTRIBUTING.md).

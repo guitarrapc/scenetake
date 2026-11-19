@@ -1,6 +1,6 @@
 [![Build](https://github.com/guitarrapc/scenetake/actions/workflows/build.yaml/badge.svg)](https://github.com/guitarrapc/scenetake/actions/workflows/build.yaml)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
 [![NuGet](https://img.shields.io/nuget/v/scenetake.svg?label=scenetake%20nuget)](https://www.nuget.org/packages/scenetake)
 [![npm](https://img.shields.io/npm/v/scenetake.svg?label=scenetake%20npm)](https://www.npmjs.com/package/scenetake)
 
@@ -8,9 +8,9 @@
 
 [English](README.md) | 日本語
 
-YAML **scenario** を実行し、ターミナルの scene take（[asciinema v3 `.cast`](https://docs.asciinema.org/manual/asciicast/v3/)、アニメーション `.svg`）を記録するツールです。`asciinema`をインストール・起動する必要はありません。step を並べた YAML を書くだけで、実際にコマンドを実行し、その出力を `.cast`（任意で `.svg`、`.mp4`、`.gif`、1 画面の `.png` も）として記録します。通常の step はタイピング演出付き、`pty: true` の step は端末ストリームをリアルタイムで記録します。
+scenetakeは、コマンドをYAMLシナリオに書いてターミナル録画を作るツールです。コマンドを自動入力するので何度も録画するのが簡単で、TUIや対話型のアプリもキー操作を指示できます。
 
-サンプルシナリオ `samples/basic.yaml` から `.cast` と `.svg` を生成すると、こんな見た目になります。タイプを頑張る必要もないし、実際にコマンドも走るので、リアルなターミナル記録が簡単に作れます。
+![](samples/showcase/welcome.svg)
 
 ```yaml
 title: "Basic Demo"
@@ -108,7 +108,7 @@ scenetake --help
 
 ffmpegは`winget install Gyan.FFmpeg`、`brew install ffmpeg`、`sudo apt install ffmpeg`などでインストールできます。
 
-## 見た目
+## 見た目の調整
 
 シナリオの`render`キーか、同じ名前のフラグ（`--window macos`など）で指定します。
 
@@ -186,7 +186,7 @@ steps:
 | --- | --- |
 | ![](samples/pty.gif) | ![](samples/pty.svg) |
 
-`keys`でキー操作を、`timeout`で止めるまでの時間を書けます。
+`keys`でキー操作をTUIに送り、`timeout`で止めるまでの時間を書けます。
 
 ```yaml
 steps:
@@ -221,9 +221,9 @@ steps:
 scenetake --save-keys keys.yaml demo.yaml
 ```
 
-## 便利な機能
+## 便利機能
 
-### ひと続きのセッション
+### ステップをまたぐ
 
 bash、zsh、PowerShellでは、`cd`や`export`が後のステップにも引き継がれます。
 
@@ -238,9 +238,9 @@ steps:
   - clear: true             # 画面を消す
 ```
 
-### 実行し直さずに見た目を変える
+### 実行し直さず見た目だけ変える
 
-`--save-outputs`で一度録画しておけば、`--replay`でコマンドを実行せずにテーマや出力形式を変えられます。
+`--replay`と`--save-outputs`を組み合わせて、一度録画した出力ファイルを再利用してテーマや出力形式だけ変えられます。
 
 ```bash
 scenetake --save-outputs demo.outputs.json demo.yaml
@@ -249,7 +249,7 @@ scenetake --replay demo.outputs.json --format mp4 --theme dracula demo.yaml
 
 ### 撮り直しても差分を出さない
 
-撮り直したとき、出力が前回と同じステップは前回の録画をそのまま使います。毎回変わる出力は`keep-output: true`で前回のものを使い続けられます。
+撮り直したとき、出力が前回と同じステップは前回の録画をそのまま使います。`date`のように毎回変わる出力でも前回の出力を再利用するには`keep-output: true`を指定します。
 
 ```text
 Compared with the earlier cast: 4 of 5 steps printed the same, 1 changed
@@ -258,7 +258,7 @@ Compared with the earlier cast: 4 of 5 steps printed the same, 1 changed
 
 ### 秘密情報のマスク
 
-トークン、`API_KEY=…`の値、URL中のパスワード、秘密鍵、`GITHUB_TOKEN`などの環境変数の値は、自動で`*`に置き換えます。ほかに隠したい文字列は`mask`に書きます。
+トークン、`API_KEY=…`の値、URL中のパスワード、秘密鍵、`GITHUB_TOKEN`などの環境変数の値は、自動で`*`に置き換えます。ほかに隠したい文字列は`mask`で指定します。
 
 ```yaml
 settings:
@@ -268,11 +268,11 @@ settings:
 
 ### CI
 
-`--strict`を付けると、ステップのコマンドが0以外で終了したときにエラーになります。失敗するのが正しいステップには`continue-on-error: true`を付けます。
+`--strict`を付けると、ステップのコマンドが0以外で終了したときにエラーにできます。失敗するのが正しいステップには`continue-on-error: true`を付けます。
 
 ## シナリオファイル形式
 
-必須のキーは`steps`だけです。下の例はそのまま実行できます（[samples/scenario_format.yaml](samples/scenario_format.yaml)）。`: `を含むコマンドは`run: 'echo "answer: $a"'`のように引用符で囲んでください。キーの詳細は[spec_scenario.md](.github/docs/spec_scenario.md)にあります。
+`steps`キーのみ必須です。`: `を含むコマンドは`run: 'echo "answer: $a"'`のように引用符で囲んでください。キーの詳細は[spec_scenario.md](.github/docs/spec_scenario.md)にあります。
 
 ![](samples/scenario_format.svg)
 
@@ -388,7 +388,3 @@ steps:
 post:
   - echo "demo complete (not recorded)"
 ```
-
-## 開発
-
-ビルド、サンプルの再生成、リリース手順は[CONTRIBUTING.md](CONTRIBUTING.md)にあります。
