@@ -1,5 +1,5 @@
 // Serves the published playground for a local look, the way GitHub Pages serves it: static files only.
-// Usage: node playground/serve.mjs artifacts/playground/wwwroot [port]
+// Usage: node src/Scenetake.Playground/serve.mjs artifacts/playground/wwwroot [port]
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve, sep } from 'node:path';

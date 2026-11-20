@@ -1,17 +1,17 @@
-// Takes the playground's OGP image (playground/wwwroot/ogp.png): the page at 1200 × 670 in the dark theme, with a
+// Takes the playground's OGP image (src/Scenetake.Playground/wwwroot/ogp.png): the page at 1200 × 670 in the dark theme, with a
 // sample's YAML and its demo, as the seiton playground's ogp.png shows its page.
 //
 // Usage, from the repository root, with the playground served (the "playground" entry in .claude/launch.json, or
-// node playground/preview.mjs):
+// node src/Scenetake.Playground/preview.mjs):
 //   npm install --no-save playwright && npx playwright install chromium
-//   node playground/take-ogp.mjs
+//   node src/Scenetake.Playground/take-ogp.mjs
 //
 // Options:
 //   --url <url>        The served playground (default: http://127.0.0.1:5180/)
 //   --sample <name>    The sample to show (default: welcome, the first screen)
 //   --time <seconds>   The moment of the demo to show; the SVG's animations are paused there (default: 14, when
 //                      welcome has printed everything and its 15 s loop has not started again)
-//   --output <path>    Output file (default: playground/wwwroot/ogp.png)
+//   --output <path>    Output file (default: src/Scenetake.Playground/wwwroot/ogp.png)
 //   --channel <name>   A browser Playwright did not download, such as msedge or chrome
 
 import { chromium } from 'playwright';
@@ -23,7 +23,7 @@ const { values: args } = parseArgs({
     url: { type: 'string', default: 'http://127.0.0.1:5180/' },
     sample: { type: 'string', default: 'welcome' },
     time: { type: 'string', default: '14' },
-    output: { type: 'string', default: 'playground/wwwroot/ogp.png' },
+    output: { type: 'string', default: 'src/Scenetake.Playground/wwwroot/ogp.png' },
     channel: { type: 'string' },
   },
 });

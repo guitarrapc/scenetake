@@ -1,12 +1,12 @@
 // Publishes the playground into artifacts/playground and serves it, for a local look. .claude/launch.json runs it for
 // Claude's preview pane; it works the same from a terminal.
-// Usage: node playground/preview.mjs [port]   (default 5180, then open http://127.0.0.1:<port>/)
+// Usage: node src/Scenetake.Playground/preview.mjs [port]   (default 5180, then open http://127.0.0.1:<port>/)
 import { spawnSync } from 'node:child_process';
 import { rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const out = join(root, 'artifacts', 'playground');
 const wwwroot = join(out, 'wwwroot');
 const port = process.argv[2] ?? '5180';
@@ -19,7 +19,7 @@ for (const name of ['index.html', 'index.html.br', 'index.html.gz'])
 
 const publish = spawnSync(
   'dotnet',
-  ['publish', 'playground/Scenetake.Playground.csproj', '-c', 'Release', '-p:PlaygroundSoftFingerprint=true', '-o', out],
+  ['publish', 'src/Scenetake.Playground/Scenetake.Playground.csproj', '-c', 'Release', '-p:PlaygroundSoftFingerprint=true', '-o', out],
   { cwd: root, stdio: 'inherit' },
 );
 if (publish.error) {
@@ -30,5 +30,5 @@ if (publish.status !== 0)
   process.exit(publish.status ?? 1);
 
 // serve.mjs reads its folder and port from the command line.
-process.argv = [process.argv[0], join(root, 'playground', 'serve.mjs'), wwwroot, port];
+process.argv = [process.argv[0], join(root, 'src', 'Scenetake.Playground', 'serve.mjs'), wwwroot, port];
 await import('./serve.mjs');

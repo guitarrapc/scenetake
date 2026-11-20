@@ -251,7 +251,7 @@ static string FindRepoRoot(string startDir)
     var dir = Path.GetFullPath(startDir);
     while (true)
     {
-        if (File.Exists(Path.Combine(dir, "scenetake.cs")))
+        if (File.Exists(Path.Combine(dir, "scenetake.slnx")))
             return dir;
 
         var parent = Directory.GetParent(dir);
@@ -261,7 +261,7 @@ static string FindRepoRoot(string startDir)
         dir = parent.FullName;
     }
 
-    Console.Error.WriteLine("Error: could not find scenetake.cs; run from the repository root");
+    Console.Error.WriteLine("Error: could not find scenetake.slnx; run from the repository root");
     Environment.Exit(1);
     return "";
 }

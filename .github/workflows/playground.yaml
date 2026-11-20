@@ -69,10 +69,10 @@ jobs:
 
       # The samples must replay to their committed casts; a stale outputs file would show a different recording.
       - name: Test replay
-        run: dotnet run tests/playground_replay_test.cs
+        run: dotnet test --project tests/Scenetake.Core.Tests -c Release --treenode-filter '/*/*/PlaygroundReplayTests/*'
 
       - name: Publish playground (browser-wasm Release)
-        run: dotnet publish playground/Scenetake.Playground.csproj -c Release -p:PlaygroundSoftFingerprint=true -o publish/
+        run: dotnet publish src/Scenetake.Playground/Scenetake.Playground.csproj -c Release -p:PlaygroundSoftFingerprint=true -o publish/
 
       # GitHub Pages drops folders that start with an underscore, such as _framework, unless Jekyll is off.
       - name: Add .nojekyll
