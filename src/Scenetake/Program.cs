@@ -1463,8 +1463,22 @@ static void PrintDone(string castPath, IReadOnlyList<string> renderedPaths)
     Console.Error.WriteLine(done.ToString());
 }
 
-static string FormatDisplayPath(string fullPath) =>
-    Path.GetRelativePath(Directory.GetCurrentDirectory(), fullPath).Replace('\\', '/');
+static string FormatDisplayPath(string fullPath)
+{
+    var current = Directory.GetCurrentDirectory();
+    var relative = Path.GetRelativePath(current, fullPath);
+    // Unix gives the current folder with its links followed, such as macOS /private/var for /var, while a path
+    // named through a link keeps it. Such a path climbs out to the root and back in, so the path between the
+    // followed forms is used when it is shorter. Windows keeps the current folder as it was given.
+    if (!OperatingSystem.IsWindows() && (relative == ".." || relative.StartsWith("../", StringComparison.Ordinal)))
+    {
+        var followed = Path.GetRelativePath(FollowLinks(current), FollowLinks(fullPath));
+        if (followed.Length < relative.Length)
+            relative = followed;
+    }
+
+    return relative.Replace('\\', '/');
+}
 
 /// <summary>
 /// The line and a fix for the YAML error a shell command most often causes: a command that holds <c>": "</c>, such as

@@ -133,6 +133,10 @@ public sealed class Mp4FfmpegTests
     [Test]
     public async Task ScenarioOutputsFileNames() => await Assert.That(Skipping.Run(() => Mp4FfmpegCases.ScenarioOutputsFileNames(TestEnv.Binary, Work))).IsTrue();
 
+    [ExcludeOn(OS.Windows)]
+    [Test]
+    public async Task MessagesNameFilesInALinkedFolderShortly() => await Assert.That(Mp4FfmpegCases.MessagesNameFilesInALinkedFolderShortly(TestEnv.Binary, Work)).IsTrue();
+
     [RunOn(OS.Linux)]
     [Test]
     public async Task FontInstalledByPreOrStepIsUsed() => await Assert.That(Skipping.Run(() => Mp4FfmpegCases.FontInstalledByPreOrStepIsUsed(TestEnv.Binary, TestEnv.RepoRoot, Work))).IsTrue();
@@ -690,6 +694,30 @@ internal static class Mp4FfmpegCases
                 Console.Error.WriteLine($"  expected '{expected}' (and nothing run), got exit {exit}: {stderr}");
             return good;
         }
+    }
+
+    // Unix gives the current folder with its links followed, while a path named through a link keeps it. The
+    // process starts in the link and is given the scenario through it, so a plain relative path would go out
+    // to the real folder and back in through the link. macOS puts its temporary folders behind such a link.
+    internal static bool MessagesNameFilesInALinkedFolderShortly(string scenetake, string work)
+    {
+        if (OperatingSystem.IsWindows())
+            throw new PlatformNotSupportedException("Unix only");
+        var real = Directory.CreateDirectory(Path.Combine(work, "display-real")).FullName;
+        var link = Path.Combine(work, "display-link");
+        if (!Directory.Exists(link))
+            Directory.CreateSymbolicLink(link, real);
+        File.WriteAllText(Path.Combine(real, "demo.yaml"), "steps:\n  - echo hi\noutputs:\n  - format: png\n    file: bg\n    background: bg.png\n");
+        File.WriteAllText(Path.Combine(real, "bg.png"), "not read before the check");
+        var (errorExit, errorStderr) = Exec(scenetake, link, [Path.Combine(link, "demo.yaml")]);
+        File.WriteAllText(Path.Combine(real, "demo.yaml"), "steps:\n  - echo hi\n");
+        var (exit, stderr) = Exec(scenetake, link, ["--format", "svg", Path.Combine(link, "demo.yaml")]);
+        var ok = errorExit == 1 && errorStderr.Contains("would write over the background image bg.png.", StringComparison.Ordinal)
+            && exit == 0 && stderr.Contains("Loading: demo.yaml", StringComparison.Ordinal)
+            && stderr.Contains("Done: demo.cast, demo.svg", StringComparison.Ordinal);
+        if (!ok)
+            Console.Error.WriteLine($"exit {errorExit}: {errorStderr}{Environment.NewLine}exit {exit}: {stderr}");
+        return ok;
     }
 
     // A GIF and an mp4 from one recording, each with its own options.
