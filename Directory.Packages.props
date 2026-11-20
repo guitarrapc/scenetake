@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="MiniPty" Version="1.7.0" />
+    <PackageVersion Include="MiniPty.Capture" Version="1.7.0" />
+    <PackageVersion Include="MiniPty.Console" Version="1.7.0" />
+    <PackageVersion Include="StbTrueTypeSharp" Version="1.26.13" />
+    <PackageVersion Include="TUnit" Version="1.12.111" />
+    <PackageVersion Include="VYaml" Version="1.6.1" />
+  </ItemGroup>
+</Project>

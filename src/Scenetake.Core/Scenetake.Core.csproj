@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- What the CLI and the browser playground share: terminal emulation, cast reading and writing, SVG rendering,
+       scenario parsing, and composing a recording from each step's output. Nothing here starts a process. -->
+  <PropertyGroup>
+    <RootNamespace>Scenetake.Core</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="VYaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="scenetake" />
+    <InternalsVisibleTo Include="Scenetake.Playground" />
+    <InternalsVisibleTo Include="Scenetake.Core.Tests" />
+    <InternalsVisibleTo Include="Scenetake.Tests" />
+  </ItemGroup>
+
+</Project>

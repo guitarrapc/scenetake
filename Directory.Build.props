@@ -1,19 +1,15 @@
 <Project>
   <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+
+    <!-- Bump on release with scripts/set_version.cs; release.yaml checks the tag against it. -->
     <Version>1.5.0</Version>
-    <AssemblyName>scenetake</AssemblyName>
-    <PackageId>scenetake</PackageId>
-    <PackAsTool>true</PackAsTool>
-    <ToolCommandName>scenetake</ToolCommandName>
     <Authors>guitarrapc</Authors>
-    <Description>Run a YAML scenario and record terminal output as asciinema v3 .cast and animated .svg without installing asciinema</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/guitarrapc/scenetake</PackageProjectUrl>
     <RepositoryUrl>https://github.com/guitarrapc/scenetake.git</RepositoryUrl>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="\" />
-  </ItemGroup>
 </Project>
