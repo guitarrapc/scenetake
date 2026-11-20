@@ -472,7 +472,7 @@ if (args[0] is "capture" && args.Length > 1 && args[1] is "-h" or "--help")
 }
 
 // `capture` comes here too: it records the one-step scenario that its command makes, without a file.
-if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runStyle, out var runStillAt, out var capture, out var saveKeysArg, out var saveOutputsArg, out var replayArg, out var runError))
+if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runStyle, out var runStillAt, out var capture, out var saveKeysArg, out var saveOutputsArg, out var replayArg, out var runError, out var formatGiven))
 {
     Console.Error.WriteLine($"Error: {runError}");
     if (args[0] is "capture")
@@ -512,10 +512,6 @@ if (capture?.SavePath is not null)
 
 var outputStem = RenderSettingsResolver.ResolveOutputStem(scenarioPath, outputArg);
 var outputPath = outputStem + ".cast";
-var svgPath = outputFormat == OutputFormat.Svg ? outputStem + ".svg" : null;
-var mp4Path = outputFormat == OutputFormat.Mp4 ? outputStem + ".mp4" : null;
-var pngPath = outputFormat == OutputFormat.Png ? outputStem + ".png" : null;
-var gifPath = outputFormat == OutputFormat.Gif ? outputStem + ".gif" : null;
 
 Console.Error.WriteLine(capture is null ? $"Loading: {FormatDisplayPath(scenarioPath)}" : $"Capturing: {capture.CommandLine}");
 string? yaml = null;
@@ -639,35 +635,8 @@ if (replayOutputs is null && !string.IsNullOrWhiteSpace(scenario.Cwd))
     }
 }
 
-// The cast is written only after pre and the recording, so the outputs are checked first. When pre
-// has commands, their folder is checked after pre instead, because pre may create it.
 var preHasCommands = replayOutputs is null && scenario.Pre?.Any(command => !string.IsNullOrWhiteSpace(command)) == true;
 var saveOutputsPath = saveOutputsArg is null ? null : Path.GetFullPath(saveOutputsArg);
-if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path, pngPath, gifPath, saveKeysPath, saveOutputsPath], out var outputPathError, requireFolder: !preHasCommands))
-{
-    Console.Error.WriteLine($"Error: {outputPathError}");
-    return 1;
-}
-
-foreach (var (option, path, others) in new[]
-{
-    ("--save-keys", saveKeysPath, new[] { outputPath, svgPath, mp4Path, pngPath, gifPath, saveOutputsPath }),
-    ("--save-outputs", saveOutputsPath, new[] { outputPath, svgPath, mp4Path, pngPath, gifPath }),
-})
-{
-    if (path is not null && others.Any(other => other is not null && IsSamePath(other, path)))
-    {
-        Console.Error.WriteLine($"Error: {option} would write over another output: {FormatDisplayPath(path)}");
-        return 1;
-    }
-}
-
-// The outputs that a replay writes would replace the file it reads from.
-if (replayPath is not null && new[] { outputPath, svgPath, mp4Path, pngPath, gifPath }.Any(path => path is not null && IsSamePath(path, replayPath)))
-{
-    Console.Error.WriteLine($"Error: --replay reads the file that an output would write over: {FormatDisplayPath(replayPath)}");
-    return 1;
-}
 
 if (runFontSize is int runFontSizeValue)
     renderSettings = renderSettings with { FontSize = runFontSizeValue };
@@ -686,100 +655,104 @@ if (TerminalReplay.CheckCrop(renderSettings.Crop, scenarioWidth, scenarioHeight)
     return 1;
 }
 
-// The cast keeps the settings for a later `scenetake svg`, so only mp4, GIF, and still output skip the SVG's notes.
-foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(renderSettings,
-    svg: outputFormat is OutputFormat.Svg or OutputFormat.Cast && runStillAt is null, gif: outputFormat == OutputFormat.Gif))
-    Console.Error.WriteLine($"Warning: {note}");
-
-// A YAML background image needs SVG, mp4, PNG, or GIF output: the cast keeps background colors only.
-if (outputFormat == OutputFormat.Cast && renderSettings.Background?.ImagePath is not null)
+// The files written besides the cast: the --format output, or the scenario's outputs list when no --format is given.
+// --format on the command line wins, as other options win over the YAML. capture writes its --format output.
+List<OutputPlan> outputPlans;
+if (formatGiven || capture is not null || scenario.Outputs is not { Count: > 0 })
 {
-    Console.Error.WriteLine("Error: render.background with an image file requires --format svg, mp4, png, or gif: a cast keeps colors only");
+    outputPlans = outputFormat == OutputFormat.Cast
+        ? []
+        : [new OutputPlan("", outputFormat, outputStem + OutputExtension(outputFormat), renderSettings, runMp4Options, runStillAt, null)];
+    if (formatGiven && scenario.Outputs is { Count: > 0 })
+        Console.Error.WriteLine($"Note: --format {outputFormat.ToString().ToLowerInvariant()} writes only that file: the scenario's outputs are not written.");
+}
+else if (!TryReadOutputEntries(scenario.Outputs, Path.GetDirectoryName(scenarioPath)!, outputStem, renderSettings, out outputPlans, out var outputsError))
+{
+    Console.Error.WriteLine($"Error: {outputsError}");
     return 1;
 }
 
-// mp4 needs ffmpeg, a font, and a frame size that ffmpeg and x264 accept. Check them before running
-// anything, so a long recording does not fail at the end.
-string? ffmpegPath = null;
-if (outputFormat == OutputFormat.Mp4)
+// The cast is written only after pre and the recording, so the outputs are checked first. When pre
+// has commands, their folder is checked after pre instead, because pre may create it.
+var renderedPaths = new string[outputPlans.Count];
+for (var planIndex = 0; planIndex < outputPlans.Count; planIndex++)
+    renderedPaths[planIndex] = outputPlans[planIndex].Path;
+if (!TryCheckOutputPaths(scenarioPath, [outputPath, .. renderedPaths, saveKeysPath, saveOutputsPath], out var outputPathError, requireFolder: !preHasCommands))
 {
-    if (!Ffmpeg.TryResolve(out var resolvedFfmpeg, out var ffmpegError))
-    {
-        Console.Error.WriteLine($"Error: {ffmpegError}");
-        return 1;
-    }
-
-    try
-    {
-        var mp4Settings = runMp4Options.ToSettings();
-        var layout = Mp4Render.CreateLayout(renderSettings, scenarioWidth, scenarioHeight, mp4Settings);
-        Mp4Render.OutputSize(layout, mp4Settings);
-        GlyphSource.Create(renderSettings.FontFamily, runMp4Options.FontFile, layout);
-    }
-    catch (Exception ex) when (ex is FontNotFoundException or FrameTooLargeException)
-    {
-        Console.Error.WriteLine($"Error: {ex.Message}");
-        return 1;
-    }
-
-    ffmpegPath = resolvedFfmpeg;
+    Console.Error.WriteLine($"Error: {outputPathError}");
+    return 1;
 }
 
-// A PNG needs a font and a frame it can draw, and ffmpeg only to decode a background image. Checked before running
-// anything, as for mp4.
-if (outputFormat == OutputFormat.Png)
+// Two outputs entries would write one file, and only the last one written would stay. An entry's file ends with
+// its format's extension, so it is never the cast.
+for (var planIndex = 0; planIndex < outputPlans.Count; planIndex++)
 {
-    if (renderSettings.Background?.ImagePath is not null)
+    var plan = outputPlans[planIndex];
+    for (var earlierIndex = 0; earlierIndex < planIndex; earlierIndex++)
     {
-        if (!Ffmpeg.TryResolveImageDecoder(out var imageDecoder, out var decoderError))
+        var same = outputPlans[earlierIndex];
+        if (IsSamePath(same.Path, plan.Path))
         {
-            Console.Error.WriteLine($"Error: {decoderError}");
+            Console.Error.WriteLine($"Error: {same.Label} and {plan.Label} both write {FormatDisplayPath(plan.Path)}. Give one of them its own 'file'.");
             return 1;
         }
-
-        ffmpegPath = imageDecoder;
-    }
-
-    try
-    {
-        GlyphSource.Create(renderSettings.FontFamily, runMp4Options.FontFile, PngRender.CreateLayout(renderSettings, scenarioWidth, scenarioHeight));
-    }
-    catch (Exception ex) when (ex is FontNotFoundException or FrameTooLargeException)
-    {
-        Console.Error.WriteLine($"Error: {ex.Message}");
-        return 1;
-    }
-    finally
-    {
-        LoadedFace.ReleaseAll();
     }
 }
 
-// A GIF needs ffmpeg (any build), a font, and a frame it can draw, checked before running anything as for mp4.
-if (outputFormat == OutputFormat.Gif)
+foreach (var (option, path, others) in new[]
 {
-    if (!Ffmpeg.TryResolveForGif(out var gifFfmpeg, out var gifFfmpegError))
+    ("--save-keys", saveKeysPath, (string?[])[outputPath, .. renderedPaths, saveOutputsPath]),
+    ("--save-outputs", saveOutputsPath, (string?[])[outputPath, .. renderedPaths]),
+})
+{
+    if (path is not null && others.Any(other => other is not null && IsSamePath(other, path)))
     {
-        Console.Error.WriteLine($"Error: {gifFfmpegError}");
+        Console.Error.WriteLine($"Error: {option} would write over another output: {FormatDisplayPath(path)}");
         return 1;
     }
+}
 
-    try
+// The outputs that a replay writes would replace the file it reads from.
+if (replayPath is not null && (IsSamePath(outputPath, replayPath) || renderedPaths.Any(path => IsSamePath(path, replayPath))))
+{
+    Console.Error.WriteLine($"Error: --replay reads the file that an output would write over: {FormatDisplayPath(replayPath)}");
+    return 1;
+}
+
+// The cast keeps the settings for a later `scenetake svg`, so only mp4, GIF, and still output skip the SVG's notes.
+// With outputs, each one is noted for its own look, and a note that two outputs share is said once.
+var styleNotes = new List<string>();
+if (outputPlans.Count == 0)
+    styleNotes.AddRange(RenderSettingsResolver.FindIneffectiveStyle(renderSettings, svg: runStillAt is null, gif: false));
+foreach (var plan in outputPlans)
+{
+    foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(plan.Settings,
+        svg: plan.Format == OutputFormat.Svg && plan.StillAt is null, gif: plan.Format == OutputFormat.Gif))
     {
-        var layout = Mp4Render.CreateLayout(renderSettings, scenarioWidth, scenarioHeight, runMp4Options.ToGifSettings());
-        GlyphSource.Create(renderSettings.FontFamily, runMp4Options.FontFile, layout);
+        if (!styleNotes.Contains(note))
+            styleNotes.Add(note);
     }
-    catch (Exception ex) when (ex is FontNotFoundException or FrameTooLargeException)
+}
+
+foreach (var note in styleNotes)
+    Console.Error.WriteLine($"Warning: {note}");
+
+// A YAML background image needs SVG, mp4, PNG, or GIF output: the cast keeps background colors only.
+if (outputPlans.Count == 0 && renderSettings.Background?.ImagePath is not null)
+{
+    Console.Error.WriteLine("Error: render.background with an image file requires --format svg, mp4, png, or gif, or an outputs entry: a cast keeps colors only");
+    return 1;
+}
+
+// Each output needs what it draws with: ffmpeg for mp4 and GIF (and for a PNG's background image), a font, and a
+// frame size it can draw. Checked before running anything, so a long recording does not fail at the end.
+foreach (var plan in outputPlans)
+{
+    if (!TryCheckOutputPlan(plan, scenarioWidth, scenarioHeight, out var planError))
     {
-        Console.Error.WriteLine($"Error: {ex.Message}");
+        Console.Error.WriteLine($"Error: {(plan.Label.Length == 0 ? "" : plan.Label + ": ")}{planError}");
         return 1;
     }
-    finally
-    {
-        LoadedFace.ReleaseAll();
-    }
-
-    ffmpegPath = gifFfmpeg;
 }
 
 var deterministicSeed = ComputeDeterministicSeed(yaml);
@@ -849,7 +822,7 @@ async Task<int> StopAfterPreAsync(string error)
 // pre may create the output folder, or put a directory or a link to the input where an output goes, so
 // every output check runs again. Found here, they stop the run before the recording, instead of failing
 // the cast write or overwriting the input.
-if (!TryCheckOutputPaths(scenarioPath, [outputPath, svgPath, mp4Path, pngPath, gifPath, saveKeysPath], out var outputCheckError))
+if (!TryCheckOutputPaths(scenarioPath, [outputPath, .. renderedPaths, saveKeysPath], out var outputCheckError))
     return await StopAfterPreAsync(outputCheckError);
 
 // pre or the steps may install fonts. The mp4 render scans again when it starts, instead of using
@@ -921,18 +894,34 @@ var rerecorder = new Rerecorder(previousCast, masker);
 Console.Error.WriteLine("Generating cast...");
 List<CastEvent> events;
 FailedStep? strictFailure;
+// The folder the next command starts in, for the prompt's {dir}: the one the shell's state carried, after pre and
+// each step, or the scenario's cwd (the caller's folder without one). A shell that carries no state starts every
+// command there. A carried folder that a step removed is not returned to, so the next command starts there too.
+var promptStartFolder = scenario.Cwd ?? Directory.GetCurrentDirectory();
+var promptHome = Environment.GetEnvironmentVariable("HOME") is { Length: > 0 } homeVariable ? homeVariable : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+string PromptFolderName()
+{
+    var folder = shellState?.Folder is { Length: > 0 } carried
+        && (!Path.IsPathFullyQualified(PromptTemplate.NativePath(carried)) || Directory.Exists(PromptTemplate.NativePath(carried)))
+        ? carried
+        : promptStartFolder;
+    return PromptTemplate.FolderName(folder, promptHome);
+}
+
+var generateOptions = new GenerateOptions
+{
+    Verbose = verbose,
+    Strict = strict,
+    TrackPtyCursor = OperatingSystem.IsWindows(),
+    FitsHeight = renderSettings.Fit is FitMode.Height or FitMode.Both,
+    PromptFolder = PromptFolderName,
+    Record = recordedSteps,
+    Masker = masker,
+    SavedKeys = savedKeys,
+    Rerecorder = rerecorder,
+};
 try
 {
-    var generateOptions = new GenerateOptions
-    {
-        Verbose = verbose,
-        Strict = strict,
-        TrackPtyCursor = OperatingSystem.IsWindows(),
-        Record = recordedSteps,
-        Masker = masker,
-        SavedKeys = savedKeys,
-        Rerecorder = rerecorder,
-    };
     (events, strictFailure) = await GenerateAsync(scenario, deterministicSeed, generateOptions, step => AfterStep(step switch
     {
         { Background: true } => RunBackgroundAsync(step, scenario.Cwd, shell, shellState, backgroundSteps),
@@ -987,7 +976,7 @@ if (masker?.Summary() is { } maskSummary)
 
 var duration = events.Count > 0 ? events[^1].Time : 0.0;
 // With the cast as the only output, its line also says how large an SVG or mp4 of it would be.
-var convertedSizes = outputFormat == OutputFormat.Cast ? $", {DescribeConvertedSizes(events, scenarioWidth, scenarioHeight, renderSettings)}" : "";
+var convertedSizes = outputPlans.Count == 0 ? $", {DescribeConvertedSizes(events, scenarioWidth, scenarioHeight, renderSettings)}" : "";
 Console.Error.WriteLine($"Written: {FormatDisplayPath(outputPath)}  ({events.Count} events, {duration:F1}s{convertedSizes})");
 foreach (var line in Rerecording.Describe(rerecorder, previousCastProblem, FormatDisplayPath(outputPath)))
     Console.Error.WriteLine(line);
@@ -1005,6 +994,7 @@ if (recordedSteps is not null)
             Width = scenarioWidth,
             Height = scenarioHeight,
             Steps = recordedSteps,
+            EndFolder = generateOptions.EndFolder,
         }.WriteFile(outputsFilePath);
     }
     catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -1015,7 +1005,7 @@ if (recordedSteps is not null)
     Console.Error.WriteLine($"Written: {FormatDisplayPath(outputsFilePath)}");
 }
 
-var exitCode = RenderFromCast(outputFormat, outputPath, svgPath, mp4Path, pngPath, gifPath, renderSettings, runMp4Options, runStillAt, ffmpegPath);
+var exitCode = RenderOutputs(outputPath, outputPlans, renderSettings, scenario.Title);
 if (keysWriteError is not null)
     exitCode = 1;
 
@@ -1026,7 +1016,7 @@ if (postExitCode != 0)
 if (exitCode != 0)
     return exitCode;
 
-PrintDone(outputPath, svgPath ?? mp4Path ?? pngPath ?? gifPath);
+PrintDone(outputPath, renderedPaths);
 return 0;
 
 // --replay: each step takes the output that the outputs file recorded for it, as in the playground, and no command
@@ -1054,6 +1044,7 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
         Verbose = verbose,
         Strict = strict,
         TrackPtyCursor = replay.TrackPtyCursor,
+        FitsHeight = renderSettings.Fit is FitMode.Height or FitMode.Both,
         LogRunning = false,
         Masker = replayMasker,
         Rerecorder = replayRerecorder,
@@ -1099,106 +1090,330 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
         Console.Error.WriteLine($"{replayMaskSummary} (settings.mask-auto: false turns off the automatic ones)");
 
     var replayDuration = replayed.Count > 0 ? replayed[^1].Time : 0.0;
-    var replaySizes = outputFormat == OutputFormat.Cast ? $", {DescribeConvertedSizes(replayed, scenarioWidth, scenarioHeight, renderSettings)}" : "";
+    var replaySizes = outputPlans.Count == 0 ? $", {DescribeConvertedSizes(replayed, scenarioWidth, scenarioHeight, renderSettings)}" : "";
     Console.Error.WriteLine($"Written: {FormatDisplayPath(outputPath)}  ({replayed.Count} events, {replayDuration:F1}s{replaySizes})");
     foreach (var line in Rerecording.Describe(replayRerecorder, replayPreviousProblem, FormatDisplayPath(outputPath)))
         Console.Error.WriteLine(line);
 
-    var renderExitCode = RenderFromCast(outputFormat, outputPath, svgPath, mp4Path, pngPath, gifPath, renderSettings, runMp4Options, runStillAt, ffmpegPath);
+    var renderExitCode = RenderOutputs(outputPath, outputPlans, renderSettings, scenario.Title);
     if (renderExitCode != 0)
         return renderExitCode;
 
-    PrintDone(outputPath, svgPath ?? mp4Path ?? pngPath ?? gifPath);
+    PrintDone(outputPath, renderedPaths);
     return 0;
 }
 
-// SVG and mp4 are rendered from the cast as written, not from the in-memory events. The cast stores
-// millisecond times, so only the cast gives the same output as `scenetake svg|mp4 <cast>`. The header
-// carries the font, theme, and window overrides. --max-fps is not stored, so it is applied again.
-// Returns 1 when the render failed, which removes that output.
-static int RenderFromCast(OutputFormat outputFormat, string outputPath, string? svgPath, string? mp4Path, string? pngPath, string? gifPath, ResolvedRenderSettings renderSettings, Mp4Options runMp4Options, double? runStillAt, string? ffmpegPath)
+// SVG, mp4, PNG, and GIF are rendered from the cast as written, not from the in-memory events. The cast stores
+// millisecond times, so only the cast gives the same output as `scenetake svg|mp4|png|gif <cast>`. The header
+// carries the look. --max-fps and an image background are not stored, so they are applied again, and an outputs
+// entry's own look goes on top, as `scenetake svg --theme ...` puts its options on top of the cast's.
+// A failed output is removed and the others are still written. Returns 1 when one failed.
+static int RenderOutputs(string castPath, IReadOnlyList<OutputPlan> plans, ResolvedRenderSettings runSettings, string? title)
 {
-    if (outputFormat == OutputFormat.Svg)
+    var exitCode = 0;
+    string? darkSvg = null;
+    string? lightSvg = null;
+    foreach (var plan in plans)
     {
-        try
+        if (!TryRenderOutput(castPath, plan, runSettings, out var drawn))
         {
-            var written = CastReader.Read(outputPath);
-            var svgSettings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings) with { MaxFps = renderSettings.MaxFps };
-            SvgRender.WriteSvg(written.Events, written.Width, written.Height, svgSettings, svgPath!, written.LoopDuration, runStillAt);
-            PrintSvgWritten(svgPath!, written, svgSettings, runStillAt);
-            if (SvgRender.SizeWarning(new FileInfo(svgPath!).Length, svgSettings.MaxFps, fromCast: false) is { } svgSizeWarning)
-                Console.Error.WriteLine($"Warning: {svgSizeWarning}");
+            exitCode = 1;
+            continue;
         }
-        catch (Exception ex)
+
+        if (plan.Format == OutputFormat.Svg && plan.StillAt is null)
         {
-            DeleteFileIfExists(svgPath!);
-            Console.Error.WriteLine($"Error: SVG render failed: {ex.Message}");
-            return 1;
+            if (SvgFrameRenderer.IsLightTerminalBg(drawn.Theme.Bg))
+                lightSvg ??= plan.Path;
+            else
+                darkSvg ??= plan.Path;
         }
     }
 
-    if (outputFormat == OutputFormat.Mp4)
+    // A dark and a light SVG of one recording can follow the reader's color scheme on GitHub, with a <picture>.
+    if (darkSvg is not null && lightSvg is not null)
     {
-        try
-        {
-            // WriteMp4 encodes to a temporary file and renames it, so a failure leaves no partial .mp4.
-            var written = CastReader.Read(outputPath);
-            var result = Mp4Render.WriteMp4(written.Events, written.Width, written.Height, RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings), runMp4Options.ToSettings(), mp4Path!, ffmpegPath!, written.LoopDuration);
-            PrintMp4Written(mp4Path!, result);
-        }
-        catch (Exception ex)
-        {
-            // An .mp4 from an earlier run no longer matches the new cast.
-            DeleteFileIfExists(mp4Path!);
-            Console.Error.WriteLine($"Error: mp4 render failed: {ex.Message}");
-            return 1;
-        }
+        var alt = string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(darkSvg) : title.Trim();
+        Console.Error.WriteLine("For a README that follows the reader's light or dark mode:");
+        Console.Error.WriteLine(
+            $"  <picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"{FormatDisplayPath(darkSvg)}\">"
+            + $"<img src=\"{FormatDisplayPath(lightSvg)}\" alt=\"{alt.Replace("&", "&amp;").Replace("\"", "&quot;").Replace("<", "&lt;").Replace(">", "&gt;")}\"></picture>");
     }
 
-    if (outputFormat == OutputFormat.Png)
-    {
-        try
-        {
-            // Drawn from the cast as written, as SVG and mp4 are.
-            var written = CastReader.Read(outputPath);
-            var pngSettings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings);
-            var at = runStillAt ?? double.PositiveInfinity;
-            var result = PngRender.WritePng(written.Events, written.Width, written.Height, pngSettings, at, pngPath!, runMp4Options.FontFile, ffmpegPath);
-            PrintPngWritten(pngPath!, result, at);
-        }
-        catch (Exception ex)
-        {
-            // A .png from an earlier run no longer matches the new cast.
-            DeleteFileIfExists(pngPath!);
-            Console.Error.WriteLine($"Error: PNG render failed: {ex.Message}");
-            return 1;
-        }
-    }
-
-    if (outputFormat == OutputFormat.Gif)
-    {
-        try
-        {
-            // WriteGif encodes to a temporary file and renames it, as WriteMp4 does.
-            var written = CastReader.Read(outputPath);
-            var result = GifRender.WriteGif(written.Events, written.Width, written.Height, RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings), runMp4Options.ToGifSettings(), gifPath!, ffmpegPath!, written.LoopDuration);
-            PrintGifWritten(gifPath!, result, fromCast: false);
-        }
-        catch (Exception ex)
-        {
-            // A .gif from an earlier run no longer matches the new cast.
-            DeleteFileIfExists(gifPath!);
-            Console.Error.WriteLine($"Error: GIF render failed: {ex.Message}");
-            return 1;
-        }
-    }
-
-    return 0;
+    return exitCode;
 }
 
-// The cast and the --format output, when there is one.
-static void PrintDone(string castPath, string? renderedPath) =>
-    Console.Error.WriteLine(renderedPath is null ? $"Done: {FormatDisplayPath(castPath)}" : $"Done: {FormatDisplayPath(castPath)}, {FormatDisplayPath(renderedPath)}");
+static bool TryRenderOutput(string castPath, OutputPlan plan, ResolvedRenderSettings runSettings, out ResolvedRenderSettings drawn)
+{
+    drawn = runSettings;
+    var name = plan.Format switch
+    {
+        OutputFormat.Svg => "SVG",
+        OutputFormat.Mp4 => "mp4",
+        OutputFormat.Png => "PNG",
+        _ => "GIF",
+    };
+    try
+    {
+        var written = CastReader.Read(castPath);
+        var settings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, runSettings);
+        if (plan.Format == OutputFormat.Svg)
+            settings = settings with { MaxFps = runSettings.MaxFps };
+        drawn = settings = plan.Overrides?.Apply(settings) ?? settings;
+        switch (plan.Format)
+        {
+            case OutputFormat.Svg:
+                SvgRender.WriteSvg(written.Events, written.Width, written.Height, settings, plan.Path, written.LoopDuration, plan.StillAt);
+                PrintSvgWritten(plan.Path, written, settings, plan.StillAt);
+                if (SvgRender.SizeWarning(new FileInfo(plan.Path).Length, settings.MaxFps, fromCast: false) is { } svgSizeWarning)
+                    Console.Error.WriteLine($"Warning: {svgSizeWarning}");
+                break;
+            case OutputFormat.Mp4:
+                // WriteMp4 encodes to a temporary file and renames it, so a failure leaves no partial .mp4.
+                PrintMp4Written(plan.Path, Mp4Render.WriteMp4(written.Events, written.Width, written.Height, settings, plan.Mp4.ToSettings(), plan.Path, plan.FfmpegPath!, written.LoopDuration));
+                break;
+            case OutputFormat.Png:
+                var at = plan.StillAt ?? double.PositiveInfinity;
+                PrintPngWritten(plan.Path, PngRender.WritePng(written.Events, written.Width, written.Height, settings, at, plan.Path, plan.Mp4.FontFile, plan.FfmpegPath), at);
+                break;
+            default:
+                // WriteGif encodes to a temporary file and renames it, as WriteMp4 does.
+                PrintGifWritten(plan.Path, GifRender.WriteGif(written.Events, written.Width, written.Height, settings, plan.Mp4.ToGifSettings(), plan.Path, plan.FfmpegPath!, written.LoopDuration), fromCast: false);
+                break;
+        }
+
+        return true;
+    }
+    catch (Exception ex)
+    {
+        // A file from an earlier run no longer matches the new cast.
+        DeleteFileIfExists(plan.Path);
+        Console.Error.WriteLine($"Error: {(plan.Label.Length == 0 ? "" : plan.Label + ": ")}{name} render failed: {ex.Message}");
+        return false;
+    }
+}
+
+/// <summary>
+/// Whether an output can be drawn, checked before anything runs. mp4 needs ffmpeg with x264, a font, and a frame
+/// size that ffmpeg and x264 accept. A GIF needs ffmpeg (any build), a font, and a frame it can draw. A PNG needs a
+/// font and a frame, and ffmpeg only to decode a background image. An SVG needs nothing. Sets the plan's ffmpeg.
+/// </summary>
+static bool TryCheckOutputPlan(OutputPlan plan, int width, int height, out string error)
+{
+    error = "";
+    var settings = plan.Settings;
+    try
+    {
+        switch (plan.Format)
+        {
+            case OutputFormat.Mp4:
+            {
+                if (!Ffmpeg.TryResolve(out var ffmpeg, out error))
+                    return false;
+                var mp4Settings = plan.Mp4.ToSettings();
+                var layout = Mp4Render.CreateLayout(settings, width, height, mp4Settings);
+                Mp4Render.OutputSize(layout, mp4Settings);
+                GlyphSource.Create(settings.FontFamily, plan.Mp4.FontFile, layout);
+                plan.FfmpegPath = ffmpeg;
+                break;
+            }
+            case OutputFormat.Png:
+            {
+                if (settings.Background?.ImagePath is not null)
+                {
+                    if (!Ffmpeg.TryResolveImageDecoder(out var decoder, out error))
+                        return false;
+                    plan.FfmpegPath = decoder;
+                }
+
+                GlyphSource.Create(settings.FontFamily, plan.Mp4.FontFile, PngRender.CreateLayout(settings, width, height));
+                break;
+            }
+            case OutputFormat.Gif:
+            {
+                if (!Ffmpeg.TryResolveForGif(out var ffmpeg, out error))
+                    return false;
+                GlyphSource.Create(settings.FontFamily, plan.Mp4.FontFile, Mp4Render.CreateLayout(settings, width, height, plan.Mp4.ToGifSettings()));
+                plan.FfmpegPath = ffmpeg;
+                break;
+            }
+        }
+
+        // An entry's crop is checked with its own look, as the scenario's is.
+        if (plan.Overrides is not null && TerminalReplay.CheckCrop(settings.Crop, width, height) is { } cropError)
+        {
+            error = cropError;
+            return false;
+        }
+
+        return true;
+    }
+    catch (Exception ex) when (ex is FontNotFoundException or FrameTooLargeException)
+    {
+        error = ex.Message;
+        return false;
+    }
+    finally
+    {
+        LoadedFace.ReleaseAll();
+    }
+}
+
+static string OutputExtension(OutputFormat format) => "." + format.ToString().ToLowerInvariant();
+
+/// <summary>
+/// The scenario's outputs list as plans. Each entry is read by the same parser as the command line, as the options
+/// of its name, so an entry takes the same values, ranges, and format rules as `--format FORMAT --KEY VALUE`, and
+/// an error names the entry and its key. A file (<c>file</c>, <c>font-file</c>, an image <c>background</c>) is
+/// found from the scenario's folder, as render.background's image is. A key the entry does not read is left to
+/// the unknown-key warning.
+/// </summary>
+static bool TryReadOutputEntries(List<object?> entries, string scenarioFolder, string outputStem, ResolvedRenderSettings runSettings, out List<OutputPlan> plans, out string error)
+{
+    plans = [];
+    error = "";
+    var stemFolder = Path.GetDirectoryName(outputStem)!;
+    for (var i = 0; i < entries.Count; i++)
+    {
+        var where = $"outputs entry {i + 1}";
+        if (entries[i] is not Dictionary<object, object?> entry)
+        {
+            error = $"{where} must be a mapping with 'format', such as: - format: svg";
+            return false;
+        }
+
+        if (!entry.TryGetValue("format", out var formatValue) || formatValue is not string formatText || formatText.Trim().Length == 0)
+        {
+            error = $"{where} has no 'format': svg, mp4, gif, or png";
+            return false;
+        }
+
+        if (!TryParseOutputFormat(formatText.Trim(), out var format, out var formatError))
+        {
+            error = $"{where}: {formatError}";
+            return false;
+        }
+
+        if (format == OutputFormat.Cast)
+        {
+            error = $"{where}: the cast is written by every recording. List svg, mp4, gif, or png.";
+            return false;
+        }
+
+        var extension = OutputExtension(format);
+        var path = outputStem + extension;
+        if (entry.TryGetValue("file", out var fileValue) && fileValue is not null)
+        {
+            if (fileValue is not string fileText || fileText.Trim().Length == 0)
+            {
+                error = $"{where} key 'file' must be a file name, such as demo-light{extension}";
+                return false;
+            }
+
+            path = Path.GetFullPath(fileText.Trim(), stemFolder);
+            var given = Path.GetExtension(path);
+            if (given.Length == 0)
+            {
+                path += extension;
+            }
+            else if (!given.Equals(extension, StringComparison.OrdinalIgnoreCase))
+            {
+                error = $"{where} key 'file' ends with {given}, and the format is {extension[1..]}: name it {Path.GetFileNameWithoutExtension(path)}{extension}";
+                return false;
+            }
+        }
+
+        var args = new List<string> { $"--format={extension[1..]}" };
+        foreach (var (rawKey, value) in entry)
+        {
+            var key = rawKey?.ToString() ?? "";
+            if (key is "format" or "file" || Array.IndexOf(ScenarioKeys.OutputEntry, key) < 0)
+                continue;
+
+            if (value is null)
+            {
+                error = $"{where} key '{key}' has no value";
+                return false;
+            }
+
+            if (value is System.Collections.IEnumerable and not string)
+            {
+                error = $"{where} key '{key}' must be one value, not a list or a mapping";
+                return false;
+            }
+
+            if (key == "loop")
+            {
+                if (value is bool loop || (value is string loopText && bool.TryParse(loopText, out loop)))
+                {
+                    args.Add(loop ? "--loop" : "--no-loop");
+                    continue;
+                }
+
+                error = $"{where} key 'loop' must be true or false, not {value}";
+                return false;
+            }
+
+            var text = Convert.ToString(value, CultureInfo.InvariantCulture) ?? "";
+            if (key == "font-file" || (key == "background" && RenderSettingsResolver.IsBackgroundImageName(text.Trim())))
+                text = Path.GetFullPath(text.Trim(), scenarioFolder);
+            // The --key=value form keeps an empty window-title and a value that starts with a dash.
+            args.Add($"--{key}={text}");
+        }
+
+        args.Add("outputs-entry.yaml");
+        if (!TryParseRunArgs([.. args], out _, out _, out _, out _, out _, out var fontSize, out var fontFamily, out var theme, out var window, out var maxFps, out var mp4, out var style, out var at, out _, out _, out _, out _, out var parseError, out _))
+        {
+            error = $"{where} ({extension[1..]}): {AsEntryKeys(parseError)}";
+            return false;
+        }
+
+        var overrides = new OutputOverrides(fontSize, fontFamily, theme, window, maxFps, style);
+        plans.Add(new OutputPlan(where, format, path, overrides.Apply(runSettings), mp4, at, overrides));
+    }
+
+    return true;
+
+    // The parser names command-line options: an entry's error names its keys instead. Each option is read whole,
+    // so --window-title is not taken as --window.
+    static string AsEntryKeys(string message)
+    {
+        message = message.Replace("--no-loop", "'loop'", StringComparison.Ordinal).Replace("--loop", "'loop'", StringComparison.Ordinal)
+            .Replace("--format ", "format ", StringComparison.Ordinal);
+        var named = new StringBuilder(message.Length);
+        var i = 0;
+        while (i < message.Length)
+        {
+            if (message.AsSpan(i).StartsWith("--", StringComparison.Ordinal))
+            {
+                var end = i + 2;
+                while (end < message.Length && (char.IsAsciiLetterLower(message[end]) || message[end] == '-'))
+                    end++;
+                var key = message[(i + 2)..end];
+                if (Array.IndexOf(ScenarioKeys.OutputEntry, key) >= 0)
+                {
+                    named.Append('\'').Append(key).Append('\'');
+                    i = end;
+                    continue;
+                }
+            }
+
+            named.Append(message[i]);
+            i++;
+        }
+
+        return named.ToString();
+    }
+}
+
+// The cast and the other files written.
+static void PrintDone(string castPath, IReadOnlyList<string> renderedPaths)
+{
+    var done = new StringBuilder("Done: ").Append(FormatDisplayPath(castPath));
+    foreach (var path in renderedPaths)
+        done.Append(", ").Append(FormatDisplayPath(path));
+    Console.Error.WriteLine(done.ToString());
+}
 
 static string FormatDisplayPath(string fullPath) =>
     Path.GetRelativePath(Directory.GetCurrentDirectory(), fullPath).Replace('\\', '/');
@@ -1452,7 +1667,8 @@ static bool TryParseRunArgs(
     out string? saveKeysPath,
     out string? saveOutputsPath,
     out string? replayPath,
-    out string error)
+    out string error,
+    out bool formatGiven)
 {
     scenarioPath = "";
     style = new StyleOptions();
@@ -1465,7 +1681,7 @@ static bool TryParseRunArgs(
     var captureMode = args.Length > 0 && args[0] == "capture";
     capture = captureMode ? new CaptureRequest() : null;
     outputFormat = captureMode ? OutputFormat.Svg : OutputFormat.Cast;
-    var formatGiven = false;
+    formatGiven = false;
     verbose = false;
     strict = false;
     fontSizeOverride = null;
@@ -1599,7 +1815,7 @@ static bool TryParseRunArgs(
             // A second --format used to replace the first without a word, so `--format svg --format gif` wrote no SVG.
             if (formatGiven)
             {
-                error = "--format takes one format. Record once, then convert the cast for each other format, such as: scenetake gif <file>.cast";
+                error = "--format takes one format. List several under 'outputs:' in the scenario, or record once and convert the cast for each other format, such as: scenetake gif <file>.cast";
                 return false;
             }
 
@@ -2932,29 +3148,46 @@ static string CreateInitialScenarioYaml(string? shell)
           #   run: read -r -p "Your name? " name; echo "Hello, $name"
         """;
     return $"""
-    # scenetake starter scenario. Edit the values below and add commands under steps.
-    title: "My App"            # Optional cast title
+    # scenetake starter scenario. Record it with: scenetake <this file>
+    # It writes a cast and, as outputs lists below, an SVG. Replace the steps with your tool's commands.
+    title: "My App"            # The window's title
     # width: 80                  # Default: 80
-    # height: 24                 # Default: 24
+    # height: 24                 # Default: 24. Rows below the content are left out of the image (render.fit)
     # cwd: /your/path            # Optional working directory for pre, steps, and post. A relative path is relative to this file
     {shellLine}
 
-    # Optional look of the SVG, mp4, PNG, and GIF. The cast keeps it too (an image background aside), so the svg,
-    # mp4, png, and gif commands draw the cast the same way later. Options such as --theme override it.
-    # render:
-    #   font-size: 16
-    #   font-family: '"JetBrains Mono", Consolas, monospace'
-    #   theme:
-    #     preset: dark               # Also light, nord, dracula, github-dark, and more: scenetake --help lists them
-    #     fg: "#d0d0d0"
-    #     bg: "#282c34"
-    #   window: macos                # A title bar around the terminal: none, macos, or windows
-    #   background: "#1e3c72 #2a5298"  # Around the window: a color, 2-4 colors for a gradient, or an image file
-    #   fit: height                  # The default: no empty rows below the content. none draws the whole terminal
+    # How the SVG, mp4, PNG, and GIF look. The cast keeps it too (an image background aside), so the svg, mp4, png,
+    # and gif commands draw the cast the same way later. Options such as --theme override it.
+    render:
+      window: macos                # A title bar with the title: none, macos, or windows
+      background: "#1e3c72 #2a5298"  # Around the window: a color, 2-4 colors for a gradient, or an image file
+      theme:
+        preset: dark               # Also light, nord, dracula, github-dark, and more: scenetake --help lists them
+        # fg: "#d0d0d0"
+        # bg: "#282c34"
+      end-hold: 2                  # Seconds the last screen stays before the SVG plays again
+      # font-size: 16
+      # font-family: '"JetBrains Mono", Consolas, monospace'
+      # fit: height                  # The default: no empty rows below the content. none draws the whole terminal
+
+    # The files each recording writes besides the cast. Without --format, scenetake writes every one.
+    outputs:
+      - format: svg                # For a README
+      # - format: svg              # A light copy. With the dark one, scenetake prints a <picture> for a README
+      #   theme: light
+      #   file: light.svg
+      # - format: gif              # For X, Reddit, and Zenn. Needs ffmpeg
+      #   font-size: 12
+      #   fps: 10
+      # - format: mp4              # For X. Needs ffmpeg
+      #   max-size: 1280x1024
 
     # Default settings for all steps. Can be overridden per step by using a mapping with "run" and timing keys.
     settings:
-      prompt: "{DefaultPrompt}"             # Default prompt shown before each command.
+      prompt:                      # Shown before each command: text, or parts with a color each
+        - text: "{DirPlaceholder}"            # The name of the folder the command starts in
+          color: "fg:cyan"
+        - " {DefaultPrompt}"
       typing-speed: {DefaultSpeed}       # Seconds per character on average.
       typing-jitter: {DefaultJitter}     # Random typing variance (+/- seconds).
       pre-delay: {DefaultPreDelay}           # Pause before typing each step.
@@ -2975,29 +3208,26 @@ static string CreateInitialScenarioYaml(string? shell)
 
     # Add one command per step. Use a mapping when you want to override per-command timing.
     steps:
-      - echo "Hello, World!"
-      - run: pwd
-        post-delay: 1.5
-      - name: "[cyan]Styled command typing + output highlight"
-        run: echo 'line1 alpha'; echo 'line2 beta gamma'; echo 'line3'; echo 'line4 delta'
-        run-highlight: "bold fg:bright-cyan"
-        highlight:
-          - at: "1"
-            color: "fg:bright-green"
-          - at: "2:7-10"
-            color: "underline fg:yellow"
-          - at: "2:12-"
-            color: "bold fg:magenta"
-          - at: "3"
-            color: "fg:white bg:212"
-          - at: "4"
-            color: "fg:black bg:114"
-      - name: "[bright-yellow]stderr color override"
+      - card:                      # A title screen: lines centered on a cleared screen, each with an optional [style]
+          - "[bold fg:bright-cyan]My App"
+          - "What it does, in one line"
+        post-delay: 2
+      - name: "A comment line before the command"
+        run: echo "Hello, World!"
+      - name: "[bright-yellow]stderr is red when the tool does not color it"
     {stderrStep}
         stderr-color: "bold fg:red"
-      - name: "run in a PTY"
-        run: echo "Running in a PTY, which is useful for TUI app and tty-based output"
+      - name: "Tools that color their output for a terminal run in a PTY"
+        run: echo "Running in a PTY"
         pty: true
+      # Colors for the typed command and for parts of the output, by line and column:
+      # - run: echo 'line1 alpha'; echo 'line2 beta gamma'
+      #   run-highlight: "bold fg:bright-cyan"
+      #   highlight:
+      #     - at: "1"
+      #       color: "fg:bright-green"
+      #     - at: "2:12-"
+      #       color: "bold fg:magenta"
       # A step that answers a prompt: keys types into the program, so the step needs pty: true. To type the keys
       # yourself, set interactive: true instead, and scenetake --save-keys keys.yaml <this file> saves them as keys.
       # - name: "answer a prompt"
@@ -3007,6 +3237,10 @@ static string CreateInitialScenarioYaml(string? shell)
       #   keys:
       #     - wait: "Your name?"     # Wait until the program prints this text
       #       type: "scenetake\n"    # Then type it. \n is Enter
+      - card:                      # An end screen: where to get it
+          - "[bold]Get it"
+          - "[fg:yellow]npm install -g my-app"
+        post-delay: 3
 
     # Optional teardown commands. They run last and are not recorded in the cast.
     # post:
@@ -4315,9 +4549,11 @@ static class HelpText
             : """
                 Recording:
                   --format cast|svg|mp4|png|gif
-                                           Write only the cast (cast, the default), or the cast and an SVG,
-                                           an mp4, a PNG, or a GIF rendered from it. One format a run:
-                                           convert the cast for others, such as 'scenetake gif demo.cast'.
+                                           Write only the cast (cast), or the cast and an SVG, an mp4, a
+                                           PNG, or a GIF rendered from it. Without --format, the cast and
+                                           the files the scenario lists under 'outputs:', each with its
+                                           own options. One format a run here: list several under
+                                           'outputs:', or convert the cast, such as 'scenetake gif demo.cast'.
                   --save-keys FILE         Write the keys typed in the 'interactive: true' steps to FILE as
                                            'keys' entries, which replay them without a person. Written even
                                            when the run stops at a later step. On Windows a password typed
@@ -4521,4 +4757,43 @@ static class HelpText
                                    $SHELL elsewhere.
 
         """;
+}
+
+/// <summary>
+/// A file a recording writes besides the cast: the <c>--format</c> output, or an entry of the scenario's
+/// <c>outputs</c> list. <see cref="Settings"/> is its look for the checks before anything runs. An entry's
+/// <see cref="Overrides"/> are applied again to the settings read back from the cast, which the file is drawn with.
+/// </summary>
+/// <remarks>A class, not a record: nothing compares plans, and a record's generated members add to the AOT binary.</remarks>
+sealed class OutputPlan(
+    string label,
+    OutputFormat format,
+    string path,
+    ResolvedRenderSettings settings,
+    Mp4Options mp4,
+    double? stillAt,
+    OutputOverrides? overrides)
+{
+    /// <summary>How errors name it: empty for <c>--format</c>, "outputs entry 2" for an entry.</summary>
+    internal string Label { get; } = label;
+    internal OutputFormat Format { get; } = format;
+    internal string Path { get; } = path;
+    internal ResolvedRenderSettings Settings { get; } = settings;
+    internal Mp4Options Mp4 { get; } = mp4;
+    internal double? StillAt { get; } = stillAt;
+    internal OutputOverrides? Overrides { get; } = overrides;
+
+    /// <summary>The ffmpeg that draws it, found by the checks before anything runs. Null for an SVG.</summary>
+    internal string? FfmpegPath { get; set; }
+}
+
+/// <summary>The look an outputs entry sets for its file, on top of the scenario's, as the svg command's options do.</summary>
+sealed class OutputOverrides(int? fontSize, string? fontFamily, string? theme, WindowStyle? window, int? maxFps, StyleOptions style)
+{
+    /// <summary>
+    /// A theme replaces the scenario's theme with its fg, bg, and palette, as <c>scenetake svg --theme</c> does: a
+    /// light copy of a dark recording takes the light theme's own colors.
+    /// </summary>
+    internal ResolvedRenderSettings Apply(ResolvedRenderSettings settings) =>
+        style.ToOverrides().Apply(RenderSettingsResolver.ApplySvgOverrides(settings, fontSize, fontFamily, theme, window, maxFps, out _));
 }

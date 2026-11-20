@@ -64,6 +64,7 @@ The playground is a .NET WebAssembly build of the same source files that the CLI
 | `os` | `windows`, `linux`, or `macos` |
 | `shell` | The resolved shell's file name, the same value as the cast's `env.SHELL` ([spec_cast.md](spec_cast.md) → Header) |
 | `width`, `height` | The terminal size of the recording |
+| `endFolder` | Only when the prompt shows `{dir}`: the folder name that the closing prompt showed ([spec_scenario.md](spec_scenario.md) → Prompt) |
 | `steps` | One entry for each step that ran, in order |
 
 Each step entry:
@@ -74,6 +75,7 @@ Each step entry:
 | `maskedRun` | Only when masking changed `run`: the text after masking. A replay types it as the step's command, and it identifies the step in the cast's `st:steps` tag, because a replay may not know the secret ([spec_scenario.md](spec_scenario.md#recording-again) → Recording again) |
 | `kind` | `pipe`, `pty`, or `interactive` |
 | `exitCode` | The command's exit code |
+| `folder` | Only when the prompt shows `{dir}`: the folder name its prompt showed. A replay and the playground draw the same prompt from it, and show `~` for a file without it |
 | `cursor` | Non-interactive PTY steps on Windows only: the start cursor that scenetake reported to ConPTY, as `row` and `column` ([spec_pty.md](spec_pty.md)) |
 | `chunks` | Output in arrival order (below) |
 | `end` | Interactive steps only: where the step's output ends, in seconds since the command started |
@@ -103,7 +105,7 @@ The playground composes a cast the way the scenario path does. The only differen
 - The n-th step with a given text and kind takes the n-th recorded step with that text and kind. When the scenario has more such steps than the recording, each extra step takes the last recorded one.
 - **Why order counts.** The commands of a sample carry state: `git status` before `git commit` prints something different from `git status` after it. Reusing the last recorded output for an extra step lets a reader duplicate a step and still see output.
 - Only the `run` text and the kind decide a match. Edits to typing, highlights, names, timing keys, or render keys never lose a match.
-- **A `show: none` step, or a `background: true` one, is not in the outputs file**, and the replay skips it: it runs nothing, takes no recorded output, takes no time, and the step notes leave it out. What a later step got from a background server is in that step's recorded output. A step with `show: output` is recorded and matched as any other. A `clear: true` step needs no recording: the replay writes the same clear as the CLI ([spec_scenario.md](spec_scenario.md) → steps).
+- **A `show: none` step, or a `background: true` one, is not in the outputs file**, and the replay skips it: it runs nothing, takes no recorded output, takes no time, and the step notes leave it out. What a later step got from a background server is in that step's recorded output. A step with `show: output` is recorded and matched as any other. A `clear: true` step and a `card` step need no recording: the replay writes the same clear and the same card as the CLI ([spec_scenario.md](spec_scenario.md) → steps).
 - The shell state that the CLI carries from step to step ([spec_scenario.md](spec_scenario.md) → Shell state across steps) is already in each recorded output, such as a `ls` after a hidden `cd`, so the replay needs none.
 
 ### Steps without recorded output
@@ -134,6 +136,7 @@ The UI lists these keys as not applied when the scenario sets them.
 | Timing and typing keys of an interactive step | Its output is stored already timed ([Contents](#contents)). The UI does not list these. |
 | `keys`, `timeout` | No command runs to type into, wait for, or stop. The recorded output already holds what they did. The playground still draws the typing delays of `type`, so later steps type as on the CLI. A `wait` draws none. The UI does not list these. |
 | `keep-output` | There is no earlier cast in the browser to keep the output of, so each step shows its recorded output ([spec_scenario.md](spec_scenario.md#recording-again) → Recording again). The cast the playground writes has the same `st:steps` tag as the CLI's. |
+| `outputs` | The browser shows one SVG, drawn with the render options on the page. The CLI writes the files listed ([spec_cli.md](spec_cli.md) → Outputs list). |
 
 ### Exit codes, warnings, and errors
 

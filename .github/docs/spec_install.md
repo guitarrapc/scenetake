@@ -89,6 +89,7 @@ Speed was unchanged within run-to-run noise (±1–2%), and every output was byt
 - `UseSystemResourceKeys=true` saves 13 KB. Not chosen: scenetake prints framework exception messages after `Error:`, and they would become resource keys.
 - `IlcScanReflection=false` saves 26 KB. Not chosen: little gain, and it can drop members that are found by reflection.
 - A narrower VYaml resolver saves 15 KB. VYaml's built-in resolver keeps every formatter it knows, including `Uri`, `BigInteger`, and `Type`. But the `YamlSerializerOptions` constructor references that resolver, so the formatters stay even when a parse never uses them. Avoiding that needs a change in VYaml.
+- New code costs more than its size suggests when it brings new generic instantiations. Native AOT compiles a generic again for each value type it is used with, and LINQ operators the binary did not use before bring their iterator types. The outputs list, card steps, and prompt parts first added 81.5 KB. A list of tuples, LINQ `OrderByDescending`, `Prepend`, `Take`, and `SelectMany`, and two records accounted for 34.5 KB of it, and `WebUtility.HtmlEncode` for 1.5 KB. With plain loops, two lists in place of the tuple list, and classes in place of the records, the three features add 45.5 KB (4,931,584 → 4,978,176 B). The ILC map file (`-p:IlcGenerateMapFile=true`) of two publishes, compared by node name, shows where the bytes go.
 
 ---
 

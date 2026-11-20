@@ -152,6 +152,7 @@ Priority: explicit ANSI in stderr > resolved `stderr-color`.
 - One prefix at start is parsed. Additional bracket text is literal display text.
 - Prefix style format: [Style Value Formats](#style-value-formats).
 - Unknown style falls back to `cyan` with warning.
+- A `card` step's lines take the same prefix, without the `# ` and without a default color: a line without one takes the terminal's foreground, and an unknown style is a warning that leaves it plain ([spec_scenario.md](spec_scenario.md) → Card steps).
 
 ## Range Grammar (`at`)
 

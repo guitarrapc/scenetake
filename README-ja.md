@@ -108,6 +108,21 @@ scenetake --help
 
 ffmpegは`winget install Gyan.FFmpeg`、`brew install ffmpeg`、`sudo apt install ffmpeg`などでインストールできます。
 
+1回で複数フォーマットを出力する時は`outputs`キーを使います。
+
+```yaml
+outputs:
+  - format: svg                # demo.svg（README用）
+  - format: svg
+    theme: github-light
+    file: demo-light.svg
+  - format: gif                # Zenn用（3MB以下）
+    font-size: 12
+    fps: 10
+  - format: mp4                # X用
+    max-size: 1280x1024
+```
+
 ## 見た目の調整
 
 シナリオの`render`キーか、同じ名前のフラグ（`--window macos`など）で指定します。
@@ -238,6 +253,25 @@ steps:
   - clear: true             # 画面を消す
 ```
 
+### タイトル画面とプロンプト
+
+`card`ステップは、ウィンドウ中央寄せでオープニング表示します。`prompt`に`{dir}`を指定するとステップごとにそのフォルダ名を表示します。
+
+```yaml
+settings:
+  prompt:
+    - text: "{dir}"
+      color: "fg:cyan"
+    - " $ "
+steps:
+  - card:
+      - "[bold fg:bright-cyan]my-app"
+      - "Fast JSON diffs in your terminal"
+    post-delay: 2.5
+  - my-app diff a.json b.json
+  - card: "[fg:yellow]npm install -g my-app"
+```
+
 ### 実行し直さず見た目だけ変える
 
 `--replay`と`--save-outputs`を組み合わせて、一度録画した出力ファイルを再利用してテーマや出力形式だけ変えられます。
@@ -297,8 +331,19 @@ render:                          # Optional display metadata for cast header and
   margin: 24                     # px around the window (default 8, 12 with a window, 32 with a background)
   padding: 12                    # px between the terminal edge and its text (default from font-size)
 
+# outputs:                       # Files to write besides the cast, when no --format is given
+#   - format: svg
+#   - format: svg                # A light copy, for a README that follows the reader's light or dark mode
+#     theme: light
+#     file: scenario_format-light.svg
+#   - format: gif                # Needs ffmpeg
+#     fps: 10
+
 settings:                        # Defaults for all steps; map-form steps can override per key
-  prompt: "$ "
+  prompt:                        # Text ("$ "), or parts with a color each. {dir} is the folder the step starts in
+    - text: "{dir}"
+      color: cyan
+    - " $ "
   typing-speed: 0.04             # Average seconds per typed character
   typing-jitter: 0.01            # Random variance (+/- seconds) per character
   pre-delay: 0.5                 # Pause before typing each step
@@ -318,6 +363,12 @@ pre:
   - echo "environment check (not recorded)"
 
 steps:
+  # A card shows centered lines on a cleared screen and runs nothing: a title, or an install line at the end
+  - card:
+      - "[bold fg:bright-cyan]Scenario Format Demo"
+      - "every key, recorded"
+    post-delay: 2
+
   # String form - uses settings defaults
   - echo "Hello, World!"
 

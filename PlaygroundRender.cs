@@ -121,6 +121,7 @@ internal static class PlaygroundRender
             var generateOptions = new GenerateOptions
             {
                 TrackPtyCursor = replay.TrackPtyCursor,
+                FitsHeight = renderSettings.Fit is FitMode.Height or FitMode.Both,
                 LogRunning = false,
                 // The outputs were masked when they were recorded, with the recording machine's environment, which the
                 // browser does not have. Masking again hides only what the YAML adds, such as a new settings.mask text.
@@ -206,6 +207,8 @@ internal static class PlaygroundRender
             notes.Add("pre, post: no command runs in the browser, and their output is never in a cast");
         if ((scenario.Steps ?? []).Select(ParseCommand).Any(static command => IsStepFlagSet(command.Extra, "keep-output")))
             notes.Add("keep-output: there is no earlier cast in the browser, so each step shows the recorded output");
+        if (scenario.Outputs is { Count: > 0 })
+            notes.Add("outputs: the browser shows one SVG with the render options above, and the CLI writes the files listed");
         return notes;
     }
 

@@ -37,7 +37,7 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 - Unknown `-` / `--` options are explicit errors (avoids typos becoming path-not-found errors).
 - `--format`, `--at`, `--font-size`, `--font-family`, `--theme`, `--window`, `--max-fps`, `--fps`, `--crf`, `--max-size`, `--size`, and `--font-file` accept `--name=value` or `--name value`.
 - Duplicate `--at`, `--font-size`, `--font-family`, `--theme`, `--window`, `--window-title`, `--background`, `--margin`, `--padding`, `--opacity`, `--blur`, `--max-fps`, `--fps`, `--crf`, `--max-size`, `--size`, or `--font-file` is an error. `--size` with `--max-size` is an error too: `--size` already sets the output size.
-- A second `--format` is an error that says how to get more formats: `--format takes one format. Record once, then convert the cast for each other format, such as: scenetake gif <file>.cast`. It used to replace the first without a word, so `--format svg --format gif` wrote no SVG. One run writes one format because the format options differ (`--at` for a still, `--fps` and `--size` for a video), and the subcommands convert the cast with no second recording.
+- A second `--format` is an error that says how to get more formats: `--format takes one format. List several under 'outputs:' in the scenario, or record once and convert the cast for each other format, such as: scenetake gif <file>.cast`. It used to replace the first without a word, so `--format svg --format gif` wrote no SVG. The command line takes one format because the format options differ (`--at` for a still, `--fps` and `--size` for a video) and would be ambiguous among several. The scenario's `outputs` list gives each format its own options (Outputs list below).
 - Options for the other output format are errors, not ignored:
   - On the scenario path, `--fps`, `--max-size`, and `--size` without `--format mp4` or `gif` fail with `<option> requires --format mp4 or gif`. `--crf`, H.264's quality, needs `--format mp4`: `--crf requires --format mp4`, and with GIF output `--crf applies to mp4: a GIF has no H.264 quality`. `--font-file` without `--format mp4`, `png`, or `gif` fails with `--font-file requires --format mp4, png, or gif`. The `svg` subcommand reports them as unknown options.
   - With GIF output, `--fps` above 50 fails with `--fps for a GIF must be between 1 and 50: <N> (a GIF counts each frame's delay in hundredths of a second)`.
@@ -93,7 +93,7 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
 
 ## Output Paths
 
-**Scenario path.** `[output]` sets a shared stem. Extensions differ (`.cast`, plus `.svg` with `--format svg`, `.mp4` with `--format mp4`, `.png` with `--format png`, or `.gif` with `--format gif`). With no `[output]`, stem matches the scenario path without extension. Passing `out.cast`, `out.svg`, `out.mp4`, `out.png`, or `out.gif` yields the same stem.
+**Scenario path.** `[output]` sets a shared stem. Extensions differ (`.cast`, plus `.svg` with `--format svg`, `.mp4` with `--format mp4`, `.png` with `--format png`, or `.gif` with `--format gif`). With no `[output]`, stem matches the scenario path without extension. Passing `out.cast`, `out.svg`, `out.mp4`, `out.png`, or `out.gif` yields the same stem. An `outputs` entry writes `<stem>.<format>`, or its `file`, which is relative to the stem's folder (Outputs list below).
 
 **`svg`, `mp4`, `png`, and `gif` subcommands.** With no `[output]`, writes alongside the input as `<stem>.svg`, `<stem>.mp4`, `<stem>.png`, or `<stem>.gif`. With `[output]`, uses that path's stem and directory (extension optional).
 
@@ -184,6 +184,34 @@ Previously, cast parsing reported a JSON error before the hint. Failed conversio
 
 Without `--strict`, recorded step exit codes do not affect the process exit code. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
 
+## Outputs list
+
+A scenario's top-level `outputs` lists the files a recording writes besides the cast, so one run gives every place a demo goes its own file:
+
+```yaml
+outputs:
+  - format: svg                    # demo.svg, for the README
+  - format: svg
+    theme: github-light
+    file: demo-light.svg           # with the dark one, the CLI prints a <picture> for a README
+  - format: gif                    # for Zenn, under 3 MB
+    font-size: 12
+    fps: 10
+  - format: mp4                    # for X
+    max-size: 1280x1024
+  - format: png
+    file: demo-title.png
+    at: 1                          # one screen, such as a title card, for a page's preview image
+```
+
+- **When it applies.** Without `--format`, the scenario path writes the cast and every entry, and so does `--replay`. With `--format`, the command line wins as it does over other YAML keys: only that file is written, and stderr says `Note: --format svg writes only that file: the scenario's outputs are not written.` capture builds its own scenario and has no list. The playground lists `outputs` as not applied: it shows one SVG with its own options.
+- **An entry.** `format` (svg, mp4, gif, or png) is required, and `cast` is an error, because every recording writes the cast. `file` names the file, relative to the folder of the output stem. Its extension may be left out, and another format's extension is an error. Without `file`, an entry writes `<stem>.<format>`, so two entries of one format need a `file` each. Every other key is a command-line option of the same name without `--`, with the same values, ranges, and format rules: the look (`theme`, `window`, `window-title`, `background`, `margin`, `padding`, `opacity`, `blur`, `fit`, `crop-top`, `crop-bottom`, `crop-left`, `crop-right`, `font-size`, `font-family`, `loop`, `end-hold`, `fade-out`) and the format's options (`at`, `max-fps`, `fps`, `crf`, `max-size`, `size`, `font-file`). `loop` takes `true` or `false`. A file (`font-file`, an image `background`) is found from the scenario's folder, as `render.background`'s image is. A key an entry does not read is an unknown-key warning.
+- **The look.** The cast is drawn as the scenario and the command line set it. An entry's keys go on top for that file only, as `scenetake svg --theme ...` puts its options on a cast's. An entry's `theme` replaces the scenario's theme with its `fg`, `bg`, and `palette`, so a light copy of a dark demo takes the light theme's own colors.
+- **Checks before anything runs.** Each entry is read as `--format FORMAT` with its options, so an error is the command line's, naming the entry and its keys instead of the options: `outputs entry 3 (gif): 'crf' applies to mp4: a GIF has no H.264 quality`. Then the paths are checked as the `--format` output's are, two entries that write one file are an error, and each entry's ffmpeg, font, and frame are checked as for `--format`.
+- **Writing.** The entries are drawn from the cast as written, in order. One that fails removes its file, says why with its entry's name, and the others are still written. The run then exits `1`. `Done:` lists the cast and every file.
+- **Light and dark.** When the files include an animated SVG on a dark theme and one on a light theme (as the window chrome tells them apart, by the background's lightness), stderr ends with a `<picture>` that a GitHub README uses to show the one that matches the reader's color scheme. Its `alt` is the scenario's `title`.
+- **Why a list in the YAML, not several `--format` values.** Each place takes another format with other options: a GIF under Zenn's 3 MB needs a smaller font and fewer frames, an mp4 for X a size limit, a light README image another theme. Command-line options apply to one format at a time. In the scenario, the options sit with the format they shape, and a CI run that records the scenario writes every file.
+
 ## Capture
 
 `scenetake capture [options] -- <command>` (or `scenetake capture [options] "<command>"`) records one command without a scenario file.
@@ -239,3 +267,5 @@ Without `--strict`, recorded step exit codes do not affect the process exit code
 - **Device paths must retain their prefix.** Adding `\\?\` to a `\??\` path made it invalid. Identity lookup failed, and failed rendering deleted the input through that spelling. Device paths now remain unchanged.
 - **Windows must resolve its own links.** Relative targets through junctions resolve against the opened path, rather than the junction target. Targets starting with a separator resolve against the current drive. Manual traversal therefore rejected valid outputs. File indices handle normal volumes. WSL shares need final paths from opened files because their serial number is `0`. Comparing only written paths missed Windows links to WSL inputs and allowed overwrites.
 - **Help must describe command-specific behavior.** Previously, `--help` printed only usage lines on stderr, leaving option details in the README. Help now describes each option on stdout, which supports pagers. Scenario `--theme` retains YAML color overrides. Conversion `--theme` replaces cast colors, so the commands need different descriptions. A test checks help coverage against each parser's accepted options.
+- **An output's look goes on the settings read back from the cast** (2026-11-20). The scenario path draws every file from the cast it wrote, and took from the run's own settings only an image background and `--max-fps`, which the cast does not store. An outputs entry's theme or font applied to the run's settings would have changed nothing. Entries are applied after the cast is read, as the `svg` command applies its options.
+- **An entry is read by the command-line parser** (2026-11-20). Its keys are turned into `--format FORMAT --KEY=VALUE` and read as a command line, so an entry takes every rule of its format with no second list of rules to keep in step. The errors are rewritten to name the keys (`'crf'` for `--crf`).

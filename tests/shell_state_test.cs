@@ -49,6 +49,13 @@ failures += Run("PosixShellRestoreCarriesWhatChanged", PosixShellRestoreCarriesW
 failures += Run("PowerShellWrapsOnFirstAndLastLine", PowerShellWrapsOnFirstAndLastLine);
 failures += Run("ShowAndClearErrors", ShowAndClearErrors);
 failures += Run("ShowAndClearAreKnownKeys", ShowAndClearAreKnownKeys);
+failures += Run("CardErrors", CardErrors);
+failures += Run("CardLinesSplitAndStyle", CardLinesSplitAndStyle);
+failures += Run("CardComposition", CardComposition);
+failures += Run("PromptPartsAndErrors", PromptPartsAndErrors);
+failures += Run("FolderNamesHideThePath", FolderNamesHideThePath);
+failures += Run("PromptFolderReplays", PromptFolderReplays);
+failures += Run("PlaygroundComposesCards", PlaygroundComposesCards);
 failures += Run("PlaygroundComposesShowAndClear", PlaygroundComposesShowAndClear);
 failures += Run("HiddenStepFailureStops", () => HiddenStepFailureStops(continueOnError: false));
 failures += Run("HiddenStepContinueOnError", () => HiddenStepFailureStops(continueOnError: true));
@@ -60,6 +67,7 @@ failures += Run("BackgroundProblemContinueOnError", () => BackgroundProblemStops
 failures += Run("PlaygroundSkipsBackground", PlaygroundSkipsBackground);
 failures += Run("IntegrationBashCarriesState", () => IntegrationBashCarriesState(repoRoot));
 failures += Run("IntegrationBashLoginAliasesStayOff", () => IntegrationBashLoginAliasesStayOff(repoRoot));
+failures += Run("IntegrationPromptFollowsFolder", () => IntegrationPromptFollowsFolder(repoRoot));
 failures += Run("IntegrationPowerShellCarriesState", () => IntegrationPowerShellCarriesState(repoRoot));
 failures += Run("IntegrationZshCarriesState", () => IntegrationZshCarriesState(repoRoot));
 failures += Run("IntegrationShCarriesState", () => IntegrationShCarriesState(repoRoot));
@@ -356,9 +364,203 @@ static bool ShowAndClearErrors()
     }
 }
 
+static bool CardErrors()
+{
+    var ok = true;
+    ok &= ExpectError("- run: echo hi\n  card: Title", "Step 1 has both 'run' and 'card'");
+    ok &= ExpectError("- card: Title\n  clear: true", "Step 1 has both 'card' and 'clear'");
+    ok &= ExpectError("- card: Title\n  pty: true", "Step 1 key 'pty' does not apply to a 'card' step");
+    ok &= ExpectError("- card: Title\n  name: Scene", "Step 1 key 'name' does not apply to a 'card' step");
+    ok &= ExpectError("- card: {title: x}", "Step 1 key 'card' must be a line of text or a list of lines");
+    ok &= ExpectError("- card: [\"\", \"[bold]\"]", "Step 1 key 'card' has no text to show");
+    ok &= ExpectError("- card: [a, b, c, d, e, f, g, h, i]", "Step 1 card has 9 lines, more than the terminal's 8 rows", height: 8);
+    ok &= ExpectError("- card: \"[bold]0123456789abc\"", "Step 1 card line 1 is 13 columns wide, wider than the terminal's 12", width: 12);
+    ok &= ExpectError("- card: \"日本語のタイトルです\"", "Step 1 card line 1 is 20 columns wide, wider than the terminal's 12", width: 12);
+    ok &= ExpectError("- card: \"a\\tb\"", "Step 1 card line 1 holds a control character");
+    // A card alone is a recording, unlike a clear step alone.
+    ok &= ExpectError("- card: Title", null);
+    ok &= ExpectError("- card: |\n    my-app\n    npm i -g my-app\n  post-delay: 3\n  pre-delay: 0\n- echo hi\n- card: [\"[bold fg:cyan] my-app \", 42, ~, \"\"]", null);
+    return ok;
+
+    static bool ExpectError(string steps, string? expected, int width = 80, int height = 24)
+    {
+        var yaml = $"width: {width}\nheight: {height}\nsteps:\n" + string.Join('\n', steps.Split('\n').Select(static line => "  " + line));
+        var error = FindStepKeyError(ParseScenario(yaml));
+        return expected is null
+            ? Expect(error is null, $"unexpected error: {error}")
+            : Expect(error is not null && error.StartsWith(expected, StringComparison.Ordinal), $"expected '{expected}', got '{error}'");
+    }
+}
+
+// Without fit: height a card is centered in the whole terminal and needs no mark. A card as tall as its rows has no
+// row below it to mark.
+static bool CardComposition()
+{
+    var whole = ComposeCard(["a", "b"], 10, 9, null, markBottom: false);
+    var marked = ComposeCard(["a", "b"], 10, 6, null, markBottom: true);
+    var full = ComposeCard(["a", "b"], 10, 2, null, markBottom: true);
+    var masker = SecretMasker.ForScenario(ParseScenario("settings:\n  mask: [\"hunter2\"]\nsteps:\n  - echo hi\n"), null);
+    var masked = ComposeCard(["pass: hunter2"], 20, 3, masker, markBottom: false);
+    return Expect(whole == "\u001b[?25l\u001b[H\u001b[2J\u001b[4;5Ha\u001b[5;5Hb", Show(whole))
+        && Expect(marked == "\u001b[?25l\u001b[H\u001b[2J\u001b[6;5H\u001b[1m \u001b[0m\u001b[3;5Ha\u001b[4;5Hb", Show(marked))
+        && Expect(!full.Contains("\u001b[1m", StringComparison.Ordinal), Show(full))
+        && Expect(masked.Contains("pass: *******", StringComparison.Ordinal) && !masked.Contains("hunter2", StringComparison.Ordinal), Show(masked));
+}
+
+static bool CardLinesSplitAndStyle() =>
+    Expect(CardLines("one\ntwo\n") is ["one", "two"], "a block's lines, without the last line break")
+    && Expect(CardLines(new List<object?> { "a\nb", 3, null }) is ["a", "b", "3", ""], "list entries, numbers, and empty entries")
+    && Expect(CardLines(true) is null && CardLines(new List<object?> { new Dictionary<object, object?>() }) is null, "a value that is not text")
+    && Expect(SplitCardStyle("[bold fg:cyan]  my-app  ") == ("bold fg:cyan", "my-app"), "a style prefix")
+    && Expect(SplitCardStyle("  plain  ") == (null, "plain"), "no prefix")
+    && Expect(DisplayWidth("aé日本") == 6 && DisplayWidth("é") == 1, "display width");
+
+// A title card, a command, then a closing card, composed as the playground composes them. The cast is played on
+// scenetake's own terminal to check where each line lands.
+static bool PlaygroundComposesCards()
+{
+    const string yaml = """
+        width: 30
+        height: 9
+        settings:
+          typing-speed: 0.01
+          typing-jitter: 0
+          pre-delay: 0
+          post-delay: 0
+        steps:
+          - card:
+              - "[bold fg:cyan]my-app"
+              - ""
+              - 日本語
+          - name: Scene
+            run: ls
+          - card: npm i -g my-app
+            post-delay: 3
+        """;
+    var outputs = new StepOutputs
+    {
+        Scenetake = "test",
+        Os = "linux",
+        Shell = "bash",
+        Width = 30,
+        Height = 9,
+        Steps = [RecordedStep.Pipe("ls", 0, [new PipeStreamChunk(TimeSpan.Zero, false, "file.txt\n")])],
+    };
+    var result = PlaygroundRender.RenderScenario(yaml, outputs, new PlaygroundOptions(), renderSvg: false);
+    if (!Expect(result.Error is null && result.Cast is not null, $"render failed: {result.Error}"))
+        return false;
+
+    var output = CastOutput(Encoding.UTF8.GetString(result.Cast!));
+    // The step after a card starts with the clear that ends the card.
+    var cardCleared = output.IndexOf(ClearScreen + "\u001b[?25h", StringComparison.Ordinal);
+    if (!Expect(cardCleared > 0, $"no clear after the title card: {Show(output)}"))
+        return false;
+    var title = Play(output[..cardCleared], 30, 9, out _);
+    var middle = Play(output[..output.LastIndexOf("\u001b[?25l", StringComparison.Ordinal)], 30, 9, out var middleCursorShown);
+    var end = Play(output, 30, 9, out var endCursorShown);
+    // With fit: height (the default), cards are centered in the rows the rest uses: the comment, the typed command,
+    // its output, and the cursor below it, 4 rows, and at least the tallest card's 3 lines and a blank row above and
+    // below, 5. Three lines in 5 rows start at row 1 (0-based). "my-app" is 6 wide in 30, and "日本語" is 6 too.
+    return Expect(title[1] == new string(' ', 12) + "my-app" + new string(' ', 12) && title[3].StartsWith(new string(' ', 12) + "日本語", StringComparison.Ordinal),
+            $"the title card's lines: {Show(string.Join('\n', title))}")
+        && Expect(output.Contains("\u001b[5;15H\u001b[1m \u001b[0m", StringComparison.Ordinal), $"the mark on the card's last row: {Show(output)}")
+        && Expect(output.Contains("\u001b[1;36mmy-app\u001b[0m", StringComparison.Ordinal), "the line's style")
+        && Expect(middle[0].StartsWith("# Scene", StringComparison.Ordinal) && middle[1].StartsWith("$ ls", StringComparison.Ordinal) && middle[2].StartsWith("file.txt", StringComparison.Ordinal),
+            $"the step after the card starts on a cleared screen: {Show(string.Join('\n', middle))}")
+        && Expect(middleCursorShown, "the cursor stayed hidden after the card")
+        && Expect(end[2] == new string(' ', 7) + "npm i -g my-app" + new string(' ', 8) && end.Count(static row => row.Trim().Length > 0) == 1,
+            $"the closing card: {Show(string.Join('\n', end))}")
+        && Expect(!endCursorShown && !output.EndsWith("$ ", StringComparison.Ordinal), "a prompt or a cursor over the closing card");
+
+    static string[] Play(string text, int width, int height, out bool cursorVisible)
+    {
+        var theme = TerminalTheme.ForMeasuring();
+        var buffer = new ScreenBuffer(width, height, theme);
+        new AnsiParser(buffer, theme).Process(text);
+        cursorVisible = buffer.CursorVisible;
+        return [.. Enumerable.Range(0, height).Select(row => string.Concat(Enumerable.Range(0, width).Select(col =>
+            buffer.GetCell(row, col) is var cell && cell.IsWideContinuation ? "" : cell.Text is { Length: > 0 } text ? text : " ")))];
+    }
+}
+
+static bool PromptPartsAndErrors()
+{
+    var plain = ParsePrompt("$ ");
+    var styled = ParsePrompt(new List<object?> { new Dictionary<object, object?> { ["text"] = "demo", ["color"] = "bold fg:green" }, " {dir} $ ", 42, null });
+    var ok = Expect(plain.Render("x") == "$ " && !plain.UsesDir, "plain text")
+        && Expect(styled.UsesDir && styled.Render("my-app") == "\u001b[1;32mdemo\u001b[0m my-app $ 42", Show(styled.Render("my-app")))
+        && Expect(ParsePrompt(null).Render("") == DefaultPrompt, "the default");
+    ok &= ExpectError("prompt: \"{dir} $ \"", null);
+    ok &= ExpectError("prompt:\n    - text: demo\n      color: green\n    - \" $ \"", null);
+    ok &= ExpectError("prompt:\n    a: b", "'settings.prompt' must be text or a list of parts");
+    ok &= ExpectError("prompt:\n    - [a, b]", "settings.prompt part 1 must be text or a mapping with 'text' and 'color'");
+    ok &= ExpectError("prompt:\n    - color: green", "settings.prompt part 1 needs 'text'");
+    ok &= ExpectError("prompt:\n    - text: x\n      color: [red]", "settings.prompt part 1 key 'color' must be a style");
+    var unknown = FindUnknownScenarioKeys("settings:\n  prompt:\n    - text: x\n      colour: red\nsteps:\n  - echo hi\n");
+    return ok && Expect(unknown.Count == 1 && unknown[0].Contains("in settings.prompt part 1 (did you mean 'color'?)", StringComparison.Ordinal), string.Join("; ", unknown));
+
+    static bool ExpectError(string settings, string? expected)
+    {
+        var error = FindStepKeyError(ParseScenario($"settings:\n  {settings}\nsteps:\n  - echo hi\n"));
+        return expected is null
+            ? Expect(error is null, $"unexpected error: {error}")
+            : Expect(error is not null && error.StartsWith(expected, StringComparison.Ordinal), $"expected '{expected}', got '{error}'");
+    }
+}
+
+// {dir} shows a folder's last name, ~ for the home folder, and / for the root, never the rest of the path.
+static bool FolderNamesHideThePath()
+{
+    var ok = Expect(PromptTemplate.FolderName("/home/me/my-app", "/home/me") == "my-app", "a folder")
+        && Expect(PromptTemplate.FolderName("/home/me/", "/home/me") == "~", "the home folder")
+        && Expect(PromptTemplate.FolderName("/", "/home/me") == "/", "the root")
+        && Expect(PromptTemplate.FolderName("/home/me/my-app/", null) == "my-app", "a trailing slash");
+    if (OperatingSystem.IsWindows())
+    {
+        ok &= Expect(PromptTemplate.FolderName(@"C:\Users\me", @"C:\Users\me") == "~", "Windows home")
+            && Expect(PromptTemplate.FolderName("/c/Users/me", @"C:\Users\Me") == "~", "Git Bash's home")
+            && Expect(PromptTemplate.FolderName("/c/Users/me/src", @"C:\Users\me") == "src", "Git Bash's folder")
+            && Expect(PromptTemplate.FolderName(@"D:\", @"C:\Users\me") == @"D:\", "a drive's root")
+            && Expect(PromptTemplate.NativePath("/cygdrive/d/work") == @"D:\work" && PromptTemplate.NativePath("/tmp") == "/tmp", "native paths");
+    }
+
+    return ok;
+}
+
+// The outputs file keeps each step's folder and the closing one, and a replay draws the same prompts.
+static bool PromptFolderReplays()
+{
+    var outputs = new StepOutputs
+    {
+        Scenetake = "test",
+        Os = "linux",
+        Shell = "bash",
+        Width = 40,
+        Height = 8,
+        EndFolder = "src",
+        Steps =
+        [
+            RecordedStep.Pipe("echo one", 0, [new PipeStreamChunk(TimeSpan.Zero, false, "one\n")], folder: "~"),
+            RecordedStep.Pipe("cd src", 0, [], folder: "my-app"),
+        ],
+    };
+    using var stream = new MemoryStream();
+    outputs.Write(stream);
+    var parsed = StepOutputs.Parse(Encoding.UTF8.GetString(stream.ToArray()));
+    if (!Expect(parsed.EndFolder == "src" && parsed.Steps[0].Folder == "~" && parsed.Steps[1].Folder == "my-app", "the folders did not round-trip"))
+        return false;
+
+    const string yaml = "width: 40\nheight: 8\nsettings:\n  typing-speed: 0.01\n  typing-jitter: 0\n  prompt: \"{dir} $ \"\nsteps:\n  - echo one\n  - cd src\n";
+    var result = PlaygroundRender.RenderScenario(yaml, parsed, new PlaygroundOptions(), renderSvg: false);
+    var output = CastOutput(Encoding.UTF8.GetString(result.Cast!));
+    var noFolders = PlaygroundRender.RenderScenario(yaml, StepOutputs.Parse(Encoding.UTF8.GetString(stream.ToArray()).Replace("\"folder\"", "\"other\"").Replace("\"endFolder\"", "\"other\"")), new PlaygroundOptions(), renderSvg: false);
+    return Expect(output.Contains("~ $ echo one", StringComparison.Ordinal) && output.Contains("my-app $ cd src", StringComparison.Ordinal) && output.EndsWith("src $ ", StringComparison.Ordinal), Show(output))
+        && Expect(CastOutput(Encoding.UTF8.GetString(noFolders.Cast!)).Contains("~ $ cd src", StringComparison.Ordinal), "a file without folders shows ~");
+}
+
 static bool ShowAndClearAreKnownKeys()
 {
-    var unknown = FindUnknownScenarioKeys("steps:\n  - run: echo hi\n    show: none\n  - clear: true\n    name: Scene\n  - echo done\n");
+    var unknown = FindUnknownScenarioKeys("steps:\n  - run: echo hi\n    show: none\n  - clear: true\n    name: Scene\n  - echo done\n  - card: [Title]\n    post-delay: 2\n");
     return Expect(unknown.Count == 0, string.Join("; ", unknown));
 }
 
@@ -647,6 +849,56 @@ static bool IntegrationBashCarriesState(string repoRoot)
         && Expect(run.Stderr.Contains("step exited 3: exit 3", StringComparison.Ordinal), "the exit code")
         && Expect(text.Contains("after-timeout=fixtures", StringComparison.Ordinal), "a stopped step changed the folder")
         && Expect(!text.Contains("correct-horse-battery-staple", StringComparison.Ordinal) && text.Contains("[****", StringComparison.Ordinal), "an exported secret was not hidden");
+}
+
+// The prompt's {dir} follows pre's cd, a step's cd, and a hidden step's cd, and a replay of the outputs file draws the
+// same prompts, byte for byte.
+static bool IntegrationPromptFollowsFolder(string repoRoot)
+{
+    if (!TryGetBinary(out var bin))
+        return true;
+
+    var stem = Path.Combine(Path.GetTempPath(), $"scenetake-prompt-{Guid.NewGuid():N}");
+    var outputs = stem + ".outputs.json";
+    try
+    {
+        var fixture = Path.Combine("tests", "fixtures", "shell-state-bash-prompt.yaml");
+        var (recordExit, recordStderr) = RunBinary(bin, repoRoot, ["--save-outputs", outputs, fixture, stem]);
+        var recorded = File.Exists(stem + ".cast") ? File.ReadAllBytes(stem + ".cast") : [];
+        var (replayExit, replayStderr) = RunBinary(bin, repoRoot, ["--replay", outputs, fixture, stem + "-replay"]);
+        var replayed = File.Exists(stem + "-replay.cast") ? File.ReadAllBytes(stem + "-replay.cast") : [];
+        var text = CastOutput(Encoding.UTF8.GetString(recorded));
+        var prompt = static (string dir) => $"\u001b[34m{dir}\u001b[0m $ ";
+        return Expect(recordExit == 0 && replayExit == 0, $"{recordStderr}\n{replayStderr}")
+            && Expect(text.Contains(prompt("tests") + "echo first", StringComparison.Ordinal)
+                && text.Contains(prompt("tests") + "cd fixtures", StringComparison.Ordinal)
+                && text.Contains(prompt("fixtures") + "echo second", StringComparison.Ordinal)
+                && text.Contains(prompt("tests") + "echo third", StringComparison.Ordinal)
+                && text.EndsWith(prompt("tests"), StringComparison.Ordinal), Show(text))
+            && Expect(recorded.AsSpan().SequenceEqual(replayed), "the replay drew other prompts");
+    }
+    finally
+    {
+        foreach (var file in new[] { stem + ".cast", stem + "-replay.cast", outputs })
+            File.Delete(file);
+    }
+}
+
+static (int ExitCode, string Stderr) RunBinary(string bin, string repoRoot, string[] arguments)
+{
+    var psi = new ProcessStartInfo(bin) { RedirectStandardError = true, RedirectStandardOutput = true, UseShellExecute = false, WorkingDirectory = repoRoot };
+    foreach (var argument in arguments)
+        psi.ArgumentList.Add(argument);
+    using var process = Process.Start(psi)!;
+    var stdout = process.StandardOutput.ReadToEndAsync();
+    var stderr = process.StandardError.ReadToEndAsync();
+    if (!process.WaitForExit(TimeSpan.FromSeconds(180)))
+    {
+        process.Kill(entireProcessTree: true);
+        throw new TimeoutException($"{string.Join(' ', arguments)} ran for over 180 s");
+    }
+
+    return (process.ExitCode, stderr.Result);
 }
 
 // HOME is a folder whose .bash_profile defines aliases. Before the fix, a step's alias turned expansion on for them

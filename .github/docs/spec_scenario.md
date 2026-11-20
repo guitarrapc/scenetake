@@ -99,6 +99,7 @@ post:
 | `height` | `24` | Terminal rows in the cast header and PTY geometry when a step uses `pty: true`. `1`–`512`, checked before `pre` runs. |
 | `cwd` | process cwd | Working directory for `pre`, `steps`, and `post`. Relative paths, including `..`, use the scenario file's folder, independent of the caller's location. Without `cwd`, commands use the caller's folder. The directory must exist before `pre`. An error names the resolved directory if it is missing. |
 | `shell` | `$SHELL` / `pwsh` | Shell for all commands. Values: `bash`, `pwsh`, `powershell`, or a path |
+| `outputs` | — | The files a recording writes besides the cast, each with its own format and options, such as a dark and a light SVG, a GIF, and an mp4. Written when no `--format` is given. See [spec_cli.md](spec_cli.md) → Outputs list. |
 
 On Linux and macOS, `pwsh` and `powershell` use PowerShell command arguments, including when selected by a path or by `$SHELL`. Other Unix shells use `-lc`. The requested executable name or path is preserved for both pipe and PTY commands, including `pre` and `post`.
 
@@ -108,7 +109,7 @@ Defaults for all steps. Map-form steps may override individual keys.
 
 | Key | Default | Description |
 |---|---|---|
-| `prompt` | `$ ` | Prompt shown before each typed command |
+| `prompt` | `$ ` | Prompt shown before each typed command: text, or a list of parts with a color each. `{dir}` shows the folder the step starts in. See Prompt below. |
 | `typing-speed` | `0.05` | Average seconds per typed character |
 | `typing-jitter` | `0.015` | Random variance (± seconds) per character |
 | `pre-delay` | `0.2` | Pause before typing a step |
@@ -121,6 +122,31 @@ Defaults for all steps. Map-form steps may override individual keys.
 | `stderr-color` | `red` | Fallback color when stderr has no ANSI SGR. Value format: [spec_highlight.md](spec_highlight.md) |
 | `mask` | — | A list of texts to hide wherever the recording shows them. See Masking secrets below. |
 | `mask-auto` | `true` | Also hide what looks like a secret: known token formats, secret `KEY=value` pairs, URL passwords, and secret environment values. See Masking secrets below. |
+
+### Prompt
+
+`prompt` is the text before each typed command and at the end of the recording. It is text, as before, or a list of parts, each text or a mapping with `text` and an optional `color`. A color is a style as `highlight` takes one ([spec_highlight.md](spec_highlight.md)), and each colored part ends with a reset.
+
+```yaml
+settings:
+  prompt: "{dir} $ "              # text, with the folder's name
+  # or parts, each with its own color:
+  prompt:
+    - text: "demo"
+      color: "bold fg:green"
+    - " "
+    - text: "{dir}"
+      color: "fg:blue"
+    - " $ "
+```
+
+- **`{dir}`** is the name of the folder the step starts in: its last name, `~` for the home folder, and `/` for the root, as bash's `\W` shows it. The rest of the path never appears, so a recording names no user folder.
+- **Which folder.** With a shell that carries the folder (Shell state across steps below), `{dir}` follows each `cd` in `pre`, in a shown step, and in a `show: none` step. The prompt is drawn before its step runs, so a step's own `cd` moves the next prompt. The closing prompt shows where the last step left. A folder that a step removed is not returned to, so the next prompt shows the scenario's `cwd`, as the next command starts there. A shell that carries no state starts every command in `cwd` (or the caller's folder), and `{dir}` always shows that.
+- **Replay and the playground.** When the prompt shows `{dir}`, the outputs file keeps each step's folder name and the closing one (`folder`, `endFolder`, [spec_playground.md](spec_playground.md) → Outputs file), and a replay draws the same prompts. A file without them shows `~`. Without `{dir}`, the file keeps no folder names.
+- **Errors and warnings.** A value that is neither text nor a list, a part that is neither text nor a mapping, a mapping without `text`, and a `color` that is not text are errors found before anything runs. An unknown style is a warning, and its part is drawn plain. A misspelled part key is an unknown-key warning.
+- **The prompt is masked** as the recording's other text is, without counting it again at each step.
+- **Width.** A prompt whose width changes from step to step starts each command at another column. On Windows a PTY step starts where the recording's cursor is, so ConPTY still draws it in place. A `keep-output` step whose PTY output would start elsewhere than in the earlier cast shows its new output (Recording again below).
+- **Why `{dir}` and no other placeholder.** Since steps carry their folder, a prompt that shows it makes `cd my-app` visible as it would be in a terminal. A user name or a host name would name the person who recorded the demo, which scenetake keeps out of a published cast (`spec_cast.md`), and the prompt's text can name a fixed one.
 
 ### Output timing (pipe and PTY)
 
@@ -273,6 +299,8 @@ Map-form steps recognize:
 | `wait-timeout` | no | Requires `wait`. Seconds above 0 to wait for the text. Default `30`. |
 | `keep-output` | no | Default `false`. `true` shows the step's output from the earlier cast at the output path, even when the command now prints something else. The command still runs. See Recording again below. |
 
+Two kinds of step run no command and have no `run`: `- clear: true` (Clear steps below) and `- card: ...` (Card steps below).
+
 Coloring value formats, range grammar, and validation: [spec_highlight.md](spec_highlight.md). Coloring does not apply to PTY-captured output.
 
 ### What a step shows
@@ -314,6 +342,33 @@ steps:
 A step `- clear: true` clears the screen and moves the cursor to the top left, as `clear` does, without running a command. It writes `ESC [H ESC [2J` into the cast, so it works without `TERM`, on every OS, and in the playground. It takes `name`, which prints a comment line at the top of the cleared screen, and `pre-delay` and `post-delay`. Any other step key, `run` with `clear`, or a value other than `true` is an error.
 
 - **Why not `run: clear`.** That types the command, and `clear` fails in a pipe without `TERM`, as in CI. With `show: output` it would still depend on the host's terminal database, and on Windows on the shell.
+
+### Card steps
+
+A `card` step shows lines of text centered on a cleared screen, without running a command: a title before the demo, a scene's heading, or an install line and a URL at the end.
+
+```yaml
+steps:
+  - card:
+      - "[bold fg:bright-cyan]my-app"
+      - "Fast JSON diffs in your terminal"
+      - ""
+      - "[fg:yellow]npm i -g my-app"
+    post-delay: 2.5
+  - my-app diff a.json b.json
+  - card: "Get it: npm i -g my-app"
+```
+
+- **The lines.** `card` is a line of text or a list of lines. A YAML block (`card: |`) gives one line per line of the block. A number is text, and an empty entry (`""` or `~`) is an empty line that keeps its row. Each line may start with a `[style]` prefix, as `name` takes one ([spec_highlight.md](spec_highlight.md)). Without one, a line takes the terminal's foreground. An unknown style is a warning, and the line is drawn without it. The spaces around a line are left out, because a card centers it.
+- **The screen.** The card hides the cursor, clears the screen, and draws each line in the middle of the terminal's width. A wide character takes two columns. The text is masked as the recording's other text is.
+- **The rows it is centered in.** With `fit: height` or `both` (`fit: height` is the default, [spec_svg.md](spec_svg.md)), the block of lines is centered in the rows the rest of the recording uses, with at least a blank row above and below the tallest card. The canvas that fit keeps therefore does not grow for a card, and a card sits in the middle of it. A row is in use when the recording's cursor reaches it, as every cell is written from its row and fit keeps a visible cursor's row. With `fit: none` or `width`, the block is centered in the whole terminal. The CLI and the playground pass the fit that the output uses, the CLI the scenario's with `--fit`. An outputs entry with its own `fit` draws the cast as it was recorded.
+- **A still of a card stays centered.** A still (PNG or `--at`) keeps only the rows that its own screen uses, which would end at the card's last line. So the card puts a bold space, which shows nothing, on the last of the rows it is centered in, in the middle column, which a crop that keeps the text keeps too.
+- **Time.** The card stays for `post-delay`, 2 seconds by default instead of the settings' value, because a title and an install line take longer to read than a command's output. `pre-delay` works as for a clear step.
+- **After it.** The next shown step starts on a cleared screen with the cursor shown again, as after a clear step. A `show: none` or background step between them runs while the card stays. A card that ends the scenario stays to the end of the recording, and no prompt follows it.
+- **Keys and errors.** A card takes `pre-delay` and `post-delay` only. `run` or `clear` with `card`, another step key, a value that is not text, a card with no text, a line wider than the terminal, more lines than its rows, and a control character in a line are errors found before anything runs. A scenario of cards alone is a recording, unlike one of clear steps alone.
+- **Why centered.** A card is a screen of its own, a title or an end screen, and the middle of the screen is where a reader looks for one.
+- **Why in the rows in use, not the terminal's height.** Centered in all 24 rows, a card in a demo that used 6 of them made fit keep 13 rows, and the card sat near the bottom of the canvas. The rows in use are known only after the last step, so each card's event is drawn then.
+- **Why a step and not `show: output` with `printf`.** A card centers by itself at any terminal size, takes styles without escape codes, works the same in bash and PowerShell, and needs no recording, so the playground and `--replay` show it too.
 
 ## Step exit codes
 
@@ -475,7 +530,9 @@ So a recording compares each step with the cast that is already at its output pa
 
 ## Init Template
 
-`scenetake init` creates a commented starter file following this structure. Optional sections should be present but commented so users discover features without enabling them by default: `render` with the theme, `window`, `background`, and `fit`, `settings.mask` and `mask-auto`, `pre`, `post`, and a step that answers a prompt with `keys` and `wait`. Coloring examples and a `pty: true` step are live steps. The file is UTF-8 without a BOM.
+`scenetake init` creates a commented starter file. Recorded unchanged, it is a demo that looks like one: `render` sets a `macos` window with the title, a gradient `background`, and an `end-hold`, `outputs` writes an SVG next to the cast, the prompt shows the folder in color (`{dir}`), and the steps are a title `card`, a command with a comment line, the stderr example, a `pty: true` step, and an end `card` with an install line. The reader replaces the commands and the cards' text. Commented, to take up: the theme's `fg` and `bg`, the font, `fit`, a light SVG, a GIF, and an mp4 in `outputs`, `settings.mask` and `mask-auto`, `pre`, `post`, a highlight example, and a step that answers a prompt with `keys` and `wait`. The file is UTF-8 without a BOM.
+
+- **Why the starter looks finished.** It was a tour of coloring options with the look commented out, so its first recording was a plain terminal, and a reader learned the window, the background, and the cards only from the README. A starter that records as a finished demo shows the look first, and its comments show what else there is. Only the SVG output is live, so the first recording needs no ffmpeg.
 
 The prompt step stays a comment: a live one would hold up the first recording wherever its keys go astray, such as in a shell whose prompt prints differently. Its comment names `interactive: true` and `--save-keys` for keys typed by hand.
 

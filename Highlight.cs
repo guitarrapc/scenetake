@@ -105,6 +105,49 @@ internal static partial class ScenarioCast
         return true;
     }
 
+    /// <summary>What <c>{dir}</c> in the prompt becomes: the name of the folder a step starts in.</summary>
+    internal const string DirPlaceholder = "{dir}";
+
+    /// <summary>How <c>{dir}</c> shows the home folder, and any folder that is not known, such as in an old outputs file.</summary>
+    internal const string HomeFolderName = "~";
+
+    /// <summary>
+    /// The prompt as <c>settings.prompt</c> gives it: text, or a list of parts, each text or <c>{text, color}</c>
+    /// with a style as <c>highlight</c> takes one. An unknown style is a warning, and its part is drawn plain.
+    /// <see cref="FindPromptError"/> checks the value before anything runs: what it refuses becomes the default here.
+    /// </summary>
+    internal static PromptTemplate ParsePrompt(object? value)
+    {
+        if (value is null)
+            return new([new(DefaultPrompt, "")]);
+        if (TextToType(value) is { } text)
+            return new([new(text, "")]);
+        if (value is not List<object?> list)
+            return new([new(DefaultPrompt, "")]);
+
+        var parts = new List<PromptPart>();
+        foreach (var item in list)
+        {
+            if (TextToType(item) is { } partText)
+            {
+                parts.Add(new(partText, ""));
+            }
+            else if (item is Dictionary<object, object?> part && TextToType(part.GetValueOrDefault("text")) is { } styledText)
+            {
+                var style = "";
+                if (part.GetValueOrDefault("color") is string color && !TryParseStyle(color, out style))
+                {
+                    Warn("settings.prompt", null, $"unknown color/style '{color}'");
+                    style = "";
+                }
+
+                parts.Add(new(styledText, style));
+            }
+        }
+
+        return new([.. parts]);
+    }
+
     internal static string GetOverrideStyle(Dictionary<string, object?> extra, string key, string fallbackStyle, string scope, string cmd)
         => extra.TryGetValue(key, out var raw)
             ? ParseStyleOrFallback(raw?.ToString(), fallbackStyle, scope, cmd)
@@ -860,5 +903,74 @@ internal static partial class ScenarioCast
             Console.Error.WriteLine($"Warning: step exited {exitCode}: {cmd}");
         else
             Console.Error.WriteLine($"Warning: step exited {exitCode} ({name}): {cmd}");
+    }
+}
+
+/// <summary>One part of the prompt and its SGR style, empty for none. A class, not a tuple: a generic over a new value type adds its own code to the AOT binary.</summary>
+internal sealed class PromptPart(string text, string style)
+{
+    internal string Text { get; } = text;
+    internal string Style { get; } = style;
+}
+
+/// <summary>The prompt's parts, each with its style (<see cref="ScenarioCast.ParsePrompt"/>).</summary>
+internal sealed class PromptTemplate(PromptPart[] parts)
+{
+    /// <summary>Whether the prompt shows the folder, which the recording then keeps for each step.</summary>
+    internal bool UsesDir { get; } = Array.Exists(parts, static part => part.Text.Contains(ScenarioCast.DirPlaceholder, StringComparison.Ordinal));
+
+    /// <summary>The prompt with <c>{dir}</c> as <paramref name="dir"/>, each styled part closed by a reset.</summary>
+    internal string Render(string dir)
+    {
+        var prompt = new StringBuilder();
+        foreach (var part in parts)
+        {
+            var shown = part.Text.Replace(ScenarioCast.DirPlaceholder, dir, StringComparison.Ordinal);
+            if (shown.Length == 0)
+                continue;
+            if (part.Style.Length == 0)
+                prompt.Append(shown);
+            else
+                prompt.Append(part.Style).Append(shown).Append(ScenarioCast.SgrReset);
+        }
+
+        return prompt.ToString();
+    }
+
+    /// <summary>
+    /// How <c>{dir}</c> shows a folder, as bash's <c>\W</c> does: its last name, <c>~</c> for the home folder, and
+    /// <c>/</c> for the root. The rest of the path is never shown, so a recording names no user folder. Git Bash
+    /// reports <c>/c/Users/name</c> for <c>C:\Users\name</c>, which is the home folder too.
+    /// </summary>
+    internal static string FolderName(string folder, string? home)
+    {
+        var path = NativePath(folder);
+        if (home is not null && SamePath(path, NativePath(home)))
+            return "~";
+
+        var trimmed = path.TrimEnd('/', '\\');
+        if (trimmed.Length == 0)
+            return "/";
+        // C: or C:\ is a drive's root.
+        if (trimmed.Length == 2 && trimmed[1] == ':')
+            return trimmed + "\\";
+
+        var slash = trimmed.LastIndexOfAny(['/', '\\']);
+        return slash < 0 ? trimmed : trimmed[(slash + 1)..];
+
+        static bool SamePath(string a, string b) =>
+            string.Equals(a.TrimEnd('/', '\\'), b.TrimEnd('/', '\\'), OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
+    }
+
+    /// <summary>A Git Bash or Cygwin drive path on Windows (<c>/c/Users</c>, <c>/cygdrive/c/Users</c>) as Windows writes it.</summary>
+    internal static string NativePath(string path)
+    {
+        if (!OperatingSystem.IsWindows())
+            return path;
+
+        var rest = path.StartsWith("/cygdrive/", StringComparison.Ordinal) ? path["/cygdrive".Length..] : path;
+        if (rest.Length >= 2 && rest[0] == '/' && char.IsAsciiLetter(rest[1]) && (rest.Length == 2 || rest[2] == '/'))
+            return char.ToUpperInvariant(rest[1]) + ":\\" + rest[Math.Min(rest.Length, 3)..].Replace('/', '\\');
+        return path;
     }
 }

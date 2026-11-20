@@ -57,6 +57,8 @@ try
     failures += Run("SizeOptionRules", () => SizeOptionRules(scenetake, repoRoot, work));
     failures += Run("ScenarioChecksSizeFrameBeforePre", () => ScenarioChecksSizeFrameBeforePre(scenetake, repoRoot, work));
     failures += Run("EarlierMp4GoesWhenEncodingStarts", () => EarlierMp4GoesWhenEncodingStarts(scenetake, repoRoot, work));
+    failures += Run("ScenarioOutputsList", () => ScenarioOutputsList(scenetake, repoRoot, work));
+    failures += Run("ScenarioOutputsErrors", () => ScenarioOutputsErrors(scenetake, repoRoot, work));
 
     // The test copies a font from the Linux font folders and installs it where XDG_DATA_HOME points the
     // Linux scan. macOS has neither: it keeps fonts in other folders and scans ~/Library/Fonts. Windows
@@ -102,6 +104,7 @@ try
         failures += Run("ScenarioFormatMp4", () => ScenarioFormatMp4(scenetake, repoRoot, work));
         failures += Run("SubcommandWritesGif", () => SubcommandWritesGif(scenetake, repoRoot, work));
         failures += Run("ScenarioFormatGif", () => ScenarioFormatGif(scenetake, repoRoot, work));
+        failures += Run("ScenarioOutputsGifAndMp4", () => ScenarioOutputsGifAndMp4(scenetake, repoRoot, work));
         failures += Run("LargeGifWarns", () => LargeGifWarns(scenetake, repoRoot, work));
 
         // Windows delivers Ctrl+C per console. Sending one to a child needs a separate console,
@@ -498,6 +501,134 @@ static bool CtrlCLeavesNoFiles(string scenetake, string repoRoot, string work)
     return process.ExitCode != 0 && left.Count == 0;
 }
 
+// A scenario with a title card and an outputs list writes the cast and every entry in one run: a dark SVG, a light
+// copy, and a PNG of the card. --format writes only its file, and a replay writes the list too.
+static bool ScenarioOutputsList(string scenetake, string repoRoot, string work)
+{
+    var folder = Directory.CreateDirectory(Path.Combine(work, "outputs-list")).FullName;
+    var scenario = Path.Combine(folder, "demo.yaml");
+    File.WriteAllText(scenario, """
+        title: "outputs demo"
+        width: 40
+        height: 6
+        settings:
+          typing-speed: 0.001
+          pre-delay: 0
+          post-delay: 0
+        render:
+          theme:
+            preset: github-dark
+        steps:
+          - card: "[bold]my-app"
+            post-delay: 1
+          - run: echo hello
+        outputs:
+          - format: svg
+          - format: svg
+            theme: github-light
+            file: demo-light
+          - format: png
+            file: card.png
+            at: 0.6
+            typo: 1
+        """);
+    var (exit, stderr) = Exec(scenetake, folder, [scenario]);
+    var files = new[] { "demo.cast", "demo.svg", "demo-light.svg", "card.png" }.Select(name => Path.Combine(folder, name)).ToArray();
+    var light = File.Exists(files[2]) ? File.ReadAllText(files[2]) : "";
+    var dark = File.Exists(files[1]) ? File.ReadAllText(files[1]) : "";
+
+    foreach (var file in files.Skip(1))
+        File.Delete(file);
+    var (formatExit, formatStderr) = Exec(scenetake, folder, ["--format", "png", scenario, "only"]);
+    // Checked now: the runs below write the outputs again.
+    var formatOnly = formatExit == 0 && File.Exists(Path.Combine(folder, "only.png")) && !File.Exists(files[1]) && !File.Exists(files[3]);
+
+    var outputsFile = Path.Combine(folder, "demo.outputs.json");
+    var (saveExit, saveStderr) = Exec(scenetake, folder, ["--save-outputs", outputsFile, scenario]);
+    foreach (var file in files.Skip(1))
+        File.Delete(file);
+    var (replayExit, replayStderr) = Exec(scenetake, folder, ["--replay", outputsFile, scenario]);
+
+    var checks = new (string Name, bool Passed)[]
+    {
+        ("the first run", exit == 0 && stderr.Contains("Done: demo.cast, demo.svg, demo-light.svg, card.png", StringComparison.Ordinal)),
+        ("the picture", stderr.Contains("<picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"demo.svg\"><img src=\"demo-light.svg\" alt=\"outputs demo\"></picture>", StringComparison.Ordinal)),
+        ("the unknown key", stderr.Contains("unknown key 'typo' in outputs entry 3", StringComparison.Ordinal)),
+        // github-light draws on white, github-dark on #0d1117.
+        ("the light copy", light.Contains("#ffffff", StringComparison.OrdinalIgnoreCase) && !light.Contains("#0d1117", StringComparison.OrdinalIgnoreCase)),
+        ("the dark one", dark.Contains("#0d1117", StringComparison.OrdinalIgnoreCase)),
+        ("--format", formatOnly),
+        ("the --format note", formatStderr.Contains("Note: --format png writes only that file: the scenario's outputs are not written.", StringComparison.Ordinal)),
+        ("the replay", saveExit == 0 && replayExit == 0 && files.All(File.Exists) && replayStderr.Contains("Done: demo.cast, demo.svg, demo-light.svg, card.png", StringComparison.Ordinal)),
+    };
+    foreach (var (name, passed) in checks.Where(static check => !check.Passed))
+        Console.Error.WriteLine($"  failed: {name}");
+    var ok = checks.All(static check => check.Passed);
+    if (!ok)
+        Console.Error.WriteLine($"{stderr}{formatStderr}{saveStderr}{replayStderr}");
+    return ok;
+}
+
+// Each entry is checked before anything runs, with the CLI's rules for its format, and the error names the entry and its key.
+static bool ScenarioOutputsErrors(string scenetake, string repoRoot, string work)
+{
+    var folder = Directory.CreateDirectory(Path.Combine(work, "outputs-errors")).FullName;
+    var ok = true;
+    ok &= Expect("- svg", "outputs entry 1 must be a mapping with 'format'");
+    ok &= Expect("- file: x.svg", "outputs entry 1 has no 'format'");
+    ok &= Expect("- format: webm", "outputs entry 1: unknown format: webm");
+    ok &= Expect("- format: cast", "outputs entry 1: the cast is written by every recording");
+    ok &= Expect("- format: svg\n  file: shot.png", "outputs entry 1 key 'file' ends with .png, and the format is svg: name it shot.svg");
+    ok &= Expect("- format: svg\n- format: svg", "outputs entry 1 and outputs entry 2 both write");
+    ok &= Expect("- format: gif\n  crf: 20", "outputs entry 1 (gif): 'crf' applies to mp4: a GIF has no H.264 quality");
+    ok &= Expect("- format: svg\n  fps: 10", "outputs entry 1 (svg): 'fps' requires format mp4 or gif");
+    ok &= Expect("- format: mp4\n  at: 1", "outputs entry 1 (mp4): 'at' applies to SVG and PNG");
+    ok &= Expect("- format: png\n  theme: nosuch", "outputs entry 1 (png): unknown theme");
+    ok &= Expect("- format: svg\n  margin: 999", "outputs entry 1 (svg): ");
+    ok &= Expect("- format: svg\n  loop: maybe", "outputs entry 1 key 'loop' must be true or false");
+    return ok;
+
+    bool Expect(string outputs, string expected)
+    {
+        var scenario = Path.Combine(folder, "bad.yaml");
+        var marker = Path.Combine(folder, "pre-ran.txt");
+        File.Delete(marker);
+        File.WriteAllText(scenario, $"pre:\n  - echo ran > \"{marker}\"\nsteps:\n  - echo hello\noutputs:\n" + string.Join('\n', outputs.Split('\n').Select(static line => "  " + line)) + "\n");
+        var (exit, stderr) = Exec(scenetake, folder, [scenario]);
+        var good = exit == 1 && stderr.Contains(expected, StringComparison.Ordinal) && !File.Exists(marker);
+        if (!good)
+            Console.Error.WriteLine($"  expected '{expected}' (and nothing run), got exit {exit}: {stderr}");
+        return good;
+    }
+}
+
+// A GIF and an mp4 from one recording, each with its own options.
+static bool ScenarioOutputsGifAndMp4(string scenetake, string repoRoot, string work)
+{
+    var folder = Directory.CreateDirectory(Path.Combine(work, "outputs-video")).FullName;
+    var scenario = Path.Combine(folder, "video.yaml");
+    File.WriteAllText(scenario, """
+        width: 40
+        height: 6
+        steps:
+          - run: echo hello
+        outputs:
+          - format: gif
+            fps: 10
+            font-size: 12
+          - format: mp4
+            max-size: 320x240
+        """);
+    var (exit, stderr) = Exec(scenetake, folder, [scenario]);
+    var gif = Path.Combine(folder, "video.gif");
+    var mp4 = Path.Combine(folder, "video.mp4");
+    var ok = exit == 0 && File.Exists(gif) && ReadGif(gif).Delays.Count > 0 && File.Exists(mp4)
+        && stderr.Contains("Done: video.cast, video.gif, video.mp4", StringComparison.Ordinal);
+    if (!ok)
+        Console.Error.WriteLine(stderr);
+    return ok;
+}
+
 static string WriteScenario(string work, string name)
 {
     var path = Path.Combine(work, name);
@@ -822,16 +953,21 @@ static bool InitWritesStepsForItsShell(string scenetake, string work)
             continue;
         }
 
-        // UTF-8 without a BOM, as the other files scenetake writes. And the reader who starts from init meets
-        // the window, the background, fit, masking, and keys with wait, as comments to take up.
+        // UTF-8 without a BOM, as the other files scenetake writes. Recorded unchanged, the template looks like a
+        // demo: a window on a background, a title card and an end card, a prompt with the folder, and an SVG from
+        // outputs. The reader who starts from init meets fit, masking, keys with wait, and a GIF output as comments.
         var bytes = File.ReadAllBytes(path);
         var commented = lines.Where(line => line.TrimStart().StartsWith('#')).Select(line => line.TrimStart('#', ' ')).ToList();
-        var missing = new[] { "window: ", "background: ", "fit: ", "mask: ", "mask-auto: ", "keys: ", "- wait: " }
+        var live = lines.Where(line => !line.TrimStart().StartsWith('#')).Select(line => line.Trim()).ToList();
+        var missing = new[] { "fit: ", "mask: ", "mask-auto: ", "keys: ", "- wait: ", "- format: gif" }
             .Where(key => !commented.Any(line => line.StartsWith(key, StringComparison.Ordinal) || line.StartsWith(key.TrimEnd(), StringComparison.Ordinal)))
             .ToList();
-        if (bytes is [0xEF, 0xBB, 0xBF, ..] || missing.Count != 0)
+        var notLive = new[] { "window: macos", "background: ", "- card:", "outputs:", "- format: svg", "- text: \"{dir}\"" }
+            .Where(key => !live.Any(line => line.StartsWith(key, StringComparison.Ordinal)))
+            .ToList();
+        if (bytes is [0xEF, 0xBB, 0xBF, ..] || missing.Count != 0 || notLive.Count != 0)
         {
-            Console.Error.WriteLine($"  {name}: BOM {bytes is [0xEF, 0xBB, 0xBF, ..]}, keys missing from the comments: {string.Join(", ", missing)}");
+            Console.Error.WriteLine($"  {name}: BOM {bytes is [0xEF, 0xBB, 0xBF, ..]}, keys missing from the comments: {string.Join(", ", missing)}, not live: {string.Join(", ", notLive)}");
             written = false;
             continue;
         }
@@ -861,7 +997,8 @@ static bool InitWritesStepsForItsShell(string scenetake, string work)
             continue;
         }
 
-        if (exit != 0 || stderr.Contains("Warning: step exited", StringComparison.Ordinal))
+        // Its outputs list writes the SVG next to the cast.
+        if (exit != 0 || stderr.Contains("Warning:", StringComparison.Ordinal) || !File.Exists(Path.Combine(directory, name + ".svg")))
         {
             Console.Error.WriteLine($"  {name}: exit {exit}{Environment.NewLine}{stderr}");
             recorded = false;
@@ -911,7 +1048,7 @@ static bool CliRulesForValuesAndFormats(string scenetake, string repoRoot, strin
     // A second --format used to replace the first without a word. Both spellings count, and nothing runs.
     var (formatExit, formatStderr) = Exec(scenetake, repoRoot, ["--format", "svg", "--format=gif", scenario]);
     var ok = maxFpsExit == 1 && maxFpsStderr.Contains("--max-fps requires --format svg", StringComparison.Ordinal)
-        && formatExit == 1 && formatStderr.Contains("--format takes one format. Record once, then convert the cast for each other format", StringComparison.Ordinal)
+        && formatExit == 1 && formatStderr.Contains("--format takes one format. List several under 'outputs:' in the scenario, or record once and convert the cast for each other format", StringComparison.Ordinal)
         && !formatStderr.Contains("Generating cast", StringComparison.Ordinal)
         && fontExit == 1 && fontStderr.Contains("--font-file requires a value", StringComparison.Ordinal)
         && fpsExit == 1 && fpsStderr.Contains("--fps must be between 1 and 60: 99", StringComparison.Ordinal)

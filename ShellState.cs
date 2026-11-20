@@ -59,6 +59,12 @@ internal abstract class ShellState : IDisposable
     /// <summary>False for a shell that carries the folder and the variables only.</summary>
     internal virtual bool CarriesFunctionsAndAliases => true;
 
+    /// <summary>
+    /// The folder the last command that carried its state ended in, as the shell wrote it (Git Bash writes
+    /// <c>/c/Users/...</c>). The next command starts there. Null until a command has carried its state.
+    /// </summary>
+    internal string? Folder { get; private protected set; }
+
     /// <summary>The command to start in place of <paramref name="command"/>, and the variables to add to its environment.</summary>
     internal PreparedCommand Prepare(string command)
     {
@@ -194,11 +200,12 @@ internal sealed class BashState : ShellState
         if (!File.Exists(Path.Combine(folder, "final.pwd")) || !File.Exists(Path.Combine(folder, "base.vars")))
             return;
 
+        Folder = Read("final.pwd");
         _restore = BashDump.BuildRestore(
             Read("base.vars"), Read("final.vars"),
             Read("base.funcs"), Read("final.funcs"),
             Read("base.alias"), Read("final.alias"),
-            Read("final.pwd"),
+            Folder,
             exports);
     }
 
@@ -671,11 +678,12 @@ internal sealed class ZshState : ShellState
         if (!File.Exists(Path.Combine(folder, "final.pwd")) || !File.Exists(Path.Combine(folder, "base.vars")))
             return;
 
+        Folder = Read("final.pwd");
         _restore = ZshDump.BuildRestore(
             Read("base.vars"), Read("final.vars"),
             Read("base.funcs"), Read("final.funcs"),
             Read("base.alias"), Read("final.alias"),
-            Read("final.pwd"),
+            Folder,
             exports);
     }
 
@@ -916,10 +924,11 @@ internal sealed class PosixShellState : ShellState
         if (!File.Exists(Path.Combine(folder, "final.pwd")) || !File.Exists(Path.Combine(folder, "base.vars")))
             return;
 
+        Folder = Read("final.pwd");
         _restore = PosixShellDump.BuildRestore(
             Read("base.vars"), Read("final.vars"),
             Read("base.exports"), Read("final.exports"),
-            Read("final.pwd"),
+            Folder,
             exports);
     }
 
@@ -1042,7 +1051,7 @@ internal sealed class PowerShellState : ShellState
         var restore = Path.Combine(folder, "restore.ps1");
         var save = Path.Combine(folder, "save.ps1");
         File.WriteAllText(restore, BuildRestore(_input, Path.Combine(folder, "restore.err")), new UTF8Encoding(false));
-        File.WriteAllText(save, BuildSave(Path.Combine(folder, "state.xml"), Path.Combine(folder, "exports.txt"), Path.Combine(folder, "restore.err")), new UTF8Encoding(false));
+        File.WriteAllText(save, BuildSave(Path.Combine(folder, "state.xml"), Path.Combine(folder, "exports.txt"), Path.Combine(folder, "restore.err"), Path.Combine(folder, "final.pwd")), new UTF8Encoding(false));
         // The scripts are read as text and run as script blocks: Windows PowerShell's default execution policy
         // refuses to run a .ps1 file, and a script block is not checked.
         var text = $". ([scriptblock]::Create([IO.File]::ReadAllText({Literal(restore)}))); $__scenetake_ok = $false; try {{ {command}\n" +
@@ -1060,6 +1069,9 @@ internal sealed class PowerShellState : ShellState
         var kept = Path.Combine(Path.GetDirectoryName(folder)!, "powershell-state.xml");
         File.Copy(state, kept, overwrite: true);
         _input = kept;
+        var location = Path.Combine(folder, "final.pwd");
+        if (File.Exists(location))
+            Folder = File.ReadAllText(location);
 
         var exportsPath = Path.Combine(folder, "exports.txt");
         if (!File.Exists(exportsPath))
@@ -1118,7 +1130,7 @@ internal sealed class PowerShellState : ShellState
         Remove-Variable -Name __scenetake_state, __scenetake_name -ErrorAction SilentlyContinue
         """;
 
-    internal static string BuildSave(string output, string exports, string errors) =>
+    internal static string BuildSave(string output, string exports, string errors, string location) =>
         $$"""
         # Written by scenetake: saves what this command changed in the shell, for the next command (ShellState.cs).
         try {
@@ -1158,6 +1170,8 @@ internal sealed class PowerShellState : ShellState
                 [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($__scenetake_name)) + ' ' + [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes([string]$__scenetake_state.Environment[$__scenetake_name]))
             }
             [IO.File]::WriteAllLines({{Literal(exports)}}, [string[]]@($__scenetake_lines))
+            # The folder, as text for the prompt's {dir}: the CLI reads no CliXml.
+            [IO.File]::WriteAllText({{Literal(location)}}, [string]$__scenetake_state.Location)
         } catch {
             [IO.File]::AppendAllText({{Literal(errors)}}, "could not save the shell state: $($_.Exception.Message)`n")
         }

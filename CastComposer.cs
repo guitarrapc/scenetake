@@ -12,6 +12,77 @@ internal static partial class ScenarioCast
     /// <summary>What a <c>clear: true</c> step writes: the cursor home, then the screen erased, as <c>clear</c> writes for xterm.</summary>
     internal const string ClearScreen = "\u001b[H\u001b[2J";
 
+    private const string HideCursor = "\u001b[?25l";
+    private const string ShowCursor = "\u001b[?25h";
+
+    /// <summary>
+    /// What a <c>card</c> step writes: the cursor hidden, the screen cleared, and each line centered in the
+    /// terminal's width and in its first <paramref name="rows"/> rows, with its <c>[style]</c> prefix as its color.
+    /// An empty line keeps its row. The text is masked as the recording's other text is, which keeps its width.
+    /// With <paramref name="markBottom"/>, the last of those rows gets a bold space, which shows nothing but is not
+    /// a blank cell, so <c>fit: height</c> keeps the rows below the text and a still of the card stays centered. It
+    /// sits in the middle column, which a crop that keeps the card's text keeps too.
+    /// </summary>
+    internal static string ComposeCard(IReadOnlyList<string> lines, int width, int rows, SecretMasker? masker, bool markBottom)
+    {
+        var card = new StringBuilder(HideCursor).Append(ClearScreen);
+        var top = Math.Max(0, (rows - lines.Count) / 2);
+        if (markBottom && top + lines.Count < rows)
+            card.Append("\u001b[").Append(rows).Append(';').Append((width + 1) / 2).Append("H\u001b[1m ").Append(SgrReset);
+        for (var i = 0; i < lines.Count; i++)
+        {
+            var (styleName, raw) = SplitCardStyle(lines[i]);
+            if (raw.Length == 0)
+                continue;
+
+            var text = masker?.MaskText(raw) ?? raw;
+            var style = "";
+            if (styleName is not null && !TryParseStyle(styleName, out style))
+            {
+                Warn("card", $"line {i + 1}", $"unknown color/style '{styleName}'");
+                style = "";
+            }
+
+            var column = Math.Max(0, (width - DisplayWidth(text)) / 2);
+            card.Append("\u001b[").Append(top + i + 1).Append(';').Append(column + 1).Append('H');
+            card.Append(style).Append(text);
+            if (style.Length > 0)
+                card.Append(SgrReset);
+        }
+
+        return card.ToString();
+    }
+
+    /// <summary>
+    /// The rows a card is centered in. With <c>fit: height</c>, the rows the rest of the recording uses, so the
+    /// canvas that fit keeps does not grow for a card, with at least a blank row above and below the tallest card.
+    /// Otherwise the whole terminal. A row is used when the cursor reached it: every cell is written with the
+    /// cursor on its row, and fit keeps the row of a visible cursor too.
+    /// </summary>
+    private static int CardRows(List<CastEvent> events, List<int> cardEvents, int tallestCard, int width, int height, bool fitsHeight)
+    {
+        if (!fitsHeight)
+            return height;
+
+        var theme = TerminalTheme.ForMeasuring();
+        var buffer = new ScreenBuffer(width, height, theme);
+        var parser = new AnsiParser(buffer, theme);
+        var used = 0;
+        for (var i = 0; i < events.Count; i++)
+        {
+            var castEvent = events[i];
+            if (castEvent.Kind != CastEventKind.Output || cardEvents.Contains(i))
+                continue;
+            if (castEvent.HasUtf8Output)
+                parser.ProcessUtf8(castEvent.Utf8Output.Span);
+            else
+                parser.Process(castEvent.Data);
+            used = Math.Max(used, buffer.CursorRow + 1);
+        }
+
+        return Math.Clamp(Math.Max(used, tallestCard + 2), tallestCard, height);
+    }
+
     /// <summary>
     /// Records the scenario's steps as cast events. <paramref name="run"/> gives each step's output: the CLI
     /// runs the command, and the playground takes the output recorded in an outputs file.
@@ -23,7 +94,16 @@ internal static partial class ScenarioCast
         StepRunner run)
     {
         var settings = scenario.Settings ?? new ScenarioSettings();
-        var prompt    = settings.Prompt ?? DefaultPrompt;
+        var promptTemplate = ParsePrompt(settings.Prompt);
+        // The folder a step starts in, as {dir} shows it: from the shell's state on the CLI, from the outputs file in a
+        // replay. Null when the prompt does not show it, so the outputs file keeps no folder names it does not need.
+        string? StepFolder(string run, bool pty, bool interactive) =>
+            !promptTemplate.UsesDir ? null
+            : options.Replay is { } replay ? replay.Folder(run, pty, interactive) ?? HomeFolderName
+            : options.PromptFolder?.Invoke() ?? HomeFolderName;
+        // A prompt drawn at every step: masked without counting, so a folder name is not counted once per step.
+        string Prompt(string? folder) =>
+            promptTemplate.Render(folder ?? "") is var prompt && options.Masker is { } promptMasker ? promptMasker.MaskUncounted(prompt) : prompt;
         var speed     = settings.TypingSpeed ?? DefaultSpeed;
         var jitter    = settings.TypingJitter ?? DefaultJitter;
         var preDelay  = settings.PreDelay ?? DefaultPreDelay;
@@ -37,11 +117,33 @@ internal static partial class ScenarioCast
         // Whether a step has been shown yet. It does not depend on what the step printed, so a step that printed
         // nothing the cast keeps lays out the steps after it as in any other recording of the scenario.
         var anyStepShown = false;
+        // A card stays on the screen, with the cursor hidden, until the next shown step clears it. Its event is drawn
+        // after the last step, when the rows it is centered in are known (CardRows).
+        var cardOnScreen = false;
+        // Two lists rather than a list of tuples: a generic over a new value type adds its own code to the AOT binary.
+        var cardEvents = new List<int>();
+        var cardLines = new List<List<string>>();
 
         var steps = scenario.Steps ?? [];
         for (var i = 0; i < steps.Count; i++)
         {
             var command = ParseCommand(steps[i]);
+            if (command.Card is { } card)
+            {
+                // A card shows lines centered on a cleared screen, such as a title before the demo and an install
+                // line after it, without a command: the same on every OS and in the playground, which runs nothing.
+                if (!anyStepShown)
+                    t += preDelay;
+                anyStepShown = true;
+                cardEvents.Add(events.Count);
+                cardLines.Add(card);
+                events.Add(CastEvent.Output(Math.Round(t, 6), HideCursor + ClearScreen));
+                cardOnScreen = true;
+                t += GetDouble(command.Extra, CardPostDelay, "post-delay");
+                t += GetDouble(command.Extra, preDelay, "pre-delay");
+                continue;
+            }
+
             if (command.Clear)
             {
                 // A clear step clears the screen as `clear` does, without a command: the same in a terminal
@@ -49,7 +151,8 @@ internal static partial class ScenarioCast
                 if (!anyStepShown)
                     t += preDelay;
                 anyStepShown = true;
-                events.Add(CastEvent.Output(Math.Round(t, 6), ClearScreen));
+                events.Add(CastEvent.Output(Math.Round(t, 6), cardOnScreen ? ClearScreen + ShowCursor : ClearScreen));
+                cardOnScreen = false;
                 if (TryFormatNameComment(command.Name, "clear", out var clearNameLine, out var clearNameText))
                 {
                     // The cursor is home, so the comment needs no line break before it.
@@ -143,12 +246,24 @@ internal static partial class ScenarioCast
                 t += preDelay;
             anyStepShown = true;
 
+            // After a card the demo goes on from a cleared screen, as after a clear step, with the cursor shown again.
+            var afterCard = cardOnScreen;
+            // Taken before the command runs: a cd in it moves the next step's prompt, not its own.
+            var stepFolder = StepFolder(command.Cmd, usePty, useInteractive);
+            if (cardOnScreen)
+            {
+                events.Add(CastEvent.Output(Math.Round(t, 6), ClearScreen + ShowCursor));
+                cardOnScreen = false;
+            }
+
             // Secrets are hidden in everything the recording shows: the comment line, the typed command, and the
             // output below. The outputs file gets the hidden output too, so a replay never sees the secret.
             var masker = options.Masker;
             if (TryFormatNameComment(command.Name, command.Cmd, out var nameLine, out var nameDisplayText))
             {
-                var prefix = CastEventLayout.NameCommentPrefixForLastEvent(events);
+                // The cursor is home after a card's clear. The line break check looks past escape sequences, and
+                // would see the card's text.
+                var prefix = afterCard ? "" : CastEventLayout.NameCommentPrefixForLastEvent(events);
                 events.Add(CastEvent.Marker(Math.Round(t, 6), masker?.MaskText(nameDisplayText) ?? nameDisplayText));
                 events.Add(CastEvent.Output(Math.Round(t, 6), prefix + (masker?.MaskText(nameLine) ?? nameLine)));
                 t += 0.05;
@@ -160,7 +275,7 @@ internal static partial class ScenarioCast
             if (show == StepShow.All)
             {
                 var typed = options.Replay?.MaskedRun(command.Cmd, usePty, useInteractive) ?? command.Cmd;
-                EmitTypedCommand(events, ref t, prompt, masker?.MaskText(typed) ?? typed, cmdSpeed, cmdJitter, rng, hasRunHighlight, runHighlightStyle);
+                EmitTypedCommand(events, ref t, Prompt(stepFolder), masker?.MaskText(typed) ?? typed, cmdSpeed, cmdJitter, rng, hasRunHighlight, runHighlightStyle);
             }
 
             if (options.LogRunning)
@@ -224,7 +339,7 @@ internal static partial class ScenarioCast
                     height,
                     options.Verbose);
                 composed = masker?.MaskComposed(composed) ?? composed;
-                options.Record?.Add(RecordedStep.Interactive(command.Cmd, execution.ExitCode, composed, maskedRun));
+                options.Record?.Add(RecordedStep.Interactive(command.Cmd, execution.ExitCode, composed, maskedRun, stepFolder));
                 t = EmitComposedPtyOutput(events, commandStart, composed);
             }
             else if (execution.IsPty)
@@ -233,7 +348,7 @@ internal static partial class ScenarioCast
                     ? execution.PtyByteChunks!
                     : RemovePtyLeadingInit(execution.PtyByteChunks!, options.Verbose);
                 chunks = masker?.MaskPty(chunks) ?? chunks;
-                options.Record?.Add(RecordedStep.Pty(command.Cmd, execution.ExitCode, ptyStartCursor, chunks, maskedRun));
+                options.Record?.Add(RecordedStep.Pty(command.Cmd, execution.ExitCode, ptyStartCursor, chunks, maskedRun, stepFolder));
                 t = EmitPtyStepOutput(
                     events,
                     commandStart,
@@ -248,7 +363,7 @@ internal static partial class ScenarioCast
                     ? StreamedPipeCuts(execution.PipeStreamChunks!, cmdStderrStyle)
                     : null;
                 var pipeChunks = masker?.MaskPipe(execution.PipeStreamChunks!, cuts) ?? execution.PipeStreamChunks!;
-                options.Record?.Add(RecordedStep.Pipe(command.Cmd, execution.ExitCode, pipeChunks, maskedRun));
+                options.Record?.Add(RecordedStep.Pipe(command.Cmd, execution.ExitCode, pipeChunks, maskedRun, stepFolder));
                 t = EmitPipeStepOutput(
                     events,
                     commandStart,
@@ -311,8 +426,24 @@ internal static partial class ScenarioCast
             t += cmdPre;
         }
 
-        if (anyStepShown)
-            events.Add(CastEvent.Output(Math.Round(t, 6), prompt));
+        // A closing card stays to the end, without a prompt over it. The closing prompt shows the folder the last step
+        // left, which the outputs file keeps for a replay.
+        if (promptTemplate.UsesDir)
+            options.EndFolder = options.Replay is { } endReplay ? endReplay.EndFolder ?? HomeFolderName : options.PromptFolder?.Invoke() ?? HomeFolderName;
+        if (anyStepShown && !cardOnScreen)
+            events.Add(CastEvent.Output(Math.Round(t, 6), Prompt(options.EndFolder)));
+
+        if (cardEvents.Count > 0)
+        {
+            var cardWidth = scenario.Width ?? RenderSettingsResolver.DefaultTerminalCols;
+            var cardHeight = scenario.Height ?? RenderSettingsResolver.DefaultTerminalRows;
+            var tallest = 0;
+            foreach (var lines in cardLines)
+                tallest = Math.Max(tallest, lines.Count);
+            var rows = CardRows(events, cardEvents, tallest, cardWidth, cardHeight, options.FitsHeight);
+            for (var c = 0; c < cardEvents.Count; c++)
+                events[cardEvents[c]] = CastEvent.Output(events[cardEvents[c]].Time, ComposeCard(cardLines[c], cardWidth, rows, options.Masker, options.FitsHeight));
+        }
 
         return (events, null);
     }
@@ -1244,6 +1375,22 @@ internal sealed class GenerateOptions
 
     /// <summary>Whether each step writes a <c>running:</c> line to stderr.</summary>
     internal bool LogRunning { get; init; } = true;
+
+    /// <summary>
+    /// Whether the output keeps only the rows in use (<c>fit: height</c> or <c>both</c>, the default), which centers a
+    /// card in those rows instead of the whole terminal (spec_scenario.md → Card steps).
+    /// </summary>
+    internal bool FitsHeight { get; init; } = true;
+
+    /// <summary>
+    /// The name of the folder the next command starts in, as the prompt's <c>{dir}</c> shows it
+    /// (<see cref="PromptTemplate.FolderName"/>). Called before each shown step and once at the end. Null shows
+    /// <c>~</c>. A replay takes the folders from the outputs file instead.
+    /// </summary>
+    internal Func<string>? PromptFolder { get; init; }
+
+    /// <summary>The folder the closing prompt showed, when the prompt shows one: the outputs file keeps it.</summary>
+    internal string? EndFolder { get; set; }
 
     /// <summary>Receives each step's output for the outputs file. Null records nothing.</summary>
     internal List<RecordedStep>? Record { get; init; }

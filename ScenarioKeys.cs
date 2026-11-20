@@ -19,7 +19,7 @@ internal static class ScenarioKeys
         "run-highlight", "highlight", "stderr-color",
         "pty", "interactive", "normalize-typing", "continue-on-error",
         "keys", "timeout",
-        "show", "clear",
+        "show", "clear", "card",
         "background", "wait", "wait-timeout",
         "keep-output",
     ];
@@ -29,6 +29,24 @@ internal static class ScenarioKeys
 
     /// <summary>The keys a <c>keys</c> entry reads.</summary>
     internal static readonly string[] KeyEntry = ["sleep", "wait", "type", "key"];
+
+    /// <summary>
+    /// The keys an <c>outputs</c> entry reads: the format, the file, the render keys it overrides, and the options of
+    /// its format, named as the CLI names them without <c>--</c>.
+    /// </summary>
+    /// <summary>The keys a part of a <c>settings.prompt</c> list reads.</summary>
+    internal static readonly string[] PromptPart = ["text", "color"];
+
+    private const string OutputEntryWhere = "in an outputs entry";
+
+    internal static readonly string[] OutputEntry =
+    [
+        "format", "file",
+        "theme", "window", "window-title", "background", "margin", "padding", "opacity", "blur",
+        "fit", "crop-top", "crop-bottom", "crop-left", "crop-right",
+        "font-size", "font-family", "loop", "end-hold", "fade-out",
+        "at", "max-fps", "fps", "crf", "max-size", "size", "font-file",
+    ];
 
     /// <summary>The keys of the typed sections, taken from the classes that read them.</summary>
     internal sealed record Known(
@@ -48,12 +66,23 @@ internal static class ScenarioKeys
             ("in a step", Step),
             ("in a highlight entry", Highlight),
             ("in a keys entry", KeyEntry),
+            (OutputEntryWhere, OutputEntry),
         };
         var findings = new List<string>();
         Check(root, known.TopLevel, "at the top level", levels, findings);
 
         if (root.GetValueOrDefault("settings") is Dictionary<object, object?> settings)
+        {
             Check(settings, known.Settings, "in settings", levels, findings);
+            if (settings.GetValueOrDefault("prompt") is List<object?> parts)
+            {
+                for (var i = 0; i < parts.Count; i++)
+                {
+                    if (parts[i] is Dictionary<object, object?> part)
+                        Check(part, PromptPart, $"in settings.prompt part {i + 1}", levels, findings);
+                }
+            }
+        }
 
         if (root.GetValueOrDefault("render") is Dictionary<object, object?> render)
         {
@@ -87,6 +116,15 @@ internal static class ScenarioKeys
                             Check(entry, KeyEntry, $"in step {i + 1} keys entry {j + 1}", levels, findings);
                     }
                 }
+            }
+        }
+
+        if (root.GetValueOrDefault("outputs") is List<object?> outputs)
+        {
+            for (var i = 0; i < outputs.Count; i++)
+            {
+                if (outputs[i] is Dictionary<object, object?> entry)
+                    Check(entry, OutputEntry, $"in outputs entry {i + 1}", levels, findings);
             }
         }
 
@@ -217,6 +255,9 @@ internal static class ScenarioKeys
             .Select(level => level.Where)
             .Distinct()
             .ToList();
+        // An outputs entry repeats render's keys for one file. Where render has the key too, render is the likely place.
+        if (elsewhere.Count > 1)
+            elsewhere.Remove(OutputEntryWhere);
         if (elsewhere.Count > 0)
             return $"it belongs {string.Join(" or ", elsewhere)}";
 

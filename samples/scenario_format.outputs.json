@@ -5,14 +5,16 @@
   "shell": "bash",
   "width": 80,
   "height": 24,
+  "endFolder": "scenetake",
   "steps": [
     {
       "run": "echo \"Hello, World!\"",
       "kind": "pipe",
       "exitCode": 0,
+      "folder": "scenetake",
       "chunks": [
         {
-          "ticks": 3672624,
+          "ticks": 4323532,
           "out": "Hello, World!\n"
         }
       ]
@@ -21,13 +23,14 @@
       "run": "printf 'name\\tversion\\nscenetake\\t1.0\\n'",
       "kind": "pipe",
       "exitCode": 0,
+      "folder": "scenetake",
       "chunks": [
         {
-          "ticks": 3520047,
+          "ticks": 5166765,
           "out": "name\tversion\n"
         },
         {
-          "ticks": 3520699,
+          "ticks": 5167204,
           "out": "scenetake\t1.0\n"
         }
       ]
@@ -36,9 +39,10 @@
       "run": "printf 'typing slowly...\\n'",
       "kind": "pipe",
       "exitCode": 0,
+      "folder": "scenetake",
       "chunks": [
         {
-          "ticks": 3566937,
+          "ticks": 4260687,
           "out": "typing slowly...\n"
         }
       ]
@@ -47,51 +51,53 @@
       "run": "sleep 1",
       "kind": "pipe",
       "exitCode": 0,
+      "folder": "scenetake",
       "chunks": []
     },
     {
       "run": "bash -c 'case \"$(uname -s)\" in MINGW*|MSYS*|CYGWIN*) ping -n 4 127.0.0.1 ;; *) ping -c 4 127.0.0.1 ;; esac'",
       "kind": "pipe",
       "exitCode": 0,
+      "folder": "scenetake",
       "chunks": [
         {
-          "ticks": 4923474,
+          "ticks": 5847270,
           "out": "\r\nPinging 127.0.0.1 "
         },
         {
-          "ticks": 4924051,
+          "ticks": 5847809,
           "out": "with 32 bytes of data:\r\n"
         },
         {
-          "ticks": 4926852,
+          "ticks": 5850554,
           "out": "Reply from 127.0.0.1: "
         },
         {
-          "ticks": 4927065,
+          "ticks": 5850670,
           "out": "bytes=32 time<1ms TTL=128\r\n"
         },
         {
-          "ticks": 14985944,
+          "ticks": 15859483,
           "out": "Reply from 127.0.0.1: "
         },
         {
-          "ticks": 14986489,
+          "ticks": 15859948,
           "out": "bytes=32 time<1ms TTL=128\r\n"
         },
         {
-          "ticks": 25086092,
+          "ticks": 26001757,
           "out": "Reply from 127.0.0.1: "
         },
         {
-          "ticks": 25086594,
+          "ticks": 26002278,
           "out": "bytes=32 time<1ms TTL=128\r\n"
         },
         {
-          "ticks": 35191588,
+          "ticks": 36118239,
           "out": "Reply from 127.0.0.1: "
         },
         {
-          "ticks": 35192323,
+          "ticks": 36118629,
           "out": "bytes=32 time<1ms TTL=128\r\n\r\nPing statistics for 127.0.0.1:\r\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),\r\nApproximate round trip times in milli-seconds:\r\n    Minimum = 0ms, Maximum = 0ms, Average = 0ms\r\n"
         }
       ]
@@ -100,45 +106,46 @@
       "run": "bash -c 'case \"$(uname -s)\" in MINGW*|MSYS*|CYGWIN*) ping -n 4 127.0.0.1 ;; *) ping -c 4 127.0.0.1 ;; esac'",
       "kind": "pipe",
       "exitCode": 0,
+      "folder": "scenetake",
       "chunks": [
         {
-          "ticks": 4206653,
+          "ticks": 5951519,
           "out": "\r\nPinging 127.0.0.1 "
         },
         {
-          "ticks": 4207011,
+          "ticks": 5952196,
           "out": "with 32 bytes of data:\r\n"
         },
         {
-          "ticks": 4210174,
+          "ticks": 5955079,
           "out": "Reply from 127.0.0.1: "
         },
         {
-          "ticks": 4210568,
+          "ticks": 5955422,
           "out": "bytes=32 time<1ms TTL=128\r\n"
         },
         {
-          "ticks": 14243212,
+          "ticks": 16022102,
           "out": "Reply from 127.0.0.1: "
         },
         {
-          "ticks": 14244249,
+          "ticks": 16022835,
           "out": "bytes=32 time<1ms TTL=128\r\n"
         },
         {
-          "ticks": 24377364,
+          "ticks": 26144341,
           "out": "Reply from 127.0.0.1: "
         },
         {
-          "ticks": 24377845,
+          "ticks": 26144865,
           "out": "bytes=32 time<1ms TTL=128\r\n"
         },
         {
-          "ticks": 34494540,
+          "ticks": 36279469,
           "out": "Reply from 127.0.0.1: "
         },
         {
-          "ticks": 34495069,
+          "ticks": 36279865,
           "out": "bytes=32 time<1ms TTL=128\r\n\r\nPing statistics for 127.0.0.1:\r\n    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),\r\nApproximate round trip times in milli-seconds:\r\n    Minimum = 0ms, Maximum = 0ms, Average = 0ms\r\n"
         }
       ]
@@ -147,17 +154,18 @@
       "run": "echo \"This command runs in a PTY, so output appears immediately and can include interactive features like colors and progress bars.\"",
       "kind": "pty",
       "exitCode": 0,
+      "folder": "scenetake",
       "cursor": {
         "row": 24,
         "column": 1
       },
       "chunks": [
         {
-          "ticks": 3625413,
+          "ticks": 4085876,
           "data": "VGhpcyBjb21tYW5kIHJ1bnMgaW4gYSBQVFksIHNvIG91dHB1dCBhcHBlYXJzIGltbWVkaWF0ZWx5IGFuZCBjYW4gaW5jbHVkZSBpbnRlcmENChtbMjM7ODBIYWN0aXZlIGZlYXR1cmVzIGxpa2UgY29sb3JzIGFuZCBwcm9ncmVzcyBiYXJzLg0K"
         },
         {
-          "ticks": 4035744,
+          "ticks": 4546754,
           "data": "G1s/OTAwMWwbWz8xMDA0bA=="
         }
       ]
@@ -166,65 +174,66 @@
       "run": "read -r -p \"Your name? \" name; echo \"Hello, $name\"",
       "kind": "pty",
       "exitCode": 0,
+      "folder": "scenetake",
       "cursor": {
         "row": 24,
         "column": 1
       },
       "chunks": [
         {
-          "ticks": 3790816,
+          "ticks": 5038917,
           "data": "WW91ciBuYW1lPyA="
         },
         {
-          "ticks": 5007753,
+          "ticks": 5217596,
           "data": "cw=="
         },
         {
-          "ticks": 5455159,
+          "ticks": 5554969,
           "data": "Yw=="
         },
         {
-          "ticks": 5938865,
+          "ticks": 6014155,
           "data": "ZQ=="
         },
         {
-          "ticks": 6380359,
+          "ticks": 6480993,
           "data": "bg=="
         },
         {
-          "ticks": 6685515,
+          "ticks": 6945835,
           "data": "ZQ=="
         },
         {
-          "ticks": 7045681,
+          "ticks": 7264954,
           "data": "dA=="
         },
         {
-          "ticks": 7500655,
+          "ticks": 7729157,
           "data": "YQ=="
         },
         {
-          "ticks": 7940527,
+          "ticks": 8204788,
           "data": "aw=="
         },
         {
-          "ticks": 8422128,
+          "ticks": 8507526,
           "data": "ZQ=="
         },
         {
-          "ticks": 8808074,
+          "ticks": 8968566,
           "data": "DQo="
         },
         {
-          "ticks": 8809224,
+          "ticks": 8969644,
           "data": "SGVsbG8sIHNjZW5ldGFrZQ=="
         },
         {
-          "ticks": 8892135,
+          "ticks": 9112616,
           "data": "DQo="
         },
         {
-          "ticks": 8930688,
+          "ticks": 9325134,
           "data": "G1s/OTAwMWwbWz8xMDA0bA=="
         }
       ]
@@ -233,9 +242,10 @@
       "run": "printf 'done\\n'",
       "kind": "pipe",
       "exitCode": 0,
+      "folder": "scenetake",
       "chunks": [
         {
-          "ticks": 3585158,
+          "ticks": 5171026,
           "out": "done\n"
         }
       ]
@@ -244,13 +254,14 @@
       "run": "printf 'line1 alpha\\nline2 beta gamma\\nline3\\n'",
       "kind": "pipe",
       "exitCode": 0,
+      "folder": "scenetake",
       "chunks": [
         {
-          "ticks": 3514739,
+          "ticks": 4290178,
           "out": "line1 alpha\n"
         },
         {
-          "ticks": 3515035,
+          "ticks": 4290426,
           "out": "line2 beta gamma\nline3\n"
         }
       ]
@@ -259,9 +270,10 @@
       "run": "echo \"plain stderr\" 1>&2",
       "kind": "pipe",
       "exitCode": 0,
+      "folder": "scenetake",
       "chunks": [
         {
-          "ticks": 3495540,
+          "ticks": 4909276,
           "err": "plain stderr\n"
         }
       ]
@@ -270,9 +282,10 @@
       "run": "echo \"bright yellow stderr\" 1>&2",
       "kind": "pipe",
       "exitCode": 0,
+      "folder": "scenetake",
       "chunks": [
         {
-          "ticks": 3465151,
+          "ticks": 4412526,
           "err": "bright yellow stderr\n"
         }
       ]
@@ -281,9 +294,10 @@
       "run": "echo \"Done!\"",
       "kind": "pipe",
       "exitCode": 0,
+      "folder": "scenetake",
       "chunks": [
         {
-          "ticks": 3597734,
+          "ticks": 4376776,
           "out": "Done!\n"
         }
       ]

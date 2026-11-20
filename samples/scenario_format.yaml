@@ -18,8 +18,19 @@ render:                          # Optional display metadata for cast header and
   margin: 24                     # px around the window (default 8, 12 with a window, 32 with a background)
   padding: 12                    # px between the terminal edge and its text (default from font-size)
 
+# outputs:                       # Files to write besides the cast, when no --format is given
+#   - format: svg
+#   - format: svg                # A light copy, for a README that follows the reader's light or dark mode
+#     theme: light
+#     file: scenario_format-light.svg
+#   - format: gif                # Needs ffmpeg
+#     fps: 10
+
 settings:                        # Defaults for all steps; map-form steps can override per key
-  prompt: "$ "
+  prompt:                        # Text ("$ "), or parts with a color each. {dir} is the folder the step starts in
+    - text: "{dir}"
+      color: cyan
+    - " $ "
   typing-speed: 0.04             # Average seconds per typed character
   typing-jitter: 0.01            # Random variance (+/- seconds) per character
   pre-delay: 0.5                 # Pause before typing each step
@@ -39,6 +50,12 @@ pre:
   - echo "environment check (not recorded)"
 
 steps:
+  # A card shows centered lines on a cleared screen and runs nothing: a title, or an install line at the end
+  - card:
+      - "[bold fg:bright-cyan]Scenario Format Demo"
+      - "every key, recorded"
+    post-delay: 2
+
   # String form - uses settings defaults
   - echo "Hello, World!"
 

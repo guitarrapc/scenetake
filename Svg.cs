@@ -2327,7 +2327,7 @@ internal static class SvgFrameRenderer
         };
     }
 
-    private static bool IsLightTerminalBg(string bg)
+    internal static bool IsLightTerminalBg(string bg)
     {
         if (!CellColors.TryParseHexColor(bg, out var r, out var g, out var b))
             return false;

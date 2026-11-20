@@ -108,6 +108,21 @@ scenetake --help
 
 Install ffmpeg with `winget install Gyan.FFmpeg`, `brew install ffmpeg`, or `sudo apt install ffmpeg`.
 
+To write several formats in one run, use the `outputs` key.
+
+```yaml
+outputs:
+  - format: svg                # demo.svg, for the README
+  - format: svg
+    theme: github-light
+    file: demo-light.svg
+  - format: gif                # For Zenn (under 3 MB)
+    font-size: 12
+    fps: 10
+  - format: mp4                # For X
+    max-size: 1280x1024
+```
+
 ## Customize the look
 
 Set these with a `render` key in the scenario, or with the flag of the same name, such as `--window macos`.
@@ -238,6 +253,25 @@ steps:
   - clear: true             # Clear the screen
 ```
 
+### Title cards and the prompt
+
+A `card` step shows an opening screen, centered in the window. With `{dir}` in `prompt`, each step shows the name of its folder.
+
+```yaml
+settings:
+  prompt:
+    - text: "{dir}"
+      color: "fg:cyan"
+    - " $ "
+steps:
+  - card:
+      - "[bold fg:bright-cyan]my-app"
+      - "Fast JSON diffs in your terminal"
+    post-delay: 2.5
+  - my-app diff a.json b.json
+  - card: "[fg:yellow]npm install -g my-app"
+```
+
 ### Change only the look, without running again
 
 Combine `--save-outputs` and `--replay` to reuse the outputs of one recording and change only the theme or the format.
@@ -297,8 +331,19 @@ render:                          # Optional display metadata for cast header and
   margin: 24                     # px around the window (default 8, 12 with a window, 32 with a background)
   padding: 12                    # px between the terminal edge and its text (default from font-size)
 
+# outputs:                       # Files to write besides the cast, when no --format is given
+#   - format: svg
+#   - format: svg                # A light copy, for a README that follows the reader's light or dark mode
+#     theme: light
+#     file: scenario_format-light.svg
+#   - format: gif                # Needs ffmpeg
+#     fps: 10
+
 settings:                        # Defaults for all steps; map-form steps can override per key
-  prompt: "$ "
+  prompt:                        # Text ("$ "), or parts with a color each. {dir} is the folder the step starts in
+    - text: "{dir}"
+      color: cyan
+    - " $ "
   typing-speed: 0.04             # Average seconds per typed character
   typing-jitter: 0.01            # Random variance (+/- seconds) per character
   pre-delay: 0.5                 # Pause before typing each step
@@ -318,6 +363,12 @@ pre:
   - echo "environment check (not recorded)"
 
 steps:
+  # A card shows centered lines on a cleared screen and runs nothing: a title, or an install line at the end
+  - card:
+      - "[bold fg:bright-cyan]Scenario Format Demo"
+      - "every key, recorded"
+    post-delay: 2
+
   # String form - uses settings defaults
   - echo "Hello, World!"
 

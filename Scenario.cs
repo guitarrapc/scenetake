@@ -88,6 +88,9 @@ internal static partial class ScenarioCast
                 error = value is Dictionary<object, object?> or System.Collections.IList ? $"'{key}' must be text, not {DescribeValue(value)}." : null;
             else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
                 error = value is System.Collections.IList ? null : $"'{key}' must be a list, not {DescribeValue(value)}.";
+            // A key that takes more than one form, such as settings.prompt, checks its value itself (FindStepKeyError).
+            else if (type == typeof(object))
+                error = null;
             else if (value is not Dictionary<object, object?> section)
                 error = $"'{key}' must be a mapping of keys, not {DescribeValue(value)}.";
             else if (type == typeof(ScenarioSettings))
@@ -169,6 +172,9 @@ internal static partial class ScenarioCast
     /// </summary>
     internal static string? FindStepKeyError(Scenario scenario)
     {
+        if (FindPromptError(scenario.Settings?.Prompt) is { } promptError)
+            return promptError;
+
         var steps = scenario.Steps ?? [];
         var recorded = 0;
         for (var index = 0; index < steps.Count; index++)
@@ -176,6 +182,17 @@ internal static partial class ScenarioCast
             var step = steps[index];
             if (step is Dictionary<object, object?> map)
             {
+                if (map.ContainsKey("card"))
+                {
+                    var width = scenario.Width ?? RenderSettingsResolver.DefaultTerminalCols;
+                    var height = scenario.Height ?? RenderSettingsResolver.DefaultTerminalRows;
+                    if (FindCardStepError(map, index + 1, width, height) is { } cardError)
+                        return cardError;
+                    // A card is shown, so a scenario of cards alone records them.
+                    recorded++;
+                    continue;
+                }
+
                 if (map.ContainsKey("clear"))
                 {
                     if (FindClearStepError(map, index + 1) is { } clearError)
@@ -241,6 +258,15 @@ internal static partial class ScenarioCast
 
     // The keys a clear step reads besides clear: it shows a comment line and takes time, but runs nothing.
     private static readonly string[] ClearStepKeys = ["clear", "name", "pre-delay", "post-delay"];
+
+    // The keys a card step reads besides card: it shows its lines and takes time, but runs nothing.
+    private static readonly string[] CardStepKeys = ["card", "pre-delay", "post-delay"];
+
+    /// <summary>
+    /// Seconds a card stays without <c>post-delay</c>: long enough to read a title and an install line, which a
+    /// command's post-delay (half a second) is not.
+    /// </summary>
+    internal const double CardPostDelay = 2.0;
 
     /// <summary>
     /// What a step shows: <c>show: all</c> (the default) types the command and shows its output; <c>show: output</c>
@@ -378,6 +404,130 @@ internal static partial class ScenarioCast
         return null;
     }
 
+    /// <summary>
+    /// The error for a <c>card</c> step: one that has no <c>run</c> or <c>clear</c>, only the keys it reads, and at
+    /// least one line of text that fits the terminal, each line and all of them. Null when the step is fine.
+    /// </summary>
+    private static string? FindCardStepError(Dictionary<object, object?> map, int number, int width, int height)
+    {
+        if (map.ContainsKey("run"))
+            return $"Step {number} has both 'run' and 'card'. A card shows its lines and runs nothing: put the command in a step of its own.";
+        if (map.ContainsKey("clear"))
+            return $"Step {number} has both 'card' and 'clear'. A card clears the screen by itself: leave 'clear' out.";
+
+        foreach (var key in map.Keys)
+        {
+            var name = key?.ToString() ?? "";
+            if (Array.IndexOf(CardStepKeys, name) < 0 && Array.IndexOf(ScenarioKeys.Step, name) >= 0)
+                return $"Step {number} key '{name}' does not apply to a 'card' step, which takes only 'pre-delay' and 'post-delay'.";
+        }
+
+        if (CardLines(map["card"]) is not { } lines)
+            return $"Step {number} key 'card' must be a line of text or a list of lines, not {DescribeValue(map["card"])}.";
+        if (!lines.Any(static line => HasPrintable(SplitCardStyle(line).Text)))
+            return $"Step {number} key 'card' has no text to show. Give it a line, such as card: [\"my-app\", \"npm i -g my-app\"].";
+        if (lines.Count > height)
+            return $"Step {number} card has {lines.Count} lines, more than the terminal's {height} rows. Leave lines out, or raise 'height'.";
+
+        for (var i = 0; i < lines.Count; i++)
+        {
+            var text = SplitCardStyle(lines[i]).Text;
+            if (text.AsSpan().IndexOfAnyInRange('\0', '\u001f') >= 0 || text.AsSpan().IndexOfAnyInRange('\u007f', '\u009f') >= 0)
+                return $"Step {number} card line {i + 1} holds a control character. Color a line with a [style] prefix, such as \"[bold fg:cyan]my-app\".";
+            if (DisplayWidth(text) is var columns && columns > width)
+                return $"Step {number} card line {i + 1} is {columns} columns wide, wider than the terminal's {width}. Shorten it, or raise 'width'.";
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The error for a <c>settings.prompt</c> that is neither text nor a list of parts, each part text or a mapping with
+    /// <c>text</c> and an optional <c>color</c>. Null when the prompt is fine or not set.
+    /// </summary>
+    internal static string? FindPromptError(object? value)
+    {
+        const string Example = "such as [{text: \"demo\", color: green}, \" {dir} $ \"]";
+        if (value is null || TextToType(value) is not null)
+            return null;
+        if (value is not List<object?> parts)
+            return $"'settings.prompt' must be text or a list of parts, {Example}, not {DescribeValue(value)}.";
+
+        for (var i = 0; i < parts.Count; i++)
+        {
+            if (parts[i] is null || TextToType(parts[i]) is not null)
+                continue;
+            if (parts[i] is not Dictionary<object, object?> part)
+                return $"settings.prompt part {i + 1} must be text or a mapping with 'text' and 'color', not {DescribeValue(parts[i])}.";
+            if (!part.TryGetValue("text", out var text) || TextToType(text) is null)
+                return $"settings.prompt part {i + 1} needs 'text', the text it shows, {Example}.";
+            if (part.TryGetValue("color", out var color) && color is not null and not string)
+                return $"settings.prompt part {i + 1} key 'color' must be a style, such as \"bold fg:green\", not {DescribeValue(color)}.";
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The lines of a <c>card</c> value: a text, split at its line breaks, as a YAML block (<c>card: |</c>) writes
+    /// one, or a list of texts, each split the same way. A number is text, and an empty entry is an empty line.
+    /// Null for a value that is neither.
+    /// </summary>
+    internal static List<string>? CardLines(object? value)
+    {
+        var lines = new List<string>();
+        if (TextToType(value) is { } text)
+        {
+            AddLines(text);
+            return lines;
+        }
+
+        if (value is not List<object?> list)
+            return null;
+        foreach (var item in list)
+        {
+            if (item is null)
+                lines.Add("");
+            else if (TextToType(item) is { } itemText)
+                AddLines(itemText);
+            else
+                return null;
+        }
+
+        return lines;
+
+        // A block ends with a line break, which is not a line of its own.
+        void AddLines(string part) =>
+            lines.AddRange(part.Replace("\r\n", "\n").TrimEnd('\n').Split('\n'));
+    }
+
+    /// <summary>
+    /// A card line's optional <c>[style]</c> prefix, as a <c>name</c> comment reads one, and its text without the
+    /// spaces around it: a card centers each line, so they would only move it. <c>"[bold]my-app"</c> gives
+    /// <c>("bold", "my-app")</c>, and a line without a prefix gives a null style.
+    /// </summary>
+    internal static (string? Style, string Text) SplitCardStyle(string line)
+    {
+        var value = line.Trim();
+        if (value.StartsWith('[') && value.IndexOf(']') is var close and > 1)
+            return (value[1..close], value[(close + 1)..].Trim());
+        return (null, value);
+    }
+
+    /// <summary>The columns a text takes in the terminal: two for a wide character, none for a combining mark.</summary>
+    internal static int DisplayWidth(string text)
+    {
+        var width = 0;
+        foreach (var rune in text.EnumerateRunes())
+        {
+            width += Rune.GetUnicodeCategory(rune) is UnicodeCategory.NonSpacingMark or UnicodeCategory.EnclosingMark or UnicodeCategory.SpacingCombiningMark
+                ? 0
+                : ScreenBuffer.IsWideCodePoint(rune.Value) ? 2 : 1;
+        }
+
+        return width;
+    }
+
     /// <summary>Whether a step that will be recorded sets <c>interactive: true</c>.</summary>
     internal static bool HasInteractiveStep(Scenario scenario) =>
         (scenario.Steps ?? []).Select(ParseCommand).Any(command => !string.IsNullOrWhiteSpace(command.Cmd) && IsStepFlagSet(command.Extra, "interactive"));
@@ -394,6 +544,7 @@ internal static partial class ScenarioCast
             var cmd = "";
             string? name = null;
             var clear = false;
+            List<string>? card = null;
             foreach (var (rawKey, value) in map)
             {
                 var key = rawKey?.ToString() ?? "";
@@ -405,8 +556,11 @@ internal static partial class ScenarioCast
                     case "name":
                         name = value?.ToString();
                         break;
-                    case "clear" when !map.ContainsKey("run"):
+                    case "clear" when !map.ContainsKey("run") && !map.ContainsKey("card"):
                         clear = value is true || (value is string text && bool.TryParse(text, out var parsed) && parsed);
+                        break;
+                    case "card" when !map.ContainsKey("run"):
+                        card = CardLines(value);
                         break;
                     default:
                         extra[key] = value;
@@ -414,7 +568,7 @@ internal static partial class ScenarioCast
                 }
             }
 
-            return new CommandEntry { Cmd = cmd, Name = name, Extra = extra, Clear = clear };
+            return new CommandEntry { Cmd = cmd, Name = name, Extra = extra, Clear = clear, Card = card };
         }
         return new CommandEntry();
     }
@@ -680,12 +834,16 @@ public partial class Scenario
     public List<string>? Pre { get; set; }
     public List<object?>? Steps { get; set; }
     public List<string>? Post { get; set; }
+
+    /// <summary>The files a recording writes besides the cast, each a mapping with <c>format</c> (scenetake.cs reads them).</summary>
+    public List<object?>? Outputs { get; set; }
 }
 
 [YamlObject(NamingConvention.KebabCase)]
 public partial class ScenarioSettings
 {
-    public string? Prompt { get; set; }
+    /// <summary>Text, or a list of parts with a color each (<see cref="ScenarioCast.ParsePrompt"/>).</summary>
+    public object? Prompt { get; set; }
     public double? TypingSpeed { get; set; }
     public double? TypingJitter { get; set; }
     public double? PreDelay { get; set; }
@@ -740,6 +898,9 @@ public class CommandEntry
 
     /// <summary>A <c>clear: true</c> step: it clears the screen and runs nothing.</summary>
     public bool Clear { get; set; }
+
+    /// <summary>A <c>card</c> step's lines: it shows them centered on a cleared screen and runs nothing.</summary>
+    public List<string>? Card { get; set; }
 }
 
 /// <summary>What a step shows in the recording (<c>show</c>).</summary>
