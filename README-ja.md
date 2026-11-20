@@ -8,9 +8,37 @@
 
 [English](README.md) | 日本語
 
-scenetakeは、コマンドをYAMLシナリオに書いてターミナル録画を作るツールです。コマンドを自動入力するので何度も録画するのが簡単で、TUIや対話型のアプリもキー操作を指示できます。
+scenetakeは、YAMLシナリオに書いたコマンドからターミナルのデモを録画するツールです。
 
 ![](samples/showcase/welcome.svg)
+
+## なぜscenetake?
+
+手で録ったターミナルのデモは、ツールが変わると古くなります。撮り直す時、コマンドを全部打ち直して出力を待ち、打ち間違えないよう気を付けて、何度も取り直したくなくなります。
+
+scenetakeはデモの作り直しを簡単にするためのツールです。YAMLシナリオを用意すればコマンドを自動入力するので、撮り直しが簡単です。TUIや対話型アプリでは書いたとおりにキーを自動入力し、トークンやユーザー名は隠します。出力が変わらないステップは前回と同じに録れるのでデモを撮り直しても、差分は変更のあった部分だけです。
+
+## ギャラリー
+
+| [fastfetch](samples/showcase/fetch.yaml) | [bat、git、jq](samples/showcase/devtools.yaml) |
+| --- | --- |
+| ![](samples/showcase/fetch.svg) | ![](samples/showcase/devtools.svg) |
+| [figlet、lolcat、toilet](samples/showcase/logo.yaml) | [sl](samples/showcase/sl.yaml) |
+| ![](samples/showcase/logo.svg) | ![](samples/showcase/sl.svg) |
+| [`keys`で操作するvimとgit diff（背景は画像）](samples/showcase/vim.yaml) | [トークンとパスワードを自動で隠す](samples/showcase/secrets.yaml) |
+| ![](samples/showcase/vim.svg) | ![](samples/showcase/secrets.svg) |
+
+![](samples/showcase/nyancat.svg)
+
+## 仕組み
+
+scenetakeはステップに書いたコマンドを実際に実行します。ステップを設定した速さで入力し、コマンドの実出力を記録します。`pty: true`ステップは疑似端末で実行され、TUIやプログレスバーもターミナルと同じように描かれます。
+
+録画はasciinema v3形式のcastで、SVG/PNG/mp4/GIFで出力できます。castをgitコミットしておくと、コマンドを実行し直さずに別の形式やテーマで描き直せます。
+
+## 例
+
+[samples/basic.yaml](samples/basic.yaml)のシナリオは、次のように録画されます。
 
 ```yaml
 title: "Basic Demo"
@@ -49,19 +77,9 @@ steps:
 | --- | --- |
 | ![](samples/basic.gif) | ![](samples/basic.svg) |
 
-## ギャラリー
+## 使い始める
 
-| [fastfetch](samples/showcase/fetch.yaml) | [bat、git、jq](samples/showcase/devtools.yaml) |
-| --- | --- |
-| ![](samples/showcase/fetch.svg) | ![](samples/showcase/devtools.svg) |
-| [figlet、lolcat、toilet](samples/showcase/logo.yaml) | [sl](samples/showcase/sl.yaml) |
-| ![](samples/showcase/logo.svg) | ![](samples/showcase/sl.svg) |
-| [`keys`で操作するvimとgit diff（背景は画像）](samples/showcase/vim.yaml) | [トークンとパスワードを自動で隠す](samples/showcase/secrets.yaml) |
-| ![](samples/showcase/vim.svg) | ![](samples/showcase/secrets.svg) |
-
-![](samples/showcase/nyancat.svg)
-
-## クイックスタート
+### インストール
 
 [Releases](https://github.com/guitarrapc/scenetake/releases)からLinux、macOS、Windows向けのバイナリをダウンロードするか、次のいずれかでインストールします。asciinemaや.NETランタイムは不要です。
 
@@ -77,29 +95,111 @@ scoop bucket add guitarrapc https://github.com/guitarrapc/scoop-bucket
 scoop install scenetake
 ```
 
+mp4とGIFには[ffmpeg](https://ffmpeg.org/)が必要です。`winget install Gyan.FFmpeg`、`brew install ffmpeg`、`sudo apt install ffmpeg`などでインストールできます。
+
+### 録画する
+
 ![](samples/quickstart.svg)
 
-```bash
-# シナリオなしで1コマンドを録画する
-scenetake capture -- git log --oneline -5
+ひな形のシナリオscenario.yamlを作ります。
 
-# コマンドからシナリオを作成する
-scenetake capture --save-scenario help.yaml -- mycli --help
-
-# シナリオファイルscenario.yamlを作る
+```sh
 scenetake init
+```
 
-# シナリオを実行してscenario.svgで録画する (scenario.castも作成します)
+シナリオを実行してscenario.svgとして録画します。scenario.castも作成します。
+
+```sh
 scenetake --format svg scenario.yaml
+```
 
-# フォルダ内のシナリオをまとめて録画する
+シナリオなしで1コマンドを録画します。シナリオとして残して、ステップを足すこともできます。
+
+```sh
+scenetake capture -- git log --oneline -5
+scenetake capture --save-scenario help.yaml -- mycli --help
+```
+
+フォルダ内のシナリオをまとめて録画します。
+
+```sh
 scenetake --format svg demos/*.yaml
+```
 
-# 全オプションを確認する
+コマンドを実行し直さず、castからmp4を作ります。
+
+```sh
+scenetake mp4 scenario.cast
+```
+
+全オプションを確認します。
+
+```sh
 scenetake --help
 ```
 
-## 出力形式
+## CLIリファレンス
+
+コマンドとオプションの用途の一覧です。値の範囲と既定値は`scenetake --help`や`scenetake <コマンド> --help`で確認できます。
+
+### コマンド
+
+| コマンド | 用途 |
+| --- | --- |
+| `scenetake <scenario.yaml> [output]` | シナリオを実行して録画する。`[output]`はファイル名で、`out`ならout.castとout.svgを書きます |
+| `scenetake <scenario.yaml>...` | 複数のデモを1回で録画する。CIで`docs/*.yaml`を撮るときなど |
+| `scenetake svg\|mp4\|png\|gif <input.cast> [output]` | コマンドを実行し直さず、castから別の形式を作る |
+| `scenetake capture -- <command>` | シナリオを書かずに1コマンドを録画する |
+| `scenetake init [scenario.yaml]` | コメント付きのひな形からシナリオを始める |
+| `scenetake --version` | バージョンを確認する |
+
+### オプション
+
+`capture`は`--save-keys`、`--save-outputs`、`--replay`以外のシナリオのオプションを使えます。svg、mp4、png、gifコマンドは、見た目のオプションとその形式のオプションを使えます。
+
+| オプション | 用途 |
+| --- | --- |
+| **録画** | |
+| `--format cast\|svg\|mp4\|png\|gif` | castのほかに1つの形式を書く。指定しなければ、シナリオは`outputs`に並べたファイルを、`capture`はSVGを書きます |
+| `--strict` | ステップのコマンドが失敗したらエラーで止める。壊れたデモをCIで残さないために |
+| `--save-keys FILE` | `interactive: true`のステップで打ったキーを保存し、次からの録画で自動入力する |
+| `--save-outputs FILE` | 各ステップの出力を`--replay`用に保存する |
+| `--replay FILE` | コマンドを実行し直さず、見た目、タイミング、形式を変える |
+| `--verbose` | 実行中のフェーズと、止まったときのエラーの詳細を見る |
+| **見た目**（シナリオの`render`やcastの保存値を上書き） | |
+| `--theme NAME` | カラーテーマを選ぶ。明るいページには明るいテーマなど |
+| `--font-size N`、`--font-family FAMILIES` | 文字を読みやすくする、好きなフォントを使う |
+| `--window none\|macos\|windows`、`--window-title TEXT` | タイトルバーを付けてターミナルのウィンドウらしく見せる |
+| `--background VALUE` | ウィンドウの周りを色、グラデーション、画像にする |
+| `--opacity N`、`--blur N` | 背景をウィンドウに透かす、ぼかす |
+| `--margin N`、`--padding N` | ウィンドウの周りと文字の周りの余白を変える |
+| `--fit none\|height\|width\|both` | 出力より下の空き行を描かない（既定）。`none`でターミナル全体を描く |
+| `--crop-top N`、`--crop-bottom N`、`--crop-left N`、`--crop-right N` | 見せたくない行や列を端から切る |
+| **アニメーションと静止画** | |
+| `--no-loop`、`--loop` | SVGやGIFを1回だけ再生して最後の画面で止める。シナリオやcastがループしない設定でもループさせる |
+| `--end-hold N` | 最初に戻る前や終わる前に、最後の画面を読む時間を取る |
+| `--fade-out N` | 最後に文字をフェードアウトさせて終える |
+| `--max-fps N` | 画面がよく変わるSVGを小さくする |
+| `--at TIME` | ある時点の静止画をSVGかPNGで作る。`end`なら最後の画面 |
+| **mp4、GIF、PNG** | |
+| `--fps N` | mp4とGIFの滑らかさとファイルサイズを調整する |
+| `--crf N` | mp4の画質とファイルサイズを調整する |
+| `--max-size WxH` | サイトのアップロード上限に収める。Xなら`1280x1024` |
+| `--size WxH` | `1920x1080`など、決まったサイズの動画を作る |
+| `--font-file PATH` | インストールしていないフォントファイルを使う。mp4、GIF、PNGは文字を自分で描き、SVGは見る人のフォントを使います |
+| **capture** | |
+| `--width N`、`--height N` | ターミナルのサイズを決める |
+| `--shell NAME` | 既定以外のシェルでコマンドを実行する |
+| `--pipe` | パイプで受けた出力を録画する。多くのツールは色なしで出力します |
+| `--timeout N` | `tail -f`など、自分では終わらないコマンドを止める |
+| `-o, --output NAME` | ファイル名を決める。`-o demo`ならdemo.castとdemo.svg |
+| `--save-scenario FILE` | コマンドをシナリオとして残し、ステップを足して撮り直せるようにする |
+| **init** | |
+| `--shell bash\|pwsh\|powershell` | ひな形のステップをそのシェル向けに書く |
+
+PATHにないffmpegを使うときは、`SCENETAKE_FFMPEG`にそのパスを設定します。
+
+### 出力形式
 
 | 形式 | 作り方 | 備考 |
 | --- | --- | --- |
@@ -108,8 +208,6 @@ scenetake --help
 | `.png` | `--format png`、`scenetake png scenario.cast` | 1画面の静止画 |
 | `.mp4` | `--format mp4`、`scenetake mp4 scenario.cast` | [ffmpeg](https://ffmpeg.org/)が必要 |
 | `.gif` | `--format gif`、`scenetake gif scenario.cast` | [ffmpeg](https://ffmpeg.org/)が必要 |
-
-ffmpegは`winget install Gyan.FFmpeg`、`brew install ffmpeg`、`sudo apt install ffmpeg`などでインストールできます。
 
 1回で複数フォーマットを出力する時は`outputs`キーを使います。
 
@@ -126,40 +224,33 @@ outputs:
     max-size: 1280x1024
 ```
 
-## 見た目の調整
+### 終了コード
 
-シナリオの`render`キーか、同じ名前のフラグ（`--window macos`など）で指定します。
-
-| キー | 内容 |
+| コード | 意味 |
 | --- | --- |
-| `window`、`window-title` | タイトルバー（`macos` / `windows`）とその文字 |
-| `background` | ウィンドウの周り。色、グラデーション（`"#1e3c72 #2a5298"`）、画像 |
-| `opacity`、`blur` | 画像の背景を透かす、ぼかす |
-| `margin`、`padding` | 余白（px） |
-| `loop`、`end-hold`、`fade-out` | 1回だけ再生（`--no-loop`）、最後の画面を表示する秒数、文字を消す秒数 |
+| `0` | 録画できた。`--strict`なしなら、ステップのコマンドが失敗しても0です |
+| `1` | シナリオ、オプション、ファイルのエラー、ffmpegがない、`--strict`でステップが失敗した、複数のシナリオのうち録画できなかったものがある |
+| その他 | `pre`か`post`のコマンドが失敗した。そのコマンドの終了コードを返します |
 
-| macOS | Windows |
-| --- | --- |
-| ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
+## シナリオファイル形式
 
-既定では出力より下の空き行を描きません。動画の解像度そのままにするには`--fit none`を指定します。`--fit none`のとき、デフォルト`80×24`は、mp4で`820×488`、SVGで`829.6×504`です。1920×1080動画を作るときは、`--font-size`を上げると読みやすく解像度もちょうどよくなります。
+`steps`キーのみ必須です。`: `を含むコマンドは`run: 'echo "answer: $a"'`のように引用符で囲んでください。キーの詳細は[spec_scenario.md](.github/docs/spec_scenario.md)にあります。
 
-カラーテーマは`render.theme.preset`か`--theme`で指定します。
+| キー | 既定値 | 内容 |
+| --- | --- | --- |
+| `title` | — | castのタイトル。`window-title`がなければタイトルバーの文字にもなります |
+| `width`、`height` | `80`、`24` | ターミナルの列数と行数 |
+| `cwd` | 実行したフォルダ | コマンドを実行するフォルダ。相対パスはシナリオのフォルダから |
+| `shell` | `$SHELL`かbash、Windowsでは`pwsh` | `bash`、`pwsh`、`powershell`、またはパス |
+| `render` | — | 見た目。[見た目の調整](#見た目の調整)を参照 |
+| `outputs` | — | castのほかに書くファイル。[出力形式](#出力形式)を参照 |
+| `settings` | — | 全ステップの既定値。プロンプト、入力速度、待ち時間、マスク |
+| `pre`、`post` | — | ステップの前後に実行するコマンド。録画しません |
+| `steps` | 必須 | 録画するコマンド |
 
-| 暗い背景 | |
-| --- | --- |
-| ![](samples/theme-presets/dark.svg) | ![](samples/theme-presets/macos-dark.svg) |
-| ![](samples/theme-presets/dracula.svg) | ![](samples/theme-presets/nord.svg) |
-| ![](samples/theme-presets/one-dark.svg) | ![](samples/theme-presets/gruvbox-dark.svg) |
-| ![](samples/theme-presets/catppuccin-mocha.svg) | ![](samples/theme-presets/tokyo-night.svg) |
-| ![](samples/theme-presets/solarized-dark.svg) | ![](samples/theme-presets/github-dark.svg) |
-| 明るい背景 | |
-| ![](samples/theme-presets/light.svg) | ![](samples/theme-presets/macos-light.svg) |
-| ![](samples/theme-presets/solarized-light.svg) | ![](samples/theme-presets/github-light.svg) |
+### 出力モード
 
-## 出力モード
-
-### 通常出力
+#### 通常出力
 
 コマンドの入力に続けて出力を記録します。`highlight`で色を付けられます。
 
@@ -176,7 +267,7 @@ steps:
 | --- | --- |
 | ![](samples/highlight.gif) | ![](samples/highlight.svg) |
 
-### ストリーム出力
+#### ストリーム出力
 
 `stream-output: true`で、出力を実際のタイミングで再生します。
 
@@ -190,7 +281,7 @@ steps:
 | --- | --- |
 | ![](samples/stream-output.gif) | ![](samples/stream-output.svg) |
 
-### TUI出力
+#### TUI出力
 
 `pty: true`でTUIやプログレスバーを記録します。
 
@@ -218,7 +309,7 @@ steps:
       - type: ":wq\n"
 ```
 
-### 対話型アプリケーション出力
+#### 対話型アプリケーション出力
 
 `interactive: true`で、自分で操作しながら録画します。
 
@@ -238,8 +329,6 @@ steps:
 ```bash
 scenetake --save-keys keys.yaml demo.yaml
 ```
-
-## 便利機能
 
 ### ステップをまたぐ
 
@@ -275,89 +364,40 @@ steps:
   - card: "[fg:yellow]npm install -g my-app"
 ```
 
-### 実行し直さず見た目だけ変える
+### 見た目の調整
 
-`--replay`と`--save-outputs`を組み合わせて、一度録画した出力ファイルを再利用してテーマや出力形式だけ変えられます。
+シナリオの`render`キーか、同じ名前のフラグ（`--window macos`など）で指定します。
 
-```bash
-scenetake --save-outputs demo.outputs.json demo.yaml
-scenetake --replay demo.outputs.json --format mp4 --theme dracula demo.yaml
-```
+| キー | 内容 |
+| --- | --- |
+| `window`、`window-title` | タイトルバー（`macos` / `windows`）とその文字 |
+| `background` | ウィンドウの周り。色、グラデーション（`"#1e3c72 #2a5298"`）、画像 |
+| `opacity`、`blur` | 画像の背景を透かす、ぼかす |
+| `margin`、`padding` | 余白（px） |
+| `loop`、`end-hold`、`fade-out` | 1回だけ再生（`--no-loop`）、最後の画面を表示する秒数、文字を消す秒数 |
 
-### 撮り直しても差分を出さない
+| macOS | Windows |
+| --- | --- |
+| ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
 
-撮り直したとき、出力が前回と同じステップは前回の録画をそのまま使います。`date`のように毎回変わる出力でも前回の出力を再利用するには`keep-output: true`を指定します。
+既定では出力より下の空き行を描きません。動画の解像度そのままにするには`--fit none`を指定します。`--fit none`のとき、デフォルト`80×24`は、mp4で`820×488`、SVGで`829.6×504`です。1920×1080動画を作るときは、`--font-size`を上げると読みやすく解像度もちょうどよくなります。
 
-```text
-Compared with the earlier cast: 4 of 5 steps printed the same, 1 changed
-  changed: step 3: npm test
-```
+カラーテーマは`render.theme.preset`か`--theme`で指定します。
 
-### 秘密情報のマスク
+| 暗い背景 | |
+| --- | --- |
+| ![](samples/theme-presets/dark.svg) | ![](samples/theme-presets/macos-dark.svg) |
+| ![](samples/theme-presets/dracula.svg) | ![](samples/theme-presets/nord.svg) |
+| ![](samples/theme-presets/one-dark.svg) | ![](samples/theme-presets/gruvbox-dark.svg) |
+| ![](samples/theme-presets/catppuccin-mocha.svg) | ![](samples/theme-presets/tokyo-night.svg) |
+| ![](samples/theme-presets/solarized-dark.svg) | ![](samples/theme-presets/github-dark.svg) |
+| 明るい背景 | |
+| ![](samples/theme-presets/light.svg) | ![](samples/theme-presets/macos-light.svg) |
+| ![](samples/theme-presets/solarized-light.svg) | ![](samples/theme-presets/github-light.svg) |
 
-トークン、`API_KEY=…`の値、URL中のパスワード、秘密鍵、`GITHUB_TOKEN`などの環境変数の値は、自動で`*`に置き換えます。ほかに隠したい文字列は`mask`で指定します。
+### 全体の例
 
-```yaml
-settings:
-  mask:
-    - "internal.example.com"
-```
-
-録画した人の情報をマスクします。対象は`/home/<名前>`や`ls -l`に出るユーザー名、コンピューター名、`git log`に出るgitの名前とメールです。表示したいときは`mask-personal: false`にします。webアドレス中の名前（例: `github.com/<名前>/tool`）はマスクしません。
-
-```yaml
-settings:
-  mask-personal: false
-```
-
-### CI
-
-製品が変わったら、GitHub Actionsでデモを撮り直します。出力が変わらないデモは同じファイルになるので、差分に出るのは変わったデモだけです。
-
-```yaml
-# .github/workflows/demos.yaml
-name: Update demos
-on:
-  workflow_dispatch:
-  release:
-    types: [published]
-permissions:
-  contents: write
-  pull-requests: write
-jobs:
-  record:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          # releaseはタグをチェックアウトし、そこからはPRを作れない
-          ref: ${{ github.event_name == 'release' && github.event.repository.default_branch || github.ref }}
-      # デモで見せる製品をここでインストールする
-      - run: sudo apt-get update && sudo apt-get install -y ffmpeg # gifとmp4を出力するときだけ
-      - run: npx -y scenetake --strict docs/demos/*.yaml
-      # リポジトリ設定の「Allow GitHub Actions to create and approve pull requests」が必要
-      - uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
-        with:
-          title: Update demos
-          branch: update-demos
-```
-
-デモが古いままのPRを落とすには、撮り直してからcastを比べます。`git add -N`で、まだコミットしていないcastも差分に出します。
-
-```bash
-npx -y scenetake --strict docs/demos/*.yaml
-git add -N docs/demos
-git diff --exit-code -- 'docs/demos/*.cast'
-```
-
-- 手元でもCIと同じシェル（Linuxのbashなど）で撮ります。Windowsのpwshで撮ったデモは、CIで最初に撮り直したときに全部変わります。
-- 比べるのはcastです。GIFとmp4はffmpegのバージョンでバイトが変わります。
-- `interactive: true`のステップはCIでは撮れません。`keys`のステップは撮れます。
-- `--strict`を付けると、ステップのコマンドが0以外で終了したときにエラーにできます。失敗するのが正しいステップには`continue-on-error: true`を付けます。
-
-## シナリオファイル形式
-
-`steps`キーのみ必須です。`: `を含むコマンドは`run: 'echo "answer: $a"'`のように引用符で囲んでください。キーの詳細は[spec_scenario.md](.github/docs/spec_scenario.md)にあります。
+各キーにコメントを付けた、実行できるシナリオ[samples/scenario_format.yaml](samples/scenario_format.yaml)です。
 
 ![](samples/scenario_format.svg)
 
@@ -490,3 +530,108 @@ steps:
 post:
   - echo "demo complete (not recorded)"
 ```
+
+## 秘密情報のマスク
+
+トークン、`API_KEY=…`の値、URL中のパスワード、秘密鍵、`GITHUB_TOKEN`などの環境変数の値は、自動で`*`に置き換えます。ほかに隠したい文字列は`mask`で指定します。
+
+```yaml
+settings:
+  mask:
+    - "internal.example.com"
+```
+
+録画した人の情報をマスクします。対象は`/home/<名前>`や`ls -l`に出るユーザー名、コンピューター名、`git log`に出るgitの名前とメールです。表示したいときは`mask-personal: false`にします。webアドレス中の名前（例: `github.com/<名前>/tool`）はマスクしません。
+
+```yaml
+settings:
+  mask-personal: false
+```
+
+## 撮り直し
+
+ツールが変わったらシナリオを撮り直します。次の機能で、撮り直しを手早くし、差分を変わったところだけにできます。
+
+### 実行し直さず見た目だけ変える
+
+`--replay`と`--save-outputs`を組み合わせて、一度録画した出力ファイルを再利用してテーマや出力形式だけ変えられます。
+
+```bash
+scenetake --save-outputs demo.outputs.json demo.yaml
+scenetake --replay demo.outputs.json --format mp4 --theme dracula demo.yaml
+```
+
+### 撮り直しても差分を出さない
+
+撮り直したとき、出力が前回と同じステップは前回の録画をそのまま使います。`date`のように毎回変わる出力でも前回の出力を再利用するには`keep-output: true`を指定します。
+
+```text
+Compared with the earlier cast: 4 of 5 steps printed the same, 1 changed
+  changed: step 3: npm test
+```
+
+### CI
+
+製品が変わったら、GitHub Actionsでデモを撮り直します。出力が変わらないデモは同じファイルになるので、差分に出るのは変わったデモだけです。
+
+```yaml
+# .github/workflows/demos.yaml
+name: Update demos
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  record:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # releaseはタグをチェックアウトし、そこからはPRを作れない
+          ref: ${{ github.event_name == 'release' && github.event.repository.default_branch || github.ref }}
+      # デモで見せる製品をここでインストールする
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg # gifとmp4を出力するときだけ
+      - run: npx -y scenetake --strict docs/demos/*.yaml
+      # リポジトリ設定の「Allow GitHub Actions to create and approve pull requests」が必要
+      - uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
+        with:
+          title: Update demos
+          branch: update-demos
+```
+
+デモが古いままのPRを落とすには、撮り直してからcastを比べます。`git add -N`で、まだコミットしていないcastも差分に出します。
+
+```bash
+npx -y scenetake --strict docs/demos/*.yaml
+git add -N docs/demos
+git diff --exit-code -- 'docs/demos/*.cast'
+```
+
+- 手元でもCIと同じシェル（Linuxのbashなど）で撮ります。Windowsのpwshで撮ったデモは、CIで最初に撮り直したときに全部変わります。
+- 比べるのはcastです。GIFとmp4はffmpegのバージョンでバイトが変わります。
+- `interactive: true`のステップはCIでは撮れません。`keys`のステップは撮れます。
+- `--strict`を付けると、ステップのコマンドが0以外で終了したときにエラーにできます。失敗するのが正しいステップには`continue-on-error: true`を付けます。
+
+## 開発
+
+.NET 10 SDKが必要です。
+
+```sh
+# ビルド
+dotnet build
+
+# テスト。バイナリのテストはSCENETAKE_BINに発行したバイナリを指定したときだけ実行します
+dotnet test
+
+# このマシン向けのNative AOTバイナリを発行する
+dotnet publish src/Scenetake/Scenetake.csproj -c Release -p:PublishAot=true
+```
+
+仕様は[.github/docs](.github/docs/spec_index.md)にあります。
+
+## ライセンス
+
+MIT。[LICENSE.md](LICENSE.md)を参照してください。

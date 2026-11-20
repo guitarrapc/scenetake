@@ -8,9 +8,37 @@
 
 English | [日本語](README-ja.md)
 
-scenetake makes terminal recordings from commands you write in a YAML scenario. It types the commands for you, so recording again and again is easy, and you can tell it which keys to press in TUIs and interactive apps.
+scenetake records terminal demos from commands you write in a YAML scenario.
 
 ![](samples/showcase/welcome.svg)
+
+## Why scenetake?
+
+Terminal demos recorded by hand go stale when your tool changes. Re-recording means retyping every command, waiting for the output, and avoiding typos, and it gets tedious fast.
+
+scenetake makes re-recording easy. Write the commands in a YAML scenario, and scenetake types them for you. It presses the keys you list in TUIs and interactive apps, and hides tokens and your user name. Steps whose output did not change record exactly as before, so a re-recorded demo differs only where something changed.
+
+## Gallery
+
+| [fastfetch](samples/showcase/fetch.yaml) | [bat, git, and jq](samples/showcase/devtools.yaml) |
+| --- | --- |
+| ![](samples/showcase/fetch.svg) | ![](samples/showcase/devtools.svg) |
+| [figlet, lolcat, and toilet](samples/showcase/logo.yaml) | [sl](samples/showcase/sl.yaml) |
+| ![](samples/showcase/logo.svg) | ![](samples/showcase/sl.svg) |
+| [vim and git diff, typed by `keys`, on an image background](samples/showcase/vim.yaml) | [Tokens and passwords, masked](samples/showcase/secrets.yaml) |
+| ![](samples/showcase/vim.svg) | ![](samples/showcase/secrets.svg) |
+
+![](samples/showcase/nyancat.svg)
+
+## How it works
+
+scenetake runs the commands in your steps for real. It types each one at the speed you set and records the actual output. Steps with `pty: true` run in a pseudo-terminal, so TUIs and progress bars draw just as they do in your terminal.
+
+The recording is an asciinema v3 cast, which you can turn into SVG, PNG, mp4, or GIF. Commit the cast to git, and you can redraw it in another format or theme without running the commands again.
+
+## Example
+
+This scenario, [samples/basic.yaml](samples/basic.yaml), records as below.
 
 ```yaml
 title: "Basic Demo"
@@ -49,19 +77,9 @@ steps:
 | --- | --- |
 | ![](samples/basic.gif) | ![](samples/basic.svg) |
 
-## Gallery
+## Getting started
 
-| [fastfetch](samples/showcase/fetch.yaml) | [bat, git, and jq](samples/showcase/devtools.yaml) |
-| --- | --- |
-| ![](samples/showcase/fetch.svg) | ![](samples/showcase/devtools.svg) |
-| [figlet, lolcat, and toilet](samples/showcase/logo.yaml) | [sl](samples/showcase/sl.yaml) |
-| ![](samples/showcase/logo.svg) | ![](samples/showcase/sl.svg) |
-| [vim and git diff, typed by `keys`, on an image background](samples/showcase/vim.yaml) | [Tokens and passwords, masked](samples/showcase/secrets.yaml) |
-| ![](samples/showcase/vim.svg) | ![](samples/showcase/secrets.svg) |
-
-![](samples/showcase/nyancat.svg)
-
-## Quick Start
+### Install
 
 Download a binary for Linux, macOS, or Windows from [Releases](https://github.com/guitarrapc/scenetake/releases), or install it with one of these. You do not need asciinema or a .NET runtime.
 
@@ -77,29 +95,111 @@ scoop bucket add guitarrapc https://github.com/guitarrapc/scoop-bucket
 scoop install scenetake
 ```
 
+mp4 and GIF need [ffmpeg](https://ffmpeg.org/). Install it with `winget install Gyan.FFmpeg`, `brew install ffmpeg`, or `sudo apt install ffmpeg`.
+
+### Record a demo
+
 ![](samples/quickstart.svg)
 
-```bash
-# Record one command without a scenario
-scenetake capture -- git log --oneline -5
+Make a starter scenario, scenario.yaml:
 
-# Make a scenario from a command
-scenetake capture --save-scenario help.yaml -- mycli --help
-
-# Make a scenario file, scenario.yaml
+```sh
 scenetake init
+```
 
-# Run the scenario and record it as scenario.svg (scenario.cast is written too)
+Run the scenario and record it as scenario.svg. scenario.cast is written too:
+
+```sh
 scenetake --format svg scenario.yaml
+```
 
-# Record every scenario in a folder
+Record one command without a scenario, or keep it as a scenario to add steps to:
+
+```sh
+scenetake capture -- git log --oneline -5
+scenetake capture --save-scenario help.yaml -- mycli --help
+```
+
+Record every scenario in a folder:
+
+```sh
 scenetake --format svg demos/*.yaml
+```
 
-# See every option
+Make an mp4 from the cast, without running the commands again:
+
+```sh
+scenetake mp4 scenario.cast
+```
+
+See every option:
+
+```sh
 scenetake --help
 ```
 
-## Output formats
+## CLI reference
+
+The tables below say what each command and option is for. `scenetake --help` and `scenetake <command> --help` show their ranges and defaults.
+
+### Commands
+
+| Command | Use it to |
+| --- | --- |
+| `scenetake <scenario.yaml> [output]` | Run a scenario and record it. `[output]` names the files: `out` writes out.cast and out.svg |
+| `scenetake <scenario.yaml>...` | Record several demos in one run, such as `docs/*.yaml` in CI |
+| `scenetake svg\|mp4\|png\|gif <input.cast> [output]` | Make another format from a cast without running the commands again |
+| `scenetake capture -- <command>` | Record one command without writing a scenario |
+| `scenetake init [scenario.yaml]` | Start a scenario from a commented template |
+| `scenetake --version` | See which version you have |
+
+### Options
+
+`capture` takes the options of a scenario, except `--save-keys`, `--save-outputs`, and `--replay`. The svg, mp4, png, and gif commands take the options for the look and for their format.
+
+| Option | Use it to |
+| --- | --- |
+| **Recording** | |
+| `--format cast\|svg\|mp4\|png\|gif` | Write one format besides the cast. Without it, a scenario writes the files its `outputs` lists, and `capture` writes an SVG |
+| `--strict` | Stop with an error when a step's command fails, so CI does not keep a broken demo |
+| `--save-keys FILE` | Save what you type in `interactive: true` steps, so later recordings type it for you |
+| `--save-outputs FILE` | Save what each step printed, for `--replay` |
+| `--replay FILE` | Change the look, the timing, or the format without running the commands again |
+| `--verbose` | See which phase is running, and the details of an error that stops the run |
+| **Look** (overrides the scenario's `render`, or what the cast stores) | |
+| `--theme NAME` | Pick a color theme, such as a light one for a light page |
+| `--font-size N`, `--font-family FAMILIES` | Make the text easier to read, or use your own font |
+| `--window none\|macos\|windows`, `--window-title TEXT` | Draw a title bar, so the recording looks like a terminal window |
+| `--background VALUE` | Put a color, a gradient, or an image around the window |
+| `--opacity N`, `--blur N` | Show the background through the window, and blur it |
+| `--margin N`, `--padding N` | Change the space around the window and around the text |
+| `--fit none\|height\|width\|both` | Leave out the empty rows below the output (the default), or keep the whole terminal with `none` |
+| `--crop-top N`, `--crop-bottom N`, `--crop-left N`, `--crop-right N` | Cut rows or columns that you do not want to show from an edge |
+| **Animation and stills** | |
+| `--no-loop`, `--loop` | Play an SVG or a GIF once and stop on the final screen, or loop when the scenario or the cast says not to |
+| `--end-hold N` | Give viewers time to read the final screen before the animation starts again or ends |
+| `--fade-out N` | End with the text fading out instead of a cut |
+| `--max-fps N` | Make the SVG of a fast-changing screen smaller |
+| `--at TIME` | Make a still SVG or PNG of one moment, such as `end` for the final screen |
+| **mp4, GIF, and PNG** | |
+| `--fps N` | Balance smooth motion and file size for mp4 and GIF |
+| `--crf N` | Balance mp4 quality and file size |
+| `--max-size WxH` | Stay under a site's upload limit, such as `1280x1024` for X |
+| `--size WxH` | Make a video of an exact size, such as `1920x1080` |
+| `--font-file PATH` | Use a font file that is not installed. mp4, GIF, and PNG draw the text themselves, and an SVG uses the viewer's fonts |
+| **capture** | |
+| `--width N`, `--height N` | Set the terminal size |
+| `--shell NAME` | Run the command in a shell other than the default |
+| `--pipe` | Record the output as a pipe gets it, which most tools print without colors |
+| `--timeout N` | Stop a command that does not end by itself, such as `tail -f` |
+| `-o, --output NAME` | Name the files: `-o demo` writes demo.cast and demo.svg |
+| `--save-scenario FILE` | Keep the command as a scenario, to add steps and record it again |
+| **init** | |
+| `--shell bash\|pwsh\|powershell` | Write the template's steps for that shell |
+
+To use an ffmpeg that is not on PATH, set `SCENETAKE_FFMPEG` to its path.
+
+### Output formats
 
 | Format | How | Notes |
 | --- | --- | --- |
@@ -108,8 +208,6 @@ scenetake --help
 | `.png` | `--format png`, `scenetake png scenario.cast` | A still of one screen |
 | `.mp4` | `--format mp4`, `scenetake mp4 scenario.cast` | Needs [ffmpeg](https://ffmpeg.org/) |
 | `.gif` | `--format gif`, `scenetake gif scenario.cast` | Needs [ffmpeg](https://ffmpeg.org/) |
-
-Install ffmpeg with `winget install Gyan.FFmpeg`, `brew install ffmpeg`, or `sudo apt install ffmpeg`.
 
 To write several formats in one run, use the `outputs` key.
 
@@ -126,40 +224,33 @@ outputs:
     max-size: 1280x1024
 ```
 
-## Customize the look
+### Exit codes
 
-Set these with a `render` key in the scenario, or with the flag of the same name, such as `--window macos`.
-
-| Key | What it sets |
+| Code | Meaning |
 | --- | --- |
-| `window`, `window-title` | A title bar (`macos` / `windows`) and its text |
-| `background` | Around the window: a color, a gradient (`"#1e3c72 #2a5298"`), or an image |
-| `opacity`, `blur` | Show an image background through the window, and blur it |
-| `margin`, `padding` | Space in pixels |
-| `loop`, `end-hold`, `fade-out` | Play once (`--no-loop`), seconds on the final screen, seconds to fade the text out |
+| `0` | Recorded. Without `--strict`, a step's command that fails does not change it |
+| `1` | An error in the scenario, an option, or a file, ffmpeg is missing, a step failed with `--strict`, or one of several scenarios was not recorded |
+| Other | A `pre` or `post` command failed, and scenetake returns its exit code |
 
-| macOS | Windows |
-| --- | --- |
-| ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
+## Scenario format
 
-By default, empty rows below the output are left out. To keep the video at the full resolution, use `--fit none`. With `--fit none`, the default `80×24` is 820×488 as mp4 and 829.6×504 as SVG. For a 1920×1080 video, raise `--font-size`: the text is easier to read, and the size comes close to the resolution.
+Only the `steps` key is required. Quote a command that contains `: `, for example `run: 'echo "answer: $a"'`. See [spec_scenario.md](.github/docs/spec_scenario.md) for every key.
 
-Set the color theme with `render.theme.preset` or `--theme`.
+| Key | Default | What it sets |
+| --- | --- | --- |
+| `title` | — | The cast's title, and the title bar's text unless `window-title` sets it |
+| `width`, `height` | `80`, `24` | Terminal columns and rows |
+| `cwd` | the current folder | The folder the commands run in. A relative path starts at the scenario's folder |
+| `shell` | `$SHELL` or bash, `pwsh` on Windows | `bash`, `pwsh`, `powershell`, or a path |
+| `render` | — | The look: see [Customize the look](#customize-the-look) |
+| `outputs` | — | Files to write besides the cast: see [Output formats](#output-formats) |
+| `settings` | — | Defaults for every step: the prompt, typing speed, pauses, and masking |
+| `pre`, `post` | — | Commands that run before and after the steps, not recorded |
+| `steps` | required | The commands to record |
 
-| Dark background | |
-| --- | --- |
-| ![](samples/theme-presets/dark.svg) | ![](samples/theme-presets/macos-dark.svg) |
-| ![](samples/theme-presets/dracula.svg) | ![](samples/theme-presets/nord.svg) |
-| ![](samples/theme-presets/one-dark.svg) | ![](samples/theme-presets/gruvbox-dark.svg) |
-| ![](samples/theme-presets/catppuccin-mocha.svg) | ![](samples/theme-presets/tokyo-night.svg) |
-| ![](samples/theme-presets/solarized-dark.svg) | ![](samples/theme-presets/github-dark.svg) |
-| Light background | |
-| ![](samples/theme-presets/light.svg) | ![](samples/theme-presets/macos-light.svg) |
-| ![](samples/theme-presets/solarized-light.svg) | ![](samples/theme-presets/github-light.svg) |
+### Output modes
 
-## Output modes
-
-### Ordinary output
+#### Ordinary output
 
 The output follows the typed command. `highlight` adds colors.
 
@@ -176,7 +267,7 @@ steps:
 | --- | --- |
 | ![](samples/highlight.gif) | ![](samples/highlight.svg) |
 
-### Stream output
+#### Stream output
 
 `stream-output: true` plays the output at its real timing.
 
@@ -190,7 +281,7 @@ steps:
 | --- | --- |
 | ![](samples/stream-output.gif) | ![](samples/stream-output.svg) |
 
-### TUI output
+#### TUI output
 
 `pty: true` records a TUI or a progress bar.
 
@@ -218,7 +309,7 @@ steps:
       - type: ":wq\n"
 ```
 
-### Interactive application output
+#### Interactive application output
 
 `interactive: true` records you using the app.
 
@@ -238,8 +329,6 @@ Save your keys with `--save-keys`, and later recordings play them back for you. 
 ```bash
 scenetake --save-keys keys.yaml demo.yaml
 ```
-
-## More features
 
 ### Across steps
 
@@ -275,89 +364,40 @@ steps:
   - card: "[fg:yellow]npm install -g my-app"
 ```
 
-### Change only the look, without running again
+### Customize the look
 
-Combine `--save-outputs` and `--replay` to reuse the outputs of one recording and change only the theme or the format.
+Set these with a `render` key in the scenario, or with the flag of the same name, such as `--window macos`.
 
-```bash
-scenetake --save-outputs demo.outputs.json demo.yaml
-scenetake --replay demo.outputs.json --format mp4 --theme dracula demo.yaml
-```
+| Key | What it sets |
+| --- | --- |
+| `window`, `window-title` | A title bar (`macos` / `windows`) and its text |
+| `background` | Around the window: a color, a gradient (`"#1e3c72 #2a5298"`), or an image |
+| `opacity`, `blur` | Show an image background through the window, and blur it |
+| `margin`, `padding` | Space in pixels |
+| `loop`, `end-hold`, `fade-out` | Play once (`--no-loop`), seconds on the final screen, seconds to fade the text out |
 
-### Record again without noise
+| macOS | Windows |
+| --- | --- |
+| ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
 
-When you record again, a step whose output did not change reuses the earlier recording. To reuse the earlier output even for output that changes every run, such as `date`, set `keep-output: true`.
+By default, empty rows below the output are left out. To keep the video at the full resolution, use `--fit none`. With `--fit none`, the default `80×24` is 820×488 as mp4 and 829.6×504 as SVG. For a 1920×1080 video, raise `--font-size`: the text is easier to read, and the size comes close to the resolution.
 
-```text
-Compared with the earlier cast: 4 of 5 steps printed the same, 1 changed
-  changed: step 3: npm test
-```
+Set the color theme with `render.theme.preset` or `--theme`.
 
-### Masking secrets
+| Dark background | |
+| --- | --- |
+| ![](samples/theme-presets/dark.svg) | ![](samples/theme-presets/macos-dark.svg) |
+| ![](samples/theme-presets/dracula.svg) | ![](samples/theme-presets/nord.svg) |
+| ![](samples/theme-presets/one-dark.svg) | ![](samples/theme-presets/gruvbox-dark.svg) |
+| ![](samples/theme-presets/catppuccin-mocha.svg) | ![](samples/theme-presets/tokyo-night.svg) |
+| ![](samples/theme-presets/solarized-dark.svg) | ![](samples/theme-presets/github-dark.svg) |
+| Light background | |
+| ![](samples/theme-presets/light.svg) | ![](samples/theme-presets/macos-light.svg) |
+| ![](samples/theme-presets/solarized-light.svg) | ![](samples/theme-presets/github-light.svg) |
 
-scenetake replaces tokens, `API_KEY=…` values, passwords in URLs, private keys, and the values of secret environment variables such as `GITHUB_TOKEN` with `*`. Specify other texts to hide with `mask`.
+### Full example
 
-```yaml
-settings:
-  mask:
-    - "internal.example.com"
-```
-
-It also hides who recorded the demo: your user name in `/home/<name>` or `ls -l`, your computer's name, and your git name and email in `git log`. Your name in a web address, such as `github.com/<name>/tool`, stays. To show them, set `mask-personal: false`.
-
-```yaml
-settings:
-  mask-personal: false
-```
-
-### CI
-
-Record the demos again in GitHub Actions when your product changes. A demo whose output did not change gives the same files, so only the demos that changed show in the diff.
-
-```yaml
-# .github/workflows/demos.yaml
-name: Update demos
-on:
-  workflow_dispatch:
-  release:
-    types: [published]
-permissions:
-  contents: write
-  pull-requests: write
-jobs:
-  record:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          # A release would check out its tag, which a pull request cannot start from.
-          ref: ${{ github.event_name == 'release' && github.event.repository.default_branch || github.ref }}
-      # Install the product that the demos show here.
-      - run: sudo apt-get update && sudo apt-get install -y ffmpeg # only for gif and mp4 outputs
-      - run: npx -y scenetake --strict docs/demos/*.yaml
-      # Needs "Allow GitHub Actions to create and approve pull requests" in the repository settings.
-      - uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
-        with:
-          title: Update demos
-          branch: update-demos
-```
-
-To fail a pull request whose demos are out of date, record them and compare the casts. `git add -N` makes a cast that was never committed show in the diff too:
-
-```bash
-npx -y scenetake --strict docs/demos/*.yaml
-git add -N docs/demos
-git diff --exit-code -- 'docs/demos/*.cast'
-```
-
-- Record locally in the shell that CI uses, such as bash on Linux. A demo recorded with pwsh on Windows changes completely on its first CI run.
-- Compare the casts, not GIFs or mp4s, whose bytes change with the ffmpeg version.
-- Steps with `interactive: true` cannot run in CI. Steps with `keys` can.
-- `--strict` makes a non-zero exit from a step's command an error. Set `continue-on-error: true` on a step that is meant to fail.
-
-## Scenario Format
-
-Only the `steps` key is required. Quote a command that contains `: `, for example `run: 'echo "answer: $a"'`. See [spec_scenario.md](.github/docs/spec_scenario.md) for every key.
+A runnable scenario with a comment on each key, [samples/scenario_format.yaml](samples/scenario_format.yaml):
 
 ![](samples/scenario_format.svg)
 
@@ -490,3 +530,108 @@ steps:
 post:
   - echo "demo complete (not recorded)"
 ```
+
+## Masking secrets
+
+scenetake replaces tokens, `API_KEY=…` values, passwords in URLs, private keys, and the values of secret environment variables such as `GITHUB_TOKEN` with `*`. Specify other texts to hide with `mask`.
+
+```yaml
+settings:
+  mask:
+    - "internal.example.com"
+```
+
+It also hides who recorded the demo: your user name in `/home/<name>` or `ls -l`, your computer's name, and your git name and email in `git log`. Your name in a web address, such as `github.com/<name>/tool`, stays. To show them, set `mask-personal: false`.
+
+```yaml
+settings:
+  mask-personal: false
+```
+
+## Recording again
+
+When the tool changes, record the scenario again. These make that quick, and keep the diff to what changed.
+
+### Change only the look, without running again
+
+Combine `--save-outputs` and `--replay` to reuse the outputs of one recording and change only the theme or the format.
+
+```bash
+scenetake --save-outputs demo.outputs.json demo.yaml
+scenetake --replay demo.outputs.json --format mp4 --theme dracula demo.yaml
+```
+
+### Record again without noise
+
+When you record again, a step whose output did not change reuses the earlier recording. To reuse the earlier output even for output that changes every run, such as `date`, set `keep-output: true`.
+
+```text
+Compared with the earlier cast: 4 of 5 steps printed the same, 1 changed
+  changed: step 3: npm test
+```
+
+### CI
+
+Record the demos again in GitHub Actions when your product changes. A demo whose output did not change gives the same files, so only the demos that changed show in the diff.
+
+```yaml
+# .github/workflows/demos.yaml
+name: Update demos
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  record:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # A release would check out its tag, which a pull request cannot start from.
+          ref: ${{ github.event_name == 'release' && github.event.repository.default_branch || github.ref }}
+      # Install the product that the demos show here.
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg # only for gif and mp4 outputs
+      - run: npx -y scenetake --strict docs/demos/*.yaml
+      # Needs "Allow GitHub Actions to create and approve pull requests" in the repository settings.
+      - uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
+        with:
+          title: Update demos
+          branch: update-demos
+```
+
+To fail a pull request whose demos are out of date, record them and compare the casts. `git add -N` makes a cast that was never committed show in the diff too:
+
+```bash
+npx -y scenetake --strict docs/demos/*.yaml
+git add -N docs/demos
+git diff --exit-code -- 'docs/demos/*.cast'
+```
+
+- Record locally in the shell that CI uses, such as bash on Linux. A demo recorded with pwsh on Windows changes completely on its first CI run.
+- Compare the casts, not GIFs or mp4s, whose bytes change with the ffmpeg version.
+- Steps with `interactive: true` cannot run in CI. Steps with `keys` can.
+- `--strict` makes a non-zero exit from a step's command an error. Set `continue-on-error: true` on a step that is meant to fail.
+
+## Development
+
+Needs the .NET 10 SDK.
+
+```sh
+# Build
+dotnet build
+
+# Run the tests. Tests of the binary are skipped unless SCENETAKE_BIN names a published one
+dotnet test
+
+# Publish a Native AOT binary for this machine
+dotnet publish src/Scenetake/Scenetake.csproj -c Release -p:PublishAot=true
+```
+
+The specifications are in [.github/docs](.github/docs/spec_index.md).
+
+## License
+
+MIT. See [LICENSE.md](LICENSE.md).

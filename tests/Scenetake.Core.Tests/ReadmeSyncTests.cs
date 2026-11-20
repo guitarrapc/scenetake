@@ -2,12 +2,12 @@
 
 namespace Scenetake.Core.Tests;
 
-// The Scenario Format yaml block in each README is a copy of samples/scenario_format.yaml.
+// The Full example yaml block in each README is a copy of samples/scenario_format.yaml.
 public sealed class ReadmeSyncTests
 {
     [Test]
-    [Arguments("README.md", "## Scenario Format")]
-    [Arguments("README-ja.md", "## シナリオファイル形式")]
+    [Arguments("README.md", "### Full example")]
+    [Arguments("README-ja.md", "### 全体の例")]
     public async Task ScenarioFormatBlockMatchesSample(string readme, string heading)
     {
         var expected = NormalizeNewlines(File.ReadAllText(TestEnv.RepoPath("samples", "scenario_format.yaml")));
