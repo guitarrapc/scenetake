@@ -42,102 +42,102 @@ public sealed class PipeOutputDecoderTests
 internal static class PipeOutputDecoderCases
 {
 
-// Feeds each read to the decoder as PipeStreamCapture does, then the end of the stream (flush).
-internal static string Decode(ILegacyTextDecoder legacy, params byte[][] reads)
-{
-    var decoder = new PipeOutputDecoder(legacy);
-    var text = new StringBuilder();
-    foreach (var read in reads.Append([]))
+    // Feeds each read to the decoder as PipeStreamCapture does, then the end of the stream (flush).
+    internal static string Decode(ILegacyTextDecoder legacy, params byte[][] reads)
     {
-        var chars = new char[read.Length + PipeOutputDecoder.MaxPendingBytes];
-        var count = decoder.GetChars(read, 0, read.Length, chars, 0, flush: read.Length == 0);
-        text.Append(chars, 0, count);
+        var decoder = new PipeOutputDecoder(legacy);
+        var text = new StringBuilder();
+        foreach (var read in reads.Append([]))
+        {
+            var chars = new char[read.Length + PipeOutputDecoder.MaxPendingBytes];
+            var count = decoder.GetChars(read, 0, read.Length, chars, 0, flush: read.Length == 0);
+            text.Append(chars, 0, count);
+        }
+
+        return text.ToString();
     }
 
-    return text.ToString();
-}
+    internal static byte[] Utf8Bytes(string text) => Encoding.UTF8.GetBytes(text);
 
-internal static byte[] Utf8Bytes(string text) => Encoding.UTF8.GetBytes(text);
-
-internal static bool Expect(string actual, string expected)
-{
-    if (actual == expected)
-        return true;
-    Console.Error.WriteLine($"  expected: {Escape(expected)}{Environment.NewLine}  actual:   {Escape(actual)}");
-    return false;
-
-    static string Escape(string text) => text.Replace("\r", "\\r", StringComparison.Ordinal).Replace("\n", "\\n", StringComparison.Ordinal);
-}
-
-internal static bool Utf8LineStaysUtf8() =>
-    Expect(Decode(new Latin1Decoder(), Utf8Bytes("bash 絵文字 🎉 ✓\r\n")), "bash 絵文字 🎉 ✓\r\n");
-
-internal static bool InvalidUtf8LineUsesLegacyCodePage() =>
-    // 0xE9 is "é" in Latin-1 and a UTF-8 lead byte without its continuation bytes.
-    Expect(Decode(new Latin1Decoder(), [(byte)'c', (byte)'a', (byte)'f', 0xE9, (byte)'\r', (byte)'\n']), "café\r\n");
-
-internal static bool EachLineChoosesItsOwnDecoding() =>
-    // A tool that writes UTF-8 and one that writes the legacy code page in the same step.
-    Expect(Decode(new Latin1Decoder(), [.. Utf8Bytes("git 報告書.txt\n"), (byte)'p', 0xE9, (byte)'\n', .. Utf8Bytes("ok\n")]), "git 報告書.txt\npé\nok\n");
-
-internal static bool Utf8SequenceSplitAcrossReads()
-{
-    // The 4 bytes of an emoji arrive in two reads. The first read returns nothing for them and holds them.
-    var emoji = Utf8Bytes("🎉");
-    var decoder = new PipeOutputDecoder(new Latin1Decoder());
-    var chars = new char[8];
-    var first = decoder.GetChars([(byte)'a', emoji[0], emoji[1]], 0, 3, chars, 0, flush: false);
-    var firstText = new string(chars, 0, first);
-    var second = decoder.GetChars([emoji[2], emoji[3], (byte)'\n'], 0, 3, chars, 0, flush: false);
-    return Expect(firstText, "a") && Expect(new string(chars, 0, second), "🎉\n");
-}
-
-internal static bool BomAtStartIsSkipped() =>
-    // The StreamReader this replaces skipped a BOM at the start of the stream, also when it arrived in pieces.
-    Expect(Decode(new Latin1Decoder(), [0xEF, 0xBB, 0xBF, (byte)'a', (byte)'\n']), "a\n")
-    && Expect(Decode(new Latin1Decoder(), [0xEF], [0xBB, 0xBF, (byte)'b']), "b")
-    && Expect(Decode(new Latin1Decoder(), Utf8Bytes("x"), [0xEF, 0xBB, 0xBF]), "x﻿");
-
-internal static bool FlushDecodesHeldBytes() =>
-    // Bytes held for a character that never finishes come out at the end of the stream instead of being
-    // lost: here they are not UTF-8, so the legacy code page reads them.
-    Expect(Decode(new Latin1Decoder(), [(byte)'z', 0xE7, 0xB5]), "zçµ");
-
-internal static bool OutputFitsOneCharPerByte()
-{
-    // PipeStreamCapture sizes its char buffer as the read plus MaxPendingBytes. Random bytes in random
-    // reads must always fit.
-    var random = new Random(1234);
-    for (var round = 0; round < 200; round++)
+    internal static bool Expect(string actual, string expected)
     {
+        if (actual == expected)
+            return true;
+        Console.Error.WriteLine($"  expected: {Escape(expected)}{Environment.NewLine}  actual:   {Escape(actual)}");
+        return false;
+
+        static string Escape(string text) => text.Replace("\r", "\\r", StringComparison.Ordinal).Replace("\n", "\\n", StringComparison.Ordinal);
+    }
+
+    internal static bool Utf8LineStaysUtf8() =>
+        Expect(Decode(new Latin1Decoder(), Utf8Bytes("bash 絵文字 🎉 ✓\r\n")), "bash 絵文字 🎉 ✓\r\n");
+
+    internal static bool InvalidUtf8LineUsesLegacyCodePage() =>
+        // 0xE9 is "é" in Latin-1 and a UTF-8 lead byte without its continuation bytes.
+        Expect(Decode(new Latin1Decoder(), [(byte)'c', (byte)'a', (byte)'f', 0xE9, (byte)'\r', (byte)'\n']), "café\r\n");
+
+    internal static bool EachLineChoosesItsOwnDecoding() =>
+        // A tool that writes UTF-8 and one that writes the legacy code page in the same step.
+        Expect(Decode(new Latin1Decoder(), [.. Utf8Bytes("git 報告書.txt\n"), (byte)'p', 0xE9, (byte)'\n', .. Utf8Bytes("ok\n")]), "git 報告書.txt\npé\nok\n");
+
+    internal static bool Utf8SequenceSplitAcrossReads()
+    {
+        // The 4 bytes of an emoji arrive in two reads. The first read returns nothing for them and holds them.
+        var emoji = Utf8Bytes("🎉");
         var decoder = new PipeOutputDecoder(new Latin1Decoder());
-        for (var i = 0; i < 20; i++)
+        var chars = new char[8];
+        var first = decoder.GetChars([(byte)'a', emoji[0], emoji[1]], 0, 3, chars, 0, flush: false);
+        var firstText = new string(chars, 0, first);
+        var second = decoder.GetChars([emoji[2], emoji[3], (byte)'\n'], 0, 3, chars, 0, flush: false);
+        return Expect(firstText, "a") && Expect(new string(chars, 0, second), "🎉\n");
+    }
+
+    internal static bool BomAtStartIsSkipped() =>
+        // The StreamReader this replaces skipped a BOM at the start of the stream, also when it arrived in pieces.
+        Expect(Decode(new Latin1Decoder(), [0xEF, 0xBB, 0xBF, (byte)'a', (byte)'\n']), "a\n")
+        && Expect(Decode(new Latin1Decoder(), [0xEF], [0xBB, 0xBF, (byte)'b']), "b")
+        && Expect(Decode(new Latin1Decoder(), Utf8Bytes("x"), [0xEF, 0xBB, 0xBF]), "x﻿");
+
+    internal static bool FlushDecodesHeldBytes() =>
+        // Bytes held for a character that never finishes come out at the end of the stream instead of being
+        // lost: here they are not UTF-8, so the legacy code page reads them.
+        Expect(Decode(new Latin1Decoder(), [(byte)'z', 0xE7, 0xB5]), "zçµ");
+
+    internal static bool OutputFitsOneCharPerByte()
+    {
+        // PipeStreamCapture sizes its char buffer as the read plus MaxPendingBytes. Random bytes in random
+        // reads must always fit.
+        var random = new Random(1234);
+        for (var round = 0; round < 200; round++)
         {
-            var read = new byte[random.Next(0, 9)];
-            random.NextBytes(read);
-            var chars = new char[read.Length + PipeOutputDecoder.MaxPendingBytes];
-            decoder.GetChars(read, 0, read.Length, chars, 0, flush: i == 19);
+            var decoder = new PipeOutputDecoder(new Latin1Decoder());
+            for (var i = 0; i < 20; i++)
+            {
+                var read = new byte[random.Next(0, 9)];
+                random.NextBytes(read);
+                var chars = new char[read.Length + PipeOutputDecoder.MaxPendingBytes];
+                decoder.GetChars(read, 0, read.Length, chars, 0, flush: i == 19);
+            }
+        }
+
+        return true;
+    }
+
+    internal static bool Cp932LineDecodesWithTheOs() =>
+        // What cmd's echo writes on Japanese Windows: "cmd 漢字" in code page 932.
+        Expect(Decode(new WindowsCodePageDecoder(932), [.. "cmd "u8, 0x8A, 0xBF, 0x8E, 0x9A, (byte)'\r', (byte)'\n']), "cmd 漢字\r\n");
+
+    internal static bool Cp932LeadByteSplitAcrossReads() =>
+        // A read ends between the lead byte and the trail byte of "字" (0x8E 0x9A), and the trail byte of "漢"
+        // (0xBF) has the value of no lead byte while 0x8E does, so only a walk from the line start finds the split.
+        Expect(Decode(new WindowsCodePageDecoder(932), [0x8A, 0xBF, 0x8E], [0x9A, (byte)'\n']), "漢字\n");
+
+    internal sealed class Latin1Decoder : ILegacyTextDecoder
+    {
+        public int Decode(ReadOnlySpan<byte> bytes, bool final, StringBuilder text)
+        {
+            text.Append(Encoding.Latin1.GetString(bytes));
+            return bytes.Length;
         }
     }
-
-    return true;
-}
-
-internal static bool Cp932LineDecodesWithTheOs() =>
-    // What cmd's echo writes on Japanese Windows: "cmd 漢字" in code page 932.
-    Expect(Decode(new WindowsCodePageDecoder(932), [.. "cmd "u8, 0x8A, 0xBF, 0x8E, 0x9A, (byte)'\r', (byte)'\n']), "cmd 漢字\r\n");
-
-internal static bool Cp932LeadByteSplitAcrossReads() =>
-    // A read ends between the lead byte and the trail byte of "字" (0x8E 0x9A), and the trail byte of "漢"
-    // (0xBF) has the value of no lead byte while 0x8E does, so only a walk from the line start finds the split.
-    Expect(Decode(new WindowsCodePageDecoder(932), [0x8A, 0xBF, 0x8E], [0x9A, (byte)'\n']), "漢字\n");
-
-internal sealed class Latin1Decoder : ILegacyTextDecoder
-{
-    public int Decode(ReadOnlySpan<byte> bytes, bool final, StringBuilder text)
-    {
-        text.Append(Encoding.Latin1.GetString(bytes));
-        return bytes.Length;
-    }
-}
 }
