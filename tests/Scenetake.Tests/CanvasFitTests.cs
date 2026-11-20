@@ -1,88 +1,84 @@
-#:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
-#:property Nullable=enable
-#:property ImplicitUsings=enable
-#:property AllowUnsafeBlocks=true
-#:package StbTrueTypeSharp@1.26.13
-#:include ../Terminal.cs
-#:include ../CastTimingPipeline.cs
-#:include ../CastReader.cs
-#:include SvgTestStubs.cs
-#:include ../Svg.cs
-#:include ../Raster.cs
-#:include ../Mp4.cs
+﻿using Scenetake.TestSupport;
+
+namespace Scenetake.Tests;
 
 // render.fit and render.crop-* (.github/docs/spec_svg.md → Fit and crop): the part of the terminal that a render
 // draws.
 
-var failures = 0;
-failures += Run("FitMovesEdgesToContentAndCursor", FitMovesEdgesToContentAndCursor);
-failures += Run("FitCoversEveryScreen", FitCoversEveryScreen);
-failures += Run("StillFitLooksAtItsScreenOnly", StillFitLooksAtItsScreenOnly);
-failures += Run("HiddenCursorIsNotContent", HiddenCursorIsNotContent);
-failures += Run("ColoredBlankIsContent", ColoredBlankIsContent);
-failures += Run("CropShiftsCellsAndCursor", CropShiftsCellsAndCursor);
-failures += Run("CropThenFit", CropThenFit);
-failures += Run("WideCharacterCutByCropIsBlank", WideCharacterCutByCropIsBlank);
-failures += Run("CropLeavingNothingIsAnError", CropLeavingNothingIsAnError);
-failures += Run("FittedSvgEqualsTheSmallTerminal", FittedSvgEqualsTheSmallTerminal);
-failures += Run("CroppedSvgEqualsTheSmallTerminal", CroppedSvgEqualsTheSmallTerminal);
-failures += Run("Mp4SizeFollowsFit", Mp4SizeFollowsFit);
-failures += Run("ScenarioKeysResolve", ScenarioKeysResolve);
-failures += Run("OverridesReplaceEachEdge", OverridesReplaceEachEdge);
-failures += Run("CastTagsRoundTrip", CastTagsRoundTrip);
-
-if (failures > 0)
+public sealed class CanvasFitTests
 {
-    Console.Error.WriteLine($"Failed: {failures} canvas fit test(s)");
-    return 1;
+    [Test]
+    public async Task FitMovesEdgesToContentAndCursor() => await Assert.That(CanvasFitCases.FitMovesEdgesToContentAndCursor()).IsTrue();
+
+    [Test]
+    public async Task FitCoversEveryScreen() => await Assert.That(CanvasFitCases.FitCoversEveryScreen()).IsTrue();
+
+    [Test]
+    public async Task StillFitLooksAtItsScreenOnly() => await Assert.That(CanvasFitCases.StillFitLooksAtItsScreenOnly()).IsTrue();
+
+    [Test]
+    public async Task HiddenCursorIsNotContent() => await Assert.That(CanvasFitCases.HiddenCursorIsNotContent()).IsTrue();
+
+    [Test]
+    public async Task ColoredBlankIsContent() => await Assert.That(CanvasFitCases.ColoredBlankIsContent()).IsTrue();
+
+    [Test]
+    public async Task CropShiftsCellsAndCursor() => await Assert.That(CanvasFitCases.CropShiftsCellsAndCursor()).IsTrue();
+
+    [Test]
+    public async Task CropThenFit() => await Assert.That(CanvasFitCases.CropThenFit()).IsTrue();
+
+    [Test]
+    public async Task WideCharacterCutByCropIsBlank() => await Assert.That(CanvasFitCases.WideCharacterCutByCropIsBlank()).IsTrue();
+
+    [Test]
+    public async Task CropLeavingNothingIsAnError() => await Assert.That(CanvasFitCases.CropLeavingNothingIsAnError()).IsTrue();
+
+    [Test]
+    public async Task FittedSvgEqualsTheSmallTerminal() => await Assert.That(CanvasFitCases.FittedSvgEqualsTheSmallTerminal()).IsTrue();
+
+    [Test]
+    public async Task CroppedSvgEqualsTheSmallTerminal() => await Assert.That(CanvasFitCases.CroppedSvgEqualsTheSmallTerminal()).IsTrue();
+
+    [Test]
+    public async Task Mp4SizeFollowsFit() => await Assert.That(CanvasFitCases.Mp4SizeFollowsFit()).IsTrue();
+
+    [Test]
+    public async Task ScenarioKeysResolve() => await Assert.That(CanvasFitCases.ScenarioKeysResolve()).IsTrue();
+
+    [Test]
+    public async Task OverridesReplaceEachEdge() => await Assert.That(CanvasFitCases.OverridesReplaceEachEdge()).IsTrue();
+
+    [Test]
+    public async Task CastTagsRoundTrip() => await Assert.That(CanvasFitCases.CastTagsRoundTrip()).IsTrue();
 }
 
-Console.Error.WriteLine("all canvas fit tests passed");
-return 0;
-
-static int Run(string name, Func<bool> test)
+internal static class CanvasFitCases
 {
-    try
-    {
-        if (test())
-        {
-            Console.Error.WriteLine($"ok {name}");
-            return 0;
-        }
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"  {ex}");
-    }
 
-    Console.Error.WriteLine($"FAIL {name}");
-    return 1;
-}
-
-static bool Expect(bool condition, string message)
+internal static bool Expect(bool condition, string message)
 {
     if (!condition)
         Console.Error.WriteLine($"  {message}");
     return condition;
 }
 
-static ResolvedTheme Dark() => new(RenderSettingsResolver.DefaultFg, RenderSettingsResolver.DefaultBg, RenderSettingsResolver.DefaultPalette);
+internal static ResolvedTheme Dark() => new(RenderSettingsResolver.DefaultFg, RenderSettingsResolver.DefaultBg, RenderSettingsResolver.DefaultPalette);
 
-static TerminalTheme Theme() => TerminalTheme.FromResolved(Dark());
+internal static TerminalTheme Theme() => TerminalTheme.FromResolved(Dark());
 
-static List<CastEvent> Events(params string[] outputs) =>
+internal static List<CastEvent> Events(params string[] outputs) =>
     [.. outputs.Select((text, i) => CastEvent.Output(0.1 * (i + 1), text))];
 
-static string Window(CanvasWindow canvas) => $"{canvas.Left},{canvas.Top},{canvas.Width}x{canvas.Height}";
+internal static string Window(CanvasWindow canvas) => $"{canvas.Left},{canvas.Top},{canvas.Width}x{canvas.Height}";
 
-static bool SameWindow(string label, string expected, CanvasWindow actual) =>
+internal static bool SameWindow(string label, string expected, CanvasWindow actual) =>
     Expect(expected == Window(actual), $"{label}: expected {expected}, got {Window(actual)}");
 
-static CanvasWindow Resolve(List<CastEvent> events, int width, int height, FitMode fit, CropSpec crop = default, double? stillAt = null) =>
+internal static CanvasWindow Resolve(List<CastEvent> events, int width, int height, FitMode fit, CropSpec crop = default, double? stillAt = null) =>
     TerminalReplay.ResolveCanvas(events, width, height, crop, fit, Theme(), stillAt);
 
-static bool FitMovesEdgesToContentAndCursor()
+internal static bool FitMovesEdgesToContentAndCursor()
 {
     // "abc" on row 0, "de" on row 1, and the cursor after "e" at column 2.
     var events = Events("abc\r\nde");
@@ -94,27 +90,27 @@ static bool FitMovesEdgesToContentAndCursor()
         & SameWindow("cursor", "0,0,6x1", Resolve(Events("abcde"), 20, 10, FitMode.Both));
 }
 
-static bool FitCoversEveryScreen()
+internal static bool FitCoversEveryScreen()
 {
     // A long line, then a cleared screen with one character: the long line was shown, so its columns stay.
     var events = Events("a long line\r\n", "\u001b[2J\u001b[Hx");
     return SameWindow("every screen", "0,0,11x2", Resolve(events, 20, 10, FitMode.Both));
 }
 
-static bool StillFitLooksAtItsScreenOnly()
+internal static bool StillFitLooksAtItsScreenOnly()
 {
     var events = Events("a long line\r\n", "\u001b[2J\u001b[Hx");
     return SameWindow("final screen", "0,0,2x1", Resolve(events, 20, 10, FitMode.Both, stillAt: double.PositiveInfinity))
         & SameWindow("first screen", "0,0,11x2", Resolve(events, 20, 10, FitMode.Both, stillAt: 0.15));
 }
 
-static bool HiddenCursorIsNotContent() =>
+internal static bool HiddenCursorIsNotContent() =>
     SameWindow("hidden cursor", "0,0,3x1", Resolve(Events("abc\r\n\u001b[?25l"), 20, 10, FitMode.Both));
 
-static bool ColoredBlankIsContent() =>
+internal static bool ColoredBlankIsContent() =>
     SameWindow("red spaces", "0,0,4x1", Resolve(Events("ab\u001b[41m  \u001b[0m\r\u001b[?25l"), 20, 10, FitMode.Both));
 
-static bool CropShiftsCellsAndCursor()
+internal static bool CropShiftsCellsAndCursor()
 {
     var theme = Theme();
     var buffer = new ScreenBuffer(10, 5, theme);
@@ -129,7 +125,7 @@ static bool CropShiftsCellsAndCursor()
         & Expect(!hidden.CursorVisible, "a cursor left of the window is hidden");
 }
 
-static bool CropThenFit()
+internal static bool CropThenFit()
 {
     // crop-left 2 cuts "ab", and fit then ends after "cdef" and the cursor after it.
     var events = Events("abcdef");
@@ -137,7 +133,7 @@ static bool CropThenFit()
         & SameWindow("crop only", "2,1,17x7", Resolve(events, 20, 10, FitMode.None, new CropSpec(1, 2, 2, 1)));
 }
 
-static bool WideCharacterCutByCropIsBlank()
+internal static bool WideCharacterCutByCropIsBlank()
 {
     var theme = Theme();
     var buffer = new ScreenBuffer(10, 2, theme);
@@ -149,7 +145,7 @@ static bool WideCharacterCutByCropIsBlank()
         & Expect(right.GetCell(0, 2).Text == " " && !right.GetCell(0, 2).IsWide, "the half cut at the right is blank");
 }
 
-static bool CropLeavingNothingIsAnError()
+internal static bool CropLeavingNothingIsAnError()
 {
     var rows = TerminalReplay.CheckCrop(new CropSpec(5, 5, 0, 0), 20, 10);
     var cols = TerminalReplay.CheckCrop(new CropSpec(0, 0, 15, 5), 20, 10);
@@ -169,10 +165,10 @@ static bool CropLeavingNothingIsAnError()
         & Expect(thrown, "ResolveCanvas throws for a crop that leaves nothing");
 }
 
-static ResolvedRenderSettings Render(FitMode fit = FitMode.None, CropSpec crop = default) =>
+internal static ResolvedRenderSettings Render(FitMode fit = FitMode.None, CropSpec crop = default) =>
     new ResolvedRenderSettings(16, RenderSettingsResolver.DefaultFontFamily, Dark()) with { Fit = fit, Crop = crop };
 
-static bool FittedSvgEqualsTheSmallTerminal()
+internal static bool FittedSvgEqualsTheSmallTerminal()
 {
     // Fit draws exactly what a terminal of the fitted size would show: the same cells, cursor, and viewport.
     var events = Events("abc\r\n", "de");
@@ -183,7 +179,7 @@ static bool FittedSvgEqualsTheSmallTerminal()
         & Expect(measured == SvgRender.Measure(events, 3, 2, Render()), $"Measure: {measured}");
 }
 
-static bool CroppedSvgEqualsTheSmallTerminal()
+internal static bool CroppedSvgEqualsTheSmallTerminal()
 {
     // Cutting the right and bottom edges of a terminal whose text stays inside them is a smaller terminal.
     var events = Events("abc\r\n", "de");
@@ -192,7 +188,7 @@ static bool CroppedSvgEqualsTheSmallTerminal()
     return Expect(cropped == small, "the cropped SVG differs from the SVG of a 3x2 terminal");
 }
 
-static bool Mp4SizeFollowsFit()
+internal static bool Mp4SizeFollowsFit()
 {
     var events = Events("abc\r\n", "de");
     var settings = new Mp4Settings(30, 23, 0, 0, 0, 0, null);
@@ -202,7 +198,7 @@ static bool Mp4SizeFollowsFit()
     return Expect(fitted == small, $"fitted {fitted} vs small {small}") & Expect(whole != small, "the whole terminal is larger");
 }
 
-static bool ScenarioKeysResolve()
+internal static bool ScenarioKeysResolve()
 {
     var ok = RenderSettingsResolver.TryResolve(
         new Scenario { Render = new ScenarioRender { Fit = "Height", CropTop = 1, CropRight = 3 } }, null, out var settings, out var error);
@@ -216,7 +212,7 @@ static bool ScenarioKeysResolve()
         & Expect(!badCrop && cropError == "invalid render.crop-left: must be between 0 and 511 cells: 512", $"crop error: {cropError}");
 }
 
-static bool OverridesReplaceEachEdge()
+internal static bool OverridesReplaceEachEdge()
 {
     var settings = Render(FitMode.Both, new CropSpec(1, 1, 1, 1));
     var applied = new RenderStyleOverrides(null, null, null, null, Fit: FitMode.Width, CropTop: 2, CropRight: 0).Apply(settings);
@@ -225,7 +221,7 @@ static bool OverridesReplaceEachEdge()
         & Expect(none.Fit == FitMode.Both && none.Crop == new CropSpec(1, 1, 1, 1), $"none: {none.Fit} {none.Crop}");
 }
 
-static bool CastTagsRoundTrip()
+internal static bool CastTagsRoundTrip()
 {
     var tagged = ReadHeader("\"st:fit=both\",\"st:crop-top=2\",\"st:crop-bottom=1\",\"st:crop-left=3\",\"st:crop-right=4\"");
     var none = ReadHeader("\"st:fit=none\"");
@@ -244,6 +240,8 @@ static bool CastTagsRoundTrip()
         var path = Path.Combine(Path.GetTempPath(), $"scenetake-fit-{Guid.NewGuid():N}.cast");
         var original = Console.Error;
         using var captured = new StringWriter();
+        // The reader writes its warnings to stderr. Tests run one at a time, so no other test writes while it is swapped.
+#pragma warning disable TUnit0055
         try
         {
             File.WriteAllText(path, "{\"version\":3,\"term\":{\"cols\":20,\"rows\":10},\"tags\":[" + tags + "]}\n[0.1,\"o\",\"x\"]\n");
@@ -255,5 +253,7 @@ static bool CastTagsRoundTrip()
             Console.SetError(original);
             File.Delete(path);
         }
+#pragma warning restore TUnit0055
     }
+}
 }

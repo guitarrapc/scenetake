@@ -1,27 +1,41 @@
-#:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
-#:property Nullable=enable
-#:property ImplicitUsings=enable
-
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text.Json;
+using Scenetake.TestSupport;
 
-var repoRoot = FindRepoRoot(Directory.GetCurrentDirectory());
-var failures = 0;
+namespace Scenetake.Tests;
 
-failures += Run("IntegrationStreamStagger", () => IntegrationStreamStagger(repoRoot));
-failures += Run("IntegrationInstantDefault", () => IntegrationInstantDefault(repoRoot));
-failures += Run("IntegrationInstantMergeOrder", () => IntegrationInstantMergeOrder(repoRoot));
-failures += Run("IntegrationInstantProgressBar", () => IntegrationInstantProgressBar(repoRoot));
-failures += Run("IntegrationDockerBuildStream", () => IntegrationDockerBuildStream(repoRoot));
-failures += Run("IntegrationTypingKeepsGraphemes", () => IntegrationTypingKeepsGraphemes(repoRoot));
-failures += Run("IntegrationTypingAfterVariableStepsRepeats", () => IntegrationTypingAfterVariableStepsRepeats(repoRoot));
-if (OperatingSystem.IsWindows())
-    failures += Run("IntegrationPipeOutputIsUtf8OnWindows", () => IntegrationPipeOutputIsUtf8OnWindows(repoRoot));
+[Category("Smoke")]
+public sealed class StreamOutputTests
+{
+    [Test]
+    public async Task IntegrationStreamStagger() => await Assert.That(StreamOutputCases.IntegrationStreamStagger(TestEnv.RepoRoot)).IsTrue();
 
-return failures == 0 ? 0 : 1;
+    [Test]
+    public async Task IntegrationInstantDefault() => await Assert.That(StreamOutputCases.IntegrationInstantDefault(TestEnv.RepoRoot)).IsTrue();
 
-static bool IntegrationPipeOutputIsUtf8OnWindows(string repoRoot)
+    [Test]
+    public async Task IntegrationInstantMergeOrder() => await Assert.That(StreamOutputCases.IntegrationInstantMergeOrder(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationInstantProgressBar() => await Assert.That(StreamOutputCases.IntegrationInstantProgressBar(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationDockerBuildStream() => await Assert.That(StreamOutputCases.IntegrationDockerBuildStream(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationTypingKeepsGraphemes() => await Assert.That(StreamOutputCases.IntegrationTypingKeepsGraphemes(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationTypingAfterVariableStepsRepeats() => await Assert.That(StreamOutputCases.IntegrationTypingAfterVariableStepsRepeats(TestEnv.RepoRoot)).IsTrue();
+
+    [RunOn(OS.Windows)]
+    [Test]
+    public async Task IntegrationPipeOutputIsUtf8OnWindows() => await Assert.That(StreamOutputCases.IntegrationPipeOutputIsUtf8OnWindows(TestEnv.RepoRoot)).IsTrue();
+}
+
+internal static class StreamOutputCases
+{
+internal static bool IntegrationPipeOutputIsUtf8OnWindows(string repoRoot)
 {
     // Pipe output used to be decoded in the code page of the terminal that started scenetake, while each
     // child writes either UTF-8 (Git Bash, git) or the code page of its own console (pwsh, cmd). Under code
@@ -34,10 +48,10 @@ static bool IntegrationPipeOutputIsUtf8OnWindows(string repoRoot)
     var ok = true;
     foreach (var (fixture, expected) in new[]
     {
-        ("pipe-encoding-pwsh.yaml", new[] { "SCENETAKE_PWSH 絵文字 🎉\r\n", "SCENETAKE_CMD 漢字 ✓\r\n" }),
-        // The cast writes Git Bash's "\n" as "\r\n".
-        ("pipe-encoding-bash.yaml", new[] { "SCENETAKE_BASH 絵文字 🎉\r\n" }),
-    })
+    ("pipe-encoding-pwsh.yaml", new[] { "SCENETAKE_PWSH 絵文字 🎉\r\n", "SCENETAKE_CMD 漢字 ✓\r\n" }),
+    // The cast writes Git Bash's "\n" as "\r\n".
+    ("pipe-encoding-bash.yaml", new[] { "SCENETAKE_BASH 絵文字 🎉\r\n" }),
+})
     {
         var outputStem = Path.Combine(Path.GetTempPath(), $"scenetake-encoding-{Guid.NewGuid():N}");
         try
@@ -66,37 +80,11 @@ static bool IntegrationPipeOutputIsUtf8OnWindows(string repoRoot)
     return ok;
 }
 
-static int Run(string name, Func<bool> test)
-{
-    try
-    {
-        if (test())
-        {
-            Console.Error.WriteLine($"ok {name}");
-            return 0;
-        }
 
-        Console.Error.WriteLine($"FAIL {name}");
-        return 1;
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"FAIL {name}: {ex.Message}");
-        return 1;
-    }
-}
+// Skips the test when SCENETAKE_BIN does not name a published binary.
+internal static bool IntegrationTestsEnabled() => TestEnv.Binary.Length > 0;
 
-static bool IntegrationTestsEnabled()
-{
-    var env = Environment.GetEnvironmentVariable("SCENETAKE_BIN");
-    if (!string.IsNullOrWhiteSpace(env) && File.Exists(env))
-        return true;
-
-    Console.Error.WriteLine("skip stream output integration tests: set SCENETAKE_BIN to a published scenetake binary");
-    return false;
-}
-
-static bool IntegrationStreamStagger(string repoRoot)
+internal static bool IntegrationStreamStagger(string repoRoot)
 {
     if (!IntegrationTestsEnabled())
         return true;
@@ -123,7 +111,7 @@ static bool IntegrationStreamStagger(string repoRoot)
     }
 }
 
-static bool IntegrationInstantDefault(string repoRoot)
+internal static bool IntegrationInstantDefault(string repoRoot)
 {
     if (!IntegrationTestsEnabled())
         return true;
@@ -148,7 +136,7 @@ static bool IntegrationInstantDefault(string repoRoot)
     }
 }
 
-static bool IntegrationInstantMergeOrder(string repoRoot)
+internal static bool IntegrationInstantMergeOrder(string repoRoot)
 {
     if (!IntegrationTestsEnabled())
         return true;
@@ -179,7 +167,7 @@ static bool IntegrationInstantMergeOrder(string repoRoot)
     }
 }
 
-static bool IntegrationInstantProgressBar(string repoRoot)
+internal static bool IntegrationInstantProgressBar(string repoRoot)
 {
     if (!IntegrationTestsEnabled())
         return true;
@@ -203,16 +191,13 @@ static bool IntegrationInstantProgressBar(string repoRoot)
     }
 }
 
-static bool IntegrationDockerBuildStream(string repoRoot)
+internal static bool IntegrationDockerBuildStream(string repoRoot)
 {
     if (!IntegrationTestsEnabled())
         return true;
 
     if (!DockerEnabled())
-    {
-        Console.Error.WriteLine("skip IntegrationDockerBuildStream: docker not available");
-        return true;
-    }
+        Skip.Test("docker not available");
 
     const double maxDuration = 12.0;
     var fixturePath = Path.Combine(repoRoot, "tests", "fixtures", "stream-output-docker.yaml");
@@ -245,7 +230,7 @@ static bool IntegrationDockerBuildStream(string repoRoot)
     }
 }
 
-static bool DockerEnabled()
+internal static bool DockerEnabled()
 {
     try
     {
@@ -268,7 +253,7 @@ static bool DockerEnabled()
     }
 }
 
-static bool IntegrationTypingKeepsGraphemes(string repoRoot)
+internal static bool IntegrationTypingKeepsGraphemes(string repoRoot)
 {
     // Typing one UTF-16 code unit at a time split an emoji's surrogate pair into two events, which the
     // cast stores as two U+FFFD. Each user-perceived character must be one typing event.
@@ -303,7 +288,7 @@ static bool IntegrationTypingKeepsGraphemes(string repoRoot)
     }
 }
 
-static bool IntegrationTypingAfterVariableStepsRepeats(string repoRoot)
+internal static bool IntegrationTypingAfterVariableStepsRepeats(string repoRoot)
 {
     // Stream emit and PTY output keep wall-clock times, so where they end differs between runs below a
     // millisecond. The cast stores each interval as the difference of absolute times rounded to
@@ -360,7 +345,7 @@ static bool IntegrationTypingAfterVariableStepsRepeats(string repoRoot)
     }
 }
 
-static List<(string Interval, string Text)> ReadCastRawOutputEvents(string castPath)
+internal static List<(string Interval, string Text)> ReadCastRawOutputEvents(string castPath)
 {
     // Intervals as written in the cast, not summed, so a 1ms change shows.
     var results = new List<(string Interval, string Text)>();
@@ -378,7 +363,7 @@ static List<(string Interval, string Text)> ReadCastRawOutputEvents(string castP
     return results;
 }
 
-static bool RunScenetake(string fixturePath, string outputStem, out int exitCode)
+internal static bool RunScenetake(string fixturePath, string outputStem, out int exitCode)
 {
     exitCode = -1;
     var scenetakePath = Environment.GetEnvironmentVariable("SCENETAKE_BIN");
@@ -401,7 +386,7 @@ static bool RunScenetake(string fixturePath, string outputStem, out int exitCode
     return true;
 }
 
-static List<(double Time, string Text)> ReadCastTimedOutputEvents(string castPath)
+internal static List<(double Time, string Text)> ReadCastTimedOutputEvents(string castPath)
 {
     var results = new List<(double Time, string Text)>();
     var time = 0.0;
@@ -427,7 +412,7 @@ static List<(double Time, string Text)> ReadCastTimedOutputEvents(string castPat
     return results;
 }
 
-static void Cleanup(string outputStem)
+internal static void Cleanup(string outputStem)
 {
     foreach (var path in new[] { outputStem + ".cast", outputStem + ".svg" })
     {
@@ -436,22 +421,4 @@ static void Cleanup(string outputStem)
     }
 }
 
-static string FindRepoRoot(string startDir)
-{
-    var dir = Path.GetFullPath(startDir);
-    while (true)
-    {
-        if (File.Exists(Path.Combine(dir, "scenetake.cs")))
-            return dir;
-
-        var parent = Directory.GetParent(dir);
-        if (parent is null)
-            break;
-
-        dir = parent.FullName;
-    }
-
-    Console.Error.WriteLine("Error: could not find scenetake.cs; run from the repository root");
-    Environment.Exit(1);
-    return "";
 }

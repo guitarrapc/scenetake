@@ -1,44 +1,91 @@
-#:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
-#:property Nullable=enable
-#:property ImplicitUsings=enable
-#:include ../Terminal.cs
-#:include ../CastTimingPipeline.cs
-#:include ../CastReader.cs
-#:include SvgTestStubs.cs
-#:include ../Svg.cs
+﻿using Scenetake.TestSupport;
 
-var failures = 0;
-failures += Run("LightBackgroundTakesShortHex", LightBackgroundTakesShortHex);
-failures += Run("BoldKeepsAColorItCannotBrighten", BoldKeepsAColorItCannotBrighten);
-failures += Run("ParseWindowAcceptsKnownValues", ParseWindowAcceptsKnownValues);
-failures += Run("ParseWindowRejectsUnknownValue", ParseWindowRejectsUnknownValue);
-failures += Run("ScenarioResolveReadsWindow", ScenarioResolveReadsWindow);
-failures += Run("ApplySvgOverridesWindowWins", ApplySvgOverridesWindowWins);
-failures += Run("CastTagReadsWindow", CastTagReadsWindow);
-failures += Run("MacosChromeAddsTrafficLights", MacosChromeAddsTrafficLights);
-failures += Run("WindowsChromeIsATabRow", WindowsChromeIsATabRow);
-failures += Run("WinTabRowFitsItsTitle", WinTabRowFitsItsTitle);
-failures += Run("ChromeIncreasesSvgHeight", ChromeIncreasesSvgHeight);
-failures += Run("PlainSvgHasNoChrome", PlainSvgHasNoChrome);
-failures += Run("ScenarioResolveReadsStyle", ScenarioResolveReadsStyle);
-failures += Run("ScenarioResolveRejectsBadStyle", ScenarioResolveRejectsBadStyle);
-failures += Run("BackgroundImagePathFollowsBaseFolder", BackgroundImagePathFollowsBaseFolder);
-failures += Run("CastTagsReadStyle", CastTagsReadStyle);
-failures += Run("ChromeShowsTitle", ChromeShowsTitle);
-failures += Run("FitWindowTitleCutsToRoom", FitWindowTitleCutsToRoom);
-failures += Run("BackgroundMarginAndPaddingShapeCanvas", BackgroundMarginAndPaddingShapeCanvas);
-failures += Run("ParseOpacityAndBlur", ParseOpacityAndBlur);
-failures += Run("OpacityAndBlurNeedBackground", OpacityAndBlurNeedBackground);
-failures += Run("TranslucentWindowSvg", TranslucentWindowSvg);
-failures += Run("FrostedWindowSvg", FrostedWindowSvg);
-failures += Run("WindowOnBackgroundCastsShadow", WindowOnBackgroundCastsShadow);
-failures += Run("DarkMacWindowHasEdgeLine", DarkMacWindowHasEdgeLine);
-failures += Run("TitleWidthIsNoNarrowerThanSans", TitleWidthIsNoNarrowerThanSans);
+namespace Scenetake.Core.Tests;
 
-return failures == 0 ? 0 : 1;
+public sealed class WindowChromeTests
+{
+    [Test]
+    public async Task LightBackgroundTakesShortHex() => await Assert.That(WindowChromeCases.LightBackgroundTakesShortHex()).IsTrue();
 
-static bool ScenarioResolveReadsStyle()
+    [Test]
+    public async Task BoldKeepsAColorItCannotBrighten() => await Assert.That(WindowChromeCases.BoldKeepsAColorItCannotBrighten()).IsTrue();
+
+    [Test]
+    public async Task ParseWindowAcceptsKnownValues() => await Assert.That(WindowChromeCases.ParseWindowAcceptsKnownValues()).IsTrue();
+
+    [Test]
+    public async Task ParseWindowRejectsUnknownValue() => await Assert.That(WindowChromeCases.ParseWindowRejectsUnknownValue()).IsTrue();
+
+    [Test]
+    public async Task ScenarioResolveReadsWindow() => await Assert.That(WindowChromeCases.ScenarioResolveReadsWindow()).IsTrue();
+
+    [Test]
+    public async Task ApplySvgOverridesWindowWins() => await Assert.That(WindowChromeCases.ApplySvgOverridesWindowWins()).IsTrue();
+
+    [Test]
+    public async Task CastTagReadsWindow() => await Assert.That(WindowChromeCases.CastTagReadsWindow()).IsTrue();
+
+    [Test]
+    public async Task MacosChromeAddsTrafficLights() => await Assert.That(WindowChromeCases.MacosChromeAddsTrafficLights()).IsTrue();
+
+    [Test]
+    public async Task WindowsChromeIsATabRow() => await Assert.That(WindowChromeCases.WindowsChromeIsATabRow()).IsTrue();
+
+    [Test]
+    public async Task WinTabRowFitsItsTitle() => await Assert.That(WindowChromeCases.WinTabRowFitsItsTitle()).IsTrue();
+
+    [Test]
+    public async Task ChromeIncreasesSvgHeight() => await Assert.That(WindowChromeCases.ChromeIncreasesSvgHeight()).IsTrue();
+
+    [Test]
+    public async Task PlainSvgHasNoChrome() => await Assert.That(WindowChromeCases.PlainSvgHasNoChrome()).IsTrue();
+
+    [Test]
+    public async Task ScenarioResolveReadsStyle() => await Assert.That(WindowChromeCases.ScenarioResolveReadsStyle()).IsTrue();
+
+    [Test]
+    public async Task ScenarioResolveRejectsBadStyle() => await Assert.That(WindowChromeCases.ScenarioResolveRejectsBadStyle()).IsTrue();
+
+    [Test]
+    public async Task BackgroundImagePathFollowsBaseFolder() => await Assert.That(WindowChromeCases.BackgroundImagePathFollowsBaseFolder()).IsTrue();
+
+    [Test]
+    public async Task CastTagsReadStyle() => await Assert.That(WindowChromeCases.CastTagsReadStyle()).IsTrue();
+
+    [Test]
+    public async Task ChromeShowsTitle() => await Assert.That(WindowChromeCases.ChromeShowsTitle()).IsTrue();
+
+    [Test]
+    public async Task FitWindowTitleCutsToRoom() => await Assert.That(WindowChromeCases.FitWindowTitleCutsToRoom()).IsTrue();
+
+    [Test]
+    public async Task BackgroundMarginAndPaddingShapeCanvas() => await Assert.That(WindowChromeCases.BackgroundMarginAndPaddingShapeCanvas()).IsTrue();
+
+    [Test]
+    public async Task ParseOpacityAndBlur() => await Assert.That(WindowChromeCases.ParseOpacityAndBlur()).IsTrue();
+
+    [Test]
+    public async Task OpacityAndBlurNeedBackground() => await Assert.That(WindowChromeCases.OpacityAndBlurNeedBackground()).IsTrue();
+
+    [Test]
+    public async Task TranslucentWindowSvg() => await Assert.That(WindowChromeCases.TranslucentWindowSvg()).IsTrue();
+
+    [Test]
+    public async Task FrostedWindowSvg() => await Assert.That(WindowChromeCases.FrostedWindowSvg()).IsTrue();
+
+    [Test]
+    public async Task WindowOnBackgroundCastsShadow() => await Assert.That(WindowChromeCases.WindowOnBackgroundCastsShadow()).IsTrue();
+
+    [Test]
+    public async Task DarkMacWindowHasEdgeLine() => await Assert.That(WindowChromeCases.DarkMacWindowHasEdgeLine()).IsTrue();
+
+    [Test]
+    public async Task TitleWidthIsNoNarrowerThanSans() => await Assert.That(WindowChromeCases.TitleWidthIsNoNarrowerThanSans()).IsTrue();
+}
+
+internal static class WindowChromeCases
+{
+internal static bool ScenarioResolveReadsStyle()
 {
     var scenario = new Scenario
     {
@@ -54,20 +101,20 @@ static bool ScenarioResolveReadsStyle()
         && settings is { Opacity: 0.85, Blur: 8, WindowOpacity: 0.85, WindowBlur: 8 };
 }
 
-static bool ScenarioResolveRejectsBadStyle()
+internal static bool ScenarioResolveRejectsBadStyle()
 {
     var cases = new (ScenarioRender Render, string Expected)[]
     {
-        (new ScenarioRender { Margin = 201 }, "invalid render.margin: must be between 0 and 200 pixels: 201"),
-        (new ScenarioRender { Padding = -1 }, "invalid render.padding: must be between 0 and 100 pixels: -1"),
-        (new ScenarioRender { Opacity = 1.5 }, "invalid render.opacity: must be between 0 and 1: 1.5"),
-        (new ScenarioRender { Opacity = -0.1 }, "invalid render.opacity: must be between 0 and 1: -0.1"),
-        (new ScenarioRender { Opacity = double.NaN }, "invalid render.opacity: must be between 0 and 1: NaN"),
-        (new ScenarioRender { Blur = 51 }, "invalid render.blur: must be between 0 and 50 pixels: 51"),
-        (new ScenarioRender { Background = "#12345" }, "invalid render.background: invalid background color (expected #rgb or #rrggbb): #12345"),
-        (new ScenarioRender { Background = "#111 #222 #333 #444 #555" }, "background takes at most 4 colors"),
-        // No scenario folder, as in the playground: an image cannot be read.
-        (new ScenarioRender { Background = "wall.png" }, "background here takes colors only"),
+    (new ScenarioRender { Margin = 201 }, "invalid render.margin: must be between 0 and 200 pixels: 201"),
+    (new ScenarioRender { Padding = -1 }, "invalid render.padding: must be between 0 and 100 pixels: -1"),
+    (new ScenarioRender { Opacity = 1.5 }, "invalid render.opacity: must be between 0 and 1: 1.5"),
+    (new ScenarioRender { Opacity = -0.1 }, "invalid render.opacity: must be between 0 and 1: -0.1"),
+    (new ScenarioRender { Opacity = double.NaN }, "invalid render.opacity: must be between 0 and 1: NaN"),
+    (new ScenarioRender { Blur = 51 }, "invalid render.blur: must be between 0 and 50 pixels: 51"),
+    (new ScenarioRender { Background = "#12345" }, "invalid render.background: invalid background color (expected #rgb or #rrggbb): #12345"),
+    (new ScenarioRender { Background = "#111 #222 #333 #444 #555" }, "background takes at most 4 colors"),
+    // No scenario folder, as in the playground: an image cannot be read.
+    (new ScenarioRender { Background = "wall.png" }, "background here takes colors only"),
     };
 
     var ok = true;
@@ -84,7 +131,7 @@ static bool ScenarioResolveRejectsBadStyle()
     return ok;
 }
 
-static bool BackgroundImagePathFollowsBaseFolder()
+internal static bool BackgroundImagePathFollowsBaseFolder()
 {
     var folder = Directory.CreateTempSubdirectory("st-background-").FullName;
     try
@@ -106,7 +153,7 @@ static bool BackgroundImagePathFollowsBaseFolder()
     }
 }
 
-static bool CastTagsReadStyle()
+internal static bool CastTagsReadStyle()
 {
     // st:window-title wins over the cast's title; without it the cast's title shows. A value scenetake does not
     // accept is warned about and left out.
@@ -141,7 +188,7 @@ static bool CastTagsReadStyle()
     }
 }
 
-static bool ChromeShowsTitle()
+internal static bool ChromeShowsTitle()
 {
     var macos = RenderStyled(WindowStyle.Macos, title: "Demo <1> & \"2\"");
     var windows = RenderStyled(WindowStyle.Windows, title: "Demo");
@@ -158,7 +205,7 @@ static bool ChromeShowsTitle()
         && !empty.Contains("13px -apple-system", StringComparison.Ordinal);
 }
 
-static bool FitWindowTitleCutsToRoom()
+internal static bool FitWindowTitleCutsToRoom()
 {
     // macOS keeps the buttons' width clear on both sides: 2 * (14 + 3*16 + 2*10 + 10) = 184 px, so 400 px leaves
     // 216. At 13 px an 'a' is 0.67 em, 8.71 px: 24 fit. Cut, 23 leave room for the 1.05 em ellipsis (13.65 px).
@@ -187,7 +234,7 @@ static bool FitWindowTitleCutsToRoom()
     return ok;
 }
 
-static bool TitleWidthIsNoNarrowerThanSans()
+internal static bool TitleWidthIsNoNarrowerThanSans()
 {
     // Each ASCII width is at least what the widest common sans-serif in bold gives it (Verdana Bold, measured):
     // spot checks at 13 px.
@@ -210,7 +257,7 @@ static bool TitleWidthIsNoNarrowerThanSans()
         && Math.Abs(SvgFrameRenderer.TitleWidth("日") - 16.12) < 0.001;
 }
 
-static bool WindowOnBackgroundCastsShadow()
+internal static bool WindowOnBackgroundCastsShadow()
 {
     // On a background the window's whole shape casts a desktop window's shadow, filtered over the canvas. A
     // translucent window keeps it outside itself with a mask. Without a background the 1-pixel frame keeps its
@@ -237,7 +284,7 @@ static bool WindowOnBackgroundCastsShadow()
     return ok;
 }
 
-static bool DarkMacWindowHasEdgeLine()
+internal static bool DarkMacWindowHasEdgeLine()
 {
     // A dark macOS window has a faint white line just inside its edge, drawn after the terminal, whose background
     // reaches the edge. A light one and Windows windows have none.
@@ -252,7 +299,7 @@ static bool DarkMacWindowHasEdgeLine()
         && !windows.Contains("stroke=\"#ffffff\"", StringComparison.Ordinal);
 }
 
-static bool BackgroundMarginAndPaddingShapeCanvas()
+internal static bool BackgroundMarginAndPaddingShapeCanvas()
 {
     var chrome = RenderStyled(WindowStyle.Macos);
     var gradient = RenderStyled(WindowStyle.Macos, background: new BackgroundSpec(["#000000", "#808080", "#ffffff"], null));
@@ -273,7 +320,7 @@ static bool BackgroundMarginAndPaddingShapeCanvas()
         && Math.Abs(ExtractSvgHeight(padding) - (ExtractSvgHeight(chrome) + 32)) < 0.01;
 }
 
-static bool ParseOpacityAndBlur()
+internal static bool ParseOpacityAndBlur()
 {
     var ok = RenderSettingsResolver.TryParseOpacity("0.85", out var opacity, out _) && opacity == 0.85
         && RenderSettingsResolver.TryParseOpacity(" 0 ", out var zero, out _) && zero == 0
@@ -284,12 +331,12 @@ static bool ParseOpacityAndBlur()
         && RenderSettingsResolver.FormatOpacity(1d / 3) == "0.333";
     var cases = new (bool Parsed, string Error, string Expected)[]
     {
-        (RenderSettingsResolver.TryParseOpacity("1.5", out _, out var high), high, "opacity must be between 0 and 1: 1.5"),
-        (RenderSettingsResolver.TryParseOpacity("-0.1", out _, out var low), low, "opacity must be between 0 and 1: -0.1"),
-        (RenderSettingsResolver.TryParseOpacity("85%", out _, out var percent), percent, "invalid opacity value: 85% (expected a number from 0 to 1, such as 0.85)"),
-        (RenderSettingsResolver.TryParseOpacity("NaN", out _, out var nan), nan, "invalid opacity value: NaN"),
-        (RenderSettingsResolver.TryParseBlur("51", out _, out var wide), wide, "blur must be between 0 and 50 pixels: 51"),
-        (RenderSettingsResolver.TryParseBlur("2.5", out _, out var fraction), fraction, "blur"),
+    (RenderSettingsResolver.TryParseOpacity("1.5", out _, out var high), high, "opacity must be between 0 and 1: 1.5"),
+    (RenderSettingsResolver.TryParseOpacity("-0.1", out _, out var low), low, "opacity must be between 0 and 1: -0.1"),
+    (RenderSettingsResolver.TryParseOpacity("85%", out _, out var percent), percent, "invalid opacity value: 85% (expected a number from 0 to 1, such as 0.85)"),
+    (RenderSettingsResolver.TryParseOpacity("NaN", out _, out var nan), nan, "invalid opacity value: NaN"),
+    (RenderSettingsResolver.TryParseBlur("51", out _, out var wide), wide, "blur must be between 0 and 50 pixels: 51"),
+    (RenderSettingsResolver.TryParseBlur("2.5", out _, out var fraction), fraction, "blur"),
     };
     foreach (var (parsed, error, expected) in cases)
     {
@@ -303,7 +350,7 @@ static bool ParseOpacityAndBlur()
     return ok;
 }
 
-static bool OpacityAndBlurNeedBackground()
+internal static bool OpacityAndBlurNeedBackground()
 {
     // Without a background the window stays opaque, so neither setting does anything, and both say so. Blur alone
     // has nothing to show through.
@@ -312,14 +359,14 @@ static bool OpacityAndBlurNeedBackground()
     string Notes(ResolvedRenderSettings settings) => string.Join(" | ", RenderSettingsResolver.FindIneffectiveStyle(settings));
     var cases = new (ResolvedRenderSettings Settings, string Expected)[]
     {
-        (plain with { Opacity = 0.85 }, "opacity has no effect without a background: the window stays opaque"),
-        (plain with { Blur = 8 }, "blur has no effect without a background: the window stays opaque"),
-        (plain with { Opacity = 0.85, Blur = 8 }, "opacity and blur have no effect without a background: the window stays opaque"),
-        (plain with { Background = background, Blur = 8 }, "blur has no effect on an opaque window: set an opacity below 1, such as 0.85"),
-        (plain with { Background = background, Opacity = 1, Blur = 8 }, "blur has no effect on an opaque window: set an opacity below 1, such as 0.85"),
-        (plain with { Background = background, Opacity = 0.85, Blur = 8 }, ""),
-        (plain with { Background = background, Opacity = 0.85 }, ""),
-        (plain with { Opacity = 1, Blur = 0 }, ""),
+    (plain with { Opacity = 0.85 }, "opacity has no effect without a background: the window stays opaque"),
+    (plain with { Blur = 8 }, "blur has no effect without a background: the window stays opaque"),
+    (plain with { Opacity = 0.85, Blur = 8 }, "opacity and blur have no effect without a background: the window stays opaque"),
+    (plain with { Background = background, Blur = 8 }, "blur has no effect on an opaque window: set an opacity below 1, such as 0.85"),
+    (plain with { Background = background, Opacity = 1, Blur = 8 }, "blur has no effect on an opaque window: set an opacity below 1, such as 0.85"),
+    (plain with { Background = background, Opacity = 0.85, Blur = 8 }, ""),
+    (plain with { Background = background, Opacity = 0.85 }, ""),
+    (plain with { Opacity = 1, Blur = 0 }, ""),
     };
 
     var ok = true;
@@ -338,7 +385,7 @@ static bool OpacityAndBlurNeedBackground()
         && (plain with { Background = background, Opacity = 0.5, Blur = 8 }) is { WindowOpacity: 0.5, WindowBlur: 8 };
 }
 
-static bool TranslucentWindowSvg()
+internal static bool TranslucentWindowSvg()
 {
     // The terminal's default background and the title bar take the opacity; text, buttons, and the border do not.
     // With chrome, the terminal's square bottom corners are cut to the window's rounded ones.
@@ -362,7 +409,7 @@ static bool TranslucentWindowSvg()
         && !noBackground.Contains("fill-opacity=\"", StringComparison.Ordinal);
 }
 
-static bool FrostedWindowSvg()
+internal static bool FrostedWindowSvg()
 {
     // The background is defined once and drawn twice: sharp over the canvas, and blurred inside the window.
     var colors = RenderStyled(WindowStyle.Macos, background: new BackgroundSpec(["#000000", "#ffffff"], null), opacity: 0.8, blur: 6);
@@ -384,7 +431,7 @@ static bool FrostedWindowSvg()
         && !opaque.Contains("frost", StringComparison.Ordinal);
 }
 
-static string RenderStyled(WindowStyle window, string? title = null, BackgroundSpec? background = null, int? margin = null, int? padding = null, double? opacity = null, int? blur = null, bool lightTheme = false)
+internal static string RenderStyled(WindowStyle window, string? title = null, BackgroundSpec? background = null, int? margin = null, int? padding = null, double? opacity = null, int? blur = null, bool lightTheme = false)
 {
     var castPath = Path.Combine(Path.GetTempPath(), $"st-styled-{Guid.NewGuid():N}.cast");
     try
@@ -402,7 +449,7 @@ static string RenderStyled(WindowStyle window, string? title = null, BackgroundS
     }
 }
 
-static double ExtractSvgWidth(string svg)
+internal static double ExtractSvgWidth(string svg)
 {
     var marker = "width=\"";
     var start = svg.IndexOf(marker, svg.IndexOf("<svg", StringComparison.Ordinal), StringComparison.Ordinal) + marker.Length;
@@ -410,29 +457,10 @@ static double ExtractSvgWidth(string svg)
     return double.Parse(svg[start..end], System.Globalization.CultureInfo.InvariantCulture);
 }
 
-static int Run(string name, Func<bool> test)
-{
-    try
-    {
-        if (test())
-        {
-            Console.Error.WriteLine($"ok {name}");
-            return 0;
-        }
-
-        Console.Error.WriteLine($"FAIL {name}");
-        return 1;
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"FAIL {name}: {ex.Message}");
-        return 1;
-    }
-}
 
 // A theme may give a color as #rgb, and the cast keeps it so: white is light, as #ffffff is, and the PNG, GIF, and mp4
 // draw #f80 as #ff8800, not as the grey they fall back to for a color they cannot read.
-static bool LightBackgroundTakesShortHex() =>
+internal static bool LightBackgroundTakesShortHex() =>
     SvgFrameRenderer.IsLightTerminalBg("#fff") && SvgFrameRenderer.IsLightTerminalBg("#FFFFFF")
     && !SvgFrameRenderer.IsLightTerminalBg("#000") && !SvgFrameRenderer.IsLightTerminalBg("#0d1117")
     && CellColors.TryParseHexColor("#f80", out var r, out var g, out var b) && (r, g, b) == (255, 136, 0)
@@ -440,26 +468,26 @@ static bool LightBackgroundTakesShortHex() =>
 
 // Bold white stays as the theme spells it, #fff included: the matrix-rain tint finds the theme's white by its text.
 // A color bold does brighten comes back as #rrggbb.
-static bool BoldKeepsAColorItCannotBrighten() =>
+internal static bool BoldKeepsAColorItCannotBrighten() =>
     CellColors.ApplyIntensity("#fff", bold: true, faint: false) == "#fff"
     && CellColors.ApplyIntensity("#ffffff", bold: true, faint: false) == "#ffffff"
     && CellColors.ApplyIntensity("#ccc", bold: true, faint: false) == "#f5f5f5"
     && CellColors.ApplyIntensity("#ccc", bold: false, faint: true) == "#999999";
 
-static bool ParseWindowAcceptsKnownValues()
+internal static bool ParseWindowAcceptsKnownValues()
 {
     return RenderSettingsResolver.TryParseWindow("none", out var none, out _) && none == WindowStyle.None
         && RenderSettingsResolver.TryParseWindow("macos", out var macos, out _) && macos == WindowStyle.Macos
         && RenderSettingsResolver.TryParseWindow("windows", out var windows, out _) && windows == WindowStyle.Windows;
 }
 
-static bool ParseWindowRejectsUnknownValue()
+internal static bool ParseWindowRejectsUnknownValue()
 {
     return !RenderSettingsResolver.TryParseWindow("gnome", out _, out var error)
         && error.Contains("gnome", StringComparison.Ordinal);
 }
 
-static bool ScenarioResolveReadsWindow()
+internal static bool ScenarioResolveReadsWindow()
 {
     var scenario = new Scenario
     {
@@ -475,7 +503,7 @@ static bool ScenarioResolveReadsWindow()
         && settings.Window == WindowStyle.Macos;
 }
 
-static bool ApplySvgOverridesWindowWins()
+internal static bool ApplySvgOverridesWindowWins()
 {
     var baseSettings = new ResolvedRenderSettings(
         16,
@@ -495,17 +523,17 @@ static bool ApplySvgOverridesWindowWins()
     return error.Length == 0 && overridden.Window == WindowStyle.Windows;
 }
 
-static bool CastTagReadsWindow()
+internal static bool CastTagReadsWindow()
 {
     var castPath = Path.Combine(Path.GetTempPath(), $"st-window-{Guid.NewGuid():N}.cast");
     try
     {
         File.WriteAllText(castPath,
             """
-            {"version":3,"term":{"cols":40,"rows":6,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"tags":["st:font-size=16","st:window=macos"]}
-            [0.0,"o","hello\r\n"]
-            [0.05,"x","0"]
-            """);
+        {"version":3,"term":{"cols":40,"rows":6,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"tags":["st:font-size=16","st:window=macos"]}
+        [0.0,"o","hello\r\n"]
+        [0.05,"x","0"]
+        """);
 
         var recording = CastReader.Read(castPath);
         return recording.RenderSettings.Window == WindowStyle.Macos;
@@ -517,7 +545,7 @@ static bool CastTagReadsWindow()
     }
 }
 
-static string RenderMinimal(string windowTagValue)
+internal static string RenderMinimal(string windowTagValue)
 {
     var castPath = Path.Combine(Path.GetTempPath(), $"st-chrome-{Guid.NewGuid():N}.cast");
     try
@@ -540,7 +568,7 @@ static string RenderMinimal(string windowTagValue)
     }
 }
 
-static bool MacosChromeAddsTrafficLights()
+internal static bool MacosChromeAddsTrafficLights()
 {
     var svg = RenderMinimal("macos");
     return svg.Contains("viewport-chrome-0", StringComparison.Ordinal)
@@ -549,7 +577,7 @@ static bool MacosChromeAddsTrafficLights()
         && CountOccurrences(svg, "<circle") >= 3;
 }
 
-static bool WindowsChromeIsATabRow()
+internal static bool WindowsChromeIsATabRow()
 {
     // A Windows Terminal tab row: the active tab in the terminal's color, an outlined terminal icon, the title in
     // the tab, and the minimize, maximize, and close glyphs. No macOS-style line under the bar, and no filled
@@ -572,7 +600,7 @@ static bool WindowsChromeIsATabRow()
     return ok;
 }
 
-static bool WinTabRowFitsItsTitle()
+internal static bool WinTabRowFitsItsTitle()
 {
     // The tab is at least 120 px; a longer title widens it by the width that cuts titles (12 px here), and the
     // new-tab and dropdown buttons follow it while they fit. A narrow window drops them and the title, then the tab.
@@ -593,7 +621,7 @@ static bool WinTabRowFitsItsTitle()
     return ok;
 }
 
-static bool ChromeIncreasesSvgHeight()
+internal static bool ChromeIncreasesSvgHeight()
 {
     var plain = RenderMinimal("");
     var macos = RenderMinimal("macos");
@@ -602,14 +630,14 @@ static bool ChromeIncreasesSvgHeight()
     return macosHeight > plainHeight + 20;
 }
 
-static bool PlainSvgHasNoChrome()
+internal static bool PlainSvgHasNoChrome()
 {
     var svg = RenderMinimal("");
     return !svg.Contains("<filter id=\"window-shadow\"", StringComparison.Ordinal)
         && !svg.Contains("<circle", StringComparison.Ordinal);
 }
 
-static double ExtractSvgHeight(string svg)
+internal static double ExtractSvgHeight(string svg)
 {
     var marker = "height=\"";
     var start = svg.IndexOf(marker, StringComparison.Ordinal);
@@ -620,7 +648,7 @@ static double ExtractSvgHeight(string svg)
     return double.Parse(svg[start..end], System.Globalization.CultureInfo.InvariantCulture);
 }
 
-static int CountOccurrences(string text, string value)
+internal static int CountOccurrences(string text, string value)
 {
     var count = 0;
     var index = 0;
@@ -631,4 +659,5 @@ static int CountOccurrences(string text, string value)
     }
 
     return count;
+}
 }

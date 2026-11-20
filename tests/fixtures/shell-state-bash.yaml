@@ -1,5 +1,5 @@
 # What a command leaves in its bash shell reaches the next one (spec_scenario.md → Shell state across steps).
-# Run from the repository root by tests/shell_state_test.cs.
+# Run from the repository root by ShellStateTests.
 title: "shell state (bash)"
 width: 100
 height: 40

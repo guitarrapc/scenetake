@@ -1,76 +1,68 @@
-#:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
-#:property Nullable=enable
-#:property ImplicitUsings=enable
-#:property AllowUnsafeBlocks=true
-#:package StbTrueTypeSharp@1.26.13
-#:include ../Terminal.cs
-#:include ../CastTimingPipeline.cs
-#:include ../CastReader.cs
-#:include SvgTestStubs.cs
-#:include ../Svg.cs
-#:include ../Raster.cs
-#:include ../Mp4.cs
-#:include ../Png.cs
+﻿using System.Buffers.Binary;
+using System.IO.Compression;
+using Scenetake.TestSupport;
+
+namespace Scenetake.Tests;
 
 // Still images: the PNG encoder (decoded again here, so the tests compare pixels, not compressed bytes), the PNG of
 // one screen, which must match the mp4 frame at the same time, and the still SVG. Tests that draw need one installed
-// font. They print "skip" when none is found.
-//
-// Usage (from repository root):
-//   dotnet run tests/png_render_test.cs
+// font. They skip when none is found.
 
-using System.Buffers.Binary;
-using System.IO.Compression;
-
-var failures = 0;
-failures += Run("Crc32MatchesTheStandardCheckValue", Crc32MatchesTheStandardCheckValue);
-failures += Run("FewColorsUseAPaletteAtTheSmallestDepth", FewColorsUseAPaletteAtTheSmallestDepth);
-failures += Run("PaletteRowsPackAtOddWidths", PaletteRowsPackAtOddWidths);
-failures += Run("ManyColorsUseFilteredRgb", ManyColorsUseFilteredRgb);
-failures += Run("EncoderRejectsAWrongPixelCount", EncoderRejectsAWrongPixelCount);
-failures += Run("StillTimeParsing", StillTimeParsing);
-failures += Run("StillSelectsTheLastScreenShownByThen", StillSelectsTheLastScreenShownByThen);
-failures += Run("StillSvgHasNoAnimation", StillSvgHasNoAnimation);
-failures += Run("StillSvgShowsTheScreenAtItsTime", StillSvgShowsTheScreenAtItsTime);
-failures += Run("StillSvgBeforeTheFirstScreenIsEmpty", StillSvgBeforeTheFirstScreenIsEmpty);
-failures += Run("PngMatchesTheMp4FrameAtTheSameTime", PngMatchesTheMp4FrameAtTheSameTime);
-failures += Run("PngBeforeTheFirstScreenIsAnEmptyTerminal", PngBeforeTheFirstScreenIsAnEmptyTerminal);
-failures += Run("PngDrawsWindowAndBackgroundLikeMp4", PngDrawsWindowAndBackgroundLikeMp4);
-failures += Run("HugePngIsReportedAsAPng", HugePngIsReportedAsAPng);
-failures += Run("FailedPngWritesNoFile", FailedPngWritesNoFile);
-
-return failures == 0 ? 0 : 1;
-
-static int Run(string name, Func<bool> test)
+public sealed class PngRenderTests
 {
-    try
-    {
-        if (test())
-        {
-            Console.Error.WriteLine($"ok {name}");
-            return 0;
-        }
+    [Test]
+    public async Task Crc32MatchesTheStandardCheckValue() => await Assert.That(Skipping.Run(() => PngRenderCases.Crc32MatchesTheStandardCheckValue())).IsTrue();
 
-        Console.Error.WriteLine($"FAIL {name}");
-        return 1;
-    }
-    catch (FontNotFoundException ex)
-    {
-        Console.Error.WriteLine($"skip {name}: {ex.Message}");
-        return 0;
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"FAIL {name}: {ex}");
-        return 1;
-    }
+    [Test]
+    public async Task FewColorsUseAPaletteAtTheSmallestDepth() => await Assert.That(Skipping.Run(() => PngRenderCases.FewColorsUseAPaletteAtTheSmallestDepth())).IsTrue();
+
+    [Test]
+    public async Task PaletteRowsPackAtOddWidths() => await Assert.That(Skipping.Run(() => PngRenderCases.PaletteRowsPackAtOddWidths())).IsTrue();
+
+    [Test]
+    public async Task ManyColorsUseFilteredRgb() => await Assert.That(Skipping.Run(() => PngRenderCases.ManyColorsUseFilteredRgb())).IsTrue();
+
+    [Test]
+    public async Task EncoderRejectsAWrongPixelCount() => await Assert.That(Skipping.Run(() => PngRenderCases.EncoderRejectsAWrongPixelCount())).IsTrue();
+
+    [Test]
+    public async Task StillTimeParsing() => await Assert.That(Skipping.Run(() => PngRenderCases.StillTimeParsing())).IsTrue();
+
+    [Test]
+    public async Task StillSelectsTheLastScreenShownByThen() => await Assert.That(Skipping.Run(() => PngRenderCases.StillSelectsTheLastScreenShownByThen())).IsTrue();
+
+    [Test]
+    public async Task StillSvgHasNoAnimation() => await Assert.That(Skipping.Run(() => PngRenderCases.StillSvgHasNoAnimation())).IsTrue();
+
+    [Test]
+    public async Task StillSvgShowsTheScreenAtItsTime() => await Assert.That(Skipping.Run(() => PngRenderCases.StillSvgShowsTheScreenAtItsTime())).IsTrue();
+
+    [Test]
+    public async Task StillSvgBeforeTheFirstScreenIsEmpty() => await Assert.That(Skipping.Run(() => PngRenderCases.StillSvgBeforeTheFirstScreenIsEmpty())).IsTrue();
+
+    [Test]
+    public async Task PngMatchesTheMp4FrameAtTheSameTime() => await Assert.That(Skipping.Run(() => PngRenderCases.PngMatchesTheMp4FrameAtTheSameTime())).IsTrue();
+
+    [Test]
+    public async Task PngBeforeTheFirstScreenIsAnEmptyTerminal() => await Assert.That(Skipping.Run(() => PngRenderCases.PngBeforeTheFirstScreenIsAnEmptyTerminal())).IsTrue();
+
+    [Test]
+    public async Task PngDrawsWindowAndBackgroundLikeMp4() => await Assert.That(Skipping.Run(() => PngRenderCases.PngDrawsWindowAndBackgroundLikeMp4())).IsTrue();
+
+    [Test]
+    public async Task HugePngIsReportedAsAPng() => await Assert.That(Skipping.Run(() => PngRenderCases.HugePngIsReportedAsAPng())).IsTrue();
+
+    [Test]
+    public async Task FailedPngWritesNoFile() => await Assert.That(Skipping.Run(() => PngRenderCases.FailedPngWritesNoFile())).IsTrue();
 }
 
-static bool Crc32MatchesTheStandardCheckValue() =>
+internal static class PngRenderCases
+{
+
+internal static bool Crc32MatchesTheStandardCheckValue() =>
     PngEncoder.Crc32("123456789"u8) == 0xCBF43926u && PngEncoder.Crc32([]) == 0;
 
-static bool FewColorsUseAPaletteAtTheSmallestDepth()
+internal static bool FewColorsUseAPaletteAtTheSmallestDepth()
 {
     // 2, 4, 16 and 200 colors take 1, 2, 4 and 8 bits per pixel.
     var ok = true;
@@ -89,7 +81,7 @@ static bool FewColorsUseAPaletteAtTheSmallestDepth()
     return ok;
 }
 
-static bool PaletteRowsPackAtOddWidths()
+internal static bool PaletteRowsPackAtOddWidths()
 {
     // A width that leaves part of the last byte of each row unused, at every packed depth.
     var ok = true;
@@ -110,7 +102,7 @@ static bool PaletteRowsPackAtOddWidths()
     return ok;
 }
 
-static bool ManyColorsUseFilteredRgb()
+internal static bool ManyColorsUseFilteredRgb()
 {
     // 64×64 with 4096 colors: RGB, and each row's filter is one of the five.
     var rgb = Pixels(64, 64, (x, y) => (x * 4) << 16 | (y * 4) << 8 | ((x ^ y) * 4 & 0xFF));
@@ -120,7 +112,7 @@ static bool ManyColorsUseFilteredRgb()
         && decoded.Filters.All(static f => f <= 4) && decoded.Filters.Distinct().Count() > 1;
 }
 
-static bool EncoderRejectsAWrongPixelCount()
+internal static bool EncoderRejectsAWrongPixelCount()
 {
     try
     {
@@ -133,7 +125,7 @@ static bool EncoderRejectsAWrongPixelCount()
     }
 }
 
-static bool StillTimeParsing()
+internal static bool StillTimeParsing()
 {
     bool Parses(string text, double expected) => RenderSettingsResolver.TryParseStillAt(text, out var at, out _) && at.Equals(expected);
     bool Fails(string text) => !RenderSettingsResolver.TryParseStillAt(text, out _, out var error) && error.Contains("--at", StringComparison.Ordinal);
@@ -143,7 +135,7 @@ static bool StillTimeParsing()
         && RenderSettingsResolver.FormatStillAt(double.PositiveInfinity) == "final screen" && RenderSettingsResolver.FormatStillAt(2.5) == "at 2.5s";
 }
 
-static bool StillSelectsTheLastScreenShownByThen()
+internal static bool StillSelectsTheLastScreenShownByThen()
 {
     var frames = new List<ReplayFrame> { new(0.5, 4, 1, 1, false, 0), new(1.0, 4, 1, 2, false, 1), new(2.0, 4, 1, 3, false, 2) };
     return TerminalReplay.SelectStill(frames, 0.4) is null
@@ -155,7 +147,7 @@ static bool StillSelectsTheLastScreenShownByThen()
         && TerminalReplay.SelectStill([], double.PositiveInfinity) is null;
 }
 
-static bool StillSvgHasNoAnimation()
+internal static bool StillSvgHasNoAnimation()
 {
     // Settings that shape the animation, a fade and playing once, change nothing in a still.
     var recording = Recording("[0.5,\"o\",\"one\\r\\n\"]\n[1.0,\"o\",\"two\\r\\n\"]\n[2.0,\"o\",\"three\"]");
@@ -168,7 +160,7 @@ static bool StillSvgHasNoAnimation()
         && animated.Contains("animation", StringComparison.Ordinal) && svg.Length < animated.Length;
 }
 
-static bool StillSvgShowsTheScreenAtItsTime()
+internal static bool StillSvgShowsTheScreenAtItsTime()
 {
     // At 1.5 s the screen has "one" and "two"; "three" comes at 2 s.
     var recording = Recording("[0.5,\"o\",\"one\\r\\n\"]\n[1.0,\"o\",\"two\\r\\n\"]\n[2.0,\"o\",\"three\"]");
@@ -176,14 +168,14 @@ static bool StillSvgShowsTheScreenAtItsTime()
     return svg.Contains(">one<", StringComparison.Ordinal) && svg.Contains(">two<", StringComparison.Ordinal) && !svg.Contains("three", StringComparison.Ordinal);
 }
 
-static bool StillSvgBeforeTheFirstScreenIsEmpty()
+internal static bool StillSvgBeforeTheFirstScreenIsEmpty()
 {
     var recording = Recording("[0.5,\"o\",\"one\"]");
     var svg = SvgRender.RenderToString(recording.Events, recording.Width, recording.Height, recording.RenderSettings, recording.LoopDuration, stillAt: 0.2);
     return !svg.Contains("one", StringComparison.Ordinal) && svg.StartsWith("<?xml", StringComparison.Ordinal);
 }
 
-static bool PngMatchesTheMp4FrameAtTheSameTime()
+internal static bool PngMatchesTheMp4FrameAtTheSameTime()
 {
     // mp4 frame k shows the events up to k / fps, so at 10 fps frame 10 is the screen at 1 s and the last frame the
     // final screen. Both are drawn by the same rasterizer from the same cells.
@@ -210,7 +202,7 @@ static bool PngMatchesTheMp4FrameAtTheSameTime()
     }
 }
 
-static bool PngBeforeTheFirstScreenIsAnEmptyTerminal()
+internal static bool PngBeforeTheFirstScreenIsAnEmptyTerminal()
 {
     // Nothing is drawn before the first output, not even the cursor: one color, the theme background.
     var recording = Recording("[0.5,\"o\",\"one\"]");
@@ -226,7 +218,7 @@ static bool PngBeforeTheFirstScreenIsAnEmptyTerminal()
     }
 }
 
-static bool PngDrawsWindowAndBackgroundLikeMp4()
+internal static bool PngDrawsWindowAndBackgroundLikeMp4()
 {
     // macOS chrome on a gradient: the PNG is the mp4's last frame, with the window inside the margin.
     var recording = Recording("[0.5,\"o\",\"hello\"]", "\"st:window=macos\",\"st:background=#1e3c72 #2a5298\"");
@@ -247,7 +239,7 @@ static bool PngDrawsWindowAndBackgroundLikeMp4()
     }
 }
 
-static bool HugePngIsReportedAsAPng()
+internal static bool HugePngIsReportedAsAPng()
 {
     try
     {
@@ -260,7 +252,7 @@ static bool HugePngIsReportedAsAPng()
     }
 }
 
-static bool FailedPngWritesNoFile()
+internal static bool FailedPngWritesNoFile()
 {
     // A font file that does not exist fails before anything is drawn, and no PNG is left behind.
     var recording = Recording("[0.5,\"o\",\"one\"]");
@@ -281,7 +273,7 @@ static bool FailedPngWritesNoFile()
     }
 }
 
-static CastRecording Recording(string events, string? tags = null)
+internal static CastRecording Recording(string events, string? tags = null)
 {
     var path = Path.Combine(Path.GetTempPath(), $"scenetake-png-{Guid.NewGuid():N}.cast");
     try
@@ -298,7 +290,7 @@ static CastRecording Recording(string events, string? tags = null)
     }
 }
 
-static byte[] Pixels(int width, int height, Func<int, int, int> color)
+internal static byte[] Pixels(int width, int height, Func<int, int, int> color)
 {
     var rgb = new byte[width * height * 3];
     for (var y = 0; y < height; y++)
@@ -318,7 +310,7 @@ static byte[] Pixels(int width, int height, Func<int, int, int> color)
 
 // A PNG decoder for the encoder's output: checks the signature and every chunk's CRC, inflates IDAT, reverses the
 // row filters, and expands palette indices to RGB.
-static (byte[] Rgb, int Width, int Height, int ColorType, int BitDepth, int PaletteSize, List<byte> Filters) Decode(byte[] png)
+internal static (byte[] Rgb, int Width, int Height, int ColorType, int BitDepth, int PaletteSize, List<byte> Filters) Decode(byte[] png)
 {
     byte[] signature = [0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A];
     if (!png.AsSpan(0, 8).SequenceEqual(signature))
@@ -413,11 +405,12 @@ static (byte[] Rgb, int Width, int Height, int ColorType, int BitDepth, int Pale
     return (rgb, width, height, colorType, bitDepth, palette.Length / 3, filters);
 }
 
-static int PaethPredictor(int a, int b, int c)
+internal static int PaethPredictor(int a, int b, int c)
 {
     var p = a + b - c;
     var pa = Math.Abs(p - a);
     var pb = Math.Abs(p - b);
     var pc = Math.Abs(p - c);
     return pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+}
 }

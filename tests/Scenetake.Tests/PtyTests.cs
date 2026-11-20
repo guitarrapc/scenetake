@@ -1,104 +1,111 @@
-﻿#:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
-#:property Nullable=enable
-#:property ImplicitUsings=enable
-#:property AllowUnsafeBlocks=true
-#:package MiniPty@1.7.0
-#:package MiniPty.Capture@1.7.0
-
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using MiniPty;
 using MiniPty.Capture;
+using Scenetake.TestSupport;
 
-var repoRoot = FindRepoRoot(Directory.GetCurrentDirectory());
-var failures = 0;
+namespace Scenetake.Tests;
 
-failures += await RunAsync("PtyEchoOutput", PtyEchoOutput);
-failures += await RunAsync("PtyTtyCheck", PtyTtyCheck);
-failures += await RunAsync("PtyStdinEof", PtyStdinEof);
-failures += await RunAsync("PtyEmptyInputSignalsEof", PtyEmptyInputSignalsEof);
-failures += await RunAsync("PtyStdinReadCompletesAfterInputEof", PtyStdinReadCompletesAfterInputEof);
-failures += await RunAsync("PtyHasExitedPolls", () => Task.FromResult(PtyHasExitedPolls()));
-failures += await RunAsync("PtyCancellationKill", PtyCancellationKill);
-failures += await RunAsync("PtyCancellationWait", PtyCancellationWait);
-failures += await RunAsync("PtyResizeUpdatesSize", () => Task.FromResult(PtyResizeUpdatesSize()));
-if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && TryResolvePwsh(out var pwshPath))
-    failures += await RunAsync("PtyMatrixPwsh", () => PtyMatrixPwsh(pwshPath));
-else if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-    failures += await RunAsync("PtyMatrixUnix", PtyMatrixUnix);
-
-if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+[Category("Smoke")]
+public sealed class PtyTests
 {
-    failures += await RunAsync("IntegrationPtyCmdFixture", () => Task.FromResult(IntegrationFixture(repoRoot, "pty-cmd.yaml", "pty-cmd-output")));
-    failures += await RunAsync("IntegrationPtyTtyFixture", () => Task.FromResult(IntegrationFixture(repoRoot, "pty-tty-check.yaml", "redirected=False")));
-    failures += await RunAsync("IntegrationPtyScreenStateFixture", () => Task.FromResult(IntegrationPtyScreenStateFixture(repoRoot, "pty-screen-state-cmd.yaml")));
-    failures += await RunAsync("IntegrationPtyDefaultTypingFixture", () => Task.FromResult(IntegrationPtyDefaultTypingFixture(repoRoot, "pty-default-typing-cmd.yaml", "echo pty-typed-output")));
-    failures += await RunAsync("IntegrationChildEnvironmentFixture", () => Task.FromResult(IntegrationChildEnvironmentFixture(repoRoot, "child-env-cmd.yaml")));
-    if (TryResolvePwsh(out var pwshForFixture))
-        failures += await RunAsync("IntegrationMatrixFixture", () => Task.FromResult(IntegrationMatrixFixture(repoRoot, "matrix-pwsh-pty.yaml")));
-}
-else
-{
-    failures += await RunAsync("IntegrationPtyCmdFixture", () => Task.FromResult(IntegrationFixture(repoRoot, "pty-unix.yaml", "pty-cmd-output")));
-    failures += await RunAsync("IntegrationPtyTtyFixture", () => Task.FromResult(IntegrationFixture(repoRoot, "pty-tty-check-unix.yaml", "redirected=False")));
-    failures += await RunAsync("IntegrationPtyScreenStateFixture", () => Task.FromResult(IntegrationPtyScreenStateFixture(repoRoot, "pty-screen-state.yaml")));
-    failures += await RunAsync("IntegrationPtyDefaultTypingFixture", () => Task.FromResult(IntegrationPtyDefaultTypingFixture(repoRoot, "pty-default-typing.yaml", "printf 'pty-typed-output\\n'")));
-    failures += await RunAsync("IntegrationChildEnvironmentFixture", () => Task.FromResult(IntegrationChildEnvironmentFixture(repoRoot, "child-env.yaml")));
-    if (!TryFindExecutable("matrix", out _))
-        Console.Error.WriteLine("skip IntegrationMatrixFixture: matrix not found");
-    else
-        failures += await RunAsync("IntegrationMatrixFixture", () => Task.FromResult(IntegrationMatrixFixture(repoRoot, "matrix-unix-pty.yaml")));
-}
+    [Test]
+    public async Task PtyEchoOutput() => await Assert.That(await PtyCases.PtyEchoOutput()).IsTrue();
 
-failures += await RunAsync("IntegrationPtyRedrawKeepsRow", () => Task.FromResult(IntegrationPtyRedrawKeepsRow(repoRoot)));
-failures += await RunAsync("IntegrationCastKeepsPathsOut", () => Task.FromResult(IntegrationCastKeepsPathsOut(repoRoot)));
+    [Test]
+    public async Task PtyTtyCheck() => await Assert.That(await PtyCases.PtyTtyCheck()).IsTrue();
 
-return failures == 0 ? 0 : 1;
+    [Test]
+    public async Task PtyStdinEof() => await Assert.That(await PtyCases.PtyStdinEof()).IsTrue();
 
-static bool IntegrationTestsEnabled(string repoRoot)
-{
-    var env = Environment.GetEnvironmentVariable("SCENETAKE_BIN");
-    if (!string.IsNullOrWhiteSpace(env) && File.Exists(env))
-        return true;
+    [Test]
+    public async Task PtyEmptyInputSignalsEof() => await Assert.That(await PtyCases.PtyEmptyInputSignalsEof()).IsTrue();
 
-    Console.Error.WriteLine("skip integration PTY tests: set SCENETAKE_BIN to a published scenetake binary");
-    return false;
-}
+    [Test]
+    public async Task PtyStdinReadCompletesAfterInputEof() => await Assert.That(await PtyCases.PtyStdinReadCompletesAfterInputEof()).IsTrue();
 
-static async Task<int> RunAsync(string name, Func<Task<bool>> test)
-{
-    try
+    [Test]
+    public async Task PtyHasExitedPolls() => await Assert.That(PtyCases.PtyHasExitedPolls()).IsTrue();
+
+    [Test]
+    public async Task PtyCancellationKill() => await Assert.That(await PtyCases.PtyCancellationKill()).IsTrue();
+
+    [Test]
+    public async Task PtyCancellationWait() => await Assert.That(await PtyCases.PtyCancellationWait()).IsTrue();
+
+    [Test]
+    public async Task PtyResizeUpdatesSize() => await Assert.That(PtyCases.PtyResizeUpdatesSize()).IsTrue();
+
+    [Test]
+    [RunOn(OS.Windows)]
+    public async Task PtyMatrixPwsh() => await Assert.That(await PtyCases.PtyMatrixPwsh(RequirePwsh())).IsTrue();
+
+    [Test]
+    [ExcludeOn(OS.Windows)]
+    public async Task PtyMatrixUnix() => await Assert.That(await PtyCases.PtyMatrixUnix()).IsTrue();
+
+    [Test]
+    public async Task IntegrationPtyCmdFixture() => await Assert.That(PtyCases.IntegrationFixture(TestEnv.RepoRoot, Fixture("pty-cmd.yaml", "pty-unix.yaml"), "pty-cmd-output")).IsTrue();
+
+    [Test]
+    public async Task IntegrationPtyTtyFixture() => await Assert.That(PtyCases.IntegrationFixture(TestEnv.RepoRoot, Fixture("pty-tty-check.yaml", "pty-tty-check-unix.yaml"), "redirected=False")).IsTrue();
+
+    [Test]
+    public async Task IntegrationPtyScreenStateFixture() => await Assert.That(PtyCases.IntegrationPtyScreenStateFixture(TestEnv.RepoRoot, Fixture("pty-screen-state-cmd.yaml", "pty-screen-state.yaml"))).IsTrue();
+
+    [Test]
+    public async Task IntegrationPtyDefaultTypingFixture() => await Assert.That(OperatingSystem.IsWindows()
+        ? PtyCases.IntegrationPtyDefaultTypingFixture(TestEnv.RepoRoot, "pty-default-typing-cmd.yaml", "echo pty-typed-output")
+        : PtyCases.IntegrationPtyDefaultTypingFixture(TestEnv.RepoRoot, "pty-default-typing.yaml", "printf 'pty-typed-output\\n'")).IsTrue();
+
+    [Test]
+    public async Task IntegrationChildEnvironmentFixture() => await Assert.That(PtyCases.IntegrationChildEnvironmentFixture(TestEnv.RepoRoot, Fixture("child-env-cmd.yaml", "child-env.yaml"))).IsTrue();
+
+    [Test]
+    public async Task IntegrationMatrixFixture()
     {
-        if (await test())
-        {
-            Console.Error.WriteLine($"ok {name}");
-            return 0;
-        }
-
-        Console.Error.WriteLine($"FAIL {name}");
-        return 1;
+        // The Windows fixture runs matrix from pwsh.
+        if (OperatingSystem.IsWindows())
+            RequirePwsh();
+        await Assert.That(PtyCases.IntegrationMatrixFixture(TestEnv.RepoRoot, Fixture("matrix-pwsh-pty.yaml", "matrix-unix-pty.yaml"))).IsTrue();
     }
-    catch (Exception ex)
+
+    [Test]
+    public async Task IntegrationPtyRedrawKeepsRow() => await Assert.That(PtyCases.IntegrationPtyRedrawKeepsRow(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationCastKeepsPathsOut() => await Assert.That(PtyCases.IntegrationCastKeepsPathsOut(TestEnv.RepoRoot)).IsTrue();
+
+    /// <summary>The fixture for this OS: the Windows ones run cmd.exe or pwsh, the Unix ones run sh.</summary>
+    private static string Fixture(string windows, string unix) => OperatingSystem.IsWindows() ? windows : unix;
+
+    private static string RequirePwsh()
     {
-        Console.Error.WriteLine($"FAIL {name}: {ex.Message}");
-        return 1;
+        if (!PtyCases.TryResolvePwsh(out var pwsh))
+            Skip.Test("pwsh not found");
+        return pwsh;
     }
 }
 
-static PtyStartInfo Spawn(string fileName, IReadOnlyList<string> arguments, int columns = 40, int rows = 8) =>
+internal static class PtyCases
+{
+// Skips the test when SCENETAKE_BIN does not name a published binary.
+internal static bool IntegrationTestsEnabled(string repoRoot) => TestEnv.Binary.Length > 0;
+
+
+internal static PtyStartInfo Spawn(string fileName, IReadOnlyList<string> arguments, int columns = 40, int rows = 8) =>
     new() { FileName = fileName, Arguments = arguments, Size = new(columns, rows) };
 
-static PtyStartInfo UnixShell(string command) => Spawn("sh", ["-c", command]);
+internal static PtyStartInfo UnixShell(string command) => Spawn("sh", ["-c", command]);
 
-static PtyStartInfo WindowsCommand(string command)
+internal static PtyStartInfo WindowsCommand(string command)
 {
     var cmd = Environment.GetEnvironmentVariable("ComSpec") ?? @"C:\Windows\System32\cmd.exe";
     return Spawn(cmd, ["/c", command]);
 }
 
-static async Task<bool> PtyEchoOutput()
+internal static async Task<bool> PtyEchoOutput()
 {
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     {
@@ -110,7 +117,7 @@ static async Task<bool> PtyEchoOutput()
     return unix.ExitCode == 0 && unix.Contains("pty-layer-echo", StringComparison.Ordinal);
 }
 
-static async Task<bool> PtyStdinEof()
+internal static async Task<bool> PtyStdinEof()
 {
     const string marker = "pty-stdin-eof";
 
@@ -131,7 +138,7 @@ static async Task<bool> PtyStdinEof()
     return unix.ExitCode == 0 && unix.Contains(marker, StringComparison.Ordinal);
 }
 
-static async Task<bool> PtyEmptyInputSignalsEof()
+internal static async Task<bool> PtyEmptyInputSignalsEof()
 {
     const string marker = "pty-empty-eof-complete";
 
@@ -149,7 +156,7 @@ static async Task<bool> PtyEmptyInputSignalsEof()
     return unix.ExitCode == 0 && unix.Contains(marker, StringComparison.Ordinal);
 }
 
-static async Task<bool> PtyStdinReadCompletesAfterInputEof()
+internal static async Task<bool> PtyStdinReadCompletesAfterInputEof()
 {
     const string marker = "pty-stdin-read-complete";
 
@@ -167,7 +174,7 @@ static async Task<bool> PtyStdinReadCompletesAfterInputEof()
     return unix.ExitCode == 0 && unix.Contains(marker, StringComparison.Ordinal);
 }
 
-static bool PtyHasExitedPolls()
+internal static bool PtyHasExitedPolls()
 {
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     {
@@ -185,7 +192,7 @@ static bool PtyHasExitedPolls()
     return unixSession.HasExited;
 }
 
-static async Task<bool> PtyCancellationKill()
+internal static async Task<bool> PtyCancellationKill()
 {
     using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
 
@@ -219,7 +226,7 @@ static async Task<bool> PtyCancellationKill()
     }
 }
 
-static async Task<bool> PtyCancellationWait()
+internal static async Task<bool> PtyCancellationWait()
 {
     using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
 
@@ -251,7 +258,7 @@ static async Task<bool> PtyCancellationWait()
     }
 }
 
-static bool PtyResizeUpdatesSize()
+internal static bool PtyResizeUpdatesSize()
 {
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     {
@@ -267,15 +274,12 @@ static bool PtyResizeUpdatesSize()
     return unixSession.Size.Columns == 100 && unixSession.Size.Rows == 30;
 }
 
-static async Task<bool> PtyTtyCheck()
+internal static async Task<bool> PtyTtyCheck()
 {
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     {
         if (!TryResolvePwsh(out var pwsh))
-        {
-            Console.Error.WriteLine("skip PtyTtyCheck: pwsh not found");
-            return true;
-        }
+            Skip.Test("pwsh not found");
 
         var result = await PtyCapture.RunAsync(Spawn(pwsh, ["-NoLogo", "-NoProfile", "-Command", "Write-Output (\"redirected=$([Console]::IsOutputRedirected)\")"]));
         return result.ExitCode == 0 && result.Contains("redirected=False", StringComparison.OrdinalIgnoreCase);
@@ -285,13 +289,10 @@ static async Task<bool> PtyTtyCheck()
     return unix.ExitCode == 0 && unix.Contains("redirected=False", StringComparison.Ordinal);
 }
 
-static async Task<bool> PtyMatrixPwsh(string pwshPath)
+internal static async Task<bool> PtyMatrixPwsh(string pwshPath)
 {
     if (!TryFindExecutable("matrix", out _))
-    {
-        Console.Error.WriteLine("skip PtyMatrixPwsh: matrix not found");
-        return true;
-    }
+        Skip.Test("matrix not found");
 
     var result = await PtyCapture.RunAsync(Spawn(pwshPath, ["-NoLogo", "-Command", "matrix 3"], 80, 24));
     return result.ExitCode == 0
@@ -300,10 +301,10 @@ static async Task<bool> PtyMatrixPwsh(string pwshPath)
         && result.Output.Length > 100;
 }
 
-static async Task<bool> PtyMatrixUnix()
+internal static async Task<bool> PtyMatrixUnix()
 {
     if (!TryFindExecutable("cmatrix", out var cmatrix))
-        return true;
+        Skip.Test("cmatrix not found");
 
     var result = await PtyCapture.RunAsync(Spawn(cmatrix, ["-C", "-s", "-l", "3"], 80, 24));
     return result.ExitCode == 0
@@ -311,7 +312,7 @@ static async Task<bool> PtyMatrixUnix()
         && result.Output.Length > 50;
 }
 
-static bool IntegrationFixture(string repoRoot, string fixtureName, string expectedSubstring)
+internal static bool IntegrationFixture(string repoRoot, string fixtureName, string expectedSubstring)
 {
     if (!IntegrationTestsEnabled(repoRoot))
         return true;
@@ -342,16 +343,13 @@ static bool IntegrationFixture(string repoRoot, string fixtureName, string expec
     }
 }
 
-static bool IntegrationMatrixFixture(string repoRoot, string fixtureName)
+internal static bool IntegrationMatrixFixture(string repoRoot, string fixtureName)
 {
     if (!IntegrationTestsEnabled(repoRoot))
         return true;
 
     if (!TryFindExecutable("matrix", out _))
-    {
-        Console.Error.WriteLine("skip IntegrationMatrixFixture: matrix not found");
-        return true;
-    }
+        Skip.Test("matrix not found");
 
     var fixturePath = Path.Combine(repoRoot, "tests", "fixtures", fixtureName);
     var outputStem = Path.Combine(Path.GetTempPath(), $"scenetake-pty-matrix-{Guid.NewGuid():N}");
@@ -379,7 +377,7 @@ static bool IntegrationMatrixFixture(string repoRoot, string fixtureName)
     }
 }
 
-static bool IntegrationPtyScreenStateFixture(string repoRoot, string fixtureName)
+internal static bool IntegrationPtyScreenStateFixture(string repoRoot, string fixtureName)
 {
     if (!IntegrationTestsEnabled(repoRoot))
         return true;
@@ -410,7 +408,7 @@ static bool IntegrationPtyScreenStateFixture(string repoRoot, string fixtureName
     }
 }
 
-static bool IntegrationPtyRedrawKeepsRow(string repoRoot)
+internal static bool IntegrationPtyRedrawKeepsRow(string repoRoot)
 {
     // ConPTY assumes its cursor starts on row 1 of an empty screen, so it redrew a `\r` progress line with
     // a cursor address for row 1 (ESC[H), which covered the earlier output in the recording. Started at the
@@ -447,7 +445,7 @@ static bool IntegrationPtyRedrawKeepsRow(string repoRoot)
     }
 }
 
-static bool IntegrationCastKeepsPathsOut(string repoRoot)
+internal static bool IntegrationCastKeepsPathsOut(string repoRoot)
 {
     // A committed cast must not tell its readers where things are on the recording machine. The header
     // used to hold the shell's full path (C:\Users\<name>\... for a scoop or winget pwsh), and PTY output
@@ -486,7 +484,7 @@ static bool IntegrationCastKeepsPathsOut(string repoRoot)
     }
 }
 
-static bool IntegrationPtyDefaultTypingFixture(string repoRoot, string fixtureName, string typedCommand)
+internal static bool IntegrationPtyDefaultTypingFixture(string repoRoot, string fixtureName, string typedCommand)
 {
     if (!IntegrationTestsEnabled(repoRoot))
         return true;
@@ -516,7 +514,7 @@ static bool IntegrationPtyDefaultTypingFixture(string repoRoot, string fixtureNa
     }
 }
 
-static bool IntegrationChildEnvironmentFixture(string repoRoot, string fixtureName)
+internal static bool IntegrationChildEnvironmentFixture(string repoRoot, string fixtureName)
 {
     if (!IntegrationTestsEnabled(repoRoot))
         return true;
@@ -549,13 +547,13 @@ static bool IntegrationChildEnvironmentFixture(string repoRoot, string fixtureNa
     }
 }
 
-static bool LooksLikeMatrixOutput(string text) =>
+internal static bool LooksLikeMatrixOutput(string text) =>
     text.Length > 100
     && (text.Contains("\u001b[?1049h", StringComparison.Ordinal)
         || text.Contains("\u001b[2J", StringComparison.Ordinal)
         || text.Contains("\u001b[H", StringComparison.Ordinal));
 
-static bool RunScenetake(string repoRoot, string fixturePath, string outputStem, out int exitCode, IReadOnlyDictionary<string, string>? environment = null)
+internal static bool RunScenetake(string repoRoot, string fixturePath, string outputStem, out int exitCode, IReadOnlyDictionary<string, string>? environment = null)
 {
     exitCode = -1;
     var scenetakePath = Environment.GetEnvironmentVariable("SCENETAKE_BIN");
@@ -584,12 +582,12 @@ static bool RunScenetake(string repoRoot, string fixturePath, string outputStem,
     return true;
 }
 
-static string ReadCastOutput(string castPath)
+internal static string ReadCastOutput(string castPath)
 {
     return string.Concat(ReadCastOutputEvents(castPath));
 }
 
-static List<string> ReadCastOutputEvents(string castPath)
+internal static List<string> ReadCastOutputEvents(string castPath)
 {
     var outputs = new List<string>();
     foreach (var line in File.ReadAllLines(castPath))
@@ -611,7 +609,7 @@ static List<string> ReadCastOutputEvents(string castPath)
     return outputs;
 }
 
-static bool TryResolvePwsh(out string path)
+internal static bool TryResolvePwsh(out string path)
 {
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         return TryFindExecutable("pwsh", out path) || TryFindExecutable("powershell", out path);
@@ -619,7 +617,7 @@ static bool TryResolvePwsh(out string path)
     return TryFindExecutable("pwsh", out path);
 }
 
-static bool TryFindExecutable(string name, out string resolved)
+internal static bool TryFindExecutable(string name, out string resolved)
 {
     resolved = "";
     if (File.Exists(name))
@@ -664,15 +662,4 @@ static bool TryFindExecutable(string name, out string resolved)
     return false;
 }
 
-static string FindRepoRoot(string start)
-{
-    var current = new DirectoryInfo(start);
-    while (current is not null)
-    {
-        if (File.Exists(Path.Combine(current.FullName, "scenetake.cs")))
-            return current.FullName;
-        current = current.Parent;
-    }
-
-    throw new InvalidOperationException("repository root not found");
 }

@@ -1,51 +1,60 @@
-﻿#:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
-#:property Nullable=enable
-#:property ImplicitUsings=enable
-#:include ../PtyLeadingInitFilter.cs
+﻿using System.Text;
+using Scenetake.TestSupport;
 
-using System.Text;
+namespace Scenetake.Core.Tests;
 
-var failures = 0;
-failures += Run("StripClearHomeAndText", StripClearHomeAndText);
-failures += Run("SplitCsiAcrossChunks", SplitCsiAcrossChunks);
-failures += Run("KeepClearAfterPhaseEnd", KeepClearAfterPhaseEnd);
-failures += Run("KeepAlternateScreenAndEndPhase", KeepAlternateScreenAndEndPhase);
-failures += Run("KeepAlternateScreenExitAndFollowingText", KeepAlternateScreenExitAndFollowingText);
-failures += Run("StripAlternateScreenExitCleanup", StripAlternateScreenExitCleanup);
-failures += Run("StripOscAndInitOnly", StripOscAndInitOnly);
-failures += Run("KeepLineEraseDuringLeadingPhase", KeepLineEraseDuringLeadingPhase);
-failures += Run("StripPrivateModes", StripPrivateModes);
-failures += Run("StripLeadingNewlines", StripLeadingNewlines);
-failures += Run("KeepLargePassthroughChunk", KeepLargePassthroughChunk);
-failures += Run("StripCopilotStyleAlternateScreenExit", StripCopilotStyleAlternateScreenExit);
-failures += Run("StripCopilotBannerTeardownAfterAlternateScreenExit", StripCopilotBannerTeardownAfterAlternateScreenExit);
-failures += Run("FastPathOutputIsBufferIndependent", FastPathOutputIsBufferIndependent);
-failures += Run("StripLeadingCursorPositionQuery", StripLeadingCursorPositionQuery);
-
-return failures == 0 ? 0 : 1;
-
-static int Run(string name, Func<bool> test)
+public sealed class PtyContinueTests
 {
-    try
-    {
-        if (test())
-        {
-            Console.Error.WriteLine($"ok {name}");
-            return 0;
-        }
+    [Test]
+    public async Task StripClearHomeAndText() => await Assert.That(PtyContinueCases.StripClearHomeAndText()).IsTrue();
 
-        Console.Error.WriteLine($"FAIL {name}");
-        return 1;
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"FAIL {name}: {ex.Message}");
-        return 1;
-    }
+    [Test]
+    public async Task SplitCsiAcrossChunks() => await Assert.That(PtyContinueCases.SplitCsiAcrossChunks()).IsTrue();
+
+    [Test]
+    public async Task KeepClearAfterPhaseEnd() => await Assert.That(PtyContinueCases.KeepClearAfterPhaseEnd()).IsTrue();
+
+    [Test]
+    public async Task KeepAlternateScreenAndEndPhase() => await Assert.That(PtyContinueCases.KeepAlternateScreenAndEndPhase()).IsTrue();
+
+    [Test]
+    public async Task KeepAlternateScreenExitAndFollowingText() => await Assert.That(PtyContinueCases.KeepAlternateScreenExitAndFollowingText()).IsTrue();
+
+    [Test]
+    public async Task StripAlternateScreenExitCleanup() => await Assert.That(PtyContinueCases.StripAlternateScreenExitCleanup()).IsTrue();
+
+    [Test]
+    public async Task StripOscAndInitOnly() => await Assert.That(PtyContinueCases.StripOscAndInitOnly()).IsTrue();
+
+    [Test]
+    public async Task KeepLineEraseDuringLeadingPhase() => await Assert.That(PtyContinueCases.KeepLineEraseDuringLeadingPhase()).IsTrue();
+
+    [Test]
+    public async Task StripPrivateModes() => await Assert.That(PtyContinueCases.StripPrivateModes()).IsTrue();
+
+    [Test]
+    public async Task StripLeadingNewlines() => await Assert.That(PtyContinueCases.StripLeadingNewlines()).IsTrue();
+
+    [Test]
+    public async Task KeepLargePassthroughChunk() => await Assert.That(PtyContinueCases.KeepLargePassthroughChunk()).IsTrue();
+
+    [Test]
+    public async Task StripCopilotStyleAlternateScreenExit() => await Assert.That(PtyContinueCases.StripCopilotStyleAlternateScreenExit()).IsTrue();
+
+    [Test]
+    public async Task StripCopilotBannerTeardownAfterAlternateScreenExit() => await Assert.That(PtyContinueCases.StripCopilotBannerTeardownAfterAlternateScreenExit()).IsTrue();
+
+    [Test]
+    public async Task FastPathOutputIsBufferIndependent() => await Assert.That(PtyContinueCases.FastPathOutputIsBufferIndependent()).IsTrue();
+
+    [Test]
+    public async Task StripLeadingCursorPositionQuery() => await Assert.That(PtyContinueCases.StripLeadingCursorPositionQuery()).IsTrue();
 }
 
-static string Filter(params string[] chunks)
+internal static class PtyContinueCases
+{
+
+internal static string Filter(params string[] chunks)
 {
     var filter = new PtyLeadingInitFilter();
     var output = new List<byte>();
@@ -59,13 +68,13 @@ static string Filter(params string[] chunks)
     return Encoding.UTF8.GetString(output.ToArray());
 }
 
-static bool StripClearHomeAndText()
+internal static bool StripClearHomeAndText()
 {
     var output = Filter("\u001b[?25l\u001b[2J\u001b[m\u001b[Htext");
     return output == "text";
 }
 
-static bool StripLeadingCursorPositionQuery()
+internal static bool StripLeadingCursorPositionQuery()
 {
     // ConPTY started at the recording's cursor (InheritCursor) opens with a cursor position query, which
     // scenetake answers itself. It is dropped there, like the other startup controls. A query a program
@@ -75,68 +84,68 @@ static bool StripLeadingCursorPositionQuery()
     return leading == "text" && later == "text\u001b[6nmore";
 }
 
-static bool SplitCsiAcrossChunks()
+internal static bool SplitCsiAcrossChunks()
 {
     var output = Filter("\u001b[2", "Jtext");
     return output == "text";
 }
 
-static bool KeepClearAfterPhaseEnd()
+internal static bool KeepClearAfterPhaseEnd()
 {
     var output = Filter("text\u001b[2J");
     return output == "text\u001b[2J";
 }
 
-static bool KeepAlternateScreenAndEndPhase()
+internal static bool KeepAlternateScreenAndEndPhase()
 {
     var output = Filter("\u001b[2J\u001b[?1049hmatrix\u001b[2J");
     return output == "\u001b[?1049hmatrix\u001b[2J";
 }
 
-static bool KeepAlternateScreenExitAndFollowingText()
+internal static bool KeepAlternateScreenExitAndFollowingText()
 {
     var output = Filter("\u001b[2J\u001b[H\u001b[?1049hmatrix\u001b[?1049lafter");
     return output == "\u001b[?1049hmatrix\u001b[?1049lafter";
 }
 
-static bool StripAlternateScreenExitCleanup()
+internal static bool StripAlternateScreenExitCleanup()
 {
     var output = Filter("\u001b[2J", "\u001b[H\u001b[?1049hmatrix\u001b[?1049l", "\u001b[?25l\u001b[H\u001b[K\r\n\u001b[K\r\n\u001b[H\u001b[?25hafter");
     return output == "\u001b[?1049hmatrix\u001b[?1049lafter";
 }
 
-static bool StripOscAndInitOnly()
+internal static bool StripOscAndInitOnly()
 {
     var output = Filter("\u001b]0;title\u0007\u001b[?25h\u001b[0m");
     return output == "";
 }
 
-static bool KeepLineEraseDuringLeadingPhase()
+internal static bool KeepLineEraseDuringLeadingPhase()
 {
     var output = Filter("\u001b[2Ktext");
     return output == "\u001b[2Ktext";
 }
 
-static bool StripPrivateModes()
+internal static bool StripPrivateModes()
 {
     var output = Filter("\u001b[?9001h\u001b[?1004l\u001b[?2004htext");
     return output == "text";
 }
 
-static bool StripLeadingNewlines()
+internal static bool StripLeadingNewlines()
 {
     var output = Filter(string.Join("", Enumerable.Repeat("\r\n", 20)), "\u001b[?1049hvim");
     return output == "\u001b[?1049hvim";
 }
 
-static bool KeepLargePassthroughChunk()
+internal static bool KeepLargePassthroughChunk()
 {
     var payload = new string('x', 100_000);
     var output = Filter("start", payload + "\u001b[2Jtail");
     return output == "start" + payload + "\u001b[2Jtail";
 }
 
-static bool StripCopilotStyleAlternateScreenExit()
+internal static bool StripCopilotStyleAlternateScreenExit()
 {
     var output = Filter(
         "\u001b[?1049hcopilot",
@@ -144,7 +153,7 @@ static bool StripCopilotStyleAlternateScreenExit()
     return output == "\u001b[?1049hcopilot\u001b[?1049lafter";
 }
 
-static bool StripCopilotBannerTeardownAfterAlternateScreenExit()
+internal static bool StripCopilotBannerTeardownAfterAlternateScreenExit()
 {
     var output = Filter(
         "\u001b[?1049hcopilot",
@@ -157,7 +166,7 @@ static bool StripCopilotBannerTeardownAfterAlternateScreenExit()
     return output == "\u001b[?1049hcopilot\u001b[=0;1u\u001b[>4;0m\u001b[?1049l$ ";
 }
 
-static bool FastPathOutputIsBufferIndependent()
+internal static bool FastPathOutputIsBufferIndependent()
 {
     var filter = new PtyLeadingInitFilter();
     var source = Encoding.UTF8.GetBytes("hello");
@@ -166,4 +175,5 @@ static bool FastPathOutputIsBufferIndependent()
     source[0] = (byte)'X';
 
     return Encoding.UTF8.GetString(output.Span) == "hello";
+}
 }

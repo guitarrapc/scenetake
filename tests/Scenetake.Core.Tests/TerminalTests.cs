@@ -1,57 +1,134 @@
-﻿#:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
-#:property Nullable=enable
-#:property ImplicitUsings=enable
-#:include ../Terminal.cs
-#:include ../CastTimingPipeline.cs
+﻿using System.Text;
+using Scenetake.TestSupport;
 
-using System.Text;
+namespace Scenetake.Core.Tests;
 
-var failures = 0;
-failures += Run("SgrColorAndReset", SgrColorAndReset);
-failures += Run("MoveCursorAndOverwrite", MoveCursorAndOverwrite);
-failures += Run("CjkWideCharacter", CjkWideCharacter);
-failures += Run("TrueColorForeground", TrueColorForeground);
-failures += Run("ColonDelimitedTrueColor", ColonDelimitedTrueColor);
-failures += Run("AlternateScreen", AlternateScreen);
-failures += Run("CursorVisibility", CursorVisibility);
-failures += Run("SplitEscapeAcrossChunks", SplitEscapeAcrossChunks);
-failures += Run("SplitUtf8AcrossChunks", SplitUtf8AcrossChunks);
-failures += Run("Utf8ProcessMatchesString", Utf8ProcessMatchesString);
-failures += Run("CsiParameterWhitespace", CsiParameterWhitespace);
-failures += Run("InvalidUtf8Replacement", InvalidUtf8Replacement);
-failures += Run("InsertBlankCharacters", InsertBlankCharacters);
-failures += Run("ScrollRegion", ScrollRegion);
-failures += Run("ScrollRegionByCount", ScrollRegionByCount);
-failures += Run("InsertAndDeleteLines", InsertAndDeleteLines);
-failures += Run("SameTimeFramesKeepLastScreen", SameTimeFramesKeepLastScreen);
-failures += Run("SameTimeFramesWithBlankFinalScreen", SameTimeFramesWithBlankFinalScreen);
-failures += Run("NameCommentPrefixIgnoresTrailingAnsiControls", NameCommentPrefixIgnoresTrailingAnsiControls);
-failures += Run("AlternateScreenRestoreKeepsNextPromptAdjacent", AlternateScreenRestoreKeepsNextPromptAdjacent);
-failures += Run("VimRedrawAtScenarioHeight", VimRedrawAtScenarioHeight);
-failures += Run("SoftFontThroughG1AndShiftOut", SoftFontThroughG1AndShiftOut);
-failures += Run("SoftFontThroughG0WithIntermediate", SoftFontThroughG0WithIntermediate);
-failures += Run("DesignationWithIntermediatePrintsNothing", DesignationWithIntermediatePrintsNothing);
-failures += Run("SoftFontSplitAcrossChunks", SoftFontSplitAcrossChunks);
-failures += Run("SoftFontDesignatedBeforeLoad", SoftFontDesignatedBeforeLoad);
-failures += Run("UndefinedSoftFontCodeIsBlank", UndefinedSoftFontCodeIsBlank);
-failures += Run("SoftFontMatrixSizeFromData", SoftFontMatrixSizeFromData);
-failures += Run("SoftFontEraseControl", SoftFontEraseControl);
-failures += Run("OtherDcsStaySkipped", OtherDcsStaySkipped);
-failures += Run("SosPmApcStringsPrintNothing", SosPmApcStringsPrintNothing);
-failures += Run("SoftGlyphCellsDifferFromText", SoftGlyphCellsDifferFromText);
-failures += Run("SaveRestoreKeepsCharsets", SaveRestoreKeepsCharsets);
-failures += Run("ResetDropsSoftFonts", ResetDropsSoftFonts);
-failures += Run("SingleShiftMapsOneCharacter", SingleShiftMapsOneCharacter);
-failures += Run("CastCursorTrackerFollowsEvents", CastCursorTrackerFollowsEvents);
-failures += Run("OscFilterDropsTitlesAndPaths", OscFilterDropsTitlesAndPaths);
-failures += Run("OscFilterFollowsSequencesAcrossEvents", OscFilterFollowsSequencesAcrossEvents);
-failures += Run("OscFilterKeepsColorsAndOtherEscapes", OscFilterKeepsColorsAndOtherEscapes);
-failures += Run("OscFilterKeepsEventsWithoutOsc", OscFilterKeepsEventsWithoutOsc);
+public sealed class TerminalTests
+{
+    [Test]
+    public async Task SgrColorAndReset() => await Assert.That(TerminalCases.SgrColorAndReset()).IsTrue();
 
-return failures == 0 ? 0 : 1;
+    [Test]
+    public async Task MoveCursorAndOverwrite() => await Assert.That(TerminalCases.MoveCursorAndOverwrite()).IsTrue();
 
-static bool CastCursorTrackerFollowsEvents()
+    [Test]
+    public async Task CjkWideCharacter() => await Assert.That(TerminalCases.CjkWideCharacter()).IsTrue();
+
+    [Test]
+    public async Task TrueColorForeground() => await Assert.That(TerminalCases.TrueColorForeground()).IsTrue();
+
+    [Test]
+    public async Task ColonDelimitedTrueColor() => await Assert.That(TerminalCases.ColonDelimitedTrueColor()).IsTrue();
+
+    [Test]
+    public async Task AlternateScreen() => await Assert.That(TerminalCases.AlternateScreen()).IsTrue();
+
+    [Test]
+    public async Task CursorVisibility() => await Assert.That(TerminalCases.CursorVisibility()).IsTrue();
+
+    [Test]
+    public async Task SplitEscapeAcrossChunks() => await Assert.That(TerminalCases.SplitEscapeAcrossChunks()).IsTrue();
+
+    [Test]
+    public async Task SplitUtf8AcrossChunks() => await Assert.That(TerminalCases.SplitUtf8AcrossChunks()).IsTrue();
+
+    [Test]
+    public async Task Utf8ProcessMatchesString() => await Assert.That(TerminalCases.Utf8ProcessMatchesString()).IsTrue();
+
+    [Test]
+    public async Task CsiParameterWhitespace() => await Assert.That(TerminalCases.CsiParameterWhitespace()).IsTrue();
+
+    [Test]
+    public async Task InvalidUtf8Replacement() => await Assert.That(TerminalCases.InvalidUtf8Replacement()).IsTrue();
+
+    [Test]
+    public async Task InsertBlankCharacters() => await Assert.That(TerminalCases.InsertBlankCharacters()).IsTrue();
+
+    [Test]
+    public async Task ScrollRegion() => await Assert.That(TerminalCases.ScrollRegion()).IsTrue();
+
+    [Test]
+    public async Task ScrollRegionByCount() => await Assert.That(TerminalCases.ScrollRegionByCount()).IsTrue();
+
+    [Test]
+    public async Task InsertAndDeleteLines() => await Assert.That(TerminalCases.InsertAndDeleteLines()).IsTrue();
+
+    [Test]
+    public async Task SameTimeFramesKeepLastScreen() => await Assert.That(TerminalCases.SameTimeFramesKeepLastScreen()).IsTrue();
+
+    [Test]
+    public async Task SameTimeFramesWithBlankFinalScreen() => await Assert.That(TerminalCases.SameTimeFramesWithBlankFinalScreen()).IsTrue();
+
+    [Test]
+    public async Task NameCommentPrefixIgnoresTrailingAnsiControls() => await Assert.That(TerminalCases.NameCommentPrefixIgnoresTrailingAnsiControls()).IsTrue();
+
+    [Test]
+    public async Task AlternateScreenRestoreKeepsNextPromptAdjacent() => await Assert.That(TerminalCases.AlternateScreenRestoreKeepsNextPromptAdjacent()).IsTrue();
+
+    [Test]
+    public async Task VimRedrawAtScenarioHeight() => await Assert.That(TerminalCases.VimRedrawAtScenarioHeight()).IsTrue();
+
+    [Test]
+    public async Task SoftFontThroughG1AndShiftOut() => await Assert.That(TerminalCases.SoftFontThroughG1AndShiftOut()).IsTrue();
+
+    [Test]
+    public async Task SoftFontThroughG0WithIntermediate() => await Assert.That(TerminalCases.SoftFontThroughG0WithIntermediate()).IsTrue();
+
+    [Test]
+    public async Task DesignationWithIntermediatePrintsNothing() => await Assert.That(TerminalCases.DesignationWithIntermediatePrintsNothing()).IsTrue();
+
+    [Test]
+    public async Task SoftFontSplitAcrossChunks() => await Assert.That(TerminalCases.SoftFontSplitAcrossChunks()).IsTrue();
+
+    [Test]
+    public async Task SoftFontDesignatedBeforeLoad() => await Assert.That(TerminalCases.SoftFontDesignatedBeforeLoad()).IsTrue();
+
+    [Test]
+    public async Task UndefinedSoftFontCodeIsBlank() => await Assert.That(TerminalCases.UndefinedSoftFontCodeIsBlank()).IsTrue();
+
+    [Test]
+    public async Task SoftFontMatrixSizeFromData() => await Assert.That(TerminalCases.SoftFontMatrixSizeFromData()).IsTrue();
+
+    [Test]
+    public async Task SoftFontEraseControl() => await Assert.That(TerminalCases.SoftFontEraseControl()).IsTrue();
+
+    [Test]
+    public async Task OtherDcsStaySkipped() => await Assert.That(TerminalCases.OtherDcsStaySkipped()).IsTrue();
+
+    [Test]
+    public async Task SosPmApcStringsPrintNothing() => await Assert.That(TerminalCases.SosPmApcStringsPrintNothing()).IsTrue();
+
+    [Test]
+    public async Task SoftGlyphCellsDifferFromText() => await Assert.That(TerminalCases.SoftGlyphCellsDifferFromText()).IsTrue();
+
+    [Test]
+    public async Task SaveRestoreKeepsCharsets() => await Assert.That(TerminalCases.SaveRestoreKeepsCharsets()).IsTrue();
+
+    [Test]
+    public async Task ResetDropsSoftFonts() => await Assert.That(TerminalCases.ResetDropsSoftFonts()).IsTrue();
+
+    [Test]
+    public async Task SingleShiftMapsOneCharacter() => await Assert.That(TerminalCases.SingleShiftMapsOneCharacter()).IsTrue();
+
+    [Test]
+    public async Task CastCursorTrackerFollowsEvents() => await Assert.That(TerminalCases.CastCursorTrackerFollowsEvents()).IsTrue();
+
+    [Test]
+    public async Task OscFilterDropsTitlesAndPaths() => await Assert.That(TerminalCases.OscFilterDropsTitlesAndPaths()).IsTrue();
+
+    [Test]
+    public async Task OscFilterFollowsSequencesAcrossEvents() => await Assert.That(TerminalCases.OscFilterFollowsSequencesAcrossEvents()).IsTrue();
+
+    [Test]
+    public async Task OscFilterKeepsColorsAndOtherEscapes() => await Assert.That(TerminalCases.OscFilterKeepsColorsAndOtherEscapes()).IsTrue();
+
+    [Test]
+    public async Task OscFilterKeepsEventsWithoutOsc() => await Assert.That(TerminalCases.OscFilterKeepsEventsWithoutOsc()).IsTrue();
+}
+
+internal static class TerminalCases
+{
+internal static bool CastCursorTrackerFollowsEvents()
 {
     // A Windows PTY step starts ConPTY at the cursor this reports, so it must match what a player shows:
     // a 1-based row and column, wrapped lines, scrolling at the bottom, UTF-8 events from earlier PTY
@@ -68,39 +145,20 @@ static bool CastCursorTrackerFollowsEvents()
     return afterTyping == (2, 1) && afterWrap == (3, 3) && afterScroll == (4, 1) && again == (4, 1);
 }
 
-static int Run(string name, Func<bool> test)
-{
-    try
-    {
-        if (test())
-        {
-            Console.Error.WriteLine($"ok {name}");
-            return 0;
-        }
 
-        Console.Error.WriteLine($"FAIL {name}");
-        return 1;
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"FAIL {name}: {ex.Message}");
-        return 1;
-    }
-}
-
-static TerminalTheme DarkTheme() =>
+internal static TerminalTheme DarkTheme() =>
     TerminalTheme.FromResolved(new ResolvedTheme(
         "#d0d0d0",
         "#282c34",
         "#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"));
 
-static void Feed(AnsiParser parser, params string[] chunks)
+internal static void Feed(AnsiParser parser, params string[] chunks)
 {
     foreach (var chunk in chunks)
         parser.Process(chunk);
 }
 
-static bool SgrColorAndReset()
+internal static bool SgrColorAndReset()
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(8, 2, theme);
@@ -113,7 +171,7 @@ static bool SgrColorAndReset()
         && buffer.GetCell(0, 1).Foreground == theme.Foreground;
 }
 
-static bool MoveCursorAndOverwrite()
+internal static bool MoveCursorAndOverwrite()
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(8, 2, theme);
@@ -125,7 +183,7 @@ static bool MoveCursorAndOverwrite()
         && buffer.GetCell(0, 2).Text == "!";
 }
 
-static bool CjkWideCharacter()
+internal static bool CjkWideCharacter()
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(8, 2, theme);
@@ -138,7 +196,7 @@ static bool CjkWideCharacter()
         && buffer.CursorCol == 2;
 }
 
-static bool TrueColorForeground()
+internal static bool TrueColorForeground()
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(8, 2, theme);
@@ -149,7 +207,7 @@ static bool TrueColorForeground()
         && string.Equals(buffer.GetCell(0, 0).Foreground, "#FF8000", StringComparison.OrdinalIgnoreCase);
 }
 
-static bool ColonDelimitedTrueColor()
+internal static bool ColonDelimitedTrueColor()
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(8, 2, theme);
@@ -160,7 +218,7 @@ static bool ColonDelimitedTrueColor()
         && string.Equals(buffer.GetCell(0, 0).Foreground, "#FF8000", StringComparison.OrdinalIgnoreCase);
 }
 
-static bool AlternateScreen()
+internal static bool AlternateScreen()
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(8, 4, theme);
@@ -173,7 +231,7 @@ static bool AlternateScreen()
         && buffer.GetCell(0, 3).Text == "N";
 }
 
-static bool CursorVisibility()
+internal static bool CursorVisibility()
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(8, 2, theme);
@@ -183,7 +241,7 @@ static bool CursorVisibility()
     return !buffer.CursorVisible;
 }
 
-static bool SplitEscapeAcrossChunks()
+internal static bool SplitEscapeAcrossChunks()
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(12, 2, theme);
@@ -194,13 +252,13 @@ static bool SplitEscapeAcrossChunks()
         && buffer.GetCell(0, 1).Text == "B";
 }
 
-static void FeedUtf8(AnsiParser parser, byte[][] chunks)
+internal static void FeedUtf8(AnsiParser parser, byte[][] chunks)
 {
     foreach (var chunk in chunks)
         parser.ProcessUtf8(chunk);
 }
 
-static bool SplitUtf8AcrossChunks()
+internal static bool SplitUtf8AcrossChunks()
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(8, 2, theme);
@@ -214,7 +272,7 @@ static bool SplitUtf8AcrossChunks()
         && buffer.CursorCol == 2;
 }
 
-static bool Utf8ProcessMatchesString()
+internal static bool Utf8ProcessMatchesString()
 {
     var theme = DarkTheme();
     var stringBuffer = new ScreenBuffer(12, 2, theme);
@@ -236,7 +294,7 @@ static bool Utf8ProcessMatchesString()
     return stringBuffer.CursorCol == utf8Buffer.CursorCol;
 }
 
-static bool CsiParameterWhitespace()
+internal static bool CsiParameterWhitespace()
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(8, 2, theme);
@@ -247,7 +305,7 @@ static bool CsiParameterWhitespace()
         && buffer.GetCell(0, 0).Foreground == theme.AnsiPalette[1];
 }
 
-static bool InvalidUtf8Replacement()
+internal static bool InvalidUtf8Replacement()
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(8, 2, theme);
@@ -257,7 +315,7 @@ static bool InvalidUtf8Replacement()
     return buffer.GetCell(0, 0).Text == "\uFFFD";
 }
 
-static bool InsertBlankCharacters()
+internal static bool InsertBlankCharacters()
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(6, 2, theme);
@@ -269,7 +327,7 @@ static bool InsertBlankCharacters()
         && buffer.GetCell(0, 3).Text == "B";
 }
 
-static bool ScrollRegion()
+internal static bool ScrollRegion()
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(5, 4, theme);
@@ -284,7 +342,7 @@ static bool ScrollRegion()
 }
 
 /// <summary>Rows A–E with a red C, scroll region rows 2–4, after <paramref name="sequence"/>: the first letter of each row.</summary>
-static (string Rows, bool RedMoved) ScrollRegionAfter(string sequence, int redRow)
+internal static (string Rows, bool RedMoved) ScrollRegionAfter(string sequence, int redRow)
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(3, 5, theme);
@@ -296,7 +354,7 @@ static (string Rows, bool RedMoved) ScrollRegionAfter(string sequence, int redRo
     return (rows, red);
 }
 
-static bool ScrollRegionByCount()
+internal static bool ScrollRegionByCount()
 {
     // Whole rows move together, styles included; rows outside the region stay.
     return ScrollRegionAfter("\u001b[2S", redRow: -1) == ("AD..E", true)
@@ -308,7 +366,7 @@ static bool ScrollRegionByCount()
         && ScrollRegionAfter("\u001b[4;1H\n", redRow: 1) == ("ACD.E", true);
 }
 
-static bool InsertAndDeleteLines()
+internal static bool InsertAndDeleteLines()
 {
     // Lines move from the cursor row to the bottom of the scroll region; outside it nothing happens.
     return ScrollRegionAfter("\u001b[3;1H\u001b[L", redRow: 3) == ("AB.CE", true)
@@ -318,10 +376,10 @@ static bool InsertAndDeleteLines()
         && ScrollRegionAfter("\u001b[5;1H\u001b[M", redRow: 2) == ("ABCDE", true);
 }
 
-static List<CastEvent> OutputEvents(params (double Time, string Data)[] events) =>
+internal static List<CastEvent> OutputEvents(params (double Time, string Data)[] events) =>
     events.Select(e => e.Data.StartsWith('#') ? CastEvent.Marker(e.Time, e.Data) : CastEvent.Output(e.Time, e.Data)).ToList();
 
-static bool SameTimeFramesKeepLastScreen()
+internal static bool SameTimeFramesKeepLastScreen()
 {
     // Writes within one millisecond: only the screen after the last of them is kept, at the event
     // that wrote it. A marker between same-time writes does not split them. The cursor hidden and
@@ -342,7 +400,7 @@ static bool SameTimeFramesKeepLastScreen()
         && last.Select(f => f.EventIndex).SequenceEqual([3, 6, 7]);
 }
 
-static bool SameTimeFramesWithBlankFinalScreen()
+internal static bool SameTimeFramesWithBlankFinalScreen()
 {
     // A blank final screen after leaving the alternate screen is trimmed, which needs every frame:
     // both modes return the same list.
@@ -356,18 +414,18 @@ static bool SameTimeFramesWithBlankFinalScreen()
         && last.Select(f => (f.Time, f.Signature, f.EventIndex)).SequenceEqual(all.Select(f => (f.Time, f.Signature, f.EventIndex)));
 }
 
-static bool NameCommentPrefixIgnoresTrailingAnsiControls()
+internal static bool NameCommentPrefixIgnoresTrailingAnsiControls()
 {
     var events = new List<CastEvent>
-    {
-        CastEvent.OutputUtf8(0, Encoding.UTF8.GetBytes("Running inside PTY\r\n\u001b]0;bash\a\u001b[?25h")),
-        CastEvent.OutputUtf8(0.1, Encoding.UTF8.GetBytes("\u001b[?9001l\u001b[?1004l")),
-    };
+{
+    CastEvent.OutputUtf8(0, Encoding.UTF8.GetBytes("Running inside PTY\r\n\u001b]0;bash\a\u001b[?25h")),
+    CastEvent.OutputUtf8(0.1, Encoding.UTF8.GetBytes("\u001b[?9001l\u001b[?1004l")),
+};
 
     return CastEventLayout.NameCommentPrefixForLastEvent(events) == "";
 }
 
-static bool VimRedrawAtScenarioHeight()
+internal static bool VimRedrawAtScenarioHeight()
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(80, 24, theme);
@@ -384,7 +442,7 @@ static bool VimRedrawAtScenarioHeight()
         && buffer.CursorCol == 0;
 }
 
-static bool AlternateScreenRestoreKeepsNextPromptAdjacent()
+internal static bool AlternateScreenRestoreKeepsNextPromptAdjacent()
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(80, 24, theme);
@@ -404,11 +462,11 @@ static bool AlternateScreenRestoreKeepsNextPromptAdjacent()
 
 // Soft fonts (DECDLD). Glyphs are written as rows of '#' and '.', top row first.
 
-static string[] Diagonal() => ["#....", ".#...", "..#..", "...#.", "....#", "....."];
-static string[] TopBar() => ["#####", ".....", ".....", ".....", ".....", "....."];
+internal static string[] Diagonal() => ["#....", ".#...", "..#..", "...#.", "....#", "....."];
+internal static string[] TopBar() => ["#####", ".....", ".....", ".....", ".....", "....."];
 
 /// <summary>Sixel data for one glyph: one band per six rows, one character per column, top pixel in bit 0.</summary>
-static string SixelGlyph(string[] rows)
+internal static string SixelGlyph(string[] rows)
 {
     var sb = new StringBuilder();
     var width = rows.Max(r => r.Length);
@@ -434,10 +492,10 @@ static string SixelGlyph(string[] rows)
 }
 
 /// <summary>A DECDLD string: <c>ESC P parameters { name glyph;glyph… ESC \</c>.</summary>
-static string Decdld(string parameters, string name, params string[][] glyphs) =>
+internal static string Decdld(string parameters, string name, params string[][] glyphs) =>
     "\u001bP" + parameters + "{" + name + string.Join(';', glyphs.Select(SixelGlyph)) + "\u001b\\";
 
-static bool GlyphIs(ScreenCell cell, string[] rows)
+internal static bool GlyphIs(ScreenCell cell, string[] rows)
 {
     if (cell.Glyph is not { } glyph || glyph.Width != rows[0].Length || glyph.Height != rows.Length)
         return false;
@@ -453,7 +511,7 @@ static bool GlyphIs(ScreenCell cell, string[] rows)
     return true;
 }
 
-static bool SoftFontThroughG1AndShiftOut()
+internal static bool SoftFontThroughG1AndShiftOut()
 {
     // The in-box Windows ConPTY's form: the font renamed to "@", designated into G1, and each run of
     // its characters between SO and SI. Text outside SO/SI stays ASCII.
@@ -469,7 +527,7 @@ static bool SoftFontThroughG1AndShiftOut()
         && buffer.CursorCol == 4;
 }
 
-static bool SoftFontThroughG0WithIntermediate()
+internal static bool SoftFontThroughG0WithIntermediate()
 {
     // The form a program writes itself (matrix on Unix, or the out-of-band ConPTY): a name with an
     // intermediate, designated into G0, then ASCII designated back.
@@ -483,7 +541,7 @@ static bool SoftFontThroughG0WithIntermediate()
         && buffer.CursorCol == 2;
 }
 
-static bool DesignationWithIntermediatePrintsNothing()
+internal static bool DesignationWithIntermediatePrintsNothing()
 {
     // ESC ( SP @ is one sequence. Reading only one byte after "(" used to print the "@".
     // DEC line drawing (ESC ( 0) is not drawn as lines and stays ASCII.
@@ -495,7 +553,7 @@ static bool DesignationWithIntermediatePrintsNothing()
     return RowText(buffer, 0) == "ABq" && buffer.CursorCol == 3;
 }
 
-static bool SoftFontSplitAcrossChunks()
+internal static bool SoftFontSplitAcrossChunks()
 {
     var theme = DarkTheme();
     var buffer = new ScreenBuffer(10, 2, theme);
@@ -513,7 +571,7 @@ static bool SoftFontSplitAcrossChunks()
     return GlyphIs(buffer.GetCell(0, 0), Diagonal()) && buffer.CursorCol == 1;
 }
 
-static bool SoftFontDesignatedBeforeLoad()
+internal static bool SoftFontDesignatedBeforeLoad()
 {
     // A designation names a set. The font is used once it loads, whichever comes first.
     var theme = DarkTheme();
@@ -524,7 +582,7 @@ static bool SoftFontDesignatedBeforeLoad()
     return buffer.GetCell(0, 0) is { Text: "!", Glyph: null } && GlyphIs(buffer.GetCell(0, 1), Diagonal());
 }
 
-static bool UndefinedSoftFontCodeIsBlank()
+internal static bool UndefinedSoftFontCodeIsBlank()
 {
     // One glyph at 0x21. 0x22 has none and draws blank, as on DEC terminals. Space stays a space in a 94-character set.
     var theme = DarkTheme();
@@ -537,7 +595,7 @@ static bool UndefinedSoftFontCodeIsBlank()
         && GlyphIs(buffer.GetCell(0, 2), Diagonal());
 }
 
-static bool SoftFontMatrixSizeFromData()
+internal static bool SoftFontMatrixSizeFromData()
 {
     // Pcmw 0 and Pcmh 0: the width is the widest glyph, the height six rows per band.
     string[] tall = ["#....", ".....", ".....", ".....", ".....", ".....", "....#"];
@@ -550,7 +608,7 @@ static bool SoftFontMatrixSizeFromData()
         && glyph.IsSet(0, 0) && glyph.IsSet(4, 6) && !glyph.IsSet(4, 0);
 }
 
-static bool SoftFontEraseControl()
+internal static bool SoftFontEraseControl()
 {
     // Pe 1 replaces only the codes it loads; Pe 0 replaces the whole font.
     var theme = DarkTheme();
@@ -563,21 +621,21 @@ static bool SoftFontEraseControl()
         && buffer.GetCell(0, 2) is { Text: " ", Glyph: null } && GlyphIs(buffer.GetCell(0, 3), TopBar());
 }
 
-static string OscFilterText(List<CastEvent> events) =>
+internal static string OscFilterText(List<CastEvent> events) =>
     string.Concat(events.Where(e => e.Kind == CastEventKind.Output)
         .Select(e => e.HasUtf8Output ? Encoding.UTF8.GetString(e.Utf8Output.Span) : e.Data));
 
-static bool OscFilterDropsTitlesAndPaths()
+internal static bool OscFilterDropsTitlesAndPaths()
 {
     // ConPTY's title is the shell's full path. vim, shells and ls put folders, host names and file URLs in
     // OSC 0/2, 7, 9;9, 133, 633 and 8; OSC 52 carries the clipboard. Only what a terminal draws is left.
     var events = new List<CastEvent>
-    {
-        CastEvent.OutputUtf8(0, Encoding.UTF8.GetBytes("out 日本\r\n\u001b]0;C:\\Users\\me\\scoop\\shims\\pwsh.EXE\a\u001b[?25h")),
-        CastEvent.Output(0.1, "\u001b]2;README.md (D:\\work\\secret) - VIM\u001b\\vim"),
-        CastEvent.Output(0.2, "\u001b]7;file://host/home/me\a\u001b]9;9;C:\\Users\\me\a\u001b]133;A\a\u001b]633;P;Cwd=/home/me\a$ "),
-        CastEvent.Output(0.3, "\u001b]8;;file://host/home/me/a.txt\aa.txt\u001b]8;;\a \u001b]52;c;c2VjcmV0\a\u001b]l old-style title\u001b\\"),
-    };
+{
+    CastEvent.OutputUtf8(0, Encoding.UTF8.GetBytes("out 日本\r\n\u001b]0;C:\\Users\\me\\scoop\\shims\\pwsh.EXE\a\u001b[?25h")),
+    CastEvent.Output(0.1, "\u001b]2;README.md (D:\\work\\secret) - VIM\u001b\\vim"),
+    CastEvent.Output(0.2, "\u001b]7;file://host/home/me\a\u001b]9;9;C:\\Users\\me\a\u001b]133;A\a\u001b]633;P;Cwd=/home/me\a$ "),
+    CastEvent.Output(0.3, "\u001b]8;;file://host/home/me/a.txt\aa.txt\u001b]8;;\a \u001b]52;c;c2VjcmV0\a\u001b]l old-style title\u001b\\"),
+};
     var filtered = CastOscFilter.RemovePrivateSequences(events);
     var text = OscFilterText(filtered);
     var ok = text == "out 日本\r\n\u001b[?25hvim$ a.txt " && filtered.Count == 4;
@@ -586,22 +644,22 @@ static bool OscFilterDropsTitlesAndPaths()
     return ok;
 }
 
-static bool OscFilterFollowsSequencesAcrossEvents()
+internal static bool OscFilterFollowsSequencesAcrossEvents()
 {
     // A PTY read can end anywhere in a sequence: after ESC, inside the code, inside the body, or between
     // the ESC and backslash of ST. An event left with nothing is dropped, except the last one, which
     // sets the recording's length and stays empty.
     var events = new List<CastEvent>
-    {
-        CastEvent.OutputUtf8(0.0, "a\u001b"u8.ToArray()),
-        CastEvent.OutputUtf8(0.1, "]"u8.ToArray()),
-        CastEvent.OutputUtf8(0.2, "0;C:\\Users\\me"u8.ToArray()),
-        CastEvent.OutputUtf8(0.3, "\\pwsh.EXE\u001b"u8.ToArray()),
-        CastEvent.OutputUtf8(0.4, "\\b\u001b"u8.ToArray()),
-        CastEvent.Marker(0.45, "step"),
-        CastEvent.OutputUtf8(0.5, "[1mc\u001b]2"u8.ToArray()),
-        CastEvent.OutputUtf8(0.6, ";title\a"u8.ToArray()),
-    };
+{
+    CastEvent.OutputUtf8(0.0, "a\u001b"u8.ToArray()),
+    CastEvent.OutputUtf8(0.1, "]"u8.ToArray()),
+    CastEvent.OutputUtf8(0.2, "0;C:\\Users\\me"u8.ToArray()),
+    CastEvent.OutputUtf8(0.3, "\\pwsh.EXE\u001b"u8.ToArray()),
+    CastEvent.OutputUtf8(0.4, "\\b\u001b"u8.ToArray()),
+    CastEvent.Marker(0.45, "step"),
+    CastEvent.OutputUtf8(0.5, "[1mc\u001b]2"u8.ToArray()),
+    CastEvent.OutputUtf8(0.6, ";title\a"u8.ToArray()),
+};
     var filtered = CastOscFilter.RemovePrivateSequences(events);
     var text = OscFilterText(filtered);
     var times = string.Join(",", filtered.Select(e => e.Time.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)));
@@ -614,7 +672,7 @@ static bool OscFilterFollowsSequencesAcrossEvents()
     return ok;
 }
 
-static bool OscFilterKeepsColorsAndOtherEscapes()
+internal static bool OscFilterKeepsColorsAndOtherEscapes()
 {
     // Color OSCs set the palette and stay. CSI, DCS (soft fonts) and a bare ESC are not OSCs. An ESC inside
     // a dropped OSC that is not ST ends it, and the sequence it starts is kept.
@@ -627,7 +685,7 @@ static bool OscFilterKeepsColorsAndOtherEscapes()
     return text == expected;
 }
 
-static bool OscFilterKeepsEventsWithoutOsc()
+internal static bool OscFilterKeepsEventsWithoutOsc()
 {
     // Events without an OSC are passed on as they are: same instance data, string events stay strings.
     var typed = CastEvent.Output(0, "🎉");
@@ -638,7 +696,7 @@ static bool OscFilterKeepsEventsWithoutOsc()
         && filtered[2].Utf8Output.Equals(bytes.Utf8Output);
 }
 
-static bool OtherDcsStaySkipped()
+internal static bool OtherDcsStaySkipped()
 {
     // DECRQSS and a Sixel image (whose data has "{") are not soft fonts and print nothing.
     var theme = DarkTheme();
@@ -649,7 +707,7 @@ static bool OtherDcsStaySkipped()
     return RowText(buffer, 0) == "ABC" && buffer.GetCell(0, 2).Glyph is null;
 }
 
-static bool SosPmApcStringsPrintNothing()
+internal static bool SosPmApcStringsPrintNothing()
 {
     // An inline image's data (APC), a privacy message (PM), and SOS are strings like DCS. The masker does not search
     // their data, so drawing it would show text that was never masked.
@@ -670,7 +728,7 @@ static bool SosPmApcStringsPrintNothing()
     return RowText(buffer, 0) == "ABCD" && RowText(buffer, 1) == "EFGHI" && RowText(buffer, 2) == "J" && RowText(buffer, 3) == "K";
 }
 
-static bool SoftGlyphCellsDifferFromText()
+internal static bool SoftGlyphCellsDifferFromText()
 {
     // A glyph cell and a plain cell with the same code are different rows. Equal bitmaps are one glyph.
     var theme = DarkTheme();
@@ -691,7 +749,7 @@ static bool SoftGlyphCellsDifferFromText()
         && soft.RowEquals(other, 0);
 }
 
-static bool SaveRestoreKeepsCharsets()
+internal static bool SaveRestoreKeepsCharsets()
 {
     // DECSC saves the designations and the GL shift with the cursor, and DECRC brings them back.
     var theme = DarkTheme();
@@ -702,7 +760,7 @@ static bool SaveRestoreKeepsCharsets()
     return GlyphIs(buffer.GetCell(0, 0), Diagonal());
 }
 
-static bool ResetDropsSoftFonts()
+internal static bool ResetDropsSoftFonts()
 {
     // RIS resets the designations and drops every soft font.
     var theme = DarkTheme();
@@ -713,7 +771,7 @@ static bool ResetDropsSoftFonts()
     return buffer.GetCell(0, 0) is { Text: "!", Glyph: null } && buffer.GetCell(0, 1) is { Text: "!", Glyph: null };
 }
 
-static bool SingleShiftMapsOneCharacter()
+internal static bool SingleShiftMapsOneCharacter()
 {
     // SS2 takes the next character from G2 only.
     var theme = DarkTheme();
@@ -724,12 +782,11 @@ static bool SingleShiftMapsOneCharacter()
     return GlyphIs(buffer.GetCell(0, 0), Diagonal()) && buffer.GetCell(0, 1) is { Text: "!", Glyph: null };
 }
 
-static string RowText(ScreenBuffer buffer, int row)
+internal static string RowText(ScreenBuffer buffer, int row)
 {
     var chars = new char[buffer.Width];
     for (var col = 0; col < buffer.Width; col++)
         chars[col] = buffer.GetCell(row, col).Text.Length == 1 ? buffer.GetCell(row, col).Text[0] : ' ';
     return new string(chars).TrimEnd();
 }
-
-internal readonly record struct ResolvedTheme(string Fg, string Bg, string Palette);
+}

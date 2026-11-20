@@ -1,5 +1,5 @@
 # What a command leaves in its zsh shell reaches the next one (spec_scenario.md → Shell state across steps).
-# Run from the repository root by tests/shell_state_test.cs, with HOME set to a folder of login files: .zshenv moves
+# Run from the repository root by ShellStateTests, with HOME set to a folder of login files: .zshenv moves
 # ZDOTDIR, .zprofile puts /usr/bin first in PATH, and .zlogin sets FROM_ZLOGIN.
 title: "shell state (zsh)"
 width: 100

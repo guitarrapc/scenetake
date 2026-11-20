@@ -1,75 +1,176 @@
-#:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
-#:property Nullable=enable
-#:property ImplicitUsings=enable
-#:include ../Terminal.cs
-#:include ../CastTimingPipeline.cs
-#:include ../CastReader.cs
-#:include SvgTestStubs.cs
-#:include ../Svg.cs
+﻿using Scenetake.TestSupport;
 
-var failures = 0;
-failures += Run("CurlOutputSurvivesFrameSampling", CurlOutputSurvivesFrameSampling);
-failures += Run("EchoOutputNoDuplicateCommandLine", EchoOutputNoDuplicateCommandLine);
-failures += Run("MarkerDelayAdvancesTiming", MarkerDelayAdvancesTiming);
-failures += Run("SvgLoopsWithCastDuration", SvgLoopsWithCastDuration);
-failures += Run("LoopDurationMatchesAggGifCycle", LoopDurationMatchesAggGifCycle);
-failures += Run("MaxFpsDoesNotChangeLoopDuration", MaxFpsDoesNotChangeLoopDuration);
-failures += Run("EndHoldAndFadeOutSetTheLoop", EndHoldAndFadeOutSetTheLoop);
-failures += Run("NoLoopPlaysOnceWithoutFade", NoLoopPlaysOnceWithoutFade);
-failures += Run("ThemePresetsAreValidAndPreviewed", ThemePresetsAreValidAndPreviewed);
-failures += Run("MatrixTintWhiteNearGreen", MatrixTintWhiteNearGreen);
-failures += Run("MatrixTintIgnoresVerticalNeighbors", MatrixTintIgnoresVerticalNeighbors);
-failures += Run("CopilotBannerBlockGlyphs", CopilotBannerBlockGlyphs);
-failures += Run("ShadesAreTranslucentRects", ShadesAreTranslucentRects);
-failures += Run("WriteSvgMatchesRenderToString", WriteSvgMatchesRenderToString);
-failures += Run("GlyphListForSparseColoredRow", GlyphListForSparseColoredRow);
-failures += Run("RunFormForProse", RunFormForProse);
-failures += Run("MultiCodeUnitCellsStayOutOfXLists", MultiCodeUnitCellsStayOutOfXLists);
-failures += Run("BackgroundSpanCoversStyleChanges", BackgroundSpanCoversStyleChanges);
-failures += Run("UnderlinedRowUsesRunForm", UnderlinedRowUsesRunForm);
-failures += Run("RowLayersShareKeyframeRules", RowLayersShareKeyframeRules);
-failures += Run("StepKeyframesAreCompact", StepKeyframesAreCompact);
-failures += Run("LayerSwitchesLeaveNoGap", LayerSwitchesLeaveNoGap);
-failures += Run("ScrolledRowsReuseContent", ScrolledRowsReuseContent);
-failures += Run("CursorJoinsRowLayers", CursorJoinsRowLayers);
-failures += Run("SvgUsesLfLineEndings", SvgUsesLfLineEndings);
-failures += Run("ThemeForegroundIsInherited", ThemeForegroundIsInherited);
-failures += Run("SingleTextLayerHasNoWrapper", SingleTextLayerHasNoWrapper);
-failures += Run("RowLocalContentDropsY", RowLocalContentDropsY);
-failures += Run("KeyframeNamesAreShort", KeyframeNamesAreShort);
-failures += Run("TypingRowsGetRowClasses", TypingRowsGetRowClasses);
-failures += Run("RowsLandOnTheirLines", RowsLandOnTheirLines);
-failures += Run("CursorSitsOnItsRow", CursorSitsOnItsRow);
-failures += Run("EveryKeyframeIsUsed", EveryKeyframeIsUsed);
-failures += Run("ClassNamesAreLowercase", ClassNamesAreLowercase);
-failures += Run("ZeroLengthFramesAreDropped", ZeroLengthFramesAreDropped);
-failures += Run("RunTextLengthCountsCells", RunTextLengthCountsCells);
-failures += Run("UnderlinedSpacesKeepUnderline", UnderlinedSpacesKeepUnderline);
-failures += Run("UnderlinedBlocksKeepUnderline", UnderlinedBlocksKeepUnderline);
-failures += Run("PlainBlocksStayOutOfText", PlainBlocksStayOutOfText);
-failures += Run("BlockOnlyRowsDecodeToTheirRow", BlockOnlyRowsDecodeToTheirRow);
-failures += Run("XmlInvalidCharactersAreReplaced", XmlInvalidCharactersAreReplaced);
-failures += Run("ScenarioThemeColorsAreValidated", ScenarioThemeColorsAreValidated);
-failures += Run("CastWarningsSayCast", CastWarningsSayCast);
-failures += Run("InvalidJsonNamesOnlyTheCastLine", InvalidJsonNamesOnlyTheCastLine);
-failures += Run("CombiningMarkDoesNotFailRender", CombiningMarkDoesNotFailRender);
-failures += Run("LargeSvgWarnsWithAlternatives", LargeSvgWarnsWithAlternatives);
-failures += Run("DefaultFontFamilyPassesValidation", DefaultFontFamilyPassesValidation);
-failures += Run("OwnCastReadsWithoutFontFamilyWarning", OwnCastReadsWithoutFontFamilyWarning);
-failures += Run("TooManyFontFamiliesStillWarns", TooManyFontFamiliesStillWarns);
-failures += Run("SoftFontGlyphsAreUses", SoftFontGlyphsAreUses);
-failures += Run("SoftFontThroughG0IsTheSame", SoftFontThroughG0IsTheSame);
-failures += Run("UnderlinedSoftGlyphsKeepUnderline", UnderlinedSoftGlyphsKeepUnderline);
-failures += Run("SoftGlyphIdsAvoidOtherIds", SoftGlyphIdsAvoidOtherIds);
+namespace Scenetake.Core.Tests;
 
-return failures == 0 ? 0 : 1;
+public sealed class SvgRenderTests
+{
+    [Test]
+    public async Task CurlOutputSurvivesFrameSampling() => await Assert.That(SvgRenderCases.CurlOutputSurvivesFrameSampling()).IsTrue();
 
+    [Test]
+    public async Task EchoOutputNoDuplicateCommandLine() => await Assert.That(SvgRenderCases.EchoOutputNoDuplicateCommandLine()).IsTrue();
+
+    [Test]
+    public async Task MarkerDelayAdvancesTiming() => await Assert.That(SvgRenderCases.MarkerDelayAdvancesTiming()).IsTrue();
+
+    [Test]
+    public async Task SvgLoopsWithCastDuration() => await Assert.That(SvgRenderCases.SvgLoopsWithCastDuration()).IsTrue();
+
+    [Test]
+    public async Task LoopDurationMatchesAggGifCycle() => await Assert.That(SvgRenderCases.LoopDurationMatchesAggGifCycle()).IsTrue();
+
+    [Test]
+    public async Task MaxFpsDoesNotChangeLoopDuration() => await Assert.That(SvgRenderCases.MaxFpsDoesNotChangeLoopDuration()).IsTrue();
+
+    [Test]
+    public async Task EndHoldAndFadeOutSetTheLoop() => await Assert.That(SvgRenderCases.EndHoldAndFadeOutSetTheLoop()).IsTrue();
+
+    [Test]
+    public async Task NoLoopPlaysOnceWithoutFade() => await Assert.That(SvgRenderCases.NoLoopPlaysOnceWithoutFade()).IsTrue();
+
+    [Test]
+    public async Task ThemePresetsAreValidAndPreviewed() => await Assert.That(SvgRenderCases.ThemePresetsAreValidAndPreviewed()).IsTrue();
+
+    [Test]
+    public async Task MatrixTintWhiteNearGreen() => await Assert.That(SvgRenderCases.MatrixTintWhiteNearGreen()).IsTrue();
+
+    [Test]
+    public async Task MatrixTintIgnoresVerticalNeighbors() => await Assert.That(SvgRenderCases.MatrixTintIgnoresVerticalNeighbors()).IsTrue();
+
+    [Test]
+    public async Task CopilotBannerBlockGlyphs() => await Assert.That(SvgRenderCases.CopilotBannerBlockGlyphs()).IsTrue();
+
+    [Test]
+    public async Task ShadesAreTranslucentRects() => await Assert.That(SvgRenderCases.ShadesAreTranslucentRects()).IsTrue();
+
+    [Test]
+    public async Task WriteSvgMatchesRenderToString() => await Assert.That(SvgRenderCases.WriteSvgMatchesRenderToString()).IsTrue();
+
+    [Test]
+    public async Task GlyphListForSparseColoredRow() => await Assert.That(SvgRenderCases.GlyphListForSparseColoredRow()).IsTrue();
+
+    [Test]
+    public async Task RunFormForProse() => await Assert.That(SvgRenderCases.RunFormForProse()).IsTrue();
+
+    [Test]
+    public async Task MultiCodeUnitCellsStayOutOfXLists() => await Assert.That(SvgRenderCases.MultiCodeUnitCellsStayOutOfXLists()).IsTrue();
+
+    [Test]
+    public async Task BackgroundSpanCoversStyleChanges() => await Assert.That(SvgRenderCases.BackgroundSpanCoversStyleChanges()).IsTrue();
+
+    [Test]
+    public async Task UnderlinedRowUsesRunForm() => await Assert.That(SvgRenderCases.UnderlinedRowUsesRunForm()).IsTrue();
+
+    [Test]
+    public async Task RowLayersShareKeyframeRules() => await Assert.That(SvgRenderCases.RowLayersShareKeyframeRules()).IsTrue();
+
+    [Test]
+    public async Task StepKeyframesAreCompact() => await Assert.That(SvgRenderCases.StepKeyframesAreCompact()).IsTrue();
+
+    [Test]
+    public async Task LayerSwitchesLeaveNoGap() => await Assert.That(SvgRenderCases.LayerSwitchesLeaveNoGap()).IsTrue();
+
+    [Test]
+    public async Task ScrolledRowsReuseContent() => await Assert.That(SvgRenderCases.ScrolledRowsReuseContent()).IsTrue();
+
+    [Test]
+    public async Task CursorJoinsRowLayers() => await Assert.That(SvgRenderCases.CursorJoinsRowLayers()).IsTrue();
+
+    [Test]
+    public async Task SvgUsesLfLineEndings() => await Assert.That(SvgRenderCases.SvgUsesLfLineEndings()).IsTrue();
+
+    [Test]
+    public async Task ThemeForegroundIsInherited() => await Assert.That(SvgRenderCases.ThemeForegroundIsInherited()).IsTrue();
+
+    [Test]
+    public async Task SingleTextLayerHasNoWrapper() => await Assert.That(SvgRenderCases.SingleTextLayerHasNoWrapper()).IsTrue();
+
+    [Test]
+    public async Task RowLocalContentDropsY() => await Assert.That(SvgRenderCases.RowLocalContentDropsY()).IsTrue();
+
+    [Test]
+    public async Task KeyframeNamesAreShort() => await Assert.That(SvgRenderCases.KeyframeNamesAreShort()).IsTrue();
+
+    [Test]
+    public async Task TypingRowsGetRowClasses() => await Assert.That(SvgRenderCases.TypingRowsGetRowClasses()).IsTrue();
+
+    [Test]
+    public async Task RowsLandOnTheirLines() => await Assert.That(SvgRenderCases.RowsLandOnTheirLines()).IsTrue();
+
+    [Test]
+    public async Task CursorSitsOnItsRow() => await Assert.That(SvgRenderCases.CursorSitsOnItsRow()).IsTrue();
+
+    [Test]
+    public async Task EveryKeyframeIsUsed() => await Assert.That(SvgRenderCases.EveryKeyframeIsUsed()).IsTrue();
+
+    [Test]
+    public async Task ClassNamesAreLowercase() => await Assert.That(SvgRenderCases.ClassNamesAreLowercase()).IsTrue();
+
+    [Test]
+    public async Task ZeroLengthFramesAreDropped() => await Assert.That(SvgRenderCases.ZeroLengthFramesAreDropped()).IsTrue();
+
+    [Test]
+    public async Task RunTextLengthCountsCells() => await Assert.That(SvgRenderCases.RunTextLengthCountsCells()).IsTrue();
+
+    [Test]
+    public async Task UnderlinedSpacesKeepUnderline() => await Assert.That(SvgRenderCases.UnderlinedSpacesKeepUnderline()).IsTrue();
+
+    [Test]
+    public async Task UnderlinedBlocksKeepUnderline() => await Assert.That(SvgRenderCases.UnderlinedBlocksKeepUnderline()).IsTrue();
+
+    [Test]
+    public async Task PlainBlocksStayOutOfText() => await Assert.That(SvgRenderCases.PlainBlocksStayOutOfText()).IsTrue();
+
+    [Test]
+    public async Task BlockOnlyRowsDecodeToTheirRow() => await Assert.That(SvgRenderCases.BlockOnlyRowsDecodeToTheirRow()).IsTrue();
+
+    [Test]
+    public async Task XmlInvalidCharactersAreReplaced() => await Assert.That(SvgRenderCases.XmlInvalidCharactersAreReplaced()).IsTrue();
+
+    [Test]
+    public async Task ScenarioThemeColorsAreValidated() => await Assert.That(SvgRenderCases.ScenarioThemeColorsAreValidated()).IsTrue();
+
+    [Test]
+    public async Task CastWarningsSayCast() => await Assert.That(SvgRenderCases.CastWarningsSayCast()).IsTrue();
+
+    [Test]
+    public async Task InvalidJsonNamesOnlyTheCastLine() => await Assert.That(SvgRenderCases.InvalidJsonNamesOnlyTheCastLine()).IsTrue();
+
+    [Test]
+    public async Task CombiningMarkDoesNotFailRender() => await Assert.That(SvgRenderCases.CombiningMarkDoesNotFailRender()).IsTrue();
+
+    [Test]
+    public async Task LargeSvgWarnsWithAlternatives() => await Assert.That(SvgRenderCases.LargeSvgWarnsWithAlternatives()).IsTrue();
+
+    [Test]
+    public async Task DefaultFontFamilyPassesValidation() => await Assert.That(SvgRenderCases.DefaultFontFamilyPassesValidation()).IsTrue();
+
+    [Test]
+    public async Task OwnCastReadsWithoutFontFamilyWarning() => await Assert.That(SvgRenderCases.OwnCastReadsWithoutFontFamilyWarning()).IsTrue();
+
+    [Test]
+    public async Task TooManyFontFamiliesStillWarns() => await Assert.That(SvgRenderCases.TooManyFontFamiliesStillWarns()).IsTrue();
+
+    [Test]
+    public async Task SoftFontGlyphsAreUses() => await Assert.That(SvgRenderCases.SoftFontGlyphsAreUses()).IsTrue();
+
+    [Test]
+    public async Task SoftFontThroughG0IsTheSame() => await Assert.That(SvgRenderCases.SoftFontThroughG0IsTheSame()).IsTrue();
+
+    [Test]
+    public async Task UnderlinedSoftGlyphsKeepUnderline() => await Assert.That(SvgRenderCases.UnderlinedSoftGlyphsKeepUnderline()).IsTrue();
+
+    [Test]
+    public async Task SoftGlyphIdsAvoidOtherIds() => await Assert.That(SvgRenderCases.SoftGlyphIdsAvoidOtherIds()).IsTrue();
+}
+
+internal static class SvgRenderCases
+{
 // WriteSvg streams pre-encoded row layers to disk. It must produce exactly the bytes of the
 // in-memory render, including resize shrink (canvas-sized copies) and --max-fps sampling.
-static bool WriteSvgMatchesRenderToString()
+internal static bool WriteSvgMatchesRenderToString()
 {
-    foreach (var (castPath, maxFps) in new[] { ("samples/resize.cast", 0), ("samples/pty.cast", 0), ("samples/pty.cast", 20) })
+    foreach (var (castPath, maxFps) in new[] { (TestEnv.RepoPath("samples/resize.cast"), 0), (TestEnv.RepoPath("samples/pty.cast"), 0), (TestEnv.RepoPath("samples/pty.cast"), 20) })
     {
         var recording = CastReader.Read(castPath);
         var render = recording.RenderSettings with { MaxFps = maxFps };
@@ -91,27 +192,8 @@ static bool WriteSvgMatchesRenderToString()
     return true;
 }
 
-static int Run(string name, Func<bool> test)
-{
-    try
-    {
-        if (test())
-        {
-            Console.Error.WriteLine($"ok {name}");
-            return 0;
-        }
 
-        Console.Error.WriteLine($"FAIL {name}");
-        return 1;
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"FAIL {name}: {ex.Message}");
-        return 1;
-    }
-}
-
-static string RenderCast(string castPath, int? maxFps = null)
+internal static string RenderCast(string castPath, int? maxFps = null)
 {
     var recording = CastReader.Read(castPath);
     var render = maxFps is int fps
@@ -123,7 +205,7 @@ static string RenderCast(string castPath, int? maxFps = null)
 // Soft fonts (DECDLD). Glyphs are written as rows of '#' and '.', top row first.
 
 /// <summary>Sixel data for one glyph: one band per six rows, one character per column, top pixel in bit 0.</summary>
-static string SixelGlyph(string[] rows)
+internal static string SixelGlyph(string[] rows)
 {
     var sb = new System.Text.StringBuilder();
     var width = rows.Max(r => r.Length);
@@ -149,11 +231,11 @@ static string SixelGlyph(string[] rows)
 }
 
 /// <summary>A DECDLD string loading <paramref name="glyphs"/> from code 0x21, with a matrix the size of the first glyph.</summary>
-static string Decdld(string name, params string[][] glyphs) =>
+internal static string Decdld(string name, params string[][] glyphs) =>
     $"\u001bP1;1;0;{glyphs[0][0].Length};0;2;{glyphs[0].Length};0{{" + name + string.Join(';', glyphs.Select(SixelGlyph)) + "\u001b\\";
 
 /// <summary>An "o" event at <paramref name="time"/> with <paramref name="text"/> escaped for JSON.</summary>
-static string OutputEvent(double time, string text)
+internal static string OutputEvent(double time, string text)
 {
     var sb = new System.Text.StringBuilder("[").Append(time.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append(", \"o\", \"");
     foreach (var ch in text)
@@ -169,7 +251,7 @@ static string OutputEvent(double time, string text)
     return sb.Append("\"]").ToString();
 }
 
-static bool SoftFontGlyphsAreUses()
+internal static bool SoftFontGlyphsAreUses()
 {
     // The in-box ConPTY form: the font in G1, its characters between SO and SI. Each glyph is one path in
     // <defs>, in its own pixels, scaled to the 9.92 × 20 cell and lifted by the 12.8 baseline offset. Each
@@ -191,7 +273,7 @@ static bool SoftFontGlyphsAreUses()
         && !System.Text.RegularExpressions.Regex.IsMatch(svg, """<text[^>]*>[^<]*(!|&quot;|")""");
 }
 
-static bool SoftFontThroughG0IsTheSame()
+internal static bool SoftFontThroughG0IsTheSame()
 {
     // A program's own form (Unix, out-of-band ConPTY): the font named " @" in G0. It draws exactly as the in-box form.
     string[] corner = ["##...", "##...", "....#", ".....", ".....", "....."];
@@ -200,7 +282,7 @@ static bool SoftFontThroughG0IsTheSame()
     return inBox == own && SvgRenderTestPatterns.GlyphUsePattern.Matches(own).Count == 1;
 }
 
-static bool UnderlinedSoftGlyphsKeepUnderline()
+internal static bool UnderlinedSoftGlyphsKeepUnderline()
 {
     // Like a block element, an underlined glyph puts an underlined space in the run over its cell.
     string[] corner = ["##...", "##...", "....#", ".....", ".....", "....."];
@@ -209,7 +291,7 @@ static bool UnderlinedSoftGlyphsKeepUnderline()
         && SvgRenderTestPatterns.GlyphUsePattern.Matches(svg).Count == 2;
 }
 
-static bool SoftGlyphIdsAvoidOtherIds()
+internal static bool SoftGlyphIdsAvoidOtherIds()
 {
     // 40 different glyphs get 40 ids, none of them the cursor's "c" or starting with "r" like reused rows (r0, r1, …).
     var glyphs = Enumerable.Range(0, 40)
@@ -223,23 +305,23 @@ static bool SoftGlyphIdsAvoidOtherIds()
         && SvgRenderTestPatterns.GlyphUsePattern.Matches(svg).Count == 40;
 }
 
-static bool CurlOutputSurvivesFrameSampling()
+internal static bool CurlOutputSurvivesFrameSampling()
 {
     // curl -sI prints every header in one burst: the first, a middle, and the last row must all be drawn.
-    var rows = DecodeRowLayers(RenderCast("samples/basic.cast", maxFps: 12));
+    var rows = DecodeRowLayers(RenderCast(TestEnv.RepoPath("samples/basic.cast"), maxFps: 12));
     return rows.Any(r => r.Text.Contains("HTTP/1.1 301 Moved Permanently", StringComparison.Ordinal))
         && rows.Any(r => r.Text.Contains("Location: https://www.google.com/", StringComparison.Ordinal))
         && rows.Any(r => r.Text.StartsWith("Alt-Svc: ", StringComparison.Ordinal));
 }
 
-static bool EchoOutputNoDuplicateCommandLine()
+internal static bool EchoOutputNoDuplicateCommandLine()
 {
     // At 8.5s the echo command and its output are both on screen, so the command line must show exactly once.
-    var svg = RenderCast("samples/basic.cast");
+    var svg = RenderCast(TestEnv.RepoPath("samples/basic.cast"));
     return CountVisibleLayersWithText(svg, 8.5, "$ echo \"Wait for 2 seconds...\"") == 1;
 }
 
-static bool GlyphListForSparseColoredRow()
+internal static bool GlyphListForSparseColoredRow()
 {
     // Sparse glyphs in alternating colors: one <text> per color with an x per glyph beats one <text> per run.
     var svg = RenderInline(40, 2, """[0.0, "o", "\u001b[32mA\u001b[0m    \u001b[31mB\u001b[0m    \u001b[32mC\u001b[0m    \u001b[31mD\u001b[0m    \u001b[32mE\u001b[0m"]""");
@@ -247,7 +329,7 @@ static bool GlyphListForSparseColoredRow()
         && DecodeRowLayers(svg).Any(r => r.Text == "A    B    C    D    E");
 }
 
-static bool RunFormForProse()
+internal static bool RunFormForProse()
 {
     var svg = RenderInline(40, 2, """[0.0, "o", "hello world, this is plain prose"]""");
     return !SvgRenderTestPatterns.GlyphListPattern.IsMatch(svg)
@@ -257,7 +339,7 @@ static bool RunFormForProse()
         && DecodeRowLayers(svg).Any(r => r.Text == "hello world, this is plain prose");
 }
 
-static bool MultiCodeUnitCellsStayOutOfXLists()
+internal static bool MultiCodeUnitCellsStayOutOfXLists()
 {
     // Surrogate pairs and combining marks get their own <text>, because browsers count x values for them differently.
     var svg = RenderInline(40, 2, """[0.0, "o", "\u001b[32mA\u001b[0m   \u001b[32m😀\u001b[0m   \u001b[32mB\u001b[0m   \u001b[32mé\u001b[0m   \u001b[32mC\u001b[0m   \u001b[32mD\u001b[0m"]""");
@@ -268,7 +350,7 @@ static bool MultiCodeUnitCellsStayOutOfXLists()
         && svg.Contains(">é</text>", StringComparison.Ordinal);
 }
 
-static bool BackgroundSpanCoversStyleChanges()
+internal static bool BackgroundSpanCoversStyleChanges()
 {
     // One rect for "abcd" even though the foreground changes after "ab" (4 cells × 9.92px).
     var svg = RenderInline(10, 2, """[0.0, "o", "\u001b[41;37mab\u001b[32mcd\u001b[0m"]""");
@@ -277,7 +359,7 @@ static bool BackgroundSpanCoversStyleChanges()
         && svg.Contains(".bg,rect:not([class])", StringComparison.Ordinal);
 }
 
-static bool UnderlinedRowUsesRunForm()
+internal static bool UnderlinedRowUsesRunForm()
 {
     // The underline continues under spaces between words, which the glyph-list form omits.
     var svg = RenderInline(40, 2, """[0.0, "o", "\u001b[4;32mA\u001b[31m    B\u001b[32m    C\u001b[31m    D\u001b[32m    E\u001b[0m"]""");
@@ -285,23 +367,23 @@ static bool UnderlinedRowUsesRunForm()
         && svg.Contains("text-decoration=\"underline\"", StringComparison.Ordinal);
 }
 
-static bool RowLayersShareKeyframeRules()
+internal static bool RowLayersShareKeyframeRules()
 {
     // A full-screen redraw changes every row at once: those row layers share one keyframe class.
     var svg = RenderInline(10, 3, """
-        [0.0, "o", "aaa\r\nbbb\r\nccc"]
-        [1.0, "o", "\u001b[Hddd\r\neee\r\nfff"]
-        """);
+    [0.0, "o", "aaa\r\nbbb\r\nccc"]
+    [1.0, "o", "\u001b[Hddd\r\neee\r\nfff"]
+    """);
     var perKeyframe = DecodeRowLayers(svg).GroupBy(r => r.Keyframe).Select(g => g.Count()).ToList();
     return perKeyframe.SequenceEqual([3, 3]);
 }
 
-static bool StepKeyframesAreCompact()
+internal static bool StepKeyframesAreCompact()
 {
     // A window is a delay in whole milliseconds plus one keyframe step that every window of its length
     // shares, with step-start timing set once. basic types at a steady pace, so it needs far fewer
     // keyframes than windows. Layers switch visibility, which browsers skip when painting.
-    var svg = RenderCast("samples/basic.cast");
+    var svg = RenderCast(TestEnv.RepoPath("samples/basic.cast"));
     var keyframes = SvgRenderTestPatterns.KeyframePattern.Matches(svg);
     var delays = SvgRenderTestPatterns.TimingRulePattern.Matches(svg).Where(m => m.Groups[2].Success).ToList();
     return keyframes.Count > 0
@@ -313,20 +395,20 @@ static bool StepKeyframesAreCompact()
         && !svg.Contains("{opacity:", StringComparison.Ordinal);
 }
 
-static bool LayerSwitchesLeaveNoGap()
+internal static bool LayerSwitchesLeaveNoGap()
 {
     // A loop of 11.2152s makes most percentages inexact. Where one layer replaces another on a row,
     // the old layer is hidden no earlier than the new one shows, and both show for under 2µs.
     var svg = RenderInline(12, 2, """
-        [0.1234, "o", "a"]
-        [0.2101, "o", "b"]
-        [0.4443, "o", "c"]
-        [0.3337, "o", "d"]
-        [0.9871, "o", "\r\ne"]
-        [1.2345, "o", "f"]
-        [0.0517, "o", "g"]
-        [3.9152, "o", "h"]
-        """);
+    [0.1234, "o", "a"]
+    [0.2101, "o", "b"]
+    [0.4443, "o", "c"]
+    [0.3337, "o", "d"]
+    [0.9871, "o", "\r\ne"]
+    [1.2345, "o", "f"]
+    [0.0517, "o", "g"]
+    [3.9152, "o", "h"]
+    """);
     var timings = ParseKeyframeTimings(svg);
     var pairs = 0;
     foreach (var row in DecodeRowLayers(svg).GroupBy(r => r.Row))
@@ -347,14 +429,14 @@ static bool LayerSwitchesLeaveNoGap()
     return svg.Contains("animation: 11.2152s", StringComparison.Ordinal) && pairs >= 6;
 }
 
-static bool ScrolledRowsReuseContent()
+internal static bool ScrolledRowsReuseContent()
 {
     // Output scrolls a 3-row terminal: "second line …" moves from row 1 to row 0 unchanged and is reused with <use>.
     var svg = RenderInline(40, 3, """
-        [0.0, "o", "first line of the output\r\nsecond line of the output\r\n"]
-        [0.5, "o", "third line of the output\r\n"]
-        [1.0, "o", "fourth line of the output\r\n"]
-        """);
+    [0.0, "o", "first line of the output\r\nsecond line of the output\r\n"]
+    [0.5, "o", "third line of the output\r\n"]
+    [1.0, "o", "fourth line of the output\r\n"]
+    """);
     var rows = DecodeRowLayers(svg);
     return svg.Contains("<use href=\"#r", StringComparison.Ordinal)
         && svg.Contains("<g id=\"r", StringComparison.Ordinal)
@@ -362,25 +444,25 @@ static bool ScrolledRowsReuseContent()
         && rows.Count(r => r.Text == "third line of the output") >= 2;
 }
 
-static bool CursorJoinsRowLayers()
+internal static bool CursorJoinsRowLayers()
 {
     // One cursor rect in <defs>, and each position is a <use> of it. A position with the same timing as
     // a row layer on its row goes inside that layer, without timing of its own.
-    var svg = RenderCast("samples/basic.cast");
+    var svg = RenderCast(TestEnv.RepoPath("samples/basic.cast"));
     var uses = SvgRenderTestPatterns.CursorPattern.Matches(svg).Select(m => m.Value).ToList();
     return svg.Split("<rect id=\"c\" class=\"c\"").Length == 2
         && uses.Count(u => !u.Contains("class=", StringComparison.Ordinal)) > uses.Count / 2
         && uses.Any(u => u.Contains("class=\"l ", StringComparison.Ordinal));
 }
 
-static bool CombiningMarkDoesNotFailRender()
+internal static bool CombiningMarkDoesNotFailRender()
 {
     // "e" + U+0301 shares one cell. Its second UTF-16 unit is not a low surrogate, so reading it as one throws.
     var svg = RenderInline(20, 2, """[0.0, "o", "café ok"]""");
     return DecodeRowLayers(svg).Any(r => r.Text.StartsWith("caf", StringComparison.Ordinal) && r.Text.Contains("́ ok", StringComparison.Ordinal));
 }
 
-static bool LargeSvgWarnsWithAlternatives()
+internal static bool LargeSvgWarnsWithAlternatives()
 {
     // Over 10MB warns. The suggestion depends on the entry point and on --max-fps already being set.
     var limit = SvgRender.LargeSvgBytes;
@@ -398,19 +480,19 @@ static bool LargeSvgWarnsWithAlternatives()
         && !sampled.Contains("--max-fps 20", StringComparison.Ordinal);
 }
 
-static bool DefaultFontFamilyPassesValidation() =>
+internal static bool DefaultFontFamilyPassesValidation() =>
     RenderSettingsResolver.TryParseFontFamily(RenderSettingsResolver.DefaultFontFamily, out var parsed, out _)
     && parsed == RenderSettingsResolver.DefaultFontFamily;
 
-static bool OwnCastReadsWithoutFontFamilyWarning()
+internal static bool OwnCastReadsWithoutFontFamilyWarning()
 {
     // Casts written by scenetake record the default stack in st:font-family, and reading one must not warn.
-    var (recording, warnings) = ReadCastCapturingWarnings("samples/basic.cast");
+    var (recording, warnings) = ReadCastCapturingWarnings(TestEnv.RepoPath("samples/basic.cast"));
     return !warnings.Contains("font-family", StringComparison.Ordinal)
         && recording.RenderSettings.FontFamily == RenderSettingsResolver.DefaultFontFamily;
 }
 
-static bool TooManyFontFamiliesStillWarns()
+internal static bool TooManyFontFamiliesStillWarns()
 {
     var families = string.Join(", ", Enumerable.Range(1, RenderSettingsResolver.MaxFontFamilyCount + 1).Select(i => $"F{i}"));
     var path = Path.Combine(Path.GetTempPath(), $"scenetake-font-family-{Guid.NewGuid():N}.cast");
@@ -427,10 +509,12 @@ static bool TooManyFontFamiliesStillWarns()
     }
 }
 
-static (CastRecording Recording, string Warnings) ReadCastCapturingWarnings(string path)
+internal static (CastRecording Recording, string Warnings) ReadCastCapturingWarnings(string path)
 {
     var original = Console.Error;
     using var captured = new StringWriter();
+    // The reader writes its warnings to stderr. Tests run one at a time, so no other test writes while it is swapped.
+#pragma warning disable TUnit0055
     Console.SetError(captured);
     try
     {
@@ -440,9 +524,10 @@ static (CastRecording Recording, string Warnings) ReadCastCapturingWarnings(stri
     {
         Console.SetError(original);
     }
+#pragma warning restore TUnit0055
 }
 
-static string RenderInline(int cols, int rows, string events)
+internal static string RenderInline(int cols, int rows, string events)
 {
     var path = Path.Combine(Path.GetTempPath(), $"scenetake-svg-inline-{Guid.NewGuid():N}.cast");
     try
@@ -457,7 +542,7 @@ static string RenderInline(int cols, int rows, string events)
 }
 
 /// <summary>The top edge of terminal row <paramref name="row"/>, from the first viewport and the inner padding.</summary>
-static double RowTop(string svg, int row)
+internal static double RowTop(string svg, int row)
 {
     var inv = System.Globalization.CultureInfo.InvariantCulture;
     var fontSize = double.Parse(SvgRenderTestPatterns.FontSizePattern.Match(svg).Groups[1].Value, inv);
@@ -472,7 +557,7 @@ static double RowTop(string svg, int row)
 /// document order, and columns are relative to the leftmost glyph in the SVG. Row is the terminal
 /// row the layer is drawn on, from its row class, its own y, or the source row plus a &lt;use&gt;'s dy.
 /// </summary>
-static List<(int Layer, string Keyframe, string Text, int Row)> DecodeRowLayers(string svg)
+internal static List<(int Layer, string Keyframe, string Text, int Row)> DecodeRowLayers(string svg)
 {
     var inv = System.Globalization.CultureInfo.InvariantCulture;
     var fontSize = double.Parse(SvgRenderTestPatterns.FontSizePattern.Match(svg).Groups[1].Value, inv);
@@ -561,7 +646,7 @@ static List<(int Layer, string Keyframe, string Text, int Row)> DecodeRowLayers(
 }
 
 /// <summary>The text each row shows at <paramref name="timeSeconds"/>, from the layers visible then.</summary>
-static Dictionary<int, string> VisibleRowsAt(string svg, double timeSeconds)
+internal static Dictionary<int, string> VisibleRowsAt(string svg, double timeSeconds)
 {
     var keyframes = ParseKeyframeTimings(svg);
     var rows = new Dictionary<int, string>();
@@ -579,7 +664,7 @@ static Dictionary<int, string> VisibleRowsAt(string svg, double timeSeconds)
 /// the window's length, keyframes visible from an offset to the loop end, or visibility throughout.
 /// A class with no rule is never shown, so it is not listed.
 /// </summary>
-static Dictionary<string, (double Show, double? Hide)> ParseKeyframeTimings(string svg)
+internal static Dictionary<string, (double Show, double? Hide)> ParseKeyframeTimings(string svg)
 {
     var loopDuration = ParseLoopDuration(svg);
     var keyframes = SvgRenderTestPatterns.KeyframePattern.Matches(svg).ToDictionary(m => m.Groups[1].Value, m => m.Groups[2].Value);
@@ -605,7 +690,7 @@ static Dictionary<string, (double Show, double? Hide)> ParseKeyframeTimings(stri
 /// Every &lt;text&gt; with the color it renders in: its fill class's color, or the color the
 /// enclosing group passes down when it has none.
 /// </summary>
-static List<(string Fill, string Text)> DecodeTextFills(string svg)
+internal static List<(string Fill, string Text)> DecodeTextFills(string svg)
 {
     var defaultFill = SvgRenderTestPatterns.DefaultFillPattern.Match(svg).Groups[1].Value;
     var fills = SvgRenderTestPatterns.FillClassPattern.Matches(svg).ToDictionary(m => m.Groups[1].Value, m => m.Groups[2].Value);
@@ -619,9 +704,9 @@ static List<(string Fill, string Text)> DecodeTextFills(string svg)
     return result;
 }
 
-static bool MarkerDelayAdvancesTiming()
+internal static bool MarkerDelayAdvancesTiming()
 {
-    var recording = CastReader.Read("tests/marker-delay.cast");
+    var recording = CastReader.Read(TestEnv.RepoPath("tests/marker-delay.cast"));
     var outputs = recording.Events.Where(e => e.Kind == CastEventKind.Output).ToList();
     if (outputs.Count < 2)
         return false;
@@ -629,16 +714,16 @@ static bool MarkerDelayAdvancesTiming()
     if (Math.Abs(outputs[0].Time - 0.5) > 1e-6 || Math.Abs(outputs[1].Time - 1.5) > 1e-6)
         return false;
 
-    var svg = RenderCast("tests/marker-delay.cast");
+    var svg = RenderCast(TestEnv.RepoPath("tests/marker-delay.cast"));
     var shows = ParseKeyframeTimings(svg).Values.Select(t => t.Show).ToList();
     return svg.Contains("animation: 2.5s step-start infinite", StringComparison.Ordinal)
         && shows.Any(s => Math.Abs(s - 0.5) < 1e-6)
         && shows.Any(s => Math.Abs(s - 1.5) < 1e-6);
 }
 
-static bool LoopDurationMatchesAggGifCycle()
+internal static bool LoopDurationMatchesAggGifCycle()
 {
-    var recording = CastReader.Read("samples/basic.cast");
+    var recording = CastReader.Read(TestEnv.RepoPath("samples/basic.cast"));
     if (recording.Events.Count < 2)
         return false;
 
@@ -646,10 +731,10 @@ static bool LoopDurationMatchesAggGifCycle()
     return Math.Abs(recording.LoopDuration - 18.11) < 0.05;
 }
 
-static bool SvgLoopsWithCastDuration()
+internal static bool SvgLoopsWithCastDuration()
 {
-    var recording = CastReader.Read("samples/basic.cast");
-    var svg = RenderCast("samples/basic.cast");
+    var recording = CastReader.Read(TestEnv.RepoPath("samples/basic.cast"));
+    var svg = RenderCast(TestEnv.RepoPath("samples/basic.cast"));
     var durationText = recording.LoopDuration.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
     return svg.Contains($".l {{ visibility: hidden; animation: {durationText}s step-start infinite; }}", StringComparison.Ordinal)
         && SvgRenderTestPatterns.KeyframePattern.IsMatch(svg);
@@ -657,9 +742,9 @@ static bool SvgLoopsWithCastDuration()
 
 // end-hold replaces the default hold after the last event, and fade-out adds its seconds after it. The fade group
 // holds the rows and the cursor; the terminal's background stays outside it, so it does not fade.
-static bool EndHoldAndFadeOutSetTheLoop()
+internal static bool EndHoldAndFadeOutSetTheLoop()
 {
-    var recording = CastReader.Read("samples/basic.cast");
+    var recording = CastReader.Read(TestEnv.RepoPath("samples/basic.cast"));
     var loop = recording.Events[^1].Time + 2 + 0.5;
     var svg = SvgRender.RenderToString(recording.Events, recording.Width, recording.Height,
         recording.RenderSettings with { EndHold = 2, FadeOut = 0.5 }, recording.LoopDuration);
@@ -680,9 +765,9 @@ static bool EndHoldAndFadeOutSetTheLoop()
 
 // Played once, the SVG is the looping one but for the iteration: each element keeps its value at the end of the
 // loop, which shows the final screen. A fade-out is left out, as it would fade that screen for good.
-static bool NoLoopPlaysOnceWithoutFade()
+internal static bool NoLoopPlaysOnceWithoutFade()
 {
-    var recording = CastReader.Read("samples/basic.cast");
+    var recording = CastReader.Read(TestEnv.RepoPath("samples/basic.cast"));
     var looping = SvgRender.RenderToString(recording.Events, recording.Width, recording.Height, recording.RenderSettings, recording.LoopDuration);
     var once = SvgRender.RenderToString(recording.Events, recording.Width, recording.Height,
         recording.RenderSettings with { Loop = false }, recording.LoopDuration);
@@ -700,10 +785,10 @@ static bool NoLoopPlaysOnceWithoutFade()
 // Each named theme has 16 palette colors and fg and bg that the cast reader accepts, so a cast written with it reads
 // back the same. samples/theme-presets has one preview per theme, as `scenetake svg --theme NAME --window macos
 // --window-title NAME palette.cast` renders it (samples/regenerate.cs), and no preview of a theme that is gone.
-static bool ThemePresetsAreValidAndPreviewed()
+internal static bool ThemePresetsAreValidAndPreviewed()
 {
     var ok = true;
-    var folder = Path.Combine("samples", "theme-presets");
+    var folder = TestEnv.RepoPath("samples", "theme-presets");
     var recording = CastReader.Read(Path.Combine(folder, "palette.cast"));
     var names = RenderSettingsResolver.PresetNames.ToList();
     foreach (var name in names)
@@ -718,7 +803,8 @@ static bool ThemePresetsAreValidAndPreviewed()
         }
 
         var settings = RenderSettingsResolver.ApplySvgOverrides(recording.RenderSettings, null, null, name, WindowStyle.Macos, null, out var error)
-            with { WindowTitle = name };
+            with
+        { WindowTitle = name };
         var preview = Path.Combine(folder, name + ".svg");
         var expected = SvgRender.RenderToString(recording.Events, recording.Width, recording.Height, settings, recording.LoopDuration);
         if (error.Length != 0 || !File.Exists(preview) || File.ReadAllText(preview) != expected)
@@ -738,12 +824,12 @@ static bool ThemePresetsAreValidAndPreviewed()
     return ok && RenderSettingsResolver.TryGetPreset("Nord", out _) && !RenderSettingsResolver.TryGetPreset("nord-light", out _);
 }
 
-static bool MatrixTintWhiteNearGreen()
+internal static bool MatrixTintWhiteNearGreen()
 {
     const string cast = """
-        {"version":3,"term":{"cols":8,"rows":2,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":0,"title":"matrix-tint","env":{}}
-        [0.0, "o", "\u001b[32mA\u001b[37mB\u001b[39m"]
-        """;
+    {"version":3,"term":{"cols":8,"rows":2,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":0,"title":"matrix-tint","env":{}}
+    [0.0, "o", "\u001b[32mA\u001b[37mB\u001b[39m"]
+    """;
 
     var path = Path.Combine(Path.GetTempPath(), $"scenetake-matrix-tint-{Guid.NewGuid():N}.cast");
     try
@@ -761,12 +847,12 @@ static bool MatrixTintWhiteNearGreen()
     }
 }
 
-static bool MatrixTintIgnoresVerticalNeighbors()
+internal static bool MatrixTintIgnoresVerticalNeighbors()
 {
     const string cast = """
-        {"version":3,"term":{"cols":16,"rows":3,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":0,"title":"matrix-tint-vertical","env":{}}
-        [0.0, "o", "$ \u001b[1;4;32mdate\u001b[0m\r\nFri, Jul  3, 2026\r\n"]
-        """;
+    {"version":3,"term":{"cols":16,"rows":3,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":0,"title":"matrix-tint-vertical","env":{}}
+    [0.0, "o", "$ \u001b[1;4;32mdate\u001b[0m\r\nFri, Jul  3, 2026\r\n"]
+    """;
 
     var path = Path.Combine(Path.GetTempPath(), $"scenetake-matrix-tint-vertical-{Guid.NewGuid():N}.cast");
     try
@@ -783,21 +869,21 @@ static bool MatrixTintIgnoresVerticalNeighbors()
     }
 }
 
-static int CountVisibleGreenDateFragments(string svg) =>
+internal static int CountVisibleGreenDateFragments(string svg) =>
     DecodeTextFills(svg).Count(t => string.Equals(t.Fill, "#7e8e50", StringComparison.OrdinalIgnoreCase)
         && (t.Text.Contains("Fri", StringComparison.Ordinal) || t.Text.Contains("Jul", StringComparison.Ordinal)));
 
-static bool MaxFpsDoesNotChangeLoopDuration()
+internal static bool MaxFpsDoesNotChangeLoopDuration()
 {
-    var recording = CastReader.Read("samples/basic.cast");
+    var recording = CastReader.Read(TestEnv.RepoPath("samples/basic.cast"));
     var durationText = recording.LoopDuration.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
-    var full = RenderCast("samples/basic.cast");
-    var sampled = RenderCast("samples/basic.cast", maxFps: 12);
+    var full = RenderCast(TestEnv.RepoPath("samples/basic.cast"));
+    var sampled = RenderCast(TestEnv.RepoPath("samples/basic.cast"), maxFps: 12);
     return full.Contains($"{durationText}s step-start infinite", StringComparison.Ordinal)
         && sampled.Contains($"{durationText}s step-start infinite", StringComparison.Ordinal);
 }
 
-static int CountVisibleLayersWithText(string svg, double timeSeconds, string text)
+internal static int CountVisibleLayersWithText(string svg, double timeSeconds, string text)
 {
     var keyframes = ParseKeyframeTimings(svg);
     var count = 0;
@@ -816,7 +902,7 @@ static int CountVisibleLayersWithText(string svg, double timeSeconds, string tex
     return count;
 }
 
-static double ParseLoopDuration(string svg)
+internal static double ParseLoopDuration(string svg)
 {
     var match = SvgRenderTestPatterns.DurationPattern.Match(svg);
     if (!match.Success)
@@ -825,12 +911,12 @@ static double ParseLoopDuration(string svg)
     return double.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
 }
 
-static bool CopilotBannerBlockGlyphs()
+internal static bool CopilotBannerBlockGlyphs()
 {
     const string cast = """
-        {"version":3,"term":{"cols":40,"rows":6,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":0,"title":"copilot-banner-glyphs","env":{}}
-        [0.0, "o", "\u001b[38;2;133;52;243m  ╭─╮╭─╮\r\n  ╰─╯╰─╯  \u001b[38;2;145;152;161mCopilot v1.0.68 uses AI.\u001b[38;2;133;52;243m\r\n  █ \u001b[38;2;95;237;131m▘▝ \u001b[38;2;133;52;243m█  \u001b[38;2;145;152;161mCheck for mistakes.\u001b[38;2;133;52;243m\r\n   ▔▔▔▔ \u001b[m"]
-        """;
+    {"version":3,"term":{"cols":40,"rows":6,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":0,"title":"copilot-banner-glyphs","env":{}}
+    [0.0, "o", "\u001b[38;2;133;52;243m  ╭─╮╭─╮\r\n  ╰─╯╰─╯  \u001b[38;2;145;152;161mCopilot v1.0.68 uses AI.\u001b[38;2;133;52;243m\r\n  █ \u001b[38;2;95;237;131m▘▝ \u001b[38;2;133;52;243m█  \u001b[38;2;145;152;161mCheck for mistakes.\u001b[38;2;133;52;243m\r\n   ▔▔▔▔ \u001b[m"]
+    """;
 
     var path = Path.Combine(Path.GetTempPath(), $"scenetake-copilot-glyphs-{Guid.NewGuid():N}.cast");
     try
@@ -854,7 +940,7 @@ static bool CopilotBannerBlockGlyphs()
     }
 }
 
-static bool ShadesAreTranslucentRects()
+internal static bool ShadesAreTranslucentRects()
 {
     // ░▒▓ as 25%, 50%, and 75% opacity, as the mp4 rasterizer draws them. Different opacities do not merge.
     var svg = RenderInline(10, 2, """[0.0, "o", "░▒▓"]""");
@@ -862,13 +948,13 @@ static bool ShadesAreTranslucentRects()
     return opacities.SequenceEqual(["0.25", "0.5", "0.75"]) && !svg.Contains('░');
 }
 
-static bool SvgUsesLfLineEndings()
+internal static bool SvgUsesLfLineEndings()
 {
-    var svg = RenderCast("samples/basic.cast");
+    var svg = RenderCast(TestEnv.RepoPath("samples/basic.cast"));
     return !svg.Contains('\r') && svg.Contains("</style>\n<defs>\n", StringComparison.Ordinal);
 }
 
-static bool ThemeForegroundIsInherited()
+internal static bool ThemeForegroundIsInherited()
 {
     // Text in the theme's foreground has no fill of its own. The mask group passes it down.
     // Other colors are classes with one rule each.
@@ -881,14 +967,14 @@ static bool ThemeForegroundIsInherited()
         && SvgRenderTestPatterns.FillClassPattern.Matches(svg).Count == 1;
 }
 
-static bool SingleTextLayerHasNoWrapper()
+internal static bool SingleTextLayerHasNoWrapper()
 {
-    var svg = RenderCast("samples/basic.cast");
+    var svg = RenderCast(TestEnv.RepoPath("samples/basic.cast"));
     return System.Text.RegularExpressions.Regex.IsMatch(svg, """^<text class="l [A-Za-z]""", System.Text.RegularExpressions.RegexOptions.Multiline)
         && !System.Text.RegularExpressions.Regex.IsMatch(svg, """<g class="l [^"]*"><text[^>]*>[^<]*</text></g>""");
 }
 
-static bool RowLocalContentDropsY()
+internal static bool RowLocalContentDropsY()
 {
     // Row-local layers (those with a row class) draw at y=0, so none of their <text> may carry y.
     // The encoders decide y, and the writers then add the layer classes: one path for grouped layers and
@@ -906,7 +992,7 @@ static bool RowLocalContentDropsY()
     var typed = new System.Text.StringBuilder("[0.0, \"o\", \"\\u001b[?25l\\u001b[32m\"]\n");
     for (var i = 0; i < 12; i++)
         typed.Append(System.Globalization.CultureInfo.InvariantCulture, $"[{0.1 * (i + 1):0.0}, \"o\", \"{(char)('a' + i)}\"]\n");
-    var pty = LocalLayers(RenderCast("samples/pty.cast"));
+    var pty = LocalLayers(RenderCast(TestEnv.RepoPath("samples/pty.cast")));
     var green = LocalLayers(RenderInline(20, 2, typed.ToString()));
     static bool Grouped(System.Text.RegularExpressions.Match m) => m.Value.StartsWith("<g ", StringComparison.Ordinal);
     return pty.Any(m => Grouped(m) && m.Value.Contains("<text class=\"", StringComparison.Ordinal))
@@ -916,14 +1002,14 @@ static bool RowLocalContentDropsY()
         && pty.Concat(green).All(m => !SvgRenderTestPatterns.TextYPattern.IsMatch(m.Value));
 }
 
-static bool TypingRowsGetRowClasses()
+internal static bool TypingRowsGetRowClasses()
 {
     // A typed line saves about 10 bytes per layer as row-local content, less than its row's CSS rule.
     // Rows get a class only because those savings are added up per row.
-    return SvgRenderTestPatterns.RowClassPattern.Matches(RenderCast("samples/basic.cast")).Count > 0;
+    return SvgRenderTestPatterns.RowClassPattern.Matches(RenderCast(TestEnv.RepoPath("samples/basic.cast"))).Count > 0;
 }
 
-static bool RowsLandOnTheirLines()
+internal static bool RowsLandOnTheirLines()
 {
     // Six lines of sparse two-color glyphs scroll through a 3-row terminal, so rows get row classes
     // and lines move up a row unchanged. After line k, row 0 shows line k-1 and row 1 shows line k.
@@ -943,7 +1029,7 @@ static bool RowsLandOnTheirLines()
         && Enumerable.Range(2, 4).All(k => At(k * 0.5 + 0.25, 0, Text(k - 1)) && At(k * 0.5 + 0.25, 1, Text(k)));
 }
 
-static string SparseLine(int k)
+internal static string SparseLine(int k)
 {
     var line = new System.Text.StringBuilder();
     for (var i = 0; i < 8; i++)
@@ -951,7 +1037,7 @@ static string SparseLine(int k)
     return line.Append("\\u001b[0m").ToString();
 }
 
-static bool CursorSitsOnItsRow()
+internal static bool CursorSitsOnItsRow()
 {
     // A cursor inside a row layer is drawn at that row's top edge, whether the layer is row-local
     // (y relative to the baseline) or absolute. A cursor with its own timing is checked on a cast
@@ -960,10 +1046,10 @@ static bool CursorSitsOnItsRow()
     // layer on its row with the same timing.
     var inv = System.Globalization.CultureInfo.InvariantCulture;
     var moves = RenderInline(10, 4, """
-        [0.0, "o", "ab"]
-        [0.5, "o", "\r\n"]
-        [1.0, "o", "\r\n"]
-        """);
+    [0.0, "o", "ab"]
+    [0.5, "o", "\r\n"]
+    [1.0, "o", "\r\n"]
+    """);
     var ownTiming = SvgRenderTestPatterns.CursorPattern.Matches(moves)
         .Where(m => m.Value.Contains(" class=", StringComparison.Ordinal))
         .Select(m => double.Parse(m.Groups[2].Value, inv))
@@ -971,7 +1057,7 @@ static bool CursorSitsOnItsRow()
     if (ownTiming.Count != 3 || Enumerable.Range(0, 3).Any(row => Math.Abs(ownTiming[row] - RowTop(moves, row)) > 0.01))
         return false;
 
-    var svg = RenderCast("samples/basic.cast");
+    var svg = RenderCast(TestEnv.RepoPath("samples/basic.cast"));
     var rowRules = SvgRenderTestPatterns.RowClassPattern.Matches(svg).ToDictionary(m => m.Groups[1].Value, m => double.Parse(m.Groups[2].Value, inv));
     var baselineOffset = double.Parse(SvgRenderTestPatterns.FontSizePattern.Match(svg).Groups[1].Value, inv) * 0.8;
     var checkedLocal = 0;
@@ -1000,11 +1086,11 @@ static bool CursorSitsOnItsRow()
     return checkedLocal > 0 && checkedAbsolute > 0;
 }
 
-static bool KeyframeNamesAreShort()
+internal static bool KeyframeNamesAreShort()
 {
     // basic has about 220 timing classes and 60 shared keyframes: one or two characters each, and the
     // most used get the one-letter names that rows and colors left over.
-    var svg = RenderCast("samples/basic.cast");
+    var svg = RenderCast(TestEnv.RepoPath("samples/basic.cast"));
     var classes = SvgRenderTestPatterns.TimingRulePattern.Matches(svg).Select(m => m.Groups[1].Value).ToList();
     var keyframes = SvgRenderTestPatterns.KeyframePattern.Matches(svg).Select(m => m.Groups[1].Value).ToList();
     int Uses(string name) => System.Text.RegularExpressions.Regex.Matches(svg, $"class=\"[^\"]*\\b{name}\\b").Count;
@@ -1016,12 +1102,12 @@ static bool KeyframeNamesAreShort()
         && mostUsed.Length == 1;
 }
 
-static bool EveryKeyframeIsUsed()
+internal static bool EveryKeyframeIsUsed()
 {
     // In pty.cast some cursor positions share their timing with a row layer. Their own timing is
     // unused once they move into that layer, and must not be written. Every keyframes rule is named
     // by a timing rule.
-    var svg = RenderCast("samples/pty.cast");
+    var svg = RenderCast(TestEnv.RepoPath("samples/pty.cast"));
     var body = svg[svg.IndexOf("</style>", StringComparison.Ordinal)..];
     var used = System.Text.RegularExpressions.Regex.Matches(body, "class=\"([^\"]*)\"").SelectMany(m => m.Groups[1].Value.Split(' ')).ToHashSet();
     var rules = SvgRenderTestPatterns.TimingRulePattern.Matches(svg).ToList();
@@ -1030,33 +1116,33 @@ static bool EveryKeyframeIsUsed()
     return rules.Count > 0 && rules.All(m => used.Contains(m.Groups[1].Value)) && keyframes.All(named.Contains);
 }
 
-static bool ClassNamesAreLowercase()
+internal static bool ClassNamesAreLowercase()
 {
     // An SVG inlined in an HTML page without a doctype matches classes regardless of case, so no two
     // names may differ only by case. pty.cast uses several hundred names.
-    var svg = RenderCast("samples/pty.cast");
+    var svg = RenderCast(TestEnv.RepoPath("samples/pty.cast"));
     var rules = System.Text.RegularExpressions.Regex.Matches(svg, @"^\.([A-Za-z0-9]+)\{", System.Text.RegularExpressions.RegexOptions.Multiline)
         .Select(m => m.Groups[1].Value).ToList();
     return rules.Count > 52 && rules.All(name => name == name.ToLowerInvariant());
 }
 
-static bool ZeroLengthFramesAreDropped()
+internal static bool ZeroLengthFramesAreDropped()
 {
     // Three writes in the same millisecond: only the last screen is ever visible, so no layer may be
     // shown and hidden at the same offset.
     var svg = RenderInline(20, 2, """
-        [0.5, "o", "red"]
-        [0.0, "o", " part"]
-        [0.0, "o", " done"]
-        [0.5, "o", "!"]
-        """);
+    [0.5, "o", "red"]
+    [0.0, "o", " part"]
+    [0.0, "o", " done"]
+    [0.5, "o", "!"]
+    """);
     var timings = ParseKeyframeTimings(svg).Values;
     return timings.Count > 0
         && timings.All(t => t.Hide is null || t.Hide > t.Show)
         && VisibleRowsAt(svg, 0.75).GetValueOrDefault(0) == "red part done";
 }
 
-static bool RunTextLengthCountsCells()
+internal static bool RunTextLengthCountsCells()
 {
     // "café au lait|" is 13 cells but 14 UTF-16 units (e + U+0301). textLength must span 13 cells
     // (13 × 9.92 = 128.96), and an underlined wide character must span its 2 cells (19.84).
@@ -1066,7 +1152,7 @@ static bool RunTextLengthCountsCells()
         && wide.Contains("textLength=\"19.84\">日</text>", StringComparison.Ordinal);
 }
 
-static bool UnderlinedSpacesKeepUnderline()
+internal static bool UnderlinedSpacesKeepUnderline()
 {
     // Underlined spaces before the row's last underlined character are drawn with their underline, as
     // in mp4: the three leading spaces (29.76 = 3 cells) and the space that starts the green run.
@@ -1078,7 +1164,7 @@ static bool UnderlinedSpacesKeepUnderline()
         && between.Contains("text-decoration=\"underline\" textLength=\"39.68\"> bar</text>", StringComparison.Ordinal);
 }
 
-static bool UnderlinedBlocksKeepUnderline()
+internal static bool UnderlinedBlocksKeepUnderline()
 {
     // A block element is a rect, not text, so its underline needs a run over its cell. mp4 underlines up
     // to the row's last underlined character that is not a space, and a block is not a space. The two
@@ -1087,7 +1173,7 @@ static bool UnderlinedBlocksKeepUnderline()
     return svg.Contains("text-decoration=\"underline\" textLength=\"49.6\">   ab</text>", StringComparison.Ordinal);
 }
 
-static bool PlainBlocksStayOutOfText()
+internal static bool PlainBlocksStayOutOfText()
 {
     // Without an underline a block element needs no text: its rect draws it. The underlined z puts the
     // row in the run form, where blocks written as spaces would turn "ab" into "   ab" at column 0.
@@ -1095,20 +1181,20 @@ static bool PlainBlocksStayOutOfText()
     return svg.Contains(">ab</text>", StringComparison.Ordinal) && !svg.Contains(">   ab</text>", StringComparison.Ordinal);
 }
 
-static bool BlockOnlyRowsDecodeToTheirRow()
+internal static bool BlockOnlyRowsDecodeToTheirRow()
 {
     // A layer of block rects alone decodes to the row its first rect starts in. ▄ starts half a line
     // down and ▁ seven eighths down, so rounding the rect's y to a row would put both one row too low.
     var svg = RenderInline(10, 4, """
-        [0.0, "o", "x\r\n"]
-        [0.5, "o", "▄▄▄▄\r\n"]
-        [1.0, "o", "▁▁▁▁"]
-        """);
+    [0.0, "o", "x\r\n"]
+    [0.5, "o", "▄▄▄▄\r\n"]
+    [1.0, "o", "▁▁▁▁"]
+    """);
     var rows = DecodeRowLayers(svg).Where(layer => layer.Text.Length == 0).Select(layer => layer.Row).ToList();
     return rows.Contains(1) && rows.Contains(2) && rows.All(row => row is 1 or 2);
 }
 
-static bool XmlInvalidCharactersAreReplaced()
+internal static bool XmlInvalidCharactersAreReplaced()
 {
     // U+FFFF and U+FFFE are not allowed in XML, and one of them makes the whole SVG fail to load.
     var svg = RenderInline(20, 2, """[0.0, "o", "a\uFFFFb\uFFFEc"]""");
@@ -1117,7 +1203,7 @@ static bool XmlInvalidCharactersAreReplaced()
     return svg.Contains("a\uFFFDb\uFFFDc", StringComparison.Ordinal);
 }
 
-static bool ScenarioThemeColorsAreValidated()
+internal static bool ScenarioThemeColorsAreValidated()
 {
     // Theme colors go into the cast header, and the cast reader replaces values it does not accept
     // with the defaults. The scenario must reject them up front instead.
@@ -1132,7 +1218,7 @@ static bool ScenarioThemeColorsAreValidated()
         && RenderSettingsResolver.TryResolve(new Scenario { Render = new ScenarioRender { Theme = new ScenarioTheme { Fg = "#fff", Bg = "#123456", Palette = palette16 } } }, null, out _, out _);
 }
 
-static bool CastWarningsSayCast()
+internal static bool CastWarningsSayCast()
 {
     // Cast warnings also show during mp4 conversion, so they name the cast, not SVG.
     var path = Path.Combine(Path.GetTempPath(), $"scenetake-cast-warning-{Guid.NewGuid():N}.cast");
@@ -1149,7 +1235,7 @@ static bool CastWarningsSayCast()
     }
 }
 
-static bool InvalidJsonNamesOnlyTheCastLine()
+internal static bool InvalidJsonNamesOnlyTheCastLine()
 {
     // System.Text.Json ends its message with "LineNumber: 0 | BytePositionInLine: N." for the single line
     // it parses, which contradicted the cast line number. Only the cast line number is kept.
@@ -1176,7 +1262,7 @@ static bool InvalidJsonNamesOnlyTheCastLine()
     }
 }
 
-file static class SvgRenderTestPatterns
+internal static class SvgRenderTestPatterns
 {
     // A row layer, one per line, with its class list in group "cls" ("l K", then a row class R and, on a
     // single <text>, a fill class F):
@@ -1277,4 +1363,5 @@ file static class SvgRenderTestPatterns
     internal static readonly System.Text.RegularExpressions.Regex StepBodyPattern = new(
         """^[0-9.]+%\{visibility:(?:visible|hidden\}to\{visibility:visible)\}$""",
         System.Text.RegularExpressions.RegexOptions.Compiled);
+}
 }

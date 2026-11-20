@@ -1,84 +1,90 @@
-#:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
-#:property Nullable=enable
-#:property ImplicitUsings=enable
-#:package VYaml@1.6.1
-#:include ../Terminal.cs
-#:include ../CastTimingPipeline.cs
-#:include ../CastReader.cs
-#:include ../Svg.cs
-#:include ../JsonEscape.cs
-#:include ../PtyLeadingInitFilter.cs
-#:include ../ScenarioKeys.cs
-#:include ../Scenario.cs
-#:include ../Highlight.cs
-#:include ../CastComposer.cs
-#:include ../Rerecord.cs
-#:include ../SecretMask.cs
-#:include ../StepChunks.cs
-#:include ../StepOutputs.cs
-#:include ../PlaygroundRender.cs
+﻿using System.Diagnostics;
+using System.Text;
+using Scenetake.TestSupport;
+
+namespace Scenetake.Core.Tests;
 
 // The playground and the CLI's --replay replay outputs files instead of running commands
 // (.github/docs/spec_playground.md, spec_cli.md → Replay). These tests check that a replay gives the CLI's cast and
 // SVG byte for byte, that steps match recorded output by run text, kind, and occurrence, and that an outputs file
 // keeps no OSC text that the cast leaves out.
-//
-// Usage (from repository root):
-//   dotnet run tests/playground_replay_test.cs
-//   SCENETAKE_BIN=/path/to/scenetake dotnet run tests/playground_replay_test.cs   # also records, and replays with the CLI
 
-using System.Diagnostics;
-using System.Text;
-
-var repoRoot = FindRepoRoot(Directory.GetCurrentDirectory());
-var failures = 0;
-failures += Run("SamplesReplayToCommittedCasts", () => SamplesReplayToCommittedCasts(repoRoot));
-failures += Run("MaskedOscGivesSameFilteredEvents", MaskedOscGivesSameFilteredEvents);
-failures += Run("MaskKeepsColorOscAndLength", MaskKeepsColorOscAndLength);
-failures += Run("MaskCarriesStateAcrossChunks", MaskCarriesStateAcrossChunks);
-failures += Run("OutputsFileRoundTripsExactly", OutputsFileRoundTripsExactly);
-failures += Run("OutputsFileMasksPrivateOsc", OutputsFileMasksPrivateOsc);
-failures += Run("NthOccurrenceTakesNthRecording", NthOccurrenceTakesNthRecording);
-failures += Run("ExtraOccurrenceTakesLastRecording", ExtraOccurrenceTakesLastRecording);
-failures += Run("UnrecordedStepGetsPlaceholderLine", UnrecordedStepGetsPlaceholderLine);
-failures += Run("KindMismatchGetsPlaceholderLine", KindMismatchGetsPlaceholderLine);
-failures += Run("EditsBesidesRunKeepTheMatch", EditsBesidesRunKeepTheMatch);
-failures += Run("PtySizeMismatchGivesNotice", PtySizeMismatchGivesNotice);
-failures += Run("RecordedExitCodeWarns", RecordedExitCodeWarns);
-failures += Run("ErrorsAreValuesNotExceptions", ErrorsAreValuesNotExceptions);
-failures += Run("NotAppliedKeysAreListed", NotAppliedKeysAreListed);
-failures += Run("UnquotedColorsWarn", UnquotedColorsWarn);
-failures += Run("CastTabAppliesOverrides", () => CastTabAppliesOverrides(repoRoot));
-failures += Run("FitAndCropApplyInThePlayground", FitAndCropApplyInThePlayground);
-failures += Run("BackgroundImagesComeFromThePage", BackgroundImagesComeFromThePage);
-
-var scenetake = Environment.GetEnvironmentVariable("SCENETAKE_BIN");
-if (!string.IsNullOrWhiteSpace(scenetake) && File.Exists(scenetake))
+public sealed class PlaygroundReplayTests
 {
-    failures += Run("RecordedScenarioReplaysToSameCast", () => RecordedScenarioReplaysToSameCast(scenetake, repoRoot));
-    failures += Run("CliReplayGivesSameCast", () => CliReplayGivesSameCast(scenetake, repoRoot));
-    failures += Run("CliReplayRefusesWhatItCannotReplay", () => CliReplayRefusesWhatItCannotReplay(scenetake, repoRoot));
+    [Test]
+    public async Task SamplesReplayToCommittedCasts() => await Assert.That(PlaygroundReplayCases.SamplesReplayToCommittedCasts(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task MaskedOscGivesSameFilteredEvents() => await Assert.That(PlaygroundReplayCases.MaskedOscGivesSameFilteredEvents()).IsTrue();
+
+    [Test]
+    public async Task MaskKeepsColorOscAndLength() => await Assert.That(PlaygroundReplayCases.MaskKeepsColorOscAndLength()).IsTrue();
+
+    [Test]
+    public async Task MaskCarriesStateAcrossChunks() => await Assert.That(PlaygroundReplayCases.MaskCarriesStateAcrossChunks()).IsTrue();
+
+    [Test]
+    public async Task OutputsFileRoundTripsExactly() => await Assert.That(PlaygroundReplayCases.OutputsFileRoundTripsExactly()).IsTrue();
+
+    [Test]
+    public async Task OutputsFileMasksPrivateOsc() => await Assert.That(PlaygroundReplayCases.OutputsFileMasksPrivateOsc()).IsTrue();
+
+    [Test]
+    public async Task NthOccurrenceTakesNthRecording() => await Assert.That(PlaygroundReplayCases.NthOccurrenceTakesNthRecording()).IsTrue();
+
+    [Test]
+    public async Task ExtraOccurrenceTakesLastRecording() => await Assert.That(PlaygroundReplayCases.ExtraOccurrenceTakesLastRecording()).IsTrue();
+
+    [Test]
+    public async Task UnrecordedStepGetsPlaceholderLine() => await Assert.That(PlaygroundReplayCases.UnrecordedStepGetsPlaceholderLine()).IsTrue();
+
+    [Test]
+    public async Task KindMismatchGetsPlaceholderLine() => await Assert.That(PlaygroundReplayCases.KindMismatchGetsPlaceholderLine()).IsTrue();
+
+    [Test]
+    public async Task EditsBesidesRunKeepTheMatch() => await Assert.That(PlaygroundReplayCases.EditsBesidesRunKeepTheMatch()).IsTrue();
+
+    [Test]
+    public async Task PtySizeMismatchGivesNotice() => await Assert.That(PlaygroundReplayCases.PtySizeMismatchGivesNotice()).IsTrue();
+
+    [Test]
+    public async Task RecordedExitCodeWarns() => await Assert.That(PlaygroundReplayCases.RecordedExitCodeWarns()).IsTrue();
+
+    [Test]
+    public async Task ErrorsAreValuesNotExceptions() => await Assert.That(PlaygroundReplayCases.ErrorsAreValuesNotExceptions()).IsTrue();
+
+    [Test]
+    public async Task NotAppliedKeysAreListed() => await Assert.That(PlaygroundReplayCases.NotAppliedKeysAreListed()).IsTrue();
+
+    [Test]
+    public async Task UnquotedColorsWarn() => await Assert.That(PlaygroundReplayCases.UnquotedColorsWarn()).IsTrue();
+
+    [Test]
+    public async Task CastTabAppliesOverrides() => await Assert.That(PlaygroundReplayCases.CastTabAppliesOverrides(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task FitAndCropApplyInThePlayground() => await Assert.That(PlaygroundReplayCases.FitAndCropApplyInThePlayground()).IsTrue();
+
+    [Test]
+    public async Task BackgroundImagesComeFromThePage() => await Assert.That(PlaygroundReplayCases.BackgroundImagesComeFromThePage()).IsTrue();
+
+    [Test]
+    public async Task RecordedScenarioReplaysToSameCast() => await Assert.That(PlaygroundReplayCases.RecordedScenarioReplaysToSameCast(TestEnv.Binary, TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task CliReplayGivesSameCast() => await Assert.That(PlaygroundReplayCases.CliReplayGivesSameCast(TestEnv.Binary, TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task CliReplayRefusesWhatItCannotReplay() => await Assert.That(PlaygroundReplayCases.CliReplayRefusesWhatItCannotReplay(TestEnv.Binary, TestEnv.RepoRoot)).IsTrue();
 }
-else
+
+internal static class PlaygroundReplayCases
 {
-    Console.Error.WriteLine("skip RecordedScenarioReplaysToSameCast, CliReplayGivesSameCast, CliReplayRefusesWhatItCannotReplay: set SCENETAKE_BIN to a scenetake binary");
-}
-
-if (failures > 0)
-{
-    Console.Error.WriteLine($"{failures} test(s) failed");
-    return 1;
-}
-
-Console.Error.WriteLine("all playground replay tests passed");
-return 0;
-
 // Every committed sample with an outputs file replays to its committed cast and SVG. The showcase samples are
 // recorded on Linux in a container (samples/showcase/record.sh), and the playground offers them too. The replay has
 // the images that the playground publishes (PlaygroundImage in its project), as the page loads them: a sample that
 // names another image fails here, as it would on the page.
-static bool SamplesReplayToCommittedCasts(string repoRoot)
+internal static bool SamplesReplayToCommittedCasts(string repoRoot)
 {
     var images = PublishedImages(repoRoot);
     var outputsFiles = new[] { "samples", "samples/showcase" }
@@ -121,7 +127,7 @@ static bool SamplesReplayToCommittedCasts(string repoRoot)
 }
 
 // The CLI records a scenario with SCENETAKE_OUTPUTS; the replay gives the cast and SVG it wrote.
-static bool RecordedScenarioReplaysToSameCast(string scenetake, string repoRoot)
+internal static bool RecordedScenarioReplaysToSameCast(string scenetake, string repoRoot)
 {
     var work = Directory.CreateTempSubdirectory("scenetake-playground-replay-").FullName;
     try
@@ -183,7 +189,7 @@ static bool RecordedScenarioReplaysToSameCast(string scenetake, string repoRoot)
 
 // The CLI's --save-outputs writes the outputs file, and --replay composes the cast from it without running a command:
 // with the YAML unchanged, the cast and SVG are the recording's byte for byte. A change to how the steps look applies.
-static bool CliReplayGivesSameCast(string scenetake, string repoRoot)
+internal static bool CliReplayGivesSameCast(string scenetake, string repoRoot)
 {
     var work = Directory.CreateTempSubdirectory("scenetake-cli-replay-").FullName;
     try
@@ -219,7 +225,7 @@ static bool CliReplayGivesSameCast(string scenetake, string repoRoot)
 
 // A step that the outputs file has no output for stops the replay before anything is written, and options that need a
 // command to run are refused.
-static bool CliReplayRefusesWhatItCannotReplay(string scenetake, string repoRoot)
+internal static bool CliReplayRefusesWhatItCannotReplay(string scenetake, string repoRoot)
 {
     var work = Directory.CreateTempSubdirectory("scenetake-cli-replay-").FullName;
     try
@@ -257,7 +263,7 @@ static bool CliReplayRefusesWhatItCannotReplay(string scenetake, string repoRoot
         Expect(run.ExitCode == 1 && run.Stderr.Contains(message, StringComparison.Ordinal), $"expected exit 1 with \"{message}\": exit {run.ExitCode}\n{run.Stderr}");
 }
 
-static (int ExitCode, string Stderr) RunCli(string scenetake, params string[] args)
+internal static (int ExitCode, string Stderr) RunCli(string scenetake, params string[] args)
 {
     var psi = new ProcessStartInfo(scenetake) { UseShellExecute = false, RedirectStandardError = true, RedirectStandardOutput = true, RedirectStandardInput = true };
     foreach (var arg in args)
@@ -271,27 +277,27 @@ static (int ExitCode, string Stderr) RunCli(string scenetake, params string[] ar
 }
 
 // A cast's length: each event line after the header starts with the time since the event before it.
-static double CastDuration(string cast) =>
+internal static double CastDuration(string cast) =>
     cast.TrimEnd('\n').Split('\n').Skip(1)
         .Sum(static line => double.Parse(line[1..line.IndexOf(',')], System.Globalization.CultureInfo.InvariantCulture));
 
 // A chunk sequence and its masked copy give the same events after CastOscFilter, also when an OSC is split
 // between chunks or a chunk holds nothing but an OSC.
-static bool MaskedOscGivesSameFilteredEvents()
+internal static bool MaskedOscGivesSameFilteredEvents()
 {
     string[][] cases =
     [
         ["\u001b]0;C:\\Users\\name\\pwsh.exe\u0007", "hello\r\n"],
-        ["before\u001b]0;ti", "tle\u0007after", "\r\n"],
-        ["\u001b]", "7;file:///home/user", "\u001b\\", "done"],
-        ["\u001b]8;;file:///home/x\u001b\\link\u001b]8;;\u001b\\ text"],
-        ["\u001b]4;1;rgb:ff/00/00\u0007red", "\u001b]10;?\u001b\\"],
-        ["\u001b]133;A\u0007$ ", "\u001b]633;P;Cwd=/home/user\u0007x"],
-        ["a\u001b]0;open title never ended", "more", "end"],
-        ["\u001b", "]2;split introducer\u0007", "ok"],
-        ["\u001b[1mbold\u001b[0m", "\u001b]0;t\u001b[31mred"],
-        ["\u001b]1234567;long code\u0007z"],
-    ];
+    ["before\u001b]0;ti", "tle\u0007after", "\r\n"],
+    ["\u001b]", "7;file:///home/user", "\u001b\\", "done"],
+    ["\u001b]8;;file:///home/x\u001b\\link\u001b]8;;\u001b\\ text"],
+    ["\u001b]4;1;rgb:ff/00/00\u0007red", "\u001b]10;?\u001b\\"],
+    ["\u001b]133;A\u0007$ ", "\u001b]633;P;Cwd=/home/user\u0007x"],
+    ["a\u001b]0;open title never ended", "more", "end"],
+    ["\u001b", "]2;split introducer\u0007", "ok"],
+    ["\u001b[1mbold\u001b[0m", "\u001b]0;t\u001b[31mred"],
+    ["\u001b]1234567;long code\u0007z"],
+];
 
     var ok = true;
     foreach (var chunks in cases)
@@ -321,7 +327,7 @@ static bool MaskedOscGivesSameFilteredEvents()
         string.Join(", ", events.Select(static ev => $"{ev.Time}:{(ev.HasUtf8Output ? Encoding.UTF8.GetString(ev.Utf8Output.Span) : ev.Data)}".Replace("\u001b", "ESC")));
 }
 
-static bool MaskKeepsColorOscAndLength()
+internal static bool MaskKeepsColorOscAndLength()
 {
     var input = "\u001b]4;1;rgb:ff/00/00\u0007\u001b]0;private title\u0007text";
     var masked = new OscMasker().Mask(input);
@@ -331,7 +337,7 @@ static bool MaskKeepsColorOscAndLength()
         & Expect(masked.EndsWith("\u0007text", StringComparison.Ordinal), "the terminator and later text are kept");
 }
 
-static bool MaskCarriesStateAcrossChunks()
+internal static bool MaskCarriesStateAcrossChunks()
 {
     var masker = new OscMasker();
     var first = masker.Mask("ok \u001b]0;secr");
@@ -340,7 +346,7 @@ static bool MaskCarriesStateAcrossChunks()
         & Expect(second == "xx\u0007 visible", $"second chunk masked: {second.Replace("\u001b", "ESC")}");
 }
 
-static bool OutputsFileRoundTripsExactly()
+internal static bool OutputsFileRoundTripsExactly()
 {
     var outputs = new StepOutputs
     {
@@ -352,9 +358,9 @@ static bool OutputsFileRoundTripsExactly()
         Steps =
         [
             RecordedStep.Pipe("echo 日本語", 0, [new(TimeSpan.FromTicks(1234567), false, "日本語 👍\n"), new(TimeSpan.FromTicks(1234568), true, "err\n")]),
-            RecordedStep.Pty("matrix", 3, (5, 1), [new(TimeSpan.FromTicks(98765), new byte[] { 0x1B, (byte)'[', (byte)'H', 0xE3, 0x81 })]),
-            RecordedStep.Interactive("vim", 0, new ComposedPtyOutput([(0.1 + 0.2, new byte[] { (byte)'a' }), (1.0 / 3, Array.Empty<byte>())], 2.0 / 3)),
-        ],
+        RecordedStep.Pty("matrix", 3, (5, 1), [new(TimeSpan.FromTicks(98765), new byte[] { 0x1B, (byte)'[', (byte)'H', 0xE3, 0x81 })]),
+        RecordedStep.Interactive("vim", 0, new ComposedPtyOutput([(0.1 + 0.2, new byte[] { (byte)'a' }), (1.0 / 3, Array.Empty<byte>())], 2.0 / 3)),
+    ],
     };
 
     using var stream = new MemoryStream();
@@ -372,7 +378,7 @@ static bool OutputsFileRoundTripsExactly()
         & Expect(interactive.Composed!.End == 2.0 / 3 && interactive.Composed.Chunks[0].Time == 0.1 + 0.2 && interactive.Composed.Chunks[1].Time == 1.0 / 3, "times are exact");
 }
 
-static bool OutputsFileMasksPrivateOsc()
+internal static bool OutputsFileMasksPrivateOsc()
 {
     var outputs = new StepOutputs
     {
@@ -384,9 +390,9 @@ static bool OutputsFileMasksPrivateOsc()
         Steps =
         [
             RecordedStep.Pipe("a", 0, [new(TimeSpan.Zero, false, "\u001b]0;pipe-secret\u0007x")]),
-            RecordedStep.Pty("b", 0, null, [new(TimeSpan.Zero, Encoding.UTF8.GetBytes("\u001b]7;file:///pty-secret\u001b\\y"))]),
-            RecordedStep.Interactive("c", 0, new ComposedPtyOutput([(0.5, Encoding.UTF8.GetBytes("\u001b]2;interactive-secret\u0007z"))], 0.5)),
-        ],
+        RecordedStep.Pty("b", 0, null, [new(TimeSpan.Zero, Encoding.UTF8.GetBytes("\u001b]7;file:///pty-secret\u001b\\y"))]),
+        RecordedStep.Interactive("c", 0, new ComposedPtyOutput([(0.5, Encoding.UTF8.GetBytes("\u001b]2;interactive-secret\u0007z"))], 0.5)),
+    ],
     };
 
     using var stream = new MemoryStream();
@@ -398,7 +404,7 @@ static bool OutputsFileMasksPrivateOsc()
     return Expect(!all.Contains("secret", StringComparison.Ordinal), $"no OSC text remains: {all.Replace("\u001b", "ESC")}");
 }
 
-static bool NthOccurrenceTakesNthRecording()
+internal static bool NthOccurrenceTakesNthRecording()
 {
     var outputs = Outputs(RecordedStep.Pipe("git status", 0, [Out("before\n")]), RecordedStep.Pipe("git status", 0, [Out("after\n")]));
     var result = Render(Yaml("git status", "git status"), outputs);
@@ -406,7 +412,7 @@ static bool NthOccurrenceTakesNthRecording()
     return Expect(cast.IndexOf("before", StringComparison.Ordinal) is var before && before >= 0 && cast.IndexOf("after", StringComparison.Ordinal) > before, "before, then after");
 }
 
-static bool ExtraOccurrenceTakesLastRecording()
+internal static bool ExtraOccurrenceTakesLastRecording()
 {
     var outputs = Outputs(RecordedStep.Pipe("echo hi", 0, [Out("first\n")]), RecordedStep.Pipe("echo hi", 0, [Out("second\n")]));
     var result = Render(Yaml("echo hi", "echo hi", "echo hi"), outputs);
@@ -415,7 +421,7 @@ static bool ExtraOccurrenceTakesLastRecording()
         & Expect(result.Steps.Count == 3 && result.Steps.All(static step => step.Recorded), "all recorded");
 }
 
-static bool UnrecordedStepGetsPlaceholderLine()
+internal static bool UnrecordedStepGetsPlaceholderLine()
 {
     var outputs = Outputs(RecordedStep.Pipe("echo hi", 0, [Out("hi\n")]));
     var result = Render(Yaml("echo hi", "ls -la"), outputs);
@@ -424,7 +430,7 @@ static bool UnrecordedStepGetsPlaceholderLine()
         & Expect(result.Steps.Count == 2 && result.Steps[0].Recorded && !result.Steps[1].Recorded, "steps list marks the step");
 }
 
-static bool KindMismatchGetsPlaceholderLine()
+internal static bool KindMismatchGetsPlaceholderLine()
 {
     var outputs = Outputs(RecordedStep.Pipe("top", 0, [Out("pipe output\n")]));
     var yaml = "width: 80\nheight: 24\nsteps:\n  - run: top\n    pty: true\n";
@@ -433,32 +439,32 @@ static bool KindMismatchGetsPlaceholderLine()
         && Expect(!result.Steps[0].Recorded && result.Steps[0].Kind == "pty", "a pty step does not take pipe output");
 }
 
-static bool EditsBesidesRunKeepTheMatch()
+internal static bool EditsBesidesRunKeepTheMatch()
 {
     var outputs = Outputs(RecordedStep.Pipe("printf 'a\\nb\\n'", 0, [Out("a\nb\n")]));
     var yaml = """
-        width: 80
-        height: 24
-        settings:
-          prompt: "% "
-          typing-speed: 0.2
-        render:
-          window: macos
-        steps:
-          - name: renamed
-            run: printf 'a\nb\n'
-            highlight:
-              - color: green
-                at: "2"
-            post-delay: 2
-        """;
+    width: 80
+    height: 24
+    settings:
+      prompt: "% "
+      typing-speed: 0.2
+    render:
+      window: macos
+    steps:
+      - name: renamed
+        run: printf 'a\nb\n'
+        highlight:
+          - color: green
+            at: "2"
+        post-delay: 2
+    """;
     var result = Render(yaml, outputs);
     var cast = Encoding.UTF8.GetString(result.Cast!);
     return Expect(result.Steps[0].Recorded, "still recorded")
         & Expect(cast.Contains("\\u001b[32mb", StringComparison.Ordinal), "the highlight colors the recorded line");
 }
 
-static bool PtySizeMismatchGivesNotice()
+internal static bool PtySizeMismatchGivesNotice()
 {
     var outputs = Outputs(RecordedStep.Pty("matrix", 0, null, [new(TimeSpan.FromMilliseconds(10), Encoding.UTF8.GetBytes("rain"))]));
     var yaml = "width: 40\nheight: 10\nsteps:\n  - run: matrix\n    pty: true\n";
@@ -467,7 +473,7 @@ static bool PtySizeMismatchGivesNotice()
         & Expect(result.Steps[0].Notices.Any(static notice => notice.Contains("80x24", StringComparison.Ordinal)), "size notice");
 }
 
-static bool RecordedExitCodeWarns()
+internal static bool RecordedExitCodeWarns()
 {
     var outputs = Outputs(RecordedStep.Pipe("exit 1", 1, []), RecordedStep.Pipe("exit 2", 2, []));
     var yaml = "width: 80\nheight: 24\nsteps:\n  - exit 1\n  - run: exit 2\n    continue-on-error: true\n";
@@ -475,7 +481,7 @@ static bool RecordedExitCodeWarns()
     return Expect(result.Warnings.Count(static warning => warning.StartsWith("step exited", StringComparison.Ordinal)) == 1, string.Join("; ", result.Warnings));
 }
 
-static bool ErrorsAreValuesNotExceptions()
+internal static bool ErrorsAreValuesNotExceptions()
 {
     var outputs = Outputs(RecordedStep.Pipe("echo hi", 0, [Out("hi\n")]));
     return Expect(Render("steps: [", outputs).Error is not null, "YAML syntax error")
@@ -502,7 +508,7 @@ static bool ErrorsAreValuesNotExceptions()
     }
 }
 
-static bool NotAppliedKeysAreListed()
+internal static bool NotAppliedKeysAreListed()
 {
     var outputs = Outputs(RecordedStep.Pipe("echo hi", 0, [Out("hi\n")]));
     var yaml = "width: 80\nheight: 24\nshell: pwsh\ncwd: work\npre:\n  - mkdir work\nsteps:\n  - echo hi\n";
@@ -518,34 +524,34 @@ static bool NotAppliedKeysAreListed()
 // YAML reads `key: #1e3c72` as a key with no value and a comment, so the color was lost without a word. The CLI and
 // the playground warn the same way: a color key gets the quoted color, a style key the quoted fg: style. A real
 // comment, a quoted color, and a #fff inside a script block draw no warning.
-static bool UnquotedColorsWarn()
+internal static bool UnquotedColorsWarn()
 {
     var yaml = """
-        width: 80
-        height: 24
-        settings:
-          stderr-color: #ff8800
-        render:
-          background: #1e3c72 #2a5298
-          theme:
-            bg: #222
-            fg: "#eeeeee"
-            palette: # 16 colors go here
-        steps:
-          - run: |
-              echo "background: #fff"
-          - run: echo hi
-            highlight:
-              - color: #00ff00
-                at: "1"
-        """;
+    width: 80
+    height: 24
+    settings:
+      stderr-color: #ff8800
+    render:
+      background: #1e3c72 #2a5298
+      theme:
+        bg: #222
+        fg: "#eeeeee"
+        palette: # 16 colors go here
+    steps:
+      - run: |
+          echo "background: #fff"
+      - run: echo hi
+        highlight:
+          - color: #00ff00
+            at: "1"
+    """;
     var expected = new[]
     {
-        "line 4: 'stderr-color' has no value: YAML reads '#ff8800' as a comment. Quote the style: stderr-color: \"fg:#ff8800\"",
-        "line 6: 'background' has no value: YAML reads '#1e3c72 #2a5298' as a comment. Quote the color: background: \"#1e3c72 #2a5298\"",
-        "line 8: 'bg' has no value: YAML reads '#222' as a comment. Quote the color: bg: \"#222\"",
-        "line 16: 'color' has no value: YAML reads '#00ff00' as a comment. Quote the style: color: \"fg:#00ff00\"",
-    };
+    "line 4: 'stderr-color' has no value: YAML reads '#ff8800' as a comment. Quote the style: stderr-color: \"fg:#ff8800\"",
+    "line 6: 'background' has no value: YAML reads '#1e3c72 #2a5298' as a comment. Quote the color: background: \"#1e3c72 #2a5298\"",
+    "line 8: 'bg' has no value: YAML reads '#222' as a comment. Quote the color: bg: \"#222\"",
+    "line 16: 'color' has no value: YAML reads '#00ff00' as a comment. Quote the style: color: \"fg:#00ff00\"",
+};
     var found = ScenarioCast.FindUnknownScenarioKeys(yaml);
     var ok = Expect(found.SequenceEqual(expected), "the four unquoted colors, in order; got:\n    " + string.Join("\n    ", found));
 
@@ -557,7 +563,7 @@ static bool UnquotedColorsWarn()
     return ok;
 }
 
-static bool CastTabAppliesOverrides(string repoRoot)
+internal static bool CastTabAppliesOverrides(string repoRoot)
 {
     var castText = File.ReadAllText(Path.Combine(repoRoot, "samples", "resize.cast"), Encoding.UTF8);
     var plain = PlaygroundRender.RenderCast(castText, new PlaygroundOptions());
@@ -578,7 +584,7 @@ static bool CastTabAppliesOverrides(string repoRoot)
 }
 
 // render.fit and crop in the YAML reach the playground's SVG through the cast's tags, as `scenetake svg` reads them.
-static bool FitAndCropApplyInThePlayground()
+internal static bool FitAndCropApplyInThePlayground()
 {
     var outputs = Outputs(RecordedStep.Pipe("echo hi", 0, [Out("hi\n")]));
     var plain = PlaygroundRender.RenderScenario("width: 80\nheight: 24\nsteps:\n  - echo hi\n", outputs, new PlaygroundOptions());
@@ -609,7 +615,7 @@ static bool FitAndCropApplyInThePlayground()
 // The playground has no files: the page gives it each image with a name. A background in the YAML or the option
 // finds an image by its file name, so a CLI path such as ../wall.webp works unchanged. The cast keeps no image,
 // and the SVG embeds the page's bytes.
-static bool BackgroundImagesComeFromThePage()
+internal static bool BackgroundImagesComeFromThePage()
 {
     byte[] wall = [0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4];
     var images = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["wall.webp"] = wall };
@@ -644,9 +650,9 @@ static bool BackgroundImagesComeFromThePage()
 }
 
 // The images the playground publishes next to the samples: PlaygroundImage items in its project file.
-static Dictionary<string, byte[]> PublishedImages(string repoRoot)
+internal static Dictionary<string, byte[]> PublishedImages(string repoRoot)
 {
-    var project = Path.Combine(repoRoot, "playground", "Scenetake.Playground.csproj");
+    var project = Path.Combine(repoRoot, "src", "Scenetake.Playground", "Scenetake.Playground.csproj");
     var images = new Dictionary<string, byte[]>(StringComparer.Ordinal);
     foreach (var element in System.Xml.Linq.XDocument.Load(project).Descendants("PlaygroundImage"))
     {
@@ -660,7 +666,7 @@ static Dictionary<string, byte[]> PublishedImages(string repoRoot)
     return images;
 }
 
-static StepOutputs Outputs(params RecordedStep[] steps) => new()
+internal static StepOutputs Outputs(params RecordedStep[] steps) => new()
 {
     Scenetake = "1.5.0",
     Os = "linux",
@@ -670,15 +676,15 @@ static StepOutputs Outputs(params RecordedStep[] steps) => new()
     Steps = steps,
 };
 
-static PipeStreamChunk Out(string text) => new(TimeSpan.FromMilliseconds(5), false, text);
+internal static PipeStreamChunk Out(string text) => new(TimeSpan.FromMilliseconds(5), false, text);
 
-static string Yaml(params string[] commands) =>
+internal static string Yaml(params string[] commands) =>
     "width: 80\nheight: 24\nsteps:\n" + string.Concat(commands.Select(static command => $"  - {command}\n"));
 
-static PlaygroundResult Render(string yaml, StepOutputs outputs) =>
+internal static PlaygroundResult Render(string yaml, StepOutputs outputs) =>
     PlaygroundRender.RenderScenario(yaml, outputs, new PlaygroundOptions(), renderSvg: false);
 
-static int Count(string text, string value)
+internal static int Count(string text, string value)
 {
     var count = 0;
     for (var index = text.IndexOf(value, StringComparison.Ordinal); index >= 0; index = text.IndexOf(value, index + value.Length, StringComparison.Ordinal))
@@ -686,7 +692,7 @@ static int Count(string text, string value)
     return count;
 }
 
-static bool SameBytes(string name, byte[] expected, byte[] actual)
+internal static bool SameBytes(string name, byte[] expected, byte[] actual)
 {
     if (expected.AsSpan().SequenceEqual(actual))
         return true;
@@ -699,42 +705,12 @@ static bool SameBytes(string name, byte[] expected, byte[] actual)
     return false;
 }
 
-static bool Expect(bool condition, string what)
+internal static bool Expect(bool condition, string what)
 {
     if (!condition)
         Console.Error.WriteLine($"  expected: {what}");
     return condition;
 }
 
-static int Run(string name, Func<bool> test)
-{
-    try
-    {
-        if (test())
-        {
-            Console.Error.WriteLine($"ok {name}");
-            return 0;
-        }
 
-        Console.Error.WriteLine($"FAIL {name}");
-        return 1;
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"FAIL {name}: {ex}");
-        return 1;
-    }
-}
-
-static string FindRepoRoot(string start)
-{
-    var current = new DirectoryInfo(start);
-    while (current is not null)
-    {
-        if (File.Exists(Path.Combine(current.FullName, "scenetake.cs")))
-            return current.FullName;
-        current = current.Parent;
-    }
-
-    throw new InvalidOperationException("repository root not found");
 }

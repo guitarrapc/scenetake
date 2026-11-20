@@ -1,62 +1,71 @@
-#:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
-#:property Nullable=enable
-#:property ImplicitUsings=enable
-#:include ../ScenarioBatch.cs
+﻿using System.Diagnostics;
+using Scenetake.TestSupport;
+
+namespace Scenetake.Tests;
 
 // Several scenarios in one run (.github/docs/spec_cli.md → Several scenarios). The unit tests need only the source.
 // The integration tests record small scenarios with a published binary (SCENETAKE_BIN), in the default shell: pwsh on
 // Windows, $SHELL elsewhere.
 
-using System.Diagnostics;
-
-var failures = 0;
-failures += Run("ScenarioArguments", ScenarioArguments);
-failures += Run("ExpandOrderAndDuplicates", ExpandOrderAndDuplicates);
-failures += Run("ExpandErrors", ExpandErrors);
-failures += Run("DevicePathsHaveNoWildcard", DevicePathsHaveNoWildcard);
-failures += Run("NamedFileIsNotExpandedAgain", NamedFileIsNotExpandedAgain);
-failures += Run("UnreadableFolderIsAnError", UnreadableFolderIsAnError);
-failures += Run("SharedOutputIsAnError", SharedOutputIsAnError);
-failures += Run("ChildArgumentsDropTheOtherScenarios", ChildArgumentsDropTheOtherScenarios);
-failures += Run("SummaryLines", SummaryLines);
-failures += Run("IntegrationRecordsEachScenario", IntegrationRecordsEachScenario);
-failures += Run("IntegrationTwoYamlFilesAreTwoScenarios", IntegrationTwoYamlFilesAreTwoScenarios);
-failures += Run("IntegrationFailureDoesNotStopTheOthers", IntegrationFailureDoesNotStopTheOthers);
-failures += Run("IntegrationRefusesBeforeRecording", IntegrationRefusesBeforeRecording);
-failures += Run("IntegrationOneMatchIsAnOrdinaryRun", IntegrationOneMatchIsAnOrdinaryRun);
-failures += Run("IntegrationDevicePaths", IntegrationDevicePaths);
-
-return failures == 0 ? 0 : 1;
-
-static int Run(string name, Func<bool> test)
+public sealed class BatchTests
 {
-    try
-    {
-        if (test())
-        {
-            Console.Error.WriteLine($"ok {name}");
-            return 0;
-        }
+    [Test]
+    public async Task ScenarioArguments() => await Assert.That(BatchCases.ScenarioArguments()).IsTrue();
 
-        Console.Error.WriteLine($"FAIL {name}");
-        return 1;
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"FAIL {name}: {ex}");
-        return 1;
-    }
+    [Test]
+    public async Task ExpandOrderAndDuplicates() => await Assert.That(BatchCases.ExpandOrderAndDuplicates()).IsTrue();
+
+    [Test]
+    public async Task ExpandErrors() => await Assert.That(BatchCases.ExpandErrors()).IsTrue();
+
+    [Test]
+    public async Task DevicePathsHaveNoWildcard() => await Assert.That(BatchCases.DevicePathsHaveNoWildcard()).IsTrue();
+
+    [Test]
+    public async Task NamedFileIsNotExpandedAgain() => await Assert.That(BatchCases.NamedFileIsNotExpandedAgain()).IsTrue();
+
+    [Test]
+    public async Task UnreadableFolderIsAnError() => await Assert.That(BatchCases.UnreadableFolderIsAnError()).IsTrue();
+
+    [Test]
+    public async Task SharedOutputIsAnError() => await Assert.That(BatchCases.SharedOutputIsAnError()).IsTrue();
+
+    [Test]
+    public async Task ChildArgumentsDropTheOtherScenarios() => await Assert.That(BatchCases.ChildArgumentsDropTheOtherScenarios()).IsTrue();
+
+    [Test]
+    public async Task SummaryLines() => await Assert.That(BatchCases.SummaryLines()).IsTrue();
+
+    [Test]
+    public async Task IntegrationRecordsEachScenario() => await Assert.That(BatchCases.IntegrationRecordsEachScenario()).IsTrue();
+
+    [Test]
+    public async Task IntegrationTwoYamlFilesAreTwoScenarios() => await Assert.That(BatchCases.IntegrationTwoYamlFilesAreTwoScenarios()).IsTrue();
+
+    [Test]
+    public async Task IntegrationFailureDoesNotStopTheOthers() => await Assert.That(BatchCases.IntegrationFailureDoesNotStopTheOthers()).IsTrue();
+
+    [Test]
+    public async Task IntegrationRefusesBeforeRecording() => await Assert.That(BatchCases.IntegrationRefusesBeforeRecording()).IsTrue();
+
+    [Test]
+    public async Task IntegrationOneMatchIsAnOrdinaryRun() => await Assert.That(BatchCases.IntegrationOneMatchIsAnOrdinaryRun()).IsTrue();
+
+    [Test]
+    public async Task IntegrationDevicePaths() => await Assert.That(BatchCases.IntegrationDevicePaths()).IsTrue();
 }
 
-static bool Check(bool passed, string what)
+internal static class BatchCases
+{
+
+internal static bool Check(bool passed, string what)
 {
     if (!passed)
         Console.Error.WriteLine($"  failed: {what}");
     return passed;
 }
 
-static bool ScenarioArguments()
+internal static bool ScenarioArguments()
 {
     var ok = true;
     foreach (var arg in new[] { "a.yaml", "docs/A.YML", "demos/*", "demo?.txt" })
@@ -66,7 +75,7 @@ static bool ScenarioArguments()
     return ok;
 }
 
-static bool ExpandOrderAndDuplicates()
+internal static bool ExpandOrderAndDuplicates()
 {
     var folder = NewFolder("expand");
     foreach (var name in new[] { "b.yaml", "a.yaml", "B2.yaml", ".hidden.yaml", "notes.txt" })
@@ -93,7 +102,7 @@ static bool ExpandOrderAndDuplicates()
     return ok;
 }
 
-static bool ExpandErrors()
+internal static bool ExpandErrors()
 {
     var folder = NewFolder("expand-errors");
     File.WriteAllText(Path.Combine(folder, "a.yaml"), "");
@@ -102,12 +111,12 @@ static bool ExpandErrors()
     var ok = true;
     foreach (var (pattern, expected) in new[]
     {
-        ("*.yml", "no file matches *.yml"),
-        ("none/*.yaml", "no file matches none/*.yaml"),
-        ("missing.yaml", "missing.yaml not found"),
-        ("s*/a.yaml", "a wildcard works in the file name only, such as docs/*.yaml: s*/a.yaml"),
-        ("**/*.yaml", "'**' does not look into folders below"),
-    })
+    ("*.yml", "no file matches *.yml"),
+    ("none/*.yaml", "no file matches none/*.yaml"),
+    ("missing.yaml", "missing.yaml not found"),
+    ("s*/a.yaml", "a wildcard works in the file name only, such as docs/*.yaml: s*/a.yaml"),
+    ("**/*.yaml", "'**' does not look into folders below"),
+})
     {
         var expanded = ScenarioBatch.TryExpand(["a.yaml", pattern], folder, out _, out var error);
         ok &= Check(!expanded && error.Contains(expected, StringComparison.Ordinal), $"{pattern}: {error}");
@@ -117,7 +126,7 @@ static bool ExpandErrors()
 }
 
 // Windows allows no ? in a name, so the ? of \\?\, \??\, and //?/ is the path's own. Elsewhere it may be a pattern.
-static bool DevicePathsHaveNoWildcard()
+internal static bool DevicePathsHaveNoWildcard()
 {
     var ok = Check(ScenarioBatch.HasWildcard(@"\\?\C:\work\*.yaml"), @"\\?\ with *");
     ok &= Check(ScenarioBatch.HasWildcard(@"\\?\C:\work\a.yaml") == !OperatingSystem.IsWindows(), @"\\?\ alone");
@@ -131,7 +140,7 @@ static bool DevicePathsHaveNoWildcard()
 
 // Each scenario's own process gets the full path of a file the parent found. A name that holds ? matched itself and
 // ab.yaml before, so every process started the batch again without end. Only Unix allows such a name.
-static bool NamedFileIsNotExpandedAgain()
+internal static bool NamedFileIsNotExpandedAgain()
 {
     var folder = NewFolder("named");
     File.WriteAllText(Path.Combine(folder, "ab.yaml"), "");
@@ -146,7 +155,7 @@ static bool NamedFileIsNotExpandedAgain()
     return ok;
 }
 
-static bool UnreadableFolderIsAnError()
+internal static bool UnreadableFolderIsAnError()
 {
     string folder;
     if (OperatingSystem.IsWindows())
@@ -165,7 +174,7 @@ static bool UnreadableFolderIsAnError()
         try
         {
             _ = Directory.EnumerateFiles(folder).Any();
-            Console.Error.WriteLine("  skip: the folder can be read");
+            Skip.Test("the folder can be read");
             return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -182,7 +191,7 @@ static bool UnreadableFolderIsAnError()
     }
 }
 
-static bool SharedOutputIsAnError()
+internal static bool SharedOutputIsAnError()
 {
     static string Display(string path) => Path.GetFileName(path);
     var folder = NewFolder("shared");
@@ -205,14 +214,14 @@ static bool SharedOutputIsAnError()
     return ok;
 }
 
-static bool ChildArgumentsDropTheOtherScenarios()
+internal static bool ChildArgumentsDropTheOtherScenarios()
 {
     string[] args = ["--format", "svg", "a.yaml", "--strict", "docs/*.yaml", "--theme=dracula"];
     var child = ScenarioBatch.ChildArguments(args, [2, 4], "/work/docs/b.yaml");
     return Check(string.Join(" ", child) == "--format svg --strict --theme=dracula /work/docs/b.yaml", string.Join(" ", child));
 }
 
-static bool SummaryLines()
+internal static bool SummaryLines()
 {
     static string Display(string path) => path;
     var ok = true;
@@ -223,7 +232,7 @@ static bool SummaryLines()
 }
 
 // A wildcard as PowerShell passes it on, unexpanded, records each match in ordinal order, each next to its YAML.
-static bool IntegrationRecordsEachScenario()
+internal static bool IntegrationRecordsEachScenario()
 {
     if (!TryGetBinary(out var bin))
         return true;
@@ -249,7 +258,7 @@ static bool IntegrationRecordsEachScenario()
 }
 
 // Before, the second .yaml was the output name: a.yaml was written to b.cast, over b's own recording.
-static bool IntegrationTwoYamlFilesAreTwoScenarios()
+internal static bool IntegrationTwoYamlFilesAreTwoScenarios()
 {
     if (!TryGetBinary(out var bin))
         return true;
@@ -273,7 +282,7 @@ static bool IntegrationTwoYamlFilesAreTwoScenarios()
     return ok;
 }
 
-static bool IntegrationFailureDoesNotStopTheOthers()
+internal static bool IntegrationFailureDoesNotStopTheOthers()
 {
     if (!TryGetBinary(out var bin))
         return true;
@@ -294,7 +303,7 @@ static bool IntegrationFailureDoesNotStopTheOthers()
 
 // What names one file, a file that is not there, and a pattern that finds nothing stop the run before anything is
 // recorded.
-static bool IntegrationRefusesBeforeRecording()
+internal static bool IntegrationRefusesBeforeRecording()
 {
     if (!TryGetBinary(out var bin))
         return true;
@@ -305,16 +314,16 @@ static bool IntegrationRefusesBeforeRecording()
 
     var cases = new (string[] Args, Dictionary<string, string>? Env, string Expected)[]
     {
-        (["a.yaml", "b.yaml", "out"], null, "unexpected argument: out. Several scenarios are each written next to their YAML, so an output name works with one scenario file only"),
-        (["a.yaml", "out", "b.yaml"], null, "unexpected argument: b.yaml. An output name works with one scenario file only"),
-        (["*.yaml", "out"], null, "unexpected argument: out. Several scenarios"),
-        (["--save-outputs", "o.json", "a.yaml", "b.yaml"], null, "--save-outputs names one file, and 2 scenarios were given: record them one at a time"),
-        (["--save-keys", "keys.yaml", "a.yaml", "b.yaml"], null, "--save-keys names one file"),
-        (["--replay", "o.json", "*.yaml"], null, "--replay names one file"),
-        (["a.yaml", "b.yaml"], new() { ["SCENETAKE_OUTPUTS"] = "o.json" }, "SCENETAKE_OUTPUTS names one file"),
-        (["a.yaml", "missing.yaml"], null, "missing.yaml not found"),
-        (["a.yaml", "*.json"], null, "no file matches *.json"),
-        (["a.yaml", "b.yaml", "a.yml"], null, "a.yaml and a.yml would both write a.cast: rename one of them"),
+    (["a.yaml", "b.yaml", "out"], null, "unexpected argument: out. Several scenarios are each written next to their YAML, so an output name works with one scenario file only"),
+    (["a.yaml", "out", "b.yaml"], null, "unexpected argument: b.yaml. An output name works with one scenario file only"),
+    (["*.yaml", "out"], null, "unexpected argument: out. Several scenarios"),
+    (["--save-outputs", "o.json", "a.yaml", "b.yaml"], null, "--save-outputs names one file, and 2 scenarios were given: record them one at a time"),
+    (["--save-keys", "keys.yaml", "a.yaml", "b.yaml"], null, "--save-keys names one file"),
+    (["--replay", "o.json", "*.yaml"], null, "--replay names one file"),
+    (["a.yaml", "b.yaml"], new() { ["SCENETAKE_OUTPUTS"] = "o.json" }, "SCENETAKE_OUTPUTS names one file"),
+    (["a.yaml", "missing.yaml"], null, "missing.yaml not found"),
+    (["a.yaml", "*.json"], null, "no file matches *.json"),
+    (["a.yaml", "b.yaml", "a.yml"], null, "a.yaml and a.yml would both write a.cast: rename one of them"),
     };
     WriteScenario(Path.Combine(folder, "a.yml"), "echo other");
 
@@ -330,7 +339,7 @@ static bool IntegrationRefusesBeforeRecording()
 }
 
 // A wildcard that finds one file is an ordinary run, which takes the options that name one file.
-static bool IntegrationOneMatchIsAnOrdinaryRun()
+internal static bool IntegrationOneMatchIsAnOrdinaryRun()
 {
     if (!TryGetBinary(out var bin))
         return true;
@@ -349,7 +358,7 @@ static bool IntegrationOneMatchIsAnOrdinaryRun()
 
 // A Windows device path names one file, as it did before several scenarios: as the scenario, as the output name, and
 // as the folder that each scenario's own process is started in.
-static bool IntegrationDevicePaths()
+internal static bool IntegrationDevicePaths()
 {
     if (!OperatingSystem.IsWindows())
         return true;
@@ -380,10 +389,10 @@ static bool IntegrationDevicePaths()
     return ok;
 }
 
-static void WriteScenario(string path, string step) =>
+internal static void WriteScenario(string path, string step) =>
     File.WriteAllText(path, $"title: {Path.GetFileNameWithoutExtension(path)}\nwidth: 40\nheight: 6\nsteps:\n  - {step}\n");
 
-static string NewFolder(string name)
+internal static string NewFolder(string name)
 {
     var folder = Path.Combine(Path.GetTempPath(), "scenetake-batch-test", name);
     if (Directory.Exists(folder))
@@ -391,7 +400,7 @@ static string NewFolder(string name)
     return Directory.CreateDirectory(folder).FullName;
 }
 
-static (int ExitCode, string Stderr) Exec(string bin, string folder, string[] arguments, Dictionary<string, string>? env = null)
+internal static (int ExitCode, string Stderr) Exec(string bin, string folder, string[] arguments, Dictionary<string, string>? env = null)
 {
     var psi = new ProcessStartInfo(bin) { RedirectStandardError = true, RedirectStandardOutput = true, UseShellExecute = false, WorkingDirectory = folder };
     foreach (var argument in arguments)
@@ -411,12 +420,9 @@ static (int ExitCode, string Stderr) Exec(string bin, string folder, string[] ar
     return (process.ExitCode, stderr.Result.Replace("\r\n", "\n", StringComparison.Ordinal));
 }
 
-static bool TryGetBinary(out string bin)
+internal static bool TryGetBinary(out string bin)
 {
-    bin = Environment.GetEnvironmentVariable("SCENETAKE_BIN") ?? "";
-    if (!string.IsNullOrWhiteSpace(bin) && File.Exists(bin))
-        return true;
-
-    Console.Error.WriteLine("  skip: set SCENETAKE_BIN to a published scenetake binary");
-    return false;
+    bin = TestEnv.Binary;
+    return true;
+}
 }

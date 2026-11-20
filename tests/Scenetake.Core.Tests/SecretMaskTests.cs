@@ -1,109 +1,132 @@
-#:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
-#:property Nullable=enable
-#:property ImplicitUsings=enable
-#:package VYaml@1.6.1
-#:include ../Terminal.cs
-#:include ../CastTimingPipeline.cs
-#:include ../CastReader.cs
-#:include ../Svg.cs
-#:include ../JsonEscape.cs
-#:include ../PtyLeadingInitFilter.cs
-#:include ../ScenarioKeys.cs
-#:include ../Scenario.cs
-#:include ../Highlight.cs
-#:include ../CastComposer.cs
-#:include ../Rerecord.cs
-#:include ../SecretMask.cs
-#:include ../StepChunks.cs
-#:include ../StepOutputs.cs
-#:include ../PlaygroundRender.cs
+﻿using System.Text;
+using static Scenetake.Core.ScenarioCast;
+using Scenetake.TestSupport;
+
+namespace Scenetake.Core.Tests;
 
 // Secret masking (.github/docs/spec_scenario.md → Masking secrets). Every secret here is put together at run time,
 // so no file in the repository holds a whole token that a secret scanner would report.
 
-using System.Text;
-using static ScenarioCast;
-
-var failures = 0;
-
-failures += Run("ListedTextIsHidden", ListedTextIsHidden);
-failures += Run("ListedTextSplitAcrossChunks", ListedTextSplitAcrossChunks);
-failures += Run("ColorCodesDoNotSplitASecret", ColorCodesDoNotSplitASecret);
-failures += Run("CursorMovesSeparateText", CursorMovesSeparateText);
-failures += Run("ConPtyCursorForwardIsASpace", ConPtyCursorForwardIsASpace);
-failures += Run("TextAfterACutOffStringIsFound", TextAfterACutOffStringIsFound);
-failures += Run("UnendedDataStringIsReadAsText", UnendedDataStringIsReadAsText);
-failures += Run("TextJoinsWhereTheTerminalJoinsIt", TextJoinsWhereTheTerminalJoinsIt);
-failures += Run("StringsTheCastHidesStay", StringsTheCastHidesStay);
-failures += Run("CutOffStringsLeaveNoSecretInTheCast", CutOffStringsLeaveNoSecretInTheCast);
-failures += Run("StreamedPipeCutsFollowTheCast", StreamedPipeCutsFollowTheCast);
-failures += Run("StreamedStepLeavesNoSecretInTheCast", StreamedStepLeavesNoSecretInTheCast);
-failures += Run("WideCharactersKeepTheirWidth", WideCharactersKeepTheirWidth);
-failures += Run("KnownTokensKeepTheirPrefix", KnownTokensKeepTheirPrefix);
-failures += Run("TokenLookalikesStay", TokenLookalikesStay);
-failures += Run("SecretPairsHideTheValue", SecretPairsHideTheValue);
-failures += Run("OtherPairsStay", OtherPairsStay);
-failures += Run("UrlPasswordIsHidden", UrlPasswordIsHidden);
-failures += Run("PrivateKeyBodyIsHidden", PrivateKeyBodyIsHidden);
-failures += Run("JsonWebTokenKeepsItsHeader", JsonWebTokenKeepsItsHeader);
-failures += Run("SecretEnvironmentValuesAreHidden", SecretEnvironmentValuesAreHidden);
-failures += Run("MaskAutoFalseHidesListedTextOnly", MaskAutoFalseHidesListedTextOnly);
-failures += Run("MaskingTwiceChangesNothing", MaskingTwiceChangesNothing);
-failures += Run("PipeStreamsAreMaskedSeparately", PipeStreamsAreMaskedSeparately);
-failures += Run("SummaryCountsByKind", SummaryCountsByKind);
-failures += Run("OneTokenIsOneSecret", OneTokenIsOneSecret);
-failures += Run("SecretKeyNames", SecretKeyNames);
-failures += Run("SettingsKeysParse", SettingsKeysParse);
-failures += Run("RecordingHidesCommandCommentAndOutput", RecordingHidesCommandCommentAndOutput);
-failures += Run("ReplayTypesTheRunAsRecorded", ReplayTypesTheRunAsRecorded);
-failures += Run("HighlightsStayOutOfEscapeSequences", HighlightsStayOutOfEscapeSequences);
-failures += Run("HighlightInsideATitleLeavesNoSecretInTheCast", HighlightInsideATitleLeavesNoSecretInTheCast);
-failures += Run("StreamedHighlightLeavesTitlesWhole", StreamedHighlightLeavesTitlesWhole);
-
-if (failures > 0)
+public sealed class SecretMaskTests
 {
-    Console.Error.WriteLine($"Failed: {failures} secret mask test(s)");
-    return 1;
+    [Test]
+    public async Task ListedTextIsHidden() => await Assert.That(SecretMaskCases.ListedTextIsHidden()).IsTrue();
+
+    [Test]
+    public async Task ListedTextSplitAcrossChunks() => await Assert.That(SecretMaskCases.ListedTextSplitAcrossChunks()).IsTrue();
+
+    [Test]
+    public async Task ColorCodesDoNotSplitASecret() => await Assert.That(SecretMaskCases.ColorCodesDoNotSplitASecret()).IsTrue();
+
+    [Test]
+    public async Task CursorMovesSeparateText() => await Assert.That(SecretMaskCases.CursorMovesSeparateText()).IsTrue();
+
+    [Test]
+    public async Task ConPtyCursorForwardIsASpace() => await Assert.That(SecretMaskCases.ConPtyCursorForwardIsASpace()).IsTrue();
+
+    [Test]
+    public async Task TextAfterACutOffStringIsFound() => await Assert.That(SecretMaskCases.TextAfterACutOffStringIsFound()).IsTrue();
+
+    [Test]
+    public async Task UnendedDataStringIsReadAsText() => await Assert.That(SecretMaskCases.UnendedDataStringIsReadAsText()).IsTrue();
+
+    [Test]
+    public async Task TextJoinsWhereTheTerminalJoinsIt() => await Assert.That(SecretMaskCases.TextJoinsWhereTheTerminalJoinsIt()).IsTrue();
+
+    [Test]
+    public async Task StringsTheCastHidesStay() => await Assert.That(SecretMaskCases.StringsTheCastHidesStay()).IsTrue();
+
+    [Test]
+    public async Task CutOffStringsLeaveNoSecretInTheCast() => await Assert.That(SecretMaskCases.CutOffStringsLeaveNoSecretInTheCast()).IsTrue();
+
+    [Test]
+    public async Task StreamedPipeCutsFollowTheCast() => await Assert.That(SecretMaskCases.StreamedPipeCutsFollowTheCast()).IsTrue();
+
+    [Test]
+    public async Task StreamedStepLeavesNoSecretInTheCast() => await Assert.That(SecretMaskCases.StreamedStepLeavesNoSecretInTheCast()).IsTrue();
+
+    [Test]
+    public async Task WideCharactersKeepTheirWidth() => await Assert.That(SecretMaskCases.WideCharactersKeepTheirWidth()).IsTrue();
+
+    [Test]
+    public async Task KnownTokensKeepTheirPrefix() => await Assert.That(SecretMaskCases.KnownTokensKeepTheirPrefix()).IsTrue();
+
+    [Test]
+    public async Task TokenLookalikesStay() => await Assert.That(SecretMaskCases.TokenLookalikesStay()).IsTrue();
+
+    [Test]
+    public async Task SecretPairsHideTheValue() => await Assert.That(SecretMaskCases.SecretPairsHideTheValue()).IsTrue();
+
+    [Test]
+    public async Task OtherPairsStay() => await Assert.That(SecretMaskCases.OtherPairsStay()).IsTrue();
+
+    [Test]
+    public async Task UrlPasswordIsHidden() => await Assert.That(SecretMaskCases.UrlPasswordIsHidden()).IsTrue();
+
+    [Test]
+    public async Task PrivateKeyBodyIsHidden() => await Assert.That(SecretMaskCases.PrivateKeyBodyIsHidden()).IsTrue();
+
+    [Test]
+    public async Task JsonWebTokenKeepsItsHeader() => await Assert.That(SecretMaskCases.JsonWebTokenKeepsItsHeader()).IsTrue();
+
+    [Test]
+    public async Task SecretEnvironmentValuesAreHidden() => await Assert.That(SecretMaskCases.SecretEnvironmentValuesAreHidden()).IsTrue();
+
+    [Test]
+    public async Task MaskAutoFalseHidesListedTextOnly() => await Assert.That(SecretMaskCases.MaskAutoFalseHidesListedTextOnly()).IsTrue();
+
+    [Test]
+    public async Task MaskingTwiceChangesNothing() => await Assert.That(SecretMaskCases.MaskingTwiceChangesNothing()).IsTrue();
+
+    [Test]
+    public async Task PipeStreamsAreMaskedSeparately() => await Assert.That(SecretMaskCases.PipeStreamsAreMaskedSeparately()).IsTrue();
+
+    [Test]
+    public async Task SummaryCountsByKind() => await Assert.That(SecretMaskCases.SummaryCountsByKind()).IsTrue();
+
+    [Test]
+    public async Task OneTokenIsOneSecret() => await Assert.That(SecretMaskCases.OneTokenIsOneSecret()).IsTrue();
+
+    [Test]
+    public async Task SecretKeyNames() => await Assert.That(SecretMaskCases.SecretKeyNames()).IsTrue();
+
+    [Test]
+    public async Task SettingsKeysParse() => await Assert.That(SecretMaskCases.SettingsKeysParse()).IsTrue();
+
+    [Test]
+    public async Task RecordingHidesCommandCommentAndOutput() => await Assert.That(SecretMaskCases.RecordingHidesCommandCommentAndOutput()).IsTrue();
+
+    [Test]
+    public async Task ReplayTypesTheRunAsRecorded() => await Assert.That(SecretMaskCases.ReplayTypesTheRunAsRecorded()).IsTrue();
+
+    [Test]
+    public async Task HighlightsStayOutOfEscapeSequences() => await Assert.That(SecretMaskCases.HighlightsStayOutOfEscapeSequences()).IsTrue();
+
+    [Test]
+    public async Task HighlightInsideATitleLeavesNoSecretInTheCast() => await Assert.That(SecretMaskCases.HighlightInsideATitleLeavesNoSecretInTheCast()).IsTrue();
+
+    [Test]
+    public async Task StreamedHighlightLeavesTitlesWhole() => await Assert.That(SecretMaskCases.StreamedHighlightLeavesTitlesWhole()).IsTrue();
 }
 
-Console.Error.WriteLine("all secret mask tests passed");
-return 0;
-
-static int Run(string name, Func<bool> test)
+internal static class SecretMaskCases
 {
-    try
-    {
-        if (test())
-        {
-            Console.Error.WriteLine($"ok {name}");
-            return 0;
-        }
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"  {ex}");
-    }
 
-    Console.Error.WriteLine($"FAIL {name}");
-    return 1;
-}
-
-static bool Expect(bool condition, string message)
+internal static bool Expect(bool condition, string message)
 {
     if (!condition)
         Console.Error.WriteLine($"  {message}");
     return condition;
 }
 
-static bool Same(string label, string expected, string actual) =>
+internal static bool Same(string label, string expected, string actual) =>
     Expect(expected == actual, $"{label}: expected {Show(expected)}, got {Show(actual)}");
 
-static string Show(string text) => "\"" + text.Replace("\u001b", "\\e").Replace("\r", "\\r").Replace("\n", "\\n") + "\"";
+internal static string Show(string text) => "\"" + text.Replace("\u001b", "\\e").Replace("\r", "\\r").Replace("\n", "\\n") + "\"";
 
-static string Stars(int count) => new('*', count);
+internal static string Stars(int count) => new('*', count);
 
-static string Repeat(string text, int length)
+internal static string Repeat(string text, int length)
 {
     var sb = new StringBuilder();
     while (sb.Length < length)
@@ -111,31 +134,31 @@ static string Repeat(string text, int length)
     return sb.ToString(0, length);
 }
 
-static SecretMasker Masker(string? yamlSettings = null, IEnumerable<KeyValuePair<string, string?>>? environment = null) =>
+internal static SecretMasker Masker(string? yamlSettings = null, IEnumerable<KeyValuePair<string, string?>>? environment = null) =>
     SecretMasker.ForScenario(ParseScenario($"settings:\n{yamlSettings ?? "  prompt: \"$ \""}\nsteps:\n  - echo hi\n"), environment)
         ?? throw new InvalidOperationException("no masker");
 
-static string MaskPty(SecretMasker masker, params string[] chunks)
+internal static string MaskPty(SecretMasker masker, params string[] chunks)
 {
     var input = chunks.Select((text, i) => new TimedBytes(TimeSpan.FromMilliseconds(i), Encoding.UTF8.GetBytes(text))).ToArray();
     var output = masker.MaskPty(input);
     return string.Join("|", output.Select(static chunk => Encoding.UTF8.GetString(chunk.Data.Span)));
 }
 
-static bool ListedTextIsHidden()
+internal static bool ListedTextIsHidden()
 {
     var masker = Masker("  mask:\n    - \"s3cret value\"");
     return Same("listed", "the value is ************.\n", masker.MaskText("the value is s3cret value.\n"));
 }
 
-static bool ListedTextSplitAcrossChunks()
+internal static bool ListedTextSplitAcrossChunks()
 {
     var masker = Masker("  mask:\n    - abcdef");
     // Each chunk keeps its place: the stars stay in the chunk that held the characters.
     return Same("split", "x***|***y", MaskPty(masker, "xabc", "defy"));
 }
 
-static bool ColorCodesDoNotSplitASecret()
+internal static bool ColorCodesDoNotSplitASecret()
 {
     var token = "gh" + "p_" + Repeat("aB3", 36);
     var colored = token[..10] + "\u001b[1m" + token[10..] + "\u001b[0m";
@@ -143,14 +166,14 @@ static bool ColorCodesDoNotSplitASecret()
     return Same("colored", expected, Masker().MaskText(colored));
 }
 
-static bool CursorMovesSeparateText()
+internal static bool CursorMovesSeparateText()
 {
     // A full-screen program draws "abc" and "def" in different places: they are not one word.
     var masker = Masker("  mask:\n    - abcdef");
     return Same("cursor", "abc\u001b[5;1Hdef", masker.MaskText("abc\u001b[5;1Hdef"));
 }
 
-static bool ConPtyCursorForwardIsASpace()
+internal static bool ConPtyCursorForwardIsASpace()
 {
     // ConPTY writes `TOKEN: value` with the space as a cursor move.
     return Same("cuf", "TOKEN:\u001b[1C" + Stars(10), Masker().MaskText("TOKEN:\u001b[1Cvalue12345"));
@@ -159,33 +182,33 @@ static bool ConPtyCursorForwardIsASpace()
 // The secret follows a control string that ends early: the cast filter, the SVG renderer, or the asciinema player ends
 // it there, so the text after it is shown. Each case has a later terminator or none at all, so a masker that waits for
 // the string's ST misses the secret.
-static (string Label, string Text)[] CutOffStrings() =>
+internal static (string Label, string Text)[] CutOffStrings() =>
 [
     ("title ended by CSI", "b \u001b]0;t\u001b[0m hunter2secret\n"),
-    ("title ended by CAN", "b \u001b]0;t\u0018 hunter2secret\n"),
-    ("title ended by SUB", "b \u001b]0;t\u001a hunter2secret\u0007\n"),
-    ("DCS ended by BEL", "\u001bPq\u0007 hunter2secret\u001b\\"),
-    ("DCS ended by CAN", "\u001bPq\u0018 hunter2secret\n"),
-    ("DCS ended by CSI", "\u001bPq\u001b[0m hunter2secret\u001b\\"),
-    ("DCS ended by a C1 control", "\u001bPq\u0085hunter2secret\u001b\\"),
-    ("color OSC ended by C1 ST", "\u001b]4;1;rgb:0/0/0\u009c hunter2secret\u001b\\"),
-    ("color OSC ended by NEL", "\u001b]4;1;rgb:0/0/0\u0085hunter2secret\u001b\\"),
-    ("APC ended by CSI", "\u001b_Ga=T\u001b[0m hunter2secret\u001b\\"),
-    ("SOS ended by SUB", "\u001bXs\u001a hunter2secret\u001b\\"),
-    ("PM ended by CAN", "\u001b^p\u0018 hunter2secret\u001b\\"),
+("title ended by CAN", "b \u001b]0;t\u0018 hunter2secret\n"),
+("title ended by SUB", "b \u001b]0;t\u001a hunter2secret\u0007\n"),
+("DCS ended by BEL", "\u001bPq\u0007 hunter2secret\u001b\\"),
+("DCS ended by CAN", "\u001bPq\u0018 hunter2secret\n"),
+("DCS ended by CSI", "\u001bPq\u001b[0m hunter2secret\u001b\\"),
+("DCS ended by a C1 control", "\u001bPq\u0085hunter2secret\u001b\\"),
+("color OSC ended by C1 ST", "\u001b]4;1;rgb:0/0/0\u009c hunter2secret\u001b\\"),
+("color OSC ended by NEL", "\u001b]4;1;rgb:0/0/0\u0085hunter2secret\u001b\\"),
+("APC ended by CSI", "\u001b_Ga=T\u001b[0m hunter2secret\u001b\\"),
+("SOS ended by SUB", "\u001bXs\u001a hunter2secret\u001b\\"),
+("PM ended by CAN", "\u001b^p\u0018 hunter2secret\u001b\\"),
 ];
 
 // Nothing ends these strings, and the cast keeps their bytes, so what follows the introducer is read as the program's
 // output. The last ESC of the output starts nothing: the cast filter drops it.
-static (string Label, string Text)[] UnendedDataStrings() =>
+internal static (string Label, string Text)[] UnendedDataStrings() =>
 [
     ("DCS", "d \u001bPq hunter2secret\n"),
-    ("APC", "\u001b_Ga=T hunter2secret\n"),
-    ("color OSC", "\u001b]4;1;rgb:0/0/0 hunter2secret\n"),
-    ("DCS with an ESC at the end", "d \u001bPq hunter2secret\u001b"),
+("APC", "\u001b_Ga=T hunter2secret\n"),
+("color OSC", "\u001b]4;1;rgb:0/0/0 hunter2secret\n"),
+("DCS with an ESC at the end", "d \u001bPq hunter2secret\u001b"),
 ];
 
-static bool TextAfterACutOffStringIsFound()
+internal static bool TextAfterACutOffStringIsFound()
 {
     var ok = true;
     foreach (var (label, text) in CutOffStrings())
@@ -193,7 +216,7 @@ static bool TextAfterACutOffStringIsFound()
     return ok;
 }
 
-static bool UnendedDataStringIsReadAsText()
+internal static bool UnendedDataStringIsReadAsText()
 {
     var ok = true;
     foreach (var (label, text) in UnendedDataStrings())
@@ -201,7 +224,7 @@ static bool UnendedDataStringIsReadAsText()
     return ok;
 }
 
-static bool TextJoinsWhereTheTerminalJoinsIt()
+internal static bool TextJoinsWhereTheTerminalJoinsIt()
 {
     // Between the halves stands only what draws no character and leaves the cursor in place: a string, an escape that
     // another one cuts off or CAN cancels, a terminator that comes after its string has ended, SO or SI between sets
@@ -209,40 +232,40 @@ static bool TextJoinsWhereTheTerminalJoinsIt()
     // "hunter2secret" in one piece. A line break, NEL, or another control that moves the cursor keeps the halves apart.
     var joined = new (string Label, string Between)[]
     {
-        ("cancelled title", "\u001b]0;t\u0018"),
-        ("title ended by the next sequence", "\u001b]0;t\u001b[0m"),
-        ("color OSC ended by C1 ST", "\u001b]4;1;rgb:0/0/0\u009c"),
-        ("image", "\u001bPq#0~\u001b\\"),
-        ("ST after a cancelled title", "\u001b]0;t\u0018\u001b\\"),
-        ("mark passed through tmux", "\u001bPtmux;\u001b\u001b]633;E;x\u0007\u001b\\"),
-        ("bell", "\u0007"),
-        ("C1 control that does nothing", "\u001b]4;1;rgb:0/0/0\u0081"),
-        ("escape cancelled by CAN", "\u001b\u0018"),
-        ("CSI cut off by the next sequence", "\u001b[\u001b[0m"),
-        ("CSI cancelled by CAN", "\u001b[1\u0018"),
-        ("character set choice cut off by the next sequence", "\u001b(\u001b[0m"),
-        ("character set choice cancelled by CAN", "\u001b(\u0018"),
-        ("escape cancelled by SUB", "\u001b\u001a"),
-        ("character set shift", "\u000e"),
-        ("shift back", "\u000f"),
-        ("erase to the end of the line", "\u001b[K"),
-        ("erase to the end of the line with its parameter", "\u001b[0K"),
+    ("cancelled title", "\u001b]0;t\u0018"),
+    ("title ended by the next sequence", "\u001b]0;t\u001b[0m"),
+    ("color OSC ended by C1 ST", "\u001b]4;1;rgb:0/0/0\u009c"),
+    ("image", "\u001bPq#0~\u001b\\"),
+    ("ST after a cancelled title", "\u001b]0;t\u0018\u001b\\"),
+    ("mark passed through tmux", "\u001bPtmux;\u001b\u001b]633;E;x\u0007\u001b\\"),
+    ("bell", "\u0007"),
+    ("C1 control that does nothing", "\u001b]4;1;rgb:0/0/0\u0081"),
+    ("escape cancelled by CAN", "\u001b\u0018"),
+    ("CSI cut off by the next sequence", "\u001b[\u001b[0m"),
+    ("CSI cancelled by CAN", "\u001b[1\u0018"),
+    ("character set choice cut off by the next sequence", "\u001b(\u001b[0m"),
+    ("character set choice cancelled by CAN", "\u001b(\u0018"),
+    ("escape cancelled by SUB", "\u001b\u001a"),
+    ("character set shift", "\u000e"),
+    ("shift back", "\u000f"),
+    ("erase to the end of the line", "\u001b[K"),
+    ("erase to the end of the line with its parameter", "\u001b[0K"),
     };
     var apart = new (string Label, string Between)[]
     {
-        ("next line", "\u001b]4;1;rgb:0/0/0\u0085"),
-        ("index", "\u0084"),
-        ("reverse index", "\u008d"),
-        ("line break", "\n"),
-        ("carriage return", "\r"),
-        ("backspace", "\b"),
-        ("vertical tab", "\u000b"),
-        ("form feed", "\u000c"),
-        ("cursor move", "\u001b[5;1H"),
-        ("next line escape", "\u001bE"),
-        ("erase of the whole line", "\u001b[2K"),
-        ("erase to the start of the line", "\u001b[1K"),
-        ("reverse index escape", "\u001bM"),
+    ("next line", "\u001b]4;1;rgb:0/0/0\u0085"),
+    ("index", "\u0084"),
+    ("reverse index", "\u008d"),
+    ("line break", "\n"),
+    ("carriage return", "\r"),
+    ("backspace", "\b"),
+    ("vertical tab", "\u000b"),
+    ("form feed", "\u000c"),
+    ("cursor move", "\u001b[5;1H"),
+    ("next line escape", "\u001bE"),
+    ("erase of the whole line", "\u001b[2K"),
+    ("erase to the start of the line", "\u001b[1K"),
+    ("reverse index escape", "\u001bM"),
     };
 
     var ok = true;
@@ -257,7 +280,7 @@ static bool TextJoinsWhereTheTerminalJoinsIt()
     return ok;
 }
 
-static bool StringsTheCastHidesStay()
+internal static bool StringsTheCastHidesStay()
 {
     // The cast filter removes these titles, links, marks, and the clipboard with their text, and no player draws the
     // data of a DCS, SOS, PM, or APC that ends. Stars here would be a false positive: a changed image, or a count of a
@@ -265,24 +288,24 @@ static bool StringsTheCastHidesStay()
     var token = "sk" + "-" + Repeat("aZ_9-", 24);
     var cases = new (string Label, string Text)[]
     {
-        ("title ended by BEL", "\u001b]0;API_KEY=abcdefgh\u0007after\n"),
-        ("title ended by ST", "\u001b]0;API_KEY=abcdefgh\u001b\\after\n"),
-        ("title ended by CAN", "\u001b]0;API_KEY=abcdefgh\u0018after\n"),
-        ("title ended by SUB", "\u001b]0;API_KEY=abcdefgh\u001aafter\n"),
-        ("title ended by CSI", "\u001b]0;API_KEY=abcdefgh\u001b[0mafter\n"),
-        ("unended title, dropped by the cast", "\u001b]0;API_KEY=abcdefgh\n"),
-        ("title with a C1 control, dropped by the cast up to BEL", "\u001b]0;x\u0085API_KEY=abcdefgh\u0007after\n"),
-        ("hyperlink target", "\u001b]8;;https://app:pass1234@db.example/\u001b\\link\u001b]8;;\u001b\\\n"),
-        ("shell integration mark", "\u001b]633;E;export API_KEY=abcdefgh;nonce\u0007\n"),
-        ("clipboard", "\u001b]52;c;" + token + "\u0007\n"),
-        ("Sixel-like data", "\u001bPq#0;2;0;0;0?" + token + "\u001b\\\n"),
-        ("DCS ended by ST", "\u001bP1$r" + token + "\u001b\\\n"),
-        ("DCS data with a character that is not a C1 control", "\u001bPq" + (char)0xA0 + token + "\u001b\\\n"),
-        ("APC ended by ST", "\u001b_Ga=T;" + token + "\u001b\\\n"),
-        ("PM ended by ST", "\u001b^" + token + "\u001b\\\n"),
-        ("SOS ended by ST", "\u001bX" + token + "\u001b\\\n"),
-        ("mark passed through tmux", "\u001bPtmux;\u001b\u001b]633;E;export API_KEY=abcdefgh;nonce\u0007\u001b\\\n"),
-        ("image passed through tmux", "\u001bPtmux;\u001b\u001b_Ga=T;" + token + "\u001b\u001b\\\u001b\\\n"),
+    ("title ended by BEL", "\u001b]0;API_KEY=abcdefgh\u0007after\n"),
+    ("title ended by ST", "\u001b]0;API_KEY=abcdefgh\u001b\\after\n"),
+    ("title ended by CAN", "\u001b]0;API_KEY=abcdefgh\u0018after\n"),
+    ("title ended by SUB", "\u001b]0;API_KEY=abcdefgh\u001aafter\n"),
+    ("title ended by CSI", "\u001b]0;API_KEY=abcdefgh\u001b[0mafter\n"),
+    ("unended title, dropped by the cast", "\u001b]0;API_KEY=abcdefgh\n"),
+    ("title with a C1 control, dropped by the cast up to BEL", "\u001b]0;x\u0085API_KEY=abcdefgh\u0007after\n"),
+    ("hyperlink target", "\u001b]8;;https://app:pass1234@db.example/\u001b\\link\u001b]8;;\u001b\\\n"),
+    ("shell integration mark", "\u001b]633;E;export API_KEY=abcdefgh;nonce\u0007\n"),
+    ("clipboard", "\u001b]52;c;" + token + "\u0007\n"),
+    ("Sixel-like data", "\u001bPq#0;2;0;0;0?" + token + "\u001b\\\n"),
+    ("DCS ended by ST", "\u001bP1$r" + token + "\u001b\\\n"),
+    ("DCS data with a character that is not a C1 control", "\u001bPq" + (char)0xA0 + token + "\u001b\\\n"),
+    ("APC ended by ST", "\u001b_Ga=T;" + token + "\u001b\\\n"),
+    ("PM ended by ST", "\u001b^" + token + "\u001b\\\n"),
+    ("SOS ended by ST", "\u001bX" + token + "\u001b\\\n"),
+    ("mark passed through tmux", "\u001bPtmux;\u001b\u001b]633;E;export API_KEY=abcdefgh;nonce\u0007\u001b\\\n"),
+    ("image passed through tmux", "\u001bPtmux;\u001b\u001b_Ga=T;" + token + "\u001b\u001b\\\u001b\\\n"),
     };
 
     var ok = true;
@@ -295,7 +318,7 @@ static bool StringsTheCastHidesStay()
     return ok;
 }
 
-static bool CutOffStringsLeaveNoSecretInTheCast()
+internal static bool CutOffStringsLeaveNoSecretInTheCast()
 {
     // The cast filter removes titles and other private OSCs as the step is composed, so this checks what the cast
     // holds, for pipe and PTY output, not only what the masker returns.
@@ -315,7 +338,7 @@ static bool CutOffStringsLeaveNoSecretInTheCast()
     return ok;
 }
 
-static bool StreamedPipeCutsFollowTheCast()
+internal static bool StreamedPipeCutsFollowTheCast()
 {
     // Streamed output puts the reads of both streams in time order and colors each stderr read that has no colors of
     // its own. A cut stands only where the cast writes a byte that ends a sequence or follows a lone ESC: a cut that
@@ -332,28 +355,28 @@ static bool StreamedPipeCutsFollowTheCast()
 
     var cases = new (string Label, PipeStreamChunk[] Reads, string Style, string Expected)[]
     {
-        ("colored stderr", [Out("a"), Out("b"), Err("e1"), Out("c"), Err("e2")], "\u001b[31m", "- - BA B BA"),
-        ("stderr without color", [Out("a"), Out("b"), Err("e1"), Out("c"), Err("e2")], "", "- - - - -"),
-        ("stderr with colors of its own", [Out("a"), Err("\u001b[1mw\u001b[0m"), Out("b"), Err("x")], "", "- - B -"),
-        ("stderr colored after one with colors of its own", [Err("\u001b[1mw\u001b[0m"), Err("x")], "\u001b[31m", "- BA"),
-        ("BEL from the other stream", [Out("\u001b]0;t"), Err("\u0007"), Out("h")], "", "- - B"),
-        ("ESC that ends a read", [Out("x\u001b"), Err("y"), Out("]")], "", "- - B"),
-        ("escape left open at the end of a read", [Out("x\u001b("), Err("y"), Out("B"), Out("z\u001b[3"), Err("y"), Out("1m")], "", "- - B - B B"),
-        ("plain text from the other stream", [Out("\u001b]0;"), Err("w\n"), Out("x")], "", "- - -"),
-        ("CR of a CRLF split between reads, which the cast moves", [Err("\r"), Err("\nx")], "\u001b[31m", "- BA"),
-        ("CSI that a line feed runs inside", [Out("x\u001b[1;3"), Err("\n"), Out("2m")], "", "- - -"),
-        ("CSI that a bell runs inside", [Out("x\u001b[1;3"), Err("\u0007"), Out("2m")], "", "- - -"),
-        ("CSI that parameter bytes go on", [Out("x\u001b[1;3"), Err("45%"), Out("2m")], "", "- - -"),
-        ("ESC that a line feed runs inside", [Out("x\u001b"), Err("\n"), Out("[32m")], "", "- - -"),
-        ("empty read", [Out("x\u001b["), Err(""), Out("1m")], "", "- - -"),
-        ("CSI over two reads", [Out("x\u001b["), Out("1"), Err("y"), Out("h")], "", "- - - B"),
-        ("escape over two reads", [Out("x\u001b"), Out("("), Err("B"), Out("h")], "", "- - - B"),
-        ("digit after an ESC", [Out("x\u001b"), Err("7"), Out("]")], "", "- - B"),
-        ("CAN from the other stream", [Out("\u001b]0;t"), Err("\u0018"), Out("h")], "", "- - B"),
-        ("intermediate after a lone ESC", [Out("x\u001b"), Err("."), Out("]")], "", "- - B"),
-        ("intermediate after an escape with one", [Out("x\u001b("), Err("."), Out("B")], "", "- - -"),
-        ("DEL inside a CSI", [Out("x\u001b[1"), Err("\u007f"), Out("m")], "", "- - -"),
-        ("DEL after a lone ESC, which the terminal that plays the cast ignores", [Out("x\u001b"), Err("\u007f"), Out("]")], "", "- - -"),
+    ("colored stderr", [Out("a"), Out("b"), Err("e1"), Out("c"), Err("e2")], "\u001b[31m", "- - BA B BA"),
+    ("stderr without color", [Out("a"), Out("b"), Err("e1"), Out("c"), Err("e2")], "", "- - - - -"),
+    ("stderr with colors of its own", [Out("a"), Err("\u001b[1mw\u001b[0m"), Out("b"), Err("x")], "", "- - B -"),
+    ("stderr colored after one with colors of its own", [Err("\u001b[1mw\u001b[0m"), Err("x")], "\u001b[31m", "- BA"),
+    ("BEL from the other stream", [Out("\u001b]0;t"), Err("\u0007"), Out("h")], "", "- - B"),
+    ("ESC that ends a read", [Out("x\u001b"), Err("y"), Out("]")], "", "- - B"),
+    ("escape left open at the end of a read", [Out("x\u001b("), Err("y"), Out("B"), Out("z\u001b[3"), Err("y"), Out("1m")], "", "- - B - B B"),
+    ("plain text from the other stream", [Out("\u001b]0;"), Err("w\n"), Out("x")], "", "- - -"),
+    ("CR of a CRLF split between reads, which the cast moves", [Err("\r"), Err("\nx")], "\u001b[31m", "- BA"),
+    ("CSI that a line feed runs inside", [Out("x\u001b[1;3"), Err("\n"), Out("2m")], "", "- - -"),
+    ("CSI that a bell runs inside", [Out("x\u001b[1;3"), Err("\u0007"), Out("2m")], "", "- - -"),
+    ("CSI that parameter bytes go on", [Out("x\u001b[1;3"), Err("45%"), Out("2m")], "", "- - -"),
+    ("ESC that a line feed runs inside", [Out("x\u001b"), Err("\n"), Out("[32m")], "", "- - -"),
+    ("empty read", [Out("x\u001b["), Err(""), Out("1m")], "", "- - -"),
+    ("CSI over two reads", [Out("x\u001b["), Out("1"), Err("y"), Out("h")], "", "- - - B"),
+    ("escape over two reads", [Out("x\u001b"), Out("("), Err("B"), Out("h")], "", "- - - B"),
+    ("digit after an ESC", [Out("x\u001b"), Err("7"), Out("]")], "", "- - B"),
+    ("CAN from the other stream", [Out("\u001b]0;t"), Err("\u0018"), Out("h")], "", "- - B"),
+    ("intermediate after a lone ESC", [Out("x\u001b"), Err("."), Out("]")], "", "- - B"),
+    ("intermediate after an escape with one", [Out("x\u001b("), Err("."), Out("B")], "", "- - -"),
+    ("DEL inside a CSI", [Out("x\u001b[1"), Err("\u007f"), Out("m")], "", "- - -"),
+    ("DEL after a lone ESC, which the terminal that plays the cast ignores", [Out("x\u001b"), Err("\u007f"), Out("]")], "", "- - -"),
     };
 
     var ok = true;
@@ -362,23 +385,23 @@ static bool StreamedPipeCutsFollowTheCast()
     return ok;
 }
 
-static bool StreamedStepLeavesNoSecretInTheCast()
+internal static bool StreamedStepLeavesNoSecretInTheCast()
 {
     var cases = new (string Label, PipeStreamChunk[] Chunks)[]
     {
-        ("stderr title split across reads", [new(TimeSpan.Zero, true, "\u001b]0;t"), new(TimeSpan.FromMilliseconds(10), true, "hunter2secret\u0007\n")]),
-        ("stdout title cut by stderr", [new(TimeSpan.Zero, false, "\u001b]0;t"), new(TimeSpan.FromMilliseconds(5), true, "warn\n"), new(TimeSpan.FromMilliseconds(10), false, "hunter2secret\u0007\n")]),
-        ("stdout DCS cut by stderr", [new(TimeSpan.Zero, false, "\u001bPq"), new(TimeSpan.FromMilliseconds(5), true, "warn\n"), new(TimeSpan.FromMilliseconds(10), false, " hunter2secret\u001b\\\n")]),
-        ("stdout title ended by a BEL from stderr", [new(TimeSpan.Zero, false, "\u001b]0;t"), new(TimeSpan.FromMilliseconds(5), true, "\u0007"), new(TimeSpan.FromMilliseconds(10), false, "hunter2secret\n")]),
-        ("ESC that ends a read", [new(TimeSpan.Zero, false, "x\u001b"), new(TimeSpan.FromMilliseconds(5), true, "y"), new(TimeSpan.FromMilliseconds(10), false, "]0;hunter2secret\u0007\n")]),
-        ("title that plain stderr does not end", [new(TimeSpan.Zero, false, "hun\u001b]0;"), new(TimeSpan.FromMilliseconds(5), true, "w\n"), new(TimeSpan.FromMilliseconds(10), false, "x\u0007ter2secret\n")]),
-        ("title left open before a line break", [new(TimeSpan.Zero, true, "\u001b[1mhun\u001b]0;t\n"), new(TimeSpan.FromMilliseconds(10), true, "ter2secret\n")]),
-        ("escape left open at the end of a read", [new(TimeSpan.Zero, false, "x \u001b("), new(TimeSpan.FromMilliseconds(5), true, "y\n"), new(TimeSpan.FromMilliseconds(10), false, "hunter2secret\n")]),
-        ("CSI left open at the end of a read", [new(TimeSpan.Zero, false, "x \u001b["), new(TimeSpan.FromMilliseconds(5), true, "y\n"), new(TimeSpan.FromMilliseconds(10), false, "hunter2secret\n")]),
-        ("CSI left open over two reads", [new(TimeSpan.Zero, false, "x\u001b["), new(TimeSpan.FromMilliseconds(1), false, "1"), new(TimeSpan.FromMilliseconds(5), true, "y"), new(TimeSpan.FromMilliseconds(10), false, "hunter2secret\n")]),
-        ("ESC that a digit from stderr ends", [new(TimeSpan.Zero, false, "x\u001b"), new(TimeSpan.FromMilliseconds(5), true, "7"), new(TimeSpan.FromMilliseconds(10), false, "]0;hunter2secret\u0007\n")]),
-        ("title that a CAN from stderr ends", [new(TimeSpan.Zero, false, "\u001b]0;t"), new(TimeSpan.FromMilliseconds(5), true, "\u0018"), new(TimeSpan.FromMilliseconds(10), false, "hunter2secret\n")]),
-        ("ESC that an intermediate from stderr joins", [new(TimeSpan.Zero, false, "x\u001b"), new(TimeSpan.FromMilliseconds(5), true, "."), new(TimeSpan.FromMilliseconds(10), false, "]0;hunter2secret\u0007\n")]),
+    ("stderr title split across reads", [new(TimeSpan.Zero, true, "\u001b]0;t"), new(TimeSpan.FromMilliseconds(10), true, "hunter2secret\u0007\n")]),
+    ("stdout title cut by stderr", [new(TimeSpan.Zero, false, "\u001b]0;t"), new(TimeSpan.FromMilliseconds(5), true, "warn\n"), new(TimeSpan.FromMilliseconds(10), false, "hunter2secret\u0007\n")]),
+    ("stdout DCS cut by stderr", [new(TimeSpan.Zero, false, "\u001bPq"), new(TimeSpan.FromMilliseconds(5), true, "warn\n"), new(TimeSpan.FromMilliseconds(10), false, " hunter2secret\u001b\\\n")]),
+    ("stdout title ended by a BEL from stderr", [new(TimeSpan.Zero, false, "\u001b]0;t"), new(TimeSpan.FromMilliseconds(5), true, "\u0007"), new(TimeSpan.FromMilliseconds(10), false, "hunter2secret\n")]),
+    ("ESC that ends a read", [new(TimeSpan.Zero, false, "x\u001b"), new(TimeSpan.FromMilliseconds(5), true, "y"), new(TimeSpan.FromMilliseconds(10), false, "]0;hunter2secret\u0007\n")]),
+    ("title that plain stderr does not end", [new(TimeSpan.Zero, false, "hun\u001b]0;"), new(TimeSpan.FromMilliseconds(5), true, "w\n"), new(TimeSpan.FromMilliseconds(10), false, "x\u0007ter2secret\n")]),
+    ("title left open before a line break", [new(TimeSpan.Zero, true, "\u001b[1mhun\u001b]0;t\n"), new(TimeSpan.FromMilliseconds(10), true, "ter2secret\n")]),
+    ("escape left open at the end of a read", [new(TimeSpan.Zero, false, "x \u001b("), new(TimeSpan.FromMilliseconds(5), true, "y\n"), new(TimeSpan.FromMilliseconds(10), false, "hunter2secret\n")]),
+    ("CSI left open at the end of a read", [new(TimeSpan.Zero, false, "x \u001b["), new(TimeSpan.FromMilliseconds(5), true, "y\n"), new(TimeSpan.FromMilliseconds(10), false, "hunter2secret\n")]),
+    ("CSI left open over two reads", [new(TimeSpan.Zero, false, "x\u001b["), new(TimeSpan.FromMilliseconds(1), false, "1"), new(TimeSpan.FromMilliseconds(5), true, "y"), new(TimeSpan.FromMilliseconds(10), false, "hunter2secret\n")]),
+    ("ESC that a digit from stderr ends", [new(TimeSpan.Zero, false, "x\u001b"), new(TimeSpan.FromMilliseconds(5), true, "7"), new(TimeSpan.FromMilliseconds(10), false, "]0;hunter2secret\u0007\n")]),
+    ("title that a CAN from stderr ends", [new(TimeSpan.Zero, false, "\u001b]0;t"), new(TimeSpan.FromMilliseconds(5), true, "\u0018"), new(TimeSpan.FromMilliseconds(10), false, "hunter2secret\n")]),
+    ("ESC that an intermediate from stderr joins", [new(TimeSpan.Zero, false, "x\u001b"), new(TimeSpan.FromMilliseconds(5), true, "."), new(TimeSpan.FromMilliseconds(10), false, "]0;hunter2secret\u0007\n")]),
     };
 
     var ok = true;
@@ -416,9 +439,9 @@ static bool StreamedStepLeavesNoSecretInTheCast()
     // in the cast as it does in stdout.
     var split = new PipeStreamChunk[]
     {
-        new(TimeSpan.Zero, false, "x \u001b[1;3"),
-        new(TimeSpan.FromMilliseconds(5), true, "\n"),
-        new(TimeSpan.FromMilliseconds(10), false, "2mgh" + "p_" + body + "\u001b[0m\n"),
+    new(TimeSpan.Zero, false, "x \u001b[1;3"),
+    new(TimeSpan.FromMilliseconds(5), true, "\n"),
+    new(TimeSpan.FromMilliseconds(10), false, "2mgh" + "p_" + body + "\u001b[0m\n"),
     };
     var splitCast = RecordOneStep("  - run: printf something\n    stream-output: true\n    stderr-color: none\n", CommandExecution.FromPipeStream("x \u001b[1;32mgh" + "p_" + body + "\u001b[0m\n", "\n", 0, split));
     ok &= Expect(!splitCast.Contains(body, StringComparison.Ordinal), $"token after a split color: the cast holds it: {Show(splitCast)}");
@@ -433,11 +456,11 @@ static bool StreamedStepLeavesNoSecretInTheCast()
 
 // The text of a cast as a player shows it on one line: without colors, the data of a DCS, SOS, PM, or APC up to the
 // next ESC (no case here ends one earlier), and the controls that draw nothing.
-static string Shown(string cast) =>
+internal static string Shown(string cast) =>
     System.Text.RegularExpressions.Regex.Replace(cast, "\u001b\\[[0-?]*[ -/]*[@-~]|\u001b[PX^_][^\u001b]*(\u001b\\\\)?|[\u0000-\u0009\u000b-\u001f]", "");
 
 // The cast of a one-step scenario that masks "hunter2secret", after the cast filter.
-static string RecordOneStep(string step, CommandExecution execution)
+internal static string RecordOneStep(string step, CommandExecution execution)
 {
     var scenario = ParseScenario("settings:\n  mask:\n    - hunter2secret\nsteps:\n" + step);
     var options = new GenerateOptions { LogRunning = false, Masker = SecretMasker.ForScenario(scenario, null) };
@@ -445,27 +468,27 @@ static string RecordOneStep(string step, CommandExecution execution)
     return string.Concat(CastOscFilter.RemovePrivateSequences(events).Select(static ev => ev.HasUtf8Output ? Encoding.UTF8.GetString(ev.Utf8Output.Span) : ev.Data));
 }
 
-static bool WideCharactersKeepTheirWidth()
+internal static bool WideCharactersKeepTheirWidth()
 {
     var masker = Masker("  mask:\n    - 秘密の値");
     return Same("wide", "鍵は********です", masker.MaskText("鍵は秘密の値です"));
 }
 
-static bool KnownTokensKeepTheirPrefix()
+internal static bool KnownTokensKeepTheirPrefix()
 {
     var masker = Masker();
     var cases = new (string Prefix, string Body)[]
     {
-        ("gh" + "p_", Repeat("Ab1", 36)),
-        ("github" + "_pat_", Repeat("A1_b", 82)),
-        ("gl" + "pat-", Repeat("x-Y_9", 20)),
-        ("xo" + "xb-", "1234-5678-" + Repeat("ab", 24)),
-        ("AK" + "IA", Repeat("Q7W", 16)),
-        ("sk" + "-", "proj-" + Repeat("aZ_9-", 40)),
-        ("sk" + "_live_", Repeat("aZ9", 24)),
-        ("AI" + "za", Repeat("Sy_-9", 35)),
-        ("np" + "m_", Repeat("aZ9", 36)),
-        ("hf" + "_", Repeat("aZ9", 34)),
+    ("gh" + "p_", Repeat("Ab1", 36)),
+    ("github" + "_pat_", Repeat("A1_b", 82)),
+    ("gl" + "pat-", Repeat("x-Y_9", 20)),
+    ("xo" + "xb-", "1234-5678-" + Repeat("ab", 24)),
+    ("AK" + "IA", Repeat("Q7W", 16)),
+    ("sk" + "-", "proj-" + Repeat("aZ_9-", 40)),
+    ("sk" + "_live_", Repeat("aZ9", 24)),
+    ("AI" + "za", Repeat("Sy_-9", 35)),
+    ("np" + "m_", Repeat("aZ9", 36)),
+    ("hf" + "_", Repeat("aZ9", 34)),
     };
 
     var ok = true;
@@ -474,19 +497,19 @@ static bool KnownTokensKeepTheirPrefix()
     return ok;
 }
 
-static bool TokenLookalikesStay()
+internal static bool TokenLookalikesStay()
 {
     var masker = Masker();
     var ok = true;
     foreach (var text in new[]
     {
-        "gh" + "p_" + Repeat("Ab1", 20),               // too short
-        "task" + "-" + Repeat("ab", 30),               // sk- inside a word
-        "AK" + "IA" + Repeat("Q7W", 15),               // one short
-        "AK" + "IA" + Repeat("Q7W", 17),               // one long
-        "commit 1f3c5a7d9b2e4f6a8c0d1e3f5a7b9c2d4e6f8a0b",
-        "eyJ" + "hbGc.short.x",
-    })
+    "gh" + "p_" + Repeat("Ab1", 20),               // too short
+    "task" + "-" + Repeat("ab", 30),               // sk- inside a word
+    "AK" + "IA" + Repeat("Q7W", 15),               // one short
+    "AK" + "IA" + Repeat("Q7W", 17),               // one long
+    "commit 1f3c5a7d9b2e4f6a8c0d1e3f5a7b9c2d4e6f8a0b",
+    "eyJ" + "hbGc.short.x",
+})
     {
         ok &= Same(text, text, masker.MaskText(text));
     }
@@ -494,23 +517,23 @@ static bool TokenLookalikesStay()
     return ok;
 }
 
-static bool SecretPairsHideTheValue()
+internal static bool SecretPairsHideTheValue()
 {
     var masker = Masker();
     var cases = new (string Input, string Expected)[]
     {
-        ("API_KEY=abcd1234", "API_KEY=" + Stars(8)),
-        ("export GITHUB_TOKEN=xyz12345", "export GITHUB_TOKEN=" + Stars(8)),
-        ("\"password\": \"hunter2x\",", "\"password\": \"" + Stars(8) + "\","),
-        ("password: hunter2x", "password: " + Stars(8)),
-        ("db.password = 'p@ss-word'", "db.password = '" + Stars(9) + "'"),
-        ("mysql --password=abc12345 -u root", "mysql --password=" + Stars(8) + " -u root"),
-        ("Authorization: Bearer abcdef0123456789", "Authorization: Bearer " + Stars(16)),
-        ("\"Authorization\": \"Basic dXNlcjpwYXNz\"", "\"Authorization\": \"Basic " + Stars(12) + "\""),
-        ("aws_secret_access_key = abcdEFGH1234", "aws_secret_access_key = " + Stars(12)),
-        ("x-api-key: k-123456", "x-api-key: " + Stars(8)),
-        ("clientSecret:\"zz99yy88\"", "clientSecret:\"" + Stars(8) + "\""),
-        ("AccountName=demo;AccountKey=abc+def/123==;", "AccountName=demo;AccountKey=" + Stars(13) + ";"),
+    ("API_KEY=abcd1234", "API_KEY=" + Stars(8)),
+    ("export GITHUB_TOKEN=xyz12345", "export GITHUB_TOKEN=" + Stars(8)),
+    ("\"password\": \"hunter2x\",", "\"password\": \"" + Stars(8) + "\","),
+    ("password: hunter2x", "password: " + Stars(8)),
+    ("db.password = 'p@ss-word'", "db.password = '" + Stars(9) + "'"),
+    ("mysql --password=abc12345 -u root", "mysql --password=" + Stars(8) + " -u root"),
+    ("Authorization: Bearer abcdef0123456789", "Authorization: Bearer " + Stars(16)),
+    ("\"Authorization\": \"Basic dXNlcjpwYXNz\"", "\"Authorization\": \"Basic " + Stars(12) + "\""),
+    ("aws_secret_access_key = abcdEFGH1234", "aws_secret_access_key = " + Stars(12)),
+    ("x-api-key: k-123456", "x-api-key: " + Stars(8)),
+    ("clientSecret:\"zz99yy88\"", "clientSecret:\"" + Stars(8) + "\""),
+    ("AccountName=demo;AccountKey=abc+def/123==;", "AccountName=demo;AccountKey=" + Stars(13) + ";"),
     };
 
     var ok = true;
@@ -519,26 +542,26 @@ static bool SecretPairsHideTheValue()
     return ok;
 }
 
-static bool OtherPairsStay()
+internal static bool OtherPairsStay()
 {
     var masker = Masker();
     var ok = true;
     foreach (var text in new[]
     {
-        "token_endpoint: https://example.com/oauth/token",
-        "PASSWORD_FILE=/run/secrets/db",
-        "max_tokens: 100",
-        "token_count: 5",
-        "TOKEN=$GITHUB_TOKEN",
-        "if token == expected:",
-        "\"token\": null",
-        "secretKeyRef: name",
-        "PUBLIC_KEY=ssh-ed25519",
-        "password: ********",
-        "\"token\": \"not set yet\"",
-        "Password: ",
-        "KEY=value123",
-    })
+    "token_endpoint: https://example.com/oauth/token",
+    "PASSWORD_FILE=/run/secrets/db",
+    "max_tokens: 100",
+    "token_count: 5",
+    "TOKEN=$GITHUB_TOKEN",
+    "if token == expected:",
+    "\"token\": null",
+    "secretKeyRef: name",
+    "PUBLIC_KEY=ssh-ed25519",
+    "password: ********",
+    "\"token\": \"not set yet\"",
+    "Password: ",
+    "KEY=value123",
+})
     {
         ok &= Same(text, text, masker.MaskText(text));
     }
@@ -546,7 +569,7 @@ static bool OtherPairsStay()
     return ok;
 }
 
-static bool UrlPasswordIsHidden()
+internal static bool UrlPasswordIsHidden()
 {
     var masker = Masker();
     return Same("url", "DATABASE_URL=postgres://app:" + Stars(7) + "@db:5432/app", masker.MaskText("DATABASE_URL=postgres://app:hunter2@db:5432/app"))
@@ -554,7 +577,7 @@ static bool UrlPasswordIsHidden()
         & Same("ssh", "git@github.com:org/repo.git", masker.MaskText("git@github.com:org/repo.git"));
 }
 
-static bool PrivateKeyBodyIsHidden()
+internal static bool PrivateKeyBodyIsHidden()
 {
     var begin = "-----BEGIN OPENSSH " + "PRIVATE KEY-----";
     var end = "-----END OPENSSH " + "PRIVATE KEY-----";
@@ -563,7 +586,7 @@ static bool PrivateKeyBodyIsHidden()
     return Same("pem", expected, Masker().MaskText(input));
 }
 
-static bool JsonWebTokenKeepsItsHeader()
+internal static bool JsonWebTokenKeepsItsHeader()
 {
     var header = "ey" + "JhbGciOiJIUzI1NiJ9";
     var payload = "ey" + "JzdWIiOiIxMjM0NTY3ODkwIn0";
@@ -572,7 +595,7 @@ static bool JsonWebTokenKeepsItsHeader()
     return Same("jwt", $"id={header}.{Stars(payload.Length + 1 + signature.Length)} ok", Masker().MaskText($"id={token} ok"));
 }
 
-static bool SecretEnvironmentValuesAreHidden()
+internal static bool SecretEnvironmentValuesAreHidden()
 {
     var environment = new Dictionary<string, string?>
     {
@@ -588,7 +611,7 @@ static bool SecretEnvironmentValuesAreHidden()
         & Same("digits", "12345678", masker.MaskText("12345678"));
 }
 
-static bool MaskAutoFalseHidesListedTextOnly()
+internal static bool MaskAutoFalseHidesListedTextOnly()
 {
     var masker = Masker("  mask:\n    - hello\n  mask-auto: false", new Dictionary<string, string?> { ["API_TOKEN"] = "zzzzzzzzzz" });
     return Same("listed", "*****", masker.MaskText("hello"))
@@ -598,7 +621,7 @@ static bool MaskAutoFalseHidesListedTextOnly()
             "mask-auto: false without mask texts gives no masker");
 }
 
-static bool MaskingTwiceChangesNothing()
+internal static bool MaskingTwiceChangesNothing()
 {
     var masker = Masker();
     var chunks = new[] { new TimedBytes(TimeSpan.Zero, Encoding.UTF8.GetBytes("API_KEY=abcd1234\r\n")) };
@@ -608,23 +631,23 @@ static bool MaskingTwiceChangesNothing()
         & Expect(ReferenceEquals(once, twice), "the second pass returns the same chunks");
 }
 
-static bool PipeStreamsAreMaskedSeparately()
+internal static bool PipeStreamsAreMaskedSeparately()
 {
     var masker = Masker("  mask:\n    - abcdef");
     var chunks = new[]
     {
-        new PipeStreamChunk(TimeSpan.Zero, false, "abc"),
-        new PipeStreamChunk(TimeSpan.FromMilliseconds(1), true, "zzz"),
-        new PipeStreamChunk(TimeSpan.FromMilliseconds(2), false, "def\n"),
-        new PipeStreamChunk(TimeSpan.FromMilliseconds(3), true, "abcdef\n"),
-    };
+    new PipeStreamChunk(TimeSpan.Zero, false, "abc"),
+    new PipeStreamChunk(TimeSpan.FromMilliseconds(1), true, "zzz"),
+    new PipeStreamChunk(TimeSpan.FromMilliseconds(2), false, "def\n"),
+    new PipeStreamChunk(TimeSpan.FromMilliseconds(3), true, "abcdef\n"),
+};
     var masked = masker.MaskPipe(chunks);
     return Same("stdout", "***|***\n", masked[0].Text + "|" + masked[2].Text)
         & Same("stderr", "zzz|******\n", masked[1].Text + "|" + masked[3].Text)
         & Expect(masked.Select(static chunk => chunk.Time).SequenceEqual(chunks.Select(static chunk => chunk.Time)), "times stay");
 }
 
-static bool SummaryCountsByKind()
+internal static bool SummaryCountsByKind()
 {
     // A text counts once however often it shows: "hello" twice is one secret.
     var masker = Masker("  mask:\n    - hello");
@@ -633,7 +656,7 @@ static bool SummaryCountsByKind()
         & Expect(Masker().Summary() is null, "nothing hidden gives no summary");
 }
 
-static bool OneTokenIsOneSecret()
+internal static bool OneTokenIsOneSecret()
 {
     // The GitHub token finder hides what follows ghp_, and the key=value finder the whole value: one secret, of the
     // kind found first. The command that prints it shows it once more, and it is still one.
@@ -646,7 +669,7 @@ static bool OneTokenIsOneSecret()
         & Same("summary", "Masked 1 secret: 1 GitHub token", masker.Summary() ?? "(none)");
 }
 
-static bool SecretKeyNames()
+internal static bool SecretKeyNames()
 {
     var ok = true;
     foreach (var name in new[] { "GITHUB_TOKEN", "TOKEN", "db_password", "clientSecret", "x-api-key", "AWS_SECRET_ACCESS_KEY", "AccountKey", "APIKey", "--password", "Authorization", "MYSQL_ROOT_PASSWORD" })
@@ -656,7 +679,7 @@ static bool SecretKeyNames()
     return ok;
 }
 
-static bool SettingsKeysParse()
+internal static bool SettingsKeysParse()
 {
     var scenario = ParseScenario("settings:\n  mask:\n    - one\n    - two\n  mask-auto: false\nsteps:\n  - echo hi\n");
     var unknown = FindUnknownScenarioKeys("settings:\n  mask: [one]\n  mask-auto: true\nsteps:\n  - echo hi\n");
@@ -666,7 +689,7 @@ static bool SettingsKeysParse()
         & Same("type error", "'settings.mask' must be a list, not 'abc'.", FindValueTypeError("settings:\n  mask: abc\nsteps:\n  - echo hi\n") ?? "(none)");
 }
 
-static bool RecordingHidesCommandCommentAndOutput()
+internal static bool RecordingHidesCommandCommentAndOutput()
 {
     var scenario = ParseScenario(
         "settings:\n  mask:\n    - hunter2x\nsteps:\n  - name: log in with hunter2x\n    run: login --password hunter2x\n");
@@ -688,7 +711,7 @@ static bool RecordingHidesCommandCommentAndOutput()
             $"the outputs file holds the masked output: {outputsJson}");
 }
 
-static bool ReplayTypesTheRunAsRecorded()
+internal static bool ReplayTypesTheRunAsRecorded()
 {
     // A hidden step exports the secret halfway, as pre or a step can: the recording knows it only from then on, and a
     // replay's masker never does, so only the outputs file can tell the replay what the recording typed. The same run
@@ -733,13 +756,13 @@ static bool ReplayTypesTheRunAsRecorded()
 }
 
 // A playground cast's output events joined: the cast types one character per event.
-static string PlaygroundText(PlaygroundResult result) => result.Cast is { } bytes
+internal static string PlaygroundText(PlaygroundResult result) => result.Cast is { } bytes
     ? string.Concat(Encoding.UTF8.GetString(bytes).Split('\n').Skip(1).Where(static line => line.StartsWith('['))
         .Select(static line => System.Text.Json.JsonDocument.Parse(line).RootElement)
         .Where(static ev => ev[1].GetString() == "o").Select(static ev => ev[2].GetString()))
     : result.Error ?? "";
 
-static bool HighlightsStayOutOfEscapeSequences()
+internal static bool HighlightsStayOutOfEscapeSequences()
 {
     // A highlight paints columns of the output as written, escape sequences included. A color written inside a
     // sequence would end it early, so the change waits for the byte after the sequence.
@@ -755,7 +778,7 @@ static bool HighlightsStayOutOfEscapeSequences()
         & Same("plain text", "a" + Red + "bc" + Reset + "d\ne" + Red + "fg" + Reset + "h", Paint("abcd\nefgh", "1-2:2-3"));
 }
 
-static bool HighlightInsideATitleLeavesNoSecretInTheCast()
+internal static bool HighlightInsideATitleLeavesNoSecretInTheCast()
 {
     // The cast filter ends a title at the first ESC, so a color written inside one would show the rest of it, which
     // the masker skipped as part of the title.
@@ -771,16 +794,17 @@ static bool HighlightInsideATitleLeavesNoSecretInTheCast()
     return ok;
 }
 
-static bool StreamedHighlightLeavesTitlesWhole()
+internal static bool StreamedHighlightLeavesTitlesWhole()
 {
     // A streamed step's highlighted text is cut back into its reads, and each part closes the color it opened. The
     // first read ends inside a title, so a cut at its end would close the color inside the title and show the rest.
     var reads = new PipeStreamChunk[]
     {
-        new(TimeSpan.FromMilliseconds(100), false, "\u001b7\u001b]0;API_KEY=abc"),
-        new(TimeSpan.FromMilliseconds(400), false, "defgh\u0007done\n"),
+    new(TimeSpan.FromMilliseconds(100), false, "\u001b7\u001b]0;API_KEY=abc"),
+    new(TimeSpan.FromMilliseconds(400), false, "defgh\u0007done\n"),
     };
     var cast = RecordOneStep("  - run: printf something\n    stream-output: true\n    highlight:\n      - at: \"1\"\n        color: green\n",
         CommandExecution.FromPipeStream(string.Concat(reads.Select(static read => read.Text)), "", 0, reads));
     return Expect(!cast.Contains("defgh", StringComparison.Ordinal), $"the cast holds the end of the title: {Show(cast)}");
+}
 }

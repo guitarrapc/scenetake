@@ -1,144 +1,192 @@
-#:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
-#:property Nullable=enable
-#:property ImplicitUsings=enable
-#:package VYaml@1.6.1
-#:include ../Terminal.cs
-#:include ../CastTimingPipeline.cs
-#:include ../CastReader.cs
-#:include ../Svg.cs
-#:include ../JsonEscape.cs
-#:include ../PtyLeadingInitFilter.cs
-#:include ../ScenarioKeys.cs
-#:include ../Scenario.cs
-#:include ../Highlight.cs
-#:include ../CastComposer.cs
-#:include ../Rerecord.cs
-#:include ../SecretMask.cs
-#:include ../StepChunks.cs
-#:include ../StepOutputs.cs
-#:include ../PlaygroundRender.cs
+﻿using System.Diagnostics;
+using System.Text;
+using static Scenetake.Core.ScenarioCast;
+using Scenetake.TestSupport;
+
+namespace Scenetake.Core.Tests;
 
 // Recording again to an earlier cast (.github/docs/spec_scenario.md → Recording again): a step that prints the same
 // keeps its earlier events and timing, keep-output keeps them whatever the step prints, and only changed steps differ.
 // The integration tests need SCENETAKE_BIN and bash.
 
-using System.Diagnostics;
-using System.Text;
-using static ScenarioCast;
-
-var repoRoot = FindRepoRoot(AppContext.BaseDirectory) ?? FindRepoRoot(Directory.GetCurrentDirectory())
-    ?? throw new InvalidOperationException("repository root not found");
-var failures = 0;
-
-failures += Run("SameOutputGivesSameCast", SameOutputGivesSameCast);
-failures += Run("NoStepsSaysNothing", NoStepsSaysNothing);
-failures += Run("ChunkSplitIsTheSameOutput", ChunkSplitIsTheSameOutput);
-failures += Run("OnlyTheChangedStepDiffers", OnlyTheChangedStepDiffers);
-failures += Run("KeepOutputKeepsTheEarlierOutput", KeepOutputKeepsTheEarlierOutput);
-failures += Run("KeepOutputOfInstantOutput", KeepOutputOfInstantOutput);
-failures += Run("NewTimingKeysTakeEffect", NewTimingKeysTakeEffect);
-failures += Run("TypingChangesKeepOutputTiming", TypingChangesKeepOutputTiming);
-failures += Run("StepsAreFoundByRunText", StepsAreFoundByRunText);
-failures += Run("RepeatedCommandsMatchInOrder", RepeatedCommandsMatchInOrder);
-failures += Run("FilteredEventsKeepTheirSteps", FilteredEventsKeepTheirSteps);
-failures += Run("NoEarlierCastChangesNothing", NoEarlierCastChangesNothing);
-failures += Run("TagRoundTrips", TagRoundTrips);
-failures += Run("EarlierCastProblems", EarlierCastProblems);
-failures += Run("KeepOutputKeyRules", KeepOutputKeyRules);
-failures += Run("DescribeSaysWhatChanged", DescribeSaysWhatChanged);
-failures += Run("KeepOutputDoesNotBringBackMaskedText", KeepOutputDoesNotBringBackMaskedText);
-failures += Run("CommentFollowsTheKeptOutput", CommentFollowsTheKeptOutput);
-failures += Run("NextPtyStepStartsAfterTheKeptOutput", NextPtyStepStartsAfterTheKeptOutput);
-failures += Run("KeptPtyOutputNeedsItsPlaceOnTheScreen", KeptPtyOutputNeedsItsPlaceOnTheScreen);
-failures += Run("OtherTerminalSizeIsNotCompared", OtherTerminalSizeIsNotCompared);
-failures += Run("TagDescribesTheEventsTheCastHas", TagDescribesTheEventsTheCastHas);
-failures += Run("SplitCharactersAreTheSameOutput", SplitCharactersAreTheSameOutput);
-failures += Run("InvalidBytesKeepTheCast", InvalidBytesKeepTheCast);
-failures += Run("LineEndingsDoNotChangeTheStep", LineEndingsDoNotChangeTheStep);
-failures += Run("HalfMillisecondSettingsStayTheSame", HalfMillisecondSettingsStayTheSame);
-failures += Run("NamedStepsAreCompared", NamedStepsAreCompared);
-failures += Run("KeepOutputWithoutAnEarlierStepIsSaid", KeepOutputWithoutAnEarlierStepIsSaid);
-failures += Run("StepIdentityAndTimingKeys", StepIdentityAndTimingKeys);
-failures += Run("MaskedRunTextIsNotHashed", MaskedRunTextIsNotHashed);
-failures += Run("EditedCastIsNotCompared", EditedCastIsNotCompared);
-failures += Run("IntervalsDoNotDependOnThePreviousTime", IntervalsDoNotDependOnThePreviousTime);
-failures += Run("OutputThatIsOnlyARemovedTitleKeepsTheLayout", OutputThatIsOnlyARemovedTitleKeepsTheLayout);
-failures += Run("StderrReadsDoNotChangeTheStep", StderrReadsDoNotChangeTheStep);
-failures += Run("CarriageReturnSplitFromItsLineFeed", CarriageReturnSplitFromItsLineFeed);
-failures += Run("LaterStepsDoNotDependOnWhatTheFirstPrinted", LaterStepsDoNotDependOnWhatTheFirstPrinted);
-failures += Run("StreamedHighlightIgnoresHowSequencesFell", StreamedHighlightIgnoresHowSequencesFell);
-failures += Run("ReplayMasksTheRecordedRunAgain", ReplayMasksTheRecordedRunAgain);
-failures += Run("ColorsCountForPtyOutput", ColorsCountForPtyOutput);
-failures += Run("CarriageReturnPairsOnlyWithItsOwnStream", CarriageReturnPairsOnlyWithItsOwnStream);
-failures += Run("NoIntervalGoesBack", NoIntervalGoesBack);
-failures += Run("OpenSequencesEndWithTheirStep", OpenSequencesEndWithTheirStep);
-failures += Run("LongSequenceBeforeACommentKeepsTheLine", LongSequenceBeforeACommentKeepsTheLine);
-failures += Run("KeptEmptyFirstStepKeepsTheOthersInPlace", KeptEmptyFirstStepKeepsTheOthersInPlace);
-failures += Run("OutputsFileKeepsTheMaskedRun", OutputsFileKeepsTheMaskedRun);
-failures += Run("SplitCharactersMoveWhole", SplitCharactersMoveWhole);
-failures += Run("UncountedMaskingLeavesTheCounts", UncountedMaskingLeavesTheCounts);
-failures += Run("IntegrationRecordingAgainGivesSameFiles", () => IntegrationRecordingAgainGivesSameFiles(repoRoot));
-failures += Run("IntegrationChangedAndKeptSteps", () => IntegrationChangedAndKeptSteps(repoRoot));
-failures += Run("IntegrationOutputsFileReplaysToTheCast", () => IntegrationOutputsFileReplaysToTheCast(repoRoot));
-failures += Run("IntegrationReplayFindsStepsWithExportedSecrets", () => IntegrationReplayFindsStepsWithExportedSecrets(repoRoot));
-
-if (failures > 0)
+[Category("Smoke")]
+public sealed class RerecordTests
 {
-    Console.Error.WriteLine($"Failed: {failures} rerecord test(s)");
-    return 1;
+    [Test]
+    public async Task SameOutputGivesSameCast() => await Assert.That(RerecordCases.SameOutputGivesSameCast()).IsTrue();
+
+    [Test]
+    public async Task NoStepsSaysNothing() => await Assert.That(RerecordCases.NoStepsSaysNothing()).IsTrue();
+
+    [Test]
+    public async Task ChunkSplitIsTheSameOutput() => await Assert.That(RerecordCases.ChunkSplitIsTheSameOutput()).IsTrue();
+
+    [Test]
+    public async Task OnlyTheChangedStepDiffers() => await Assert.That(RerecordCases.OnlyTheChangedStepDiffers()).IsTrue();
+
+    [Test]
+    public async Task KeepOutputKeepsTheEarlierOutput() => await Assert.That(RerecordCases.KeepOutputKeepsTheEarlierOutput()).IsTrue();
+
+    [Test]
+    public async Task KeepOutputOfInstantOutput() => await Assert.That(RerecordCases.KeepOutputOfInstantOutput()).IsTrue();
+
+    [Test]
+    public async Task NewTimingKeysTakeEffect() => await Assert.That(RerecordCases.NewTimingKeysTakeEffect()).IsTrue();
+
+    [Test]
+    public async Task TypingChangesKeepOutputTiming() => await Assert.That(RerecordCases.TypingChangesKeepOutputTiming()).IsTrue();
+
+    [Test]
+    public async Task StepsAreFoundByRunText() => await Assert.That(RerecordCases.StepsAreFoundByRunText()).IsTrue();
+
+    [Test]
+    public async Task RepeatedCommandsMatchInOrder() => await Assert.That(RerecordCases.RepeatedCommandsMatchInOrder()).IsTrue();
+
+    [Test]
+    public async Task FilteredEventsKeepTheirSteps() => await Assert.That(RerecordCases.FilteredEventsKeepTheirSteps()).IsTrue();
+
+    [Test]
+    public async Task NoEarlierCastChangesNothing() => await Assert.That(RerecordCases.NoEarlierCastChangesNothing()).IsTrue();
+
+    [Test]
+    public async Task TagRoundTrips() => await Assert.That(RerecordCases.TagRoundTrips()).IsTrue();
+
+    [Test]
+    public async Task EarlierCastProblems() => await Assert.That(RerecordCases.EarlierCastProblems()).IsTrue();
+
+    [Test]
+    public async Task KeepOutputKeyRules() => await Assert.That(RerecordCases.KeepOutputKeyRules()).IsTrue();
+
+    [Test]
+    public async Task DescribeSaysWhatChanged() => await Assert.That(RerecordCases.DescribeSaysWhatChanged()).IsTrue();
+
+    [Test]
+    public async Task KeepOutputDoesNotBringBackMaskedText() => await Assert.That(RerecordCases.KeepOutputDoesNotBringBackMaskedText()).IsTrue();
+
+    [Test]
+    public async Task CommentFollowsTheKeptOutput() => await Assert.That(RerecordCases.CommentFollowsTheKeptOutput()).IsTrue();
+
+    [Test]
+    public async Task NextPtyStepStartsAfterTheKeptOutput() => await Assert.That(RerecordCases.NextPtyStepStartsAfterTheKeptOutput()).IsTrue();
+
+    [Test]
+    public async Task KeptPtyOutputNeedsItsPlaceOnTheScreen() => await Assert.That(RerecordCases.KeptPtyOutputNeedsItsPlaceOnTheScreen()).IsTrue();
+
+    [Test]
+    public async Task OtherTerminalSizeIsNotCompared() => await Assert.That(RerecordCases.OtherTerminalSizeIsNotCompared()).IsTrue();
+
+    [Test]
+    public async Task TagDescribesTheEventsTheCastHas() => await Assert.That(RerecordCases.TagDescribesTheEventsTheCastHas()).IsTrue();
+
+    [Test]
+    public async Task SplitCharactersAreTheSameOutput() => await Assert.That(RerecordCases.SplitCharactersAreTheSameOutput()).IsTrue();
+
+    [Test]
+    public async Task InvalidBytesKeepTheCast() => await Assert.That(RerecordCases.InvalidBytesKeepTheCast()).IsTrue();
+
+    [Test]
+    public async Task LineEndingsDoNotChangeTheStep() => await Assert.That(RerecordCases.LineEndingsDoNotChangeTheStep()).IsTrue();
+
+    [Test]
+    public async Task HalfMillisecondSettingsStayTheSame() => await Assert.That(RerecordCases.HalfMillisecondSettingsStayTheSame()).IsTrue();
+
+    [Test]
+    public async Task NamedStepsAreCompared() => await Assert.That(RerecordCases.NamedStepsAreCompared()).IsTrue();
+
+    [Test]
+    public async Task KeepOutputWithoutAnEarlierStepIsSaid() => await Assert.That(RerecordCases.KeepOutputWithoutAnEarlierStepIsSaid()).IsTrue();
+
+    [Test]
+    public async Task StepIdentityAndTimingKeys() => await Assert.That(RerecordCases.StepIdentityAndTimingKeys()).IsTrue();
+
+    [Test]
+    public async Task MaskedRunTextIsNotHashed() => await Assert.That(RerecordCases.MaskedRunTextIsNotHashed()).IsTrue();
+
+    [Test]
+    public async Task EditedCastIsNotCompared() => await Assert.That(RerecordCases.EditedCastIsNotCompared()).IsTrue();
+
+    [Test]
+    public async Task IntervalsDoNotDependOnThePreviousTime() => await Assert.That(RerecordCases.IntervalsDoNotDependOnThePreviousTime()).IsTrue();
+
+    [Test]
+    public async Task OutputThatIsOnlyARemovedTitleKeepsTheLayout() => await Assert.That(RerecordCases.OutputThatIsOnlyARemovedTitleKeepsTheLayout()).IsTrue();
+
+    [Test]
+    public async Task StderrReadsDoNotChangeTheStep() => await Assert.That(RerecordCases.StderrReadsDoNotChangeTheStep()).IsTrue();
+
+    [Test]
+    public async Task CarriageReturnSplitFromItsLineFeed() => await Assert.That(RerecordCases.CarriageReturnSplitFromItsLineFeed()).IsTrue();
+
+    [Test]
+    public async Task LaterStepsDoNotDependOnWhatTheFirstPrinted() => await Assert.That(RerecordCases.LaterStepsDoNotDependOnWhatTheFirstPrinted()).IsTrue();
+
+    [Test]
+    public async Task StreamedHighlightIgnoresHowSequencesFell() => await Assert.That(RerecordCases.StreamedHighlightIgnoresHowSequencesFell()).IsTrue();
+
+    [Test]
+    public async Task ReplayMasksTheRecordedRunAgain() => await Assert.That(RerecordCases.ReplayMasksTheRecordedRunAgain()).IsTrue();
+
+    [Test]
+    public async Task ColorsCountForPtyOutput() => await Assert.That(RerecordCases.ColorsCountForPtyOutput()).IsTrue();
+
+    [Test]
+    public async Task CarriageReturnPairsOnlyWithItsOwnStream() => await Assert.That(RerecordCases.CarriageReturnPairsOnlyWithItsOwnStream()).IsTrue();
+
+    [Test]
+    public async Task NoIntervalGoesBack() => await Assert.That(RerecordCases.NoIntervalGoesBack()).IsTrue();
+
+    [Test]
+    public async Task OpenSequencesEndWithTheirStep() => await Assert.That(RerecordCases.OpenSequencesEndWithTheirStep()).IsTrue();
+
+    [Test]
+    public async Task LongSequenceBeforeACommentKeepsTheLine() => await Assert.That(RerecordCases.LongSequenceBeforeACommentKeepsTheLine()).IsTrue();
+
+    [Test]
+    public async Task KeptEmptyFirstStepKeepsTheOthersInPlace() => await Assert.That(RerecordCases.KeptEmptyFirstStepKeepsTheOthersInPlace()).IsTrue();
+
+    [Test]
+    public async Task OutputsFileKeepsTheMaskedRun() => await Assert.That(RerecordCases.OutputsFileKeepsTheMaskedRun()).IsTrue();
+
+    [Test]
+    public async Task SplitCharactersMoveWhole() => await Assert.That(RerecordCases.SplitCharactersMoveWhole()).IsTrue();
+
+    [Test]
+    public async Task UncountedMaskingLeavesTheCounts() => await Assert.That(RerecordCases.UncountedMaskingLeavesTheCounts()).IsTrue();
+
+    [Test]
+    public async Task IntegrationRecordingAgainGivesSameFiles() => await Assert.That(RerecordCases.IntegrationRecordingAgainGivesSameFiles(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationChangedAndKeptSteps() => await Assert.That(RerecordCases.IntegrationChangedAndKeptSteps(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationOutputsFileReplaysToTheCast() => await Assert.That(RerecordCases.IntegrationOutputsFileReplaysToTheCast(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationReplayFindsStepsWithExportedSecrets() => await Assert.That(RerecordCases.IntegrationReplayFindsStepsWithExportedSecrets(TestEnv.RepoRoot)).IsTrue();
 }
 
-Console.Error.WriteLine("all rerecord tests passed");
-return 0;
-
-static int Run(string name, Func<bool> test)
+internal static class RerecordCases
 {
-    try
-    {
-        if (test())
-        {
-            Console.Error.WriteLine($"ok {name}");
-            return 0;
-        }
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"  {ex}");
-    }
 
-    Console.Error.WriteLine($"FAIL {name}");
-    return 1;
-}
-
-static bool Expect(bool condition, string message)
+internal static bool Expect(bool condition, string message)
 {
     if (!condition)
         Console.Error.WriteLine($"  {message}");
     return condition;
 }
 
-static string? FindRepoRoot(string start)
-{
-    for (var dir = new DirectoryInfo(start); dir is not null; dir = dir.Parent)
-    {
-        if (File.Exists(Path.Combine(dir.FullName, "scenetake.cs")))
-            return dir.FullName;
-    }
-
-    return null;
-}
 
 // A PTY step's output: each part at its time in seconds since the command started.
-static CommandExecution Pty(params (double Time, string Text)[] parts) =>
+internal static CommandExecution Pty(params (double Time, string Text)[] parts) =>
     new(0, true, "", "", [.. parts.Select(static part => new TimedBytes(TimeSpan.FromSeconds(part.Time), Encoding.UTF8.GetBytes(part.Text)))], null, null);
 
-static CommandExecution Pipe(string text) =>
+internal static CommandExecution Pipe(string text) =>
     CommandExecution.FromPipeStream(text, "", 0, [new PipeStreamChunk(TimeSpan.FromMilliseconds(5), false, text)]);
 
 // Records the scenario with the outputs that run gives each step, compared with an earlier cast when there is one,
 // and returns the cast as scenetake writes it.
-static (string Cast, Rerecorder Result) Record(string yaml, Func<StepStart, CommandExecution> run, string? earlier = null, bool trackCursor = false)
+internal static (string Cast, Rerecorder Result) Record(string yaml, Func<StepStart, CommandExecution> run, string? earlier = null, bool trackCursor = false)
 {
     var scenario = ParseScenario(yaml);
     PreviousCast? previous = null;
@@ -163,18 +211,18 @@ static (string Cast, Rerecorder Result) Record(string yaml, Func<StepStart, Comm
     return (writer.ToString(), result);
 }
 
-static int Cols(Scenario scenario) => scenario.Width ?? RenderSettingsResolver.DefaultTerminalCols;
+internal static int Cols(Scenario scenario) => scenario.Width ?? RenderSettingsResolver.DefaultTerminalCols;
 
-static int Rows(Scenario scenario) => scenario.Height ?? RenderSettingsResolver.DefaultTerminalRows;
+internal static int Rows(Scenario scenario) => scenario.Height ?? RenderSettingsResolver.DefaultTerminalRows;
 
 // An earlier cast with no steps, so a Rerecorder has something to compare with.
-static PreviousCast EmptyEarlierCast() =>
+internal static PreviousCast EmptyEarlierCast() =>
     PreviousCast.Parse(["{\"version\":3,\"term\":{\"cols\":80,\"rows\":24},\"tags\":[\"st:steps=0:0\"]}"], 80, 24, out _)!;
 
 // The event lines of a cast, without the header, whose st:steps tag moves with the events.
-static string[] EventLines(string cast) => cast.Split('\n')[1..];
+internal static string[] EventLines(string cast) => cast.Split('\n')[1..];
 
-static string FirstDifference(string a, string b)
+internal static string FirstDifference(string a, string b)
 {
     var left = a.Split('\n');
     var right = b.Split('\n');
@@ -190,13 +238,13 @@ static string FirstDifference(string a, string b)
 }
 
 // The output lines of the three steps: in a step that keeps its earlier events, they keep their intervals.
-static List<string> ThreeStepsLines(string cast) => EventLines(cast)
+internal static List<string> ThreeStepsLines(string cast) => EventLines(cast)
     .Where(static line => line.Contains("hello\\r\\n", StringComparison.Ordinal) || line.Contains("world\\r\\n", StringComparison.Ordinal)
         || line.Contains("\"1\\r\\n\"", StringComparison.Ordinal) || line.Contains("\"2\\r\\n\"", StringComparison.Ordinal)
         || line.Contains("\"3\\r\\n\"", StringComparison.Ordinal) || line.Contains("three\\r\\n", StringComparison.Ordinal))
     .ToList();
 
-static CommandExecution ThreeStepsOutput(StepStart step, double jitter) => step.Command.Cmd switch
+internal static CommandExecution ThreeStepsOutput(StepStart step, double jitter) => step.Command.Cmd switch
 {
     "hello" => Pty((0.1 + jitter, "hello\r\n"), (0.4 + 2 * jitter, "world\r\n")),
     "count" => Pty((0.05 + jitter, "1\r\n"), (0.25 + 3 * jitter, "2\r\n"), (0.6 - jitter, "3\r\n")),
@@ -205,13 +253,13 @@ static CommandExecution ThreeStepsOutput(StepStart step, double jitter) => step.
 
 // A recording of cards alone writes no step ranges, so the next one finds none. Its note would blame another tool
 // and promise a comparison next time, on every run.
-static bool NoStepsSaysNothing()
+internal static bool NoStepsSaysNothing()
 {
     var lines = Rerecording.Describe(new Rerecorder(previous: null, masker: null), "it has no step ranges: an earlier scenetake or another tool wrote it", "cards.cast");
     return Expect(lines.Count == 0, string.Join(" | ", lines));
 }
 
-static bool SameOutputGivesSameCast()
+internal static bool SameOutputGivesSameCast()
 {
     var first = Record(ThreeSteps, step => ThreeStepsOutput(step, 0));
     // The same output, read a few milliseconds earlier or later, as each recording reads it.
@@ -223,7 +271,7 @@ static bool SameOutputGivesSameCast()
         & Expect(first.Cast.Contains("\"st:steps=", StringComparison.Ordinal), "the cast has no st:steps tag");
 }
 
-static bool ChunkSplitIsTheSameOutput()
+internal static bool ChunkSplitIsTheSameOutput()
 {
     const string yaml = "steps:\n  - run: two lines\n    pty: true\n";
     var first = Record(yaml, _ => Pty((0.1, "one\r\n"), (0.3, "two\r\n")));
@@ -232,7 +280,7 @@ static bool ChunkSplitIsTheSameOutput()
         & Expect(again.Result.Same.Count == 1, "the step was not the same");
 }
 
-static bool OnlyTheChangedStepDiffers()
+internal static bool OnlyTheChangedStepDiffers()
 {
     var first = Record(ThreeSteps, step => ThreeStepsOutput(step, 0));
     var again = Record(ThreeSteps, step => step.Command.Cmd == "count"
@@ -249,7 +297,7 @@ static bool OnlyTheChangedStepDiffers()
         & Expect(after.Any(static line => line.Contains("4\\r\\n", StringComparison.Ordinal)), "the changed step's new output is missing");
 }
 
-static bool KeepOutputKeepsTheEarlierOutput()
+internal static bool KeepOutputKeepsTheEarlierOutput()
 {
     const string yaml = "steps:\n  - run: date\n    pty: true\n    keep-output: true\n  - echo after\n";
     var first = Record(yaml, step => step.Command.Cmd == "date" ? Pty((0.1, "Mon 10:00:01\r\n")) : Pipe("after\n"));
@@ -258,7 +306,7 @@ static bool KeepOutputKeepsTheEarlierOutput()
         & Expect(again.Result.Kept is [{ Number: 1 }], "the step was not kept");
 }
 
-static bool KeepOutputOfInstantOutput()
+internal static bool KeepOutputOfInstantOutput()
 {
     // A pipe step's output appears at once, at the step's execution-duration: the earlier text takes this run's time.
     const string yaml = "steps:\n  - run: uuidgen\n    keep-output: true\n  - echo after\n";
@@ -274,7 +322,7 @@ static bool KeepOutputOfInstantOutput()
         & Expect(stillSilent.Cast == silent.Cast, $"a step that printed nothing before: {FirstDifference(silent.Cast, stillSilent.Cast)}");
 }
 
-static bool NewTimingKeysTakeEffect()
+internal static bool NewTimingKeysTakeEffect()
 {
     // The same output, but max-duration now shortens it: the earlier timing would leave the new key without effect.
     const string yaml = "steps:\n  - run: slow\n    pty: true\n";
@@ -285,7 +333,7 @@ static bool NewTimingKeysTakeEffect()
         & Expect(bLine(again.Cast) != bLine(first.Cast), $"the earlier timing was kept: {bLine(again.Cast)}");
 }
 
-static bool TypingChangesKeepOutputTiming()
+internal static bool TypingChangesKeepOutputTiming()
 {
     // Typing is timed by the YAML, so a new typing speed applies, while the PTY output keeps its earlier timing.
     var first = Record(ThreeSteps, step => ThreeStepsOutput(step, 0));
@@ -297,7 +345,7 @@ static bool TypingChangesKeepOutputTiming()
         & Expect(!typed(again.Cast).SequenceEqual(typed(first.Cast)), "the new typing speed has no effect");
 }
 
-static bool StepsAreFoundByRunText()
+internal static bool StepsAreFoundByRunText()
 {
     // The steps move after a new first step, and keep their earlier output timing.
     var first = Record(ThreeSteps, step => ThreeStepsOutput(step, 0));
@@ -308,7 +356,7 @@ static bool StepsAreFoundByRunText()
         & Expect(ThreeStepsLines(again.Cast).SequenceEqual(ThreeStepsLines(first.Cast)), $"the moved steps lost their timing: {string.Join(" ", ThreeStepsLines(again.Cast))}");
 }
 
-static bool RepeatedCommandsMatchInOrder()
+internal static bool RepeatedCommandsMatchInOrder()
 {
     const string yaml = "steps:\n  - run: next\n    pty: true\n  - run: next\n    pty: true\n";
     var count = 0;
@@ -320,7 +368,7 @@ static bool RepeatedCommandsMatchInOrder()
         & Expect(swapped.Result.Changed.Count == 2, $"swapped outputs: changed {swapped.Result.Changed.Count}");
 }
 
-static bool FilteredEventsKeepTheirSteps()
+internal static bool FilteredEventsKeepTheirSteps()
 {
     // ConPTY's title holds the shell's path. An event that holds only the title in the middle of a step is dropped, so
     // the next step's events sit one place earlier in the cast. A title at the start of a step would not prove this:
@@ -339,7 +387,7 @@ static bool FilteredEventsKeepTheirSteps()
         & Expect(changed.Result.Same is [{ Number: 1 }] && changed.Result.Changed is [{ Number: 2 }], $"same {changed.Result.Same.Count}, changed {changed.Result.Changed.Count}");
 }
 
-static bool NoEarlierCastChangesNothing()
+internal static bool NoEarlierCastChangesNothing()
 {
     var plain = new List<CastEvent>();
     var scenario = ParseScenario(ThreeSteps);
@@ -350,13 +398,13 @@ static bool NoEarlierCastChangesNothing()
         & Expect(result.Added.Count == 3 && result.KeepMissing.Count == 0, $"added {result.Added.Count}");
 }
 
-static bool TagRoundTrips()
+internal static bool TagRoundTrips()
 {
     StepSlot[] slots =
     [
         new(1, "a", 0x0123456789abcdefUL, 0xdeadbeefU, true, false, 4, 3, 1.2345, 2.5, 1.3),
-        new(2, "b", 42UL, 7U, false, true, 9, 0, 3.0004, 3.05, 3.05),
-    ];
+    new(2, "b", 42UL, 7U, false, true, 9, 0, 3.0004, 3.05, 3.05),
+];
     var tag = Rerecording.FormatTag(slots, 9, 3100);
     var ok = Expect(tag == "st:steps=9:3100 0123456789abcdef:deadbeef:c:4:3:1235:2500 000000000000002a:00000007:d:9:0:3000:3050", tag)
         & Expect(Rerecording.TryParseTag(tag[Rerecording.TagPrefix.Length..], 9, 3100, out var steps) && steps.Count == 2, "parse")
@@ -375,7 +423,7 @@ static bool TagRoundTrips()
     static string Describe(PreviousStep step) => $"{step.Id} {step.Timing} {step.Clock} {step.First} {step.Count} {step.StartMs} {step.EndMs}";
 }
 
-static bool KeepOutputDoesNotBringBackMaskedText()
+internal static bool KeepOutputDoesNotBringBackMaskedText()
 {
     const string steps = "steps:\n  - run: pipe step\n    keep-output: true\n  - run: pty step\n    pty: true\n    keep-output: true\n";
     CommandExecution Output(StepStart step, string word) => step.Command.Cmd == "pipe step" ? Pipe($"build {word}\n") : Pty((0.1, $"pty {word}\r\n"));
@@ -391,7 +439,7 @@ static bool KeepOutputDoesNotBringBackMaskedText()
         & Expect(kept.Result.Kept.Count == 2 && kept.Result.KeepMasked.Count == 0, $"kept {kept.Result.Kept.Count}, masked {kept.Result.KeepMasked.Count}");
 }
 
-static bool CommentFollowsTheKeptOutput()
+internal static bool CommentFollowsTheKeptOutput()
 {
     // The line break before a name comment depends on how the output above it ends, and that output is the kept one.
     const string yaml = "steps:\n  - run: cat t.txt\n    keep-output: true\n  - run: echo two\n    name: second\n";
@@ -404,7 +452,7 @@ static bool CommentFollowsTheKeptOutput()
         & Expect(lostBreak.Cast == withBreak.Cast, $"lost a line break: {FirstDifference(withBreak.Cast, lostBreak.Cast)}");
 }
 
-static bool NextPtyStepStartsAfterTheKeptOutput()
+internal static bool NextPtyStepStartsAfterTheKeptOutput()
 {
     // The fake ConPTY writes the row it was told, as ConPTY does: a start cursor from the discarded output changes it.
     const string yaml = "width: 40\nheight: 10\nsteps:\n  - run: lines\n    pty: true\n    keep-output: true\n  - run: draw\n    pty: true\n";
@@ -417,7 +465,7 @@ static bool NextPtyStepStartsAfterTheKeptOutput()
         & Expect(again.Result.Kept is [{ Number: 1 }] && again.Result.Same is [{ Number: 2 }], $"kept {again.Result.Kept.Count}, same {again.Result.Same.Count}, changed {again.Result.Changed.Count}");
 }
 
-static bool KeptPtyOutputNeedsItsPlaceOnTheScreen()
+internal static bool KeptPtyOutputNeedsItsPlaceOnTheScreen()
 {
     // The step above now prints more lines, so rows that ConPTY wrote for the old place would land on other text.
     const string yaml = "width: 40\nheight: 20\nsteps:\n  - run: lines\n  - run: draw\n    pty: true\n    keep-output: true\n";
@@ -435,7 +483,7 @@ static bool KeptPtyOutputNeedsItsPlaceOnTheScreen()
         & Expect(unix.Result.Kept is [{ Number: 2 }], $"without a start cursor: kept {unix.Result.Kept.Count}");
 }
 
-static bool OtherTerminalSizeIsNotCompared()
+internal static bool OtherTerminalSizeIsNotCompared()
 {
     const string yaml = "width: 100\nheight: 30\nsteps:\n  - run: wide\n    pty: true\n    keep-output: true\n";
     var first = Record(yaml, _ => Pty((0.1, "text\r\n")));
@@ -448,7 +496,7 @@ static bool OtherTerminalSizeIsNotCompared()
         & Expect(shorter is null && shorterProblem == "it was recorded in a 100x30 terminal, and this one is 100x10", $"another height: {shorterProblem}");
 }
 
-static bool TagDescribesTheEventsTheCastHas()
+internal static bool TagDescribesTheEventsTheCastHas()
 {
     // Timing keys change while keep-output holds the earlier events, and then keep-output goes: the step must take the
     // new timing, because the events in the cast were never timed with those keys.
@@ -464,7 +512,7 @@ static bool TagDescribesTheEventsTheCastHas()
         & Expect(released.Result.Same.Count == 1, "the output is the same");
 }
 
-static bool SplitCharactersAreTheSameOutput()
+internal static bool SplitCharactersAreTheSameOutput()
 {
     const string yaml = "steps:\n  - run: japanese\n    pty: true\n";
     var text = Encoding.UTF8.GetBytes("日本語\r\n");
@@ -479,7 +527,7 @@ static bool SplitCharactersAreTheSameOutput()
         & Expect(splitAgain.Result.Same.Count == 1, "the same text split elsewhere");
 }
 
-static bool InvalidBytesKeepTheCast()
+internal static bool InvalidBytesKeepTheCast()
 {
     // Kept events come back from the file as text, so all three sources of U+FFFD must be written alike.
     const string yaml = "steps:\n  - run: bytes\n    pty: true\n  - run: encoded\n    pty: true\n  - run: text\n    stream-output: true\n";
@@ -498,7 +546,7 @@ static bool InvalidBytesKeepTheCast()
         & Expect(again.Cast == first.Cast, $"the cast differs: {FirstDifference(first.Cast, again.Cast)}");
 }
 
-static bool LineEndingsDoNotChangeTheStep()
+internal static bool LineEndingsDoNotChangeTheStep()
 {
     const string lf = "steps:\n  - run: |\n      first\n      second\n    pty: true\n    keep-output: true\n";
     var crlf = lf.Replace("\n", "\r\n", StringComparison.Ordinal);
@@ -508,7 +556,7 @@ static bool LineEndingsDoNotChangeTheStep()
         & Expect(EventLines(again.Cast).Any(static line => line.Contains("old\\r\\n", StringComparison.Ordinal)), "the earlier output was not kept");
 }
 
-static bool HalfMillisecondSettingsStayTheSame()
+internal static bool HalfMillisecondSettingsStayTheSame()
 {
     // These settings put events exactly on half a millisecond. The first recording's reads vary, because the time of
     // the event before decides what floating-point noise a half gets.
@@ -526,7 +574,7 @@ static bool HalfMillisecondSettingsStayTheSame()
     return ok;
 }
 
-static bool IntervalsDoNotDependOnThePreviousTime()
+internal static bool IntervalsDoNotDependOnThePreviousTime()
 {
     static string Written(params double[] times)
     {
@@ -550,17 +598,17 @@ static bool IntervalsDoNotDependOnThePreviousTime()
         & Expect(Written(0.0125, 0.0125, 0.013) == "0.013 0.000 0.000 ", Written(0.0125, 0.0125, 0.013));
 }
 
-static bool OutputThatIsOnlyARemovedTitleKeepsTheLayout()
+internal static bool OutputThatIsOnlyARemovedTitleKeepsTheLayout()
 {
     // The filter removes this step's only event after composing. The steps after it are laid out with the event still
     // in the list, in the first recording and in this one, or the second recording would start them elsewhere.
     const string title = "\u001b]0;my title\u0007";
     foreach (var yaml in new[]
     {
-        "steps:\n  - run: title\n    show: output\n    stream-output: true\n",
-        "steps:\n  - run: title\n    show: output\n    stream-output: true\n  - echo after\n",
-        "steps:\n  - run: title\n    show: output\n    stream-output: true\n  - run: echo after\n    name: second\n",
-    })
+    "steps:\n  - run: title\n    show: output\n    stream-output: true\n",
+    "steps:\n  - run: title\n    show: output\n    stream-output: true\n  - echo after\n",
+    "steps:\n  - run: title\n    show: output\n    stream-output: true\n  - run: echo after\n    name: second\n",
+})
     {
         CommandExecution Output(StepStart step) => step.Command.Cmd == "title" ? Pipe(title) : Pipe("after\n");
         var first = Record(yaml, Output);
@@ -572,7 +620,7 @@ static bool OutputThatIsOnlyARemovedTitleKeepsTheLayout()
     return true;
 }
 
-static bool StderrReadsDoNotChangeTheStep()
+internal static bool StderrReadsDoNotChangeTheStep()
 {
     // Each read of a streamed pipe step is colored by itself, so the same lines read otherwise have other color codes.
     static CommandExecution Reads(params (double Time, string Text)[] reads) => CommandExecution.FromPipeStream("", string.Concat(reads.Select(static r => r.Text)), 0,
@@ -588,7 +636,7 @@ static bool StderrReadsDoNotChangeTheStep()
         & Expect(recolored.Result.Same.Count == 1 && recolored.Cast != first.Cast, "a new stderr-color had no effect");
 }
 
-static bool CarriageReturnSplitFromItsLineFeed()
+internal static bool CarriageReturnSplitFromItsLineFeed()
 {
     const string yaml = "steps:\n  - run: tool\n    stream-output: true\n";
     static CommandExecution Reads(params (double Time, string Text)[] reads) => CommandExecution.FromPipeStream(string.Concat(reads.Select(static r => r.Text)), "", 0,
@@ -605,7 +653,7 @@ static bool CarriageReturnSplitFromItsLineFeed()
         & Expect(errorSplit.Result.Same.Count == 1 && errorSplit.Cast == whole.Cast, $"stderr: {FirstDifference(whole.Cast, errorSplit.Cast)}");
 }
 
-static bool LaterStepsDoNotDependOnWhatTheFirstPrinted()
+internal static bool LaterStepsDoNotDependOnWhatTheFirstPrinted()
 {
     // Sums the intervals up to the first event that holds the text.
     static double TimeOf(string cast, string text)
@@ -635,7 +683,7 @@ static bool LaterStepsDoNotDependOnWhatTheFirstPrinted()
         & Expect(alone.Contains("\"$ \"]", StringComparison.Ordinal), alone);
 }
 
-static bool StreamedHighlightIgnoresHowSequencesFell()
+internal static bool StreamedHighlightIgnoresHowSequencesFell()
 {
     const string yaml = "steps:\n  - run: link\n    stream-output: true\n    highlight:\n      - color: green\n        at: \"1\"\n";
     static CommandExecution Reads(params (double Time, string Text)[] reads) => CommandExecution.FromPipeStream(string.Concat(reads.Select(static r => r.Text)), "", 0,
@@ -648,7 +696,7 @@ static bool StreamedHighlightIgnoresHowSequencesFell()
         & Expect(again.Result.Same.Count == 1, $"same {again.Result.Same.Count}, changed {again.Result.Changed.Count}");
 }
 
-static bool ReplayMasksTheRecordedRunAgain()
+internal static bool ReplayMasksTheRecordedRunAgain()
 {
     // The recording masked one secret. The other one is masked only since then, and must not reach the hash.
     const string yaml = "settings:\n  mask: [aaaasecret, bbbbsecret]\nsteps:\n  - run: echo aaaasecret bbbbsecret\n";
@@ -662,7 +710,7 @@ static bool ReplayMasksTheRecordedRunAgain()
         & Expect(replayedPty.Result.Slots[0].Id == recordedPty.Result.Slots[0].Id, "the replayed PTY step's id differs from a recording's");
 }
 
-static bool ColorsCountForPtyOutput()
+internal static bool ColorsCountForPtyOutput()
 {
     // Only streamed pipe output is colored by scenetake one read at a time. A PTY's colors come from the program.
     const string yaml = "steps:\n  - run: ls\n    pty: true\n";
@@ -671,21 +719,21 @@ static bool ColorsCountForPtyOutput()
     return Expect(again.Result.Changed.Count == 1, $"changed {again.Result.Changed.Count}, same {again.Result.Same.Count}");
 }
 
-static bool CarriageReturnPairsOnlyWithItsOwnStream()
+internal static bool CarriageReturnPairsOnlyWithItsOwnStream()
 {
     // A line feed on the other stream is not the rest of this stream's CRLF, so the carriage return stays a line break.
     const string yaml = "steps:\n  - run: tool\n    stream-output: true\n";
     PipeStreamChunk[] chunks =
     [
         new(TimeSpan.FromSeconds(0.1), false, "one\r"),
-        new(TimeSpan.FromSeconds(0.2), true, "\nerr\n"),
-        new(TimeSpan.FromSeconds(0.3), false, "two\n"),
-    ];
+    new(TimeSpan.FromSeconds(0.2), true, "\nerr\n"),
+    new(TimeSpan.FromSeconds(0.3), false, "two\n"),
+];
     var cast = Record(yaml, _ => CommandExecution.FromPipeStream("one\rtwo\n", "\nerr\n", 0, chunks)).Cast;
     return Expect(cast.Contains("\"one\\r\\n\"]", StringComparison.Ordinal), string.Join("\n", EventLines(cast).Where(static line => line.Contains("one", StringComparison.Ordinal))));
 }
 
-static bool NoIntervalGoesBack()
+internal static bool NoIntervalGoesBack()
 {
     // The command starts just under half a millisecond, and the output before it is written just over.
     const string settings = "  typing-jitter: 0\n  pre-delay: 0\n  post-delay: 0\n  execution-duration: 0\nsteps:\n  - echo A\n  - run: b\n    pty: true\n    show: output\n";
@@ -696,7 +744,7 @@ static bool NoIntervalGoesBack()
         & Expect(!EventLines(again.Cast).Any(static line => line.StartsWith("[-", StringComparison.Ordinal)), string.Join("\n", EventLines(again.Cast).TakeLast(4)));
 }
 
-static bool OpenSequencesEndWithTheirStep()
+internal static bool OpenSequencesEndWithTheirStep()
 {
     // An escape sequence that a step leaves open must not reach the next step's text, in either recording.
     var ok = true;
@@ -719,7 +767,7 @@ static bool OpenSequencesEndWithTheirStep()
     return ok;
 }
 
-static bool LongSequenceBeforeACommentKeepsTheLine()
+internal static bool LongSequenceBeforeACommentKeepsTheLine()
 {
     // The comment's line break looks back a limited distance, and must not stop inside text the cast does not hold.
     var sequence = "hi\n\u001b]52;c;" + new string('A', 5000) + "\u0007";
@@ -730,7 +778,7 @@ static bool LongSequenceBeforeACommentKeepsTheLine()
     return Expect(again.Cast == first.Cast, $"the cast differs: {FirstDifference(first.Cast, again.Cast)}");
 }
 
-static bool KeptEmptyFirstStepKeepsTheOthersInPlace()
+internal static bool KeptEmptyFirstStepKeepsTheOthersInPlace()
 {
     const string yaml = "steps:\n  - run: first\n    show: output\n    keep-output: true\n    stream-output: true\n  - echo second\n";
     CommandExecution Output(StepStart step, string text) => step.Command.Cmd == "first" ? Pipe(text) : Pipe("second\n");
@@ -742,7 +790,7 @@ static bool KeptEmptyFirstStepKeepsTheOthersInPlace()
         & Expect(titleNow.Cast == empty.Cast, $"earlier nothing: {FirstDifference(empty.Cast, titleNow.Cast)}");
 }
 
-static bool OutputsFileKeepsTheMaskedRun()
+internal static bool OutputsFileKeepsTheMaskedRun()
 {
     var step = RecordedStep.Pipe("login hunter2", 0, [new PipeStreamChunk(TimeSpan.FromMilliseconds(5), false, "ok\n")], "login *******");
     var plain = RecordedStep.Pipe("ls", 0, [new PipeStreamChunk(TimeSpan.FromMilliseconds(5), false, "ok\n")], "ls");
@@ -755,7 +803,7 @@ static bool OutputsFileKeepsTheMaskedRun()
         & Expect(read.Steps[1].MaskedRun is null && json.Split("maskedRun").Length == 2, json);
 }
 
-static bool SplitCharactersMoveWhole()
+internal static bool SplitCharactersMoveWhole()
 {
     static List<(double Time, ReadOnlyMemory<byte> Data)> Chunks(params byte[][] parts) =>
         [.. parts.Select(static (part, index) => ((double)index, (ReadOnlyMemory<byte>)part))];
@@ -776,7 +824,7 @@ static bool SplitCharactersMoveWhole()
         & Expect(Hex(continuation) == "0:4180 1:42", Hex(continuation));
 }
 
-static bool UncountedMaskingLeavesTheCounts()
+internal static bool UncountedMaskingLeavesTheCounts()
 {
     var masker = SecretMasker.ForScenario(ParseScenario("settings:\n  mask: [hunter2]\nsteps:\n  - echo hi\n"), environment: null)!;
     var masked = masker.MaskUncounted("say hunter2");
@@ -792,7 +840,7 @@ static bool UncountedMaskingLeavesTheCounts()
         & Expect(Hash("hunter2") == Hash("*******"), "a masked text in the keys is in the hash");
 }
 
-static bool NamedStepsAreCompared()
+internal static bool NamedStepsAreCompared()
 {
     // A name comment adds a marker event: the earlier cast's event count holds only when markers are read too.
     const string yaml = "steps:\n  - run: hello\n    name: greeting\n    pty: true\n  - run: world\n    pty: true\n";
@@ -803,7 +851,7 @@ static bool NamedStepsAreCompared()
         & Expect(again.Cast == first.Cast, $"the cast differs: {FirstDifference(first.Cast, again.Cast)}");
 }
 
-static bool KeepOutputWithoutAnEarlierStepIsSaid()
+internal static bool KeepOutputWithoutAnEarlierStepIsSaid()
 {
     const string yaml = "steps:\n  - run: old\n";
     var first = Record(yaml, _ => Pipe("old\n"));
@@ -812,17 +860,17 @@ static bool KeepOutputWithoutAnEarlierStepIsSaid()
         & Expect(again.Result.Added is [{ Number: 2 }], $"added {again.Result.Added.Count}");
 }
 
-static bool StepIdentityAndTimingKeys()
+internal static bool StepIdentityAndTimingKeys()
 {
     var ok = true;
     var ids = new[]
     {
-        Rerecording.StepId(false, false, StepShow.All, "run"),
-        Rerecording.StepId(true, false, StepShow.All, "run"),
-        Rerecording.StepId(true, true, StepShow.All, "run"),
-        Rerecording.StepId(false, false, StepShow.Output, "run"),
-        Rerecording.StepId(false, false, StepShow.All, "other"),
-    };
+    Rerecording.StepId(false, false, StepShow.All, "run"),
+    Rerecording.StepId(true, false, StepShow.All, "run"),
+    Rerecording.StepId(true, true, StepShow.All, "run"),
+    Rerecording.StepId(false, false, StepShow.Output, "run"),
+    Rerecording.StepId(false, false, StepShow.All, "other"),
+};
     ok &= Expect(ids.Distinct().Count() == ids.Length, "a mode, a show value, or a run text does not change the id");
     ok &= Expect(Rerecording.StepId(false, false, StepShow.All, "a\nb") == Rerecording.StepId(false, false, StepShow.All, "a\r\nb"), "line endings change the id");
 
@@ -833,13 +881,13 @@ static bool StepIdentityAndTimingKeys()
     var plain = Hash();
     foreach (var (name, other) in new (string, uint)[]
     {
-        ("execution-duration", Hash(duration: 0.2)),
-        ("silence-threshold", Hash(settings: timing with { SilenceThreshold = 0.2 })),
-        ("max-idle", Hash(settings: timing with { MaxIdle = 2 })),
-        ("max-duration", Hash(settings: timing with { MaxDuration = 2 })),
-        ("stream-output", Hash(settings: timing with { StreamOutput = true })),
-        ("normalize-typing", Hash(normalize: true)),
-        ("timeout", Hash(timeout: 3)),
+    ("execution-duration", Hash(duration: 0.2)),
+    ("silence-threshold", Hash(settings: timing with { SilenceThreshold = 0.2 })),
+    ("max-idle", Hash(settings: timing with { MaxIdle = 2 })),
+    ("max-duration", Hash(settings: timing with { MaxDuration = 2 })),
+    ("stream-output", Hash(settings: timing with { StreamOutput = true })),
+    ("normalize-typing", Hash(normalize: true)),
+    ("timeout", Hash(timeout: 3)),
     })
     {
         ok &= Expect(other != plain, $"{name} does not change the timing hash");
@@ -857,7 +905,7 @@ static bool StepIdentityAndTimingKeys()
     return ok;
 }
 
-static bool MaskedRunTextIsNotHashed()
+internal static bool MaskedRunTextIsNotHashed()
 {
     // The cast is published without the secret, so its tag must not let anyone test a guess of it.
     const string steps = "steps:\n  - run: login --password hunter2\n";
@@ -873,7 +921,7 @@ static bool MaskedRunTextIsNotHashed()
         & Expect(tag(other.Cast) == tag(masked.Cast), "the id depends on the secret");
 }
 
-static bool EditedCastIsNotCompared()
+internal static bool EditedCastIsNotCompared()
 {
     const string yaml = "steps:\n  - run: one\n    pty: true\n  - run: two\n    pty: true\n    keep-output: true\n";
     var cast = Record(yaml, step => Pty((0.1, step.Command.Cmd + "\r\n"))).Cast;
@@ -895,7 +943,7 @@ static bool EditedCastIsNotCompared()
         & Expect(Problem(retyped) == "(read)", $"changed text: {Problem(retyped)}");
 }
 
-static bool EarlierCastProblems()
+internal static bool EarlierCastProblems()
 {
     var directory = Path.Combine(Path.GetTempPath(), $"scenetake-rerecord-{Guid.NewGuid():N}");
     Directory.CreateDirectory(directory);
@@ -925,7 +973,7 @@ static bool EarlierCastProblems()
     }
 }
 
-static bool KeepOutputKeyRules()
+internal static bool KeepOutputKeyRules()
 {
     string? Error(string steps) => FindStepKeyError(ParseScenario("steps:\n" + steps));
     var unknown = FindUnknownScenarioKeys("steps:\n  - run: date\n    keep-output: true\n");
@@ -936,7 +984,7 @@ static bool KeepOutputKeyRules()
         & Expect(Error("  - clear: true\n    keep-output: true\n") is not null, "clear");
 }
 
-static bool DescribeSaysWhatChanged()
+internal static bool DescribeSaysWhatChanged()
 {
     StepSlot Slot(int number, string run, bool keep = false) => new(number, run, (ulong)number, 0, true, keep, 0, 0, 0, 0, 0);
     Rerecorder Result(bool hadPrevious, params StepSlot[] slots)
@@ -977,17 +1025,13 @@ static bool DescribeSaysWhatChanged()
         & Expect(problem is ["Note: the earlier demo.cast was not compared with this recording: it has no step ranges: an earlier scenetake or another tool wrote it. The next recording compares with this one."], string.Join("\n", problem));
 }
 
-static bool TryGetBinary(out string bin)
+internal static bool TryGetBinary(out string bin)
 {
-    bin = Environment.GetEnvironmentVariable("SCENETAKE_BIN") ?? "";
-    if (!string.IsNullOrWhiteSpace(bin) && File.Exists(bin))
-        return true;
-
-    Console.Error.WriteLine("  skip: set SCENETAKE_BIN to a published scenetake binary");
-    return false;
+    bin = TestEnv.Binary;
+    return true;
 }
 
-static (int ExitCode, string Stderr) RunScenetake(string bin, string directory, params string[] args)
+internal static (int ExitCode, string Stderr) RunScenetake(string bin, string directory, params string[] args)
 {
     var psi = new ProcessStartInfo(bin)
     {
@@ -1012,7 +1056,7 @@ static (int ExitCode, string Stderr) RunScenetake(string bin, string directory, 
 }
 
 // Runs the test in a new folder with demo.yaml, and removes the folder after.
-static bool WithScenario(string yaml, Func<string, string, bool> test)
+internal static bool WithScenario(string yaml, Func<string, string, bool> test)
 {
     if (!TryGetBinary(out var bin))
         return true;
@@ -1030,16 +1074,16 @@ static bool WithScenario(string yaml, Func<string, string, bool> test)
     }
 }
 
-static bool IntegrationRecordingAgainGivesSameFiles(string repoRoot) => WithScenario("""
-    shell: bash
-    steps:
-      - run: printf 'hello\n'; sleep 0.3; printf 'world\n'
-        pty: true
-      - run: echo "random $RANDOM$RANDOM"
-        pty: true
-        keep-output: true
-      - echo plain
-    """, (bin, directory) =>
+internal static bool IntegrationRecordingAgainGivesSameFiles(string repoRoot) => WithScenario("""
+shell: bash
+steps:
+  - run: printf 'hello\n'; sleep 0.3; printf 'world\n'
+    pty: true
+  - run: echo "random $RANDOM$RANDOM"
+    pty: true
+    keep-output: true
+  - echo plain
+""", (bin, directory) =>
 {
     var first = RunScenetake(bin, directory, "--format", "svg", "demo.yaml", "demo");
     var cast = File.ReadAllText(Path.Combine(directory, "demo.cast"));
@@ -1054,13 +1098,13 @@ static bool IntegrationRecordingAgainGivesSameFiles(string repoRoot) => WithScen
         & Expect(svgAgain == svg, "the SVG differs");
 });
 
-static bool IntegrationChangedAndKeptSteps(string repoRoot) => WithScenario("""
-    shell: bash
-    steps:
-      - run: printf 'same\n'
-        pty: true
-      - echo "changes $RANDOM$RANDOM$RANDOM"
-    """, (bin, directory) =>
+internal static bool IntegrationChangedAndKeptSteps(string repoRoot) => WithScenario("""
+shell: bash
+steps:
+  - run: printf 'same\n'
+    pty: true
+  - echo "changes $RANDOM$RANDOM$RANDOM"
+""", (bin, directory) =>
 {
     var first = RunScenetake(bin, directory, "demo.yaml", "demo");
     var cast = File.ReadAllText(Path.Combine(directory, "demo.cast"));
@@ -1075,16 +1119,16 @@ static bool IntegrationChangedAndKeptSteps(string repoRoot) => WithScenario("""
         & Expect(changedLines.Count == 1 && changedLines[0].First.Contains("changes ", StringComparison.Ordinal), $"changed lines: {string.Join(" | ", changedLines)}");
 });
 
-static bool IntegrationOutputsFileReplaysToTheCast(string repoRoot) => WithScenario("""
-    shell: bash
-    steps:
-      - run: printf 'one\n'; sleep 0.2; printf 'two\n'
-        pty: true
-      - run: echo "random $RANDOM$RANDOM"
-        pty: true
-        keep-output: true
-      - echo plain
-    """, (bin, directory) =>
+internal static bool IntegrationOutputsFileReplaysToTheCast(string repoRoot) => WithScenario("""
+shell: bash
+steps:
+  - run: printf 'one\n'; sleep 0.2; printf 'two\n'
+    pty: true
+  - run: echo "random $RANDOM$RANDOM"
+    pty: true
+    keep-output: true
+  - echo plain
+""", (bin, directory) =>
 {
     var plain = RunScenetake(bin, directory, "demo.yaml", "demo");
     var earlier = File.ReadAllText(Path.Combine(directory, "demo.cast"));
@@ -1102,16 +1146,16 @@ static bool IntegrationOutputsFileReplaysToTheCast(string repoRoot) => WithScena
         & Expect(replayed == cast, $"the replay differs: {FirstDifference(cast, replayed)}");
 });
 
-static bool IntegrationReplayFindsStepsWithExportedSecrets(string repoRoot) => WithScenario("""
-    shell: bash
-    pre:
-      - export DEMO_API_TOKEN=exportedsecret9
-    steps:
-      - run: echo "uses exportedsecret9" > /dev/null; echo fetched
-        show: output
-      - echo plain
-      - echo exportedsecret9 > /dev/null
-    """, (bin, directory) =>
+internal static bool IntegrationReplayFindsStepsWithExportedSecrets(string repoRoot) => WithScenario("""
+shell: bash
+pre:
+  - export DEMO_API_TOKEN=exportedsecret9
+steps:
+  - run: echo "uses exportedsecret9" > /dev/null; echo fetched
+    show: output
+  - echo plain
+  - echo exportedsecret9 > /dev/null
+""", (bin, directory) =>
 {
     // Only the recording knows the secret, which pre exported, so a replay must take the masked text from the file:
     // to find the step, and to type the last one as the recording did.
@@ -1130,14 +1174,12 @@ static bool IntegrationReplayFindsStepsWithExportedSecrets(string repoRoot) => W
         & Expect(!onto.Stderr.Contains("new: step", StringComparison.Ordinal), onto.Stderr);
 });
 
-static partial class Program
-{
-    private const string ThreeSteps = """
-        steps:
-          - run: hello
-            pty: true
-          - run: count
-            pty: true
-          - echo three
-        """;
+private const string ThreeSteps = """
+steps:
+  - run: hello
+    pty: true
+  - run: count
+    pty: true
+  - echo three
+""";
 }

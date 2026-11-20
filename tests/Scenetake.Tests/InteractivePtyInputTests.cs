@@ -1,62 +1,80 @@
-﻿#:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
-#:property Nullable=enable
-#:property ImplicitUsings=enable
-#:package MiniPty.Console@1.7.0
-#:include ../Terminal.cs
-#:include ../CastTimingPipeline.cs
-#:include ../InteractivePtyInput.cs
-
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using MiniPty;
+using Scenetake.TestSupport;
 
-var failures = 0;
-failures += Run("OnForwardedInput_RecordsElapsedAndBytes", OnForwardedInput_RecordsElapsedAndBytes);
-failures += Run("OnForwardedInput_IgnoresEmptySpan", OnForwardedInput_IgnoresEmptySpan);
-failures += Run("OnForwardedInput_SkipsKeysWhileChildReadsPassword", OnForwardedInput_SkipsKeysWhileChildReadsPassword);
-failures += Run("OnForwardedInput_RecordsKeysInOtherInputModes", OnForwardedInput_RecordsKeysInOtherInputModes);
-failures += Run("NormalizeOutput_KeepsEchoAfterPasswordPrompt", NormalizeOutput_KeepsEchoAfterPasswordPrompt);
-failures += Run("NormalizeOutput_KeepsEchoOfWin32InputModeKeys", NormalizeOutput_KeepsEchoOfWin32InputModeKeys);
-failures += Run("NormalizeOutput_KeepsEchoOfWin32KeySplitAcrossReads", NormalizeOutput_KeepsEchoOfWin32KeySplitAcrossReads);
-failures += Run("NormalizeOutput_KeepsPlainEchoAfterEchoWithEscapes", NormalizeOutput_KeepsPlainEchoAfterEchoWithEscapes);
-failures += Run("NormalizeOutput_KeepsEchoOfSeveralKeysAtOnce", NormalizeOutput_KeepsEchoOfSeveralKeysAtOnce);
-failures += Run("NormalizeOutput_KeepsEveryEchoWithoutErasedKeys", NormalizeOutput_KeepsEveryEchoWithoutErasedKeys);
-failures += Run("BuildInputWindows_MergesBurst", BuildInputWindows_MergesBurst);
-failures += Run("NormalizeOutput_StripsBackspaceCorrections", NormalizeOutput_StripsBackspaceCorrections);
-failures += Run("NormalizeOutput_PreservesWallClockOutsideInput", NormalizeOutput_PreservesWallClockOutsideInput);
-failures += Run("NormalizeOutput_PassthroughAnsiInEchoWindow", NormalizeOutput_PassthroughAnsiInEchoWindow);
-failures += Run("NormalizeOutput_PassthroughBannerUtf8InEchoWindow", NormalizeOutput_PassthroughBannerUtf8InEchoWindow);
-failures += Run("NormalizeOutput_RetimesEchoPreservesBytes", NormalizeOutput_RetimesEchoPreservesBytes);
-failures += Run("NormalizeOutput_CollapsesLongIdleGap", NormalizeOutput_CollapsesLongIdleGap);
-failures += Run("NormalizeOutput_RetimesUtf8Echo", NormalizeOutput_RetimesUtf8Echo);
-failures += Run("NormalizeOutput_CountsMultiCharEchoUnits", NormalizeOutput_CountsMultiCharEchoUnits);
-failures += Run("NormalizeOutput_PassthroughClampsToMonotonicEmitTime", NormalizeOutput_PassthroughClampsToMonotonicEmitTime);
-failures += Run("CollapseIdle_PreservesNormalizedEmitSpacing", CollapseIdle_PreservesNormalizedEmitSpacing);
+namespace Scenetake.Tests;
 
-return failures == 0 ? 0 : 1;
-
-static int Run(string name, Func<bool> test)
+public sealed class InteractivePtyInputTests
 {
-    try
-    {
-        if (test())
-        {
-            Console.Error.WriteLine($"ok {name}");
-            return 0;
-        }
+    [Test]
+    public async Task OnForwardedInput_RecordsElapsedAndBytes() => await Assert.That(InteractivePtyInputCases.OnForwardedInput_RecordsElapsedAndBytes()).IsTrue();
 
-        Console.Error.WriteLine($"FAIL {name}");
-        return 1;
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"FAIL {name}: {ex.Message}");
-        return 1;
-    }
+    [Test]
+    public async Task OnForwardedInput_IgnoresEmptySpan() => await Assert.That(InteractivePtyInputCases.OnForwardedInput_IgnoresEmptySpan()).IsTrue();
+
+    [Test]
+    public async Task OnForwardedInput_SkipsKeysWhileChildReadsPassword() => await Assert.That(InteractivePtyInputCases.OnForwardedInput_SkipsKeysWhileChildReadsPassword()).IsTrue();
+
+    [Test]
+    public async Task OnForwardedInput_RecordsKeysInOtherInputModes() => await Assert.That(InteractivePtyInputCases.OnForwardedInput_RecordsKeysInOtherInputModes()).IsTrue();
+
+    [Test]
+    public async Task NormalizeOutput_KeepsEchoAfterPasswordPrompt() => await Assert.That(InteractivePtyInputCases.NormalizeOutput_KeepsEchoAfterPasswordPrompt()).IsTrue();
+
+    [Test]
+    public async Task NormalizeOutput_KeepsEchoOfWin32InputModeKeys() => await Assert.That(InteractivePtyInputCases.NormalizeOutput_KeepsEchoOfWin32InputModeKeys()).IsTrue();
+
+    [Test]
+    public async Task NormalizeOutput_KeepsEchoOfWin32KeySplitAcrossReads() => await Assert.That(InteractivePtyInputCases.NormalizeOutput_KeepsEchoOfWin32KeySplitAcrossReads()).IsTrue();
+
+    [Test]
+    public async Task NormalizeOutput_KeepsPlainEchoAfterEchoWithEscapes() => await Assert.That(InteractivePtyInputCases.NormalizeOutput_KeepsPlainEchoAfterEchoWithEscapes()).IsTrue();
+
+    [Test]
+    public async Task NormalizeOutput_KeepsEchoOfSeveralKeysAtOnce() => await Assert.That(InteractivePtyInputCases.NormalizeOutput_KeepsEchoOfSeveralKeysAtOnce()).IsTrue();
+
+    [Test]
+    public async Task NormalizeOutput_KeepsEveryEchoWithoutErasedKeys() => await Assert.That(InteractivePtyInputCases.NormalizeOutput_KeepsEveryEchoWithoutErasedKeys()).IsTrue();
+
+    [Test]
+    public async Task BuildInputWindows_MergesBurst() => await Assert.That(InteractivePtyInputCases.BuildInputWindows_MergesBurst()).IsTrue();
+
+    [Test]
+    public async Task NormalizeOutput_StripsBackspaceCorrections() => await Assert.That(InteractivePtyInputCases.NormalizeOutput_StripsBackspaceCorrections()).IsTrue();
+
+    [Test]
+    public async Task NormalizeOutput_PreservesWallClockOutsideInput() => await Assert.That(InteractivePtyInputCases.NormalizeOutput_PreservesWallClockOutsideInput()).IsTrue();
+
+    [Test]
+    public async Task NormalizeOutput_PassthroughAnsiInEchoWindow() => await Assert.That(InteractivePtyInputCases.NormalizeOutput_PassthroughAnsiInEchoWindow()).IsTrue();
+
+    [Test]
+    public async Task NormalizeOutput_PassthroughBannerUtf8InEchoWindow() => await Assert.That(InteractivePtyInputCases.NormalizeOutput_PassthroughBannerUtf8InEchoWindow()).IsTrue();
+
+    [Test]
+    public async Task NormalizeOutput_RetimesEchoPreservesBytes() => await Assert.That(InteractivePtyInputCases.NormalizeOutput_RetimesEchoPreservesBytes()).IsTrue();
+
+    [Test]
+    public async Task NormalizeOutput_CollapsesLongIdleGap() => await Assert.That(InteractivePtyInputCases.NormalizeOutput_CollapsesLongIdleGap()).IsTrue();
+
+    [Test]
+    public async Task NormalizeOutput_RetimesUtf8Echo() => await Assert.That(InteractivePtyInputCases.NormalizeOutput_RetimesUtf8Echo()).IsTrue();
+
+    [Test]
+    public async Task NormalizeOutput_CountsMultiCharEchoUnits() => await Assert.That(InteractivePtyInputCases.NormalizeOutput_CountsMultiCharEchoUnits()).IsTrue();
+
+    [Test]
+    public async Task NormalizeOutput_PassthroughClampsToMonotonicEmitTime() => await Assert.That(InteractivePtyInputCases.NormalizeOutput_PassthroughClampsToMonotonicEmitTime()).IsTrue();
+
+    [Test]
+    public async Task CollapseIdle_PreservesNormalizedEmitSpacing() => await Assert.That(InteractivePtyInputCases.CollapseIdle_PreservesNormalizedEmitSpacing()).IsTrue();
 }
 
-static bool OnForwardedInput_RecordsElapsedAndBytes()
+internal static class InteractivePtyInputCases
+{
+
+internal static bool OnForwardedInput_RecordsElapsedAndBytes()
 {
     var stopwatch = Stopwatch.StartNew();
     var chunks = new List<PtyInputChunk>();
@@ -75,7 +93,7 @@ static bool OnForwardedInput_RecordsElapsedAndBytes()
     return chunks[1].Time >= chunks[0].Time;
 }
 
-static bool OnForwardedInput_IgnoresEmptySpan()
+internal static bool OnForwardedInput_IgnoresEmptySpan()
 {
     var stopwatch = Stopwatch.StartNew();
     var chunks = new List<PtyInputChunk>();
@@ -87,7 +105,7 @@ static bool OnForwardedInput_IgnoresEmptySpan()
 }
 
 // sudo, ssh and `read -s` turn echo off and keep canonical mode on while they read a password.
-static bool OnForwardedInput_SkipsKeysWhileChildReadsPassword()
+internal static bool OnForwardedInput_SkipsKeysWhileChildReadsPassword()
 {
     var chunks = new List<PtyInputChunk>();
     var hidden = new List<TimeSpan>();
@@ -107,7 +125,7 @@ static bool OnForwardedInput_SkipsKeysWhileChildReadsPassword()
 
 // Echo off alone is not a password read: vim and a shell's line editor turn echo and canonical mode off and draw the
 // keys themselves. Windows (and an exited child) reports no mode.
-static bool OnForwardedInput_RecordsKeysInOtherInputModes()
+internal static bool OnForwardedInput_RecordsKeysInOtherInputModes()
 {
     var chunks = new List<PtyInputChunk>();
     PtyInputMode? mode = null;
@@ -126,21 +144,21 @@ static bool OnForwardedInput_RecordsKeysInOtherInputModes()
 
 // The input log the recorder leaves after `read -s`: the password keys are absent. Had they been recorded, the echo
 // matching would wait for the never-echoed "secret" and drop the "$ " prompt and the later "ls" echo.
-static bool NormalizeOutput_KeepsEchoAfterPasswordPrompt()
+internal static bool NormalizeOutput_KeepsEchoAfterPasswordPrompt()
 {
     var inputs = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (5.0, "l"u8.ToArray().AsMemory()),
-        (5.1, "s"u8.ToArray().AsMemory()),
-    };
+{
+    (5.0, "l"u8.ToArray().AsMemory()),
+    (5.1, "s"u8.ToArray().AsMemory()),
+};
     var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (0.5, "Password: "u8.ToArray().AsMemory()),
-        (1.35, "\r\n"u8.ToArray().AsMemory()),
-        (1.5, "$ "u8.ToArray().AsMemory()),
-        (5.02, "l"u8.ToArray().AsMemory()),
-        (5.12, "s"u8.ToArray().AsMemory()),
-    };
+{
+    (0.5, "Password: "u8.ToArray().AsMemory()),
+    (1.35, "\r\n"u8.ToArray().AsMemory()),
+    (1.5, "$ "u8.ToArray().AsMemory()),
+    (5.02, "l"u8.ToArray().AsMemory()),
+    (5.12, "s"u8.ToArray().AsMemory()),
+};
 
     var windows = InteractivePtyCastEmit.BuildInputEchoWindows(inputs.Select(static i => i.Time).ToArray());
     var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24, inputs);
@@ -150,9 +168,9 @@ static bool NormalizeOutput_KeepsEchoAfterPasswordPrompt()
 }
 
 // A win32-input-mode record, ESC [ Vk ; Sc ; Uc ; Kd ; Cs ; Rc _, for the key that types c: down, or up.
-static string Win32Key(char c, bool down) => $"\u001b[{(int)char.ToUpperInvariant(c)};0;{(int)c};{(down ? 1 : 0)};0;1_";
+internal static string Win32Key(char c, bool down) => $"\u001b[{(int)char.ToUpperInvariant(c)};0;{(int)c};{(down ? 1 : 0)};0;1_";
 
-static List<(double Time, ReadOnlyMemory<byte> Data)> Win32Input(double start, string text)
+internal static List<(double Time, ReadOnlyMemory<byte> Data)> Win32Input(double start, string text)
 {
     var inputs = new List<(double Time, ReadOnlyMemory<byte> Data)>();
     for (var i = 0; i < text.Length; i++)
@@ -167,20 +185,20 @@ static List<(double Time, ReadOnlyMemory<byte> Data)> Win32Input(double start, s
 // On Windows the input log holds win32-input-mode records, which ConPTY asks the host for. The keys used to come out
 // as nothing, so every plain echo was taken for a key typed and erased, and dropped: copilot's prompt showed only its
 // first letter, which came with color codes.
-static bool NormalizeOutput_KeepsEchoOfWin32InputModeKeys()
+internal static bool NormalizeOutput_KeepsEchoOfWin32InputModeKeys()
 {
     var inputs = Win32Input(1.0, "hi?");
     // Backspace: Vk 8, Uc 8. The x it erases never shows.
     inputs.Insert(2, (1.15, Encoding.UTF8.GetBytes("\u001b[88;0;120;1;0;1_\u001b[88;0;120;0;0;1_").AsMemory()));
     inputs.Insert(3, (1.17, Encoding.UTF8.GetBytes("\u001b[8;14;8;1;0;1_\u001b[8;14;8;0;0;1_").AsMemory()));
     var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (1.02, "h"u8.ToArray().AsMemory()),
-        (1.12, "i"u8.ToArray().AsMemory()),
-        (1.16, "x"u8.ToArray().AsMemory()),
-        (1.18, "\b \b"u8.ToArray().AsMemory()),
-        (1.22, "?"u8.ToArray().AsMemory()),
-    };
+{
+    (1.02, "h"u8.ToArray().AsMemory()),
+    (1.12, "i"u8.ToArray().AsMemory()),
+    (1.16, "x"u8.ToArray().AsMemory()),
+    (1.18, "\b \b"u8.ToArray().AsMemory()),
+    (1.22, "?"u8.ToArray().AsMemory()),
+};
 
     var windows = InteractivePtyCastEmit.BuildInputEchoWindows(inputs.Select(static i => i.Time).ToArray());
     var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24, inputs);
@@ -190,20 +208,20 @@ static bool NormalizeOutput_KeepsEchoOfWin32InputModeKeys()
 // copilot drew the first key with escape sequences around it, and the keys after it as plain echoes. The first chunk
 // stays as it is, and the plain echoes after it are the keys that follow it, not keys typed and erased. The x that
 // Backspace erases is left out.
-static bool NormalizeOutput_KeepsPlainEchoAfterEchoWithEscapes()
+internal static bool NormalizeOutput_KeepsPlainEchoAfterEchoWithEscapes()
 {
     var inputs = Win32Input(1.0, "hex");
     inputs.Add((1.3, Encoding.UTF8.GetBytes("\u001b[8;14;8;1;0;1_\u001b[8;14;8;0;0;1_").AsMemory()));
     inputs.AddRange(Win32Input(1.4, "y"));
     var first = "\u001b[?25lh\u001b[1m\u001b[24;34H@\u001b[22m files\u001b[22;4H\u001b[?25h";
     var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (1.02, Encoding.UTF8.GetBytes(first).AsMemory()),
-        (1.12, "e"u8.ToArray().AsMemory()),
-        (1.22, "x"u8.ToArray().AsMemory()),
-        (1.32, "\b \b"u8.ToArray().AsMemory()),
-        (1.42, "y"u8.ToArray().AsMemory()),
-    };
+{
+    (1.02, Encoding.UTF8.GetBytes(first).AsMemory()),
+    (1.12, "e"u8.ToArray().AsMemory()),
+    (1.22, "x"u8.ToArray().AsMemory()),
+    (1.32, "\b \b"u8.ToArray().AsMemory()),
+    (1.42, "y"u8.ToArray().AsMemory()),
+};
 
     var windows = InteractivePtyCastEmit.BuildInputEchoWindows(inputs.Select(static i => i.Time).ToArray());
     var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24, inputs);
@@ -211,14 +229,14 @@ static bool NormalizeOutput_KeepsPlainEchoAfterEchoWithEscapes()
 }
 
 // A record can end in the next read.
-static bool NormalizeOutput_KeepsEchoOfWin32KeySplitAcrossReads()
+internal static bool NormalizeOutput_KeepsEchoOfWin32KeySplitAcrossReads()
 {
     var down = Win32Key('a', down: true);
     var inputs = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (1.0, Encoding.UTF8.GetBytes(down[..5]).AsMemory()),
-        (1.01, Encoding.UTF8.GetBytes(down[5..] + Win32Key('a', down: false)).AsMemory()),
-    };
+{
+    (1.0, Encoding.UTF8.GetBytes(down[..5]).AsMemory()),
+    (1.01, Encoding.UTF8.GetBytes(down[5..] + Win32Key('a', down: false)).AsMemory()),
+};
     var output = new List<(double Time, ReadOnlyMemory<byte> Data)> { (1.05, "a"u8.ToArray().AsMemory()) };
 
     var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0, 1.01]);
@@ -227,19 +245,19 @@ static bool NormalizeOutput_KeepsEchoOfWin32KeySplitAcrossReads()
 }
 
 // A program that is busy echoes several keys in one write. The echo is all of them, not one key typed and erased.
-static bool NormalizeOutput_KeepsEchoOfSeveralKeysAtOnce()
+internal static bool NormalizeOutput_KeepsEchoOfSeveralKeysAtOnce()
 {
     var inputs = new List<(double Time, ReadOnlyMemory<byte> Data)>();
     foreach (var (c, i) in "hellx\u007fo".Select((c, i) => (c, i)))
         inputs.Add((1.0 + i * 0.05, new[] { (byte)c }.AsMemory()));
     var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (1.02, "h"u8.ToArray().AsMemory()),
-        (1.2, "ell"u8.ToArray().AsMemory()),
-        (1.22, "x"u8.ToArray().AsMemory()),
-        (1.27, "\b \b"u8.ToArray().AsMemory()),
-        (1.32, "o"u8.ToArray().AsMemory()),
-    };
+{
+    (1.02, "h"u8.ToArray().AsMemory()),
+    (1.2, "ell"u8.ToArray().AsMemory()),
+    (1.22, "x"u8.ToArray().AsMemory()),
+    (1.27, "\b \b"u8.ToArray().AsMemory()),
+    (1.32, "o"u8.ToArray().AsMemory()),
+};
 
     var windows = InteractivePtyCastEmit.BuildInputEchoWindows(inputs.Select(static i => i.Time).ToArray());
     var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24, inputs);
@@ -249,26 +267,26 @@ static bool NormalizeOutput_KeepsEchoOfSeveralKeysAtOnce()
 // copilot draws its logo animation while a question is typed, and an echo can come in the same write as a frame of it.
 // Nothing was erased, so no echo is left out, whatever order they came in. Matching them used to lose its place
 // after such a write, and every plain echo after it was dropped: "h e h w e" of "hello, how are you?".
-static bool NormalizeOutput_KeepsEveryEchoWithoutErasedKeys()
+internal static bool NormalizeOutput_KeepsEveryEchoWithoutErasedKeys()
 {
     var inputs = Win32Input(1.0, "hello");
     var first = "\u001b[?25lh\u001b[1m\u001b[24;34H@\u001b[22m files\u001b[22;4H\u001b[?25h";
     var frame = "\u001b[?25l\u001b[96m\u001b[7;6H▘▝ \u001b[m\u001b[22;4He\u001b[?25h";
     var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (1.02, Encoding.UTF8.GetBytes(first).AsMemory()),
-        (1.11, Encoding.UTF8.GetBytes(frame).AsMemory()),
-        (1.21, "l"u8.ToArray().AsMemory()),
-        (1.31, "l"u8.ToArray().AsMemory()),
-        (1.41, "o"u8.ToArray().AsMemory()),
-    };
+{
+    (1.02, Encoding.UTF8.GetBytes(first).AsMemory()),
+    (1.11, Encoding.UTF8.GetBytes(frame).AsMemory()),
+    (1.21, "l"u8.ToArray().AsMemory()),
+    (1.31, "l"u8.ToArray().AsMemory()),
+    (1.41, "o"u8.ToArray().AsMemory()),
+};
 
     var windows = InteractivePtyCastEmit.BuildInputEchoWindows(inputs.Select(static i => i.Time).ToArray());
     var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24, inputs);
     return string.Concat(normalized.Select(c => Encoding.UTF8.GetString(c.Data.Span))) == first + frame + "llo";
 }
 
-static bool BuildInputWindows_MergesBurst()
+internal static bool BuildInputWindows_MergesBurst()
 {
     var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0, 1.2, 1.4, 5.0, 5.1]);
     if (windows.Count != 2)
@@ -280,30 +298,30 @@ static bool BuildInputWindows_MergesBurst()
     return Math.Abs(windows[1].Start - 5.0) < 0.001;
 }
 
-static bool NormalizeOutput_StripsBackspaceCorrections()
+internal static bool NormalizeOutput_StripsBackspaceCorrections()
 {
     var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7]);
     var inputs = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (1.0, "a"u8.ToArray().AsMemory()),
-        (1.1, "b"u8.ToArray().AsMemory()),
-        (1.2, "v"u8.ToArray().AsMemory()),
-        (1.3, "\x7f"u8.ToArray().AsMemory()),
-        (1.4, "c"u8.ToArray().AsMemory()),
-        (1.5, "d"u8.ToArray().AsMemory()),
-        (1.6, "e"u8.ToArray().AsMemory()),
-    };
+{
+    (1.0, "a"u8.ToArray().AsMemory()),
+    (1.1, "b"u8.ToArray().AsMemory()),
+    (1.2, "v"u8.ToArray().AsMemory()),
+    (1.3, "\x7f"u8.ToArray().AsMemory()),
+    (1.4, "c"u8.ToArray().AsMemory()),
+    (1.5, "d"u8.ToArray().AsMemory()),
+    (1.6, "e"u8.ToArray().AsMemory()),
+};
     var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (0.5, "> "u8.ToArray().AsMemory()),
-        (1.1, "a"u8.ToArray().AsMemory()),
-        (1.2, "b"u8.ToArray().AsMemory()),
-        (1.3, "v"u8.ToArray().AsMemory()),
-        (1.4, "\b \b"u8.ToArray().AsMemory()),
-        (1.5, "c"u8.ToArray().AsMemory()),
-        (1.6, "d"u8.ToArray().AsMemory()),
-        (1.7, "e"u8.ToArray().AsMemory()),
-    };
+{
+    (0.5, "> "u8.ToArray().AsMemory()),
+    (1.1, "a"u8.ToArray().AsMemory()),
+    (1.2, "b"u8.ToArray().AsMemory()),
+    (1.3, "v"u8.ToArray().AsMemory()),
+    (1.4, "\b \b"u8.ToArray().AsMemory()),
+    (1.5, "c"u8.ToArray().AsMemory()),
+    (1.6, "d"u8.ToArray().AsMemory()),
+    (1.7, "e"u8.ToArray().AsMemory()),
+};
 
     var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 40, 3, inputs);
     var text = string.Concat(normalized.Select(c => Encoding.UTF8.GetString(c.Data.Span)));
@@ -313,15 +331,15 @@ static bool NormalizeOutput_StripsBackspaceCorrections()
     return text.Contains("abcde", StringComparison.Ordinal);
 }
 
-static bool NormalizeOutput_PreservesWallClockOutsideInput()
+internal static bool NormalizeOutput_PreservesWallClockOutsideInput()
 {
     var windows = InteractivePtyCastEmit.BuildInputEchoWindows([2.0]);
     var banner = "BANNER"u8.ToArray().AsMemory();
     var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (0.5, banner),
-        (3.0, "z"u8.ToArray().AsMemory()),
-    };
+{
+    (0.5, banner),
+    (3.0, "z"u8.ToArray().AsMemory()),
+};
 
     var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 40, 3);
     if (normalized.Count != 2)
@@ -331,16 +349,16 @@ static bool NormalizeOutput_PreservesWallClockOutsideInput()
     return Encoding.UTF8.GetString(normalized[0].Data.Span) == "BANNER";
 }
 
-static bool NormalizeOutput_CollapsesLongIdleGap()
+internal static bool NormalizeOutput_CollapsesLongIdleGap()
 {
     var banner = "BANNER"u8.ToArray().AsMemory();
     var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (0.0, banner),
-        (0.1, banner),
-        (12.0, banner),
-        (12.1, banner),
-    };
+{
+    (0.0, banner),
+    (0.1, banner),
+    (12.0, banner),
+    (12.1, banner),
+};
 
     var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, [], 0.05, 40, 3);
     InteractivePtyCastEmit.CollapseIdleAfterNormalize(normalized, silenceThreshold: 2.0, maxIdle: 0.2);
@@ -353,14 +371,14 @@ static bool NormalizeOutput_CollapsesLongIdleGap()
         && Math.Abs(normalized[3].Time - 0.4) < 0.001;
 }
 
-static bool NormalizeOutput_PassthroughAnsiInEchoWindow()
+internal static bool NormalizeOutput_PassthroughAnsiInEchoWindow()
 {
     var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0]);
     var ansi = "\u001b[1mX\u001b[0m"u8.ToArray().AsMemory();
     var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (1.1, ansi),
-    };
+{
+    (1.1, ansi),
+};
 
     var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24);
     return normalized.Count == 1
@@ -368,14 +386,14 @@ static bool NormalizeOutput_PassthroughAnsiInEchoWindow()
         && normalized[0].Data.Span.SequenceEqual(ansi.Span);
 }
 
-static bool NormalizeOutput_PassthroughBannerUtf8InEchoWindow()
+internal static bool NormalizeOutput_PassthroughBannerUtf8InEchoWindow()
 {
     var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0]);
     var box = "└"u8.ToArray().AsMemory();
     var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (1.05, box),
-    };
+{
+    (1.05, box),
+};
 
     var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24);
     return normalized.Count == 1
@@ -383,17 +401,17 @@ static bool NormalizeOutput_PassthroughBannerUtf8InEchoWindow()
         && normalized[0].Data.Span.SequenceEqual(box.Span);
 }
 
-static bool NormalizeOutput_RetimesEchoPreservesBytes()
+internal static bool NormalizeOutput_RetimesEchoPreservesBytes()
 {
     var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0]);
     var inputs = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (1.0, "a"u8.ToArray().AsMemory()),
-    };
+{
+    (1.0, "a"u8.ToArray().AsMemory()),
+};
     var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (1.01, "a"u8.ToArray().AsMemory()),
-    };
+{
+    (1.01, "a"u8.ToArray().AsMemory()),
+};
 
     var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24, inputs);
     return normalized.Count == 1
@@ -401,32 +419,32 @@ static bool NormalizeOutput_RetimesEchoPreservesBytes()
         && Encoding.UTF8.GetString(normalized[0].Data.Span) == "a";
 }
 
-static bool NormalizeOutput_RetimesUtf8Echo()
+internal static bool NormalizeOutput_RetimesUtf8Echo()
 {
     var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0]);
     var glyph = "あ"u8.ToArray().AsMemory();
     var inputs = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (1.0, glyph),
-    };
+{
+    (1.0, glyph),
+};
     var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (1.05, glyph),
-    };
+{
+    (1.05, glyph),
+};
 
     var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24, inputs);
     return normalized.Count == 1
         && Encoding.UTF8.GetString(normalized[0].Data.Span) == "あ";
 }
 
-static bool NormalizeOutput_CountsMultiCharEchoUnits()
+internal static bool NormalizeOutput_CountsMultiCharEchoUnits()
 {
     var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0]);
     var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (1.0, "ab"u8.ToArray().AsMemory()),
-        (1.1, "c"u8.ToArray().AsMemory()),
-    };
+{
+    (1.0, "ab"u8.ToArray().AsMemory()),
+    (1.1, "c"u8.ToArray().AsMemory()),
+};
 
     var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24);
     if (normalized.Count != 2)
@@ -436,17 +454,17 @@ static bool NormalizeOutput_CountsMultiCharEchoUnits()
     return Math.Abs(normalized[1].Time - 1.1) < 0.001;
 }
 
-static bool NormalizeOutput_PassthroughClampsToMonotonicEmitTime()
+internal static bool NormalizeOutput_PassthroughClampsToMonotonicEmitTime()
 {
     var windows = InteractivePtyCastEmit.BuildInputEchoWindows([1.0]);
     var ansi = "\u001b[1mX\u001b[0m"u8.ToArray().AsMemory();
     var output = new List<(double Time, ReadOnlyMemory<byte> Data)>
-    {
-        (1.0, "a"u8.ToArray().AsMemory()),
-        (1.0, "b"u8.ToArray().AsMemory()),
-        (1.0, "c"u8.ToArray().AsMemory()),
-        (1.01, ansi),
-    };
+{
+    (1.0, "a"u8.ToArray().AsMemory()),
+    (1.0, "b"u8.ToArray().AsMemory()),
+    (1.0, "c"u8.ToArray().AsMemory()),
+    (1.01, ansi),
+};
 
     var normalized = InteractivePtyCastEmit.NormalizeOutputChunks(output, windows, 0.05, 80, 24);
     if (normalized.Count != 4)
@@ -461,15 +479,15 @@ static bool NormalizeOutput_PassthroughClampsToMonotonicEmitTime()
     return normalized[3].Time >= normalized[2].Time;
 }
 
-static bool CollapseIdle_PreservesNormalizedEmitSpacing()
+internal static bool CollapseIdle_PreservesNormalizedEmitSpacing()
 {
     var chunks = new List<(double Time, double OriginalTime, ReadOnlyMemory<byte> Data)>
-    {
-        (0.0, 0.0, "a"u8.ToArray().AsMemory()),
-        (0.15, 0.1, "b"u8.ToArray().AsMemory()),
-        (12.0, 12.0, "c"u8.ToArray().AsMemory()),
-        (12.15, 12.1, "d"u8.ToArray().AsMemory()),
-    };
+{
+    (0.0, 0.0, "a"u8.ToArray().AsMemory()),
+    (0.15, 0.1, "b"u8.ToArray().AsMemory()),
+    (12.0, 12.0, "c"u8.ToArray().AsMemory()),
+    (12.15, 12.1, "d"u8.ToArray().AsMemory()),
+};
 
     InteractivePtyCastEmit.CollapseIdleAfterNormalize(chunks, silenceThreshold: 2.0, maxIdle: 0.2);
     if (Math.Abs(chunks[1].Time - 0.15) > 0.001)
@@ -478,5 +496,4 @@ static bool CollapseIdle_PreservesNormalizedEmitSpacing()
         return false;
     return Math.Abs(chunks[3].Time - 0.50) < 0.001;
 }
-
-internal readonly record struct ResolvedTheme(string Fg, string Bg, string Palette);
+}

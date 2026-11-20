@@ -1,4 +1,4 @@
-# The playground replays what the CLI recorded. tests/playground_replay_test.cs records this scenario with
+# The playground replays what the CLI recorded. PlaygroundReplayTests records this scenario with
 # SCENETAKE_OUTPUTS, replays the outputs file, and checks that the cast and SVG are the CLI's, byte for byte.
 # The steps cover instant and streamed pipe output, stderr, highlights, an OSC title in pipe and PTY output
 # (masked in the outputs file), and a repeated command.

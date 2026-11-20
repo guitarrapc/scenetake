@@ -1,114 +1,159 @@
-#:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
-#:property Nullable=enable
-#:property ImplicitUsings=enable
-#:package VYaml@1.6.1
-#:include ../Terminal.cs
-#:include ../CastTimingPipeline.cs
-#:include ../CastReader.cs
-#:include ../Svg.cs
-#:include ../JsonEscape.cs
-#:include ../PtyLeadingInitFilter.cs
-#:include ../ScenarioKeys.cs
-#:include ../Scenario.cs
-#:include ../Highlight.cs
-#:include ../CastComposer.cs
-#:include ../Rerecord.cs
-#:include ../SecretMask.cs
-#:include ../StepChunks.cs
-#:include ../StepOutputs.cs
-#:include ../PlaygroundRender.cs
-#:include ../ShellState.cs
+﻿using System.Diagnostics;
+using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using static Scenetake.Core.ScenarioCast;
+using Scenetake.TestSupport;
+
+namespace Scenetake.Tests;
 
 // Shell state across steps, and the step keys show, clear, and background (.github/docs/spec_scenario.md → Shell
 // state across steps, steps). The unit tests need only the sources. The integration tests record fixtures with a
 // published binary (SCENETAKE_BIN) and need bash, on Windows Git Bash. The PowerShell, zsh, and sh ones skip when
 // the shell is not on PATH.
 
-using System.Diagnostics;
-using System.Text;
-using System.Text.Json;
-using System.Text.RegularExpressions;
-using static ScenarioCast;
-
-var repoRoot = FindRepoRoot(Directory.GetCurrentDirectory());
-var failures = 0;
-
-failures += Run("DeclarationsSplitOutsideQuotes", DeclarationsSplitOutsideQuotes);
-failures += Run("ScalarValuesAreUnquoted", ScalarValuesAreUnquoted);
-failures += Run("RestoreCarriesWhatChanged", RestoreCarriesWhatChanged);
-failures += Run("LoginAliasesDoNotTurnOnExpansion", LoginAliasesDoNotTurnOnExpansion);
-failures += Run("LoginAliasesStayOffWithStepAlias", LoginAliasesStayOffWithStepAlias);
-failures += Run("QuoteKeepsSingleQuotes", QuoteKeepsSingleQuotes);
-failures += Run("StateForEachShell", StateForEachShell);
-failures += Run("ShellRestoreSharesFirstLine", ShellRestoreSharesFirstLine);
-failures += Run("UnquoteJoinsParts", UnquoteJoinsParts);
-failures += Run("ZshDeclarationsByName", ZshDeclarationsByName);
-failures += Run("ZshRestoreCarriesWhatChanged", ZshRestoreCarriesWhatChanged);
-failures += Run("PosixShellRestoreCarriesWhatChanged", PosixShellRestoreCarriesWhatChanged);
-failures += Run("PowerShellWrapsOnFirstAndLastLine", PowerShellWrapsOnFirstAndLastLine);
-failures += Run("ShowAndClearErrors", ShowAndClearErrors);
-failures += Run("ShowAndClearAreKnownKeys", ShowAndClearAreKnownKeys);
-failures += Run("CardErrors", CardErrors);
-failures += Run("CardLinesSplitAndStyle", CardLinesSplitAndStyle);
-failures += Run("CardComposition", CardComposition);
-failures += Run("CardFollowsFitAndCrop", CardFollowsFitAndCrop);
-failures += Run("CardCropErrors", CardCropErrors);
-failures += Run("PromptPartsAndErrors", PromptPartsAndErrors);
-failures += Run("FolderNamesHideThePath", FolderNamesHideThePath);
-failures += Run("PromptFolderReplays", PromptFolderReplays);
-failures += Run("PlaygroundComposesCards", PlaygroundComposesCards);
-failures += Run("PlaygroundComposesShowAndClear", PlaygroundComposesShowAndClear);
-failures += Run("HiddenStepFailureStops", () => HiddenStepFailureStops(continueOnError: false));
-failures += Run("HiddenStepContinueOnError", () => HiddenStepFailureStops(continueOnError: true));
-failures += Run("MaskerLearnsExportedSecrets", MaskerLearnsExportedSecrets);
-failures += Run("BackgroundErrors", BackgroundErrors);
-failures += Run("BackgroundStepStartsAndRecordsNothing", BackgroundStepStartsAndRecordsNothing);
-failures += Run("BackgroundProblemStops", () => BackgroundProblemStops(continueOnError: false));
-failures += Run("BackgroundProblemContinueOnError", () => BackgroundProblemStops(continueOnError: true));
-failures += Run("PlaygroundSkipsBackground", PlaygroundSkipsBackground);
-failures += Run("IntegrationBashCarriesState", () => IntegrationBashCarriesState(repoRoot));
-failures += Run("IntegrationBashLoginAliasesStayOff", () => IntegrationBashLoginAliasesStayOff(repoRoot));
-failures += Run("IntegrationPromptFollowsFolder", () => IntegrationPromptFollowsFolder(repoRoot));
-failures += Run("IntegrationPowerShellPromptFollowsFolder", () => IntegrationPowerShellPromptFollowsFolder(repoRoot));
-failures += Run("IntegrationPowerShellCarriesState", () => IntegrationPowerShellCarriesState(repoRoot));
-failures += Run("IntegrationZshCarriesState", () => IntegrationZshCarriesState(repoRoot));
-failures += Run("IntegrationShCarriesState", () => IntegrationShCarriesState(repoRoot));
-failures += Run("IntegrationHiddenStepFailureStops", () => IntegrationHiddenStepFailureStops(repoRoot));
-failures += Run("IntegrationBackgroundRunsUntilPost", () => IntegrationBackgroundRunsUntilPost(repoRoot));
-failures += Run("IntegrationBackgroundExitStops", () => IntegrationBackgroundExitStops(repoRoot));
-failures += Run("IntegrationBackgroundWaitTimeoutStops", () => IntegrationBackgroundWaitTimeoutStops(repoRoot));
-failures += Run("IntegrationBackgroundContinueOnError", () => IntegrationBackgroundContinueOnError(repoRoot));
-
-if (failures > 0)
+public sealed class ShellStateTests
 {
-    Console.Error.WriteLine($"Failed: {failures} shell state test(s)");
-    return 1;
+    [Test]
+    public async Task DeclarationsSplitOutsideQuotes() => await Assert.That(ShellStateCases.DeclarationsSplitOutsideQuotes()).IsTrue();
+
+    [Test]
+    public async Task ScalarValuesAreUnquoted() => await Assert.That(ShellStateCases.ScalarValuesAreUnquoted()).IsTrue();
+
+    [Test]
+    public async Task RestoreCarriesWhatChanged() => await Assert.That(ShellStateCases.RestoreCarriesWhatChanged()).IsTrue();
+
+    [Test]
+    public async Task LoginAliasesDoNotTurnOnExpansion() => await Assert.That(ShellStateCases.LoginAliasesDoNotTurnOnExpansion()).IsTrue();
+
+    [Test]
+    public async Task LoginAliasesStayOffWithStepAlias() => await Assert.That(ShellStateCases.LoginAliasesStayOffWithStepAlias()).IsTrue();
+
+    [Test]
+    public async Task QuoteKeepsSingleQuotes() => await Assert.That(ShellStateCases.QuoteKeepsSingleQuotes()).IsTrue();
+
+    [Test]
+    public async Task StateForEachShell() => await Assert.That(ShellStateCases.StateForEachShell()).IsTrue();
+
+    [Test]
+    public async Task ShellRestoreSharesFirstLine() => await Assert.That(ShellStateCases.ShellRestoreSharesFirstLine()).IsTrue();
+
+    [Test]
+    public async Task UnquoteJoinsParts() => await Assert.That(ShellStateCases.UnquoteJoinsParts()).IsTrue();
+
+    [Test]
+    public async Task ZshDeclarationsByName() => await Assert.That(ShellStateCases.ZshDeclarationsByName()).IsTrue();
+
+    [Test]
+    public async Task ZshRestoreCarriesWhatChanged() => await Assert.That(ShellStateCases.ZshRestoreCarriesWhatChanged()).IsTrue();
+
+    [Test]
+    public async Task PosixShellRestoreCarriesWhatChanged() => await Assert.That(ShellStateCases.PosixShellRestoreCarriesWhatChanged()).IsTrue();
+
+    [Test]
+    public async Task PowerShellWrapsOnFirstAndLastLine() => await Assert.That(ShellStateCases.PowerShellWrapsOnFirstAndLastLine()).IsTrue();
+
+    [Test]
+    public async Task ShowAndClearErrors() => await Assert.That(ShellStateCases.ShowAndClearErrors()).IsTrue();
+
+    [Test]
+    public async Task ShowAndClearAreKnownKeys() => await Assert.That(ShellStateCases.ShowAndClearAreKnownKeys()).IsTrue();
+
+    [Test]
+    public async Task CardErrors() => await Assert.That(ShellStateCases.CardErrors()).IsTrue();
+
+    [Test]
+    public async Task CardLinesSplitAndStyle() => await Assert.That(ShellStateCases.CardLinesSplitAndStyle()).IsTrue();
+
+    [Test]
+    public async Task CardComposition() => await Assert.That(ShellStateCases.CardComposition()).IsTrue();
+
+    [Test]
+    public async Task CardFollowsFitAndCrop() => await Assert.That(ShellStateCases.CardFollowsFitAndCrop()).IsTrue();
+
+    [Test]
+    public async Task CardCropErrors() => await Assert.That(ShellStateCases.CardCropErrors()).IsTrue();
+
+    [Test]
+    public async Task PromptPartsAndErrors() => await Assert.That(ShellStateCases.PromptPartsAndErrors()).IsTrue();
+
+    [Test]
+    public async Task FolderNamesHideThePath() => await Assert.That(ShellStateCases.FolderNamesHideThePath()).IsTrue();
+
+    [Test]
+    public async Task PromptFolderReplays() => await Assert.That(ShellStateCases.PromptFolderReplays()).IsTrue();
+
+    [Test]
+    public async Task PlaygroundComposesCards() => await Assert.That(ShellStateCases.PlaygroundComposesCards()).IsTrue();
+
+    [Test]
+    public async Task PlaygroundComposesShowAndClear() => await Assert.That(ShellStateCases.PlaygroundComposesShowAndClear()).IsTrue();
+
+    [Test]
+    public async Task HiddenStepFailureStops() => await Assert.That(ShellStateCases.HiddenStepFailureStops(continueOnError: false)).IsTrue();
+
+    [Test]
+    public async Task HiddenStepContinueOnError() => await Assert.That(ShellStateCases.HiddenStepFailureStops(continueOnError: true)).IsTrue();
+
+    [Test]
+    public async Task MaskerLearnsExportedSecrets() => await Assert.That(ShellStateCases.MaskerLearnsExportedSecrets()).IsTrue();
+
+    [Test]
+    public async Task BackgroundErrors() => await Assert.That(ShellStateCases.BackgroundErrors()).IsTrue();
+
+    [Test]
+    public async Task BackgroundStepStartsAndRecordsNothing() => await Assert.That(ShellStateCases.BackgroundStepStartsAndRecordsNothing()).IsTrue();
+
+    [Test]
+    public async Task BackgroundProblemStops() => await Assert.That(ShellStateCases.BackgroundProblemStops(continueOnError: false)).IsTrue();
+
+    [Test]
+    public async Task BackgroundProblemContinueOnError() => await Assert.That(ShellStateCases.BackgroundProblemStops(continueOnError: true)).IsTrue();
+
+    [Test]
+    public async Task PlaygroundSkipsBackground() => await Assert.That(ShellStateCases.PlaygroundSkipsBackground()).IsTrue();
+
+    [Test]
+    public async Task IntegrationBashCarriesState() => await Assert.That(ShellStateCases.IntegrationBashCarriesState(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationBashLoginAliasesStayOff() => await Assert.That(ShellStateCases.IntegrationBashLoginAliasesStayOff(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationPromptFollowsFolder() => await Assert.That(ShellStateCases.IntegrationPromptFollowsFolder(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationPowerShellPromptFollowsFolder() => await Assert.That(ShellStateCases.IntegrationPowerShellPromptFollowsFolder(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationPowerShellCarriesState() => await Assert.That(ShellStateCases.IntegrationPowerShellCarriesState(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationZshCarriesState() => await Assert.That(ShellStateCases.IntegrationZshCarriesState(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationShCarriesState() => await Assert.That(ShellStateCases.IntegrationShCarriesState(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationHiddenStepFailureStops() => await Assert.That(ShellStateCases.IntegrationHiddenStepFailureStops(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationBackgroundRunsUntilPost() => await Assert.That(ShellStateCases.IntegrationBackgroundRunsUntilPost(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationBackgroundExitStops() => await Assert.That(ShellStateCases.IntegrationBackgroundExitStops(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationBackgroundWaitTimeoutStops() => await Assert.That(ShellStateCases.IntegrationBackgroundWaitTimeoutStops(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationBackgroundContinueOnError() => await Assert.That(ShellStateCases.IntegrationBackgroundContinueOnError(TestEnv.RepoRoot)).IsTrue();
 }
 
-Console.Error.WriteLine("all shell state tests passed");
-return 0;
-
-static int Run(string name, Func<bool> test)
+internal static class ShellStateCases
 {
-    try
-    {
-        if (test())
-        {
-            Console.Error.WriteLine($"ok {name}");
-            return 0;
-        }
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"  {ex}");
-    }
 
-    Console.Error.WriteLine($"FAIL {name}");
-    return 1;
-}
-
-static bool Expect(bool condition, string message)
+internal static bool Expect(bool condition, string message)
 {
     if (!condition)
         Console.Error.WriteLine($"  {message}");
@@ -116,7 +161,7 @@ static bool Expect(bool condition, string message)
 }
 
 // bash 3.2 (macOS) writes a line break inside double quotes; bash 5.2 writes $'...'. Neither ends the statement.
-static bool DeclarationsSplitOutsideQuotes()
+internal static bool DeclarationsSplitOutsideQuotes()
 {
     const string dump = "declare -x A=\"multi\nline \\\"q\\\" it's\"\n"
         + "declare -a ARR=([0]=\"one\" [1]=\"two words\")\n"
@@ -133,14 +178,14 @@ static bool DeclarationsSplitOutsideQuotes()
         && Expect(map.ContainsKey("EUID"), "EUID missing");
 }
 
-static bool ScalarValuesAreUnquoted() =>
+internal static bool ScalarValuesAreUnquoted() =>
     Expect(BashDump.ScalarValue("declare -x A=\"a \\\"b\\\" \\$c \\\\ `d`\"") == "a \"b\" $c \\ `d`", "double quotes")
     && Expect(BashDump.ScalarValue("declare -x B=$'x\\ny\\tz \\'q\\''") == "x\ny\tz 'q'", "dollar quotes")
     && Expect(BashDump.ScalarValue("declare -x C='plain'") == "plain", "single quotes")
     && Expect(BashDump.ScalarValue("declare -a D=([0]=\"x\")") is null, "an array has no scalar value")
     && Expect(BashDump.ScalarValue("declare -- E") is null, "no value");
 
-static bool RestoreCarriesWhatChanged()
+internal static bool RestoreCarriesWhatChanged()
 {
     const string baseVars = "declare -x PATH=\"/usr/bin\"\ndeclare -- KEEP=\"same\"\ndeclare -- GONE=\"x\"\ndeclare -i RANDOM=\"1\"\ndeclare -- BASH_COMMAND=\"a\"\n";
     const string finalVars = "declare -x PATH=\"/venv/bin:/usr/bin\"\ndeclare -- KEEP=\"same\"\ndeclare -x NEW=\"secret-value-1\"\ndeclare -i RANDOM=\"2\"\ndeclare -- BASH_COMMAND=\"b\"\ndeclare -- __scenetake_dir=\"/tmp/x\"\ndeclare -- OLDPWD=\"/home\"\n";
@@ -170,7 +215,7 @@ static bool RestoreCarriesWhatChanged()
 }
 
 // Git Bash's login files define aliases such as ls. Turning expansion on for them would change what ls prints.
-static bool LoginAliasesDoNotTurnOnExpansion()
+internal static bool LoginAliasesDoNotTurnOnExpansion()
 {
     const string aliases = "alias ll='ls -l'\nalias ls='ls -F --color=auto'\n";
     var restore = BashDump.BuildRestore("", "", "", "", aliases, aliases, "/work", []);
@@ -181,7 +226,7 @@ static bool LoginAliasesDoNotTurnOnExpansion()
 // Once a step defines an alias, expansion is on, and the login files' aliases would expand with it: Git Bash's
 // node='winpty node.exe' then failed in a pipe with "stdin is not a tty". They are removed, in the step after the
 // one that defines the alias and in every later one, and a login alias that a step redefined stays.
-static bool LoginAliasesStayOffWithStepAlias()
+internal static bool LoginAliasesStayOffWithStepAlias()
 {
     const string login = "alias ls='ls -F --color=auto'\nalias node='winpty node.exe'\nalias ll='ls -l'\n";
     // The step that defines hi and redefines ll ran with the login aliases still defined.
@@ -199,11 +244,11 @@ static bool LoginAliasesStayOffWithStepAlias()
     return Check(first, "first") && Check(next, "next");
 }
 
-static bool QuoteKeepsSingleQuotes() =>
+internal static bool QuoteKeepsSingleQuotes() =>
     Expect(BashDump.Quote("it's") == "'it'\\''s'", BashDump.Quote("it's"))
     && Expect(PowerShellState.Literal("it's") == "'it''s'", PowerShellState.Literal("it's"));
 
-static bool StateForEachShell()
+internal static bool StateForEachShell()
 {
     using var bash = ShellState.Create(OperatingSystem.IsWindows() ? @"C:\Program Files\Git\usr\bin\bash.exe" : "/bin/bash", isPowerShell: false);
     using var pwsh = ShellState.Create("pwsh", isPowerShell: true);
@@ -237,7 +282,7 @@ static bool StateForEachShell()
 }
 
 // sh: the restore shares the first line, so the user's lines keep their numbers.
-static bool ShellRestoreSharesFirstLine()
+internal static bool ShellRestoreSharesFirstLine()
 {
     using var state = ShellState.Create("dash", isPowerShell: false)!;
     var prepared = state.Prepare("echo one\nnosuchcommand");
@@ -249,7 +294,7 @@ static bool ShellRestoreSharesFirstLine()
         && Expect(lines[1] == "nosuchcommand", lines[1]);
 }
 
-static bool UnquoteJoinsParts() =>
+internal static bool UnquoteJoinsParts() =>
     Expect(ShellText.Unquote("'it'\\''s'") == "it's", "bash and zsh")
     && Expect(ShellText.Unquote("'it'\"'\"'s'") == "it's", "dash")
     && Expect(ShellText.Unquote("$'it\\'s'") == "it's", "ksh93")
@@ -260,7 +305,7 @@ static bool UnquoteJoinsParts() =>
     && Expect(ShellText.AssignedValue("arr=([0]=\"a\")") is null, "an array");
 
 // zsh writes one statement per line, $'...' for a line break, and a tied pair such as PATH and path as two.
-static bool ZshDeclarationsByName()
+internal static bool ZshDeclarationsByName()
 {
     const string dump = "typeset -g foo=bar\n"
         + "export -T PATH path=( /usr/bin /bin )\n"
@@ -278,7 +323,7 @@ static bool ZshDeclarationsByName()
         && Expect(ZshDump.DeclarationName("echo hi") is null, "another line");
 }
 
-static bool ZshRestoreCarriesWhatChanged()
+internal static bool ZshRestoreCarriesWhatChanged()
 {
     const string baseVars = "export -T PATH path=( /usr/bin )\ntypeset -g -aT PATH path=( /usr/bin )\ntypeset -g KEEP=same\ntypeset -g GONE=x\ntypeset -g -i10 RANDOM=1\ntypeset -g -a argv=( base )\n";
     const string finalVars = "export -T PATH path=( /venv/bin /usr/bin )\ntypeset -g -aT PATH path=( /venv/bin /usr/bin )\ntypeset -g KEEP=same\nexport API_TOKEN='it'\\''s-secret'\ntypeset -g -i10 RANDOM=2\ntypeset -g -a argv=( final )\ntypeset -g __scenetake_dir=/tmp/x\nexport OLDPWD=/home\n";
@@ -308,7 +353,7 @@ static bool ZshRestoreCarriesWhatChanged()
 }
 
 // dash writes a quote as '"'"' and a line break inside the quotes; export -p lists the exported names again.
-static bool PosixShellRestoreCarriesWhatChanged()
+internal static bool PosixShellRestoreCarriesWhatChanged()
 {
     const string baseVars = "HOME='/root'\nIFS=' \t\n'\nKEEP='same'\nGONE='x'\nPS1='$ '\n";
     const string finalVars = "HOME='/root'\nIFS=' \t\n'\nKEEP='same'\nNOTE='it'\"'\"'s\ntwo lines'\nAPI_TOKEN='s3cr3t value'\nPS1='$ '\n_='/bin/true'\n__scenetake_dir='/tmp/x'\nOLDPWD='/home'\n";
@@ -331,7 +376,7 @@ static bool PosixShellRestoreCarriesWhatChanged()
 }
 
 // The user's lines keep their numbers: the restore shares the first line, and the save comes after the last.
-static bool PowerShellWrapsOnFirstAndLastLine()
+internal static bool PowerShellWrapsOnFirstAndLastLine()
 {
     using var state = ShellState.Create("pwsh", isPowerShell: true)!;
     var command = state.Prepare("Write-Output one\nWrite-Output two # a comment").Command;
@@ -342,7 +387,7 @@ static bool PowerShellWrapsOnFirstAndLastLine()
         && Expect(lines[2].StartsWith("$__scenetake_ok = $? }", StringComparison.Ordinal) && lines[2].EndsWith("if (-not $__scenetake_ok) { exit 1 }", StringComparison.Ordinal), lines[2]);
 }
 
-static bool ShowAndClearErrors()
+internal static bool ShowAndClearErrors()
 {
     var ok = true;
     ok &= ExpectError("- run: echo hi\n  show: maybe", "Step 1 key 'show' must be all, output, or none");
@@ -367,7 +412,7 @@ static bool ShowAndClearErrors()
     }
 }
 
-static bool CardErrors()
+internal static bool CardErrors()
 {
     var ok = true;
     ok &= ExpectError("- run: echo hi\n  card: Title", "Step 1 has both 'run' and 'card'");
@@ -403,7 +448,7 @@ static bool CardErrors()
 // Without fit a card is centered in its window and needs no mark. A card as tall as its window still has the cell right
 // of its last line, unless that line reaches the last column. A window that a crop moves from the corner moves the
 // card and the mark with it.
-static bool CardComposition()
+internal static bool CardComposition()
 {
     var whole = ComposeCard(["a", "b"], CanvasWindow.Whole(10, 9), null, markCorner: false);
     var marked = ComposeCard(["a", "b"], CanvasWindow.Whole(10, 6), null, markCorner: true);
@@ -422,7 +467,7 @@ static bool CardComposition()
 
 // A card is centered in what the crop leaves, so one larger than that is an error before anything runs. CropSpec is
 // top, bottom, left, right.
-static bool CardCropErrors()
+internal static bool CardCropErrors()
 {
     var scenario = ParseScenario("width: 40\nheight: 10\nsteps:\n  - card: [one, two, three, four, five]\n  - card: \"[bold]0123456789012345678901234567890123\"\n");
     return Expect(FindCardCropError(scenario, new CropSpec(7, 0, 0, 0)) == "Step 1 card has 5 lines, more than the 3 rows the crop leaves. Leave lines out, or crop less.", "rows")
@@ -433,7 +478,7 @@ static bool CardCropErrors()
 }
 
 // Where the composer puts a card for the scenario's fit and crop, in the cast the playground composes.
-static bool CardFollowsFitAndCrop()
+internal static bool CardFollowsFitAndCrop()
 {
     // fit: both moves the right edge in to the widest content, "$ echo hi" and the cursor after it, 10 columns, and the
     // bottom to the closing prompt, 3 rows. "my-app" is centered in them: row 1, column 2, and the mark keeps the
@@ -479,7 +524,7 @@ static bool CardFollowsFitAndCrop()
     }
 }
 
-static bool CardLinesSplitAndStyle() =>
+internal static bool CardLinesSplitAndStyle() =>
     Expect(CardLines("one\ntwo\n") is ["one", "two"], "a block's lines, without the last line break")
     && Expect(CardLines(new List<object?> { "a\nb", 3, null }) is ["a", "b", "3", ""], "list entries, numbers, and empty entries")
     && Expect(CardLines(true) is null && CardLines(new List<object?> { new Dictionary<object, object?>() }) is null, "a value that is not text")
@@ -490,26 +535,26 @@ static bool CardLinesSplitAndStyle() =>
 
 // A title card, a command, then a closing card, composed as the playground composes them. The cast is played on
 // scenetake's own terminal to check where each line lands.
-static bool PlaygroundComposesCards()
+internal static bool PlaygroundComposesCards()
 {
     const string yaml = """
-        width: 30
-        height: 9
-        settings:
-          typing-speed: 0.01
-          typing-jitter: 0
-          pre-delay: 0
-          post-delay: 0
-        steps:
-          - card:
-              - "[bold fg:cyan]my-app"
-              - ""
-              - 日本語
-          - name: Scene
-            run: ls
-          - card: npm i -g my-app
-            post-delay: 3
-        """;
+    width: 30
+    height: 9
+    settings:
+      typing-speed: 0.01
+      typing-jitter: 0
+      pre-delay: 0
+      post-delay: 0
+    steps:
+      - card:
+          - "[bold fg:cyan]my-app"
+          - ""
+          - 日本語
+      - name: Scene
+        run: ls
+      - card: npm i -g my-app
+        post-delay: 3
+    """;
     var outputs = new StepOutputs
     {
         Scenetake = "test",
@@ -553,11 +598,11 @@ static bool PlaygroundComposesCards()
         new AnsiParser(buffer, theme).Process(text);
         cursorVisible = buffer.CursorVisible;
         return [.. Enumerable.Range(0, height).Select(row => string.Concat(Enumerable.Range(0, width).Select(col =>
-            buffer.GetCell(row, col) is var cell && cell.IsWideContinuation ? "" : cell.Text is { Length: > 0 } text ? text : " ")))];
+        buffer.GetCell(row, col) is var cell && cell.IsWideContinuation ? "" : cell.Text is { Length: > 0 } text ? text : " ")))];
     }
 }
 
-static bool PromptPartsAndErrors()
+internal static bool PromptPartsAndErrors()
 {
     var plain = ParsePrompt("$ ");
     var styled = ParsePrompt(new List<object?> { new Dictionary<object, object?> { ["text"] = "demo", ["color"] = "bold fg:green" }, " {dir} $ ", 42, null });
@@ -583,7 +628,7 @@ static bool PromptPartsAndErrors()
 }
 
 // {dir} shows a folder's last name, ~ for the home folder, and / for the root, never the rest of the path.
-static bool FolderNamesHideThePath()
+internal static bool FolderNamesHideThePath()
 {
     var ok = Expect(PromptTemplate.FolderName("/home/me/my-app", "/home/me") == "my-app", "a folder")
         && Expect(PromptTemplate.FolderName("/home/me/", "/home/me") == "~", "the home folder")
@@ -604,7 +649,7 @@ static bool FolderNamesHideThePath()
 }
 
 // The outputs file keeps each step's folder and the closing one, and a replay draws the same prompts.
-static bool PromptFolderReplays()
+internal static bool PromptFolderReplays()
 {
     var outputs = new StepOutputs
     {
@@ -617,8 +662,8 @@ static bool PromptFolderReplays()
         Steps =
         [
             RecordedStep.Pipe("echo one", 0, [new PipeStreamChunk(TimeSpan.Zero, false, "one\n")], folder: "~"),
-            RecordedStep.Pipe("cd src", 0, [], folder: "my-app"),
-        ],
+        RecordedStep.Pipe("cd src", 0, [], folder: "my-app"),
+    ],
     };
     using var stream = new MemoryStream();
     outputs.Write(stream);
@@ -634,33 +679,33 @@ static bool PromptFolderReplays()
         && Expect(CastOutput(Encoding.UTF8.GetString(noFolders.Cast!)).Contains("~ $ cd src", StringComparison.Ordinal), "a file without folders shows ~");
 }
 
-static bool ShowAndClearAreKnownKeys()
+internal static bool ShowAndClearAreKnownKeys()
 {
     var unknown = FindUnknownScenarioKeys("steps:\n  - run: echo hi\n    show: none\n  - clear: true\n    name: Scene\n  - echo done\n  - card: [Title]\n    post-delay: 2\n");
     return Expect(unknown.Count == 0, string.Join("; ", unknown));
 }
 
 // The playground runs nothing: a hidden step takes no recorded output and no time, and the clear is the cast's own.
-static bool PlaygroundComposesShowAndClear()
+internal static bool PlaygroundComposesShowAndClear()
 {
     const string yaml = """
-        width: 40
-        height: 8
-        settings:
-          typing-speed: 0.01
-          typing-jitter: 0
-          pre-delay: 0
-          post-delay: 0
-        steps:
-          - run: mkdir demo && cd demo
-            show: none
-          - ls
-          - run: banner
-            show: output
-          - clear: true
-            name: Scene 2
-          - echo after
-        """;
+    width: 40
+    height: 8
+    settings:
+      typing-speed: 0.01
+      typing-jitter: 0
+      pre-delay: 0
+      post-delay: 0
+    steps:
+      - run: mkdir demo && cd demo
+        show: none
+      - ls
+      - run: banner
+        show: output
+      - clear: true
+        name: Scene 2
+      - echo after
+    """;
     var outputs = new StepOutputs
     {
         Scenetake = "test",
@@ -671,9 +716,9 @@ static bool PlaygroundComposesShowAndClear()
         Steps =
         [
             RecordedStep.Pipe("ls", 0, [new PipeStreamChunk(TimeSpan.Zero, false, "file.txt\n")]),
-            RecordedStep.Pipe("banner", 0, [new PipeStreamChunk(TimeSpan.Zero, false, "=== BANNER ===\n")]),
-            RecordedStep.Pipe("echo after", 0, [new PipeStreamChunk(TimeSpan.Zero, false, "after\n")]),
-        ],
+        RecordedStep.Pipe("banner", 0, [new PipeStreamChunk(TimeSpan.Zero, false, "=== BANNER ===\n")]),
+        RecordedStep.Pipe("echo after", 0, [new PipeStreamChunk(TimeSpan.Zero, false, "after\n")]),
+    ],
     };
     var result = PlaygroundRender.RenderScenario(yaml, outputs, new PlaygroundOptions(), renderSvg: false);
     if (!Expect(result.Error is null && result.Cast is not null, $"render failed: {result.Error}"))
@@ -689,16 +734,16 @@ static bool PlaygroundComposesShowAndClear()
         && Expect(result.Steps.Count == 3 && result.Steps.All(static step => step.Recorded), $"steps: {string.Join(", ", result.Steps.Select(static s => $"{s.Run}:{s.Recorded}"))}");
 }
 
-static bool HiddenStepFailureStops(bool continueOnError)
+internal static bool HiddenStepFailureStops(bool continueOnError)
 {
     var yaml = $"""
-        steps:
-          - echo before
-          - run: prepare
-            show: none
-            continue-on-error: {(continueOnError ? "true" : "false")}
-          - echo after
-        """;
+    steps:
+      - echo before
+      - run: prepare
+        show: none
+        continue-on-error: {(continueOnError ? "true" : "false")}
+      - echo after
+    """;
     var started = new List<string>();
     var (events, failure) = GenerateAsync(ParseScenario(yaml), 1, new GenerateOptions { LogRunning = false }, step =>
     {
@@ -719,7 +764,7 @@ static bool HiddenStepFailureStops(bool continueOnError)
         && Expect(!events.Any(static e => e.Kind == CastEventKind.Output && e.Data.Contains("prepare", StringComparison.Ordinal)), "the hidden step was recorded");
 }
 
-static bool MaskerLearnsExportedSecrets()
+internal static bool MaskerLearnsExportedSecrets()
 {
     var masker = SecretMasker.ForScenario(new Scenario(), [])!;
     masker.Learn([new("MY_API_KEY", "correct-horse-battery-staple"), new("GREETING", "hello-there-friend")]);
@@ -730,7 +775,7 @@ static bool MaskerLearnsExportedSecrets()
         && Expect(off.MaskText("correct-horse-battery-staple") == "correct-horse-battery-staple", "mask-auto: false learned a value");
 }
 
-static bool BackgroundErrors()
+internal static bool BackgroundErrors()
 {
     var ok = true;
     ok &= ExpectError("- run: serve\n  wait: Listening", "Step 1 key 'wait' applies to a 'background: true' step");
@@ -757,21 +802,21 @@ static bool BackgroundErrors()
     }
 }
 
-static bool BackgroundStepStartsAndRecordsNothing()
+internal static bool BackgroundStepStartsAndRecordsNothing()
 {
     const string yaml = """
-        steps:
-          - run: serve
-            background: true
-            wait: Listening on
-          - run: watch
-            background: true
-            wait: ready
-            wait-timeout: 5
-          - run: worker
-            background: true
-          - curl localhost
-        """;
+    steps:
+      - run: serve
+        background: true
+        wait: Listening on
+      - run: watch
+        background: true
+        wait: ready
+        wait-timeout: 5
+      - run: worker
+        background: true
+      - curl localhost
+    """;
     var started = new List<StepStart>();
     var (events, failure) = GenerateAsync(ParseScenario(yaml), 1, new GenerateOptions { LogRunning = false }, step =>
     {
@@ -792,16 +837,16 @@ static bool BackgroundStepStartsAndRecordsNothing()
         && Expect(output.Contains("ok", StringComparison.Ordinal), "the step after it");
 }
 
-static bool BackgroundProblemStops(bool continueOnError)
+internal static bool BackgroundProblemStops(bool continueOnError)
 {
     var yaml = $"""
-        steps:
-          - run: serve
-            background: true
-            wait: Listening
-            continue-on-error: {(continueOnError ? "true" : "false")}
-          - curl localhost
-        """;
+    steps:
+      - run: serve
+        background: true
+        wait: Listening
+        continue-on-error: {(continueOnError ? "true" : "false")}
+      - curl localhost
+    """;
     var started = new List<string>();
     var (_, failure) = GenerateAsync(ParseScenario(yaml), 1, new GenerateOptions { LogRunning = false }, step =>
     {
@@ -820,17 +865,17 @@ static bool BackgroundProblemStops(bool continueOnError)
 }
 
 // The playground runs nothing: a background step takes no recorded output, and the steps list leaves it out.
-static bool PlaygroundSkipsBackground()
+internal static bool PlaygroundSkipsBackground()
 {
     const string yaml = """
-        width: 40
-        height: 6
-        steps:
-          - run: serve
-            background: true
-            wait: Listening
-          - curl localhost
-        """;
+    width: 40
+    height: 6
+    steps:
+      - run: serve
+        background: true
+        wait: Listening
+      - curl localhost
+    """;
     var outputs = new StepOutputs
     {
         Scenetake = "test",
@@ -847,7 +892,7 @@ static bool PlaygroundSkipsBackground()
         && Expect(!output.Contains("serve", StringComparison.Ordinal) && output.Contains("hello", StringComparison.Ordinal), Show(output));
 }
 
-static bool IntegrationBackgroundRunsUntilPost(string repoRoot)
+internal static bool IntegrationBackgroundRunsUntilPost(string repoRoot)
 {
     if (!TryGetBinary(out var bin))
         return true;
@@ -861,7 +906,7 @@ static bool IntegrationBackgroundRunsUntilPost(string repoRoot)
         && Expect(!run.Text.Contains("while :", StringComparison.Ordinal), "the background command was recorded");
 }
 
-static bool IntegrationBackgroundExitStops(string repoRoot)
+internal static bool IntegrationBackgroundExitStops(string repoRoot)
 {
     if (!TryGetBinary(out var bin))
         return true;
@@ -875,7 +920,7 @@ static bool IntegrationBackgroundExitStops(string repoRoot)
         && Expect(run.Text.Length == 0, "a cast was written");
 }
 
-static bool IntegrationBackgroundWaitTimeoutStops(string repoRoot)
+internal static bool IntegrationBackgroundWaitTimeoutStops(string repoRoot)
 {
     if (!TryGetBinary(out var bin))
         return true;
@@ -891,7 +936,7 @@ static bool IntegrationBackgroundWaitTimeoutStops(string repoRoot)
         && Expect(stopwatch.Elapsed < TimeSpan.FromSeconds(30), $"took {stopwatch.Elapsed.TotalSeconds:0.0} s");
 }
 
-static bool IntegrationBackgroundContinueOnError(string repoRoot)
+internal static bool IntegrationBackgroundContinueOnError(string repoRoot)
 {
     if (!TryGetBinary(out var bin))
         return true;
@@ -902,7 +947,7 @@ static bool IntegrationBackgroundContinueOnError(string repoRoot)
         && Expect(run.Text.Contains("after", StringComparison.Ordinal), "the next step");
 }
 
-static bool IntegrationBashCarriesState(string repoRoot)
+internal static bool IntegrationBashCarriesState(string repoRoot)
 {
     if (!TryGetBinary(out var bin))
         return true;
@@ -929,7 +974,7 @@ static bool IntegrationBashCarriesState(string repoRoot)
 
 // The prompt's {dir} follows pre's cd, a step's cd, and a hidden step's cd, and a replay of the outputs file draws the
 // same prompts, byte for byte.
-static bool IntegrationPromptFollowsFolder(string repoRoot)
+internal static bool IntegrationPromptFollowsFolder(string repoRoot)
 {
     if (!TryGetBinary(out var bin))
         return true;
@@ -967,7 +1012,7 @@ static bool IntegrationPromptFollowsFolder(string repoRoot)
     }
 }
 
-static (int ExitCode, string Stderr) RunBinary(string bin, string repoRoot, string[] arguments)
+internal static (int ExitCode, string Stderr) RunBinary(string bin, string repoRoot, string[] arguments)
 {
     var psi = new ProcessStartInfo(bin) { RedirectStandardError = true, RedirectStandardOutput = true, UseShellExecute = false, WorkingDirectory = repoRoot };
     foreach (var argument in arguments)
@@ -986,7 +1031,7 @@ static (int ExitCode, string Stderr) RunBinary(string bin, string repoRoot, stri
 
 // HOME is a folder whose .bash_profile defines aliases. Before the fix, a step's alias turned expansion on for them
 // too, as Git Bash's node='winpty node.exe' then failed in a pipe with "stdin is not a tty".
-static bool IntegrationBashLoginAliasesStayOff(string repoRoot)
+internal static bool IntegrationBashLoginAliasesStayOff(string repoRoot)
 {
     if (!TryGetBinary(out var bin))
         return true;
@@ -1011,13 +1056,13 @@ static bool IntegrationBashLoginAliasesStayOff(string repoRoot)
     }
 }
 
-static bool IntegrationPowerShellPromptFollowsFolder(string repoRoot)
+internal static bool IntegrationPowerShellPromptFollowsFolder(string repoRoot)
 {
     if (!TryGetBinary(out var bin))
         return true;
     if (!IsOnPath("pwsh"))
     {
-        Console.Error.WriteLine("  skip: pwsh is not on PATH");
+        Skip.Test("pwsh is not on PATH");
         return true;
     }
 
@@ -1030,13 +1075,13 @@ static bool IntegrationPowerShellPromptFollowsFolder(string repoRoot)
             && text.TrimEnd().EndsWith("fixtures >", StringComparison.Ordinal), Show(text));
 }
 
-static bool IntegrationPowerShellCarriesState(string repoRoot)
+internal static bool IntegrationPowerShellCarriesState(string repoRoot)
 {
     if (!TryGetBinary(out var bin))
         return true;
     if (!IsOnPath("pwsh"))
     {
-        Console.Error.WriteLine("  skip: pwsh is not on PATH");
+        Skip.Test("pwsh is not on PATH");
         return true;
     }
 
@@ -1055,13 +1100,13 @@ static bool IntegrationPowerShellCarriesState(string repoRoot)
 }
 
 // HOME is a folder of login files that move ZDOTDIR and reorder PATH, as many users' files and macOS's path_helper do.
-static bool IntegrationZshCarriesState(string repoRoot)
+internal static bool IntegrationZshCarriesState(string repoRoot)
 {
     if (!TryGetBinary(out var bin))
         return true;
     if (OperatingSystem.IsWindows() || !IsOnPath("zsh"))
     {
-        Console.Error.WriteLine("  skip: zsh is not on PATH");
+        Skip.Test("zsh is not on PATH");
         return true;
     }
 
@@ -1099,13 +1144,13 @@ static bool IntegrationZshCarriesState(string repoRoot)
 }
 
 // sh is dash on Debian and Ubuntu, bash in POSIX mode on macOS, and Git's sh on Windows.
-static bool IntegrationShCarriesState(string repoRoot)
+internal static bool IntegrationShCarriesState(string repoRoot)
 {
     if (!TryGetBinary(out var bin))
         return true;
     if (!IsOnPath("sh"))
     {
-        Console.Error.WriteLine("  skip: sh is not on PATH");
+        Skip.Test("sh is not on PATH");
         return true;
     }
 
@@ -1129,7 +1174,7 @@ static bool IntegrationShCarriesState(string repoRoot)
         && Expect(!text.Contains("correct-horse-battery-staple", StringComparison.Ordinal) && text.Contains("[****", StringComparison.Ordinal), "an exported secret was not hidden");
 }
 
-static bool IntegrationHiddenStepFailureStops(string repoRoot)
+internal static bool IntegrationHiddenStepFailureStops(string repoRoot)
 {
     if (!TryGetBinary(out var bin))
         return true;
@@ -1145,23 +1190,19 @@ static bool IntegrationHiddenStepFailureStops(string repoRoot)
 // The line number in the error for a command the shell could not find: 2 in "bash: line 2: ", "sh: 2: ", and
 // "ksh93[2]: ". ksh93 writes "sh: line 2: " in a plain run and "sh[2]: " with an EXIT trap set, so only the number
 // is compared. Empty when the shell writes none, as busybox ash does, and null when no line names the command.
-static string? ErrorLine(string text, string command)
+internal static string? ErrorLine(string text, string command)
 {
     var match = Regex.Match(text, "^(.*)" + command + ":", RegexOptions.Multiline);
     return match.Success ? Regex.Match(match.Groups[1].Value, @"(\d+)\D*$").Groups[1].Value : null;
 }
 
-static bool TryGetBinary(out string bin)
+internal static bool TryGetBinary(out string bin)
 {
-    bin = Environment.GetEnvironmentVariable("SCENETAKE_BIN") ?? "";
-    if (!string.IsNullOrWhiteSpace(bin) && File.Exists(bin))
-        return true;
-
-    Console.Error.WriteLine("  skip: set SCENETAKE_BIN to a published scenetake binary");
-    return false;
+    bin = TestEnv.Binary;
+    return true;
 }
 
-static bool IsOnPath(string name)
+internal static bool IsOnPath(string name)
 {
     foreach (var folder in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
     {
@@ -1173,7 +1214,7 @@ static bool IsOnPath(string name)
 }
 
 // environment: variables to set for scenetake, a null value removes one.
-static (int ExitCode, string Stderr, string Text) RunFixture(string bin, string repoRoot, string fixture, Dictionary<string, string?>? environment = null)
+internal static (int ExitCode, string Stderr, string Text) RunFixture(string bin, string repoRoot, string fixture, Dictionary<string, string?>? environment = null)
 {
     var stem = Path.Combine(Path.GetTempPath(), $"scenetake-shell-state-{Guid.NewGuid():N}");
     var psi = new ProcessStartInfo(bin)
@@ -1210,7 +1251,7 @@ static (int ExitCode, string Stderr, string Text) RunFixture(string bin, string 
 }
 
 // The output events of a cast, joined, with their escape sequences.
-static string CastOutput(string cast)
+internal static string CastOutput(string cast)
 {
     var builder = new StringBuilder();
     foreach (var line in cast.Split('\n').Skip(1))
@@ -1226,7 +1267,7 @@ static string CastOutput(string cast)
 }
 
 // The last output event of an asciicast v3 cast: its interval from the event before it, and its text.
-static (double Interval, string Text) LastOutputEvent(string cast)
+internal static (double Interval, string Text) LastOutputEvent(string cast)
 {
     var last = (0.0, "");
     foreach (var line in cast.Split('\n').Skip(1))
@@ -1241,17 +1282,11 @@ static (double Interval, string Text) LastOutputEvent(string cast)
     return last;
 }
 
-static string StripEscapes(string text) =>
+internal static string StripEscapes(string text) =>
     Regex.Replace(text, @"\x1b(\[[0-9;?]*[ -/]*[@-~]|\][^\x07\x1b]*(\x07|\x1b\\)|[()][0-9A-Za-z]|[=>78])", "").Replace("\r", "");
 
 // A string with its control characters escaped, for messages.
-static string Show(string? text) =>
+internal static string Show(string? text) =>
     text is null ? "null" : "\"" + string.Concat(text.Select(static c => char.IsControl(c) && c != '\n' ? $"\\u{(int)c:x4}" : c.ToString())) + "\"";
 
-static string FindRepoRoot(string start)
-{
-    var directory = new DirectoryInfo(start);
-    while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "scenetake.cs")))
-        directory = directory.Parent;
-    return directory?.FullName ?? throw new InvalidOperationException("repository root not found");
 }

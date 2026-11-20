@@ -1,109 +1,180 @@
-#:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
-#:property Nullable=enable
-#:property ImplicitUsings=enable
-#:property AllowUnsafeBlocks=true
-#:package StbTrueTypeSharp@1.26.13
-#:include ../Terminal.cs
-#:include ../CastTimingPipeline.cs
-#:include ../CastReader.cs
-#:include SvgTestStubs.cs
-#:include ../Svg.cs
-#:include ../Raster.cs
-#:include ../Mp4.cs
-#:include ../Gif.cs
+﻿using Scenetake.TestSupport;
+
+namespace Scenetake.Tests;
 
 // mp4 frame rendering without ffmpeg: layout, colors, procedural glyphs, timing, and options.
-// Tests that draw frames need one installed font. They print "skip" when none is found.
-//
-// Usage (from repository root):
-//   dotnet run tests/mp4_render_test.cs
+// Tests that draw frames need one installed font. They skip when none is found.
 
-var failures = 0;
-failures += Run("LayoutRoundsSvgMetrics", LayoutRoundsSvgMetrics);
-failures += Run("FitWithinKeepsAspectAndEvenSize", FitWithinKeepsAspectAndEvenSize);
-failures += Run("SizePadsTerminalIntoFrame", SizePadsTerminalIntoFrame);
-failures += Run("SizeSetsOutputAndScale", SizeSetsOutputAndScale);
-failures += Run("SizeTooFarFromTerminalShapeIsReported", SizeTooFarFromTerminalShapeIsReported);
-failures += Run("SizePaddingUsesBackgroundAndFullTitleBar", SizePaddingUsesBackgroundAndFullTitleBar);
-failures += Run("BackgroundPlacesWindowInMargin", BackgroundPlacesWindowInMargin);
-failures += Run("BackgroundGradientRunsCornerToCorner", BackgroundGradientRunsCornerToCorner);
-failures += Run("WindowOnBackgroundHasBorderAndCorners", WindowOnBackgroundHasBorderAndCorners);
-failures += Run("TranslucentWindowShowsBackground", TranslucentWindowShowsBackground);
-failures += Run("BlurSoftensBackgroundUnderWindow", BlurSoftensBackgroundUnderWindow);
-failures += Run("TitleIsSansSerifAtItsOwnWidths", TitleIsSansSerifAtItsOwnWidths);
-failures += Run("OptionParsing", OptionParsing);
-failures += Run("FfmpegArgumentsUseH264Bt709", FfmpegArgumentsUseH264Bt709);
-failures += Run("GifArgumentsUseOnePaletteWithoutDither", GifArgumentsUseOnePaletteWithoutDither);
-failures += Run("GifThatPlaysOnceHasNoFade", GifThatPlaysOnceHasNoFade);
-failures += Run("FontFamilyListParsing", FontFamilyListParsing);
-failures += Run("BlockElementsFillCellEdges", BlockElementsFillCellEdges);
-failures += Run("BoxLinesReachCellEdges", BoxLinesReachCellEdges);
-failures += Run("DoubleCornerJoinsInsideCell", DoubleCornerJoinsInsideCell);
-failures += Run("BrailleDrawsDots", BrailleDrawsDots);
-failures += Run("SyntheticBoldAndItalic", SyntheticBoldAndItalic);
-failures += Run("FrameColorsMatchTheme", FrameColorsMatchTheme);
-failures += Run("CursorBlendsHalfForeground", CursorBlendsHalfForeground);
-failures += Run("NothingShownBeforeFirstEvent", NothingShownBeforeFirstEvent);
-failures += Run("FrameShowsEventsUpToItsTime", FrameShowsEventsUpToItsTime);
-failures += Run("TrailingBlankRestoreIsTrimmed", TrailingBlankRestoreIsTrimmed);
-failures += Run("EndHoldAndFadeOutEndOnTheEmptyTerminal", EndHoldAndFadeOutEndOnTheEmptyTerminal);
-failures += Run("ScreenSwitchesBecomeKeyframes", ScreenSwitchesBecomeKeyframes);
-failures += Run("TrimmedRestoreForcesNoKeyframe", TrimmedRestoreForcesNoKeyframe);
-failures += Run("ForcedKeyframesAreSpacedAndCapped", ForcedKeyframesAreSpacedAndCapped);
-failures += Run("MatrixTintMatchesSvg", MatrixTintMatchesSvg);
-failures += Run("MacosChromeDrawsTrafficLights", MacosChromeDrawsTrafficLights);
-failures += Run("WindowsChromeDrawsTabRow", WindowsChromeDrawsTabRow);
-failures += Run("BoxDrawingAtTinySizesStaysInCell", BoxDrawingAtTinySizesStaysInCell);
-failures += Run("HugeFrameIsReportedClearly", HugeFrameIsReportedClearly);
-failures += Run("FfmpegProbeTimesOut", FfmpegProbeTimesOut);
-failures += Run("OutputPathIsCheckedFirst", OutputPathIsCheckedFirst);
-failures += Run("FontTableOutsideFileIsRejected", FontTableOutsideFileIsRejected);
-failures += Run("SymbolOnlyFontIsRejected", SymbolOnlyFontIsRejected);
-failures += Run("UnreadableFontFileIsReported", UnreadableFontFileIsReported);
-failures += Run("X264SideLimitIsChecked", X264SideLimitIsChecked);
-failures += Run("FontFileThatCannotLoadIsAnError", FontFileThatCannotLoadIsAnError);
-failures += Run("ShortFontTableIsRejected", ShortFontTableIsRejected);
-failures += Run("DefaultFontsPassTableChecks", DefaultFontsPassTableChecks);
-failures += Run("SoftGlyphScalesByCoverage", SoftGlyphScalesByCoverage);
-failures += Run("SoftGlyphFrameUsesCellColor", SoftGlyphFrameUsesCellColor);
-failures += Run("OutOfRangeGlyphIdsAreMissing", OutOfRangeGlyphIdsAreMissing);
-failures += Run("EveryFontFileFaceMustLoad", EveryFontFileFaceMustLoad);
-failures += Run("FontFileIsNotHeldOpen", FontFileIsNotHeldOpen);
-failures += Run("FontFileIsReleasedAfterRender", FontFileIsReleasedAfterRender);
-failures += Run("LinkedFontFileLoads", LinkedFontFileLoads);
-failures += Run("InstalledFontsCanBeRescanned", InstalledFontsCanBeRescanned);
-failures += Run("LogNamesAFontThatLoads", LogNamesAFontThatLoads);
-
-return failures == 0 ? 0 : 1;
-
-// A test that needs an installed font and finds none is skipped, not failed: some CI runners have no fonts.
-static int Run(string name, Func<bool> test)
+[Category("Ffmpeg")]
+public sealed class Mp4RenderTests
 {
-    try
-    {
-        if (test())
-        {
-            Console.Error.WriteLine($"ok {name}");
-            return 0;
-        }
+    [Test]
+    public async Task LayoutRoundsSvgMetrics() => await Assert.That(Skipping.Run(() => Mp4RenderCases.LayoutRoundsSvgMetrics())).IsTrue();
 
-        Console.Error.WriteLine($"FAIL {name}");
-        return 1;
-    }
-    catch (Exception ex) when (ex is FontNotFoundException or SkipTestException)
-    {
-        Console.Error.WriteLine($"skip {name}: {ex.Message}");
-        return 0;
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"FAIL {name}: {ex}");
-        return 1;
-    }
+    [Test]
+    public async Task FitWithinKeepsAspectAndEvenSize() => await Assert.That(Skipping.Run(() => Mp4RenderCases.FitWithinKeepsAspectAndEvenSize())).IsTrue();
+
+    [Test]
+    public async Task SizePadsTerminalIntoFrame() => await Assert.That(Skipping.Run(() => Mp4RenderCases.SizePadsTerminalIntoFrame())).IsTrue();
+
+    [Test]
+    public async Task SizeSetsOutputAndScale() => await Assert.That(Skipping.Run(() => Mp4RenderCases.SizeSetsOutputAndScale())).IsTrue();
+
+    [Test]
+    public async Task SizeTooFarFromTerminalShapeIsReported() => await Assert.That(Skipping.Run(() => Mp4RenderCases.SizeTooFarFromTerminalShapeIsReported())).IsTrue();
+
+    [Test]
+    public async Task SizePaddingUsesBackgroundAndFullTitleBar() => await Assert.That(Skipping.Run(() => Mp4RenderCases.SizePaddingUsesBackgroundAndFullTitleBar())).IsTrue();
+
+    [Test]
+    public async Task BackgroundPlacesWindowInMargin() => await Assert.That(Skipping.Run(() => Mp4RenderCases.BackgroundPlacesWindowInMargin())).IsTrue();
+
+    [Test]
+    public async Task BackgroundGradientRunsCornerToCorner() => await Assert.That(Skipping.Run(() => Mp4RenderCases.BackgroundGradientRunsCornerToCorner())).IsTrue();
+
+    [Test]
+    public async Task WindowOnBackgroundHasBorderAndCorners() => await Assert.That(Skipping.Run(() => Mp4RenderCases.WindowOnBackgroundHasBorderAndCorners())).IsTrue();
+
+    [Test]
+    public async Task TranslucentWindowShowsBackground() => await Assert.That(Skipping.Run(() => Mp4RenderCases.TranslucentWindowShowsBackground())).IsTrue();
+
+    [Test]
+    public async Task BlurSoftensBackgroundUnderWindow() => await Assert.That(Skipping.Run(() => Mp4RenderCases.BlurSoftensBackgroundUnderWindow())).IsTrue();
+
+    [Test]
+    public async Task TitleIsSansSerifAtItsOwnWidths() => await Assert.That(Skipping.Run(() => Mp4RenderCases.TitleIsSansSerifAtItsOwnWidths())).IsTrue();
+
+    [Test]
+    public async Task OptionParsing() => await Assert.That(Skipping.Run(() => Mp4RenderCases.OptionParsing())).IsTrue();
+
+    [Test]
+    public async Task FfmpegArgumentsUseH264Bt709() => await Assert.That(Skipping.Run(() => Mp4RenderCases.FfmpegArgumentsUseH264Bt709())).IsTrue();
+
+    [Test]
+    public async Task GifArgumentsUseOnePaletteWithoutDither() => await Assert.That(Skipping.Run(() => Mp4RenderCases.GifArgumentsUseOnePaletteWithoutDither())).IsTrue();
+
+    [Test]
+    public async Task GifThatPlaysOnceHasNoFade() => await Assert.That(Skipping.Run(() => Mp4RenderCases.GifThatPlaysOnceHasNoFade())).IsTrue();
+
+    [Test]
+    public async Task FontFamilyListParsing() => await Assert.That(Skipping.Run(() => Mp4RenderCases.FontFamilyListParsing())).IsTrue();
+
+    [Test]
+    public async Task BlockElementsFillCellEdges() => await Assert.That(Skipping.Run(() => Mp4RenderCases.BlockElementsFillCellEdges())).IsTrue();
+
+    [Test]
+    public async Task BoxLinesReachCellEdges() => await Assert.That(Skipping.Run(() => Mp4RenderCases.BoxLinesReachCellEdges())).IsTrue();
+
+    [Test]
+    public async Task DoubleCornerJoinsInsideCell() => await Assert.That(Skipping.Run(() => Mp4RenderCases.DoubleCornerJoinsInsideCell())).IsTrue();
+
+    [Test]
+    public async Task BrailleDrawsDots() => await Assert.That(Skipping.Run(() => Mp4RenderCases.BrailleDrawsDots())).IsTrue();
+
+    [Test]
+    public async Task SyntheticBoldAndItalic() => await Assert.That(Skipping.Run(() => Mp4RenderCases.SyntheticBoldAndItalic())).IsTrue();
+
+    [Test]
+    public async Task FrameColorsMatchTheme() => await Assert.That(Skipping.Run(() => Mp4RenderCases.FrameColorsMatchTheme())).IsTrue();
+
+    [Test]
+    public async Task CursorBlendsHalfForeground() => await Assert.That(Skipping.Run(() => Mp4RenderCases.CursorBlendsHalfForeground())).IsTrue();
+
+    [Test]
+    public async Task NothingShownBeforeFirstEvent() => await Assert.That(Skipping.Run(() => Mp4RenderCases.NothingShownBeforeFirstEvent())).IsTrue();
+
+    [Test]
+    public async Task FrameShowsEventsUpToItsTime() => await Assert.That(Skipping.Run(() => Mp4RenderCases.FrameShowsEventsUpToItsTime())).IsTrue();
+
+    [Test]
+    public async Task TrailingBlankRestoreIsTrimmed() => await Assert.That(Skipping.Run(() => Mp4RenderCases.TrailingBlankRestoreIsTrimmed())).IsTrue();
+
+    [Test]
+    public async Task EndHoldAndFadeOutEndOnTheEmptyTerminal() => await Assert.That(Skipping.Run(() => Mp4RenderCases.EndHoldAndFadeOutEndOnTheEmptyTerminal())).IsTrue();
+
+    [Test]
+    public async Task ScreenSwitchesBecomeKeyframes() => await Assert.That(Skipping.Run(() => Mp4RenderCases.ScreenSwitchesBecomeKeyframes())).IsTrue();
+
+    [Test]
+    public async Task TrimmedRestoreForcesNoKeyframe() => await Assert.That(Skipping.Run(() => Mp4RenderCases.TrimmedRestoreForcesNoKeyframe())).IsTrue();
+
+    [Test]
+    public async Task ForcedKeyframesAreSpacedAndCapped() => await Assert.That(Skipping.Run(() => Mp4RenderCases.ForcedKeyframesAreSpacedAndCapped())).IsTrue();
+
+    [Test]
+    public async Task MatrixTintMatchesSvg() => await Assert.That(Skipping.Run(() => Mp4RenderCases.MatrixTintMatchesSvg())).IsTrue();
+
+    [Test]
+    public async Task MacosChromeDrawsTrafficLights() => await Assert.That(Skipping.Run(() => Mp4RenderCases.MacosChromeDrawsTrafficLights())).IsTrue();
+
+    [Test]
+    public async Task WindowsChromeDrawsTabRow() => await Assert.That(Skipping.Run(() => Mp4RenderCases.WindowsChromeDrawsTabRow())).IsTrue();
+
+    [Test]
+    public async Task BoxDrawingAtTinySizesStaysInCell() => await Assert.That(Skipping.Run(() => Mp4RenderCases.BoxDrawingAtTinySizesStaysInCell())).IsTrue();
+
+    [Test]
+    public async Task HugeFrameIsReportedClearly() => await Assert.That(Skipping.Run(() => Mp4RenderCases.HugeFrameIsReportedClearly())).IsTrue();
+
+    [Test]
+    public async Task FfmpegProbeTimesOut() => await Assert.That(Skipping.Run(() => Mp4RenderCases.FfmpegProbeTimesOut())).IsTrue();
+
+    [Test]
+    public async Task OutputPathIsCheckedFirst() => await Assert.That(Skipping.Run(() => Mp4RenderCases.OutputPathIsCheckedFirst())).IsTrue();
+
+    [Test]
+    public async Task FontTableOutsideFileIsRejected() => await Assert.That(Skipping.Run(() => Mp4RenderCases.FontTableOutsideFileIsRejected())).IsTrue();
+
+    [Test]
+    public async Task SymbolOnlyFontIsRejected() => await Assert.That(Skipping.Run(() => Mp4RenderCases.SymbolOnlyFontIsRejected())).IsTrue();
+
+    [Test]
+    public async Task UnreadableFontFileIsReported() => await Assert.That(Skipping.Run(() => Mp4RenderCases.UnreadableFontFileIsReported())).IsTrue();
+
+    [Test]
+    public async Task X264SideLimitIsChecked() => await Assert.That(Skipping.Run(() => Mp4RenderCases.X264SideLimitIsChecked())).IsTrue();
+
+    [Test]
+    public async Task FontFileThatCannotLoadIsAnError() => await Assert.That(Skipping.Run(() => Mp4RenderCases.FontFileThatCannotLoadIsAnError())).IsTrue();
+
+    [Test]
+    public async Task ShortFontTableIsRejected() => await Assert.That(Skipping.Run(() => Mp4RenderCases.ShortFontTableIsRejected())).IsTrue();
+
+    [Test]
+    public async Task DefaultFontsPassTableChecks() => await Assert.That(Skipping.Run(() => Mp4RenderCases.DefaultFontsPassTableChecks())).IsTrue();
+
+    [Test]
+    public async Task SoftGlyphScalesByCoverage() => await Assert.That(Skipping.Run(() => Mp4RenderCases.SoftGlyphScalesByCoverage())).IsTrue();
+
+    [Test]
+    public async Task SoftGlyphFrameUsesCellColor() => await Assert.That(Skipping.Run(() => Mp4RenderCases.SoftGlyphFrameUsesCellColor())).IsTrue();
+
+    [Test]
+    public async Task OutOfRangeGlyphIdsAreMissing() => await Assert.That(Skipping.Run(() => Mp4RenderCases.OutOfRangeGlyphIdsAreMissing())).IsTrue();
+
+    [Test]
+    public async Task EveryFontFileFaceMustLoad() => await Assert.That(Skipping.Run(() => Mp4RenderCases.EveryFontFileFaceMustLoad())).IsTrue();
+
+    [Test]
+    public async Task FontFileIsNotHeldOpen() => await Assert.That(Skipping.Run(() => Mp4RenderCases.FontFileIsNotHeldOpen())).IsTrue();
+
+    [Test]
+    public async Task FontFileIsReleasedAfterRender() => await Assert.That(Skipping.Run(() => Mp4RenderCases.FontFileIsReleasedAfterRender())).IsTrue();
+
+    [Test]
+    public async Task LinkedFontFileLoads() => await Assert.That(Skipping.Run(() => Mp4RenderCases.LinkedFontFileLoads())).IsTrue();
+
+    [Test]
+    public async Task InstalledFontsCanBeRescanned() => await Assert.That(Skipping.Run(() => Mp4RenderCases.InstalledFontsCanBeRescanned())).IsTrue();
+
+    [Test]
+    public async Task LogNamesAFontThatLoads() => await Assert.That(Skipping.Run(() => Mp4RenderCases.LogNamesAFontThatLoads())).IsTrue();
 }
 
-static bool LayoutRoundsSvgMetrics()
+internal static class Mp4RenderCases
+{
+
+internal static bool LayoutRoundsSvgMetrics()
 {
     // 16px: cell 9.92 × 20 → 10 × 20, baseline 12.8 → 13, padding 10 × 4 (SVG inner padding).
     var layout = RasterLayout.Create(16, 200, 60);
@@ -116,7 +187,7 @@ static bool LayoutRoundsSvgMetrics()
         && chrome is { TitleBarHeight: 34, Height: 102 } && chrome.RowY(0) == 38 && layout.RowY(0) == 4;
 }
 
-static bool BackgroundPlacesWindowInMargin()
+internal static bool BackgroundPlacesWindowInMargin()
 {
     // 10×3 at 16px with macOS chrome is 120 × 102. On a background the window keeps that size, 32 pixels in.
     var desktop = RasterLayout.Create(16, 10, 3, WindowStyle.Macos, desktop: true);
@@ -135,7 +206,7 @@ static bool BackgroundPlacesWindowInMargin()
         && sized is { Width: 1920, Height: 1080, WindowX: 900, WindowY: 489, WindowWidth: 120 } && sized.CellX(0) == 910;
 }
 
-static bool BackgroundGradientRunsCornerToCorner()
+internal static bool BackgroundGradientRunsCornerToCorner()
 {
     var layout = RasterLayout.Create(16, 10, 3, WindowStyle.None, margin: 20, desktop: true);
     var pixels = DesktopRaster.Render(layout, new BackgroundSpec(["#000000", "#ffffff"], null), static (_, _) => throw new InvalidOperationException("no image"));
@@ -150,7 +221,7 @@ static bool BackgroundGradientRunsCornerToCorner()
         && image.Length == width * height * 3;
 }
 
-static bool WindowOnBackgroundHasBorderAndCorners()
+internal static bool WindowOnBackgroundHasBorderAndCorners()
 {
     var layout = RasterLayout.Create(16, 10, 3, WindowStyle.Macos, desktop: true);
     var theme = TerminalTheme.FromResolved(new ResolvedTheme("#d0d0d0", "#282c34", RenderSettingsResolver.DefaultPalette));
@@ -186,15 +257,15 @@ static bool WindowOnBackgroundHasBorderAndCorners()
     return ok;
 }
 
-static bool TranslucentWindowShowsBackground()
+internal static bool TranslucentWindowShowsBackground()
 {
     // Theme bg #282c34 at opacity 0.5 (alpha 128) over a red background, in the terminal and in a row drawn again
     // after its text changed: the row comes back with the background showing through, not filled with the theme
     // color. The macOS title bar #323232 blends the same way; its border #1a1a1a stays opaque.
     var (frames, layout) = Render("""
-        [0.0,"o","ab"]
-        [0.5,"o","cd\r\nef"]
-        """, fps: 10, window: "macos", tags: ["st:background=#ff0000", "st:opacity=0.5"]);
+    [0.0,"o","ab"]
+    [0.5,"o","cd\r\nef"]
+    """, fps: 10, window: "macos", tags: ["st:background=#ff0000", "st:opacity=0.5"]);
     static byte Blend(int under, int over) => (byte)(under + (over - under) * 128 / 255);
     var terminal = (Blend(255, 0x28), Blend(0, 0x2c), Blend(0, 0x34));
     var bar = (Blend(255, 0x32), Blend(0, 0x32), Blend(0, 0x32));
@@ -216,7 +287,7 @@ static bool TranslucentWindowShowsBackground()
     return ok;
 }
 
-static bool BlurSoftensBackgroundUnderWindow()
+internal static bool BlurSoftensBackgroundUnderWindow()
 {
     // A background red on the left half and blue on the right, under a window with no fill of its own (opacity 0)
     // and a blur of 4: inside the window the edge is soft, outside it is sharp, and more than 3 deviations from the
@@ -256,7 +327,7 @@ static bool BlurSoftensBackgroundUnderWindow()
     return ok;
 }
 
-static bool TitleIsSansSerifAtItsOwnWidths()
+internal static bool TitleIsSansSerifAtItsOwnWidths()
 {
     // The title is drawn at each glyph's own width, centered on the window by that width, as the SVG's
     // text-anchor centers it: four i's take far less room than four W's, and both are centered.
@@ -293,14 +364,14 @@ static bool TitleIsSansSerifAtItsOwnWidths()
     return ok;
 }
 
-static bool FitWithinKeepsAspectAndEvenSize() =>
+internal static bool FitWithinKeepsAspectAndEvenSize() =>
     Mp4Render.FitWithin(2020, 1208, 1280, 1024) == (1280, 764)
     && Mp4Render.FitWithin(820, 488, 1280, 1024) == (820, 488)   // never upscales
     && Mp4Render.FitWithin(1000, 3000, 1280, 1024) == (340, 1024) // height-limited
     && Mp4Render.FitWithin(820, 488, 0, 0) == (820, 488)
     && Mp4Render.FitWithin(820, 1288, 1280, 1024) == (650, 1024); // 1288 × 1024/1288 in floating point is 1023.99…
 
-static bool SizePadsTerminalIntoFrame()
+internal static bool SizePadsTerminalIntoFrame()
 {
     // 190×53 at 16px is 1920×1068: the 12 spare rows of pixels split 6 above and 6 below.
     var fits = RasterLayout.Create(16, 190, 53).FitFrame(1920, 1080);
@@ -325,7 +396,7 @@ static bool SizePadsTerminalIntoFrame()
         && exact == RasterLayout.Create(16, 80, 24);
 }
 
-static bool SizeSetsOutputAndScale()
+internal static bool SizeSetsOutputAndScale()
 {
     var size = Mp4Settings.Default with { FrameWidth = 1920, FrameHeight = 1080 };
     var fits = Mp4Render.CreateLayout(16, 190, 53, WindowStyle.None, size);
@@ -338,7 +409,7 @@ static bool SizeSetsOutputAndScale()
         && Mp4Render.CreateLayout(16, 80, 24, WindowStyle.Macos, Mp4Settings.Default) == RasterLayout.Create(16, 80, 24, WindowStyle.Macos);
 }
 
-static bool SizeTooFarFromTerminalShapeIsReported()
+internal static bool SizeTooFarFromTerminalShapeIsReported()
 {
     // 512×1 at 50px is 15904×79. Padding it to the shape of 16×16384 needs 15904×16285696 pixels before
     // scaling, far over ffmpeg's raw frame limit, while the same terminal fits a 16:9 frame.
@@ -355,7 +426,7 @@ static bool SizeTooFarFromTerminalShapeIsReported()
     }
 }
 
-static bool SizePaddingUsesBackgroundAndFullTitleBar()
+internal static bool SizePaddingUsesBackgroundAndFullTitleBar()
 {
     // 8×3 with a title bar is 100×102 at 16px. In 200×200 the cells start at x 10 + 50 and y 34 + 4 + 49.
     var (frames, layout) = Render("""[0.0,"o","█\u001b[?25l"]""", fps: 10, window: "macos", size: (200, 200));
@@ -370,7 +441,7 @@ static bool SizePaddingUsesBackgroundAndFullTitleBar()
         && CellPixel(last, layout, 0, 0) == (0xd0, 0xd0, 0xd0) && layout.CellX(0) == 60 && layout.RowY(0) == 87;
 }
 
-static bool OptionParsing() =>
+internal static bool OptionParsing() =>
     Mp4Settings.TryParseFps("60", out var fps, out _) && fps == 60
     && !Mp4Settings.TryParseFps("0", out _, out _)
     && !Mp4Settings.TryParseFps("61", out _, out _)
@@ -391,7 +462,7 @@ static bool OptionParsing() =>
     && !Mp4Settings.TryParseSize("16386x1080", out _, out _, out _)
     && !Mp4Settings.TryParseSize("1920", out _, out _, out _);
 
-static bool GifArgumentsUseOnePaletteWithoutDither()
+internal static bool GifArgumentsUseOnePaletteWithoutDither()
 {
     // Pass 1 writes one palette from every frame. Pass 2 maps frames to it without dithering, stores only the changed
     // rectangle, and loops unless told not to. A scaled GIF scales in both passes, and an unscaled one passes through null.
@@ -407,7 +478,7 @@ static bool GifArgumentsUseOnePaletteWithoutDither()
         && After(scaledPalette, "-vf") == "scale=410:244:flags=lanczos,palettegen=stats_mode=full";
 }
 
-static bool GifThatPlaysOnceHasNoFade()
+internal static bool GifThatPlaysOnceHasNoFade()
 {
     // As an SVG that plays once, a GIF that plays once stops on its final screen, so it has no fade-out. One that loops keeps it.
     var render = new ResolvedRenderSettings(16, "monospace", default) with { FadeOut = 1.5 };
@@ -417,7 +488,7 @@ static bool GifThatPlaysOnceHasNoFade()
         && GifRender.OutputSize(RasterLayout.Create(16, 80, 24), Mp4Settings.Default with { FrameWidth = 640, FrameHeight = 480 }) == (640, 480);
 }
 
-static bool FfmpegArgumentsUseH264Bt709()
+internal static bool FfmpegArgumentsUseH264Bt709()
 {
     var plain = string.Join(' ', Mp4Render.BuildArguments(820, 488, Mp4Settings.Default, 820, 488, "out.mp4"));
     var scaled = string.Join(' ', Mp4Render.BuildArguments(2020, 1208, Mp4Settings.Default with { Crf = 28, Fps = 60 }, 1280, 764, "out.mp4"));
@@ -439,11 +510,11 @@ static bool FfmpegArgumentsUseH264Bt709()
         && fourK.Contains("-refs 5 ", StringComparison.Ordinal);
 }
 
-static bool FontFamilyListParsing() =>
+internal static bool FontFamilyListParsing() =>
     GlyphSource.ParseFamilyList("ui-monospace, \"Cascadia Mono\", 'Ubuntu Mono' ,monospace,")
         .SequenceEqual(["ui-monospace", "Cascadia Mono", "Ubuntu Mono", "monospace"]);
 
-static bool BlockElementsFillCellEdges()
+internal static bool BlockElementsFillCellEdges()
 {
     var layout = RasterLayout.Create(16, 1, 1);
     if (!CellGlyphs.TryDraw(0x2588, layout, 1, out var full) || full.Alpha.Any(a => a != 255))
@@ -462,7 +533,7 @@ static bool BlockElementsFillCellEdges()
         && !CellGlyphs.TryDraw(0x2571, layout, 1, out _); // diagonals come from the font
 }
 
-static bool BoxLinesReachCellEdges()
+internal static bool BoxLinesReachCellEdges()
 {
     var layout = RasterLayout.Create(16, 1, 1);
     CellGlyphs.TryDraw(0x2500, layout, 1, out var horizontal); // ─
@@ -477,7 +548,7 @@ static bool BoxLinesReachCellEdges()
         && AnyInRow(arc, h - 1) && AnyInColumn(arc, w - 1) && !AnyInRow(arc, 0) && !AnyInColumn(arc, 0);
 }
 
-static bool DoubleCornerJoinsInsideCell()
+internal static bool DoubleCornerJoinsInsideCell()
 {
     // ╔: both lines reach the right and bottom edges, and nothing is drawn above or left of the outer corner.
     var layout = RasterLayout.Create(32, 1, 1);
@@ -501,7 +572,7 @@ static bool DoubleCornerJoinsInsideCell()
         && corner.Alpha[0] == 0 && corner.Alpha[(h / 2 - 4) * w] == 0;
 }
 
-static bool BrailleDrawsDots()
+internal static bool BrailleDrawsDots()
 {
     var layout = RasterLayout.Create(16, 1, 1);
     CellGlyphs.TryDraw(0x28FF, layout, 1, out var all);   // ⣿ all eight dots
@@ -513,7 +584,7 @@ static bool BrailleDrawsDots()
         && Filled(first, 0.25, 0.0625) && !Filled(first, 0.75, 0.0625) && !Filled(first, 0.25, 0.9375);
 }
 
-static bool SyntheticBoldAndItalic()
+internal static bool SyntheticBoldAndItalic()
 {
     var bar = new RasterGlyph(1, 4, 0, -4, [255, 255, 255, 255]); // a 1px vertical bar above the baseline
     var bold = GlyphSource.Embolden(bar, 1);
@@ -534,7 +605,7 @@ static bool SyntheticBoldAndItalic()
         && Column(italic, 0) > Column(italic, 3); // the top leans right
 }
 
-static bool FrameColorsMatchTheme()
+internal static bool FrameColorsMatchTheme()
 {
     // Red background space at col 0, green █ at col 2. Dark theme: bg #282c34, palette 1 #ac4142, palette 2 #7e8e50.
     var (frames, layout) = Render(
@@ -546,7 +617,7 @@ static bool FrameColorsMatchTheme()
         && CellPixel(last, layout, 0, 2) == (0x7e, 0x8e, 0x50);
 }
 
-static bool CursorBlendsHalfForeground()
+internal static bool CursorBlendsHalfForeground()
 {
     // Cursor visible at (0, 0) on a blank cell: theme fg #d0d0d0 at alpha 128 over bg #282c34.
     var (frames, layout) = Render("""[0.0,"o",""]""", fps: 10);
@@ -554,7 +625,7 @@ static bool CursorBlendsHalfForeground()
     return CellPixel(frames[^1], layout, 0, 0) == (Blend(40, 208), Blend(44, 208), Blend(52, 208));
 }
 
-static bool NothingShownBeforeFirstEvent()
+internal static bool NothingShownBeforeFirstEvent()
 {
     // Like the SVG: no cursor until the first event at 1.0s.
     var (frames, layout) = Render("""[1.0,"o","█"]""", fps: 10);
@@ -563,29 +634,29 @@ static bool NothingShownBeforeFirstEvent()
         && CellPixel(frames[10], layout, 0, 0) == (0xd0, 0xd0, 0xd0);
 }
 
-static bool FrameShowsEventsUpToItsTime()
+internal static bool FrameShowsEventsUpToItsTime()
 {
     // Frame k shows events with time ≤ k / fps. The loop holds the last frame for one more idle gap (0.5s).
     var (frames, layout) = Render(
         """
-        [0.0,"o","\u001b[?25l█"]
-        [0.5,"o","█"]
-        """, fps: 10);
+    [0.0,"o","\u001b[?25l█"]
+    [0.5,"o","█"]
+    """, fps: 10);
     return frames.Count == 10
         && CellPixel(frames[4], layout, 0, 1) == (40, 44, 52)
         && CellPixel(frames[5], layout, 0, 1) == (0xd0, 0xd0, 0xd0);
 }
 
-static bool EndHoldAndFadeOutEndOnTheEmptyTerminal()
+internal static bool EndHoldAndFadeOutEndOnTheEmptyTerminal()
 {
     // The last event is at 0.5s. end-hold 0.5 and fade-out 0.5 make the video 1.5s: 15 frames at 10fps. Frame k
     // stands for the time up to (k + 1) / 10, so the fade starts after frame 9 and frame 14 is fully faded: the
     // block cell has the theme's background, and the padding around the cells never changes.
     var (frames, layout) = Render(
         """
-        [0.0,"o","\u001b[?25l█"]
-        [0.5,"o","█"]
-        """, fps: 10, tags: ["st:end-hold=0.5", "st:fade-out=0.5"]);
+    [0.0,"o","\u001b[?25l█"]
+    [0.5,"o","█"]
+    """, fps: 10, tags: ["st:end-hold=0.5", "st:fade-out=0.5"]);
     if (frames.Count != 15)
     {
         Console.Error.WriteLine($"  {frames.Count} frames");
@@ -605,18 +676,18 @@ static bool EndHoldAndFadeOutEndOnTheEmptyTerminal()
     return ok;
 }
 
-static bool TrailingBlankRestoreIsTrimmed()
+internal static bool TrailingBlankRestoreIsTrimmed()
 {
     // A full-screen app exits to a blank main screen. Like the SVG, the video ends on the app's last screen.
     var (frames, layout) = Render(
         """
-        [0.0,"o","\u001b[?1049h\u001b[2J\u001b[H█\u001b[?25l"]
-        [1.0,"o","\u001b[?1049l"]
-        """, fps: 10);
+    [0.0,"o","\u001b[?1049h\u001b[2J\u001b[H█\u001b[?25l"]
+    [1.0,"o","\u001b[?1049l"]
+    """, fps: 10);
     return CellPixel(frames[^1], layout, 0, 0) == (0xd0, 0xd0, 0xd0);
 }
 
-static bool ScreenSwitchesBecomeKeyframes()
+internal static bool ScreenSwitchesBecomeKeyframes()
 {
     // v3 times are intervals. At 10fps: the alternate screen opens blank at 1.02s (frame 11) and is drawn at
     // 1.15s (frame 12); leaving it at 3.04s shows the prompt again at once (frame 31). Opening and drawing at
@@ -624,37 +695,37 @@ static bool ScreenSwitchesBecomeKeyframes()
     // is not a switch, because the screen is already in the alternate screen. Leaving at 6.02s is frame 61.
     var (plan, keyframes) = PlanFor(
         """
-        [0.0,"o","$ "]
-        [1.02,"o","\u001b[?1049h"]
-        [0.13,"o","\u001b[H█"]
-        [1.89,"o","\u001b[?1049l"]
-        [0.49,"o","\u001b[?1049h\u001b[H█"]
-        [1.48,"o","\u001b[?1049hX"]
-        [1.01,"o","\u001b[?1049l"]
-        """, fps: 10);
+    [0.0,"o","$ "]
+    [1.02,"o","\u001b[?1049h"]
+    [0.13,"o","\u001b[H█"]
+    [1.89,"o","\u001b[?1049l"]
+    [0.49,"o","\u001b[?1049h\u001b[H█"]
+    [1.48,"o","\u001b[?1049hX"]
+    [1.01,"o","\u001b[?1049l"]
+    """, fps: 10);
     return plan.StopIndex == 7
         && plan.ScreenSwitchFrames.SequenceEqual([12, 31, 36, 61])
         && keyframes.SequenceEqual([12, 31, 61]);
 }
 
-static bool TrimmedRestoreForcesNoKeyframe()
+internal static bool TrimmedRestoreForcesNoKeyframe()
 {
     // The exit to a blank main screen is trimmed, so the frame that would show it is not forced either.
     // The switch into the alternate screen is in frame 0, which is a keyframe anyway.
     var (plan, keyframes) = PlanFor(
         """
-        [0.0,"o","\u001b[?1049h\u001b[2J\u001b[H█\u001b[?25l"]
-        [1.0,"o","\u001b[?1049l"]
-        """, fps: 10);
+    [0.0,"o","\u001b[?1049h\u001b[2J\u001b[H█\u001b[?25l"]
+    [1.0,"o","\u001b[?1049l"]
+    """, fps: 10);
     return plan.StopIndex == 1 && plan.ScreenSwitchFrames.Count == 0 && keyframes.Count == 0;
 }
 
-static bool ForcedKeyframesAreSpacedAndCapped() =>
+internal static bool ForcedKeyframesAreSpacedAndCapped() =>
     Mp4Render.ChooseKeyframes([5, 20, 34, 35, 64], 30).SequenceEqual([5, 35])
     && Mp4Render.ChooseKeyframes([.. Enumerable.Range(1, 1500).Select(i => i * 30)], 30) is { Count: Mp4Settings.MaxForcedKeyframes } capped
     && capped[^1] == Mp4Settings.MaxForcedKeyframes * 30;
 
-static (FixedRatePlan Plan, IReadOnlyList<int> Keyframes) PlanFor(string events, int fps)
+internal static (FixedRatePlan Plan, IReadOnlyList<int> Keyframes) PlanFor(string events, int fps)
 {
     var path = Path.Combine(Path.GetTempPath(), $"scenetake-mp4-{Guid.NewGuid():N}.cast");
     try
@@ -672,14 +743,14 @@ static (FixedRatePlan Plan, IReadOnlyList<int> Keyframes) PlanFor(string events,
     }
 }
 
-static bool MatrixTintMatchesSvg()
+internal static bool MatrixTintMatchesSvg()
 {
     // White next to green draws as bright green (palette 10 #7e8e50), as in the SVG.
     var (frames, layout) = Render("""[0.0,"o","\u001b[32m█\u001b[37m█\u001b[0m\u001b[?25l"]""", fps: 10);
     return CellPixel(frames[^1], layout, 0, 1) == (0x7e, 0x8e, 0x50);
 }
 
-static bool MacosChromeDrawsTrafficLights()
+internal static bool MacosChromeDrawsTrafficLights()
 {
     // Dark theme → MacDark: title bar #323232, separator #1a1a1a. Buttons centered at y=17, x=22/48/74 (SVG geometry).
     var (frames, layout) = Render("""[0.0,"o","█\u001b[?25l"]""", fps: 10, window: "macos");
@@ -693,7 +764,7 @@ static bool MacosChromeDrawsTrafficLights()
         && CellPixel(last, layout, 0, 0) == (0xd0, 0xd0, 0xd0); // terminal content starts below the title bar
 }
 
-static bool WindowsChromeDrawsTabRow()
+internal static bool WindowsChromeDrawsTabRow()
 {
     // Dark theme → WinDark: the tab row #1c1c1c, the active tab from 8 to 128 px in the terminal's #282c34, and
     // the caption glyphs in #d6d6d6: the minimize line on row 17 around 115 px from the right, and the maximize
@@ -720,7 +791,7 @@ static bool WindowsChromeDrawsTabRow()
     return ok;
 }
 
-static (List<byte[]> Frames, RasterLayout Layout) Render(string events, int fps, string? window = null, (int Width, int Height)? size = null, string[]? tags = null)
+internal static (List<byte[]> Frames, RasterLayout Layout) Render(string events, int fps, string? window = null, (int Width, int Height)? size = null, string[]? tags = null)
 {
     var path = Path.Combine(Path.GetTempPath(), $"scenetake-mp4-{Guid.NewGuid():N}.cast");
     try
@@ -744,16 +815,16 @@ static (List<byte[]> Frames, RasterLayout Layout) Render(string events, int fps,
     }
 }
 
-static (byte, byte, byte) Pixel(byte[] frame, RasterLayout layout, int x, int y)
+internal static (byte, byte, byte) Pixel(byte[] frame, RasterLayout layout, int x, int y)
 {
     var offset = (y * layout.Width + x) * 3;
     return (frame[offset], frame[offset + 1], frame[offset + 2]);
 }
 
-static (byte, byte, byte) CellPixel(byte[] frame, RasterLayout layout, int row, int col) =>
+internal static (byte, byte, byte) CellPixel(byte[] frame, RasterLayout layout, int row, int col) =>
     Pixel(frame, layout, layout.CellX(col) + layout.CellWidth / 2, layout.RowY(row) + layout.CellHeight / 2);
 
-static bool SoftGlyphScalesByCoverage()
+internal static bool SoftGlyphScalesByCoverage()
 {
     // A 12×24 matrix in a 10×20 cell (16px). Columns 0–5 set: output columns 0–4 cover glyph x 0–6 fully,
     // columns 5–9 nothing. One set pixel in a 2×2 matrix fills the cell's top-left quarter.
@@ -769,7 +840,7 @@ static bool SoftGlyphScalesByCoverage()
         && At(quarter, w / 2 - 1, h / 2 - 1) == 255 && At(quarter, w / 2, h / 2 - 1) == 0 && At(quarter, w / 2 - 1, h / 2) == 0;
 }
 
-static bool SoftGlyphFrameUsesCellColor()
+internal static bool SoftGlyphFrameUsesCellColor()
 {
     // A soft font glyph with every pixel set fills its cell in the cell's color: red (#ac4142) in the dark theme.
     // The in-box ConPTY form: the font in G1, its character between SO and SI. The space after it is background.
@@ -782,7 +853,7 @@ static bool SoftGlyphFrameUsesCellColor()
         && CellPixel(last, layout, 0, 1) == (40, 44, 52);
 }
 
-static bool BoxDrawingAtTinySizesStaysInCell()
+internal static bool BoxDrawingAtTinySizesStaysInCell()
 {
     // At font sizes 1–3 a cell is 1×1, 1×3, or 2×4 pixels, narrower than a heavy (2px) or double (4px)
     // line. At size 1 any write past the 1×1 mask throws, so drawing each of these without an exception
@@ -802,7 +873,7 @@ static bool BoxDrawingAtTinySizesStaysInCell()
     return true;
 }
 
-static bool HugeFrameIsReportedClearly()
+internal static bool HugeFrameIsReportedClearly()
 {
     // ffmpeg takes a raw frame only while (width + 128) × (height + 128) is below 2^28. For 512×512
     // cells that holds at font size 36 (11296x23056) and fails at 37 (11808x23568).
@@ -818,7 +889,7 @@ static bool HugeFrameIsReportedClearly()
     }
 }
 
-static bool X264SideLimitIsChecked()
+internal static bool X264SideLimitIsChecked()
 {
     // x264 rejects a side over 16384. 512 columns are 15904 pixels wide at font size 50 and 16416 at
     // 51. --max-size scales the video below the limit, so it makes the same frame encodable.
@@ -836,7 +907,7 @@ static bool X264SideLimitIsChecked()
     }
 }
 
-static bool FfmpegProbeTimesOut()
+internal static bool FfmpegProbeTimesOut()
 {
     // A "ffmpeg" that never answers must fail at the timeout, not hang until it exits. The fake runs
     // for 5s and the timeout is 1s.
@@ -867,11 +938,11 @@ static bool FfmpegProbeTimesOut()
     }
 }
 
-static bool OutputPathIsCheckedFirst()
+internal static bool OutputPathIsCheckedFirst()
 {
     // A missing output folder or a directory in the output's place is reported by name before any
     // frame is drawn. The ffmpeg path does not exist, so reaching ffmpeg would fail differently.
-    var recording = CastReader.Read("tests/marker-delay.cast");
+    var recording = CastReader.Read(TestEnv.RepoPath("tests/marker-delay.cast"));
     var directory = Path.Combine(Path.GetTempPath(), $"scenetake-mp4-out-{Guid.NewGuid():N}");
     Directory.CreateDirectory(Path.Combine(directory, "taken.mp4"));
     try
@@ -900,7 +971,7 @@ static bool OutputPathIsCheckedFirst()
     }
 }
 
-static bool FontTableOutsideFileIsRejected()
+internal static bool FontTableOutsideFileIsRejected()
 {
     // stb_truetype reads tables without bounds checks, so a table past the end of the file would crash
     // the process during rendering. The header scan must reject the file instead.
@@ -925,7 +996,7 @@ static bool FontTableOutsideFileIsRejected()
     }
 }
 
-static bool SymbolOnlyFontIsRejected()
+internal static bool SymbolOnlyFontIsRejected()
 {
     // A font whose cmap has no Unicode subtable (Symbol, Wingdings) cannot be loaded by stb_truetype.
     // It must be left out at scan time, so --font-file fails before recording and a family list skips it.
@@ -940,11 +1011,11 @@ static bool SymbolOnlyFontIsRejected()
     }
 }
 
-static bool UnreadableFontFileIsReported()
+internal static bool UnreadableFontFileIsReported()
 {
     // A --font-file without read permission must give the font error, not an unhandled exception.
     if (OperatingSystem.IsWindows())
-        throw new SkipTestException("needs Unix file modes");
+        throw new TUnit.Core.Exceptions.SkipTestException("needs Unix file modes");
 
     var path = CopyInstalledTrueTypeFont(_ => { });
     try
@@ -953,7 +1024,7 @@ static bool UnreadableFontFileIsReported()
         try
         {
             using (File.OpenRead(path))
-                throw new SkipTestException("running as a user who can read any file");
+                throw new TUnit.Core.Exceptions.SkipTestException("running as a user who can read any file");
         }
         catch (UnauthorizedAccessException)
         {
@@ -968,7 +1039,7 @@ static bool UnreadableFontFileIsReported()
     }
 }
 
-static bool FontFileThatCannotLoadIsAnError()
+internal static bool FontFileThatCannotLoadIsAnError()
 {
     // With loca renamed to "CFF ", the header scan sees outlines it can draw, but stb_truetype cannot
     // load the face. The scan alone would accept the file and the render would use another font.
@@ -983,7 +1054,7 @@ static bool FontFileThatCannotLoadIsAnError()
     }
 }
 
-static bool ShortFontTableIsRejected()
+internal static bool ShortFontTableIsRejected()
 {
     // Every variant passes the header scan: each table lies inside the file, and head, hhea, and hmtx
     // exist. stb_truetype reads the fields and tables changed here without bounds checks, so drawing
@@ -991,17 +1062,17 @@ static bool ShortFontTableIsRejected()
     Action<byte[]>[] variants =
     [
         data =>
-        {
-            PatchTableOffset(data, "loca", (uint)data.Length);
-            PatchTableLength(data, "loca", 0);
-        },
-        data => PatchTableLength(data, "glyf", 0),  // the loca entries then point past the end of glyf
-        data => PatchTableLength(data, "head", 51), // indexToLocFormat is at 50 and 51
-        data => PatchTableLength(data, "hhea", 35), // numberOfHMetrics is at 34 and 35
-        data => PatchTableLength(data, "maxp", 5),  // numGlyphs is at 4 and 5
-        data => PatchTableLength(data, "hmtx", 0),
-        data => WriteUInt16(data, TableOffset(data, "hhea") + 34, 0), // the face then has no long metrics
-    ];
+    {
+        PatchTableOffset(data, "loca", (uint)data.Length);
+        PatchTableLength(data, "loca", 0);
+    },
+    data => PatchTableLength(data, "glyf", 0),  // the loca entries then point past the end of glyf
+    data => PatchTableLength(data, "head", 51), // indexToLocFormat is at 50 and 51
+    data => PatchTableLength(data, "hhea", 35), // numberOfHMetrics is at 34 and 35
+    data => PatchTableLength(data, "maxp", 5),  // numGlyphs is at 4 and 5
+    data => PatchTableLength(data, "hmtx", 0),
+    data => WriteUInt16(data, TableOffset(data, "hhea") + 34, 0), // the face then has no long metrics
+];
     foreach (var patch in variants)
     {
         var path = CopyInstalledTrueTypeFont(patch);
@@ -1019,7 +1090,7 @@ static bool ShortFontTableIsRejected()
     return true;
 }
 
-static bool OutOfRangeGlyphIdsAreMissing()
+internal static bool OutOfRangeGlyphIdsAreMissing()
 {
     // stb_truetype reads hmtx by the glyph id the cmap gives, without checking it against maxp's glyph
     // count. Both fonts load: one lowers the glyph count to 1, the other maps only 'A' to 0xE0000000
@@ -1041,7 +1112,7 @@ static bool OutOfRangeGlyphIdsAreMissing()
     }
 }
 
-static bool EveryFontFileFaceMustLoad()
+internal static bool EveryFontFileFaceMustLoad()
 {
     // The collection holds one static face twice. The first is marked regular (OS/2 weight 400), and the
     // second bold (700) with an empty hmtx. The scan accepts both, and the family picks the second as
@@ -1060,7 +1131,7 @@ static bool EveryFontFileFaceMustLoad()
     {
         var faces = FontCatalog.ReadFaces(path);
         if (faces.Count != 2 || faces[1].Weight != 700 || !LoadedFace.CanLoad(faces[0]))
-            throw new SkipTestException("the installed font cannot make a regular and bold collection");
+            throw new TUnit.Core.Exceptions.SkipTestException("the installed font cannot make a regular and bold collection");
         return FontFileError(path).Contains(path, StringComparison.Ordinal);
     }
     finally
@@ -1069,7 +1140,7 @@ static bool EveryFontFileFaceMustLoad()
     }
 }
 
-static bool FontFileIsNotHeldOpen()
+internal static bool FontFileIsNotHeldOpen()
 {
     // The scenario path checks --font-file before pre, and pre may replace the file. Windows cannot
     // replace a file that is memory-mapped, so the check must not keep it mapped. Unix allows either.
@@ -1081,7 +1152,7 @@ static bool FontFileIsNotHeldOpen()
     return accepted;
 }
 
-static bool FontFileIsReleasedAfterRender()
+internal static bool FontFileIsReleasedAfterRender()
 {
     // post may replace or delete the --font-file. Windows cannot while the render keeps it mapped, so
     // WriteMp4 must release every face it loaded. The render must draw text in that font, which needs
@@ -1109,7 +1180,7 @@ static bool FontFileIsReleasedAfterRender()
     }
 }
 
-static bool LogNamesAFontThatLoads()
+internal static bool LogNamesAFontThatLoads()
 {
     // An installed family whose regular file fails the load checks draws no regular text, so the log
     // must not name it. A copy of an installed font with an empty hmtx gets a family name no installed
@@ -1125,7 +1196,7 @@ static bool LogNamesAFontThatLoads()
     try
     {
         if (original is null || !LoadedFace.CanLoad(original.Regular))
-            throw new SkipTestException("the copied font's own family does not load");
+            throw new TUnit.Core.Exceptions.SkipTestException("the copied font's own family does not load");
         var glyphs = GlyphSource.Create($"\"{face.Family}\", \"{copied.Family}\"", null, RasterLayout.Create(16, 1, 1));
         return !LoadedFace.CanLoad(face) && glyphs.Primary == original.Regular;
     }
@@ -1137,7 +1208,7 @@ static bool LogNamesAFontThatLoads()
     }
 }
 
-static void TryDeleteFile(string path)
+internal static void TryDeleteFile(string path)
 {
     try
     {
@@ -1149,7 +1220,7 @@ static void TryDeleteFile(string path)
 }
 
 /// <summary>A stand-in ffmpeg that reads every frame from stdin, then writes its output file (the last argument).</summary>
-static string WriteFrameReadingFfmpeg(string directory)
+internal static string WriteFrameReadingFfmpeg(string directory)
 {
     if (OperatingSystem.IsWindows())
     {
@@ -1180,7 +1251,7 @@ static string WriteFrameReadingFfmpeg(string directory)
     }
 }
 
-static bool LinkedFontFileLoads()
+internal static bool LinkedFontFileLoads()
 {
     // A font reached through a symbolic link must load like the file itself. A link's own size is
     // not the font's, so a size taken from the link would fail the table checks.
@@ -1194,7 +1265,7 @@ static bool LinkedFontFileLoads()
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            throw new SkipTestException("this machine does not allow symbolic links");
+            throw new TUnit.Core.Exceptions.SkipTestException("this machine does not allow symbolic links");
         }
 
         return FontFileError(link) == "";
@@ -1206,7 +1277,7 @@ static bool LinkedFontFileLoads()
     }
 }
 
-static bool InstalledFontsCanBeRescanned()
+internal static bool InstalledFontsCanBeRescanned()
 {
     // pre may install a font, so the render scans again after pre. A rescan must not reuse the earlier scan.
     var first = FontCatalog.Installed;
@@ -1214,7 +1285,7 @@ static bool InstalledFontsCanBeRescanned()
     return !ReferenceEquals(first, FontCatalog.Installed) && FontCatalog.Installed.Count == first.Count;
 }
 
-static unsafe bool DefaultFontsPassTableChecks()
+internal static unsafe bool DefaultFontsPassTableChecks()
 {
     // The table checks must not reject a font that stb_truetype loads. These are the fonts every
     // render tries, so a wrong length rule would show up here.
@@ -1252,7 +1323,7 @@ static unsafe bool DefaultFontsPassTableChecks()
 }
 
 /// <summary>The FontNotFoundException message for <paramref name="path"/> as --font-file, or "" when it loads.</summary>
-static string FontFileError(string path)
+internal static string FontFileError(string path)
 {
     try
     {
@@ -1266,7 +1337,7 @@ static string FontFileError(string path)
 }
 
 /// <summary>Copies an installed single-face TrueType font to a temporary file, changed by <paramref name="patch"/>.</summary>
-static string CopyInstalledTrueTypeFont(Action<byte[]> patch) =>
+internal static string CopyInstalledTrueTypeFont(Action<byte[]> patch) =>
     RewriteInstalledTrueTypeFont(data =>
     {
         patch(data);
@@ -1274,7 +1345,7 @@ static string CopyInstalledTrueTypeFont(Action<byte[]> patch) =>
     });
 
 /// <summary>Copies an installed single-face TrueType font to a temporary file, replaced by what <paramref name="patch"/> returns.</summary>
-static string RewriteInstalledTrueTypeFont(Func<byte[], byte[]> patch)
+internal static string RewriteInstalledTrueTypeFont(Func<byte[], byte[]> patch)
 {
     var data = patch(File.ReadAllBytes(InstalledSingleFaceTrueType()));
     var path = Path.Combine(Path.GetTempPath(), $"scenetake-font-{Guid.NewGuid():N}.ttf");
@@ -1282,21 +1353,21 @@ static string RewriteInstalledTrueTypeFont(Func<byte[], byte[]> patch)
     return path;
 }
 
-static string InstalledSingleFaceTrueType(bool nonVariable = false) =>
+internal static string InstalledSingleFaceTrueType(bool nonVariable = false) =>
     FontCatalog.Installed
         .Where(face => !nonVariable || !face.Variable)
         .Select(face => face.Path)
         .FirstOrDefault(p => p.EndsWith(".ttf", StringComparison.OrdinalIgnoreCase) && FontCatalog.ReadFaces(p).Count == 1)
     ?? throw new FontNotFoundException("no installed single-face TrueType font to copy");
 
-static int TableOffset(byte[] data, string tag) =>
+internal static int TableOffset(byte[] data, string tag) =>
     (int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(TableRecord(data, tag) + 8));
 
-static void WriteUInt16(byte[] data, int at, ushort value) =>
+internal static void WriteUInt16(byte[] data, int at, ushort value) =>
     System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(at), value);
 
 /// <summary>Appends a format 12 cmap subtable that maps <paramref name="codepoint"/> to <paramref name="glyph"/>, and points every Unicode encoding record at it.</summary>
-static byte[] MapToGlyph(byte[] data, int codepoint, uint glyph)
+internal static byte[] MapToGlyph(byte[] data, int codepoint, uint glyph)
 {
     var cmap = TableOffset(data, "cmap");
     var subtable = new byte[28];
@@ -1321,7 +1392,7 @@ static byte[] MapToGlyph(byte[] data, int codepoint, uint glyph)
 }
 
 /// <summary>A font collection (TTC) of two single-face fonts, with each face's table offsets moved to where it lands.</summary>
-static byte[] Collection(byte[] first, byte[] second)
+internal static byte[] Collection(byte[] first, byte[] second)
 {
     const int header = 12 + 2 * 4;
     var secondStart = header + ((first.Length + 3) & ~3);
@@ -1345,7 +1416,7 @@ static byte[] Collection(byte[] first, byte[] second)
     return result;
 }
 
-static int TableRecord(byte[] data, string tag)
+internal static int TableRecord(byte[] data, string tag)
 {
     var count = System.Buffers.Binary.BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(4));
     for (var i = 0; i < count; i++)
@@ -1358,17 +1429,17 @@ static int TableRecord(byte[] data, string tag)
     throw new FontNotFoundException($"font has no {tag} table");
 }
 
-static void PatchTableOffset(byte[] data, string tag, uint offset) =>
+internal static void PatchTableOffset(byte[] data, string tag, uint offset) =>
     System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(data.AsSpan(TableRecord(data, tag) + 8), offset);
 
-static void PatchTableLength(byte[] data, string tag, uint length) =>
+internal static void PatchTableLength(byte[] data, string tag, uint length) =>
     System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(data.AsSpan(TableRecord(data, tag) + 12), length);
 
-static void PatchTableTag(byte[] data, string tag, string newTag) =>
+internal static void PatchTableTag(byte[] data, string tag, string newTag) =>
     System.Text.Encoding.ASCII.GetBytes(newTag).CopyTo(data, TableRecord(data, tag));
 
 // Every cmap encoding record becomes Windows platform 3, encoding 0 (symbol), as in Symbol.ttf.
-static void PatchCmapToSymbol(byte[] data)
+internal static void PatchCmapToSymbol(byte[] data)
 {
     var cmap = (int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(TableRecord(data, "cmap") + 8));
     var count = System.Buffers.Binary.BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(cmap + 2));
@@ -1379,4 +1450,4 @@ static void PatchCmapToSymbol(byte[] data)
     }
 }
 
-sealed class SkipTestException(string reason) : Exception(reason);
+}

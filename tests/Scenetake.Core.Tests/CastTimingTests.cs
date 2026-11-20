@@ -1,66 +1,79 @@
-#:sdk Microsoft.NET.Sdk
-#:property TargetFramework=net10.0
-#:property Nullable=enable
-#:property ImplicitUsings=enable
-#:include ../Terminal.cs
-#:include ../CastTimingPipeline.cs
+﻿using Scenetake.TestSupport;
 
-var failures = 0;
-failures += Run("CollapseIdleGapLong", CollapseIdleGapLong);
-failures += Run("PreserveShortGap", PreserveShortGap);
-failures += Run("CollapseIdleGapsWithOriginalPreservesEmitSpacing", CollapseIdleGapsWithOriginalPreservesEmitSpacing);
-failures += Run("LinearCompressScales", LinearCompressScales);
-failures += Run("LinearCompressUnderMax", LinearCompressUnderMax);
-failures += Run("AdjustTimelineCombined", AdjustTimelineCombined);
-failures += Run("CoalesceTimedTextMerges", CoalesceTimedTextMerges);
-failures += Run("CoalesceTimedUtf8Merges", CoalesceTimedUtf8Merges);
-failures += Run("MergeBurstGapsCollapses", MergeBurstGapsCollapses);
-failures += Run("HighlightSplitterPreservesSegments", HighlightSplitterPreservesSegments);
-failures += Run("HighlightSplitterKeepsSgrAcrossBoundary", HighlightSplitterKeepsSgrAcrossBoundary);
-failures += Run("HighlightSplitterNeverCutsInsideASequence", HighlightSplitterNeverCutsInsideASequence);
-failures += Run("HighlightSplitterCountsReadsInTheJoinedOutput", HighlightSplitterCountsReadsInTheJoinedOutput);
-failures += Run("HighlightSplitterKeepsTheSequencesAtTheEnd", HighlightSplitterKeepsTheSequencesAtTheEnd);
-failures += Run("HighlightSplitterKeepsColonColors", HighlightSplitterKeepsColonColors);
-failures += Run("HighlightSplitterKeepsExtendedColors", HighlightSplitterKeepsExtendedColors);
-failures += Run("HighlightSplitterCountsACrlfOnce", HighlightSplitterCountsACrlfOnce);
+namespace Scenetake.Core.Tests;
 
-return failures == 0 ? 0 : 1;
-
-static int Run(string name, Func<bool> test)
+public sealed class CastTimingTests
 {
-    try
-    {
-        if (test())
-        {
-            Console.Error.WriteLine($"ok {name}");
-            return 0;
-        }
+    [Test]
+    public async Task CollapseIdleGapLong() => await Assert.That(CastTimingCases.CollapseIdleGapLong()).IsTrue();
 
-        Console.Error.WriteLine($"FAIL {name}");
-        return 1;
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"FAIL {name}: {ex.Message}");
-        return 1;
-    }
+    [Test]
+    public async Task PreserveShortGap() => await Assert.That(CastTimingCases.PreserveShortGap()).IsTrue();
+
+    [Test]
+    public async Task CollapseIdleGapsWithOriginalPreservesEmitSpacing() => await Assert.That(CastTimingCases.CollapseIdleGapsWithOriginalPreservesEmitSpacing()).IsTrue();
+
+    [Test]
+    public async Task LinearCompressScales() => await Assert.That(CastTimingCases.LinearCompressScales()).IsTrue();
+
+    [Test]
+    public async Task LinearCompressUnderMax() => await Assert.That(CastTimingCases.LinearCompressUnderMax()).IsTrue();
+
+    [Test]
+    public async Task AdjustTimelineCombined() => await Assert.That(CastTimingCases.AdjustTimelineCombined()).IsTrue();
+
+    [Test]
+    public async Task CoalesceTimedTextMerges() => await Assert.That(CastTimingCases.CoalesceTimedTextMerges()).IsTrue();
+
+    [Test]
+    public async Task CoalesceTimedUtf8Merges() => await Assert.That(CastTimingCases.CoalesceTimedUtf8Merges()).IsTrue();
+
+    [Test]
+    public async Task MergeBurstGapsCollapses() => await Assert.That(CastTimingCases.MergeBurstGapsCollapses()).IsTrue();
+
+    [Test]
+    public async Task HighlightSplitterPreservesSegments() => await Assert.That(CastTimingCases.HighlightSplitterPreservesSegments()).IsTrue();
+
+    [Test]
+    public async Task HighlightSplitterKeepsSgrAcrossBoundary() => await Assert.That(CastTimingCases.HighlightSplitterKeepsSgrAcrossBoundary()).IsTrue();
+
+    [Test]
+    public async Task HighlightSplitterNeverCutsInsideASequence() => await Assert.That(CastTimingCases.HighlightSplitterNeverCutsInsideASequence()).IsTrue();
+
+    [Test]
+    public async Task HighlightSplitterCountsReadsInTheJoinedOutput() => await Assert.That(CastTimingCases.HighlightSplitterCountsReadsInTheJoinedOutput()).IsTrue();
+
+    [Test]
+    public async Task HighlightSplitterKeepsTheSequencesAtTheEnd() => await Assert.That(CastTimingCases.HighlightSplitterKeepsTheSequencesAtTheEnd()).IsTrue();
+
+    [Test]
+    public async Task HighlightSplitterKeepsColonColors() => await Assert.That(CastTimingCases.HighlightSplitterKeepsColonColors()).IsTrue();
+
+    [Test]
+    public async Task HighlightSplitterKeepsExtendedColors() => await Assert.That(CastTimingCases.HighlightSplitterKeepsExtendedColors()).IsTrue();
+
+    [Test]
+    public async Task HighlightSplitterCountsACrlfOnce() => await Assert.That(CastTimingCases.HighlightSplitterCountsACrlfOnce()).IsTrue();
 }
 
-static bool CollapseIdleGapLong()
+internal static class CastTimingCases
+{
+
+internal static bool CollapseIdleGapLong()
 {
     var times = new[] { 0.0, 30.0, 30.5 };
     CastTimingPipeline.CollapseIdleGaps(times, silenceThreshold: 2.0, maxIdle: 0.2);
     return Math.Abs(times[1] - 0.2) < 1e-9 && Math.Abs(times[2] - 0.7) < 1e-9;
 }
 
-static bool PreserveShortGap()
+internal static bool PreserveShortGap()
 {
     var times = new[] { 0.0, 0.5, 1.0 };
     CastTimingPipeline.CollapseIdleGaps(times, silenceThreshold: 2.0, maxIdle: 0.2);
     return Math.Abs(times[1] - 0.5) < 1e-9 && Math.Abs(times[2] - 1.0) < 1e-9;
 }
 
-static bool CollapseIdleGapsWithOriginalPreservesEmitSpacing()
+internal static bool CollapseIdleGapsWithOriginalPreservesEmitSpacing()
 {
     var emit = new[] { 0.0, 0.15, 12.0, 12.15 };
     var original = new[] { 0.0, 0.1, 12.0, 12.1 };
@@ -70,7 +83,7 @@ static bool CollapseIdleGapsWithOriginalPreservesEmitSpacing()
         && Math.Abs(emit[3] - 0.50) < 1e-9;
 }
 
-static bool LinearCompressScales()
+internal static bool LinearCompressScales()
 {
     var times = new[] { 0.0, 5.0, 10.0 };
     CastTimingPipeline.LinearCompress(times, maxDuration: 5.0);
@@ -79,14 +92,14 @@ static bool LinearCompressScales()
         && Math.Abs(times[2] - 5.0) < 1e-9;
 }
 
-static bool LinearCompressUnderMax()
+internal static bool LinearCompressUnderMax()
 {
     var times = new[] { 0.0, 1.0, 2.0 };
     CastTimingPipeline.LinearCompress(times, maxDuration: 5.0);
     return Math.Abs(times[1] - 1.0) < 1e-9 && Math.Abs(times[2] - 2.0) < 1e-9;
 }
 
-static bool MergeBurstGapsCollapses()
+internal static bool MergeBurstGapsCollapses()
 {
     var times = new[] { 0.0, 0.02, 0.04, 1.0 };
     var original = new[] { 0.0, 0.01, 0.02, 1.0 };
@@ -96,34 +109,34 @@ static bool MergeBurstGapsCollapses()
         && Math.Abs(times[3] - 1.0) < 1e-9;
 }
 
-static bool AdjustTimelineCombined()
+internal static bool AdjustTimelineCombined()
 {
     var times = Enumerable.Range(0, 201).Select(static i => i * 0.5).ToArray();
     var adjusted = CastTimingPipeline.AdjustTimeline(times, new CastTimingSettings(2.0, 0.2, 10.0, StreamOutput: true));
     return Math.Abs(adjusted[^1] - 10.0) < 1e-9;
 }
 
-static bool CoalesceTimedTextMerges()
+internal static bool CoalesceTimedTextMerges()
 {
     var coalesced = CastTimingPipeline.CoalesceTimedText(
     [
         (0.1, "a"),
-        (0.1, "b"),
-        (0.2, "c"),
-    ]);
+    (0.1, "b"),
+    (0.2, "c"),
+]);
     return coalesced.Count == 2
         && coalesced[0].Text == "ab"
         && coalesced[1].Text == "c";
 }
 
-static bool CoalesceTimedUtf8Merges()
+internal static bool CoalesceTimedUtf8Merges()
 {
     var coalesced = CastTimingPipeline.CoalesceTimedUtf8(
     [
         (0.1, (ReadOnlyMemory<byte>)new byte[] { (byte)'a' }),
-        (0.1, (ReadOnlyMemory<byte>)new byte[] { (byte)'b' }),
-        (0.2, (ReadOnlyMemory<byte>)new byte[] { (byte)'c' }),
-    ]);
+    (0.1, (ReadOnlyMemory<byte>)new byte[] { (byte)'b' }),
+    (0.2, (ReadOnlyMemory<byte>)new byte[] { (byte)'c' }),
+]);
     return coalesced.Count == 2
         && coalesced[0].Data.Length == 2
         && coalesced[0].Data[0] == (byte)'a'
@@ -131,7 +144,7 @@ static bool CoalesceTimedUtf8Merges()
         && coalesced[1].Data[0] == (byte)'c';
 }
 
-static bool HighlightSplitterPreservesSegments()
+internal static bool HighlightSplitterPreservesSegments()
 {
     var highlighted = "\u001b[31mhello\u001b[0m\nworld";
     var split = HighlightSplitter.SplitByRawSegments(highlighted, ["hello" + "\n", "world"]);
@@ -140,7 +153,7 @@ static bool HighlightSplitterPreservesSegments()
         && split[1].Contains("world");
 }
 
-static bool HighlightSplitterKeepsSgrAcrossBoundary()
+internal static bool HighlightSplitterKeepsSgrAcrossBoundary()
 {
     var highlighted = "\u001b[31mhello world\u001b[0m";
     var split = HighlightSplitter.SplitByRawSegments(highlighted, ["hello ", "world"]);
@@ -153,7 +166,7 @@ static bool HighlightSplitterKeepsSgrAcrossBoundary()
         && split[1].Contains("\u001b[0m", StringComparison.Ordinal);
 }
 
-static bool HighlightSplitterNeverCutsInsideASequence()
+internal static bool HighlightSplitterNeverCutsInsideASequence()
 {
     // The first read ends inside a title, so it has no visible characters of its own. A cut after its last byte would
     // put the color's reset inside the title, which would end it there and show the rest.
@@ -164,7 +177,7 @@ static bool HighlightSplitterNeverCutsInsideASequence()
         && split[1].Contains("done", StringComparison.Ordinal);
 }
 
-static bool HighlightSplitterCountsReadsInTheJoinedOutput()
+internal static bool HighlightSplitterCountsReadsInTheJoinedOutput()
 {
     // The title runs from the first read into the second, so the second read's own text before its BEL is not
     // visible. Counted alone it would be, and "c" would go with the second read. A CR that ends a sequence becomes the
@@ -175,7 +188,7 @@ static bool HighlightSplitterCountsReadsInTheJoinedOutput()
         && cr.Count == 3 && cr[1].EndsWith('b') && cr[2] == "c";
 }
 
-static bool HighlightSplitterKeepsTheSequencesAtTheEnd()
+internal static bool HighlightSplitterKeepsTheSequencesAtTheEnd()
 {
     // A sequence after the last visible character, such as one that shows the cursor again, belongs to the last read.
     var one = HighlightSplitter.SplitByRawSegments("\u001b[32mdone\u001b[0m\n\u001b[?25h", ["done\n\u001b[?25h"]);
@@ -183,14 +196,14 @@ static bool HighlightSplitterKeepsTheSequencesAtTheEnd()
     return one[0].EndsWith("\u001b[?25h", StringComparison.Ordinal) && two[1] == "\u001b[?25h";
 }
 
-static bool HighlightSplitterKeepsColonColors()
+internal static bool HighlightSplitterKeepsColonColors()
 {
     // An underline style written with a colon is no reset, so the second read still opens the highlight's green.
     var split = HighlightSplitter.SplitByRawSegments("\u001b[32mab\u001b[4:3mc\u001b[1mdef\u001b[0m", ["ab\u001b[4:3mc\u001b[1md", "ef"]);
     return split.Count == 2 && split[1].StartsWith("\u001b[32m", StringComparison.Ordinal);
 }
 
-static bool HighlightSplitterKeepsExtendedColors()
+internal static bool HighlightSplitterKeepsExtendedColors()
 {
     // The 0 values of a 256 or RGB color are no reset, `0;32` resets and then sets green, and `>4;2m` is no color at
     // all. The part after each cut opens the color that is active there again.
@@ -202,12 +215,10 @@ static bool HighlightSplitterKeepsExtendedColors()
         && Second("\u001b[32mab\u001b[>4;2mcd\u001b[0m", "\u001b[32mab\u001b[>4;2mc", "d\u001b[0m").StartsWith("\u001b[32md", StringComparison.Ordinal);
 }
 
-static bool HighlightSplitterCountsACrlfOnce()
+internal static bool HighlightSplitterCountsACrlfOnce()
 {
     // The highlighting turns CRLF into one LF, so a read that ends with one counts it once.
     var split = HighlightSplitter.SplitByRawSegments("one\ntwo\n", ["one\r\n", "two\n"]);
     return split.Count == 2 && split[0] == "one\n" && split[1] == "two\n";
 }
-
-// Terminal.cs needs this type, which the CLI defines with its theme presets.
-internal readonly record struct ResolvedTheme(string Fg, string Bg, string Palette);
+}
