@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The scenetake CLI. Releases publish it with Native AOT (-p:PublishAot=true on the command line), and the dotnet
+       tool package is framework-dependent. The binary is named scenetake: npm, the archives, and ScenarioBatch, which
+       starts it again for each scenario, rely on that name. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>scenetake</AssemblyName>
+    <RootNamespace>Scenetake</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- Smaller with no measured loss of speed (.github/docs/spec_install.md → Binary size). -->
+    <OptimizationPreference>Size</OptimizationPreference>
+    <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackAsTool>true</PackAsTool>
+    <PackageId>scenetake</PackageId>
+    <ToolCommandName>scenetake</ToolCommandName>
+    <Description>Run a YAML scenario and record terminal output as asciinema v3 .cast and animated .svg without installing asciinema</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Scenetake.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MiniPty" />
+    <PackageReference Include="MiniPty.Capture" />
+    <PackageReference Include="MiniPty.Console" />
+    <PackageReference Include="StbTrueTypeSharp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Scenetake.Core\Scenetake.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Scenetake.Tests" />
+  </ItemGroup>
+
+</Project>

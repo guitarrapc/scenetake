@@ -39,8 +39,9 @@ The playground is a .NET WebAssembly build of the same source files that the CLI
 | mp4 rasterizer and ffmpeg | Not included |
 
 - **Why shared source.** A second implementation in JavaScript would drift from the CLI. The playground is only worth showing if it renders what the CLI writes.
-- **What this asks of the CLI source.** `scenetake.cs` is a file-based app. Its top-level statements are the CLI's entry point, and the functions declared among them are local to that entry point, so another project cannot compile them. The code that the playground needs lives in files that both builds include: `Scenario.cs`, `Highlight.cs`, `CastComposer.cs`, `StepChunks.cs`, `StepOutputs.cs`, and `PlaygroundRender.cs`, with the renderer files. `scenetake.cs` keeps the CLI entry point and the code that starts processes, and passes a step runner to the shared recording loop. The playground passes the replay instead.
-- **Project.** `playground/Scenetake.Playground.csproj` (`Microsoft.NET.Sdk.WebAssembly`) compiles the shared files. The .NET runtime runs in a Web Worker, so typing never waits for a render.
+- **What this asks of the CLI source.** The code that the playground needs is the core library, `src/Scenetake.Core`: `Scenario.cs`, `Highlight.cs`, `CastComposer.cs`, `StepChunks.cs`, `StepOutputs.cs`, and `PlaygroundRender.cs`, with the renderer files. The CLI, `src/Scenetake`, keeps the entry point and the code that starts processes, and passes a step runner to the shared recording loop. The playground passes the replay instead.
+- **Why a library.** The CLI started as a file-based app, `scenetake.cs`. Functions declared among its top-level statements are local to the entry point, so the playground compiled the shared files by linking each one, and each test program listed the files it included. Every new shared file meant editing those lists. A library that the CLI, the playground, and the tests reference replaced them.
+- **Project.** `src/Scenetake.Playground/Scenetake.Playground.csproj` (`Microsoft.NET.Sdk.WebAssembly`) references the core library. The .NET runtime runs in a Web Worker, so typing never waits for a render.
 - **Privacy.** Scenario YAML and cast files are processed in WASM and never leave the browser.
 
 ## Outputs File
@@ -230,7 +231,7 @@ Below 600 px each place is a block instead of a table row, so a command takes th
 A link to the page shows a large image on X, Slack, Discord, and other sites, as a link to the seiton playground does.
 
 - `ogp.png` is the page itself at 1200 × 670 in the dark theme: the first screen, `welcome`, with its YAML next to its demo, without the version badge. The image says what the page does without words: a short YAML gives this demo.
-- `playground/take-ogp.mjs` takes it with Playwright from the served page, as seiton's `take-ogp.mjs` does. It pauses every animation of the SVG at one moment (14 s by default, when `welcome` has printed everything and its 15 s loop has not started again), so the same page gives the same image byte for byte. An SVG in an `<img>` plays on its own clock, so without the pause the frame would depend on when the screenshot runs. The status line under the preview is hidden too: it gives the render time, and two runs gave different images until it was hidden.
+- `src/Scenetake.Playground/take-ogp.mjs` takes it with Playwright from the served page, as seiton's `take-ogp.mjs` does. It pauses every animation of the SVG at one moment (14 s by default, when `welcome` has printed everything and its 15 s loop has not started again), so the same page gives the same image byte for byte. An SVG in an `<img>` plays on its own clock, so without the pause the frame would depend on when the screenshot runs. The status line under the preview is hidden too: it gives the render time, and two runs gave different images until it was hidden.
 - The meta tags give `summary_large_image`, the image's size, and alt text. The image URL is absolute and has `?v=`, which is raised when the image changes, because sites cache the image by URL.
 
 ## Interop API
@@ -260,14 +261,14 @@ A link to the page shows a large image on X, Slack, Discord, and other sites, as
 
 ## Deployment
 
-- `.github/workflows/playground.yaml`: a push of a `v*` tag, or `workflow_dispatch` for an existing tag, runs `tests/playground_replay_test.cs`, publishes the playground, and deploys it with `actions/deploy-pages`. The site shows that release's version. Its samples and outputs files come from the same tag.
-- `.github/workflows/build.yaml` builds the playground without AOT on every push and pull request, so a change to the shared source that breaks only the WASM build fails there and not at the release.
+- `.github/workflows/playground.yaml`: a push of a `v*` tag, or `workflow_dispatch` for an existing tag, runs `tests/Scenetake.Core.Tests/PlaygroundReplayTests.cs`, publishes the playground, and deploys it with `actions/deploy-pages`. The site shows that release's version. Its samples and outputs files come from the same tag.
+- `.github/workflows/build.yaml` builds the playground without AOT on every push and pull request, so a change to the core library that breaks only the WASM build fails there and not at the release.
 - GitHub Pages needs a `.nojekyll` file, and the build emits both fingerprinted and non-fingerprinted asset names, as in seiton. The repository's Pages source must be **GitHub Actions**.
 - The build is trimmed and AOT-compiled, with invariant globalization. The transfer size of `_framework/` with Brotli was 2.4 MB for 1.5.0, within the 2–5 MB range that the seiton playground measured.
 
 ## Verification
 
-`tests/playground_replay_test.cs`:
+`tests/Scenetake.Core.Tests/PlaygroundReplayTests.cs`:
 
 | Test | Checks |
 |---|---|

@@ -272,13 +272,13 @@ Each fatal error stops the recording: no cast is written, `post` runs, and scene
 | Test | Location |
 |---|---|
 | MiniPty core + Capture | [MiniPty/tests](https://github.com/guitarrapc/MiniPty) |
-| PTY layer | `scenetake/tests/pty_test.cs` |
-| PTY startup cleanup filter | `scenetake/tests/pty_continue_test.cs` |
-| Interactive PTY validation | `scenetake/tests/interactive_pty_test.cs` |
-| `keys` and `timeout`: key names, errors, timing, `wait` timing, and the playground. With `SCENETAKE_BIN`: typed input, Ctrl+C, the grace kill, a pipe timeout, a `wait` that types after its prompt, a `wait` that gives up, and `--save-keys` without an interactive step | `scenetake/tests/step_input_test.cs`, fixtures `scenetake/tests/fixtures/step-input-*.yaml` |
-| `--save-keys`: xterm and win32-input-mode input to key names, terminal answers left out, entries and pauses, password notes, and the file read back as keys. `wait` text matching | `scenetake/tests/key_recording_test.cs` |
-| Interactive input recorder | `scenetake/tests/interactive_pty_input_test.cs` |
-| Command environment (`COLORTERM`) for pipe and PTY steps | `scenetake/tests/pty_test.cs` (`IntegrationChildEnvironmentFixture`) |
+| PTY layer | `scenetake/tests/Scenetake.Tests/PtyTests.cs` |
+| PTY startup cleanup filter | `scenetake/tests/Scenetake.Core.Tests/PtyContinueTests.cs` |
+| Interactive PTY validation | `scenetake/tests/Scenetake.Tests/InteractivePtyTests.cs` |
+| `keys` and `timeout`: key names, errors, timing, `wait` timing, and the playground. With `SCENETAKE_BIN`: typed input, Ctrl+C, the grace kill, a pipe timeout, a `wait` that types after its prompt, a `wait` that gives up, and `--save-keys` without an interactive step | `scenetake/tests/Scenetake.Core.Tests/StepInputTests.cs`, fixtures `scenetake/tests/fixtures/step-input-*.yaml` |
+| `--save-keys`: xterm and win32-input-mode input to key names, terminal answers left out, entries and pauses, password notes, and the file read back as keys. `wait` text matching | `scenetake/tests/Scenetake.Tests/KeyRecordingTests.cs` |
+| Interactive input recorder | `scenetake/tests/Scenetake.Tests/InteractivePtyInputTests.cs` |
+| Command environment (`COLORTERM`) for pipe and PTY steps | `scenetake/tests/Scenetake.Tests/PtyTests.cs` (`IntegrationChildEnvironmentFixture`) |
 | Fixture scenarios | `scenetake/tests/fixtures/pty-*.yaml`, `scenetake/tests/fixtures/child-env*.yaml` |
 
 Integration tests require `SCENETAKE_BIN` pointing at a published scenetake binary.

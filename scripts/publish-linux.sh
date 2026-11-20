@@ -61,11 +61,12 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# The app and its includes, the props it builds with, and what the smoke reads.
+# The projects, the props they build with, and what the smoke reads. The host's bin and obj folders stay out: their
+# restore files name the host's paths.
 (
   cd "$root"
-  cp ./*.cs Directory.Build.props README.md .editorconfig "$stage/"
-  cp -R samples tests scripts "$stage/"
+  cp Directory.Build.props Directory.Packages.props global.json scenetake.slnx README.md .editorconfig "$stage/"
+  tar -cf - --exclude=bin --exclude=obj src tests samples scripts | tar -xf - -C "$stage"
 )
 
 # Fetch the installer with the host's current curl, rather than AlmaLinux 8's curl 7.61.
@@ -80,7 +81,7 @@ cid="$(docker create "$image" sh -c "
   export PATH=/usr/share/dotnet:\$PATH DOTNET_ROOT=/usr/share/dotnet DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
   export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
   cd /src
-  dotnet publish scenetake.cs -c Release -r '$rid' --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o /out
+  dotnet publish src/Scenetake/Scenetake.csproj -c Release -r '$rid' --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o /out
   bash scripts/check-binary-floor.sh '$rid' /out
   if find /usr /lib -name 'libicuuc.so*' 2>/dev/null | grep -q .; then
     echo 'publish-linux: the image has ICU, so a start there does not show that scenetake needs none' >&2

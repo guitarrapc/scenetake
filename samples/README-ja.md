@@ -137,7 +137,7 @@ dotnet run samples/regenerate.cs -- --gifs
 ショーケースはLinuxのツールを使うので、`showcase/record.sh`がコンテナの中で録画します。LinuxかDockerのあるWSLで、linux-x64のscenetakeを置いたフォルダを渡して実行します。
 
 ```bash
-dotnet publish scenetake.cs -c Release -r linux-x64 --self-contained -p:PublishAot=false -p:PublishSingleFile=true -o ~/scenetake-linux
+dotnet publish src/Scenetake/Scenetake.csproj -c Release -r linux-x64 --self-contained -p:PublishAot=false -p:PublishSingleFile=true -o ~/scenetake-linux
 bash samples/showcase/record.sh ~/scenetake-linux            # すべて
 bash samples/showcase/record.sh ~/scenetake-linux fetch sl   # 指定したものだけ
 ```

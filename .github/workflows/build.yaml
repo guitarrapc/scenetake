@@ -89,7 +89,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          dotnet pack scenetake.cs -c Release -o ./nupkg
+          dotnet pack src/Scenetake/Scenetake.csproj -c Release -o ./nupkg
           test -f nupkg/scenetake.*.nupkg
 
       # Linked in a container at the release's C library floor (glibc 2.28, musl 1.2.3), which checks the floor and
@@ -105,7 +105,7 @@ jobs:
         run: |
           artifact_dir="$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}"
           mkdir -p "$artifact_dir"
-          dotnet publish scenetake.cs -c Release -r "${{ matrix.rid }}" --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o "$artifact_dir"
+          dotnet publish src/Scenetake/Scenetake.csproj -c Release -r "${{ matrix.rid }}" --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o "$artifact_dir"
 
       - name: Check platform floor (macOS)
         if: ${{ startsWith(matrix.rid, 'osx-') }}
@@ -158,7 +158,7 @@ jobs:
           fi
           bash scripts/smoke-binary.sh "$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}/$binary_name"
 
-      # The zsh integration test in tests/shell_state_test.cs skips when zsh is not on PATH.
+      # The zsh integration test in ShellStateTests skips when zsh is not on PATH.
       - name: Install zsh (Linux)
         if: ${{ startsWith(matrix.rid, 'linux-') && !startsWith(matrix.rid, 'linux-musl-') }}
         shell: bash
@@ -178,27 +178,13 @@ jobs:
           if [[ "${{ matrix.rid }}" == win-* ]]; then
             binary_name="scenetake.exe"
           fi
-          scenetake_bin="$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}/$binary_name"
-          dotnet run tests/terminal_tests.cs
-          dotnet run tests/json_escape_test.cs
-          dotnet run tests/pty_timing_test.cs
-          dotnet run tests/pty_continue_test.cs
-          dotnet run tests/cast_timing_test.cs
-          dotnet run tests/interactive_pty_input_test.cs
-          dotnet run tests/readme_sync_test.cs
-          dotnet run tests/svg_render_test.cs
-          dotnet run tests/window_chrome_test.cs
-          dotnet run tests/mp4_render_test.cs
-          dotnet run tests/pipe_output_decoder_test.cs
-          # With the published binary it also records a scenario, and replays it with the CLI's --replay.
-          SCENETAKE_BIN="$scenetake_bin" dotnet run tests/playground_replay_test.cs
-          dotnet run tests/step_input_test.cs
-          dotnet run tests/secret_mask_test.cs
-          dotnet run tests/canvas_fit_test.cs
-          # Shell state runs the published binary in each OS's bash and pwsh: macOS has bash 3.2, whose dumps differ.
-          SCENETAKE_BIN="$scenetake_bin" dotnet run tests/shell_state_test.cs
-          # Several scenarios in one run: each is recorded by the binary started again, in the OS's default shell.
-          SCENETAKE_BIN="$scenetake_bin" dotnet run tests/batch_test.cs
+          # Every test outside the Smoke category, which smoke-binary.sh ran. With the published binary, the playground
+          # replay also records a scenario, shell state runs in each OS's bash and pwsh (macOS has bash 3.2, whose dumps
+          # differ), and each scenario of a batch is recorded by the binary started again, in the OS's default shell.
+          export SCENETAKE_BIN="$GITHUB_WORKSPACE/artifacts/${{ matrix.rid }}/$binary_name"
+          for project in tests/Scenetake.Core.Tests tests/Scenetake.Tests; do
+            dotnet test --project "$project" -c Release --treenode-filter '/*/*/*/*[Category!=Smoke]'
+          done
 
       - name: Upload macOS binary
         if: ${{ startsWith(matrix.rid, 'osx-') }}
@@ -310,7 +296,7 @@ jobs:
       - name: Publish NativeAOT binary
         shell: bash
         run: |
-          dotnet publish scenetake.cs -c Release -r linux-x64 --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o "$RUNNER_TEMP/scenetake"
+          dotnet publish src/Scenetake/Scenetake.csproj -c Release -r linux-x64 --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o "$RUNNER_TEMP/scenetake"
 
       - name: Encode mp4
         shell: bash
@@ -323,15 +309,12 @@ jobs:
           for file in pty.mp4 interactive-pty.mp4 basic.mp4; do
             ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,profile,pix_fmt,width,height,r_frame_rate -of compact "$RUNNER_TEMP/$file"
           done
-          dotnet run tests/mp4_render_test.cs
-          SCENETAKE_BIN="$binary_path" dotnet run tests/mp4_ffmpeg_test.cs
-          SCENETAKE_BIN="$binary_path" dotnet run tests/scenario_render_test.cs
-          SCENETAKE_BIN="$binary_path" dotnet run tests/playground_replay_test.cs
+          SCENETAKE_BIN="$binary_path" dotnet test --project tests/Scenetake.Tests -c Release --treenode-filter '/*/*/*/*[Category=Ffmpeg]'
 
   playground:
     name: Build playground (browser-wasm)
     runs-on: ubuntu-24.04
-    # The playground compiles the CLI's shared source for WebAssembly; building it here catches a change that only
+    # The playground builds the core library for WebAssembly. Building it here catches a change that only
     # breaks that build, which the tag-time deploy would otherwise find first. AOT runs only in the deploy.
     timeout-minutes: 15
     permissions:
@@ -351,7 +334,7 @@ jobs:
         run: dotnet workload install wasm-tools-net10
 
       - name: Build playground
-        run: dotnet build playground/Scenetake.Playground.csproj -c Release
+        run: dotnet build src/Scenetake.Playground/Scenetake.Playground.csproj -c Release
 
   build-complete:
     needs: [npm-pack, build, macos-oldest, mp4, playground]

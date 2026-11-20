@@ -1,0 +1,106 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+
+  <!--
+    The browser playground (.github/docs/spec_playground.md). It runs Scenetake.Core, which the CLI shares, without
+    the code that starts processes, and replays the outputs files of the samples instead of running commands.
+
+    Local run (from the repository root):
+      dotnet publish src/Scenetake.Playground/Scenetake.Playground.csproj -c Release -p:PlaygroundSoftFingerprint=true -o artifacts/playground
+      node src/Scenetake.Playground/serve.mjs artifacts/playground/wwwroot
+  -->
+
+  <PropertyGroup>
+    <AssemblyName>Scenetake.Playground</AssemblyName>
+    <RootNamespace>Scenetake.Playground</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <InvariantTimezone>true</InvariantTimezone>
+    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- A large PTY sample renders an SVG of a few MB; start with room for it. -->
+    <EmccInitialHeapSize>67108864</EmccInitialHeapSize>
+    <EmccMaximumHeapSize>1073741824</EmccMaximumHeapSize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>full</TrimMode>
+    <RunAOTCompilation>true</RunAOTCompilation>
+    <WasmEnableWebcil>true</WasmEnableWebcil>
+  </PropertyGroup>
+
+  <!--
+    GitHub Pages has no import map rewriting: -p:PlaygroundSoftFingerprint=true emits both fingerprinted and plain
+    file names, so href="style.css" and import './_framework/dotnet.js' resolve as they are.
+  -->
+  <PropertyGroup Condition="'$(PlaygroundSoftFingerprint)' == 'true'">
+    <PlaygroundFingerprintSuffix>?</PlaygroundFingerprintSuffix>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(PlaygroundSoftFingerprint)' != 'true'">
+    <PlaygroundFingerprintSuffix>!</PlaygroundFingerprintSuffix>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <StaticWebAssetFingerprintPattern Include="JS" Pattern="*.js" Expression="#[.{fingerprint}]$(PlaygroundFingerprintSuffix)" />
+    <StaticWebAssetFingerprintPattern Include="MJS" Pattern="*.mjs" Expression="#[.{fingerprint}]$(PlaygroundFingerprintSuffix)" />
+    <StaticWebAssetFingerprintPattern Include="CSS" Pattern="*.css" Expression="#[.{fingerprint}]$(PlaygroundFingerprintSuffix)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Scenetake.Core\Scenetake.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Scenetake.Core" />
+  </ItemGroup>
+
+  <!--
+    The samples the playground offers: each <name>.yaml with a <name>.outputs.json, with its cast for the Cast tab,
+    from samples/ and from samples/showcase/ (recorded in a container by samples/showcase/record.sh). They are copied
+    into one folder next to the page, with samples/index.json listing their names. PlaygroundImage lists the
+    background images that samples name: the page loads them, because a browser page reads no files. They are
+    listed one by one, since samples/ also holds the GIFs of the samples.
+  -->
+  <ItemGroup>
+    <PlaygroundOutputs Include="../../samples/*.outputs.json;../../samples/showcase/*.outputs.json" />
+    <PlaygroundCast Include="../../samples/*.cast;../../samples/showcase/*.cast" />
+    <PlaygroundImage Include="../../samples/background.webp" />
+  </ItemGroup>
+
+  <Target Name="_CopyPlaygroundSamples" AfterTargets="Publish">
+    <ItemGroup>
+      <_PlaygroundSampleName Include="@(PlaygroundOutputs->'%(Filename)'->Replace('.outputs', ''))" />
+      <_PlaygroundSampleYaml Include="@(PlaygroundOutputs->'%(RelativeDir)%(Filename).yaml'->Replace('.outputs.yaml', '.yaml'))" />
+    </ItemGroup>
+    <Error Condition="'@(_PlaygroundSampleYaml)' != '' and !Exists('%(_PlaygroundSampleYaml.Identity)')" Text="An outputs file has no scenario: %(_PlaygroundSampleYaml.Identity)" />
+    <RemoveDuplicates Inputs="@(_PlaygroundSampleName)">
+      <Output TaskParameter="Filtered" ItemName="_PlaygroundUniqueSampleName" />
+    </RemoveDuplicates>
+    <Error Condition="'@(_PlaygroundUniqueSampleName->Count())' != '@(_PlaygroundSampleName->Count())'" Text="Two samples share a name. samples/ and samples/showcase/ are published into one folder, so their names must differ." />
+    <Copy SourceFiles="@(PlaygroundOutputs);@(_PlaygroundSampleYaml);@(PlaygroundCast);@(PlaygroundImage)" DestinationFolder="$(PublishDir)wwwroot/samples" />
+    <PropertyGroup>
+      <_PlaygroundIndexScenarios>@(_PlaygroundSampleName->'&quot;%(Identity)&quot;', ',')</_PlaygroundIndexScenarios>
+      <_PlaygroundIndexCasts>@(PlaygroundCast->'&quot;%(Filename)&quot;', ',')</_PlaygroundIndexCasts>
+      <_PlaygroundIndexImages>@(PlaygroundImage->'&quot;%(Filename)%(Extension)&quot;', ',')</_PlaygroundIndexImages>
+    </PropertyGroup>
+    <WriteLinesToFile
+      File="$(PublishDir)wwwroot/samples/index.json"
+      Lines="{&quot;scenarios&quot;:[$(_PlaygroundIndexScenarios)],&quot;casts&quot;:[$(_PlaygroundIndexCasts)],&quot;images&quot;:[$(_PlaygroundIndexImages)]}"
+      Overwrite="true" />
+  </Target>
+
+  <!--
+    Static-host fallback: copy the fingerprinted dotnet entry JS to _framework/dotnet.js so that the import in
+    worker.js resolves without an import map.
+  -->
+  <Target Name="_CopyDotnetJsFallback" AfterTargets="Publish" Condition="'$(PlaygroundSoftFingerprint)' == 'true'">
+    <ItemGroup>
+      <_DotnetEntryJs Include="$(PublishDir)wwwroot/_framework/dotnet.*.js"
+                      Exclude="$(PublishDir)wwwroot/_framework/dotnet.native.*.js;$(PublishDir)wwwroot/_framework/dotnet.runtime.*.js" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_DotnetEntryJs)" DestinationFiles="$(PublishDir)wwwroot/_framework/dotnet.js" />
+  </Target>
+
+</Project>

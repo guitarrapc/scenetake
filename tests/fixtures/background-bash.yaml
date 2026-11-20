@@ -1,5 +1,5 @@
 # A background step keeps running while the next steps record, and stops before post (spec_scenario.md → Background
-# steps). Run from the repository root by tests/shell_state_test.cs.
+# steps). Run from the repository root by ShellStateTests.
 title: "background step (bash)"
 width: 80
 height: 10

@@ -41,12 +41,9 @@ for fixture in tests/fixtures/*.cast; do
   test -f "$work/fixture-$stem.svg"
 done
 
+# The test classes in the Smoke category. Runner images and the containers ship no ffmpeg, so the real encodes among
+# them skip. The mp4 job runs those with ffmpeg.
 export SCENETAKE_BIN="$bin"
-dotnet run tests/stream_output_test.cs
-dotnet run tests/pty_test.cs
-dotnet run tests/interactive_pty_test.cs
-dotnet run tests/step_input_test.cs
-dotnet run tests/rerecord_test.cs
-# Runner images and the containers ship no ffmpeg, so these skip real encodes. The mp4 job runs them with ffmpeg.
-dotnet run tests/scenario_render_test.cs
-dotnet run tests/mp4_ffmpeg_test.cs
+for project in tests/Scenetake.Core.Tests tests/Scenetake.Tests; do
+  dotnet test --project "$project" -c Release --treenode-filter '/*/*/*/*[Category=Smoke]'
+done

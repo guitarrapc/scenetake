@@ -137,7 +137,7 @@ dotnet run samples/regenerate.cs -- --gifs
 The showcase uses Linux tools, so `showcase/record.sh` records it in a container. Run it on Linux or in WSL with Docker, and pass a folder that holds a linux-x64 scenetake.
 
 ```bash
-dotnet publish scenetake.cs -c Release -r linux-x64 --self-contained -p:PublishAot=false -p:PublishSingleFile=true -o ~/scenetake-linux
+dotnet publish src/Scenetake/Scenetake.csproj -c Release -r linux-x64 --self-contained -p:PublishAot=false -p:PublishSingleFile=true -o ~/scenetake-linux
 bash samples/showcase/record.sh ~/scenetake-linux            # every showcase scenario
 bash samples/showcase/record.sh ~/scenetake-linux fetch sl   # only these
 ```

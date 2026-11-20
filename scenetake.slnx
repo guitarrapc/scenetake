@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/.props/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Scenetake/Scenetake.csproj" />
+    <Project Path="src/Scenetake.Core/Scenetake.Core.csproj" />
+    <Project Path="src/Scenetake.Playground/Scenetake.Playground.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Scenetake.Core.Tests/Scenetake.Core.Tests.csproj" />
+    <Project Path="tests/Scenetake.Tests/Scenetake.Tests.csproj" />
+  </Folder>
+</Solution>

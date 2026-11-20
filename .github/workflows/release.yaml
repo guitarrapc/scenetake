@@ -135,7 +135,7 @@ jobs:
         run: |
           artifact_dir="$GITHUB_WORKSPACE/release/${{ matrix.rid }}"
           mkdir -p "$artifact_dir"
-          dotnet publish scenetake.cs -c Release -r "${{ matrix.rid }}" --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o "$artifact_dir"
+          dotnet publish src/Scenetake/Scenetake.csproj -c Release -r "${{ matrix.rid }}" --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o "$artifact_dir"
 
       - name: Check platform floor (macOS)
         if: ${{ startsWith(matrix.rid, 'osx-') }}
@@ -354,7 +354,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          dotnet pack scenetake.cs -c Release -o ./nupkg
+          dotnet pack src/Scenetake/Scenetake.csproj -c Release -o ./nupkg
           test -f nupkg/scenetake.*.nupkg
 
       - name: NuGet login (OIDC)

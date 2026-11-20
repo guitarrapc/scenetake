@@ -15,7 +15,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 var repoRoot = FindRepoRoot(Directory.GetCurrentDirectory());
-var toolPath = Path.Combine(repoRoot, "scenetake.cs");
+var toolPath = Path.Combine(repoRoot, "src", "Scenetake", "Scenetake.csproj");
 var samplesDir = Path.Combine(repoRoot, "samples");
 
 if (!File.Exists(toolPath))
@@ -25,6 +25,10 @@ if (!File.Exists(toolPath))
 }
 
 if (RunReadmeSync(repoRoot) != 0)
+    return 1;
+
+// Built once here. Each run below starts the built CLI without a build check of its own.
+if (Dotnet(repoRoot, ["build", toolPath, "-c", "Release", "--nologo", "-v", "quiet"]) != 0)
     return 1;
 
 // The color theme previews need no recording, so `-- --theme-presets` renders them alone.
@@ -86,7 +90,7 @@ static int RenderGifs(string repoRoot, string toolPath, string samplesDir)
     foreach (var cast in casts)
     {
         var psi = new ProcessStartInfo { FileName = "dotnet", WorkingDirectory = repoRoot, UseShellExecute = false };
-        foreach (var arg in new[] { "run", toolPath, "--", "gif" })
+        foreach (var arg in ScenetakeRun(toolPath, "gif"))
             psi.ArgumentList.Add(arg);
         if (BackgroundImage(Path.ChangeExtension(cast, ".yaml")) is string image)
         {
@@ -124,7 +128,7 @@ static string? BackgroundImage(string scenarioPath)
 }
 
 // samples/theme-presets/<name>.svg: palette.cast in each named color theme, with the name in a macOS title bar.
-// The names are RenderSettingsResolver.Presets in Svg.cs; svg_render_test checks that every theme has a current
+// The names are RenderSettingsResolver.Presets in Svg.cs. SvgRenderTests checks that every theme has a current
 // preview and that no preview is left of a theme that is gone.
 static int RenderThemePresets(string repoRoot, string toolPath)
 {
@@ -138,8 +142,8 @@ static int RenderThemePresets(string repoRoot, string toolPath)
     foreach (var theme in themes)
     {
         var psi = new ProcessStartInfo { FileName = "dotnet", WorkingDirectory = repoRoot, UseShellExecute = false };
-        foreach (var arg in new[] { "run", toolPath, "--", "svg", "--theme", theme, "--window", "macos", "--window-title", theme,
-            "samples/theme-presets/palette.cast", $"samples/theme-presets/{theme}.svg" })
+        foreach (var arg in ScenetakeRun(toolPath, "svg", "--theme", theme, "--window", "macos", "--window-title", theme,
+            "samples/theme-presets/palette.cast", $"samples/theme-presets/{theme}.svg"))
             psi.ArgumentList.Add(arg);
 
         using var process = Process.Start(psi);
@@ -157,21 +161,24 @@ static int RenderThemePresets(string repoRoot, string toolPath)
     return 0;
 }
 
-static int RunReadmeSync(string repoRoot)
+// The README check is a test of the core test project, run alone with a filter.
+static int RunReadmeSync(string repoRoot) =>
+    Dotnet(repoRoot, ["test", "--project", "tests/Scenetake.Core.Tests", "-c", "Release", "--treenode-filter", "/*/*/ReadmeSyncTests/*"]);
+
+// The arguments for dotnet that start the CLI built by the build step at the top.
+static string[] ScenetakeRun(string toolPath, params string[] args) =>
+    ["run", "--project", toolPath, "-c", "Release", "--no-build", "--", .. args];
+
+static int Dotnet(string repoRoot, string[] args)
 {
-    var psi = new ProcessStartInfo
-    {
-        FileName = "dotnet",
-        WorkingDirectory = repoRoot,
-        UseShellExecute = false,
-    };
-    psi.ArgumentList.Add("run");
-    psi.ArgumentList.Add("tests/readme_sync_test.cs");
+    var psi = new ProcessStartInfo { FileName = "dotnet", WorkingDirectory = repoRoot, UseShellExecute = false };
+    foreach (var arg in args)
+        psi.ArgumentList.Add(arg);
 
     using var process = Process.Start(psi);
     if (process is null)
     {
-        Console.Error.WriteLine("Error: failed to start readme sync test");
+        Console.Error.WriteLine("Error: failed to start dotnet");
         return 1;
     }
 
@@ -189,12 +196,8 @@ static int RunScenario(string repoRoot, string toolPath, string scenarioPath)
         WorkingDirectory = repoRoot,
         UseShellExecute = false,
     };
-    psi.ArgumentList.Add("run");
-    psi.ArgumentList.Add(toolPath);
-    psi.ArgumentList.Add("--");
-    psi.ArgumentList.Add("--format");
-    psi.ArgumentList.Add("svg");
-    psi.ArgumentList.Add(relativeScenario);
+    foreach (var arg in ScenetakeRun(toolPath, "--format", "svg", relativeScenario))
+        psi.ArgumentList.Add(arg);
     // The playground replays what each step printed in this run (.github/docs/spec_playground.md). The outputs
     // file comes from the same run as the cast, so a replay of the unmodified YAML gives the same cast.
     psi.Environment["SCENETAKE_OUTPUTS"] = Path.Combine(
@@ -217,7 +220,7 @@ static string FindRepoRoot(string startDir)
     var dir = Path.GetFullPath(startDir);
     while (true)
     {
-        if (File.Exists(Path.Combine(dir, "scenetake.cs")))
+        if (File.Exists(Path.Combine(dir, "scenetake.slnx")))
             return dir;
 
         var parent = Directory.GetParent(dir);
@@ -227,7 +230,7 @@ static string FindRepoRoot(string startDir)
         dir = parent.FullName;
     }
 
-    Console.Error.WriteLine("Error: could not find scenetake.cs; run from the repository root");
+    Console.Error.WriteLine("Error: could not find scenetake.slnx; run from the repository root");
     Environment.Exit(1);
     return "";
 }

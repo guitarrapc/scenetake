@@ -1,7 +1,7 @@
 # The prompt's {dir} follows the folder that each step starts in: pre's cd, a step's cd, and a show: none step's cd
 # (spec_scenario.md → settings, Prompt). A masked folder name stays masked in the outputs file. A step that removes
 # the folder it is in, under /tmp, which Git Bash has no Windows path for, leaves the next one in the start folder.
-# Run from the repository root by tests/shell_state_test.cs.
+# Run from the repository root by ShellStateTests.
 title: "prompt folder (bash)"
 width: 60
 height: 12
