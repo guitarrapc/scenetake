@@ -197,7 +197,7 @@ settings:
 
 **Why on by default.** Console2Svg masks secrets by default as well. A demo that shows a real token is a leak that cannot be taken back once the SVG is in a README. A false positive costs a few stars, which `mask-auto: false` turns off.
 
-**Tests.** `tests/secret_mask_test.cs` checks each rule, the texts each must leave alone, chunk and color splits, control strings that end early or never (also between streamed pipe reads), wide characters, and that the cast and outputs file of a recording hold no secret. It puts every fake token together at run time, so no file holds a whole token that a secret scanner would report. `tests/playground_replay_test.cs` replays every committed sample with masking on, which would show a false positive as a changed cast.
+**Tests.** `tests/Scenetake.Core.Tests/SecretMaskTests.cs` checks each rule, the texts each must leave alone, chunk and color splits, control strings that end early or never (also between streamed pipe reads), wide characters, and that the cast and outputs file of a recording hold no secret. It puts every fake token together at run time, so no file holds a whole token that a secret scanner would report. `tests/Scenetake.Core.Tests/PlaygroundReplayTests.cs` replays every committed sample with masking on, which would show a false positive as a changed cast.
 
 **Why no regular expressions.** `mask` takes plain texts, and the automatic rules are hand-written scanners. .NET's regular expression engine would add hundreds of kilobytes to the Native AOT binary, which links none today. A secret that is known before the recording, which a pattern would describe, is usually in the environment or can be listed in `mask`.
 
@@ -251,7 +251,7 @@ Display metadata for the cast header. Written on every run. Header mapping: [spe
 - **macOS has no published palette.** Apple publishes no palette file for Terminal.app. The macOS themes are "Apple System Colors" from iTerm2-Color-Schemes: macOS's system colors (`#ff453a` red, `#0a84ff` blue, `#32d74b` green) as a terminal palette, on `#1e1e1e` or white. They were chosen over that collection's "Terminal Basic", Terminal.app's default profile, whose light palette (`#990000` red, `#0000b2` blue) looks dated next to the `macos` window chrome.
 - **Solarized's bright colors are gray.** Solarized defines the bright eight as its base tones, so `\e[92m` (bright green) is a gray in both Solarized themes, and bright black is the background in `solarized-dark`. That is how Solarized looks in any terminal.
 - The window chrome follows the background's lightness, as for `dark` and `light` ([spec_svg.md](spec_svg.md) → Window chrome).
-- `samples/theme-presets/` has one preview per theme: `palette.cast` (text styles, the 16 colors as text, then as backgrounds) rendered with `--theme NAME --window macos --window-title NAME`. `samples/regenerate.cs` renders them, and `-- --theme-presets` renders them alone. `tests/svg_render_test.cs` checks each theme's colors and that every preview is current.
+- `samples/theme-presets/` has one preview per theme: `palette.cast` (text styles, the 16 colors as text, then as backgrounds) rendered with `--theme NAME --window macos --window-title NAME`. `samples/regenerate.cs` renders them, and `-- --theme-presets` renders them alone. `tests/Scenetake.Core.Tests/SvgRenderTests.cs` checks each theme's colors and that every preview is current.
 
 `settings` controls recording. `render` controls presentation. The CLI may override each key, the theme only as a preset. See [spec_cli.md](spec_cli.md).
 

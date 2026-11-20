@@ -55,13 +55,13 @@ Build and release CI hold the minimums for the binary that ships:
 
 - `scripts/publish-linux.sh` links each Linux binary in a container of the floor's distribution, on a runner of its own architecture. The images have no ICU.
 - `scripts/check-binary-floor.sh` fails a binary that requires a glibc version above 2.28, links a library outside the C library (Linux) or outside `/usr/lib` and `/System/Library` (macOS), declares a macOS other than 12.0, or has MiniPty's shim beside it instead of linked in.
-- `scripts/smoke-binary.sh` records scenarios, renders SVG, and runs the integration tests that start the binary. It runs in the floor container, so at glibc 2.28 and musl 1.2.3; on the runners, where the glibc binary also meets glibc 2.39; and on macOS 15 for the binaries built on macOS 26. The musl binaries run only in their container.
+- `scripts/smoke-binary.sh` records scenarios, renders SVG, and runs the integration tests that start the binary (the `Smoke` test category). It runs in the floor container, so at glibc 2.28 and musl 1.2.3; on the runners, where the glibc binary also meets glibc 2.39; and on macOS 15 for the binaries built on macOS 26. The musl binaries run only in their container.
 
-The containers have no `matrix`, `ffmpeg`, or `docker`, so the cases that need them skip there and run on the runners. They do get a font, because mp4 rendering stops before it starts ffmpeg when no font is installed, and four `mp4_ffmpeg_test` cases that expect the encoder to fail fail instead.
+The containers have no `matrix`, `ffmpeg`, or `docker`, so the cases that need them skip there and run on the runners. They do get a font, because mp4 rendering stops before it starts ffmpeg when no font is installed, and four `Mp4FfmpegTests` cases that expect the encoder to fail fail instead.
 
 ### Binary size
 
-The binary is kept small only in ways that do not slow it down. `scenetake.cs` sets two Native AOT properties, so every publish command uses them without extra flags:
+The binary is kept small only in ways that do not slow it down. `src/Scenetake/Scenetake.csproj` sets two Native AOT properties, so every publish command uses them without extra flags:
 
 | Setting | What it does |
 |---|---|
@@ -117,9 +117,9 @@ Update with `dotnet tool update -g scenetake`.
 | Package ID | `scenetake` |
 | Command | `scenetake` (`ToolCommandName`) |
 | Version source | `Directory.Build.props` → MSBuild `Version` |
-| Build | `dotnet pack scenetake.cs -c Release` (framework-dependent, not NativeAOT) |
+| Build | `dotnet pack src/Scenetake/Scenetake.csproj -c Release` (framework-dependent, not NativeAOT) |
 
-Packaging metadata lives in `Directory.Build.props` (`PackAsTool`, `ToolCommandName`, `PackageId`, etc.).
+Packaging metadata lives in `src/Scenetake/Scenetake.csproj` (`PackAsTool`, `ToolCommandName`, `PackageId`, etc.). The version, authors, license, and repository links are in `Directory.Build.props`, which every project reads.
 
 ### Publish (release CI)
 
@@ -132,14 +132,14 @@ verify → publish (matrix) → release → nuget-publish
 
 Steps in `nuget-publish`:
 
-1. `dotnet pack scenetake.cs -c Release`
+1. `dotnet pack src/Scenetake/Scenetake.csproj -c Release`
 2. `NuGet/login@v1` exchanges the GitHub OIDC token for a short-lived NuGet API key ([trusted publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing))
 3. `dotnet nuget push` to `https://api.nuget.org/v3/index.json`
 
 **Prerequisites (maintainer):**
 
 - Register a [trusted publisher](https://www.nuget.org/manage/package/settings) on nuget.org for `guitarrapc/scenetake`, workflow file `release.yaml`
-- Set repository secret `NUGET_USER` to the nuget.org **username** (profile name, not email)
+- Set repository secret `SYNCED_NUGET_USER` to the nuget.org **username** (profile name, not email)
 - Reserve the `scenetake` package ID on nuget.org before the first automated push
 
 Unlike npm staged publishing, NuGet push from CI is immediate once trusted publishing is configured.

@@ -7,8 +7,8 @@ using VYaml.Serialization;
 namespace Scenetake.Core;
 
 /// <summary>
-/// Scenario parsing, step keys, and the deterministic seed. Shared by the CLI and the playground, which
-/// compile the same source; scenetake.cs reaches these members through <c>using static</c>.
+/// Scenario parsing, step keys, and the deterministic seed, shared by the CLI and the playground. The CLI reaches
+/// these members through <c>using static</c>.
 /// </summary>
 internal static partial class ScenarioCast
 {
@@ -847,7 +847,7 @@ public partial class Scenario
     public List<object?>? Steps { get; set; }
     public List<string>? Post { get; set; }
 
-    /// <summary>The files a recording writes besides the cast, each a mapping with <c>format</c> (scenetake.cs reads them).</summary>
+    /// <summary>The files a recording writes besides the cast, each a mapping with <c>format</c> (the CLI reads them).</summary>
     public List<object?>? Outputs { get; set; }
 }
 
