@@ -870,8 +870,9 @@ var outputsFileArg = saveOutputsPath ?? Environment.GetEnvironmentVariable(StepO
 List<RecordedStep>? recordedSteps = string.IsNullOrWhiteSpace(outputsFileArg) ? null : [];
 
 // The commands inherit scenetake's environment, so a secret variable's value is hidden wherever a step prints it.
-// So is one that pre or a step exports for the commands after it.
-var masker = SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment());
+// So is one that pre or a step exports for the commands after it. mask-personal hides who records: the user name,
+// the home folder, the computer's name, and the git identity, which pwd, ls -l, and git log print.
+var masker = SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment(), CollectPersonalDetails(scenario));
 masker?.Learn(shellState?.TakeExports());
 
 // After each step: what the shell state could not restore, and the secrets the step exported, before its output is masked.
@@ -1006,8 +1007,7 @@ catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 }
 
 // Said before the files are listed, so a reader who finds stars in the recording knows where they came from.
-if (masker?.Summary() is { } maskSummary)
-    Console.Error.WriteLine($"{maskSummary} (settings.mask-auto: false turns off the automatic ones)");
+PrintMaskSummary(masker);
 
 var duration = events.Count > 0 ? events[^1].Time : 0.0;
 // With the cast as the only output, its line also says how large an SVG or mp4 of it would be.
@@ -1068,8 +1068,8 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
 
     var replay = new StepOutputsReplay(outputs);
     // The outputs were masked when they were recorded. Masking again hides what the YAML adds, such as a new
-    // settings.mask text, and the secrets in this machine's environment.
-    var replayMasker = SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment());
+    // settings.mask text, and the secrets and personal details of this machine.
+    var replayMasker = SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment(), CollectPersonalDetails(scenario));
     // As when recording: a step whose output is the same as in the cast here keeps its events, and keep-output keeps them.
     var replayPrevious = PreviousCast.TryRead(outputPath, scenarioWidth, scenarioHeight, out var replayPreviousProblem);
     var replayRerecorder = new Rerecorder(replayPrevious, replayMasker);
@@ -1122,8 +1122,7 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
         return 1;
     }
 
-    if (replayMasker?.Summary() is { } replayMaskSummary)
-        Console.Error.WriteLine($"{replayMaskSummary} (settings.mask-auto: false turns off the automatic ones)");
+    PrintMaskSummary(replayMasker);
 
     var replayDuration = replayed.Count > 0 ? replayed[^1].Time : 0.0;
     var replaySizes = outputPlans.Count == 0 ? $", {DescribeConvertedSizes(replayed, scenarioWidth, scenarioHeight, renderSettings)}" : "";
@@ -2994,6 +2993,19 @@ static ShellLaunch ResolveShell(Scenario scenario)
     return new ShellLaunch(requested, arguments, requested);
 }
 
+// The details that name the person who records, or null when settings.mask-personal is false: collecting them runs git.
+static List<PersonalDetail>? CollectPersonalDetails(Scenario scenario) =>
+    (scenario.Settings?.MaskPersonal ?? true) ? PersonalDetails.Collect(scenario.Cwd) : null;
+
+// What masking hid, with the key that turns each kind off.
+static void PrintMaskSummary(SecretMasker? masker)
+{
+    if (masker?.Summary() is { } secrets)
+        Console.Error.WriteLine($"{secrets} (settings.mask-auto: false turns off the automatic ones)");
+    if (masker?.PersonalSummary() is { } personal)
+        Console.Error.WriteLine($"{personal} (settings.mask-personal: false shows them)");
+}
+
 static bool CurrentDirectoryHasFile(string name)
 {
     try
@@ -3278,6 +3290,7 @@ static string CreateInitialScenarioYaml(string? shell)
       # mask:                        # Texts to hide wherever the recording shows them, as *, such as a host name.
       #   - "internal.example.com"
       # mask-auto: true              # The default: also hide tokens, KEY=value secrets, passwords in URLs, and more.
+      # mask-personal: true          # The default: also hide your user name, computer name, and git name and email.
 
     # Optional setup commands. They run before steps, but are not recorded in the cast.
     # pre:

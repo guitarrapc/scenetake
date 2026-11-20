@@ -46,7 +46,25 @@ internal static unsafe class Kernel32
     private static readonly delegate* unmanaged<nint, int> CloseHandleExport =
         (delegate* unmanaged<nint, int>)Export("CloseHandle");
 
+    private static readonly delegate* unmanaged<int, char*, uint*, int> GetComputerNameExWExport =
+        (delegate* unmanaged<int, char*, uint*, int>)Export("GetComputerNameExW");
+
     private static nint Export(string name) => NativeLibrary.GetExport(Library, name);
+
+    // COMPUTER_NAME_FORMAT's ComputerNameDnsHostname.
+    private const int ComputerNameDnsHostname = 1;
+
+    /// <summary>
+    /// The computer's DNS host name, as `hostname` prints it, or null. Environment.MachineName gives the NetBIOS name,
+    /// which is cut to 15 characters and upper case.
+    /// </summary>
+    internal static string? GetDnsHostName()
+    {
+        // A DNS host name has at most 63 characters, and the size counts the terminating null.
+        var buffer = stackalloc char[256];
+        var size = 256u;
+        return GetComputerNameExWExport(ComputerNameDnsHostname, buffer, &size) != 0 ? new string(buffer, 0, (int)size) : null;
+    }
 
     // JobObjectExtendedLimitInformation, and the limit that ends every process in the job when its last handle closes.
     private const int JobObjectExtendedLimitInformation = 9;

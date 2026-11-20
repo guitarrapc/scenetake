@@ -122,6 +122,7 @@ Defaults for all steps. Map-form steps may override individual keys.
 | `stderr-color` | `red` | Fallback color when stderr has no ANSI SGR. Value format: [spec_highlight.md](spec_highlight.md) |
 | `mask` | — | A list of texts to hide wherever the recording shows them. See Masking secrets below. |
 | `mask-auto` | `true` | Also hide what looks like a secret: known token formats, secret `KEY=value` pairs, URL passwords, and secret environment values. See Masking secrets below. |
+| `mask-personal` | `true` | Also hide who records: the user name, the home folder's name, the computer's name, and the git name and email, which `pwd`, `ls -l`, and `git log` print. See Masking personal details below. |
 
 ### Prompt
 
@@ -200,6 +201,38 @@ settings:
 **Tests.** `tests/Scenetake.Core.Tests/SecretMaskTests.cs` checks each rule, the texts each must leave alone, chunk and color splits, control strings that end early or never (also between streamed pipe reads), wide characters, and that the cast and outputs file of a recording hold no secret. It puts every fake token together at run time, so no file holds a whole token that a secret scanner would report. `tests/Scenetake.Core.Tests/PlaygroundReplayTests.cs` replays every committed sample with masking on, which would show a false positive as a changed cast.
 
 **Why no regular expressions.** `mask` takes plain texts, and the automatic rules are hand-written scanners. .NET's regular expression engine would add hundreds of kilobytes to the Native AOT binary, which links none today. A secret that is known before the recording, which a pattern would describe, is usually in the environment or can be listed in `mask`.
+
+### Masking personal details
+
+The prompt never names the person who records (`{dir}` shows a folder's name, Prompt above), but commands do, without being asked: `pwd` under the home folder prints `/c/Users/<name>/...`, `ls -l` prints the owner, `git log` prints the author's name and email, and a stack trace prints the paths of the files. `mask-personal` hides them, as `*` like a secret. It is on unless it is `false`, and it does not depend on `mask-auto`.
+
+```yaml
+settings:
+  mask-personal: false         # show the user name, computer name, and git identity
+```
+
+- **What is hidden.** The details of the machine that records, collected when the recording starts:
+
+  | Kind | From |
+  |---|---|
+  | User name | The account's name |
+  | Home folder name | The last name of the home folder, and of `HOME` (Git Bash may set it to another folder), when it differs from the user name |
+  | Computer name | The machine's name, and on Windows also its DNS host name, which `hostname` prints: the other is cut to 15 characters |
+  | Git name and git email | `user.name` and `user.email` of the global and system git config, as git reads them in the scenario's `cwd` (an `includeIf` for that folder applies), and `GIT_AUTHOR_NAME`, `GIT_AUTHOR_EMAIL`, `GIT_COMMITTER_NAME`, and `GIT_COMMITTER_EMAIL` |
+
+- **Where.** Wherever the masking of secrets looks: every step's output, the typed command, comments, and cards. It is found across reads and color codes as a secret is.
+- **As a whole word, case ignored.** A detail is hidden where the characters on either side are not ASCII letters, digits, `_`, or `-`: `/home/ada/app`, `ada  staff` in `ls -l`, `ada@host`, `uid=501(ada)`. User name `ada` in `adam`, `ada-work`, or `ada_x` is another word and stays. Case is ignored, because Windows writes `C:\Users\Ada` in one place and `/c/Users/ada` in another, and gives the computer name in upper case while `hostname` prints it as it was set.
+- **A published name stays.** A user name, home folder name, or git name inside a web address or after a leading `@` stays: `https://github.com/ada`, `github.com/ada/tool`, `git@github.com:ada/tool.git`, `@ada/tool`, `@ada`. There it is the name the author publishes under, which a demo shows on purpose. A word is in an address when the text before it, back to a space, a quote, or a bracket, holds `://`, or starts with a host name that has a dot (`github.com`) before a `/` or `:`. A path is not an address: `/home/ada`, `C:/Users/ada`, `./ada`, `~/ada`, `D:\src\ada`. A computer name and an email are not published names, and are hidden in an address too.
+- **What is not hidden.** A name shorter than 3 characters, one that is all digits, and names that name no person, which containers, CI runners, and cloud images use: `root`, `admin`, `administrator`, `user`, `guest`, `nobody`, `demo`, `test`, `dev`, `runner`, `runneradmin`, `ubuntu`, `debian`, `vscode`, `node`, `codespace`, `gitpod`, `docker`, `vagrant`, `ec2-user`, `app`, `api`, `web`, and `localhost`. Hidden, they would star words that demos print for other reasons, such as `npm run dev` or the `root` folder, and a recording in CI would differ from one made locally. An email is always hidden. A repository's own `user.name` and `user.email` are not: a demo repository may set an identity on purpose. Add one to `mask` to hide it.
+- **The CLI says what it hid**, on its own line, by kind: `Masked personal details: user name, git email (settings.mask-personal: false shows them)`. It names no value: a CI log may be public.
+- **Replay and the playground.** `--replay` masks again with the personal details of the machine that replays, as it does with its environment. The playground has no machine to read, and the outputs file was masked when it was recorded.
+- **Collecting.** One `git config` process reads the git identity, from git on PATH, never from the current directory. Without git, or when it fails, there is no git detail to hide. A git older than 2.26 has no `--show-scope`, and then the global config alone is read.
+
+**Why on by default.** A recording is made to be shared, and the details leak without a sign: the author looks at the demo, not at the path in a stack trace. Before this, `{dir}` kept the user name out of the prompt while `pwd` printed it a line below. Console2Svg also masks the git committer by default.
+
+**Why a published name stays.** For many developers the user name is also their GitHub account. Hidden everywhere, it would star `github.com/<name>/<tool>` in an end card or in `git remote -v`, which the author shows on purpose. A home path and an `ls -l` owner are not chosen: they come with the machine.
+
+**Why whole words and a list of generic names, not every occurrence.** A login is often a short common word. Hiding `ann` in `annual`, or `runner` in `test runner` on a GitHub Actions runner, would make stars appear where nothing personal was. The list keeps out the names that come with a container or a CI runner. A personal name that is also a common word still stars that word: the CLI's line names the kind, and `mask-personal: false` turns it off.
 
 ## `render`
 

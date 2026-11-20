@@ -29,20 +29,27 @@ internal sealed class SecretMasker
     // A value shorter than this is not taken as a secret in a KEY=value pair: `token_count: 5` stays.
     private const int MinPairValueLength = 4;
 
+    /// <summary>A user name, folder name, computer name, or git name shorter than this is not hidden: <c>me</c> is everywhere.</summary>
+    internal const int MinPersonalLength = 3;
+
     // This file avoids LINQ, tuples in collections, and other generics over value types: Native AOT compiles a copy of
     // such code for each value type, and the first version of this masker cost 84 KB of binary.
     private string[] _literals;
     private string[] _literalLabels;
+    private readonly PersonalDetail[] _personal;
     private readonly bool _auto;
     private readonly Dictionary<string, int> _counts = new(StringComparer.Ordinal);
     // The secrets counted so far, so a value that shows again is not counted again.
     private readonly HashSet<string> _counted = new(StringComparer.Ordinal);
 
-    private SecretMasker(List<string> literals, List<string> labels, bool auto)
+    private SecretMasker(List<string> literals, List<string> labels, List<PersonalDetail> personal, bool auto)
     {
         SortLongestFirst(literals, labels);
         _literals = literals.ToArray();
         _literalLabels = labels.ToArray();
+        // Longest first, as for the listed texts: a git email that holds the user name is hidden as an email.
+        _personal = personal.ToArray();
+        Array.Sort(_personal, static (a, b) => b.Value.Length.CompareTo(a.Value.Length));
         _auto = auto;
     }
 
@@ -90,11 +97,13 @@ internal sealed class SecretMasker
     }
 
     /// <summary>
-    /// The masker for a scenario, or null when it would hide nothing: no <c>settings.mask</c> texts and
-    /// <c>settings.mask-auto: false</c>. <paramref name="environment"/> gives the values of secret variables to hide.
-    /// The playground has none, because its outputs were masked when they were recorded.
+    /// The masker for a scenario, or null when it would hide nothing: no <c>settings.mask</c> texts,
+    /// <c>settings.mask-auto: false</c>, and no personal details to hide. <paramref name="environment"/> gives the
+    /// values of secret variables to hide, and <paramref name="personal"/> the details that name the person who
+    /// records, which <c>settings.mask-personal: false</c> leaves shown. The playground has neither, because its
+    /// outputs were masked when they were recorded.
     /// </summary>
-    internal static SecretMasker? ForScenario(Scenario scenario, IEnumerable<KeyValuePair<string, string?>>? environment)
+    internal static SecretMasker? ForScenario(Scenario scenario, IEnumerable<KeyValuePair<string, string?>>? environment, IEnumerable<PersonalDetail>? personal = null)
     {
         var settings = scenario.Settings;
         var auto = settings?.MaskAuto ?? true;
@@ -122,7 +131,49 @@ internal sealed class SecretMasker
             }
         }
 
-        return literals.Count == 0 && !auto ? null : new SecretMasker(literals, labels, auto);
+        var details = new List<PersonalDetail>();
+        if ((settings?.MaskPersonal ?? true) && personal is not null)
+        {
+            // Case is ignored: Windows writes C:\Users\Name in one place and /c/Users/name in another.
+            var seenDetails = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var detail in personal)
+            {
+                var value = detail.Value.Trim();
+                if (IsPersonalValue(value, detail.Kind) && seenDetails.Add(value))
+                    details.Add(new PersonalDetail(value, detail.Kind));
+            }
+        }
+
+        return literals.Count == 0 && !auto && details.Count == 0 ? null : new SecretMasker(literals, labels, details, auto);
+    }
+
+    // Accounts and host names that name no person: containers, CI runners, and cloud images use them, and they are
+    // words a demo prints for other reasons, such as `npm run dev` or `docker`.
+    private static readonly HashSet<string> GenericNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "root", "admin", "administrator", "user", "guest", "nobody", "demo", "test", "dev", "runner", "runneradmin",
+        "ubuntu", "debian", "vscode", "node", "codespace", "gitpod", "docker", "vagrant", "ec2-user", "app", "api",
+        "web", "localhost",
+    };
+
+    /// <summary>
+    /// Whether a personal detail is worth hiding: a name of at least <see cref="MinPersonalLength"/> characters that is
+    /// not all digits and not one of <see cref="GenericNames"/>, or an email.
+    /// </summary>
+    private static bool IsPersonalValue(string value, string kind)
+    {
+        if (value.Length < MinPersonalLength)
+            return false;
+
+        var allDigits = true;
+        foreach (var c in value)
+        {
+            if (char.IsControl(c))
+                return false;
+            allDigits &= char.IsAsciiDigit(c);
+        }
+
+        return !allDigits && (kind == PersonalDetail.GitEmail || !GenericNames.Contains(value));
     }
 
     /// <summary>The process's environment variables, for <see cref="ForScenario"/>: the commands inherit them.</summary>
@@ -135,14 +186,23 @@ internal sealed class SecretMasker
     /// <summary>How many different secrets were hidden, by kind, such as <c>GitHub token: 2</c>. Empty when nothing was.</summary>
     internal IReadOnlyDictionary<string, int> Counts => _counts;
 
-    /// <summary>A line for stderr that says what was hidden, such as <c>Masked 3 secrets: 2 key=value secrets, 1 GitHub token</c>, or null.</summary>
+    /// <summary>
+    /// A line for stderr that says which secrets were hidden, such as <c>Masked 3 secrets: 2 key=value secrets, 1 GitHub
+    /// token</c>, or null. Personal details have their own line (<see cref="PersonalSummary"/>).
+    /// </summary>
     internal string? Summary()
     {
-        if (_counts.Count == 0)
+        var secretKinds = new List<string>();
+        foreach (var kind in _counts.Keys)
+        {
+            if (!PersonalDetail.IsKind(kind))
+                secretKinds.Add(kind);
+        }
+
+        if (secretKinds.Count == 0)
             return null;
 
-        var kinds = new string[_counts.Count];
-        _counts.Keys.CopyTo(kinds, 0);
+        var kinds = secretKinds.ToArray();
         var counts = _counts;
         Array.Sort(kinds, (a, b) => counts[a] != counts[b] ? counts[b].CompareTo(counts[a]) : string.CompareOrdinal(a, b));
 
@@ -163,6 +223,22 @@ internal sealed class SecretMasker
             "password in a URL" => "passwords in URLs",
             _ => kind + "s",
         };
+    }
+
+    /// <summary>
+    /// A line for stderr that says which personal details were hidden, such as <c>Masked personal details: user name,
+    /// git email</c>, or null. A detail is one value, so the line names kinds without counts.
+    /// </summary>
+    internal string? PersonalSummary()
+    {
+        var text = new StringBuilder();
+        foreach (var kind in PersonalDetail.Kinds)
+        {
+            if (_counts.ContainsKey(kind))
+                text.Append(text.Length == 0 ? "" : ", ").Append(kind);
+        }
+
+        return text.Length == 0 ? null : $"Masked personal details: {text}";
     }
 
     /// <summary>Text that may hold escape sequences, such as a typed command or a step's comment line.</summary>
@@ -401,6 +477,8 @@ internal sealed class SecretMasker
                 Hide(at, at + literal.Length, _literalLabels[i]);
         }
 
+        FindPersonal(text, Hide);
+
         if (_auto)
         {
             FindPrivateKeys(text, Hide);
@@ -445,6 +523,67 @@ internal sealed class SecretMasker
     }
 
     private delegate void HideRange(int start, int end, string label);
+
+    /// <summary>
+    /// Each personal detail where it stands as a whole word, ignoring case: <c>/home/name/app</c>, <c>name staff</c> in
+    /// <c>ls -l</c>, <c>name@host</c>. A user name, folder name, or git name inside a web address or after a leading
+    /// <c>@</c> stays (<see cref="InAddress"/>).
+    /// </summary>
+    private void FindPersonal(string text, HideRange hide)
+    {
+        foreach (var detail in _personal)
+        {
+            var value = detail.Value;
+            for (var at = text.IndexOf(value, StringComparison.OrdinalIgnoreCase); at >= 0; at = text.IndexOf(value, at + 1, StringComparison.OrdinalIgnoreCase))
+            {
+                // A name inside a longer word is another word: user name `ann` in `annual` or `ann-marie`.
+                var end = at + value.Length;
+                if ((at > 0 && IsWordChar(text[at - 1])) || (end < text.Length && IsWordChar(text[end])))
+                    continue;
+
+                if (detail.StaysInAddress && InAddress(text, at))
+                    continue;
+
+                hide(at, end, detail.Kind);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Whether the word at <paramref name="at"/> is part of a web address or a handle: <c>https://host/name</c>,
+    /// <c>github.com/name</c>, <c>git@github.com:name/repo</c>, or <c>@name</c> as in <c>@name/tool</c>. There it is the
+    /// name a person publishes under, which a demo shows on purpose. A path such as <c>/home/name</c>,
+    /// <c>C:\Users\name</c>, or <c>./name</c> is not an address.
+    /// </summary>
+    private static bool InAddress(string text, int at)
+    {
+        var start = at;
+        while (start > 0 && !IsAddressEnd(text[start - 1]))
+            start--;
+
+        var before = text.AsSpan(start, at - start);
+        if (before is "@" || before.IndexOf("://", StringComparison.Ordinal) >= 0)
+            return true;
+
+        // A host name before the first / or :, as github.com is in github.com/name and git@github.com:name/repo.
+        var hostEnd = before.IndexOfAny('/', ':');
+        if (hostEnd <= 0)
+            return false;
+
+        var host = before[..hostEnd];
+        if (host.IndexOf('\\') >= 0)
+            return false;
+
+        var userEnd = host.LastIndexOf('@');
+        if (userEnd >= 0)
+            host = host[(userEnd + 1)..];
+
+        var dot = host.IndexOf('.');
+        return dot > 0 && dot + 1 < host.Length && char.IsAsciiLetter(host[dot + 1]);
+    }
+
+    private static bool IsAddressEnd(char c) =>
+        char.IsWhiteSpace(c) || c is '"' or '\'' or '`' or '(' or ')' or '<' or '>' or '[' or ']' or '{' or '}' or ',' or ';' or '|';
 
     /// <summary>The body of a PEM private key, between its BEGIN and END lines, which stay.</summary>
     private static void FindPrivateKeys(string text, HideRange hide)
@@ -1108,4 +1247,32 @@ internal sealed class SecretMasker
         private static bool IsCombining(Rune rune) =>
             Rune.GetUnicodeCategory(rune) is UnicodeCategory.NonSpacingMark or UnicodeCategory.EnclosingMark or UnicodeCategory.SpacingCombiningMark;
     }
+}
+
+/// <summary>
+/// A detail that names the person who records: their user name, home folder name, computer name, git name, or git
+/// email. <c>settings.mask-personal</c> (on by default) hides it. The CLI collects them on the recording machine
+/// (PersonalDetails.cs). The playground has none: its outputs were masked when they were recorded.
+/// </summary>
+internal sealed class PersonalDetail(string value, string kind)
+{
+    internal const string UserName = "user name";
+    internal const string HomeFolderName = "home folder name";
+    internal const string ComputerName = "computer name";
+    internal const string GitName = "git name";
+    internal const string GitEmail = "git email";
+
+    /// <summary>The kinds, in the order the CLI names them.</summary>
+    internal static readonly string[] Kinds = [UserName, HomeFolderName, ComputerName, GitName, GitEmail];
+
+    internal string Value { get; } = value;
+    internal string Kind { get; } = kind;
+
+    /// <summary>
+    /// Whether the detail stays in a web address or after a leading @: a user name or a git name is often the name a
+    /// person publishes under, as in <c>github.com/name</c>. A computer name and an email are not.
+    /// </summary>
+    internal bool StaysInAddress => Kind is UserName or HomeFolderName or GitName;
+
+    internal static bool IsKind(string label) => Array.IndexOf(Kinds, label) >= 0;
 }

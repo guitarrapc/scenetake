@@ -303,6 +303,13 @@ settings:
     - "internal.example.com"
 ```
 
+It also hides who recorded the demo: your user name in `/home/<name>` or `ls -l`, your computer's name, and your git name and email in `git log`. Your name in a web address, such as `github.com/<name>/tool`, stays. To show them, set `mask-personal: false`.
+
+```yaml
+settings:
+  mask-personal: false
+```
+
 ### CI
 
 Record the demos again in GitHub Actions when your product changes. A demo whose output did not change gives the same files, so only the demos that changed show in the diff.

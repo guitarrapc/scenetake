@@ -1097,7 +1097,7 @@ internal static class Mp4FfmpegCases
             var bytes = File.ReadAllBytes(path);
             var commented = lines.Where(line => line.TrimStart().StartsWith('#')).Select(line => line.TrimStart('#', ' ')).ToList();
             var live = lines.Where(line => !line.TrimStart().StartsWith('#')).Select(line => line.Trim()).ToList();
-            var missing = new[] { "fit: ", "mask: ", "mask-auto: ", "keys: ", "- wait: ", "- format: gif" }
+            var missing = new[] { "fit: ", "mask: ", "mask-auto: ", "mask-personal: ", "keys: ", "- wait: ", "- format: gif" }
                 .Where(key => !commented.Any(line => line.StartsWith(key, StringComparison.Ordinal) || line.StartsWith(key.TrimEnd(), StringComparison.Ordinal)))
                 .ToList();
             var notLive = new[] { "window: macos", "background: ", "- card:", "outputs:", "- format: svg", "- text: \"{dir}\"" }

@@ -868,6 +868,7 @@ public partial class ScenarioSettings
     public string? StderrColor { get; set; }
     public List<string>? Mask { get; set; }
     public bool? MaskAuto { get; set; }
+    public bool? MaskPersonal { get; set; }
 }
 
 [YamlObject(NamingConvention.KebabCase)]
