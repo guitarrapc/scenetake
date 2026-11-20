@@ -11,6 +11,7 @@ scenetake records scenarios, converts casts to SVG or mp4, and creates starter Y
 | Command | Purpose |
 |---|---|
 | `scenetake <scenario.yaml> [output]` | Run a scenario. Write `.cast` (default), `.cast` + `.svg`, or `.cast` + `.mp4` |
+| `scenetake <scenario.yaml>...` | Record several scenarios, or a wildcard such as `docs/*.yaml`, one after another. See Several scenarios below. |
 | `scenetake svg <input.cast> [output]` | Convert an existing cast to SVG |
 | `scenetake mp4 <input.cast> [output]` | Convert an existing cast to mp4 (needs ffmpeg. See [spec_mp4.md](spec_mp4.md)) |
 | `scenetake png <input.cast> [output]` | Draw one screen of an existing cast as a PNG (see [spec_png.md](spec_png.md)) |
@@ -22,6 +23,7 @@ scenetake records scenarios, converts casts to SVG or mp4, and creates starter Y
 
 ```bash
 scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--save-keys FILE] [--save-outputs FILE] [--replay FILE] [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]
+scenetake [options] <scenario.yaml> <scenario.yaml>... | <folder/*.yaml>
 scenetake svg [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] <input.cast> [output]
 scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output]
 scenetake png [--at TIME] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output]
@@ -181,6 +183,7 @@ Previously, cast parsing reported a JSON error before the hint. Failed conversio
 | Failed `pre` or `post` command | Failed command's exit code |
 | `--strict` and a recorded step exited non-zero without `continue-on-error: true` | `1`, with nothing written but the `--save-keys` file, after `post` has run (a failing `post` returns its own code) |
 | The `--save-keys` file could not be written | `1`, after the other outputs |
+| Several scenarios, and one was not recorded (it failed, or Ctrl+C stopped the run) | `1`, after the others were recorded |
 
 Without `--strict`, recorded step exit codes do not affect the process exit code. See [spec_scenario.md](spec_scenario.md) → Step exit codes.
 
@@ -211,6 +214,23 @@ outputs:
 - **Writing.** The entries are drawn from the cast as written, in order. One that fails removes its file, says why with its entry's name, and the others are still written. The run then exits `1`. `Done:` lists the cast and every file.
 - **Light and dark.** When the files include an animated SVG on a dark theme and one on a light theme (as the window chrome tells them apart, by the background's lightness), stderr ends with a `<picture>` that a GitHub README uses to show the one that matches the reader's color scheme. Its `alt` is the scenario's `title`.
 - **Why a list in the YAML, not several `--format` values.** Each place takes another format with other options: a GIF under Zenn's 3 MB needs a smaller font and fewer frames, an mp4 for X a size limit, a light README image another theme. Command-line options apply to one format at a time. In the scenario, the options sit with the format they shape, and a CI run that records the scenario writes every file.
+
+## Several scenarios
+
+```bash
+scenetake docs/demos/*.yaml
+scenetake --strict --format svg intro.yaml usage.yaml
+```
+
+- **What counts as a scenario.** The first positional argument is always a scenario. After it, an argument that ends with `.yaml` or `.yml`, or holds a `*` or `?`, is another scenario. Any other argument is the output name, which one scenario file takes (`scenetake demo.yaml out`). With several scenarios or a wildcard, an output name is an error, because each scenario is written next to its YAML.
+- **Wildcards.** scenetake expands `*` and `?` in the file name itself, because PowerShell and cmd pass `docs/*.yaml` on as it is. Bash and zsh expand it before scenetake sees it, and both give the same list. A wildcard in a folder name, and `**`, are errors. Matches come in ordinal order, and a file named twice is recorded once. A name that starts with a dot is left out unless the pattern starts with one, as in a shell. On Windows a pattern matches in any case, as the file system does. A pattern that finds nothing is an error. One that finds one file is an ordinary run.
+- **Checks before anything runs.** Every file is found first. `--save-keys`, `--save-outputs`, `--replay`, and `SCENETAKE_OUTPUTS` name one file, so with several scenarios each is an error: `--save-outputs names one file, and 2 scenarios were given: record them one at a time`. Nothing is recorded when a check fails.
+- **Recording.** The scenarios are recorded one after another, in the order given, each with the rest of the command line, as `scenetake <options> <scenario>` would record it alone. Each writes what it writes alone: the cast and its `--format` output or `outputs` list. Its own lines (`Loading:`, `Done:`) are printed as they are, with an empty line between scenarios. A scenario that fails, such as at a `--strict` step, does not stop the others.
+- **The last line.** `Recorded 4 scenarios.`, or `Recorded 3 of 4 scenarios. Failed: docs/demos/b.yaml`. The exit code is `1` when one was not recorded.
+- **Ctrl+C.** The scenario being recorded gets it too and stops as it would alone. No other scenario starts, and the last line says `Stopped by Ctrl+C: recorded 1 of 4 scenarios. Not recorded: ...`.
+- **Why a process for each scenario.** A recording keeps state for its run: the shell state folder, the background steps and their Ctrl+C handler, and the fonts that `pre` may install. A process of its own leaves nothing of one scenario to the next, such as a server that a background step started, and the recording code stays as it is. Starting the program again takes tens of milliseconds, against seconds of recording. The program started is the running one: the native binary, or the app host of `dotnet run` and of the dotnet tool.
+- **Why nothing is skipped.** A scenario whose YAML has not changed still needs recording when the product it shows has changed, and the YAML cannot tell. Recording an unchanged demo again gives the same files byte for byte ([spec_scenario.md](spec_scenario.md) → Recording again), so recording every scenario and comparing the result with git shows only the demos that changed. README → CI shows that workflow.
+- **Why one after another.** Steps are typed with real delays, and an interactive step takes the terminal.
 
 ## Capture
 
@@ -268,4 +288,6 @@ outputs:
 - **Windows must resolve its own links.** Relative targets through junctions resolve against the opened path, rather than the junction target. Targets starting with a separator resolve against the current drive. Manual traversal therefore rejected valid outputs. File indices handle normal volumes. WSL shares need final paths from opened files because their serial number is `0`. Comparing only written paths missed Windows links to WSL inputs and allowed overwrites.
 - **Help must describe command-specific behavior.** Previously, `--help` printed only usage lines on stderr, leaving option details in the README. Help now describes each option on stdout, which supports pagers. Scenario `--theme` retains YAML color overrides. Conversion `--theme` replaces cast colors, so the commands need different descriptions. A test checks help coverage against each parser's accepted options.
 - **An output's look goes on the settings read back from the cast** (2026-11-20). The scenario path draws every file from the cast it wrote, and took from the run's own settings only an image background and `--max-fps`, which the cast does not store. An outputs entry's theme or font applied to the run's settings would have changed nothing. Entries are applied after the cast is read, as the `svg` command applies its options.
+- **A second .yaml was the output name** (2026-11-20). Before several scenarios, `scenetake a.yaml b.yaml` took `b.yaml` as the output stem: it recorded a.yaml into b.cast, over b's own recording, without a word. A second argument that ends with `.yaml` or `.yml` is now another scenario.
+- **PowerShell passes a wildcard on as it is** (2026-11-20). `scenetake docs/*.yaml` worked in bash and found no file in PowerShell and cmd, which leave the expansion to the program. scenetake matches the file name itself, in its own way on every OS, rather than with the file system's pattern, whose Windows rules differ.
 - **An entry is read by the command-line parser** (2026-11-20). Its keys are turned into `--format FORMAT --KEY=VALUE` and read as a command line, so an entry takes every rule of its format with no second list of rules to keep in step. The errors are rewritten to name the keys (`'crf'` for `--crf`).

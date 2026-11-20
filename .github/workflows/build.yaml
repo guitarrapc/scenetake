@@ -197,6 +197,8 @@ jobs:
           dotnet run tests/canvas_fit_test.cs
           # Shell state runs the published binary in each OS's bash and pwsh: macOS has bash 3.2, whose dumps differ.
           SCENETAKE_BIN="$scenetake_bin" dotnet run tests/shell_state_test.cs
+          # Several scenarios in one run: each is recorded by the binary started again, in the OS's default shell.
+          SCENETAKE_BIN="$scenetake_bin" dotnet run tests/batch_test.cs
 
       - name: Upload macOS binary
         if: ${{ startsWith(matrix.rid, 'osx-') }}

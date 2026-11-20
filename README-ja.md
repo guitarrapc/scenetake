@@ -92,6 +92,9 @@ scenetake init
 # シナリオを実行してscenario.svgで録画する (scenario.castも作成します)
 scenetake --format svg scenario.yaml
 
+# フォルダ内のシナリオをまとめて録画する
+scenetake --format svg demos/*.yaml
+
 # 全オプションを確認する
 scenetake --help
 ```
@@ -302,7 +305,44 @@ settings:
 
 ### CI
 
-`--strict`を付けると、ステップのコマンドが0以外で終了したときにエラーにできます。失敗するのが正しいステップには`continue-on-error: true`を付けます。
+製品が変わったら、GitHub Actionsでデモを撮り直します。出力が変わらないデモは同じファイルになるので、差分に出るのは変わったデモだけです。
+
+```yaml
+# .github/workflows/demos.yaml
+name: Update demos
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  record:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      # デモで見せる製品をここでインストールする
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg # gifとmp4を出力するときだけ
+      - run: npx -y scenetake --strict docs/demos/*.yaml
+      # リポジトリ設定の「Allow GitHub Actions to create and approve pull requests」が必要
+      - uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
+        with:
+          title: Update demos
+          branch: update-demos
+```
+
+デモが古いままのPRを落とすには、撮り直してからcastを比べます。
+
+```bash
+npx -y scenetake --strict docs/demos/*.yaml
+git diff --exit-code -- 'docs/demos/*.cast'
+```
+
+- 手元でもCIと同じシェル（Linuxのbashなど）で撮ります。Windowsのpwshで撮ったデモは、CIで最初に撮り直したときに全部変わります。
+- 比べるのはcastです。GIFとmp4はffmpegのバージョンでバイトが変わります。
+- `interactive: true`のステップはCIでは撮れません。`keys`のステップは撮れます。
+- `--strict`を付けると、ステップのコマンドが0以外で終了したときにエラーにできます。失敗するのが正しいステップには`continue-on-error: true`を付けます。
 
 ## シナリオファイル形式
 

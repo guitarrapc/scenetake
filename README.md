@@ -92,6 +92,9 @@ scenetake init
 # Run the scenario and record it as scenario.svg (scenario.cast is written too)
 scenetake --format svg scenario.yaml
 
+# Record every scenario in a folder
+scenetake --format svg demos/*.yaml
+
 # See every option
 scenetake --help
 ```
@@ -302,7 +305,44 @@ settings:
 
 ### CI
 
-Add `--strict` to make a non-zero exit from a step's command an error. Set `continue-on-error: true` on a step that is meant to fail.
+Record the demos again in GitHub Actions when your product changes. A demo whose output did not change gives the same files, so only the demos that changed show in the diff.
+
+```yaml
+# .github/workflows/demos.yaml
+name: Update demos
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  record:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      # Install the product that the demos show here.
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg # only for gif and mp4 outputs
+      - run: npx -y scenetake --strict docs/demos/*.yaml
+      # Needs "Allow GitHub Actions to create and approve pull requests" in the repository settings.
+      - uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
+        with:
+          title: Update demos
+          branch: update-demos
+```
+
+To fail a pull request whose demos are out of date, record them and compare the casts:
+
+```bash
+npx -y scenetake --strict docs/demos/*.yaml
+git diff --exit-code -- 'docs/demos/*.cast'
+```
+
+- Record locally in the shell that CI uses, such as bash on Linux. A demo recorded with pwsh on Windows changes completely on its first CI run.
+- Compare the casts, not GIFs or mp4s, whose bytes change with the ffmpeg version.
+- Steps with `interactive: true` cannot run in CI. Steps with `keys` can.
+- `--strict` makes a non-zero exit from a step's command an error. Set `continue-on-error: true` on a step that is meant to fail.
 
 ## Scenario Format
 

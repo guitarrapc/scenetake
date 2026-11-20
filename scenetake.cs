@@ -36,6 +36,7 @@
 #:include ShellState.cs
 #:include BackgroundSteps.cs
 #:include Rerecord.cs
+#:include ScenarioBatch.cs
 
 using MiniPty;
 using MiniPty.Capture;
@@ -472,7 +473,7 @@ if (args[0] is "capture" && args.Length > 1 && args[1] is "-h" or "--help")
 }
 
 // `capture` comes here too: it records the one-step scenario that its command makes, without a file.
-if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runStyle, out var runStillAt, out var capture, out var saveKeysArg, out var saveOutputsArg, out var replayArg, out var runError, out var formatGiven))
+if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runStyle, out var runStillAt, out var capture, out var saveKeysArg, out var saveOutputsArg, out var replayArg, out var runError, out var formatGiven, out var scenarioIndexes))
 {
     Console.Error.WriteLine($"Error: {runError}");
     if (args[0] is "capture")
@@ -480,6 +481,39 @@ if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outpu
     else
         PrintUsage();
     return 1;
+}
+
+// Several scenarios, or a wildcard, which PowerShell and cmd pass on as it is. Each scenario is recorded alone, in
+// a process of its own (ScenarioBatch), after every file is found. A wildcard that finds one file is an ordinary run.
+if (capture is null && (scenarioIndexes.Count > 1 || ScenarioBatch.HasWildcard(scenarioArg)))
+{
+    var patterns = new List<string>(scenarioIndexes.Count);
+    foreach (var index in scenarioIndexes)
+        patterns.Add(args[index]);
+    if (!ScenarioBatch.TryExpand(patterns, Directory.GetCurrentDirectory(), out var scenarios, out var expandError))
+    {
+        Console.Error.WriteLine($"Error: {expandError}");
+        return 1;
+    }
+
+    if (scenarios.Count > 1)
+    {
+        // These name one file, which every scenario would write or read.
+        var oneFileOption = saveKeysArg is not null ? "--save-keys"
+            : saveOutputsArg is not null ? "--save-outputs"
+            : replayArg is not null ? "--replay"
+            : !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(StepOutputs.EnvironmentVariable)) ? StepOutputs.EnvironmentVariable
+            : null;
+        if (oneFileOption is not null)
+        {
+            Console.Error.WriteLine($"Error: {oneFileOption} names one file, and {scenarios.Count} scenarios were given: record them one at a time");
+            return 1;
+        }
+
+        return ScenarioBatch.Run(args, scenarioIndexes, scenarios, FormatDisplayPath);
+    }
+
+    scenarioArg = scenarios[0];
 }
 
 var scenarioPath = Path.GetFullPath(scenarioArg);
@@ -1362,7 +1396,7 @@ static bool TryReadOutputEntries(List<object?> entries, string scenarioFolder, s
         }
 
         args.Add("outputs-entry.yaml");
-        if (!TryParseRunArgs([.. args], out _, out _, out _, out _, out _, out var fontSize, out var fontFamily, out var theme, out var window, out var maxFps, out var mp4, out var style, out var at, out _, out _, out _, out _, out var parseError, out _))
+        if (!TryParseRunArgs([.. args], out _, out _, out _, out _, out _, out var fontSize, out var fontFamily, out var theme, out var window, out var maxFps, out var mp4, out var style, out var at, out _, out _, out _, out _, out var parseError, out _, out _))
         {
             error = $"{where} ({extension[1..]}): {AsEntryKeys(parseError)}";
             return false;
@@ -1668,9 +1702,11 @@ static bool TryParseRunArgs(
     out string? saveOutputsPath,
     out string? replayPath,
     out string error,
-    out bool formatGiven)
+    out bool formatGiven,
+    out List<int> scenarioIndexes)
 {
     scenarioPath = "";
+    scenarioIndexes = [];
     style = new StyleOptions();
     outputPath = null;
     saveKeysPath = null;
@@ -1850,19 +1886,32 @@ static bool TryParseRunArgs(
             continue;
         }
 
+        // The first argument is a scenario. After it, a .yaml or .yml file or a wildcard is another scenario, and
+        // anything else is the output name, which one scenario file takes.
         if (scenarioPath.Length == 0)
         {
             scenarioPath = arg;
+            scenarioIndexes.Add(i);
             continue;
         }
 
-        if (outputPath is null)
+        if (outputPath is null && ScenarioBatch.IsScenarioArgument(arg))
+        {
+            scenarioIndexes.Add(i);
+            continue;
+        }
+
+        if (outputPath is null && scenarioIndexes.Count == 1 && !ScenarioBatch.HasWildcard(scenarioPath))
         {
             outputPath = arg;
             continue;
         }
 
-        error = $"unexpected argument: {arg}";
+        error = outputPath is null
+            ? $"unexpected argument: {arg}. Several scenarios are each written next to their YAML, so an output name works with one scenario file only"
+            : ScenarioBatch.IsScenarioArgument(arg)
+                ? $"unexpected argument: {arg}. An output name works with one scenario file only: list the scenarios without it"
+                : $"unexpected argument: {arg}";
         return false;
     }
 
@@ -3252,6 +3301,7 @@ static string CreateInitialScenarioYaml(string? shell)
 static void PrintUsage()
 {
     Console.Error.WriteLine("Usage: scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--save-keys FILE] [--save-outputs FILE] [--replay FILE] [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
+    Console.Error.WriteLine("       scenetake [options] <scenario.yaml> <scenario.yaml>... | <folder/*.yaml>");
     Console.Error.WriteLine("       scenetake svg [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
     Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
     Console.Error.WriteLine("       scenetake png [--at TIME] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output.png]");
@@ -4482,6 +4532,7 @@ static class HelpText
     internal const string Commands = """
         Usage:
           scenetake [options] <scenario.yaml> [output]   Run a scenario and record it
+          scenetake [options] <scenario.yaml>...         Record several scenarios, one after another
           scenetake svg [options] <input.cast> [output]  Convert a cast file to an animated SVG
           scenetake mp4 [options] <input.cast> [output]  Convert a cast file to an mp4 (needs ffmpeg)
           scenetake png [options] <input.cast> [output]  Draw one screen of a cast file as a PNG
@@ -4493,6 +4544,10 @@ static class HelpText
 
         [output] names the files without an extension: 'out' writes out.cast and out.svg, and an
         extension given is replaced. Without it, the files are named after the scenario, next to it.
+
+        Several scenarios, or a wildcard in the file name such as 'docs/*.yaml', are recorded one
+        after another with the same options, each next to its YAML. One that fails does not stop
+        the others, and the exit code is 1 when one was not recorded.
 
         """;
 
