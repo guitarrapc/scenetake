@@ -32,6 +32,7 @@ var repoRoot = FindRepoRoot(AppContext.BaseDirectory) ?? FindRepoRoot(Directory.
 var failures = 0;
 
 failures += Run("SameOutputGivesSameCast", SameOutputGivesSameCast);
+failures += Run("NoStepsSaysNothing", NoStepsSaysNothing);
 failures += Run("ChunkSplitIsTheSameOutput", ChunkSplitIsTheSameOutput);
 failures += Run("OnlyTheChangedStepDiffers", OnlyTheChangedStepDiffers);
 failures += Run("KeepOutputKeepsTheEarlierOutput", KeepOutputKeepsTheEarlierOutput);
@@ -201,6 +202,14 @@ static CommandExecution ThreeStepsOutput(StepStart step, double jitter) => step.
     "count" => Pty((0.05 + jitter, "1\r\n"), (0.25 + 3 * jitter, "2\r\n"), (0.6 - jitter, "3\r\n")),
     _ => Pipe("three\n"),
 };
+
+// A recording of cards alone writes no step ranges, so the next one finds none. Its note would blame another tool
+// and promise a comparison next time, on every run.
+static bool NoStepsSaysNothing()
+{
+    var lines = Rerecording.Describe(new Rerecorder(previous: null, masker: null), "it has no step ranges: an earlier scenetake or another tool wrote it", "cards.cast");
+    return Expect(lines.Count == 0, string.Join(" | ", lines));
+}
 
 static bool SameOutputGivesSameCast()
 {

@@ -19,32 +19,65 @@ internal static class ScenarioBatch
         || arg.EndsWith(".yml", StringComparison.OrdinalIgnoreCase)
         || HasWildcard(arg);
 
-    internal static bool HasWildcard(string arg) => arg.AsSpan().IndexOfAny('*', '?') >= 0;
+    /// <summary>
+    /// Whether an argument holds <c>*</c> or <c>?</c>. The <c>?</c> of a Windows device path (<c>\\?\C:\...</c>,
+    /// <c>\??\C:\...</c>) is part of the path, and Windows allows neither character in a name.
+    /// </summary>
+    internal static bool HasWildcard(string arg) => arg.AsSpan(DevicePrefixLength(arg)).IndexOfAny('*', '?') >= 0;
+
+    /// <summary>
+    /// The length of a Windows device path's prefix, <c>\\?\</c>, <c>\\.\</c>, or <c>\??\</c>, with either slash as
+    /// .NET takes them, such as the <c>//?/</c> that scenetake prints for one. Zero elsewhere, where a name may hold
+    /// <c>?</c>.
+    /// </summary>
+    private static int DevicePrefixLength(string path) =>
+        OperatingSystem.IsWindows() && path.Length >= 4 && path[0] is '\\' or '/' && path[3] is '\\' or '/'
+        && ((path[1] is '\\' or '/' && path[2] is '?' or '.') || (path[1] == '?' && path[2] == '?'))
+            ? 4
+            : 0;
+
+    /// <summary>
+    /// A full path as written, without a Windows device prefix, so that <c>\\?\C:\x\a.yaml</c> and <c>C:\x\a.yaml</c>
+    /// compare the same. Paths are compared as written: a link, a volume GUID, or another case on a volume that ignores
+    /// case is another name. The rest is not normalized again, which would drop a trailing dot that a device path keeps.
+    /// </summary>
+    private static string PlainPath(string fullPath)
+    {
+        var prefix = DevicePrefixLength(fullPath);
+        if (prefix == 0)
+            return fullPath;
+
+        var rest = fullPath[prefix..].Replace('/', '\\');
+        return rest.StartsWith(@"UNC\", StringComparison.OrdinalIgnoreCase) ? @"\\" + rest[4..] : rest;
+    }
 
     /// <summary>
     /// The scenario files that <paramref name="patterns"/> name, as full paths, in the order given, each once. A
     /// wildcard (<c>*</c>, <c>?</c>) in the file name lists that folder, in ordinal order, as a shell does: PowerShell
     /// and cmd pass <c>docs/*.yaml</c> on as it is. A name that starts with a dot is left out unless the pattern
-    /// starts with one too. Every file is found before anything is recorded.
+    /// starts with one too. A file whose own name holds <c>*</c> or <c>?</c> is that file: a shell gives it so, and
+    /// so does each scenario's own process, which must not list the folder again. Every file is found before
+    /// anything is recorded.
     /// </summary>
     internal static bool TryExpand(List<string> patterns, string currentFolder, out List<string> paths, out string error)
     {
         paths = [];
         error = "";
+        var files = new List<string>();
         var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
         foreach (var pattern in patterns)
         {
+            var named = Path.GetFullPath(pattern, currentFolder);
+            if (File.Exists(named))
+            {
+                Add(paths, files, named);
+                continue;
+            }
+
             if (!HasWildcard(pattern))
             {
-                var file = Path.GetFullPath(pattern, currentFolder);
-                if (!File.Exists(file))
-                {
-                    error = $"{pattern} not found";
-                    return false;
-                }
-
-                Add(paths, file, comparison);
-                continue;
+                error = $"{pattern} not found";
+                return false;
             }
 
             var folderPart = Path.GetDirectoryName(pattern) ?? "";
@@ -63,24 +96,32 @@ internal static class ScenarioBatch
 
             var folder = Path.GetFullPath(folderPart.Length == 0 ? "." : folderPart, currentFolder);
             var matches = new List<string>();
-            if (Directory.Exists(folder))
+            try
             {
-                // The pattern is matched here, not by the file system, so it means the same on every OS.
-                foreach (var file in Directory.EnumerateFiles(folder))
+                if (Directory.Exists(folder))
                 {
-                    var name = Path.GetFileName(file);
-                    if (name.StartsWith('.') && !namePattern.StartsWith('.'))
-                        continue;
-                    if (!FileSystemName.MatchesSimpleExpression(namePattern, name, ignoreCase: OperatingSystem.IsWindows()))
-                        continue;
+                    // The pattern is matched here, not by the file system, so it means the same on every OS.
+                    foreach (var file in Directory.EnumerateFiles(folder))
+                    {
+                        var name = Path.GetFileName(file);
+                        if (name.StartsWith('.') && !namePattern.StartsWith('.'))
+                            continue;
+                        if (!FileSystemName.MatchesSimpleExpression(namePattern, name, ignoreCase: OperatingSystem.IsWindows()))
+                            continue;
 
-                    // Each match goes in its ordinal place. List.Sort with a comparer would add comparer types for
-                    // every list type of the program to the AOT binary (about 37 KB).
-                    var at = matches.Count;
-                    while (at > 0 && string.CompareOrdinal(matches[at - 1], file) > 0)
-                        at--;
-                    matches.Insert(at, file);
+                        // Each match goes in its ordinal place. List.Sort with a comparer would add comparer types for
+                        // every list type of the program to the AOT binary.
+                        var at = matches.Count;
+                        while (at > 0 && string.CompareOrdinal(matches[at - 1], file) > 0)
+                            at--;
+                        matches.Insert(at, file);
+                    }
                 }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                error = $"cannot list the folder of {pattern}: {ex.Message}";
+                return false;
             }
 
             if (matches.Count == 0)
@@ -90,21 +131,47 @@ internal static class ScenarioBatch
             }
 
             foreach (var match in matches)
-                Add(paths, match, comparison);
+                Add(paths, files, match);
         }
 
         return true;
 
-        static void Add(List<string> paths, string path, StringComparison comparison)
+        // Each file once: files holds the plain path of each one in paths.
+        void Add(List<string> paths, List<string> files, string path)
         {
-            foreach (var existing in paths)
+            var file = PlainPath(path);
+            foreach (var existing in files)
             {
-                if (string.Equals(existing, path, comparison))
+                if (string.Equals(existing, file, comparison))
                     return;
             }
 
             paths.Add(path);
+            files.Add(file);
         }
+    }
+
+    /// <summary>
+    /// The error for two scenarios that write one cast, such as demo.yaml and demo.yml, which are both recorded to
+    /// demo.cast: the second would write over the first. Null when each has its own. Case is ignored on every OS, as
+    /// for the other output paths: macOS volumes ignore it by default.
+    /// </summary>
+    internal static string? FindSharedOutput(List<string> scenarios, Func<string, string> display)
+    {
+        var stems = new List<string>(scenarios.Count);
+        foreach (var scenario in scenarios)
+            stems.Add(Path.ChangeExtension(PlainPath(scenario), null));
+
+        for (var i = 1; i < scenarios.Count; i++)
+        {
+            for (var j = 0; j < i; j++)
+            {
+                if (string.Equals(stems[j], stems[i], StringComparison.OrdinalIgnoreCase))
+                    return $"{display(scenarios[j])} and {display(scenarios[i])} would both write {display(Path.ChangeExtension(scenarios[i], ".cast"))}: rename one of them";
+            }
+        }
+
+        return null;
     }
 
     /// <summary>

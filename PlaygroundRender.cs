@@ -112,6 +112,12 @@ internal static class PlaygroundRender
             if (maxFps is int maxFpsValue)
                 renderSettings = renderSettings with { MaxFps = maxFpsValue };
             renderSettings = style.Apply(renderSettings);
+            if (FindCardCropError(scenario, renderSettings.Crop) is { } cardCropError)
+            {
+                error = cardCropError;
+                return;
+            }
+
             foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(renderSettings))
                 Console.Error.WriteLine($"Warning: {note}");
 
@@ -121,7 +127,8 @@ internal static class PlaygroundRender
             var generateOptions = new GenerateOptions
             {
                 TrackPtyCursor = replay.TrackPtyCursor,
-                FitsHeight = renderSettings.Fit is FitMode.Height or FitMode.Both,
+                Fit = renderSettings.Fit,
+                Crop = renderSettings.Crop,
                 LogRunning = false,
                 // The outputs were masked when they were recorded, with the recording machine's environment, which the
                 // browser does not have. Masking again hides only what the YAML adds, such as a new settings.mask text.

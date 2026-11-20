@@ -942,10 +942,11 @@ internal sealed class PromptTemplate(PromptPart[] parts)
     /// <c>/</c> for the root. The rest of the path is never shown, so a recording names no user folder. Git Bash
     /// reports <c>/c/Users/name</c> for <c>C:\Users\name</c>, which is the home folder too.
     /// </summary>
-    internal static string FolderName(string folder, string? home)
+    /// <param name="profile">A second folder that is home too, such as the user profile, which PowerShell's <c>~</c> names when HOME does not.</param>
+    internal static string FolderName(string folder, string? home, string? profile = null)
     {
         var path = NativePath(folder);
-        if (home is not null && SamePath(path, NativePath(home)))
+        if ((home is { Length: > 0 } && SamePath(path, NativePath(home))) || (profile is { Length: > 0 } && SamePath(path, NativePath(profile))))
             return "~";
 
         var trimmed = path.TrimEnd('/', '\\');

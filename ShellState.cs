@@ -65,6 +65,13 @@ internal abstract class ShellState : IDisposable
     /// </summary>
     internal string? Folder { get; private protected set; }
 
+    /// <summary>
+    /// False when the last command removed <see cref="Folder"/> while in it: the next command cannot return there and
+    /// starts where the first one did. The shell tells, since a Git Bash path such as <c>/tmp/x</c> has no Windows path
+    /// to look up.
+    /// </summary>
+    internal bool FolderExists { get; private protected set; } = true;
+
     /// <summary>The command to start in place of <paramref name="command"/>, and the variables to add to its environment.</summary>
     internal PreparedCommand Prepare(string command)
     {
@@ -201,6 +208,7 @@ internal sealed class BashState : ShellState
             return;
 
         Folder = Read("final.pwd");
+        FolderExists = !File.Exists(Path.Combine(folder, "final.gone"));
         _restore = BashDump.BuildRestore(
             Read("base.vars"), Read("final.vars"),
             Read("base.funcs"), Read("final.funcs"),
@@ -226,7 +234,7 @@ internal sealed class BashState : ShellState
         script.Append("{ __scenetake_vars >|\"$__scenetake_dir/base.vars\"; builtin declare -f >|\"$__scenetake_dir/base.funcs\"; builtin alias -p >|\"$__scenetake_dir/base.alias\"; } 2>/dev/null\n");
         // In a || list, set -e from the caller's BASH_ENV does not stop the shell at a statement that fails.
         script.Append("{\n").Append(restore).Append(":\n} 2>>\"$__scenetake_dir/restore.err\" || :\n");
-        script.Append("__scenetake_save() { { __scenetake_vars >|\"$__scenetake_dir/final.vars\"; builtin declare -f >|\"$__scenetake_dir/final.funcs\"; builtin alias -p >|\"$__scenetake_dir/final.alias\"; builtin printf '%s' \"$PWD\" >|\"$__scenetake_dir/final.pwd\"; } 2>/dev/null; }\n");
+        script.Append("__scenetake_save() { { __scenetake_vars >|\"$__scenetake_dir/final.vars\"; builtin declare -f >|\"$__scenetake_dir/final.funcs\"; builtin alias -p >|\"$__scenetake_dir/final.alias\"; builtin printf '%s' \"$PWD\" >|\"$__scenetake_dir/final.pwd\"; builtin test -d \"$PWD\" || : >|\"$__scenetake_dir/final.gone\"; } 2>/dev/null; }\n");
         script.Append("builtin trap __scenetake_save EXIT\n");
         return script.ToString();
     }
@@ -679,6 +687,7 @@ internal sealed class ZshState : ShellState
             return;
 
         Folder = Read("final.pwd");
+        FolderExists = !File.Exists(Path.Combine(folder, "final.gone"));
         _restore = ZshDump.BuildRestore(
             Read("base.vars"), Read("final.vars"),
             Read("base.funcs"), Read("final.funcs"),
@@ -732,7 +741,7 @@ internal sealed class ZshState : ShellState
         finish.Append("}\n");
         finish.Append("__scenetake_dump base\n");
         finish.Append("{\n").Append(restore).Append(":\n} 2>>\"$__scenetake_dir/restore.err\" || :\n");
-        finish.Append("__scenetake_save() { __scenetake_dump final; builtin print -rn -- \"$PWD\" >|\"$__scenetake_dir/final.pwd\" 2>/dev/null; }\n");
+        finish.Append("__scenetake_save() { __scenetake_dump final; builtin print -rn -- \"$PWD\" >|\"$__scenetake_dir/final.pwd\" 2>/dev/null; [[ -d $PWD ]] || : >|\"$__scenetake_dir/final.gone\" 2>/dev/null; }\n");
         finish.Append("builtin trap __scenetake_save EXIT\n");
 
         return [(".zshenv", zshenv), (".zprofile", zprofile), (".zlogin", zlogin), ("finish.zsh", finish.ToString())];
@@ -925,6 +934,7 @@ internal sealed class PosixShellState : ShellState
             return;
 
         Folder = Read("final.pwd");
+        FolderExists = !File.Exists(Path.Combine(folder, "final.gone"));
         _restore = PosixShellDump.BuildRestore(
             Read("base.vars"), Read("final.vars"),
             Read("base.exports"), Read("final.exports"),
@@ -943,7 +953,7 @@ internal sealed class PosixShellState : ShellState
         script.Append("__scenetake_dump() { { set >|\"$__scenetake_dir/$1.vars\"; export -p >|\"$__scenetake_dir/$1.exports\"; } 2>/dev/null; }\n");
         script.Append("__scenetake_dump base\n");
         script.Append("{\n").Append(restore).Append(":\n} 2>>\"$__scenetake_dir/restore.err\" || :\n");
-        script.Append("__scenetake_save() { __scenetake_dump final; command printf '%s' \"$PWD\" >|\"$__scenetake_dir/final.pwd\" 2>/dev/null; }\n");
+        script.Append("__scenetake_save() { __scenetake_dump final; command printf '%s' \"$PWD\" >|\"$__scenetake_dir/final.pwd\" 2>/dev/null; [ -d \"$PWD\" ] || : >|\"$__scenetake_dir/final.gone\" 2>/dev/null; }\n");
         script.Append("trap __scenetake_save EXIT\n");
         return script.ToString();
     }

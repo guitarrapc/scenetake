@@ -1,0 +1,19 @@
+# The prompt's {dir} follows the location that each step starts in, in PowerShell, which writes the location to the
+# state on its own: pre's Set-Location and a step's (spec_scenario.md → settings, Prompt). Run from the repository
+# root by tests/shell_state_test.cs.
+title: "prompt folder (pwsh)"
+width: 60
+height: 12
+shell: pwsh
+settings:
+  typing-speed: 0.001
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+  prompt: "{dir} > "
+pre:
+  - Set-Location tests
+steps:
+  - Write-Output first
+  - Set-Location fixtures
+  - Write-Output second

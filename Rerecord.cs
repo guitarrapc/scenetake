@@ -722,6 +722,10 @@ internal static class Rerecording
     internal static List<string> Describe(Rerecorder result, string? problem, string castPath)
     {
         var lines = new List<string>();
+        // Cards and hidden steps alone print nothing to compare, and the cast has no step ranges for the next run.
+        if (result.Slots.Count == 0)
+            return lines;
+
         var keeps = result.Slots.Exists(static slot => slot.KeepOutput);
         if (!result.HasPrevious)
         {

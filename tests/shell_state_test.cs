@@ -52,6 +52,8 @@ failures += Run("ShowAndClearAreKnownKeys", ShowAndClearAreKnownKeys);
 failures += Run("CardErrors", CardErrors);
 failures += Run("CardLinesSplitAndStyle", CardLinesSplitAndStyle);
 failures += Run("CardComposition", CardComposition);
+failures += Run("CardFollowsFitAndCrop", CardFollowsFitAndCrop);
+failures += Run("CardCropErrors", CardCropErrors);
 failures += Run("PromptPartsAndErrors", PromptPartsAndErrors);
 failures += Run("FolderNamesHideThePath", FolderNamesHideThePath);
 failures += Run("PromptFolderReplays", PromptFolderReplays);
@@ -68,6 +70,7 @@ failures += Run("PlaygroundSkipsBackground", PlaygroundSkipsBackground);
 failures += Run("IntegrationBashCarriesState", () => IntegrationBashCarriesState(repoRoot));
 failures += Run("IntegrationBashLoginAliasesStayOff", () => IntegrationBashLoginAliasesStayOff(repoRoot));
 failures += Run("IntegrationPromptFollowsFolder", () => IntegrationPromptFollowsFolder(repoRoot));
+failures += Run("IntegrationPowerShellPromptFollowsFolder", () => IntegrationPowerShellPromptFollowsFolder(repoRoot));
 failures += Run("IntegrationPowerShellCarriesState", () => IntegrationPowerShellCarriesState(repoRoot));
 failures += Run("IntegrationZshCarriesState", () => IntegrationZshCarriesState(repoRoot));
 failures += Run("IntegrationShCarriesState", () => IntegrationShCarriesState(repoRoot));
@@ -377,6 +380,11 @@ static bool CardErrors()
     ok &= ExpectError("- card: \"[bold]0123456789abc\"", "Step 1 card line 1 is 13 columns wide, wider than the terminal's 12", width: 12);
     ok &= ExpectError("- card: \"日本語のタイトルです\"", "Step 1 card line 1 is 20 columns wide, wider than the terminal's 12", width: 12);
     ok &= ExpectError("- card: \"a\\tb\"", "Step 1 card line 1 holds a control character");
+    ok &= ExpectError("- card: \"a\\u0085b\"", "Step 1 card line 1 holds a control character");
+    ok &= ExpectError("- card: \"a\\x7fb\"", "Step 1 card line 1 holds a control character");
+    // A zero-width space takes no column, as the terminal draws it.
+    ok &= ExpectError("- card: \"0123456789ab\\u200B\"", null, width: 12);
+    ok &= ExpectError("- card: [my-app, Install: npm i -g my-app]", "Step 1 card line 2 is read as a mapping, because YAML takes \": \" in it as a key. Quote the line");
     // A card alone is a recording, unlike a clear step alone.
     ok &= ExpectError("- card: Title", null);
     ok &= ExpectError("- card: |\n    my-app\n    npm i -g my-app\n  post-delay: 3\n  pre-delay: 0\n- echo hi\n- card: [\"[bold fg:cyan] my-app \", 42, ~, \"\"]", null);
@@ -392,19 +400,83 @@ static bool CardErrors()
     }
 }
 
-// Without fit: height a card is centered in the whole terminal and needs no mark. A card as tall as its rows has no
-// row below it to mark.
+// Without fit a card is centered in its window and needs no mark. A card as tall as its window still has the cell right
+// of its last line, unless that line reaches the last column. A window that a crop moves from the corner moves the
+// card and the mark with it.
 static bool CardComposition()
 {
-    var whole = ComposeCard(["a", "b"], 10, 9, null, markBottom: false);
-    var marked = ComposeCard(["a", "b"], 10, 6, null, markBottom: true);
-    var full = ComposeCard(["a", "b"], 10, 2, null, markBottom: true);
+    var whole = ComposeCard(["a", "b"], CanvasWindow.Whole(10, 9), null, markCorner: false);
+    var marked = ComposeCard(["a", "b"], CanvasWindow.Whole(10, 6), null, markCorner: true);
+    var tall = ComposeCard(["a", "b"], CanvasWindow.Whole(10, 2), null, markCorner: true);
+    var full = ComposeCard(["a", "0123456789"], CanvasWindow.Whole(10, 2), null, markCorner: true);
+    var cropped = ComposeCard(["a"], new CanvasWindow(2, 1, 6, 4), null, markCorner: true);
     var masker = SecretMasker.ForScenario(ParseScenario("settings:\n  mask: [\"hunter2\"]\nsteps:\n  - echo hi\n"), null);
-    var masked = ComposeCard(["pass: hunter2"], 20, 3, masker, markBottom: false);
+    var masked = ComposeCard(["pass: hunter2"], CanvasWindow.Whole(20, 3), masker, markCorner: false);
     return Expect(whole == "\u001b[?25l\u001b[H\u001b[2J\u001b[4;5Ha\u001b[5;5Hb", Show(whole))
-        && Expect(marked == "\u001b[?25l\u001b[H\u001b[2J\u001b[6;5H\u001b[1m \u001b[0m\u001b[3;5Ha\u001b[4;5Hb", Show(marked))
+        && Expect(marked == "\u001b[?25l\u001b[H\u001b[2J\u001b[6;10H\u001b[1m \u001b[0m\u001b[3;5Ha\u001b[4;5Hb", Show(marked))
+        && Expect(tall.Contains("\u001b[2;10H\u001b[1m ", StringComparison.Ordinal), Show(tall))
         && Expect(!full.Contains("\u001b[1m", StringComparison.Ordinal), Show(full))
+        && Expect(cropped == "\u001b[?25l\u001b[H\u001b[2J\u001b[5;8H\u001b[1m \u001b[0m\u001b[3;5Ha", Show(cropped))
         && Expect(masked.Contains("pass: *******", StringComparison.Ordinal) && !masked.Contains("hunter2", StringComparison.Ordinal), Show(masked));
+}
+
+// A card is centered in what the crop leaves, so one larger than that is an error before anything runs. CropSpec is
+// top, bottom, left, right.
+static bool CardCropErrors()
+{
+    var scenario = ParseScenario("width: 40\nheight: 10\nsteps:\n  - card: [one, two, three, four, five]\n  - card: \"[bold]0123456789012345678901234567890123\"\n");
+    return Expect(FindCardCropError(scenario, new CropSpec(7, 0, 0, 0)) == "Step 1 card has 5 lines, more than the 3 rows the crop leaves. Leave lines out, or crop less.", "rows")
+        && Expect(FindCardCropError(scenario, new CropSpec(0, 0, 10, 10)) == "Step 2 card line 1 is 34 columns wide, wider than the 20 columns the crop leaves. Shorten it, or crop less.", "columns")
+        && Expect(FindCardCropError(scenario, new CropSpec(2, 3, 3, 3)) is null, "5 lines in the 5 rows and 34 columns the crop leaves")
+        && Expect(FindCardCropError(scenario, new CropSpec(10, 0, 0, 0)) is null, "a crop that leaves nothing has its own error")
+        && Expect(FindCardCropError(scenario, default) is null, "no crop");
+}
+
+// Where the composer puts a card for the scenario's fit and crop, in the cast the playground composes.
+static bool CardFollowsFitAndCrop()
+{
+    // fit: both moves the right edge in to the widest content, "$ echo hi" and the cursor after it, 10 columns, and the
+    // bottom to the closing prompt, 3 rows. "my-app" is centered in them: row 1, column 2, and the mark keeps the
+    // window's last cell.
+    var both = CardScreen("render:\n  fit: both\n", "- card: my-app\n- echo hi", out var bothCast);
+    // crop-top: 2 cuts the first two rows. The steps show in rows 2 to 4, and the card keeps a blank row around its
+    // 3 lines: 5 rows from row 2, which center it at rows 3 to 5.
+    var crop = CardScreen("height: 10\nrender:\n  crop-top: 2\n", "- card: [title, sub, third]\n- echo a\n- echo b", out var cropCast);
+    // A step that writes row 12 and moves the cursor home in one event shows 13 rows, below the typed command.
+    var moved = CardScreen("height: 14\n", "- card: [title]\n- printf 'top\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\nrow12\\033[H'", out var movedCast, "top\n\n\n\n\n\n\n\n\n\n\nrow12\u001b[H");
+    // Without fit the card is centered in the whole terminal.
+    var none = CardScreen("render:\n  fit: none\n", "- card: my-app\n- echo hi", out _);
+    return Expect(both is not null && both[1].TrimEnd() == "  my-app" && bothCast.Contains("\u001b[3;10H\u001b[1m ", StringComparison.Ordinal), $"fit both: {Show(bothCast)}")
+        && Expect(crop is not null && crop[3].Trim() == "title" && crop[5].Trim() == "third", $"crop: {Show(cropCast)}")
+        && Expect(moved is not null && moved[6].Trim() == "title", $"cursor moved up: {Show(movedCast)}")
+        && Expect(none is not null && none[11].TrimEnd() == new string(' ', 37) + "my-app", "fit none");
+
+    // The screen of the card, the cast's first output event, and the whole cast's output.
+    static string[]? CardScreen(string head, string steps, out string cast, string output = "hi\n")
+    {
+        var yaml = head + "settings:\n  typing-speed: 0.01\n  typing-jitter: 0\n  pre-delay: 0\n  post-delay: 0\nsteps:\n"
+            + string.Join('\n', steps.Split('\n').Select(static line => "  " + line)) + "\n";
+        var scenario = ParseScenario(yaml);
+        var width = scenario.Width ?? 80;
+        var height = scenario.Height ?? 24;
+        // The last step prints `output`, and a step before it, if any, prints "a".
+        var lines = steps.Split('\n');
+        var recorded = new List<RecordedStep>();
+        if (lines.Length > 2)
+            recorded.Add(RecordedStep.Pipe(lines[^2].TrimStart('-', ' '), 0, [new PipeStreamChunk(TimeSpan.Zero, false, "a\n")]));
+        recorded.Add(RecordedStep.Pipe(lines[^1].TrimStart('-', ' '), 0, [new PipeStreamChunk(TimeSpan.Zero, false, output)]));
+        var outputs = new StepOutputs { Scenetake = "test", Os = "linux", Shell = "bash", Width = width, Height = height, Steps = recorded };
+        var result = PlaygroundRender.RenderScenario(yaml, outputs, new PlaygroundOptions(), renderSvg: false);
+        cast = result.Cast is null ? $"render failed: {result.Error}" : CastOutput(Encoding.UTF8.GetString(result.Cast));
+        if (result.Cast is null)
+            return null;
+        // The card's screen ends where the next step clears it.
+        var first = cast[..cast.IndexOf(ClearScreen + "\u001b[?25h", StringComparison.Ordinal)];
+        var theme = TerminalTheme.ForMeasuring();
+        var buffer = new ScreenBuffer(width, height, theme);
+        new AnsiParser(buffer, theme).Process(first);
+        return [.. Enumerable.Range(0, height).Select(row => string.Concat(Enumerable.Range(0, width).Select(col => buffer.GetCell(row, col).Text is { Length: > 0 } text ? text : " ")))];
+    }
 }
 
 static bool CardLinesSplitAndStyle() =>
@@ -413,7 +485,8 @@ static bool CardLinesSplitAndStyle() =>
     && Expect(CardLines(true) is null && CardLines(new List<object?> { new Dictionary<object, object?>() }) is null, "a value that is not text")
     && Expect(SplitCardStyle("[bold fg:cyan]  my-app  ") == ("bold fg:cyan", "my-app"), "a style prefix")
     && Expect(SplitCardStyle("  plain  ") == (null, "plain"), "no prefix")
-    && Expect(DisplayWidth("aé日本") == 6 && DisplayWidth("é") == 1, "display width");
+    && Expect(DisplayWidth("aé日本") == 6 && DisplayWidth("é") == 1, "display width")
+    && Expect(DisplayWidth("a‍b­﻿") == 2 && DisplayWidth("👩‍💻") == 4, "zero-width characters");
 
 // A title card, a command, then a closing card, composed as the playground composes them. The cast is played on
 // scenetake's own terminal to check where each line lands.
@@ -456,14 +529,15 @@ static bool PlaygroundComposesCards()
     if (!Expect(cardCleared > 0, $"no clear after the title card: {Show(output)}"))
         return false;
     var title = Play(output[..cardCleared], 30, 9, out _);
-    var middle = Play(output[..output.LastIndexOf("\u001b[?25l", StringComparison.Ordinal)], 30, 9, out var middleCursorShown);
+    var middle = Play(output[..output.LastIndexOf("\u001b[?25l" + ClearScreen, StringComparison.Ordinal)], 30, 9, out var middleCursorShown);
     var end = Play(output, 30, 9, out var endCursorShown);
     // With fit: height (the default), cards are centered in the rows the rest uses: the comment, the typed command,
     // its output, and the cursor below it, 4 rows, and at least the tallest card's 3 lines and a blank row above and
     // below, 5. Three lines in 5 rows start at row 1 (0-based). "my-app" is 6 wide in 30, and "日本語" is 6 too.
     return Expect(title[1] == new string(' ', 12) + "my-app" + new string(' ', 12) && title[3].StartsWith(new string(' ', 12) + "日本語", StringComparison.Ordinal),
             $"the title card's lines: {Show(string.Join('\n', title))}")
-        && Expect(output.Contains("\u001b[5;15H\u001b[1m \u001b[0m", StringComparison.Ordinal), $"the mark on the card's last row: {Show(output)}")
+        && Expect(output.Contains("\u001b[5;30H\u001b[1m \u001b[0m", StringComparison.Ordinal), $"the mark in the window's last cell: {Show(output)}")
+        && Expect(LastOutputEvent(Encoding.UTF8.GetString(result.Cast!)) == (3.0, "\u001b[?25l"), "the closing card stays for its post-delay, 3 s, until an event that changes nothing")
         && Expect(output.Contains("\u001b[1;36mmy-app\u001b[0m", StringComparison.Ordinal), "the line's style")
         && Expect(middle[0].StartsWith("# Scene", StringComparison.Ordinal) && middle[1].StartsWith("$ ls", StringComparison.Ordinal) && middle[2].StartsWith("file.txt", StringComparison.Ordinal),
             $"the step after the card starts on a cleared screen: {Show(string.Join('\n', middle))}")
@@ -514,7 +588,9 @@ static bool FolderNamesHideThePath()
     var ok = Expect(PromptTemplate.FolderName("/home/me/my-app", "/home/me") == "my-app", "a folder")
         && Expect(PromptTemplate.FolderName("/home/me/", "/home/me") == "~", "the home folder")
         && Expect(PromptTemplate.FolderName("/", "/home/me") == "/", "the root")
-        && Expect(PromptTemplate.FolderName("/home/me/my-app/", null) == "my-app", "a trailing slash");
+        && Expect(PromptTemplate.FolderName("/home/me/my-app/", null) == "my-app", "a trailing slash")
+        // PowerShell's ~ is the user profile when HOME names another folder: both hide the user name.
+        && Expect(PromptTemplate.FolderName("/home/me", "/opt/home", "/home/me") == "~" && PromptTemplate.FolderName("/opt/home", "/opt/home", "/home/me") == "~", "a second home");
     if (OperatingSystem.IsWindows())
     {
         ok &= Expect(PromptTemplate.FolderName(@"C:\Users\me", @"C:\Users\me") == "~", "Windows home")
@@ -868,13 +944,20 @@ static bool IntegrationPromptFollowsFolder(string repoRoot)
         var (replayExit, replayStderr) = RunBinary(bin, repoRoot, ["--replay", outputs, fixture, stem + "-replay"]);
         var replayed = File.Exists(stem + "-replay.cast") ? File.ReadAllBytes(stem + "-replay.cast") : [];
         var text = CastOutput(Encoding.UTF8.GetString(recorded));
+        var outputsText = File.Exists(outputs) ? File.ReadAllText(outputs) : "";
         var prompt = static (string dir) => $"\u001b[34m{dir}\u001b[0m $ ";
+        // The step that removed its folder leaves the next one where bash starts: the folder the test runs in.
+        var start = Path.GetFileName(repoRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
         return Expect(recordExit == 0 && replayExit == 0, $"{recordStderr}\n{replayStderr}")
             && Expect(text.Contains(prompt("tests") + "echo first", StringComparison.Ordinal)
-                && text.Contains(prompt("tests") + "cd fixtures", StringComparison.Ordinal)
-                && text.Contains(prompt("fixtures") + "echo second", StringComparison.Ordinal)
+                && text.Contains(prompt("tests") + "cd ********", StringComparison.Ordinal)
+                && text.Contains(prompt("********") + "echo second", StringComparison.Ordinal)
                 && text.Contains(prompt("tests") + "echo third", StringComparison.Ordinal)
-                && text.EndsWith(prompt("tests"), StringComparison.Ordinal), Show(text))
+                && text.Contains(prompt(start) + "echo fourth", StringComparison.Ordinal)
+                && text.EndsWith(prompt(start), StringComparison.Ordinal), Show(text))
+            // The run keeps the YAML's text, which the scenario holds anyway. The folder is what a step printed.
+            && Expect(outputsText.Contains("\"folder\": \"********\"", StringComparison.Ordinal) && !outputsText.Contains("\"folder\": \"fixtures\"", StringComparison.Ordinal),
+                $"the outputs file holds the masked folder: {outputsText}")
             && Expect(recorded.AsSpan().SequenceEqual(replayed), "the replay drew other prompts");
     }
     finally
@@ -926,6 +1009,25 @@ static bool IntegrationBashLoginAliasesStayOff(string repoRoot)
     {
         Directory.Delete(home, recursive: true);
     }
+}
+
+static bool IntegrationPowerShellPromptFollowsFolder(string repoRoot)
+{
+    if (!TryGetBinary(out var bin))
+        return true;
+    if (!IsOnPath("pwsh"))
+    {
+        Console.Error.WriteLine("  skip: pwsh is not on PATH");
+        return true;
+    }
+
+    var run = RunFixture(bin, repoRoot, "shell-state-pwsh-prompt.yaml");
+    var text = StripEscapes(run.Text);
+    return Expect(run.ExitCode == 0, $"exit {run.ExitCode}\n{run.Stderr}")
+        && Expect(text.Contains("tests > Write-Output first", StringComparison.Ordinal)
+            && text.Contains("tests > Set-Location fixtures", StringComparison.Ordinal)
+            && text.Contains("fixtures > Write-Output second", StringComparison.Ordinal)
+            && text.TrimEnd().EndsWith("fixtures >", StringComparison.Ordinal), Show(text));
 }
 
 static bool IntegrationPowerShellCarriesState(string repoRoot)
@@ -1121,6 +1223,22 @@ static string CastOutput(string cast)
     }
 
     return builder.ToString();
+}
+
+// The last output event of an asciicast v3 cast: its interval from the event before it, and its text.
+static (double Interval, string Text) LastOutputEvent(string cast)
+{
+    var last = (0.0, "");
+    foreach (var line in cast.Split('\n').Skip(1))
+    {
+        if (string.IsNullOrWhiteSpace(line))
+            continue;
+        using var json = JsonDocument.Parse(line);
+        if (json.RootElement[1].GetString() == "o")
+            last = (json.RootElement[0].GetDouble(), json.RootElement[2].GetString() ?? "");
+    }
+
+    return last;
 }
 
 static string StripEscapes(string text) =>

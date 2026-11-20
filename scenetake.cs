@@ -305,6 +305,12 @@ if (args[0] is "gif")
         return 1;
     }
 
+    if (BackgroundImageError(gifOutputPath, gifStyle.Background) is { } gifImageError)
+    {
+        Console.Error.WriteLine($"Error: {gifImageError}");
+        return 1;
+    }
+
     if (!Ffmpeg.TryResolveForGif(out var gifFfmpeg, out var gifFfmpegError))
     {
         Console.Error.WriteLine($"Error: {gifFfmpegError}");
@@ -390,6 +396,12 @@ if (args[0] is "png")
     if (!TryCheckOutputPaths(pngCastPath, [pngOutputPath], out var pngOutputError))
     {
         Console.Error.WriteLine($"Error: {pngOutputError}");
+        return 1;
+    }
+
+    if (BackgroundImageError(pngOutputPath, pngStyle.Background) is { } pngImageError)
+    {
+        Console.Error.WriteLine($"Error: {pngImageError}");
         return 1;
     }
 
@@ -507,6 +519,12 @@ if (capture is null && (scenarioIndexes.Count > 1 || ScenarioBatch.HasWildcard(s
         if (oneFileOption is not null)
         {
             Console.Error.WriteLine($"Error: {oneFileOption} names one file, and {scenarios.Count} scenarios were given: record them one at a time");
+            return 1;
+        }
+
+        if (ScenarioBatch.FindSharedOutput(scenarios, FormatDisplayPath) is { } sharedError)
+        {
+            Console.Error.WriteLine($"Error: {sharedError}");
             return 1;
         }
 
@@ -689,6 +707,13 @@ if (TerminalReplay.CheckCrop(renderSettings.Crop, scenarioWidth, scenarioHeight)
     return 1;
 }
 
+// A card is centered in the window the crop leaves, so a card larger than that window would be cut.
+if (FindCardCropError(scenario, renderSettings.Crop) is { } cardCropError)
+{
+    Console.Error.WriteLine($"Error: {cardCropError}");
+    return 1;
+}
+
 // The files written besides the cast: the --format output, or the scenario's outputs list when no --format is given.
 // --format on the command line wins, as other options win over the YAML. capture writes its --format output.
 List<OutputPlan> outputPlans;
@@ -728,6 +753,18 @@ for (var planIndex = 0; planIndex < outputPlans.Count; planIndex++)
         if (IsSamePath(same.Path, plan.Path))
         {
             Console.Error.WriteLine($"Error: {same.Label} and {plan.Label} both write {FormatDisplayPath(plan.Path)}. Give one of them its own 'file'.");
+            return 1;
+        }
+    }
+}
+
+foreach (var plan in outputPlans)
+{
+    foreach (var drawn in outputPlans)
+    {
+        if (BackgroundImageError(plan.Path, drawn.Settings.Background, plan.Label) is { } imageError)
+        {
+            Console.Error.WriteLine($"Error: {imageError}");
             return 1;
         }
     }
@@ -932,14 +969,16 @@ FailedStep? strictFailure;
 // each step, or the scenario's cwd (the caller's folder without one). A shell that carries no state starts every
 // command there. A carried folder that a step removed is not returned to, so the next command starts there too.
 var promptStartFolder = scenario.Cwd ?? Directory.GetCurrentDirectory();
-var promptHome = Environment.GetEnvironmentVariable("HOME") is { Length: > 0 } homeVariable ? homeVariable : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+// Both are ~: Git Bash and Unix shells take HOME, and PowerShell on Windows the user profile, which HOME may not name.
+var promptHome = Environment.GetEnvironmentVariable("HOME");
+var promptProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 string PromptFolderName()
 {
-    var folder = shellState?.Folder is { Length: > 0 } carried
+    var folder = shellState?.Folder is { Length: > 0 } carried && shellState.FolderExists
         && (!Path.IsPathFullyQualified(PromptTemplate.NativePath(carried)) || Directory.Exists(PromptTemplate.NativePath(carried)))
         ? carried
         : promptStartFolder;
-    return PromptTemplate.FolderName(folder, promptHome);
+    return PromptTemplate.FolderName(folder, promptHome, promptProfile);
 }
 
 var generateOptions = new GenerateOptions
@@ -947,7 +986,8 @@ var generateOptions = new GenerateOptions
     Verbose = verbose,
     Strict = strict,
     TrackPtyCursor = OperatingSystem.IsWindows(),
-    FitsHeight = renderSettings.Fit is FitMode.Height or FitMode.Both,
+    Fit = renderSettings.Fit,
+    Crop = renderSettings.Crop,
     PromptFolder = PromptFolderName,
     Record = recordedSteps,
     Masker = masker,
@@ -1078,7 +1118,8 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
         Verbose = verbose,
         Strict = strict,
         TrackPtyCursor = replay.TrackPtyCursor,
-        FitsHeight = renderSettings.Fit is FitMode.Height or FitMode.Both,
+        Fit = renderSettings.Fit,
+        Crop = renderSettings.Crop,
         LogRunning = false,
         Masker = replayMasker,
         Rerecorder = replayRerecorder,
@@ -1344,17 +1385,23 @@ static bool TryReadOutputEntries(List<object?> entries, string scenarioFolder, s
                 return false;
             }
 
+            if (fileText.Contains('\0', StringComparison.Ordinal))
+            {
+                error = $"{where} key 'file' cannot contain a NUL character";
+                return false;
+            }
+
             path = Path.GetFullPath(fileText.Trim(), stemFolder);
             var given = Path.GetExtension(path);
-            if (given.Length == 0)
-            {
-                path += extension;
-            }
-            else if (!given.Equals(extension, StringComparison.OrdinalIgnoreCase))
+            // Another format's extension is a mistake. Any other dot is part of the name, as in demo.light.
+            if (given.ToLowerInvariant() is ".svg" or ".mp4" or ".gif" or ".png" or ".cast" && !given.Equals(extension, StringComparison.OrdinalIgnoreCase))
             {
                 error = $"{where} key 'file' ends with {given}, and the format is {extension[1..]}: name it {Path.GetFileNameWithoutExtension(path)}{extension}";
                 return false;
             }
+
+            if (!given.Equals(extension, StringComparison.OrdinalIgnoreCase))
+                path += extension;
         }
 
         var args = new List<string> { $"--format={extension[1..]}" };
@@ -1389,6 +1436,12 @@ static bool TryReadOutputEntries(List<object?> entries, string scenarioFolder, s
             }
 
             var text = Convert.ToString(value, CultureInfo.InvariantCulture) ?? "";
+            if (text.Contains('\0', StringComparison.Ordinal))
+            {
+                error = $"{where} key '{key}' cannot contain a NUL character";
+                return false;
+            }
+
             if (key == "font-file" || (key == "background" && RenderSettingsResolver.IsBackgroundImageName(text.Trim())))
                 text = Path.GetFullPath(text.Trim(), scenarioFolder);
             // The --key=value form keeps an empty window-title and a value that starts with a dash.
@@ -3496,6 +3549,13 @@ static bool TryCheckOutputPaths(string inputPath, IEnumerable<string?> outputPat
 /// each path are followed first, because a symbolic link reaches the same file under another path. A hard
 /// link is not detected there.
 /// </summary>
+// The error for an output that is the background image an output is drawn on: rendering would replace the image, and
+// a failed render would remove it. Null when it is not.
+static string? BackgroundImageError(string outputPath, BackgroundSpec? background, string label = "") =>
+    background?.ImagePath is { } image && IsSamePath(outputPath, image)
+        ? $"{(label.Length == 0 ? "the output" : label)} would write over the background image {FormatDisplayPath(image)}. Give it another file name."
+        : null;
+
 static bool IsSamePath(string left, string right) =>
     OperatingSystem.IsWindows()
         // Windows links are not walked by hand. Windows resolves a relative link target against the path as

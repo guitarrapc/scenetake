@@ -1189,7 +1189,7 @@ internal sealed class AnsiParser
         _buffer.PutChar(ch, _style);
     }
 
-    private static bool IsZeroWidthChar(char ch) =>
+    internal static bool IsZeroWidthChar(char ch) =>
         ch is '\u00AD' or '\u200B' or '\u200C' or '\u200D' or '\uFEFF';
 
     private static bool IsVariationSelector(char ch) => ch is >= '\uFE00' and <= '\uFE0F';
@@ -3685,14 +3685,32 @@ internal static class CellColors
         if (!TryParseHexColor(color, out var r, out var g, out var b))
             return color;
 
-        return string.Create(
-            CultureInfo.InvariantCulture,
-            $"#{(int)Math.Clamp(Math.Round(r * factor), 0, 255):x2}{(int)Math.Clamp(Math.Round(g * factor), 0, 255):x2}{(int)Math.Clamp(Math.Round(b * factor), 0, 255):x2}");
+        var red = (int)Math.Clamp(Math.Round(r * factor), 0, 255);
+        var green = (int)Math.Clamp(Math.Round(g * factor), 0, 255);
+        var blue = (int)Math.Clamp(Math.Round(b * factor), 0, 255);
+        // A color that bold leaves as it is, such as white, keeps its spelling: the matrix-rain tint compares it with
+        // the theme's white as written, which may be #fff.
+        if (red == r && green == g && blue == b)
+            return color;
+
+        return string.Create(CultureInfo.InvariantCulture, $"#{red:x2}{green:x2}{blue:x2}");
     }
 
     internal static bool TryParseHexColor(string color, out int r, out int g, out int b)
     {
         r = g = b = 0;
+        // A theme or a background may give #rgb, which the cast keeps as written: each digit stands for two.
+        if (color.Length == 4 && color[0] == '#')
+        {
+            if (!TryHexNibble(color[1], out var red) || !TryHexNibble(color[2], out var green) || !TryHexNibble(color[3], out var blue))
+                return false;
+
+            r = red * 17;
+            g = green * 17;
+            b = blue * 17;
+            return true;
+        }
+
         if (color.Length != 7 || color[0] != '#'
             || !TryHexNibble(color[1], out var r0) || !TryHexNibble(color[2], out var r1)
             || !TryHexNibble(color[3], out var g0) || !TryHexNibble(color[4], out var g1)

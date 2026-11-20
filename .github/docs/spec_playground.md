@@ -64,7 +64,7 @@ The playground is a .NET WebAssembly build of the same source files that the CLI
 | `os` | `windows`, `linux`, or `macos` |
 | `shell` | The resolved shell's file name, the same value as the cast's `env.SHELL` ([spec_cast.md](spec_cast.md) → Header) |
 | `width`, `height` | The terminal size of the recording |
-| `endFolder` | Only when the prompt shows `{dir}`: the folder name that the closing prompt showed ([spec_scenario.md](spec_scenario.md) → Prompt) |
+| `endFolder` | Only when the prompt shows `{dir}`: the folder name that the closing prompt showed, masked as it showed it ([spec_scenario.md](spec_scenario.md) → Prompt) |
 | `steps` | One entry for each step that ran, in order |
 
 Each step entry:
@@ -75,7 +75,7 @@ Each step entry:
 | `maskedRun` | Only when masking changed `run`: the text after masking. A replay types it as the step's command, and it identifies the step in the cast's `st:steps` tag, because a replay may not know the secret ([spec_scenario.md](spec_scenario.md#recording-again) → Recording again) |
 | `kind` | `pipe`, `pty`, or `interactive` |
 | `exitCode` | The command's exit code |
-| `folder` | Only when the prompt shows `{dir}`: the folder name its prompt showed. A replay and the playground draw the same prompt from it, and show `~` for a file without it |
+| `folder` | Only when the prompt shows `{dir}`: the folder name its prompt showed, masked as it showed it. A replay and the playground draw the same prompt from it, and show `~` for a file without it |
 | `cursor` | Non-interactive PTY steps on Windows only: the start cursor that scenetake reported to ConPTY, as `row` and `column` ([spec_pty.md](spec_pty.md)) |
 | `chunks` | Output in arrival order (below) |
 | `end` | Interactive steps only: where the step's output ends, in seconds since the command started |

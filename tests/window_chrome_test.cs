@@ -9,6 +9,8 @@
 #:include ../Svg.cs
 
 var failures = 0;
+failures += Run("LightBackgroundTakesShortHex", LightBackgroundTakesShortHex);
+failures += Run("BoldKeepsAColorItCannotBrighten", BoldKeepsAColorItCannotBrighten);
 failures += Run("ParseWindowAcceptsKnownValues", ParseWindowAcceptsKnownValues);
 failures += Run("ParseWindowRejectsUnknownValue", ParseWindowRejectsUnknownValue);
 failures += Run("ScenarioResolveReadsWindow", ScenarioResolveReadsWindow);
@@ -427,6 +429,22 @@ static int Run(string name, Func<bool> test)
         return 1;
     }
 }
+
+// A theme may give a color as #rgb, and the cast keeps it so: white is light, as #ffffff is, and the PNG, GIF, and mp4
+// draw #f80 as #ff8800, not as the grey they fall back to for a color they cannot read.
+static bool LightBackgroundTakesShortHex() =>
+    SvgFrameRenderer.IsLightTerminalBg("#fff") && SvgFrameRenderer.IsLightTerminalBg("#FFFFFF")
+    && !SvgFrameRenderer.IsLightTerminalBg("#000") && !SvgFrameRenderer.IsLightTerminalBg("#0d1117")
+    && CellColors.TryParseHexColor("#f80", out var r, out var g, out var b) && (r, g, b) == (255, 136, 0)
+    && !CellColors.TryParseHexColor("#f8g", out _, out _, out _);
+
+// Bold white stays as the theme spells it, #fff included: the matrix-rain tint finds the theme's white by its text.
+// A color bold does brighten comes back as #rrggbb.
+static bool BoldKeepsAColorItCannotBrighten() =>
+    CellColors.ApplyIntensity("#fff", bold: true, faint: false) == "#fff"
+    && CellColors.ApplyIntensity("#ffffff", bold: true, faint: false) == "#ffffff"
+    && CellColors.ApplyIntensity("#ccc", bold: true, faint: false) == "#f5f5f5"
+    && CellColors.ApplyIntensity("#ccc", bold: false, faint: true) == "#999999";
 
 static bool ParseWindowAcceptsKnownValues()
 {

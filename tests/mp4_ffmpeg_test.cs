@@ -43,6 +43,7 @@ try
     failures += Run("InitWritesStepsForItsShell", () => InitWritesStepsForItsShell(scenetake, work));
     failures += Run("CaptureRecordsOneCommand", () => CaptureRecordsOneCommand(scenetake, work));
     failures += Run("SubcommandsNeverReplaceTheirInput", () => SubcommandsNeverReplaceTheirInput(scenetake, repoRoot, work));
+    failures += Run("SubcommandsNeverReplaceTheirBackground", () => SubcommandsNeverReplaceTheirBackground(scenetake, repoRoot, work));
     failures += Run("ScenarioChecksOutputPaths", () => ScenarioChecksOutputPaths(scenetake, repoRoot, work));
     failures += Run("ScenarioErrorsStopBeforePre", () => ScenarioErrorsStopBeforePre(scenetake, repoRoot, work));
     failures += Run("RelativeCwdFollowsScenarioFolder", () => RelativeCwdFollowsScenarioFolder(scenetake, repoRoot, work));
@@ -59,6 +60,8 @@ try
     failures += Run("EarlierMp4GoesWhenEncodingStarts", () => EarlierMp4GoesWhenEncodingStarts(scenetake, repoRoot, work));
     failures += Run("ScenarioOutputsList", () => ScenarioOutputsList(scenetake, repoRoot, work));
     failures += Run("ScenarioOutputsErrors", () => ScenarioOutputsErrors(scenetake, repoRoot, work));
+    failures += Run("ScenarioOutputsFailingEntry", () => ScenarioOutputsFailingEntry(scenetake, work));
+    failures += Run("ScenarioOutputsFileNames", () => ScenarioOutputsFileNames(scenetake, work));
 
     // The test copies a font from the Linux font folders and installs it where XDG_DATA_HOME points the
     // Linux scan. macOS has neither: it keeps fonts in other folders and scans ~/Library/Fonts. Windows
@@ -586,6 +589,11 @@ static bool ScenarioOutputsErrors(string scenetake, string repoRoot, string work
     ok &= Expect("- format: png\n  theme: nosuch", "outputs entry 1 (png): unknown theme");
     ok &= Expect("- format: svg\n  margin: 999", "outputs entry 1 (svg): ");
     ok &= Expect("- format: svg\n  loop: maybe", "outputs entry 1 key 'loop' must be true or false");
+    ok &= Expect("- format: svg\n  file: \"a\\0b\"", "outputs entry 1 key 'file' cannot contain a NUL character");
+    ok &= Expect("- format: png\n  font-file: \"a\\0b.ttf\"", "outputs entry 1 key 'font-file' cannot contain a NUL character");
+    // Rendering the PNG would replace the image it is drawn on, and a failed render would remove it.
+    File.WriteAllText(Path.Combine(folder, "bg.png"), "not read before the check");
+    ok &= Expect("- format: png\n  file: bg\n  background: bg.png", "outputs entry 1 would write over the background image bg.png");
     return ok;
 
     bool Expect(string outputs, string expected)
@@ -622,10 +630,54 @@ static bool ScenarioOutputsGifAndMp4(string scenetake, string repoRoot, string w
     var (exit, stderr) = Exec(scenetake, folder, [scenario]);
     var gif = Path.Combine(folder, "video.gif");
     var mp4 = Path.Combine(folder, "video.mp4");
-    var ok = exit == 0 && File.Exists(gif) && ReadGif(gif).Delays.Count > 0 && File.Exists(mp4)
-        && stderr.Contains("Done: video.cast, video.gif, video.mp4", StringComparison.Ordinal);
-    if (!ok)
+    if (!(exit == 0 && File.Exists(gif) && File.Exists(mp4) && stderr.Contains("Done: video.cast, video.gif, video.mp4", StringComparison.Ordinal)))
+    {
         Console.Error.WriteLine(stderr);
+        return false;
+    }
+
+    // Each entry's options reach its file. A GIF of the same cast without them is the default: 20 fps, whose frames
+    // last 5 hundredths, and the default font size, which is wider. The 40-column terminal is wider than 320 at any
+    // font size the default gives.
+    var plain = Path.Combine(folder, "plain.gif");
+    var (plainExit, plainStderr) = Exec(scenetake, folder, ["gif", "video.cast", plain]);
+    var delays = ReadGif(gif).Delays;
+    var ok = plainExit == 0
+        && delays.Count > 0 && delays.TrueForAll(static delay => delay % 10 == 0)
+        && GifWidth(gif) < GifWidth(plain)
+        && int.Parse(Probe(mp4)["width"], System.Globalization.CultureInfo.InvariantCulture) <= 320;
+    if (!ok)
+        Console.Error.WriteLine($"  delays {string.Join(',', delays)}, width {GifWidth(gif)} against {(File.Exists(plain) ? GifWidth(plain) : 0)}, mp4 {Probe(mp4)["width"]}{Environment.NewLine}{plainStderr}");
+    return ok;
+
+    static int GifWidth(string path) => File.ReadAllBytes(path) is var bytes ? bytes[6] | (bytes[7] << 8) : 0;
+}
+
+// An entry that fails while it renders removes its own file. The others are written, and the run exits 1 without
+// the Done line. The stand-in ffmpeg fails every encode, so the mp4 fails and the SVG, which needs no ffmpeg, does not.
+static bool ScenarioOutputsFailingEntry(string scenetake, string work)
+{
+    var folder = Directory.CreateDirectory(Path.Combine(work, "outputs-failing")).FullName;
+    var fake = WriteFakeFfmpeg(folder, "failing", hasLibx264: true);
+    File.WriteAllText(Path.Combine(folder, "fail.yaml"), "width: 40\nheight: 6\nsteps:\n  - echo hello\noutputs:\n  - format: mp4\n  - format: svg\n");
+    var (exit, stderr) = Exec(scenetake, folder, ["fail.yaml"], new() { ["SCENETAKE_FFMPEG"] = fake });
+    var ok = exit == 1 && File.Exists(Path.Combine(folder, "fail.cast")) && File.Exists(Path.Combine(folder, "fail.svg"))
+        && !File.Exists(Path.Combine(folder, "fail.mp4")) && !Directory.EnumerateFiles(folder, "*.partial").Any()
+        && !stderr.Contains("Done:", StringComparison.Ordinal);
+    if (!ok)
+        Console.Error.WriteLine($"  exit {exit}{Environment.NewLine}{stderr}");
+    return ok;
+}
+
+// A dot in an entry's file that is not an output format's extension is part of the name.
+static bool ScenarioOutputsFileNames(string scenetake, string work)
+{
+    var folder = Directory.CreateDirectory(Path.Combine(work, "outputs-names")).FullName;
+    File.WriteAllText(Path.Combine(folder, "names.yaml"), "width: 40\nheight: 6\nsteps:\n  - echo hello\noutputs:\n  - format: svg\n  - format: svg\n    file: names.light\n");
+    var (exit, stderr) = Exec(scenetake, folder, ["names.yaml"]);
+    var ok = exit == 0 && File.Exists(Path.Combine(folder, "names.svg")) && File.Exists(Path.Combine(folder, "names.light.svg"));
+    if (!ok)
+        Console.Error.WriteLine($"  exit {exit}{Environment.NewLine}{stderr}");
     return ok;
 }
 
@@ -1414,6 +1466,29 @@ static (int ExitCode, string Stdout, string Stderr) ExecCapture(string file, str
     var stderr = process.StandardError.ReadToEnd();
     process.WaitForExit();
     return (process.ExitCode, stdout.Result, stderr);
+}
+
+// png and gif draw on a --background image. An output with the image's own name would replace it, and a GIF removes
+// its output when its encode starts, so a failed one would lose the image. The default output is plain.png or plain.gif.
+static bool SubcommandsNeverReplaceTheirBackground(string scenetake, string repoRoot, string work)
+{
+    var directory = Directory.CreateDirectory(Path.Combine(work, "same-background")).FullName;
+    File.Copy(Path.Combine(repoRoot, "samples", "basic.cast"), Path.Combine(directory, "plain.cast"), overwrite: true);
+    var ok = true;
+    foreach (var (command, image) in new[] { ("png", "plain.png"), ("gif", "plain.gif") })
+    {
+        var path = Path.Combine(directory, image);
+        File.WriteAllText(path, "an image the user made");
+        var (exit, stderr) = Exec(scenetake, directory, [command, "plain.cast", "--background", image]);
+        if (exit != 1 || !stderr.Contains($"Error: the output would write over the background image {image}", StringComparison.Ordinal)
+            || File.ReadAllText(path) != "an image the user made")
+        {
+            Console.Error.WriteLine($"  {command}: exit {exit}{Environment.NewLine}{stderr}");
+            ok = false;
+        }
+    }
+
+    return ok;
 }
 
 static bool SubcommandsNeverReplaceTheirInput(string scenetake, string repoRoot, string work)

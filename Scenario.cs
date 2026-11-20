@@ -423,7 +423,12 @@ internal static partial class ScenarioCast
         }
 
         if (CardLines(map["card"]) is not { } lines)
+        {
+            // An unquoted line with ": " in it, such as an install line, is a mapping to YAML.
+            if (map["card"] is List<object?> entries && entries.FindIndex(static entry => entry is Dictionary<object, object?>) is var mapping and >= 0)
+                return $"Step {number} card line {mapping + 1} is read as a mapping, because YAML takes \": \" in it as a key. Quote the line, such as \"Install: npm i -g my-app\".";
             return $"Step {number} key 'card' must be a line of text or a list of lines, not {DescribeValue(map["card"])}.";
+        }
         if (!lines.Any(static line => HasPrintable(SplitCardStyle(line).Text)))
             return $"Step {number} key 'card' has no text to show. Give it a line, such as card: [\"my-app\", \"npm i -g my-app\"].";
         if (lines.Count > height)
@@ -470,7 +475,8 @@ internal static partial class ScenarioCast
 
     /// <summary>
     /// The lines of a <c>card</c> value: a text, split at its line breaks, as a YAML block (<c>card: |</c>) writes
-    /// one, or a list of texts, each split the same way. A number is text, and an empty entry is an empty line.
+    /// one, or a list of texts, each split the same way. A number is text as YAML read it, and an empty entry is an
+    /// empty line.
     /// Null for a value that is neither.
     /// </summary>
     internal static List<string>? CardLines(object? value)
@@ -514,13 +520,17 @@ internal static partial class ScenarioCast
         return (null, value);
     }
 
-    /// <summary>The columns a text takes in the terminal: two for a wide character, none for a combining mark.</summary>
+    /// <summary>
+    /// The columns a text takes in the terminal: two for a wide character, none for a combining mark or a character
+    /// the terminal draws nothing for, such as a zero-width joiner.
+    /// </summary>
     internal static int DisplayWidth(string text)
     {
         var width = 0;
         foreach (var rune in text.EnumerateRunes())
         {
             width += Rune.GetUnicodeCategory(rune) is UnicodeCategory.NonSpacingMark or UnicodeCategory.EnclosingMark or UnicodeCategory.SpacingCombiningMark
+                || (rune.IsBmp && AnsiParser.IsZeroWidthChar((char)rune.Value))
                 ? 0
                 : ScreenBuffer.IsWideCodePoint(rune.Value) ? 2 : 1;
         }

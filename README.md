@@ -322,6 +322,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # A release would check out its tag, which a pull request cannot start from.
+          ref: ${{ github.event_name == 'release' && github.event.repository.default_branch || github.ref }}
       # Install the product that the demos show here.
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg # only for gif and mp4 outputs
       - run: npx -y scenetake --strict docs/demos/*.yaml
@@ -332,10 +335,11 @@ jobs:
           branch: update-demos
 ```
 
-To fail a pull request whose demos are out of date, record them and compare the casts:
+To fail a pull request whose demos are out of date, record them and compare the casts. `git add -N` makes a cast that was never committed show in the diff too:
 
 ```bash
 npx -y scenetake --strict docs/demos/*.yaml
+git add -N docs/demos
 git diff --exit-code -- 'docs/demos/*.cast'
 ```
 

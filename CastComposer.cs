@@ -16,19 +16,24 @@ internal static partial class ScenarioCast
     private const string ShowCursor = "\u001b[?25h";
 
     /// <summary>
-    /// What a <c>card</c> step writes: the cursor hidden, the screen cleared, and each line centered in the
-    /// terminal's width and in its first <paramref name="rows"/> rows, with its <c>[style]</c> prefix as its color.
-    /// An empty line keeps its row. The text is masked as the recording's other text is, which keeps its width.
-    /// With <paramref name="markBottom"/>, the last of those rows gets a bold space, which shows nothing but is not
-    /// a blank cell, so <c>fit: height</c> keeps the rows below the text and a still of the card stays centered. It
-    /// sits in the middle column, which a crop that keeps the card's text keeps too.
+    /// What a <c>card</c> step writes: the cursor hidden, the screen cleared, and each line centered in
+    /// <paramref name="window"/> (<see cref="CardWindow"/>), with its <c>[style]</c> prefix as its color. An empty
+    /// line keeps its row. The text is masked as the recording's other text is, which keeps its width. With
+    /// <paramref name="markCorner"/>, the window's last cell gets a bold space, which shows nothing but is not a blank
+    /// cell, so fit keeps the blank rows and columns around the text and a still of the card stays centered.
     /// </summary>
-    internal static string ComposeCard(IReadOnlyList<string> lines, int width, int rows, SecretMasker? masker, bool markBottom)
+    internal static string ComposeCard(IReadOnlyList<string> lines, CanvasWindow window, SecretMasker? masker, bool markCorner)
     {
         var card = new StringBuilder(HideCursor).Append(ClearScreen);
-        var top = Math.Max(0, (rows - lines.Count) / 2);
-        if (markBottom && top + lines.Count < rows)
-            card.Append("\u001b[").Append(rows).Append(';').Append((width + 1) / 2).Append("H\u001b[1m ").Append(SgrReset);
+        var top = window.Top + Math.Max(0, (window.Height - lines.Count) / 2);
+        var bottom = window.Top + window.Height;
+        var right = window.Left + window.Width;
+        // The mark's cell must hold no text: below the card, or right of its last line, which a window as tall as the
+        // card still has when it keeps a blank column on each side.
+        var lastWidth = lines.Count == 0 ? 0 : DisplayWidth(SplitCardStyle(lines[^1]).Text);
+        var lastEnd = window.Left + Math.Max(0, (window.Width - lastWidth) / 2) + lastWidth;
+        if (markCorner && (top + lines.Count < bottom || lastEnd < right))
+            card.Append("\u001b[").Append(bottom).Append(';').Append(right).Append("H\u001b[1m ").Append(SgrReset);
         for (var i = 0; i < lines.Count; i++)
         {
             var (styleName, raw) = SplitCardStyle(lines[i]);
@@ -43,7 +48,7 @@ internal static partial class ScenarioCast
                 style = "";
             }
 
-            var column = Math.Max(0, (width - DisplayWidth(text)) / 2);
+            var column = window.Left + Math.Max(0, (window.Width - DisplayWidth(text)) / 2);
             card.Append("\u001b[").Append(top + i + 1).Append(';').Append(column + 1).Append('H');
             card.Append(style).Append(text);
             if (style.Length > 0)
@@ -54,33 +59,56 @@ internal static partial class ScenarioCast
     }
 
     /// <summary>
-    /// The rows a card is centered in. With <c>fit: height</c>, the rows the rest of the recording uses, so the
-    /// canvas that fit keeps does not grow for a card, with at least a blank row above and below the tallest card.
-    /// Otherwise the whole terminal. A row is used when the cursor reached it: every cell is written with the
-    /// cursor on its row, and fit keeps the row of a visible cursor too.
+    /// The error for a card that the crop would cut: more lines than the rows it leaves, or a line wider than its
+    /// columns. The crop comes from render settings and the command line, so this runs once they are known, before
+    /// anything runs. Null when every card fits.
     /// </summary>
-    private static int CardRows(List<CastEvent> events, List<int> cardEvents, int tallestCard, int width, int height, bool fitsHeight)
+    internal static string? FindCardCropError(Scenario scenario, CropSpec crop)
     {
-        if (!fitsHeight)
-            return height;
+        if (crop.IsEmpty)
+            return null;
 
-        var theme = TerminalTheme.ForMeasuring();
-        var buffer = new ScreenBuffer(width, height, theme);
-        var parser = new AnsiParser(buffer, theme);
-        var used = 0;
-        for (var i = 0; i < events.Count; i++)
+        var rows = (scenario.Height ?? RenderSettingsResolver.DefaultTerminalRows) - crop.Top - crop.Bottom;
+        var columns = (scenario.Width ?? RenderSettingsResolver.DefaultTerminalCols) - crop.Left - crop.Right;
+        // A crop that leaves nothing has an error of its own.
+        if (rows < 1 || columns < 1)
+            return null;
+
+        var steps = scenario.Steps ?? [];
+        for (var i = 0; i < steps.Count; i++)
         {
-            var castEvent = events[i];
-            if (castEvent.Kind != CastEventKind.Output || cardEvents.Contains(i))
+            if (ParseCommand(steps[i]).Card is not { } lines)
                 continue;
-            if (castEvent.HasUtf8Output)
-                parser.ProcessUtf8(castEvent.Utf8Output.Span);
-            else
-                parser.Process(castEvent.Data);
-            used = Math.Max(used, buffer.CursorRow + 1);
+            if (lines.Count > rows)
+                return $"Step {i + 1} card has {lines.Count} lines, more than the {rows} rows the crop leaves. Leave lines out, or crop less.";
+            for (var j = 0; j < lines.Count; j++)
+            {
+                if (DisplayWidth(SplitCardStyle(lines[j]).Text) is var width && width > columns)
+                    return $"Step {i + 1} card line {j + 1} is {width} columns wide, wider than the {columns} columns the crop leaves. Shorten it, or crop less.";
+            }
         }
 
-        return Math.Clamp(Math.Max(used, tallestCard + 2), tallestCard, height);
+        return null;
+    }
+
+    /// <summary>
+    /// The part of the terminal a card is centered in: the window the rest of the recording shows with the scenario's
+    /// fit and crop, found as the render finds it, so a card neither sits in cut cells nor grows the canvas that fit
+    /// keeps. Where fit moves an edge in, the window keeps a blank row or column on each side of the largest card. The
+    /// events hold each card as a cleared screen, which shows nothing.
+    /// </summary>
+    private static CanvasWindow CardWindow(List<CastEvent> events, int tallest, int widest, int width, int height, FitMode fit, CropSpec crop)
+    {
+        var croppedWidth = width - crop.Left - crop.Right;
+        var croppedHeight = height - crop.Top - crop.Bottom;
+        // The crop is checked before anything runs. A crop that leaves nothing never gets here from the CLI.
+        if (croppedWidth < 1 || croppedHeight < 1)
+            return CanvasWindow.Whole(width, height);
+
+        var shown = TerminalReplay.ResolveCanvas(events, width, height, crop, fit, TerminalTheme.ForMeasuring());
+        var rows = fit is FitMode.Height or FitMode.Both ? Math.Min(Math.Max(shown.Height, tallest + 2), croppedHeight) : croppedHeight;
+        var columns = fit is FitMode.Width or FitMode.Both ? Math.Min(Math.Max(shown.Width, widest + 2), croppedWidth) : croppedWidth;
+        return new CanvasWindow(crop.Left, crop.Top, columns, rows);
     }
 
     /// <summary>
@@ -100,7 +128,10 @@ internal static partial class ScenarioCast
         string? StepFolder(string run, bool pty, bool interactive) =>
             !promptTemplate.UsesDir ? null
             : options.Replay is { } replay ? replay.Folder(run, pty, interactive) ?? HomeFolderName
-            : options.PromptFolder?.Invoke() ?? HomeFolderName;
+            : MaskFolder(options.PromptFolder?.Invoke() ?? HomeFolderName);
+        // The outputs file keeps the folder name masked, as the prompt shows it: a secret that masking finds stays on
+        // this machine. An outputs file already holds it masked.
+        string MaskFolder(string folder) => options.Masker is { } folderMasker ? folderMasker.MaskUncounted(folder) : folder;
         // A prompt drawn at every step: masked without counting, so a folder name is not counted once per step.
         string Prompt(string? folder) =>
             promptTemplate.Render(folder ?? "") is var prompt && options.Masker is { } promptMasker ? promptMasker.MaskUncounted(prompt) : prompt;
@@ -118,7 +149,7 @@ internal static partial class ScenarioCast
         // nothing the cast keeps lays out the steps after it as in any other recording of the scenario.
         var anyStepShown = false;
         // A card stays on the screen, with the cursor hidden, until the next shown step clears it. Its event is drawn
-        // after the last step, when the rows it is centered in are known (CardRows).
+        // after the last step, when the window it is centered in is known (CardWindow).
         var cardOnScreen = false;
         // Two lists rather than a list of tuples: a generic over a new value type adds its own code to the AOT binary.
         var cardEvents = new List<int>();
@@ -426,11 +457,14 @@ internal static partial class ScenarioCast
             t += cmdPre;
         }
 
-        // A closing card stays to the end, without a prompt over it. The closing prompt shows the folder the last step
-        // left, which the outputs file keeps for a replay.
+        // The closing prompt shows the folder the last step left, which the outputs file keeps for a replay. A closing
+        // card stays to the end, without a prompt over it: an event that changes nothing ends the recording after its
+        // post-delay, or the card would show only for the hold after the last event.
         if (promptTemplate.UsesDir)
-            options.EndFolder = options.Replay is { } endReplay ? endReplay.EndFolder ?? HomeFolderName : options.PromptFolder?.Invoke() ?? HomeFolderName;
-        if (anyStepShown && !cardOnScreen)
+            options.EndFolder = options.Replay is { } endReplay ? endReplay.EndFolder ?? HomeFolderName : MaskFolder(options.PromptFolder?.Invoke() ?? HomeFolderName);
+        if (cardOnScreen)
+            events.Add(CastEvent.Output(Math.Round(t, 6), HideCursor));
+        else if (anyStepShown)
             events.Add(CastEvent.Output(Math.Round(t, 6), Prompt(options.EndFolder)));
 
         if (cardEvents.Count > 0)
@@ -438,11 +472,17 @@ internal static partial class ScenarioCast
             var cardWidth = scenario.Width ?? RenderSettingsResolver.DefaultTerminalCols;
             var cardHeight = scenario.Height ?? RenderSettingsResolver.DefaultTerminalRows;
             var tallest = 0;
+            var widest = 0;
             foreach (var lines in cardLines)
+            {
                 tallest = Math.Max(tallest, lines.Count);
-            var rows = CardRows(events, cardEvents, tallest, cardWidth, cardHeight, options.FitsHeight);
+                foreach (var line in lines)
+                    widest = Math.Max(widest, DisplayWidth(SplitCardStyle(line).Text));
+            }
+
+            var window = CardWindow(events, tallest, widest, cardWidth, cardHeight, options.Fit, options.Crop);
             for (var c = 0; c < cardEvents.Count; c++)
-                events[cardEvents[c]] = CastEvent.Output(events[cardEvents[c]].Time, ComposeCard(cardLines[c], cardWidth, rows, options.Masker, options.FitsHeight));
+                events[cardEvents[c]] = CastEvent.Output(events[cardEvents[c]].Time, ComposeCard(cardLines[c], window, options.Masker, options.Fit != FitMode.None));
         }
 
         return (events, null);
@@ -1377,10 +1417,13 @@ internal sealed class GenerateOptions
     internal bool LogRunning { get; init; } = true;
 
     /// <summary>
-    /// Whether the output keeps only the rows in use (<c>fit: height</c> or <c>both</c>, the default), which centers a
-    /// card in those rows instead of the whole terminal (spec_scenario.md → Card steps).
+    /// The scenario's <c>render.fit</c> and crop, with the command line's on top: a card is centered in the part of the
+    /// terminal they show (spec_scenario.md → Card steps).
     /// </summary>
-    internal bool FitsHeight { get; init; } = true;
+    internal FitMode Fit { get; init; } = FitMode.Height;
+
+    /// <inheritdoc cref="Fit"/>
+    internal CropSpec Crop { get; init; }
 
     /// <summary>
     /// The name of the folder the next command starts in, as the prompt's <c>{dir}</c> shows it

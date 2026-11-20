@@ -322,6 +322,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # releaseはタグをチェックアウトし、そこからはPRを作れない
+          ref: ${{ github.event_name == 'release' && github.event.repository.default_branch || github.ref }}
       # デモで見せる製品をここでインストールする
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg # gifとmp4を出力するときだけ
       - run: npx -y scenetake --strict docs/demos/*.yaml
@@ -332,10 +335,11 @@ jobs:
           branch: update-demos
 ```
 
-デモが古いままのPRを落とすには、撮り直してからcastを比べます。
+デモが古いままのPRを落とすには、撮り直してからcastを比べます。`git add -N`で、まだコミットしていないcastも差分に出します。
 
 ```bash
 npx -y scenetake --strict docs/demos/*.yaml
+git add -N docs/demos
 git diff --exit-code -- 'docs/demos/*.cast'
 ```
 
