@@ -3,6 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="JsonSchema.Net" Version="9.6.0" />
     <PackageVersion Include="MiniPty" Version="1.7.0" />
     <PackageVersion Include="MiniPty.Capture" Version="1.7.0" />
     <PackageVersion Include="MiniPty.Console" Version="1.7.0" />

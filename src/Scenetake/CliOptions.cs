@@ -119,6 +119,10 @@ sealed class CaptureRequest
             : Path.Combine(Directory.GetCurrentDirectory(), OutputName() + ".yaml");
 
         var yaml = new StringBuilder();
+        // A saved scenario is edited next, so it names the editor schema as init's does. The line seeds no typing, so it
+        // changes no recording.
+        if (SavePath is not null)
+            yaml.Append(ScenarioSchema.ModeLine);
         yaml.Append("title: ").Append(QuoteYaml(CommandLine)).Append('\n');
         if (Width is int width)
             yaml.Append("width: ").Append(width.ToString(CultureInfo.InvariantCulture)).Append('\n');

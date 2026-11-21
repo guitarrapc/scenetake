@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/guitarrapc/scenetake/v1.5.0/schema/scenario.schema.json
 # Scenario format reference — runnable demo (samples/scenario_format.yaml).
 # Required: steps only. Everything else is optional.
 

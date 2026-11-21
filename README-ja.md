@@ -41,6 +41,7 @@ scenetakeはステップに書いたコマンドを実際に実行します。�
 [samples/basic.yaml](samples/basic.yaml)のシナリオは、次のように録画されます。
 
 ```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/guitarrapc/scenetake/v1.5.0/schema/scenario.schema.json
 title: "Basic Demo"
 width: 80
 height: 24
@@ -136,6 +137,20 @@ scenetake mp4 scenario.cast
 
 ```sh
 scenetake --help
+```
+
+### エディターとAIエージェント
+
+シナリオファイルの1行目に、scenetakeのバージョンの[シナリオスキーマ](schema/scenario.schema.json)を指定します。VS Codeの[YAML拡張](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml)や、yaml-language-serverを使うほかのエディターで、キーと値が補完され、キーの説明、キーの綴り間違いや値の誤りが分かります。
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/guitarrapc/scenetake/v1.5.0/schema/scenario.schema.json
+```
+
+コーディングエージェント向けにscenetakeスキルを導入すると、シナリオの書き方、録画、結果の確認、調整の進め方をエージェントが判断できます。
+
+```sh
+npx skills add guitarrapc/scenetake
 ```
 
 ## CLIリファレンス
@@ -419,6 +434,7 @@ outputs:
 ![](samples/scenario_format.svg)
 
 ```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/guitarrapc/scenetake/v1.5.0/schema/scenario.schema.json
 # Scenario format reference — runnable demo (samples/scenario_format.yaml).
 # Required: steps only. Everything else is optional.
 

@@ -3237,7 +3237,7 @@ static string CreateInitialScenarioYaml(string? shell)
         : """
           #   run: read -r -p "Your name? " name; echo "Hello, $name"
         """;
-    return $"""
+    return ScenarioSchema.ModeLine + $"""
     # scenetake starter scenario. Record it with: scenetake <this file>
     # It writes a cast and, as outputs lists below, an SVG. Replace the steps with your tool's commands.
     title: "My App"            # The window's title

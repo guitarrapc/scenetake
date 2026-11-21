@@ -138,6 +138,16 @@ See every option:
 scenetake --help
 ```
 
+### Editors and AI agents
+
+Specify the [scenario schema](schema/scenario.schema.json) for your scenetake version on the first line of the scenario file. In VS Code with the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml), or another editor that uses yaml-language-server, you get completion for keys and values, a description of each key, and errors for misspelled keys and invalid values.
+
+Install the scenetake skill for coding agents, and the agent can work out how to write a scenario, record it, check the result, and tune it.
+
+```sh
+npx skills add guitarrapc/scenetake
+```
+
 ## CLI reference
 
 The tables below say what each command and option is for. `scenetake --help` and `scenetake <command> --help` show their ranges and defaults.
@@ -419,6 +429,7 @@ A runnable scenario with a comment on each key, [samples/scenario_format.yaml](s
 ![](samples/scenario_format.svg)
 
 ```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/guitarrapc/scenetake/v1.5.0/schema/scenario.schema.json
 # Scenario format reference — runnable demo (samples/scenario_format.yaml).
 # Required: steps only. Everything else is optional.
 

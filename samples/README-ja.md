@@ -2,7 +2,7 @@
 
 [English](README.md) | 日本語
 
-scenetakeのサンプルシナリオです。`scenetake --format svg samples/basic.yaml`のように録画できます。
+scenetakeのサンプルシナリオです。`scenetake --format svg samples/basic.yaml`のように録画できます。どのシナリオも、`scenetake init`が書くのと同じシナリオスキーマを指す行で始まるので、コピーしたファイルでもYAML拡張を入れたエディターでキーが補完され、チェックされます。
 
 | シナリオ | 内容 | ファイル |
 | --- | --- | --- |

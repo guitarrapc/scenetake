@@ -29,6 +29,7 @@ Use this when you know the goal but not the document.
 |---|---|
 | Write or review a scenario YAML file | [spec_scenario.md](spec_scenario.md) |
 | Know defaults for `typing-speed`, `prompt`, etc. | [spec_scenario.md](spec_scenario.md) → `settings` |
+| Get completion and checks for a scenario in an editor, or have an AI agent write one | [spec_scenario.md](spec_scenario.md) → Editor schema, Agent skill |
 | Tune long-running step replay (`docker build`, `sleep`, …) | [spec_scenario.md](spec_scenario.md) → Output timing |
 | Understand the `.cast` file scenetake produces | [spec_cast.md](spec_cast.md) |
 | Know v3 vs v2, header fields, markers, or agg compatibility | [spec_cast.md](spec_cast.md) |

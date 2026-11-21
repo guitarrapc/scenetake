@@ -3,7 +3,8 @@
 #:property Nullable=enable
 #:property ImplicitUsings=enable
 
-// Bump or set Version in Directory.Build.props and all npm package.json files.
+// Bump or set Version in Directory.Build.props and all npm package.json files, and move the editor schema line of the
+// samples and the README to the new version's tag.
 //
 // Usage (from repository root):
 //   dotnet run scripts/set_version.cs -- major
@@ -12,6 +13,7 @@
 //   dotnet run scripts/set_version.cs -- 1.4.0
 
 using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -128,8 +130,28 @@ foreach (var packagePath in packagePaths)
     Console.Error.WriteLine($"{Path.GetRelativePath(repoRoot, packagePath)}: {oldVersion} -> {newVersion}");
 }
 
+// The samples and the README's copy of samples/scenario_format.yaml name the editor schema at the version's tag, as
+// init writes it. The line seeds no typing, so moving it changes no recording.
+var schemaLineRegex = new Regex(@"(raw\.githubusercontent\.com/guitarrapc/scenetake/v)[^/\s]+(/schema/scenario\.schema\.json)", RegexOptions.CultureInvariant);
+var schemaLineFiles = Directory.EnumerateFiles(Path.Combine(repoRoot, "samples"), "*.yaml", SearchOption.AllDirectories)
+    .Append(Path.Combine(repoRoot, "README.md"))
+    .Append(Path.Combine(repoRoot, "README-ja.md"))
+    .Order(StringComparer.Ordinal);
+var schemaLinesMoved = 0;
+foreach (var file in schemaLineFiles)
+{
+    var text = File.ReadAllText(file);
+    var moved = schemaLineRegex.Replace(text, $"${{1}}{newVersion}${{2}}");
+    if (moved == text)
+        continue;
+
+    File.WriteAllText(file, moved, new UTF8Encoding(false));
+    schemaLinesMoved++;
+}
+
 Console.Error.WriteLine($"Base version: {baseVersion}");
 Console.Error.WriteLine($"Directory.Build.props: {oldPropsVersion} -> {newVersion}");
+Console.Error.WriteLine($"Schema line moved to v{newVersion} in {schemaLinesMoved} files");
 return 0;
 
 static string? ReadPackageVersion(string packagePath)

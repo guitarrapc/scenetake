@@ -146,12 +146,7 @@ internal static partial class ScenarioCast
             if (YamlSerializer.Deserialize<object>(Encoding.UTF8.GetBytes(yaml)) is not Dictionary<object, object?> map)
                 return [];
             root = map;
-
-            // The section keys come from the classes that read them: VYaml's source generator lists each member's
-            // key in the schema of the formatter it generates, so a key added to a class is known here without a
-            // second list. Serializing an empty instance gives the same keys, but no other code serializes, and
-            // that call alone kept VYaml's serializer and emitter in the Native AOT binary (about 330 KB of 5 MB).
-            known = new(KeysOf<Scenario>(), KeysOf<ScenarioSettings>(), KeysOf<ScenarioRender>(), KeysOf<ScenarioTheme>());
+            known = KnownSectionKeys();
         }
         catch (Exception)
         {
@@ -161,6 +156,20 @@ internal static partial class ScenarioCast
         }
 
         return [.. ScenarioKeys.FindUnknown(root, known), .. ScenarioKeys.FindUnquotedColors(yaml, root)];
+    }
+
+    /// <summary>
+    /// The keys of the top level, <c>settings</c>, <c>render</c>, and <c>render.theme</c>, from the classes that read
+    /// them. The editor schema (schema/scenario.schema.json) is checked against them.
+    /// </summary>
+    /// <remarks>
+    /// VYaml's source generator lists each member's key in the schema of the formatter it generates, so a key added to
+    /// a class is known here without a second list. Serializing an empty instance gives the same keys, but no other code
+    /// serializes, and that call alone kept VYaml's serializer and emitter in the Native AOT binary (about 330 KB of 5 MB).
+    /// </remarks>
+    internal static ScenarioKeys.Known KnownSectionKeys()
+    {
+        return new(KeysOf<Scenario>(), KeysOf<ScenarioSettings>(), KeysOf<ScenarioRender>(), KeysOf<ScenarioTheme>());
 
         static string[] KeysOf<T>() =>
             GeneratedResolver.Instance.GetFormatter<T>() is IYamlSchemaInfoProvider provider
@@ -252,17 +261,17 @@ internal static partial class ScenarioCast
     }
 
     // Keys that change how a step looks in the recording, which a step that shows nothing does not have.
-    private static readonly string[] ShownOnlyKeys =
+    internal static readonly string[] ShownOnlyKeys =
     [
         "name", "run-highlight", "highlight", "stderr-color", "pre-delay", "post-delay", "execution-duration",
         "stream-output", "max-duration", "silence-threshold", "max-idle", "keep-output",
     ];
 
     // The keys a clear step reads besides clear: it shows a comment line and takes time, but runs nothing.
-    private static readonly string[] ClearStepKeys = ["clear", "name", "pre-delay", "post-delay"];
+    internal static readonly string[] ClearStepKeys = ["clear", "name", "pre-delay", "post-delay"];
 
     // The keys a card step reads besides card: it shows its lines and takes time, but runs nothing.
-    private static readonly string[] CardStepKeys = ["card", "pre-delay", "post-delay"];
+    internal static readonly string[] CardStepKeys = ["card", "pre-delay", "post-delay"];
 
     /// <summary>
     /// Seconds a card stays without <c>post-delay</c>: long enough to read a title and an install line, which a
@@ -309,7 +318,7 @@ internal static partial class ScenarioCast
     internal const double BackgroundWaitLimit = 30.0;
 
     // The keys a background step reads besides run.
-    private static readonly string[] BackgroundStepKeys = ["background", "wait", "wait-timeout", "continue-on-error"];
+    internal static readonly string[] BackgroundStepKeys = ["background", "wait", "wait-timeout", "continue-on-error"];
 
     /// <summary>
     /// Whether a step sets <c>background: true</c>, and the error for its keys: <c>wait</c> and <c>wait-timeout</c>
@@ -651,6 +660,9 @@ internal static partial class ScenarioCast
         ["f9"] = "\u001b[20~", ["f10"] = "\u001b[21~", ["f11"] = "\u001b[23~", ["f12"] = "\u001b[24~",
     };
 
+    /// <summary>The names in the table above, which the editor schema (schema/scenario.schema.json) is checked against.</summary>
+    internal static IEnumerable<string> KeyNames => NamedKeys.Keys;
+
     /// <summary>
     /// Seconds a <c>wait</c> entry waits for its text in a step without <c>timeout</c>. Then it gives up with a
     /// warning and goes on, so a text the program never prints does not stop the recording.
@@ -816,11 +828,41 @@ internal static partial class ScenarioCast
             && double.IsFinite(seconds);
     }
 
+    /// <summary>
+    /// The seed of the typing jitter and the cast's timestamp: a hash of the YAML text, with line endings normalized and
+    /// the editor schema's comment lines left out, so adding that line, or naming a later version's schema, changes no
+    /// recording.
+    /// </summary>
     internal static int ComputeDeterministicSeed(string yaml)
     {
         var normalized = yaml.Replace("\r\n", "\n").Replace("\r", "\n");
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(normalized));
+        var builder = new StringBuilder(normalized.Length);
+        foreach (var line in normalized.Split('\n'))
+        {
+            if (!IsSchemaLine(line))
+                builder.Append(line).Append('\n');
+        }
+
+        // Each kept line got a line break back, and the text's own end has none to give back.
+        if (builder.Length > 0)
+            builder.Length--;
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(builder.ToString()));
         return BitConverter.ToInt32(bytes, 0);
+    }
+
+    /// <summary>
+    /// Whether a line is the comment that names the editor schema, as yaml-language-server reads one:
+    /// <c># yaml-language-server: $schema=...</c>, with spaces allowed around the name and the colon.
+    /// </summary>
+    internal static bool IsSchemaLine(string line)
+    {
+        var text = line.AsSpan().TrimStart();
+        if (text.IsEmpty || text[0] != '#')
+            return false;
+
+        text = text[1..].TrimStart();
+        const string name = "yaml-language-server";
+        return text.StartsWith(name, StringComparison.Ordinal) && text[name.Length..].TrimStart().StartsWith(":", StringComparison.Ordinal);
     }
 
     internal static long ComputeDeterministicTimestamp(int seed)

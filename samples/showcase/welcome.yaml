@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/guitarrapc/scenetake/v1.5.0/schema/scenario.schema.json
 # Welcome to the scenetake playground!
 # This YAML recorded the demo on the right. Edit a line,
 # and the demo follows. More samples are in the list above.

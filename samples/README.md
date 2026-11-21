@@ -2,7 +2,7 @@
 
 English | [日本語](README-ja.md)
 
-Sample scenarios for scenetake. Record one with a command such as `scenetake --format svg samples/basic.yaml`.
+Sample scenarios for scenetake. Record one with a command such as `scenetake --format svg samples/basic.yaml`. Each starts with the line that `scenetake init` writes, which names the scenario schema, so an editor with the YAML extension completes and checks the keys of a copy.
 
 | Scenario | What it shows | Files |
 | --- | --- | --- |

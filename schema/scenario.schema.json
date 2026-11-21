@@ -1,0 +1,744 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "The scenetake scenario format for editors. tests/Scenetake.Tests/ScenarioSchemaTests.cs keeps its keys and names in step with the code, and checks every sample and fixture against it. Spec: .github/docs/spec_scenario.md → Editor schema.",
+  "title": "scenetake scenario",
+  "description": "A scenetake scenario: the commands that scenetake types and runs for a terminal recording, and how the recording looks. Only steps is required.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["steps"],
+  "properties": {
+    "title": {
+      "description": "The recording's title. The window's title bar shows it, unless render.window-title gives another text.",
+      "type": "string"
+    },
+    "width": {
+      "description": "Terminal columns.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 512,
+      "default": 80
+    },
+    "height": {
+      "description": "Terminal rows. By default the image leaves out empty rows below the output (render.fit).",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 512,
+      "default": 24
+    },
+    "cwd": {
+      "description": "The folder that pre, steps, and post start in. A relative path starts at this file's folder. Default: the folder scenetake runs in. The folder must exist.",
+      "type": "string"
+    },
+    "shell": {
+      "description": "The shell for every command: bash, pwsh, powershell, or a path. Default: $SHELL, and pwsh on Windows. On Windows, bash is Git Bash. With bash, zsh, and PowerShell, a cd or an export carries to the next steps.",
+      "type": "string",
+      "examples": ["bash", "pwsh", "powershell", "zsh", "sh"]
+    },
+    "settings": { "$ref": "#/definitions/settings" },
+    "render": { "$ref": "#/definitions/render" },
+    "outputs": {
+      "description": "The files a recording writes besides the cast, each with its own format and options: a dark and a light SVG for a README, a GIF for Zenn, an mp4 for X. Written when no --format is given.",
+      "type": "array",
+      "items": { "$ref": "#/definitions/output" }
+    },
+    "pre": {
+      "description": "Commands that run before the steps and are not recorded. With bash, zsh, and PowerShell, their folder and variables carry to the steps.",
+      "$ref": "#/definitions/commands"
+    },
+    "steps": {
+      "description": "The commands to record, in order. A step is a command, or a mapping with run and the step keys, or a card or clear step.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/step" }
+    },
+    "post": {
+      "description": "Commands that run after the steps and are not recorded. They also run when the recording stops with an error.",
+      "$ref": "#/definitions/commands"
+    }
+  },
+  "definitions": {
+    "commands": {
+      "type": "array",
+      "items": { "type": ["string", "number"] }
+    },
+    "seconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "positiveSeconds": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "style": {
+      "description": "A style: a color name (red, bright-cyan, gray), tokens such as \"bold underline fg:yellow bg:blue\", fg:/bg: with a name, 0-255, #rrggbb, or r,g,b, or a raw SGR such as 1;31. none keeps the text plain. Quote a style with #.",
+      "type": "string",
+      "examples": [
+        "red", "green", "yellow", "blue", "magenta", "cyan", "white", "gray",
+        "bright-red", "bright-green", "bright-yellow", "bright-blue", "bright-magenta", "bright-cyan", "bright-white",
+        "bold", "underline", "bold fg:bright-cyan", "fg:#ff8c00", "none"
+      ]
+    },
+    "hexColor": {
+      "type": "string",
+      "pattern": "^\\s*#(?:[0-9a-fA-F]{3}){1,2}\\s*$",
+      "errorMessage": "A color is #rgb or #rrggbb, in quotes: YAML reads # after a space as a comment."
+    },
+    "themePreset": {
+      "description": "A color theme.",
+      "anyOf": [
+        {
+          "enum": [
+            "dark", "light", "macos-dark", "macos-light", "dracula", "nord", "one-dark", "gruvbox-dark",
+            "catppuccin-mocha", "tokyo-night", "solarized-dark", "solarized-light", "github-dark", "github-light"
+          ]
+        },
+        {
+          "type": "string",
+          "pattern": "^(?:[dD][aA][rR][kK]|[lL][iI][gG][hH][tT]|[mM][aA][cC][oO][sS]-[dD][aA][rR][kK]|[mM][aA][cC][oO][sS]-[lL][iI][gG][hH][tT]|[dD][rR][aA][cC][uU][lL][aA]|[nN][oO][rR][dD]|[oO][nN][eE]-[dD][aA][rR][kK]|[gG][rR][uU][vV][bB][oO][xX]-[dD][aA][rR][kK]|[cC][aA][tT][pP][pP][uU][cC][cC][iI][nN]-[mM][oO][cC][hH][aA]|[tT][oO][kK][yY][oO]-[nN][iI][gG][hH][tT]|[sS][oO][lL][aA][rR][iI][zZ][eE][dD]-[dD][aA][rR][kK]|[sS][oO][lL][aA][rR][iI][zZ][eE][dD]-[lL][iI][gG][hH][tT]|[gG][iI][tT][hH][uU][bB]-[dD][aA][rR][kK]|[gG][iI][tT][hH][uU][bB]-[lL][iI][gG][hH][tT])$",
+          "errorMessage": "Unknown theme. scenetake --help lists the themes."
+        }
+      ]
+    },
+    "windowName": {
+      "description": "A title bar around the terminal: none, macos, or windows.",
+      "anyOf": [
+        { "enum": ["none", "macos", "windows"] },
+        {
+          "type": "string",
+          "pattern": "^(?:[nN][oO][nN][eE]|[mM][aA][cC][oO][sS]|[wW][iI][nN][dD][oO][wW][sS])$",
+          "errorMessage": "A window is none, macos, or windows."
+        }
+      ]
+    },
+    "fitMode": {
+      "description": "Which edges move in to the last row and column the recording uses: height (the default: no empty rows below), width, both, or none (the whole terminal).",
+      "anyOf": [
+        { "enum": ["none", "height", "width", "both"] },
+        {
+          "type": "string",
+          "pattern": "^(?:[nN][oO][nN][eE]|[hH][eE][iI][gG][hH][tT]|[wW][iI][dD][tT][hH]|[bB][oO][tT][hH])$",
+          "errorMessage": "fit is none, height, width, or both."
+        }
+      ]
+    },
+    "outputFormat": {
+      "description": "svg, mp4, gif, or png. Every recording also writes the cast. mp4 and gif need ffmpeg.",
+      "anyOf": [
+        { "enum": ["svg", "mp4", "gif", "png"] },
+        {
+          "type": "string",
+          "pattern": "^(?:[sS][vV][gG]|[mM][pP]4|[gG][iI][fF]|[pP][nN][gG])$",
+          "errorMessage": "format is svg, mp4, gif, or png. The cast is always written."
+        }
+      ]
+    },
+    "showValue": {
+      "description": "What the recording shows of the step: all (the prompt, the typed command, and the output), output (the output only), or none (nothing: a step that prepares the next ones).",
+      "anyOf": [
+        { "enum": ["all", "output", "none"] },
+        {
+          "type": "string",
+          "pattern": "^(?:[aA][lL][lL]|[oO][uU][tT][pP][uU][tT]|[nN][oO][nN][eE])$",
+          "errorMessage": "show is all, output, or none."
+        }
+      ]
+    },
+    "keyName": {
+      "description": "A key: enter, tab, space, backspace, escape, up, down, left, right, home, end, page-up, page-down, insert, delete, f1-f12, ctrl+ and a letter (ctrl+c), or alt+ and a character (alt+x).",
+      "anyOf": [
+        {
+          "enum": [
+            "enter", "return", "tab", "space", "backspace", "escape", "esc", "up", "down", "right", "left", "home", "end",
+            "page-up", "pageup", "page-down", "pagedown", "insert", "delete",
+            "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12", "ctrl+c", "ctrl+d", "alt+x"
+          ]
+        },
+        {
+          "type": "string",
+          "pattern": "^\\s*(?:[eE][nN][tT][eE][rR]|[rR][eE][tT][uU][rR][nN]|[tT][aA][bB]|[sS][pP][aA][cC][eE]|[bB][aA][cC][kK][sS][pP][aA][cC][eE]|[eE][sS][cC][aA][pP][eE]|[eE][sS][cC]|[uU][pP]|[dD][oO][wW][nN]|[rR][iI][gG][hH][tT]|[lL][eE][fF][tT]|[hH][oO][mM][eE]|[eE][nN][dD]|[pP][aA][gG][eE]-[uU][pP]|[pP][aA][gG][eE][uU][pP]|[pP][aA][gG][eE]-[dD][oO][wW][nN]|[pP][aA][gG][eE][dD][oO][wW][nN]|[iI][nN][sS][eE][rR][tT]|[dD][eE][lL][eE][tT][eE]|[fF]1|[fF]2|[fF]3|[fF]4|[fF]5|[fF]6|[fF]7|[fF]8|[fF]9|[fF]10|[fF]11|[fF]12|[cC][tT][rR][lL]\\+[a-zA-Z]|[aA][lL][tT]\\+[!-~])\\s*$",
+          "errorMessage": "Unknown key name. Text to type goes in type, not key."
+        }
+      ]
+    },
+    "lineRange": {
+      "description": "Lines and columns, 1-based: 3 (line 3), 2-5 (lines 2 to 5), 4- (line 4 to the end), 2:7-10 (columns 7 to 10 of line 2), 2:12- (column 12 to the end of line 2).",
+      "type": ["string", "integer"],
+      "minimum": 1,
+      "pattern": "^\\s*0*[1-9][0-9]*(?:-(?:0*[1-9][0-9]*)?)?(?::0*[1-9][0-9]*(?:-(?:0*[1-9][0-9]*)?)?)?\\s*$"
+    },
+    "settings": {
+      "description": "Defaults for every step. A map-form step can change each timing and color key for itself.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "prompt": {
+          "description": "Shown before each typed command, and at the end. Text, or a list of parts, each text or {text, color}. {dir} shows the name of the folder the step starts in.",
+          "type": ["string", "array"],
+          "default": "$ ",
+          "items": {
+            "type": ["string", "number", "object"],
+            "additionalProperties": false,
+            "required": ["text"],
+            "properties": {
+              "text": {
+                "description": "The part's text. {dir} shows the folder's name.",
+                "type": ["string", "number"]
+              },
+              "color": { "$ref": "#/definitions/style" }
+            }
+          }
+        },
+        "typing-speed": {
+          "description": "Average seconds per typed character.",
+          "$ref": "#/definitions/seconds",
+          "default": 0.05
+        },
+        "typing-jitter": {
+          "description": "Random variance (+/- seconds) per typed character.",
+          "$ref": "#/definitions/seconds",
+          "default": 0.015
+        },
+        "pre-delay": {
+          "description": "Seconds before a step is typed.",
+          "$ref": "#/definitions/seconds",
+          "default": 0.2
+        },
+        "post-delay": {
+          "description": "Seconds after a step's output, before the next step.",
+          "$ref": "#/definitions/seconds",
+          "default": 0.5
+        },
+        "execution-duration": {
+          "description": "Seconds after Enter before the output appears, at least.",
+          "$ref": "#/definitions/seconds",
+          "default": 0.05
+        },
+        "stream-output": {
+          "description": "Play the output at the times it came, instead of all at once.",
+          "type": "boolean",
+          "default": false
+        },
+        "max-duration": {
+          "description": "Fit each step's output into at most this many seconds. Turns stream-output on.",
+          "$ref": "#/definitions/positiveSeconds"
+        },
+        "silence-threshold": {
+          "description": "Stream output: a pause longer than this many seconds is shortened to max-idle.",
+          "$ref": "#/definitions/seconds",
+          "default": 2.0
+        },
+        "max-idle": {
+          "description": "Stream output: the seconds a long pause is shortened to.",
+          "$ref": "#/definitions/seconds",
+          "default": 0.2
+        },
+        "stderr-color": {
+          "description": "The color of stderr that has no colors of its own. none keeps it plain (git and many tools print progress on stderr).",
+          "$ref": "#/definitions/style",
+          "default": "red"
+        },
+        "mask": {
+          "description": "Texts to hide as * wherever the recording shows them, such as a host name.",
+          "type": "array",
+          "items": { "type": ["string", "number"] }
+        },
+        "mask-auto": {
+          "description": "Hide what looks like a secret: tokens, KEY=value secrets, passwords in URLs, private keys, and the values of secret environment variables.",
+          "type": "boolean",
+          "default": true
+        },
+        "mask-personal": {
+          "description": "Hide the user name, home folder name, computer name, and git name and email of the machine that records.",
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "render": {
+      "description": "How the SVG, mp4, GIF, and PNG look. The cast keeps it too, so scenetake svg, mp4, gif, and png draw the cast the same way later. Command-line options such as --theme override it.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "font-size": {
+          "description": "Font size in pixels.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128,
+          "default": 16
+        },
+        "font-family": {
+          "description": "A CSS font-family list, such as '\"JetBrains Mono\", monospace'. An SVG uses the viewer's fonts.",
+          "type": "string",
+          "maxLength": 256
+        },
+        "theme": { "$ref": "#/definitions/theme" },
+        "window": {
+          "$ref": "#/definitions/windowName",
+          "default": "none"
+        },
+        "window-title": {
+          "description": "The title bar's text. Default: title. \"\" shows none.",
+          "type": "string"
+        },
+        "background": {
+          "description": "The fill around the window: a color (\"#1e3c72\"), 2-4 colors for a gradient (\"#1e3c72 #2a5298\"), or a .png, .jpg, .gif, or .webp file relative to this file. Quote a color.",
+          "type": "string",
+          "examples": ["#1e3c72 #2a5298", "#0f2027 #2c5364"]
+        },
+        "margin": {
+          "description": "Pixels around the terminal or window. Default 8, 12 with a window, 32 with a background.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 200
+        },
+        "padding": {
+          "description": "Pixels between the terminal's edge and its text. Default: from font-size.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "opacity": {
+          "description": "How much of the window covers the background image or gradient, 0-1. Text stays opaque. Needs background.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 1
+        },
+        "blur": {
+          "description": "Pixels of blur on the background seen through a window with opacity below 1.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50,
+          "default": 0
+        },
+        "loop": {
+          "description": "false plays the SVG and the GIF once and stops on the final screen.",
+          "type": "boolean",
+          "default": true
+        },
+        "end-hold": {
+          "description": "Seconds the final screen stays before the SVG starts again or the video ends. Default: as long as the pause before the last output.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "fade-out": {
+          "description": "Seconds over which the text fades out after end-hold. The window and the background stay.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 0
+        },
+        "speed": {
+          "description": "How many times as fast as recorded the SVG, mp4, and GIF play. The cast keeps the recorded times.",
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4,
+          "default": 1
+        },
+        "fit": {
+          "$ref": "#/definitions/fitMode",
+          "default": "height"
+        },
+        "crop-top": { "$ref": "#/definitions/crop" },
+        "crop-bottom": { "$ref": "#/definitions/crop" },
+        "crop-left": { "$ref": "#/definitions/crop" },
+        "crop-right": { "$ref": "#/definitions/crop" }
+      }
+    },
+    "crop": {
+      "description": "Rows or columns cut from that edge before fit.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 511,
+      "default": 0
+    },
+    "theme": {
+      "description": "The color theme: a preset, with single colors changed on top of it.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "preset": {
+          "$ref": "#/definitions/themePreset",
+          "default": "dark"
+        },
+        "fg": {
+          "description": "The text color, #rgb or #rrggbb, in quotes.",
+          "$ref": "#/definitions/hexColor"
+        },
+        "bg": {
+          "description": "The background color, #rgb or #rrggbb, in quotes.",
+          "$ref": "#/definitions/hexColor"
+        },
+        "palette": {
+          "description": "The 16 ANSI colors, each #rgb or #rrggbb, separated by :, in quotes.",
+          "type": "string",
+          "pattern": "^[\\s:]*(?:#(?:[0-9a-fA-F]{3}){1,2}\\s*:[\\s:]*){15}#(?:[0-9a-fA-F]{3}){1,2}[\\s:]*$",
+          "errorMessage": "palette is 16 colors, each #rgb or #rrggbb, separated by :."
+        }
+      }
+    },
+    "output": {
+      "description": "A file to write besides the cast. The other keys are the command-line options of the same name, without --, for this file only.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format"],
+      "properties": {
+        "format": { "$ref": "#/definitions/outputFormat" },
+        "file": {
+          "description": "The file name, relative to the folder of the outputs. The extension may be left out. Default: the scenario's name. Two entries of one format need a file each.",
+          "type": "string"
+        },
+        "theme": { "$ref": "#/definitions/themePreset" },
+        "window": { "$ref": "#/definitions/windowName" },
+        "window-title": { "type": "string", "description": "The title bar's text. \"\" shows none." },
+        "background": { "type": "string", "description": "A color, 2-4 colors for a gradient, or an image file relative to this file." },
+        "margin": { "type": "integer", "minimum": 0, "maximum": 200, "description": "Pixels around the terminal or window." },
+        "padding": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Pixels between the terminal's edge and its text." },
+        "opacity": { "type": "number", "minimum": 0, "maximum": 1, "description": "How much of the window covers the background, 0-1." },
+        "blur": { "type": "integer", "minimum": 0, "maximum": 50, "description": "Pixels of blur on the background seen through the window." },
+        "fit": { "$ref": "#/definitions/fitMode" },
+        "crop-top": { "$ref": "#/definitions/crop" },
+        "crop-bottom": { "$ref": "#/definitions/crop" },
+        "crop-left": { "$ref": "#/definitions/crop" },
+        "crop-right": { "$ref": "#/definitions/crop" },
+        "font-size": { "type": "integer", "minimum": 1, "maximum": 128, "description": "Font size in pixels. A smaller font makes a smaller GIF." },
+        "font-family": { "type": "string", "maxLength": 256, "description": "A CSS font-family list." },
+        "loop": { "type": "boolean", "description": "false plays the SVG or the GIF once." },
+        "end-hold": { "type": "number", "minimum": 0, "maximum": 60, "description": "Seconds the final screen stays." },
+        "fade-out": { "type": "number", "minimum": 0, "maximum": 10, "description": "Seconds over which the text fades out after end-hold." },
+        "speed": {
+          "description": "How many times as fast as recorded this file plays, 0.25-4, such as 1.5 or 2x.",
+          "type": ["number", "string"],
+          "minimum": 0.25,
+          "maximum": 4,
+          "pattern": "^\\s*(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)[xX]\\s*$"
+        },
+        "at": {
+          "description": "svg and png: one screen, the one shown this many seconds into the recording, or end for the final screen.",
+          "type": ["number", "string"],
+          "minimum": 0,
+          "pattern": "^\\s*[eE][nN][dD]\\s*$"
+        },
+        "max-fps": { "type": "integer", "minimum": 0, "maximum": 120, "description": "svg: cap the animation's frame rate. 0 keeps every frame." },
+        "fps": { "type": "integer", "minimum": 1, "maximum": 60, "description": "mp4 and gif: frames per second. Default 30 for mp4 and 20 for a GIF, at most 50." },
+        "crf": { "type": "integer", "minimum": 1, "maximum": 51, "description": "mp4: H.264 quality. A higher value makes a smaller file. Default 23." },
+        "max-size": {
+          "description": "mp4 and gif: scale down to fit in WxH, keeping the shape. 1280x1024 fits X.",
+          "type": "string",
+          "pattern": "^\\s*[0-9]+[xX][0-9]+\\s*$"
+        },
+        "size": {
+          "description": "mp4 and gif: exactly WxH (both even), the terminal centered on the theme's background.",
+          "type": "string",
+          "pattern": "^\\s*[0-9]+[xX][0-9]+\\s*$"
+        },
+        "font-file": { "type": "string", "description": "mp4, gif, and png: a font file (TTF, OTF, TTC) to draw with first." }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["format"],
+            "properties": { "format": { "pattern": "^[sS][vV][gG]$" } },
+            "anyOf": [{ "required": ["fps"] }, { "required": ["crf"] }, { "required": ["max-size"] }, { "required": ["size"] }, { "required": ["font-file"] }]
+          },
+          "then": {
+            "propertyNames": {
+              "enum": [
+                "format", "file", "theme", "window", "window-title", "background", "margin", "padding", "opacity",
+                "blur", "fit", "crop-top", "crop-bottom", "crop-left", "crop-right", "font-size", "font-family",
+                "loop", "end-hold", "fade-out", "speed", "at", "max-fps"
+              ],
+              "errorMessage": "An svg entry takes no fps, crf, max-size, size, or font-file: those are for mp4 and gif (font-file also png), and an SVG takes max-fps."
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["format"],
+            "properties": { "format": { "pattern": "^[pP][nN][gG]$" } },
+            "anyOf": [{ "required": ["max-fps"] }, { "required": ["fps"] }, { "required": ["crf"] }, { "required": ["max-size"] }, { "required": ["size"] }]
+          },
+          "then": {
+            "propertyNames": {
+              "enum": [
+                "format", "file", "theme", "window", "window-title", "background", "margin", "padding", "opacity",
+                "blur", "fit", "crop-top", "crop-bottom", "crop-left", "crop-right", "font-size", "font-family",
+                "loop", "end-hold", "fade-out", "speed", "at", "font-file"
+              ],
+              "errorMessage": "A png entry is one screen: it takes no max-fps, fps, crf, max-size, or size."
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["format"],
+            "properties": { "format": { "pattern": "^[mM][pP]4$" } },
+            "anyOf": [{ "required": ["at"] }, { "required": ["max-fps"] }]
+          },
+          "then": {
+            "propertyNames": {
+              "enum": [
+                "format", "file", "theme", "window", "window-title", "background", "margin", "padding", "opacity",
+                "blur", "fit", "crop-top", "crop-bottom", "crop-left", "crop-right", "font-size", "font-family",
+                "loop", "end-hold", "fade-out", "speed", "fps", "crf", "max-size", "size", "font-file"
+              ],
+              "errorMessage": "An mp4 entry plays the whole recording: it takes no at or max-fps. Use fps for its frame rate."
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["format"],
+            "properties": { "format": { "pattern": "^[gG][iI][fF]$" } },
+            "anyOf": [{ "required": ["at"] }, { "required": ["max-fps"] }, { "required": ["crf"] }]
+          },
+          "then": {
+            "propertyNames": {
+              "enum": [
+                "format", "file", "theme", "window", "window-title", "background", "margin", "padding", "opacity",
+                "blur", "fit", "crop-top", "crop-bottom", "crop-left", "crop-right", "font-size", "font-family",
+                "loop", "end-hold", "fade-out", "speed", "fps", "max-size", "size", "font-file"
+              ],
+              "errorMessage": "A gif entry plays the whole recording and has no H.264 quality: it takes no at, max-fps, or crf. Use fps for its frame rate."
+            }
+          }
+        }
+      ]
+    },
+    "keyEntry": {
+      "description": "One thing to do while the command runs, in this order: sleep, then wait, then type or key.",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "sleep": {
+          "description": "Seconds to wait first.",
+          "$ref": "#/definitions/seconds"
+        },
+        "wait": {
+          "description": "Wait until the output shows this text, such as a prompt. Steadier than sleep on a slower machine. Gives up after the step's timeout, or 10 seconds.",
+          "type": ["string", "number"]
+        },
+        "type": {
+          "description": "Text to type, one character at a time at typing-speed. A line break is Enter.",
+          "type": ["string", "number"]
+        },
+        "key": { "$ref": "#/definitions/keyName" }
+      },
+      "if": { "required": ["type", "key"] },
+      "then": {
+        "propertyNames": {
+          "enum": ["sleep", "wait", "type"],
+          "errorMessage": "An entry has type or key, not both: put the key in the next entry."
+        }
+      }
+    },
+    "highlight": {
+      "description": "Colors part of the step's output.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["color", "at"],
+      "properties": {
+        "color": { "$ref": "#/definitions/style" },
+        "at": {
+          "description": "Where: a range of lines and columns, or a list of them.",
+          "anyOf": [
+            { "$ref": "#/definitions/lineRange" },
+            { "type": "array", "items": { "$ref": "#/definitions/lineRange" } }
+          ]
+        }
+      }
+    },
+    "step": {
+      "description": "A command to type and run, or a mapping: run with step keys, a card, or a clear step.",
+      "type": ["string", "number", "null", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "run": {
+          "description": "The command. Quote a command that contains \": \".",
+          "type": ["string", "number"]
+        },
+        "name": {
+          "description": "A comment line shown before the command, with an optional [style] prefix: \"[bright-yellow]Build it\".",
+          "type": "string"
+        },
+        "typing-speed": { "description": "Average seconds per typed character, for this step.", "$ref": "#/definitions/seconds" },
+        "typing-jitter": { "description": "Random variance (+/- seconds) per typed character, for this step.", "$ref": "#/definitions/seconds" },
+        "pre-delay": { "description": "Seconds before this step is typed.", "$ref": "#/definitions/seconds" },
+        "post-delay": { "description": "Seconds after this step's output. A card stays this long, 2 by default.", "$ref": "#/definitions/seconds" },
+        "execution-duration": { "description": "Seconds after Enter before the output appears, at least.", "$ref": "#/definitions/seconds" },
+        "stream-output": { "description": "Play the output at the times it came.", "type": "boolean" },
+        "max-duration": { "description": "Fit the output into at most this many seconds. Turns stream-output on.", "$ref": "#/definitions/positiveSeconds" },
+        "silence-threshold": { "description": "Stream output: a pause longer than this is shortened to max-idle.", "$ref": "#/definitions/seconds" },
+        "max-idle": { "description": "Stream output: the seconds a long pause is shortened to.", "$ref": "#/definitions/seconds" },
+        "run-highlight": { "description": "The style of the typed command.", "$ref": "#/definitions/style" },
+        "highlight": {
+          "description": "Colors for parts of the output, by line and column. Not for pty steps.",
+          "type": "array",
+          "items": { "$ref": "#/definitions/highlight" }
+        },
+        "stderr-color": { "description": "The color of stderr that has no colors of its own, for this step.", "$ref": "#/definitions/style" },
+        "pty": {
+          "description": "Run in a pseudo-terminal: for TUIs, progress bars, and tools that color only for a terminal. Needed for keys.",
+          "type": "boolean",
+          "default": false
+        },
+        "interactive": {
+          "description": "You use the program yourself while it records. Needs pty: true. scenetake --save-keys saves your keys as keys entries.",
+          "type": "boolean",
+          "default": false
+        },
+        "normalize-typing": {
+          "description": "With interactive: true, type your keys at typing-speed and drop Backspace corrections.",
+          "type": "boolean",
+          "default": false
+        },
+        "continue-on-error": {
+          "description": "The command is meant to fail: no warning for its exit code, also with --strict.",
+          "type": "boolean",
+          "default": false
+        },
+        "keys": {
+          "description": "Keys scenetake writes to the program while it runs, in order. Needs pty: true.",
+          "type": "array",
+          "items": { "$ref": "#/definitions/keyEntry" }
+        },
+        "timeout": {
+          "description": "Seconds after which scenetake stops the command: Ctrl+C in a PTY. Not a failure.",
+          "$ref": "#/definitions/positiveSeconds"
+        },
+        "show": {
+          "$ref": "#/definitions/showValue",
+          "default": "all"
+        },
+        "clear": {
+          "description": "Clear the screen, as clear does, without running a command.",
+          "const": true
+        },
+        "card": {
+          "description": "Lines shown centered on a cleared screen, without running a command: a title, or an install line at the end. Each line may start with a [style] prefix.",
+          "type": ["string", "number", "array"],
+          "items": { "type": ["string", "number", "null"] }
+        },
+        "background": {
+          "description": "Start the command and go on while it runs, such as a server that later steps call. It is not recorded, and stops at the end.",
+          "type": "boolean",
+          "default": false
+        },
+        "wait": {
+          "description": "With background: true, start the next step when the command prints this text, such as \"Listening on\".",
+          "type": ["string", "number"]
+        },
+        "wait-timeout": {
+          "description": "Seconds to wait for the wait text. Default 30.",
+          "$ref": "#/definitions/positiveSeconds"
+        },
+        "keep-output": {
+          "description": "Show this step's output from the earlier cast when recording again, even when it changed, such as a date.",
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "dependencies": {
+        "keys": { "required": ["pty"], "properties": { "pty": { "const": true } } },
+        "wait": { "required": ["background"], "properties": { "background": { "const": true } } },
+        "wait-timeout": { "required": ["wait"] }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["interactive"], "properties": { "interactive": { "const": true } } },
+          "then": { "required": ["pty"], "properties": { "pty": { "const": true } } }
+        },
+        {
+          "if": { "required": ["normalize-typing"], "properties": { "normalize-typing": { "const": true } } },
+          "then": { "required": ["interactive"], "properties": { "interactive": { "const": true } } }
+        },
+        {
+          "if": { "required": ["card"] },
+          "then": {
+            "propertyNames": {
+              "enum": ["card", "pre-delay", "post-delay"],
+              "errorMessage": "A card step takes card, pre-delay, and post-delay only."
+            }
+          },
+          "else": {
+            "if": { "required": ["clear"] },
+            "then": {
+              "propertyNames": {
+                "enum": ["clear", "name", "pre-delay", "post-delay"],
+                "errorMessage": "A clear step takes clear, name, pre-delay, and post-delay only."
+              }
+            },
+            "else": { "required": ["run"] }
+          }
+        },
+        {
+          "if": { "required": ["background"], "properties": { "background": { "const": true } } },
+          "then": {
+            "propertyNames": {
+              "enum": ["run", "background", "wait", "wait-timeout", "continue-on-error"],
+              "errorMessage": "A background step takes run, wait, wait-timeout, and continue-on-error only: it is not recorded."
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["interactive"],
+            "properties": { "interactive": { "const": true } },
+            "anyOf": [{ "required": ["keys"] }, { "required": ["timeout"] }]
+          },
+          "then": {
+            "propertyNames": {
+              "enum": [
+                "run", "name", "typing-speed", "typing-jitter", "pre-delay", "post-delay", "execution-duration",
+                "stream-output", "max-duration", "silence-threshold", "max-idle", "run-highlight", "highlight", "stderr-color",
+                "pty", "interactive", "normalize-typing", "continue-on-error", "show", "clear", "card",
+                "background", "wait", "wait-timeout", "keep-output"
+              ],
+              "errorMessage": "keys and timeout do not apply to interactive: true, where a person types and ends the step."
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["show"],
+            "properties": { "show": { "type": "string", "pattern": "^[nN][oO][nN][eE]$" } },
+            "anyOf": [
+              { "required": ["name"] }, { "required": ["run-highlight"] }, { "required": ["highlight"] }, { "required": ["stderr-color"] },
+              { "required": ["pre-delay"] }, { "required": ["post-delay"] }, { "required": ["execution-duration"] },
+              { "required": ["stream-output"] }, { "required": ["max-duration"] }, { "required": ["silence-threshold"] },
+              { "required": ["max-idle"] }, { "required": ["keep-output"] }
+            ]
+          },
+          "then": {
+            "propertyNames": {
+              "enum": [
+                "run", "typing-speed", "typing-jitter", "pty", "interactive", "normalize-typing", "continue-on-error",
+                "keys", "timeout", "show", "clear", "card", "background", "wait", "wait-timeout"
+              ],
+              "errorMessage": "show: none shows nothing and takes no time, so it takes no name, highlight, stderr-color, delay, output timing, or keep-output."
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["show", "run-highlight"],
+            "properties": { "show": { "type": "string", "pattern": "^[oO][uU][tT][pP][uU][tT]$" } }
+          },
+          "then": {
+            "propertyNames": {
+              "enum": [
+                "run", "name", "typing-speed", "typing-jitter", "pre-delay", "post-delay", "execution-duration",
+                "stream-output", "max-duration", "silence-threshold", "max-idle", "highlight", "stderr-color",
+                "pty", "interactive", "normalize-typing", "continue-on-error", "keys", "timeout", "show", "clear", "card",
+                "background", "wait", "wait-timeout", "keep-output"
+              ],
+              "errorMessage": "show: output types nothing, so run-highlight has no effect."
+            }
+          }
+        }
+      ]
+    }
+  }
+}
