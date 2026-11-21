@@ -1196,6 +1196,9 @@ internal static partial class ScenarioCast
             tags.Add(RenderSettingsResolver.EndHoldTagPrefix + RenderSettingsResolver.FormatSeconds(endHold));
         if (renderSettings.FadeOut is double fadeOut)
             tags.Add(RenderSettingsResolver.FadeOutTagPrefix + RenderSettingsResolver.FormatSeconds(fadeOut));
+        // The events keep the recorded times, which other players play. The tag says how fast scenetake renders them.
+        if (renderSettings.Speed is double speed && speed != 1)
+            tags.Add(RenderSettingsResolver.SpeedTagPrefix + RenderSettingsResolver.FormatSeconds(speed));
         // A cast without st:fit is read with the default fit, so only another fit, none included, needs the tag.
         if (renderSettings.Fit != RenderSettingsResolver.DefaultFit)
             tags.Add(RenderSettingsResolver.FitTagPrefix + RenderSettingsResolver.FitToTagValue(renderSettings.Fit));

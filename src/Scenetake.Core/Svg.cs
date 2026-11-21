@@ -107,6 +107,7 @@ internal static class SvgRender
             return SvgFrameRenderer.Render(events, width, height, still, render with { MaxFps = 0, FadeOut = null }, canvas, loopDuration: 1, still: true);
         }
 
+        events = RenderSettingsResolver.ApplySpeed(events, render, ref loopDurationOverride);
         // Without --max-fps only the last of frames that share a time is drawn (DropZeroLengthFrames).
         var frames = TerminalReplay.BuildFrames(events, width, height, canvas, theme, lastOfSameTime: render.MaxFps <= 0);
         var loopDuration = RenderSettingsResolver.ResolveLoopDuration(
@@ -301,6 +302,16 @@ internal readonly record struct ResolvedRenderSettings(
     /// <summary>Seconds over which the terminal's contents fade out after <see cref="EndHold"/>, or null for none.</summary>
     internal double? FadeOut { get; init; }
 
+    /// <summary>
+    /// How much faster than recorded an SVG, mp4, or GIF plays, such as 1.5, or null for as recorded
+    /// (<see cref="RenderSettingsResolver.ApplySpeed"/>). <see cref="EndHold"/> and <see cref="FadeOut"/> are seconds of
+    /// the output and do not change with it.
+    /// </summary>
+    internal double? Speed { get; init; }
+
+    /// <summary>The speed played: the set one, or 1.</summary>
+    internal double PlaybackSpeed => Speed ?? 1;
+
     internal bool Loops => Loop ?? true;
 
     /// <summary>The fade an SVG draws: none when it plays once, because it stops on its final screen.</summary>
@@ -419,8 +430,8 @@ internal sealed class BackgroundImageSource
 }
 
 /// <summary>
-/// Window title, background, margin, padding, opacity, blur, loop, end hold, and fade-out from the command line or
-/// the playground: each set one replaces the cast's or the scenario's.
+/// Window title, background, margin, padding, opacity, blur, loop, end hold, fade-out, and speed from the command
+/// line or the playground: each set one replaces the cast's or the scenario's.
 /// </summary>
 internal sealed record RenderStyleOverrides(
     string? WindowTitle,
@@ -436,7 +447,8 @@ internal sealed record RenderStyleOverrides(
     int? CropTop = null,
     int? CropBottom = null,
     int? CropLeft = null,
-    int? CropRight = null)
+    int? CropRight = null,
+    double? Speed = null)
 {
     internal static readonly RenderStyleOverrides None = new(null, null, null, null);
 
@@ -451,6 +463,7 @@ internal sealed record RenderStyleOverrides(
         Loop = Loop ?? settings.Loop,
         EndHold = EndHold ?? settings.EndHold,
         FadeOut = FadeOut ?? settings.FadeOut,
+        Speed = Speed ?? settings.Speed,
         Fit = Fit ?? settings.Fit,
         Crop = new CropSpec(CropTop ?? settings.Crop.Top, CropBottom ?? settings.Crop.Bottom, CropLeft ?? settings.Crop.Left, CropRight ?? settings.Crop.Right),
     };
@@ -488,6 +501,7 @@ internal static class RenderSettingsResolver
     internal const string LoopTagPrefix = "st:loop=";
     internal const string EndHoldTagPrefix = "st:end-hold=";
     internal const string FadeOutTagPrefix = "st:fade-out=";
+    internal const string SpeedTagPrefix = "st:speed=";
     internal const string FitTagPrefix = "st:fit=";
     internal const string CropTopTagPrefix = "st:crop-top=";
     internal const string CropBottomTagPrefix = "st:crop-bottom=";
@@ -507,6 +521,12 @@ internal static class RenderSettingsResolver
     internal const int MinBlur = 0, MaxBlur = 50;
     internal const double MinEndHold = 0, MaxEndHold = 60;
     internal const double MinFadeOut = 0, MaxFadeOut = 10;
+
+    /// <summary>
+    /// The speeds a recording plays at. Typing at 4x is already a blur, and a quarter of the speed is enough to follow
+    /// a full-screen program that redraws fast.
+    /// </summary>
+    internal const double MinSpeed = 0.25, MaxSpeed = 4;
 
     /// <summary>The margin when a background is set and no margin is: enough of the background to show around the window.</summary>
     internal const int DefaultBackgroundMargin = 32;
@@ -756,6 +776,34 @@ internal static class RenderSettingsResolver
 
     internal static bool IsValidFadeOut(double seconds) => double.IsFinite(seconds) && seconds is >= MinFadeOut and <= MaxFadeOut;
 
+    /// <summary>Reads a playback speed, as <c>--speed</c> and <c>st:speed</c> hold it: a factor such as 1.5.</summary>
+    internal static bool TryParseSpeed(string text, out double speed, out string error)
+    {
+        error = "";
+        // A trailing x, as the CLI writes a speed (1.5x), is read too.
+        var number = text.Trim();
+        if (number.EndsWith('x') || number.EndsWith('X'))
+            number = number[..^1];
+        if (!double.TryParse(number, NumberStyles.Float, CultureInfo.InvariantCulture, out speed) || !double.IsFinite(speed))
+        {
+            error = $"invalid speed value: {text} (expected a factor from {FormatSeconds(MinSpeed)} to {FormatSeconds(MaxSpeed)}, such as 1.5 for one and a half times as fast)";
+            return false;
+        }
+
+        if (!IsValidSpeed(speed))
+        {
+            error = $"speed must be between {FormatSeconds(MinSpeed)} and {FormatSeconds(MaxSpeed)}: {text.Trim()}";
+            return false;
+        }
+
+        return true;
+    }
+
+    internal static bool IsValidSpeed(double speed) => double.IsFinite(speed) && speed is >= MinSpeed and <= MaxSpeed;
+
+    /// <summary>A speed as the CLI shows it, such as <c>1.5x</c>.</summary>
+    internal static string FormatSpeed(double speed) => FormatSeconds(speed) + "x";
+
     /// <summary>Seconds as a cast tag holds them: up to three decimals, no exponent.</summary>
     internal static string FormatSeconds(double seconds) => seconds.ToString("0.###", CultureInfo.InvariantCulture);
 
@@ -790,6 +838,27 @@ internal static class RenderSettingsResolver
 
         var end = settings.EndHold is double hold ? events[^1].Time + hold : loopDuration;
         return end + (settings.FadeOut ?? 0);
+    }
+
+    /// <summary>
+    /// The recording on the timeline that <see cref="ResolvedRenderSettings.Speed"/> plays: each event's time, and the
+    /// loop with the default hold, divided by the speed. Typing, pauses, and output all go faster together, so the
+    /// demo keeps its rhythm. An explicit end hold and the fade-out are added afterwards in seconds of the output
+    /// (<see cref="ResolveLoopDuration"/>): they say how long a viewer sees the final screen. A still is not played,
+    /// and its time stays the recording's.
+    /// </summary>
+    internal static IReadOnlyList<CastEvent> ApplySpeed(IReadOnlyList<CastEvent> events, ResolvedRenderSettings settings, ref double? loopDuration)
+    {
+        var speed = settings.PlaybackSpeed;
+        if (speed == 1)
+            return events;
+
+        var scaled = new CastEvent[events.Count];
+        for (var i = 0; i < scaled.Length; i++)
+            scaled[i] = events[i] with { Time = events[i].Time / speed };
+        if (loopDuration is double loop)
+            loopDuration = loop / speed;
+        return scaled;
     }
 
     /// <summary>
@@ -1112,6 +1181,17 @@ internal static class RenderSettingsResolver
             }
 
             settings = settings with { FadeOut = fadeOut };
+        }
+
+        if (render?.Speed is double speed)
+        {
+            if (!IsValidSpeed(speed))
+            {
+                error = $"invalid render.speed: must be between {FormatSeconds(MinSpeed)} and {FormatSeconds(MaxSpeed)}: {speed.ToString(CultureInfo.InvariantCulture)}";
+                return false;
+            }
+
+            settings = settings with { Speed = speed };
         }
 
         if (render?.Fit is { } fitText)

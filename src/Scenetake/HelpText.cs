@@ -176,6 +176,9 @@ static class HelpText
                                            mp4 ends, 0-60 (default: as long as the pause before the last output)
                   --fade-out N             Fade the terminal's contents out over N seconds after the end hold,
                                            0-10 (default 0). The window and the background stay.
+                  --speed N                Play the SVG, mp4, or GIF N times as fast as recorded, 0.25-4
+                                           (default 1), such as 1.5. Typing, pauses, and output all speed up.
+                                           --end-hold and --fade-out stay seconds of the output.
 
                 """
             : "");
@@ -193,7 +196,8 @@ static class HelpText
           --at TIME                Draw the screen shown TIME seconds into the recording, such as 2.5,
                                    or end for the final screen. A PNG shows the final screen without it.
                                    With SVG, --at makes a still SVG without animation, which --max-fps,
-                                   --no-loop, --end-hold and --fade-out do not apply to.
+                                   --no-loop, --end-hold, --fade-out and --speed do not apply to. TIME
+                                   is the recording's, as the cast's line shows it, at any --speed.
 
         """;
 
@@ -218,7 +222,7 @@ static class HelpText
 
     internal const string Mp4Options = """
         mp4 (--format mp4 or the mp4 command, needs ffmpeg with libx264):
-          --fps N                  Frame rate, 1-60 (default 30)
+          --fps N                  Frame rate, 1-60 (default 30, times --speed above 1: 60 at 2x)
           --crf N                  H.264 quality, 1-51, where a higher value makes a smaller file (default 23)
           --max-size WxH           Scale down to fit in WxH, keeping the shape and never scaling up.
                                    1280x1024 fits X (Twitter) uploads.
@@ -232,9 +236,9 @@ static class HelpText
 
     internal const string GifOptions = """
         GIF (--format gif or the gif command, needs ffmpeg):
-          --fps N                  Frame rate, 1-50 (default 20). A GIF counts each frame's delay in
-                                   hundredths of a second. A lower rate makes a full-screen program
-                                   smaller, and changes little for typing.
+          --fps N                  Frame rate, 1-50 (default 20, times --speed above 1: 40 at 2x). A GIF
+                                   counts each frame's delay in hundredths of a second. A lower rate
+                                   makes a full-screen program smaller, and changes little for typing.
           --max-size WxH           Scale down to fit in WxH, keeping the shape and never scaling up.
                                    Scaling blurs text and can make a GIF larger. For a smaller GIF,
                                    such as Zenn's 3MB, use a smaller --font-size.

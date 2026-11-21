@@ -359,6 +359,7 @@ const SAMPLE_NOTES = {
   quickstart: 'the README quick start',
   resize: 'a v2 cast that resizes the terminal',
   scenario_format: 'every scenario key in one file',
+  speed: 'one recording as recorded and at 2x (try --speed)',
   'stream-output': 'output replayed with its own timing',
   theme: 'light theme, 16 and 256 colors, gradient background',
   'theme-macos': 'macOS window frame on a gradient',

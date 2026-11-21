@@ -162,7 +162,8 @@ public static partial class PlaygroundInterop
             Loop: Bool(root, "loop"),
             EndHold: Double(root, "endHold"),
             FadeOut: Double(root, "fadeOut"),
-            Fit: String(root, "fit"));
+            Fit: String(root, "fit"),
+            Speed: Double(root, "speed"));
 
         // The page's loop select sends "true" or "false", and a share URL may hold either form.
         static bool? Bool(JsonElement root, string name) =>

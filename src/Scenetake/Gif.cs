@@ -73,6 +73,7 @@ internal static class GifRender
             throw new Mp4Exception($"output path is a directory: {fullOutputPath}");
 
         render = ForGif(render);
+        events = RenderSettingsResolver.ApplySpeed(events, render, ref loopDurationOverride);
         var loopDuration = RenderSettingsResolver.ResolveLoopDuration(
             loopDurationOverride ?? TerminalReplay.ComputeLoopDuration(events), events, render);
         var renderer = new Mp4FrameRenderer(events, width, height, render, settings, loopDuration, ffmpegPath);

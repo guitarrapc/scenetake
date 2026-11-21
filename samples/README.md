@@ -18,6 +18,7 @@ Sample scenarios for scenetake. Record one with a command such as `scenetake --f
 | [theme-macos](#theme-macos) | A macOS window over a gradient that shows through it | [yaml](theme-macos.yaml) · [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
 | [theme-windows](#theme-windows) | A Windows window over a gradient | [yaml](theme-windows.yaml) · [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
 | [translucent](#translucent) | A translucent, blurred window over an image | [yaml](translucent.yaml) · [cast](translucent.cast) · [gif](translucent.gif) · [svg](translucent.svg) |
+| [speed](#speed) | One recording as recorded and at 2x, from `outputs` | [yaml](speed.yaml) · [cast](speed.cast) · [gif](speed.gif) · [svg](speed.svg) · [svg 2x](speed-2x.svg) |
 | [resize](#resize) | Terminal resizes (cast only) | [cast](resize.cast) · [gif](resize.gif) · [svg](resize.svg) |
 
 ## Showcase
@@ -110,6 +111,14 @@ You operate `vim` in a real terminal to record it, so it is recorded again by ha
 | GIF | SVG |
 | --- | --- |
 | ![](translucent.gif) | ![](translucent.svg) |
+
+## speed
+
+Record it without `--format`, so its `outputs` list writes both SVGs: `scenetake samples/speed.yaml`. The cast keeps the recorded times, and `speed: 2` plays the same recording twice as fast.
+
+| As recorded | `speed: 2` |
+| --- | --- |
+| ![](speed.svg) | ![](speed-2x.svg) |
 
 ## resize
 

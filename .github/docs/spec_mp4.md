@@ -44,7 +44,7 @@ No practical H.264 encoder exists for .NET, and operating-system encoders differ
 ### Timing
 
 - Frame `k` shows the screen after every event with time ≤ `k / fps`. States shorter than one frame are not shown.
-- The video length is the SVG loop period, so it includes the final hold, `end-hold` when set, and `fade-out`.
+- The video length is the SVG loop period, so it includes the final hold, `end-hold` when set, and `fade-out`. With `speed`, the events play on the sped-up timeline before the hold and the fade are added, as in the SVG ([spec_svg.md](spec_svg.md#playback-speed) → Playback speed). A GIF follows the same timeline.
 - `fade-out` blends each frame after the hold toward the same frame without the terminal's contents: its background, the window, and `background`, drawn once when the fade starts. A frame stands for the time up to the next one, so the last frame is fully faded. The screen does not change during the fade, because it follows the last event. `loop` does not apply: whether an mp4 plays again is the player's choice.
 - Like the SVG, `--format mp4` renders the cast it just wrote, so it gives the same file as `scenetake mp4` on that cast with the same options.
 - Like the SVG, nothing is shown before the first event, not even the cursor. A cast with no events differs: its SVG shows the cursor throughout, while the mp4 shows only the background.
@@ -153,7 +153,7 @@ The background is drawn once per video and copied into each frame before the win
 | Scene cuts | Threshold 10 (`scenecut`; x264's default is 40) | When output scrolls the screen, the default threshold starts a keyframe that codes the whole screen again, though most of it only moved. Keyframes were 61–87% of typing videos. Encoding time is unchanged. |
 | Keyframes at screen switches | Forced on the first non-blank frame after a full-screen program enters or leaves the alternate screen; at least 1 second apart and at most 1000 per video | The lower threshold also dropped some cuts where a TUI replaced the whole screen, most when `--size` padding made the change a smaller share of the frame (TuiDemo at 1920×1080: 3.7% larger). scenetake sees those switches as it replays the recording. With both, 15 of 29 recordings were 0.1–19% smaller at equal SSIM than with x264's defaults, 10 were unchanged, and 4 were 0.1–2.0% larger. The spacing keeps a program that flips screens rapidly from turning every frame into a keyframe; later switches are left to x264. The limit keeps the list of times well inside Windows' 32767-character command line. |
 | Reference frames | 8, capped so the stream stays within level 5.2 | 8 references at 4K would need level 6.0, which many phone and TV decoders lack. 4K gets 5. |
-| Frame rate | `--fps`, default `30`, max `60` | 30fps keeps terminal motion smooth. For `matrix --fps 60` it is 28% smaller than 60fps (4.4MB vs 6.1MB). X allows up to 60. |
+| Frame rate | `--fps`, default `30`, max `60`. With `speed` above 1, the default is 30 times the speed, up to 60 | 30fps keeps terminal motion smooth. For `matrix --fps 60` it is 28% smaller than 60fps (4.4MB vs 6.1MB). X allows up to 60. A sped-up video at the default rate keeps the frames of 30fps at 1x ([spec_svg.md](spec_svg.md#playback-speed) → Playback speed). |
 | Color | BT.709 conversion and BT.709 tags | Untagged output (ffmpeg's default BT.601 conversion) shifts theme colors in players that assume BT.709. |
 | Container | mp4 with `+faststart` | Playback and upload processing can start before the whole file arrives. |
 

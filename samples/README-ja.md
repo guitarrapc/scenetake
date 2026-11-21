@@ -18,6 +18,7 @@ scenetakeのサンプルシナリオです。`scenetake --format svg samples/bas
 | [theme-macos](#theme-macos) | macOSのウィンドウ枠を、透けるグラデーションの上に | [yaml](theme-macos.yaml) · [cast](theme-macos.cast) · [gif](theme-macos.gif) · [svg](theme-macos.svg) |
 | [theme-windows](#theme-windows) | Windowsのウィンドウ枠を、グラデーションの上に | [yaml](theme-windows.yaml) · [cast](theme-windows.cast) · [gif](theme-windows.gif) · [svg](theme-windows.svg) |
 | [translucent](#translucent) | 画像の上に、半透明でぼかしたウィンドウ | [yaml](translucent.yaml) · [cast](translucent.cast) · [gif](translucent.gif) · [svg](translucent.svg) |
+| [speed](#speed) | 1つの録画を、録画どおりと2倍速で。`outputs`から書き出す | [yaml](speed.yaml) · [cast](speed.cast) · [gif](speed.gif) · [svg](speed.svg) · [svg 2倍速](speed-2x.svg) |
 | [resize](#resize) | ターミナルのリサイズ（castのみ） | [cast](resize.cast) · [gif](resize.gif) · [svg](resize.svg) |
 
 ## ショーケース
@@ -110,6 +111,14 @@ scenetakeのサンプルシナリオです。`scenetake --format svg samples/bas
 | GIF | SVG |
 | --- | --- |
 | ![](translucent.gif) | ![](translucent.svg) |
+
+## speed
+
+`--format`を付けずに録画すると、`outputs`の一覧どおり2つのSVGを書き出します: `scenetake samples/speed.yaml`。castには録画したときの時間が残り、`speed: 2`は同じ録画を2倍の速さで再生します。
+
+| 録画どおり | `speed: 2` |
+| --- | --- |
+| ![](speed.svg) | ![](speed-2x.svg) |
 
 ## resize
 

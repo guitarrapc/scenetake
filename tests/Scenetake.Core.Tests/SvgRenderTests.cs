@@ -29,6 +29,15 @@ public sealed class SvgRenderTests
     public async Task NoLoopPlaysOnceWithoutFade() => await Assert.That(SvgRenderCases.NoLoopPlaysOnceWithoutFade()).IsTrue();
 
     [Test]
+    public async Task SpeedScalesTheTimelineNotTheHold() => await Assert.That(SvgRenderCases.SpeedScalesTheTimelineNotTheHold()).IsTrue();
+
+    [Test]
+    public async Task SpeedValues() => await Assert.That(SvgRenderCases.SpeedValues()).IsTrue();
+
+    [Test]
+    public async Task SpeedSampleMatchesItsCast() => await Assert.That(SvgRenderCases.SpeedSampleMatchesItsCast()).IsTrue();
+
+    [Test]
     public async Task ThemePresetsAreValidAndPreviewed() => await Assert.That(SvgRenderCases.ThemePresetsAreValidAndPreviewed()).IsTrue();
 
     [Test]
@@ -780,6 +789,73 @@ internal static class SvgRenderCases
             && RenderSettingsResolver.FindIneffectiveStyle(recording.RenderSettings with { Loop = false, FadeOut = 1 })
                 .Any(note => note.StartsWith("fade-out has no effect on an SVG that plays once", StringComparison.Ordinal))
             && RenderSettingsResolver.FindIneffectiveStyle(recording.RenderSettings with { Loop = false, FadeOut = 1 }, svg: false).Count == 0;
+    }
+
+    // Speed divides each event's time and the default hold: the 2x SVG shows at t what the 1x one shows at 2t, and its
+    // loop is half as long. An explicit end hold and fade-out stay seconds of the output.
+    internal static bool SpeedScalesTheTimelineNotTheHold()
+    {
+        var recording = CastReader.Read(TestEnv.RepoPath("samples/basic.cast"));
+        string Svg(ResolvedRenderSettings settings) =>
+            SvgRender.RenderToString(recording.Events, recording.Width, recording.Height, settings, recording.LoopDuration);
+        static string Loop(double seconds) =>
+            $".l {{ visibility: hidden; animation: {seconds.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture)}s step-start infinite; }}";
+
+        var normal = Svg(recording.RenderSettings);
+        var fast = Svg(recording.RenderSettings with { Speed = 2 });
+        var held = Svg(recording.RenderSettings with { Speed = 2, EndHold = 2, FadeOut = 0.5 });
+        var ok = Expect(fast.Contains(Loop(recording.LoopDuration / 2), StringComparison.Ordinal), "2x: half the loop");
+        // Times between the event times, which are whole milliseconds.
+        for (var t = 0.2137; t < recording.LoopDuration; t += 0.7)
+        {
+            var expected = string.Join("|", VisibleRowsAt(normal, t).OrderBy(static row => row.Key).Select(static row => row.Value));
+            var actual = string.Join("|", VisibleRowsAt(fast, t / 2).OrderBy(static row => row.Key).Select(static row => row.Value));
+            ok &= Expect(expected == actual, $"2x at {t / 2:0.###}s shows 1x at {t:0.###}s: {actual} vs {expected}");
+        }
+
+        ok &= Expect(held.Contains(Loop(recording.Events[^1].Time / 2 + 2 + 0.5), StringComparison.Ordinal), "2x with end-hold 2 and fade-out 0.5: the hold and fade are not halved")
+            & Expect(Svg(recording.RenderSettings with { Speed = 1 }) == normal, "1x is the recording");
+
+        // A still is not played: --at names the recording's time at any speed.
+        var still = SvgRender.RenderToString(recording.Events, recording.Width, recording.Height, recording.RenderSettings, recording.LoopDuration, stillAt: 5);
+        var stillFast = SvgRender.RenderToString(recording.Events, recording.Width, recording.Height, recording.RenderSettings with { Speed = 2 }, recording.LoopDuration, stillAt: 5);
+        return ok & Expect(still == stillFast, "a still is the same at any speed");
+    }
+
+    internal static bool SpeedValues()
+    {
+        var ok = true;
+        foreach (var (text, expected) in new[] { ("1.5", 1.5), ("1.5x", 1.5), (" 2X ", 2.0), ("0.25", 0.25), ("4", 4.0) })
+            ok &= Expect(RenderSettingsResolver.TryParseSpeed(text, out var speed, out _) && speed == expected, $"'{text}' is {expected}");
+        foreach (var (text, message) in new[]
+        {
+            ("0.2", "speed must be between 0.25 and 4: 0.2"),
+            ("5", "speed must be between 0.25 and 4: 5"),
+            ("fast", "invalid speed value: fast (expected a factor from 0.25 to 4, such as 1.5 for one and a half times as fast)"),
+            ("NaN", "invalid speed value: NaN (expected a factor from 0.25 to 4, such as 1.5 for one and a half times as fast)"),
+        })
+        {
+            ok &= Expect(!RenderSettingsResolver.TryParseSpeed(text, out _, out var error) && error == message, $"'{text}': {message}");
+        }
+
+        return ok & Expect(RenderSettingsResolver.FormatSpeed(1.5) == "1.5x" && RenderSettingsResolver.FormatSpeed(2) == "2x", "1.5x and 2x");
+    }
+
+    // samples/speed.yaml's outputs write speed-2x.svg from the same cast as speed.svg, at 2x. PlaygroundReplayTests
+    // checks the cast and speed.svg. This checks the 2x one, so a renderer change cannot leave it behind.
+    internal static bool SpeedSampleMatchesItsCast()
+    {
+        var recording = CastReader.Read(TestEnv.RepoPath("samples/speed.cast"));
+        var rendered = SvgRender.RenderToString(recording.Events, recording.Width, recording.Height, recording.RenderSettings with { Speed = 2 }, recording.LoopDuration);
+        var committed = File.ReadAllText(TestEnv.RepoPath("samples/speed-2x.svg"));
+        return Expect(rendered == committed, "samples/speed-2x.svg is samples/speed.cast at 2x: record it again with `scenetake samples/speed.yaml`");
+    }
+
+    private static bool Expect(bool condition, string message)
+    {
+        if (!condition)
+            Console.Error.WriteLine($"  {message}");
+        return condition;
     }
 
     // Each named theme has 16 palette colors and fg and bg that the cast reader accepts, so a cast written with it reads

@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="758.24" height="326" viewBox="0 0 758.24 326" preserveAspectRatio="xMidYMid meet" role="img" aria-label="scenetake output">
+<style>
+text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
+text { dominant-baseline: alphabetic; }
+.bg,rect:not([class]) { shape-rendering: crispEdges; }
+.l { visibility: hidden; animation: 6.6055s step-start infinite; }
+.c { fill: #d0d0d0; fill-opacity: 0.5; }
+.b{transform:translate(0,82.8px)}
+.d{transform:translate(0,142.8px)}
+.e{transform:translate(0,262.8px)}
+.f{transform:translate(0,282.8px)}
+.a{fill:#7dd6cf}
+@keyframes ab{6.8125%{visibility:hidden}to{visibility:visible}}
+.ab{animation-name:ab}
+@keyframes i{0.37848%{visibility:visible}}
+.ac{animation-delay:0.475s;animation-name:i}
+.ad{animation-delay:0.5s;animation-name:i}
+@keyframes n{0.43903%{visibility:visible}}
+.ae{animation-delay:0.525s;animation-name:n}
+@keyframes p{0.48445%{visibility:visible}}
+.af{animation-delay:0.554s;animation-name:p}
+@keyframes ag{0.86292%{visibility:visible}}
+.ah{animation-delay:0.586s;animation-name:ag}
+@keyframes o{0.39362%{visibility:visible}}
+.ai{animation-delay:0.643s;animation-name:o}
+@keyframes u{0.3482%{visibility:visible}}
+.aj{animation-delay:0.669s;animation-name:u}
+.ak{animation-delay:0.692s;animation-name:p}
+@keyframes q{0.46931%{visibility:visible}}
+.al{animation-delay:0.724s;animation-name:q}
+@keyframes am{0.77209%{visibility:visible}}
+.an{animation-delay:0.755s;animation-name:am}
+.ao{animation-delay:0.806s;animation-name:n}
+@keyframes v{0.40876%{visibility:visible}}
+.ap{animation-delay:0.835s;animation-name:v}
+.aq{animation-delay:0.862s;animation-name:o}
+@keyframes j{0.28764%{visibility:visible}}
+.ar{animation-delay:0.888s;animation-name:j}
+@keyframes as{0.31792%{visibility:visible}}
+.at{animation-delay:0.907s;animation-name:as}
+.au{animation-delay:0.928s;animation-name:j}
+@keyframes r{0.30278%{visibility:visible}}
+.av{animation-delay:0.947s;animation-name:r}
+@keyframes m{0.27251%{visibility:visible}}
+.aw{animation-delay:0.967s;animation-name:m}
+.ax{animation-delay:0.985s;animation-name:m}
+@keyframes ay{0.63584%{visibility:visible}}
+.az{animation-delay:1.003s;animation-name:ay}
+@keyframes w{0.42389%{visibility:visible}}
+.a0{animation-delay:1.045s;animation-name:w}
+.a1{animation-delay:1.073s;animation-name:o}
+.a2{animation-delay:1.099s;animation-name:r}
+.a3{animation-delay:1.119s;animation-name:j}
+@keyframes s{0.45417%{visibility:visible}}
+.a4{animation-delay:1.138s;animation-name:s}
+.a5{animation-delay:1.168s;animation-name:w}
+@keyframes a6{0.92348%{visibility:visible}}
+.a7{animation-delay:1.196s;animation-name:a6}
+.a8{animation-delay:1.257s;animation-name:i}
+@keyframes x{0.33306%{visibility:visible}}
+.a9{animation-delay:1.282s;animation-name:x}
+.ba{animation-delay:1.304s;animation-name:s}
+.bb{animation-delay:1.334s;animation-name:j}
+.bc{animation-delay:1.353s;animation-name:i}
+@keyframes bd{20.8614%{visibility:hidden}to{visibility:visible}}
+.bd{animation-name:bd}
+@keyframes be{22.82946%{visibility:hidden}to{visibility:visible}}
+.be{animation-name:be}
+@keyframes bf{33.42668%{visibility:hidden}to{visibility:visible}}
+.bf{animation-name:bf}
+.bh{animation-delay:2.233s;animation-name:i}
+.bi{animation-delay:2.258s;animation-name:p}
+.bj{animation-delay:2.29s;animation-name:q}
+.bk{animation-delay:2.321s;animation-name:v}
+.bl{animation-delay:2.348s;animation-name:m}
+@keyframes bm{35.81863%{visibility:hidden}to{visibility:visible}}
+.bm{animation-name:bm}
+@keyframes bn{37.62016%{visibility:hidden}to{visibility:visible}}
+.bn{animation-name:bn}
+@keyframes bo{40.89016%{visibility:hidden}to{visibility:visible}}
+.bo{animation-name:bo}
+@keyframes bp{44.19044%{visibility:hidden}to{visibility:visible}}
+.bp{animation-name:bp}
+@keyframes bq{47.49072%{visibility:hidden}to{visibility:visible}}
+.bq{animation-name:bq}
+@keyframes br{58.08795%{visibility:hidden}to{visibility:visible}}
+.br{animation-name:br}
+.bs{animation-delay:3.862s;animation-name:i}
+.bt{animation-delay:3.887s;animation-name:m}
+.bu{animation-delay:3.905s;animation-name:j}
+.bv{animation-delay:3.924s;animation-name:m}
+.bw{animation-delay:3.942s;animation-name:r}
+.bx{animation-delay:3.962s;animation-name:n}
+.by{animation-delay:3.991s;animation-name:o}
+.bz{animation-delay:4.017s;animation-name:q}
+@keyframes b0{61.28226%{visibility:hidden}to{visibility:visible}}
+.b0{animation-name:b0}
+@keyframes b1{0.65098%{visibility:visible}}
+.b2{animation-delay:4.166s;animation-name:b1}
+@keyframes k{0.57528%{visibility:visible}}
+.b3{animation-delay:4.209s;animation-name:k}
+@keyframes g{0.59042%{visibility:visible}}
+.b4{animation-delay:4.247s;animation-name:g}
+@keyframes b5{1.18084%{visibility:visible}}
+.b6{animation-delay:4.286s;animation-name:b5}
+.b7{animation-delay:4.364s;animation-name:g}
+.b8{animation-delay:4.403s;animation-name:g}
+.b9{animation-delay:4.442s;animation-name:k}
+@keyframes y{0.60556%{visibility:visible}}
+.ca{animation-delay:4.48s;animation-name:y}
+.cb{animation-delay:4.52s;animation-name:k}
+.cc{animation-delay:4.558s;animation-name:g}
+.cd{animation-delay:4.597s;animation-name:g}
+.ce{animation-delay:4.636s;animation-name:g}
+.cf{animation-delay:4.675s;animation-name:k}
+.cg{animation-delay:4.713s;animation-name:g}
+.ch{animation-delay:4.752s;animation-name:k}
+.ci{animation-delay:4.79s;animation-name:g}
+@keyframes cj{1.1657%{visibility:visible}}
+.ck{animation-delay:4.829s;animation-name:cj}
+.cl{animation-delay:4.906s;animation-name:g}
+.cm{animation-delay:4.945s;animation-name:k}
+.cn{animation-delay:4.983s;animation-name:y}
+.co{animation-delay:5.023s;animation-name:g}
+.cp{animation-delay:5.062s;animation-name:k}
+.cq{animation-delay:5.1s;animation-name:g}
+@keyframes cr{77.7988%{visibility:hidden}to{visibility:visible}}
+.cr{animation-name:cr}
+@keyframes cs{89.3952%{visibility:hidden}to{visibility:visible}}
+.cs{animation-name:cs}
+.ct{animation-delay:0.45s;animation-name:i}
+.cu{animation-delay:0.586s;animation-name:q}
+.cv{animation-delay:0.617s;animation-name:o}
+.cw{animation-delay:0.755s;animation-name:n}
+.cx{animation-delay:0.784s;animation-name:x}
+.cy{animation-delay:1.003s;animation-name:j}
+.cz{animation-delay:1.022s;animation-name:u}
+.c0{animation-delay:1.196s;animation-name:p}
+.c1{animation-delay:1.228s;animation-name:n}
+.c2{animation-delay:1.378s;animation-name:s}
+@keyframes t{1.51389%{visibility:visible}}
+.c3{animation-delay:1.408s;animation-name:t}
+@keyframes z{10.59723%{visibility:visible}}
+.c4{animation-delay:1.508s;animation-name:z}
+.c5{animation-delay:2.208s;animation-name:i}
+.c6{animation-delay:2.366s;animation-name:j}
+.c7{animation-delay:2.385s;animation-name:t}
+@keyframes c8{3.27001%{visibility:visible}}
+.c9{animation-delay:2.485s;animation-name:c8}
+@keyframes aa{3.30029%{visibility:visible}}
+.da{animation-delay:2.701s;animation-name:aa}
+.db{animation-delay:2.919s;animation-name:aa}
+.dc{animation-delay:3.137s;animation-name:z}
+.dd{animation-delay:3.837s;animation-name:i}
+.de{animation-delay:4.048s;animation-name:m}
+.df{animation-delay:4.066s;animation-name:t}
+@keyframes dg{15.33571%{visibility:visible}}
+.dh{animation-delay:4.166s;animation-name:dg}
+@keyframes di{10.99085%{visibility:visible}}
+.dj{animation-delay:5.179s;animation-name:di}
+.h{visibility:visible}
+</style>
+<defs>
+<filter id="window-shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.22"/></filter>
+<rect id="c" class="c" width="9.92" height="20"/>
+<mask id="viewport-mask" x="0" y="0" width="758.24" height="326" maskUnits="userSpaceOnUse">
+<rect class="l h viewport-mask-0" x="12" y="46" width="734.24" height="268" fill="white"/>
+</mask>
+</defs>
+<rect class="l h viewport-chrome-0" x="12" y="12" width="734.24" height="302" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1" filter="url(#window-shadow)"/>
+<path class="l h viewport-chrome-0" d="M 20,12 H 738.24 Q 746.24,12 746.24,20 V 46 H 12 V 20 Q 12,12 20,12 Z" fill="#323232"/>
+<line class="l h viewport-chrome-0" x1="12" y1="46" x2="746.24" y2="46" stroke="#1a1a1a" stroke-width="1"/>
+<text class="l h viewport-chrome-0" x="379.12" y="33.5" style="font:bold 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI','Helvetica Neue',Helvetica,Arial,'Noto Sans','DejaVu Sans',sans-serif" text-anchor="middle" fill="#c8c8c8">Playback speed</text>
+<circle class="l h viewport-chrome-0" cx="34" cy="29" r="8" fill="#ff5f57"/>
+<circle class="l h viewport-chrome-0" cx="60" cy="29" r="8" fill="#febc2e"/>
+<circle class="l h viewport-chrome-0" cx="86" cy="29" r="8" fill="#28c840"/>
+<g mask="url(#viewport-mask)" fill="#d0d0d0">
+<rect class="bg l h viewport-bg-0" x="12" y="46" width="734.24" height="268" fill="#282c34"/>
+<text class="l ab a" x="22" y="62.8" textLength="436.48"># Typing and pauses play twice as fast at 2x</text>
+<g class="l ac"><text x="22" y="82.8">$</text><use href="#c" x="41.84" y="70"/></g>
+<g class="l ad"><text x="22 41.84" y="82.8">$e</text><use href="#c" x="51.76" y="70"/></g>
+<g class="l ae"><text x="22 41.84 51.76" y="82.8">$ec</text><use href="#c" x="61.68" y="70"/></g>
+<g class="l af"><text x="22 41.84 51.76 61.68" y="82.8">$ech</text><use href="#c" x="71.6" y="70"/></g>
+<text class="l ah b" x="22" textLength="59.52">$ echo</text>
+<g class="l ai b"><text x="22" textLength="79.36">$ echo &quot;</text><use href="#c" x="101.36" y="-12.8"/></g>
+<g class="l aj b"><text x="22" textLength="89.28">$ echo &quot;s</text><use href="#c" x="111.28" y="-12.8"/></g>
+<g class="l ak b"><text x="22" textLength="99.2">$ echo &quot;sa</text><use href="#c" x="121.2" y="-12.8"/></g>
+<g class="l al b"><text x="22" textLength="109.12">$ echo &quot;sam</text><use href="#c" x="131.12" y="-12.8"/></g>
+<text class="l an b" x="22" textLength="119.04">$ echo &quot;same</text>
+<g class="l ao b"><text x="22" textLength="138.88">$ echo &quot;same r</text><use href="#c" x="160.88" y="-12.8"/></g>
+<g class="l ap b"><text x="22" textLength="148.8">$ echo &quot;same re</text><use href="#c" x="170.8" y="-12.8"/></g>
+<g class="l aq b"><text x="22" textLength="158.72">$ echo &quot;same rec</text><use href="#c" x="180.72" y="-12.8"/></g>
+<g class="l ar b"><text x="22" textLength="168.64">$ echo &quot;same reco</text><use href="#c" x="190.64" y="-12.8"/></g>
+<g class="l at b"><text x="22" textLength="178.56">$ echo &quot;same recor</text><use href="#c" x="200.56" y="-12.8"/></g>
+<g class="l au b"><text x="22" textLength="188.48">$ echo &quot;same record</text><use href="#c" x="210.48" y="-12.8"/></g>
+<g class="l av b"><text x="22" textLength="198.4">$ echo &quot;same recordi</text><use href="#c" x="220.4" y="-12.8"/></g>
+<g class="l aw b"><text x="22" textLength="208.32">$ echo &quot;same recordin</text><use href="#c" x="230.32" y="-12.8"/></g>
+<g class="l ax b"><text x="22" textLength="218.24">$ echo &quot;same recording</text><use href="#c" x="240.24" y="-12.8"/></g>
+<text class="l az b" x="22" textLength="228.16">$ echo &quot;same recording,</text>
+<g class="l a0 b"><text x="22" textLength="248">$ echo &quot;same recording, a</text><use href="#c" x="270" y="-12.8"/></g>
+<g class="l a1 b"><text x="22" textLength="257.92">$ echo &quot;same recording, an</text><use href="#c" x="279.92" y="-12.8"/></g>
+<g class="l a2 b"><text x="22" textLength="267.84">$ echo &quot;same recording, ano</text><use href="#c" x="289.84" y="-12.8"/></g>
+<g class="l a3 b"><text x="22" textLength="277.76">$ echo &quot;same recording, anot</text><use href="#c" x="299.76" y="-12.8"/></g>
+<g class="l a4 b"><text x="22" textLength="287.68">$ echo &quot;same recording, anoth</text><use href="#c" x="309.68" y="-12.8"/></g>
+<g class="l a5 b"><text x="22" textLength="297.6">$ echo &quot;same recording, anothe</text><use href="#c" x="319.6" y="-12.8"/></g>
+<text class="l a7 b" x="22" textLength="307.52">$ echo &quot;same recording, another</text>
+<g class="l a8 b"><text x="22" textLength="327.36">$ echo &quot;same recording, another s</text><use href="#c" x="349.36" y="-12.8"/></g>
+<g class="l a9 b"><text x="22" textLength="337.28">$ echo &quot;same recording, another sp</text><use href="#c" x="359.28" y="-12.8"/></g>
+<g class="l ba b"><text x="22" textLength="347.2">$ echo &quot;same recording, another spe</text><use href="#c" x="369.2" y="-12.8"/></g>
+<g class="l bb b"><text x="22" textLength="357.12">$ echo &quot;same recording, another spee</text><use href="#c" x="379.12" y="-12.8"/></g>
+<g class="l bc b"><text x="22" textLength="367.04">$ echo &quot;same recording, another speed</text><use href="#c" x="389.04" y="-12.8"/></g>
+<text class="l bd b" x="22" textLength="376.96">$ echo &quot;same recording, another speed&quot;</text>
+<text class="l be" x="22" y="102.8" textLength="287.68">same recording, another speed</text>
+<text class="l bf a" x="22" y="122.8" textLength="337.28"># Streamed output keeps its rhythm</text>
+<g class="l bh"><text x="22" y="142.8">$</text><use href="#c" x="41.84" y="130"/></g>
+<g class="l bi"><text x="22 41.84" y="142.8">$b</text><use href="#c" x="51.76" y="130"/></g>
+<g class="l bj"><text x="22 41.84 51.76" y="142.8">$bu</text><use href="#c" x="61.68" y="130"/></g>
+<g class="l bk"><text x="22 41.84 51.76 61.68" y="142.8">$bui</text><use href="#c" x="71.6" y="130"/></g>
+<g class="l bl d"><text x="22" textLength="59.52">$ buil</text><use href="#c" x="81.52" y="-12.8"/></g>
+<text class="l bm d" x="22" textLength="69.44">$ build</text>
+<text class="l bn" x="22" y="162.8" textLength="188.48">build step 1/4 done</text>
+<text class="l bo" x="22" y="182.8" textLength="188.48">build step 2/4 done</text>
+<text class="l bp" x="22" y="202.8" textLength="188.48">build step 3/4 done</text>
+<text class="l bq" x="22" y="222.8" textLength="188.48">build step 4/4 done</text>
+<text class="l br a" x="22" y="242.8" textLength="357.12"># A progress bar redraws as smoothly</text>
+<g class="l bs"><text x="22" y="262.8">$</text><use href="#c" x="41.84" y="250"/></g>
+<g class="l bt"><text x="22 41.84" y="262.8">$p</text><use href="#c" x="51.76" y="250"/></g>
+<g class="l bu"><text x="22 41.84 51.76" y="262.8">$pr</text><use href="#c" x="61.68" y="250"/></g>
+<g class="l bv"><text x="22 41.84 51.76 61.68" y="262.8">$pro</text><use href="#c" x="71.6" y="250"/></g>
+<g class="l bw e"><text x="22" textLength="59.52">$ prog</text><use href="#c" x="81.52" y="-12.8"/></g>
+<g class="l bx e"><text x="22" textLength="69.44">$ progr</text><use href="#c" x="91.44" y="-12.8"/></g>
+<g class="l by e"><text x="22" textLength="79.36">$ progre</text><use href="#c" x="101.36" y="-12.8"/></g>
+<g class="l bz e"><text x="22" textLength="89.28">$ progres</text><use href="#c" x="111.28" y="-12.8"/></g>
+<text class="l b0 e" x="22" textLength="99.2">$ progress</text>
+<text class="l b2" x="22 31.92 270 309.68 319.6" y="282.8">[#]4%</text>
+<text class="l b3" x="22 31.92 41.84 270 309.68 319.6" y="282.8">[##]8%</text>
+<text class="l b4" x="22 31.92 41.84 51.76 270 299.76 309.68 319.6" y="282.8">[###]12%</text>
+<text class="l b6" x="22" y="282.8" textLength="307.52">[####                    ]  16%</text>
+<text class="l b7 f" x="22" textLength="307.52">[#####                   ]  20%</text>
+<text class="l b8 f" x="22" textLength="307.52">[######                  ]  25%</text>
+<text class="l b9 f" x="22" textLength="307.52">[#######                 ]  29%</text>
+<text class="l ca f" x="22" textLength="307.52">[########                ]  33%</text>
+<text class="l cb f" x="22" textLength="307.52">[#########               ]  37%</text>
+<text class="l cc f" x="22" textLength="307.52">[##########              ]  41%</text>
+<text class="l cd f" x="22" textLength="307.52">[###########             ]  45%</text>
+<text class="l ce f" x="22" textLength="307.52">[############            ]  50%</text>
+<text class="l cf f" x="22" textLength="307.52">[#############           ]  54%</text>
+<text class="l cg f" x="22" textLength="307.52">[##############          ]  58%</text>
+<text class="l ch f" x="22" textLength="307.52">[###############         ]  62%</text>
+<text class="l ci f" x="22" textLength="307.52">[################        ]  66%</text>
+<text class="l ck f" x="22" textLength="307.52">[#################       ]  70%</text>
+<text class="l cl f" x="22" textLength="307.52">[##################      ]  75%</text>
+<text class="l cm f" x="22" textLength="307.52">[###################     ]  79%</text>
+<text class="l cn f" x="22" textLength="307.52">[####################    ]  83%</text>
+<text class="l co f" x="22" textLength="307.52">[#####################   ]  87%</text>
+<text class="l cp f" x="22" textLength="307.52">[######################  ]  91%</text>
+<text class="l cq f" x="22" textLength="307.52">[####################### ]  95%</text>
+<text class="l cr f" x="22" textLength="307.52">[########################] 100%</text>
+<g class="l cs"><text x="22" y="302.8">$</text><use href="#c" x="41.84" y="290"/></g>
+<use href="#c" x="22" y="70" class="l ct"/>
+<use href="#c" x="81.52" y="70" class="l cu"/>
+<use href="#c" x="91.44" y="70" class="l cv"/>
+<use href="#c" x="141.04" y="70" class="l cw"/>
+<use href="#c" x="150.96" y="70" class="l cx"/>
+<use href="#c" x="250.16" y="70" class="l cy"/>
+<use href="#c" x="260.08" y="70" class="l cz"/>
+<use href="#c" x="329.52" y="70" class="l c0"/>
+<use href="#c" x="339.44" y="70" class="l c1"/>
+<use href="#c" x="398.96" y="70" class="l c2"/>
+<use href="#c" x="22" y="90" class="l c3"/>
+<use href="#c" x="22" y="110" class="l c4"/>
+<use href="#c" x="22" y="130" class="l c5"/>
+<use href="#c" x="91.44" y="130" class="l c6"/>
+<use href="#c" x="22" y="150" class="l c7"/>
+<use href="#c" x="22" y="170" class="l c9"/>
+<use href="#c" x="22" y="190" class="l da"/>
+<use href="#c" x="22" y="210" class="l db"/>
+<use href="#c" x="22" y="230" class="l dc"/>
+<use href="#c" x="22" y="250" class="l dd"/>
+<use href="#c" x="121.2" y="250" class="l de"/>
+<use href="#c" x="22" y="270" class="l df"/>
+<use href="#c" x="329.52" y="270" class="l dh"/>
+<use href="#c" x="22" y="290" class="l dj"/>
+</g>
+<rect class="l h viewport-chrome-0" x="12.5" y="12.5" width="733.24" height="301" rx="7.5" ry="7.5" fill="none" stroke="#ffffff" stroke-opacity="0.16"/>
+</svg>

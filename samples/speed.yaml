@@ -1,0 +1,40 @@
+title: "Playback speed"
+width: 72
+height: 14
+shell: bash
+
+settings:
+  prompt: "$ "
+  typing-speed: 0.05
+  typing-jitter: 0.015
+  pre-delay: 0.4
+  post-delay: 1.0
+
+render:
+  window: macos
+
+# One recording, two SVGs. The cast keeps the recorded times, and each output plays them at its own speed.
+outputs:
+  - format: svg                # speed.svg, as recorded
+  - format: svg                # speed-2x.svg, twice as fast: typing, pauses, and output together
+    speed: 2
+    file: speed-2x.svg
+
+steps:
+  # Not recorded: the functions the demo calls. bash carries them to the steps after this one.
+  - run: |
+      build() { for i in 1 2 3 4; do echo "build step $i/4 done"; sleep 0.4; done; }
+      progress() { local bar=""; for i in $(seq 1 24); do bar="$bar#"; printf "\r[%-24s] %3d%%" "$bar" $((i * 100 / 24)); sleep 0.05; done; echo; }
+    show: none
+
+  - name: "[cyan]Typing and pauses play twice as fast at 2x"
+    run: echo "same recording, another speed"
+
+  - name: "[cyan]Streamed output keeps its rhythm"
+    run: build
+    stream-output: true
+
+  # A PTY keeps the carriage returns that redraw the bar in place.
+  - name: "[cyan]A progress bar redraws as smoothly"
+    run: progress
+    pty: true

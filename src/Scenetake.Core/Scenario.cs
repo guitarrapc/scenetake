@@ -886,6 +886,7 @@ public partial class ScenarioRender
     public bool? Loop { get; set; }
     public double? EndHold { get; set; }
     public double? FadeOut { get; set; }
+    public double? Speed { get; set; }
     public string? Fit { get; set; }
     public int? CropTop { get; set; }
     public int? CropBottom { get; set; }

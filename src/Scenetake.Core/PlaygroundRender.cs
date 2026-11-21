@@ -30,7 +30,8 @@ internal sealed record PlaygroundOptions(
     bool? Loop = null,
     double? EndHold = null,
     double? FadeOut = null,
-    string? Fit = null)
+    string? Fit = null,
+    double? Speed = null)
 {
     internal BackgroundImageSource ImageSource => BackgroundImageSource.FromImages(Images ?? new Dictionary<string, byte[]>());
 }
@@ -345,6 +346,13 @@ internal static class PlaygroundRender
             return false;
         }
 
+        if (options.Speed is double speed
+            && !RenderSettingsResolver.TryParseSpeed(speed.ToString(System.Globalization.CultureInfo.InvariantCulture), out _, out message))
+        {
+            error = message;
+            return false;
+        }
+
         FitMode? fit = null;
         if (!string.IsNullOrWhiteSpace(options.Fit))
         {
@@ -367,7 +375,8 @@ internal static class PlaygroundRender
             options.Loop,
             options.EndHold,
             options.FadeOut,
-            fit);
+            fit,
+            Speed: options.Speed);
         return true;
     }
 

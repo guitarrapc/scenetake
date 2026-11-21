@@ -157,20 +157,20 @@ internal static class WindowChromeCases
     {
         // st:window-title wins over the cast's title; without it the cast's title shows. A value scenetake does not
         // accept is warned about and left out.
-        var tagged = ReadHeader("\"title\":\"Cast Title\",\"tags\":[\"st:window=macos\",\"st:window-title=Bar Title\",\"st:background=#000000 #ffffff\",\"st:margin=5\",\"st:padding=3\",\"st:opacity=0.85\",\"st:blur=8\",\"st:loop=false\",\"st:end-hold=2.5\",\"st:fade-out=0.75\"]");
+        var tagged = ReadHeader("\"title\":\"Cast Title\",\"tags\":[\"st:window=macos\",\"st:window-title=Bar Title\",\"st:background=#000000 #ffffff\",\"st:margin=5\",\"st:padding=3\",\"st:opacity=0.85\",\"st:blur=8\",\"st:loop=false\",\"st:end-hold=2.5\",\"st:fade-out=0.75\",\"st:speed=1.5\"]");
         var plain = ReadHeader("\"title\":\"Cast Title\",\"tags\":[\"st:window=macos\"]");
         var hidden = ReadHeader("\"title\":\"Cast Title\",\"tags\":[\"st:window-title=\"]");
-        var invalid = ReadHeader("\"tags\":[\"st:margin=999\",\"st:padding=x\",\"st:background=wall.png\",\"st:opacity=2\",\"st:blur=-1\",\"st:loop=no\",\"st:end-hold=61\",\"st:fade-out=-1\"]");
+        var invalid = ReadHeader("\"tags\":[\"st:margin=999\",\"st:padding=x\",\"st:background=wall.png\",\"st:opacity=2\",\"st:blur=-1\",\"st:loop=no\",\"st:end-hold=61\",\"st:fade-out=-1\",\"st:speed=9\"]");
         return tagged.Window == WindowStyle.Macos
             && tagged.WindowTitle == "Bar Title"
             && tagged.Background?.Colors.SequenceEqual(["#000000", "#ffffff"]) == true
             && tagged.Margin == 5 && tagged.Padding == 3
-            && tagged is { Opacity: 0.85, Blur: 8, Loop: false, EndHold: 2.5, FadeOut: 0.75, Loops: false }
+            && tagged is { Opacity: 0.85, Blur: 8, Loop: false, EndHold: 2.5, FadeOut: 0.75, Speed: 1.5, Loops: false }
             && plain.WindowTitle == "Cast Title"
-            && plain is { Opacity: null, Blur: null, Loop: null, EndHold: null, FadeOut: null, Loops: true }
+            && plain is { Opacity: null, Blur: null, Loop: null, EndHold: null, FadeOut: null, Speed: null, Loops: true, PlaybackSpeed: 1 }
             && hidden.WindowTitle == ""
             && invalid.Margin is null && invalid.Padding is null && invalid.Background is null
-            && invalid is { Opacity: null, Blur: null, Loop: null, EndHold: null, FadeOut: null };
+            && invalid is { Opacity: null, Blur: null, Loop: null, EndHold: null, FadeOut: null, Speed: null };
 
         static ResolvedRenderSettings ReadHeader(string fields)
         {

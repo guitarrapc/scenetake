@@ -23,6 +23,15 @@ internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int 
 
     internal static Mp4Settings Default => new(DefaultFps, DefaultCrf, 0, 0, 0, 0, null);
 
+    /// <summary>
+    /// The frame rate when <c>--fps</c> is not given: <paramref name="defaultFps"/> times the playback speed, rounded up,
+    /// and at most <paramref name="maxFps"/>. A video at speed s and f fps shows the recording as f / s fps would, so
+    /// at 2x and 60fps it has the frames of 1x at 30: the same look and about the same size, in half the time. A
+    /// slower speed keeps the default: its frames show more of a fast program, which is what slowing it down is for.
+    /// </summary>
+    internal static int DefaultFpsAt(int defaultFps, int maxFps, double speed) =>
+        Math.Min(maxFps, (int)Math.Ceiling(defaultFps * Math.Max(1, speed) - 1e-9));
+
     internal static bool TryParseFps(string text, out int fps, out string error) =>
         TryParseInt(text, "--fps", MinFps, MaxFps, out fps, out error);
 
@@ -268,6 +277,7 @@ internal static class Mp4Render
         if (Directory.Exists(fullOutputPath))
             throw new Mp4Exception($"output path is a directory: {fullOutputPath}");
 
+        events = RenderSettingsResolver.ApplySpeed(events, render, ref loopDurationOverride);
         var loopDuration = RenderSettingsResolver.ResolveLoopDuration(
             loopDurationOverride ?? TerminalReplay.ComputeLoopDuration(events), events, render);
         var renderer = new Mp4FrameRenderer(events, width, height, render, settings, loopDuration, ffmpegPath);

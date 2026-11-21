@@ -29,6 +29,7 @@ sealed class StyleOptions
     internal bool? Loop { get; set; }
     internal double? EndHold { get; set; }
     internal double? FadeOut { get; set; }
+    internal double? Speed { get; set; }
     internal FitMode? Fit { get; set; }
     internal int? CropTop { get; set; }
     internal int? CropBottom { get; set; }
@@ -55,7 +56,7 @@ sealed class StyleOptions
     }
 
     internal RenderStyleOverrides ToOverrides() =>
-        new(WindowTitle, Background, Margin, Padding, Opacity, Blur, Loop, EndHold, FadeOut, Fit, CropTop, CropBottom, CropLeft, CropRight);
+        new(WindowTitle, Background, Margin, Padding, Opacity, Blur, Loop, EndHold, FadeOut, Fit, CropTop, CropBottom, CropLeft, CropRight, Speed);
 }
 
 /// <summary>
@@ -175,6 +176,8 @@ sealed class CaptureRequest
             Key("end-hold", Number(endHold));
         if (style.FadeOut is double fadeOut)
             Key("fade-out", Number(fadeOut));
+        if (style.Speed is double speed)
+            Key("speed", Number(speed));
         if (style.Fit is FitMode fit)
             Key("fit", fit switch { FitMode.None => "none", FitMode.Width => "width", FitMode.Both => "both", _ => "height" });
         foreach (var edge in (ReadOnlySpan<string>)["top", "bottom", "left", "right"])
@@ -286,11 +289,16 @@ sealed class Mp4Options
     /// <summary>The first of <c>--fps</c>, <c>--max-size</c>, and <c>--size</c>, which mp4 and GIF take.</summary>
     internal string? FirstFrameOption { get; set; }
 
-    /// <summary>The settings a GIF uses: those of mp4, with the GIF's own default frame rate.</summary>
-    internal Mp4Settings ToGifSettings() => ToSettings() with { Fps = Fps ?? GifRender.DefaultFps };
+    /// <summary>
+    /// The settings a GIF uses: those of mp4, with the GIF's own default frame rate, raised with
+    /// <paramref name="speed"/> as an mp4's is (<see cref="Mp4Settings.DefaultFpsAt"/>).
+    /// </summary>
+    internal Mp4Settings ToGifSettings(double speed) =>
+        ToSettings(speed) with { Fps = Fps ?? Mp4Settings.DefaultFpsAt(GifRender.DefaultFps, GifRender.MaxFps, speed) };
 
-    internal Mp4Settings ToSettings() => new(
-        Fps ?? Mp4Settings.DefaultFps,
+    /// <summary>The mp4 settings. Without <c>--fps</c>, the frame rate follows the playback <paramref name="speed"/>.</summary>
+    internal Mp4Settings ToSettings(double speed) => new(
+        Fps ?? Mp4Settings.DefaultFpsAt(Mp4Settings.DefaultFps, Mp4Settings.MaxFps, speed),
         Crf ?? Mp4Settings.DefaultCrf,
         MaxSize?.Width ?? 0,
         MaxSize?.Height ?? 0,

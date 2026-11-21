@@ -4,7 +4,8 @@
 #:property ImplicitUsings=enable
 
 // Regenerate sample .cast and .svg files from every *.yaml in this directory, with the .outputs.json file that
-// the playground replays, then a .gif of every cast with `scenetake gif` (needs ffmpeg).
+// the playground replays, then a .gif of every cast with `scenetake gif` (needs ffmpeg). A scenario with an
+// `outputs:` list writes the files it lists instead of one SVG: speed.yaml writes speed.svg and speed-2x.svg.
 //
 // Usage (from repository root):
 //   dotnet run samples/regenerate.cs
@@ -196,7 +197,10 @@ static int RunScenario(string repoRoot, string toolPath, string scenarioPath)
         WorkingDirectory = repoRoot,
         UseShellExecute = false,
     };
-    foreach (var arg in ScenetakeRun(toolPath, "--format", "svg", relativeScenario))
+    // A scenario that lists its outputs (speed.yaml) writes them, an SVG among them. --format svg would write only
+    // the one SVG.
+    var listsOutputs = Regex.IsMatch(File.ReadAllText(scenarioPath), @"^outputs:", RegexOptions.Multiline);
+    foreach (var arg in listsOutputs ? ScenetakeRun(toolPath, relativeScenario) : ScenetakeRun(toolPath, "--format", "svg", relativeScenario))
         psi.ArgumentList.Add(arg);
     // The playground replays what each step printed in this run (.github/docs/spec_playground.md). The outputs
     // file comes from the same run as the cast, so a replay of the unmodified YAML gives the same cast.

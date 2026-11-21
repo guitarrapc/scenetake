@@ -116,6 +116,7 @@ internal static class CastReader
             Loop = style.Loop,
             EndHold = style.EndHold,
             FadeOut = style.FadeOut,
+            Speed = style.Speed,
             Fit = style.Fit,
             Crop = new CropSpec(style.CropTop, style.CropBottom, style.CropLeft, style.CropRight),
         };
@@ -148,7 +149,7 @@ internal static class CastReader
     }
 
     /// <summary>
-    /// The window title, background, margin, padding, opacity, blur, loop, end hold, and fade-out a cast's tags set,
+    /// The window title, background, margin, padding, opacity, blur, loop, end hold, fade-out, and speed a cast's tags set,
     /// null for each it does not. Fit and crop are none and zero when unset.
     /// </summary>
     private sealed class CastStyle
@@ -162,6 +163,7 @@ internal static class CastReader
         internal bool? Loop;
         internal double? EndHold;
         internal double? FadeOut;
+        internal double? Speed;
         internal FitMode Fit = RenderSettingsResolver.DefaultFit;
         internal int CropTop;
         internal int CropBottom;
@@ -231,6 +233,11 @@ internal static class CastReader
             {
                 if (ReadTag<double>(value, RenderSettingsResolver.FadeOutTagPrefix, "fade-out", "no fade", RenderSettingsResolver.TryParseFadeOut, out var fadeOut))
                     style.FadeOut = fadeOut;
+            }
+            else if (value.StartsWith(RenderSettingsResolver.SpeedTagPrefix, StringComparison.Ordinal))
+            {
+                if (ReadTag<double>(value, RenderSettingsResolver.SpeedTagPrefix, "speed", "the recorded speed", RenderSettingsResolver.TryParseSpeed, out var speed))
+                    style.Speed = speed;
             }
             else if (value.StartsWith(RenderSettingsResolver.FitTagPrefix, StringComparison.Ordinal))
             {

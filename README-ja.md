@@ -179,10 +179,11 @@ scenetake --help
 | `--no-loop`、`--loop` | SVGやGIFを1回だけ再生して最後の画面で止める。シナリオやcastがループしない設定でもループさせる |
 | `--end-hold N` | 最初に戻る前や終わる前に、最後の画面を読む時間を取る |
 | `--fade-out N` | 最後に文字をフェードアウトさせて終える |
+| `--speed N` | 録り直さずに、SVG、mp4、GIFを短く（`1.5`）、またはゆっくり（`0.5`）にする |
 | `--max-fps N` | 画面がよく変わるSVGを小さくする |
 | `--at TIME` | ある時点の静止画をSVGかPNGで作る。`end`なら最後の画面 |
 | **mp4、GIF、PNG** | |
-| `--fps N` | mp4とGIFの滑らかさとファイルサイズを調整する |
+| `--fps N` | mp4とGIFの滑らかさとファイルサイズを調整する。滑らかさを維持するため`--speed`を上げると既定値も上がる |
 | `--crf N` | mp4の画質とファイルサイズを調整する |
 | `--max-size WxH` | サイトのアップロード上限に収める。Xなら`1280x1024` |
 | `--size WxH` | `1920x1080`など、決まったサイズの動画を作る |
@@ -375,6 +376,22 @@ steps:
 | `opacity`、`blur` | 画像の背景を透かす、ぼかす |
 | `margin`、`padding` | 余白（px） |
 | `loop`、`end-hold`、`fade-out` | 1回だけ再生（`--no-loop`）、最後の画面を表示する秒数、文字を消す秒数 |
+| `speed` | SVG、mp4、GIFを録画の何倍の速さで再生するか。`0.25`〜`4` |
+
+`speed`はタイピング、間、出力をまとめて速くするので、デモのリズムは変わりません。castには録画したときの時間が残るので、出力ごとに速さを変えられます。たとえばX用だけを短くできます。
+
+```yaml
+outputs:
+  - format: svg              # README用。録画どおりの速さ
+  - format: mp4              # X用。1.5倍速
+    speed: 1.5
+```
+
+`end-hold`と`fade-out`はどの速さでも出力上の秒数のままです。`--at`は録画上の時点を指します。滑らかさを保つため、mp4とGIFの`--fps`の既定値も速さに合わせて上がります。
+
+| 録画どおり | `speed: 2`（[speed.yaml](samples/speed.yaml)） |
+| --- | --- |
+| ![](samples/speed.svg) | ![](samples/speed-2x.svg) |
 
 | macOS | Windows |
 | --- | --- |
