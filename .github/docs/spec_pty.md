@@ -165,7 +165,7 @@ An unknown key inside an entry, such as `slep`, is a warning like other unknown 
 
 - **Recording path.** A PTY step with `keys` or `timeout` reads the PTY itself while it writes the keys, timing each chunk on arrival, as interactive steps do: writing keys needs the session while output is read, which MiniPty.Capture does not expose. Other PTY steps keep MiniPty.Capture, which joins bursts differently, so their recordings stay as they were. Startup cleanup, the ConPTY cursor report, and output timing are the same for both.
 - **Cast.** Keys are input, so the cast has no event for them. The recording shows what the program echoes or draws in answer.
-- **Playground.** The outputs file holds the output the keys produced. The playground draws the same typing delays for `type`, so later steps type as on the CLI, but it writes nothing, waits for nothing, and stops nothing ([spec_playground.md](spec_playground.md) → Keys that have no effect). A `wait` draws no typing delay.
+- **Playground.** The outputs file holds the output the keys produced. The playground writes nothing, waits for nothing, and stops nothing, and later steps still type as on the CLI, because each step types from a sequence of its own ([spec_scenario.md](spec_scenario.md) → Determinism) ([spec_playground.md](spec_playground.md) → Keys that have no effect). A `wait` draws no typing delay.
 
 ### Interactive PTY (`interactive: true`)
 

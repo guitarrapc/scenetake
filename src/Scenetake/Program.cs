@@ -787,9 +787,6 @@ foreach (var plan in outputPlans)
     }
 }
 
-var deterministicSeed = ComputeDeterministicSeed(yaml);
-var deterministicTimestamp = ComputeDeterministicTimestamp(deterministicSeed);
-
 if (replayOutputs is not null)
     return await ReplayAsync(replayOutputs, replayPath!);
 
@@ -958,7 +955,7 @@ var generateOptions = new GenerateOptions
 };
 try
 {
-    (events, strictFailure) = await GenerateAsync(scenario, deterministicSeed, generateOptions, step => AfterStep(step switch
+    (events, strictFailure) = await GenerateAsync(scenario, generateOptions, step => AfterStep(step switch
     {
         { Background: true } => RunBackgroundAsync(step, scenario.Cwd, shell, shellState, backgroundSteps),
         { UseInteractive: true } => RunInteractivePtyAsync(step.Command.Cmd, scenario.Cwd, shell, shellState, step.Width, step.Height, verbose),
@@ -998,7 +995,7 @@ var stepSlots = Rerecording.MapIndices(rerecorder.Slots, filterMap);
 
 try
 {
-    WriteCast(scenario, events, outputPath, ShellEnvName(shell.FileName), deterministicTimestamp, renderSettings, stepSlots);
+    WriteCast(scenario, events, outputPath, ShellEnvName(shell.FileName), CastTimestamp, renderSettings, stepSlots);
 }
 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 {
@@ -1074,7 +1071,7 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
     var replayPrevious = PreviousCast.TryRead(outputPath, scenarioWidth, scenarioHeight, out var replayPreviousProblem);
     var replayRerecorder = new Rerecorder(replayPrevious, replayMasker);
     Console.Error.WriteLine("Generating cast...");
-    var (replayed, failure) = await GenerateAsync(scenario, deterministicSeed, new GenerateOptions
+    var (replayed, failure) = await GenerateAsync(scenario, new GenerateOptions
     {
         Verbose = verbose,
         Strict = strict,
@@ -1114,7 +1111,7 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
     replayed = CastOscFilter.RemovePrivateSequences(replayed, replayMap);
     try
     {
-        WriteCast(scenario, replayed, outputPath, outputs.Shell, deterministicTimestamp, renderSettings, Rerecording.MapIndices(replayRerecorder.Slots, replayMap));
+        WriteCast(scenario, replayed, outputPath, outputs.Shell, CastTimestamp, renderSettings, Rerecording.MapIndices(replayRerecorder.Slots, replayMap));
     }
     catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
     {

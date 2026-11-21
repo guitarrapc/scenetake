@@ -4,204 +4,205 @@
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
 .bg,rect:not([class]) { shape-rendering: crispEdges; }
-.l { visibility: hidden; animation: 10.165s step-start infinite; }
+.l { visibility: hidden; animation: 10.155s step-start infinite; }
 .c { fill: #d0d0d0; fill-opacity: 0.5; }
 .b{transform:translate(0,118.8px)}
 .d{transform:translate(0,178.8px)}
 .f{transform:translate(0,278.8px)}
 .a{fill:#7dd6cf}
 .e{fill:#191919}
-@keyframes ak{7.870142%{visibility:hidden}to{visibility:visible}}
+@keyframes ak{7.877892%{visibility:hidden}to{visibility:visible}}
 .ak{animation-name:ak}
-@keyframes n{0.491884%{visibility:visible}}
-.al{animation-delay:0.85s;animation-name:n}
-@keyframes v{0.314806%{visibility:visible}}
-.am{animation-delay:0.9s;animation-name:v}
-@keyframes j{0.38367%{visibility:visible}}
-.an{animation-delay:0.932s;animation-name:j}
-@keyframes w{0.393508%{visibility:visible}}
-.ao{animation-delay:0.971s;animation-name:w}
-@keyframes ap{0.521397%{visibility:visible}}
-.aq{animation-delay:1.011s;animation-name:ap}
-@keyframes p{0.236105%{visibility:visible}}
-.ar{animation-delay:1.064s;animation-name:p}
-@keyframes o{0.334482%{visibility:visible}}
-.as{animation-delay:1.088s;animation-name:o}
-@keyframes k{0.344319%{visibility:visible}}
-.at{animation-delay:1.122s;animation-name:k}
-@keyframes q{0.265618%{visibility:visible}}
-.au{animation-delay:1.157s;animation-name:q}
-.av{animation-delay:1.184s;animation-name:w}
-@keyframes m{0.363995%{visibility:visible}}
-.aw{animation-delay:1.224s;animation-name:m}
-@keyframes r{0.196754%{visibility:visible}}
-.ax{animation-delay:1.261s;animation-name:r}
-@keyframes ay{0.541073%{visibility:visible}}
-.az{animation-delay:1.281s;animation-name:ay}
-.a0{animation-delay:1.336s;animation-name:r}
-.a1{animation-delay:1.356s;animation-name:v}
-.a2{animation-delay:1.388s;animation-name:m}
-@keyframes a3{0.629612%{visibility:visible}}
-.a4{animation-delay:1.425s;animation-name:a3}
-.a5{animation-delay:1.489s;animation-name:v}
-.a6{animation-delay:1.521s;animation-name:k}
-.a7{animation-delay:1.556s;animation-name:j}
-@keyframes ac{0.649287%{visibility:visible}}
-.a8{animation-delay:1.595s;animation-name:ac}
-.a9{animation-delay:1.661s;animation-name:m}
-@keyframes ba{16.704377%{visibility:hidden}to{visibility:visible}}
+@keyframes k{0.492369%{visibility:visible}}
+.al{animation-delay:0.85s;animation-name:k}
+@keyframes s{0.246185%{visibility:visible}}
+.am{animation-delay:0.9s;animation-name:s}
+@keyframes m{0.285574%{visibility:visible}}
+.an{animation-delay:0.925s;animation-name:m}
+@keyframes n{0.305269%{visibility:visible}}
+.ao{animation-delay:0.954s;animation-name:n}
+@keyframes ap{0.7484%{visibility:visible}}
+.aq{animation-delay:0.985s;animation-name:ap}
+@keyframes t{0.22649%{visibility:visible}}
+.ar{animation-delay:1.061s;animation-name:t}
+.as{animation-delay:1.084s;animation-name:t}
+.at{animation-delay:1.107s;animation-name:s}
+@keyframes q{0.295421%{visibility:visible}}
+.au{animation-delay:1.132s;animation-name:q}
+@keyframes g{0.334811%{visibility:visible}}
+.av{animation-delay:1.162s;animation-name:g}
+.aw{animation-delay:1.196s;animation-name:n}
+@keyframes i{0.364353%{visibility:visible}}
+.ax{animation-delay:1.227s;animation-name:i}
+@keyframes ay{0.60069%{visibility:visible}}
+.az{animation-delay:1.264s;animation-name:ay}
+@keyframes o{0.354506%{visibility:visible}}
+.a0{animation-delay:1.325s;animation-name:o}
+@keyframes u{0.196948%{visibility:visible}}
+.a1{animation-delay:1.361s;animation-name:u}
+@keyframes j{0.236337%{visibility:visible}}
+.a2{animation-delay:1.381s;animation-name:j}
+@keyframes af{0.630232%{visibility:visible}}
+.a3{animation-delay:1.405s;animation-name:af}
+@keyframes v{0.275727%{visibility:visible}}
+.a4{animation-delay:1.469s;animation-name:v}
+.a5{animation-delay:1.497s;animation-name:q}
+@keyframes w{0.206795%{visibility:visible}}
+.a6{animation-delay:1.527s;animation-name:w}
+@keyframes a7{0.5613%{visibility:visible}}
+.a8{animation-delay:1.548s;animation-name:a7}
+.a9{animation-delay:1.605s;animation-name:t}
+@keyframes ba{16.031511%{visibility:hidden}to{visibility:visible}}
 .ba{animation-name:ba}
-@keyframes bb{18.917855%{visibility:hidden}to{visibility:visible}}
+@keyframes bb{18.394879%{visibility:hidden}to{visibility:visible}}
 .bb{animation-name:bb}
-@keyframes bc{31.706837%{visibility:hidden}to{visibility:visible}}
+@keyframes bc{31.196454%{visibility:hidden}to{visibility:visible}}
 .bc{animation-name:bc}
-.bd{animation-delay:3.273s;animation-name:n}
-@keyframes s{0.295131%{visibility:visible}}
-.be{animation-delay:3.323s;animation-name:s}
-@keyframes x{0.373832%{visibility:visible}}
-.bf{animation-delay:3.353s;animation-name:x}
-.bh{animation-delay:3.391s;animation-name:m}
-.bi{animation-delay:3.428s;animation-name:m}
-@keyframes y{0.226267%{visibility:visible}}
-.bj{animation-delay:3.465s;animation-name:y}
-@keyframes bk{0.698476%{visibility:visible}}
-.bl{animation-delay:3.488s;animation-name:bk}
-@keyframes bm{0.472209%{visibility:visible}}
-.bn{animation-delay:3.559s;animation-name:bm}
-@keyframes i{0.285293%{visibility:visible}}
-.bo{animation-delay:3.607s;animation-name:i}
-.bp{animation-delay:3.636s;animation-name:i}
-@keyframes h{0.324644%{visibility:visible}}
-.bq{animation-delay:3.665s;animation-name:h}
-@keyframes br{0.875554%{visibility:visible}}
-.bs{animation-delay:3.698s;animation-name:br}
-.bt{animation-delay:3.787s;animation-name:q}
-@keyframes t{0.25578%{visibility:visible}}
-.bu{animation-delay:3.814s;animation-name:t}
-.bv{animation-delay:3.84s;animation-name:t}
-.bw{animation-delay:3.866s;animation-name:h}
-@keyframes z{0.216429%{visibility:visible}}
-.bx{animation-delay:3.899s;animation-name:z}
-@keyframes by{0.6788%{visibility:visible}}
-.bz{animation-delay:3.921s;animation-name:by}
-.b0{animation-delay:3.99s;animation-name:r}
-.b1{animation-delay:4.01s;animation-name:p}
-.b2{animation-delay:4.034s;animation-name:x}
-.b3{animation-delay:4.072s;animation-name:h}
-@keyframes b4{0.600099%{visibility:visible}}
-.b5{animation-delay:4.105s;animation-name:b4}
-.b6{animation-delay:4.166s;animation-name:r}
-.b7{animation-delay:4.186s;animation-name:h}
-.b8{animation-delay:4.219s;animation-name:y}
-@keyframes b9{0.796852%{visibility:visible}}
-.ca{animation-delay:4.242s;animation-name:b9}
-.cb{animation-delay:4.323s;animation-name:h}
-@keyframes aa{0.354157%{visibility:visible}}
-.cc{animation-delay:4.356s;animation-name:aa}
-.cd{animation-delay:4.392s;animation-name:j}
-.ce{animation-delay:4.431s;animation-name:s}
-.cf{animation-delay:4.461s;animation-name:aa}
-.cg{animation-delay:4.497s;animation-name:ac}
-@keyframes ag{0.206592%{visibility:visible}}
-.ch{animation-delay:4.563s;animation-name:ag}
-.ci{animation-delay:4.584s;animation-name:t}
-@keyframes ab{0.304969%{visibility:visible}}
-.cj{animation-delay:4.61s;animation-name:ab}
-.ck{animation-delay:4.641s;animation-name:p}
-@keyframes cl{0.501722%{visibility:visible}}
-.cm{animation-delay:4.665s;animation-name:cl}
-.cn{animation-delay:4.716s;animation-name:p}
-.co{animation-delay:4.74s;animation-name:k}
-@keyframes u{0.275455%{visibility:visible}}
-.cp{animation-delay:4.775s;animation-name:u}
-@keyframes cq{0.993606%{visibility:visible}}
+.bd{animation-delay:3.218s;animation-name:k}
+.be{animation-delay:3.268s;animation-name:o}
+.bf{animation-delay:3.304s;animation-name:s}
+.bh{animation-delay:3.329s;animation-name:u}
+@keyframes r{0.384048%{visibility:visible}}
+.bi{animation-delay:3.349s;animation-name:r}
+.bj{animation-delay:3.388s;animation-name:j}
+@keyframes ag{0.571148%{visibility:visible}}
+.bk{animation-delay:3.412s;animation-name:ag}
+.bl{animation-delay:3.47s;animation-name:af}
+.bm{animation-delay:3.534s;animation-name:o}
+.bn{animation-delay:3.57s;animation-name:q}
+@keyframes p{0.265879%{visibility:visible}}
+.bo{animation-delay:3.6s;animation-name:p}
+@keyframes bp{0.915806%{visibility:visible}}
+.bq{animation-delay:3.627s;animation-name:bp}
+@keyframes aa{0.324964%{visibility:visible}}
+.br{animation-delay:3.72s;animation-name:aa}
+.bs{animation-delay:3.753s;animation-name:j}
+.bt{animation-delay:3.777s;animation-name:o}
+@keyframes ab{0.393895%{visibility:visible}}
+.bu{animation-delay:3.813s;animation-name:ab}
+@keyframes x{0.256032%{visibility:visible}}
+.bv{animation-delay:3.853s;animation-name:x}
+@keyframes bw{0.738553%{visibility:visible}}
+.bx{animation-delay:3.879s;animation-name:bw}
+.by{animation-delay:3.954s;animation-name:i}
+.bz{animation-delay:3.991s;animation-name:aa}
+.b0{animation-delay:4.024s;animation-name:j}
+.b1{animation-delay:4.048s;animation-name:s}
+@keyframes b2{0.610537%{visibility:visible}}
+.b3{animation-delay:4.073s;animation-name:b2}
+.b4{animation-delay:4.135s;animation-name:w}
+.b5{animation-delay:4.156s;animation-name:g}
+.b6{animation-delay:4.19s;animation-name:p}
+@keyframes b7{1.014279%{visibility:visible}}
+.b8{animation-delay:4.217s;animation-name:b7}
+.b9{animation-delay:4.32s;animation-name:m}
+@keyframes y{0.344658%{visibility:visible}}
+.ca{animation-delay:4.349s;animation-name:y}
+.cb{animation-delay:4.384s;animation-name:m}
+.cc{animation-delay:4.413s;animation-name:i}
+.cd{animation-delay:4.45s;animation-name:x}
+@keyframes ce{0.551453%{visibility:visible}}
+.cf{animation-delay:4.476s;animation-name:ce}
+.cg{animation-delay:4.532s;animation-name:g}
+.ch{animation-delay:4.566s;animation-name:y}
+.ci{animation-delay:4.601s;animation-name:g}
+.cj{animation-delay:4.635s;animation-name:u}
+@keyframes ck{0.541606%{visibility:visible}}
+.cl{animation-delay:4.655s;animation-name:ck}
+@keyframes cm{0.216643%{visibility:visible}}
+.cn{animation-delay:4.71s;animation-name:cm}
+.co{animation-delay:4.732s;animation-name:i}
+.cp{animation-delay:4.769s;animation-name:g}
+@keyframes cq{1.152142%{visibility:visible}}
 .cr{animation-delay:4.803s;animation-name:cq}
-.cs{animation-delay:4.904s;animation-name:o}
-.ct{animation-delay:4.938s;animation-name:ab}
-.cu{animation-delay:4.969s;animation-name:k}
-.cv{animation-delay:5.004s;animation-name:x}
-.cw{animation-delay:5.042s;animation-name:h}
-@keyframes cx{0.688638%{visibility:visible}}
-.cy{animation-delay:5.075s;animation-name:cx}
-.cz{animation-delay:5.145s;animation-name:aa}
-.c0{animation-delay:5.181s;animation-name:o}
-@keyframes ah{0.245942%{visibility:visible}}
-.c1{animation-delay:5.215s;animation-name:ah}
-.c2{animation-delay:5.24s;animation-name:i}
-.c3{animation-delay:5.269s;animation-name:t}
-.c4{animation-delay:5.295s;animation-name:r}
-.c5{animation-delay:5.315s;animation-name:i}
-@keyframes c6{52.572552%{visibility:hidden}to{visibility:visible}}
+.cs{animation-delay:4.92s;animation-name:g}
+.ct{animation-delay:4.954s;animation-name:n}
+.cu{animation-delay:4.985s;animation-name:r}
+.cv{animation-delay:5.024s;animation-name:v}
+.cw{animation-delay:5.052s;animation-name:x}
+@keyframes cx{0.728706%{visibility:visible}}
+.cy{animation-delay:5.078s;animation-name:cx}
+.cz{animation-delay:5.152s;animation-name:aa}
+.c0{animation-delay:5.185s;animation-name:j}
+.c1{animation-delay:5.209s;animation-name:v}
+.c2{animation-delay:5.237s;animation-name:w}
+.c3{animation-delay:5.258s;animation-name:v}
+.c4{animation-delay:5.286s;animation-name:g}
+.c5{animation-delay:5.32s;animation-name:g}
+@keyframes c6{52.722796%{visibility:hidden}to{visibility:visible}}
 .c6{animation-name:c6}
-@keyframes ad{54.756517%{visibility:hidden}to{visibility:visible}}
-.ad{animation-name:ad}
-@keyframes c7{67.545499%{visibility:hidden}to{visibility:visible}}
+@keyframes ac{55.066469%{visibility:hidden}to{visibility:visible}}
+.ac{animation-name:ac}
+@keyframes c7{67.877892%{visibility:hidden}to{visibility:visible}}
 .c7{animation-name:c7}
-.c8{animation-delay:6.916s;animation-name:n}
-.c9{animation-delay:6.966s;animation-name:s}
-.da{animation-delay:6.996s;animation-name:w}
-.ai{animation-delay:7.036s;animation-name:u}
-.db{animation-delay:7.064s;animation-name:ac}
-.aj{animation-delay:7.13s;animation-name:o}
-.dc{animation-delay:7.164s;animation-name:k}
-.dd{animation-delay:7.199s;animation-name:h}
-.de{animation-delay:7.232s;animation-name:i}
-.df{animation-delay:7.261s;animation-name:s}
-.dg{animation-delay:7.291s;animation-name:w}
-@keyframes dh{72.120019%{visibility:hidden}to{visibility:visible}}
+.c8{animation-delay:6.943s;animation-name:k}
+.c9{animation-delay:6.993s;animation-name:n}
+.da{animation-delay:7.024s;animation-name:j}
+.ah{animation-delay:7.048s;animation-name:j}
+.db{animation-delay:7.072s;animation-name:ag}
+.ai{animation-delay:7.13s;animation-name:g}
+.dc{animation-delay:7.164s;animation-name:m}
+.dd{animation-delay:7.193s;animation-name:t}
+.de{animation-delay:7.216s;animation-name:r}
+.df{animation-delay:7.255s;animation-name:m}
+.dg{animation-delay:7.284s;animation-name:y}
+@keyframes dh{72.07287%{visibility:hidden}to{visibility:visible}}
 .dh{animation-name:dh}
-@keyframes di{74.422036%{visibility:hidden}to{visibility:visible}}
+@keyframes di{74.396848%{visibility:hidden}to{visibility:visible}}
 .di{animation-name:di}
-@keyframes dj{87.211018%{visibility:hidden}to{visibility:visible}}
+@keyframes dj{87.198424%{visibility:hidden}to{visibility:visible}}
 .dj{animation-name:dj}
-.dk{animation-delay:0.8s;animation-name:n}
-.dl{animation-delay:1.011s;animation-name:ag}
-.dm{animation-delay:1.032s;animation-name:v}
-.dn{animation-delay:1.281s;animation-name:q}
-.do{animation-delay:1.308s;animation-name:u}
-.dp{animation-delay:1.425s;animation-name:m}
-.dq{animation-delay:1.462s;animation-name:q}
-.dr{animation-delay:1.595s;animation-name:k}
-.ds{animation-delay:1.63s;animation-name:ab}
-.dt{animation-delay:1.698s;animation-name:ah}
-@keyframes ae{1.967536%{visibility:visible}}
-.du{animation-delay:1.723s;animation-name:ae}
-@keyframes af{12.788982%{visibility:visible}}
-.dv{animation-delay:1.923s;animation-name:af}
-.dw{animation-delay:3.223s;animation-name:n}
-.dx{animation-delay:3.488s;animation-name:x}
-.dy{animation-delay:3.526s;animation-name:h}
-.dz{animation-delay:3.559s;animation-name:t}
-.d0{animation-delay:3.585s;animation-name:z}
-.d1{animation-delay:3.698s;animation-name:s}
-.d2{animation-delay:3.728s;animation-name:y}
-.d3{animation-delay:3.751s;animation-name:aa}
-.d4{animation-delay:3.921s;animation-name:o}
-.d5{animation-delay:3.955s;animation-name:k}
-.d6{animation-delay:4.105s;animation-name:z}
-.d7{animation-delay:4.127s;animation-name:j}
-.d8{animation-delay:4.242s;animation-name:i}
-.d9{animation-delay:4.271s;animation-name:p}
-.ea{animation-delay:4.295s;animation-name:u}
-.eb{animation-delay:4.497s;animation-name:j}
-.ec{animation-delay:4.536s;animation-name:q}
-.ed{animation-delay:4.665s;animation-name:y}
-.ee{animation-delay:4.688s;animation-name:u}
-.ef{animation-delay:4.803s;animation-name:h}
-.eg{animation-delay:4.836s;animation-name:i}
-.eh{animation-delay:4.865s;animation-name:j}
-.ei{animation-delay:5.075s;animation-name:j}
-.ej{animation-delay:5.114s;animation-name:ab}
-.ek{animation-delay:5.344s;animation-name:z}
-.el{animation-delay:5.366s;animation-name:ae}
-.em{animation-delay:5.566s;animation-name:af}
-.en{animation-delay:6.866s;animation-name:n}
-.eo{animation-delay:7.064s;animation-name:m}
-.ep{animation-delay:7.101s;animation-name:i}
-.eq{animation-delay:7.331s;animation-name:o}
-.er{animation-delay:7.365s;animation-name:ae}
-.es{animation-delay:7.565s;animation-name:af}
-.g{visibility:visible}
+.dk{animation-delay:0.8s;animation-name:k}
+.dl{animation-delay:0.985s;animation-name:r}
+.dm{animation-delay:1.024s;animation-name:i}
+.dn{animation-delay:1.264s;animation-name:j}
+.do{animation-delay:1.288s;animation-name:i}
+.dp{animation-delay:1.405s;animation-name:i}
+.dq{animation-delay:1.442s;animation-name:p}
+.dr{animation-delay:1.548s;animation-name:u}
+.ds{animation-delay:1.568s;animation-name:i}
+.dt{animation-delay:1.628s;animation-name:ab}
+@keyframes ad{1.969474%{visibility:visible}}
+.du{animation-delay:1.668s;animation-name:ad}
+@keyframes aj{12.801576%{visibility:visible}}
+.dv{animation-delay:1.868s;animation-name:aj}
+.dw{animation-delay:3.168s;animation-name:k}
+.dx{animation-delay:3.412s;animation-name:p}
+.dy{animation-delay:3.439s;animation-name:n}
+.dz{animation-delay:3.47s;animation-name:q}
+.d0{animation-delay:3.5s;animation-name:g}
+.d1{animation-delay:3.627s;animation-name:n}
+.d2{animation-delay:3.658s;animation-name:q}
+@keyframes ae{0.315116%{visibility:visible}}
+.d3{animation-delay:3.688s;animation-name:ae}
+@keyframes z{0.3742%{visibility:visible}}
+.d4{animation-delay:3.879s;animation-name:z}
+.d5{animation-delay:3.917s;animation-name:i}
+.d6{animation-delay:4.073s;animation-name:y}
+.d7{animation-delay:4.108s;animation-name:p}
+.d8{animation-delay:4.217s;animation-name:i}
+.d9{animation-delay:4.254s;animation-name:ae}
+.ea{animation-delay:4.286s;animation-name:g}
+.eb{animation-delay:4.476s;animation-name:p}
+.ec{animation-delay:4.503s;animation-name:m}
+.ed{animation-delay:4.655s;animation-name:w}
+.ee{animation-delay:4.676s;animation-name:g}
+.ef{animation-delay:4.803s;animation-name:r}
+.eg{animation-delay:4.842s;animation-name:z}
+.eh{animation-delay:4.88s;animation-name:ab}
+.ei{animation-delay:5.078s;animation-name:o}
+.ej{animation-delay:5.114s;animation-name:z}
+.ek{animation-delay:5.354s;animation-name:z}
+.el{animation-delay:5.392s;animation-name:ad}
+@keyframes em{12.811423%{visibility:visible}}
+.en{animation-delay:5.592s;animation-name:em}
+.eo{animation-delay:6.893s;animation-name:k}
+.ep{animation-delay:7.072s;animation-name:x}
+.eq{animation-delay:7.098s;animation-name:ae}
+.er{animation-delay:7.319s;animation-name:o}
+.es{animation-delay:7.355s;animation-name:ad}
+.et{animation-delay:7.555s;animation-name:aj}
+.h{visibility:visible}
 </style>
 <defs>
 <filter id="window-shadow" filterUnits="userSpaceOnUse" x="0" y="0" width="830.24" height="378"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-opacity="0.45"/></filter>
@@ -211,21 +212,21 @@ text { dominant-baseline: alphabetic; }
 <mask id="window-outside-0" maskUnits="userSpaceOnUse" x="0" y="0" width="830.24" height="378"><rect width="830.24" height="378" fill="white"/><rect x="48" y="48" width="734.24" height="282" rx="8" ry="8" fill="black"/></mask>
 <rect id="c" class="c" width="9.92" height="20"/>
 <mask id="viewport-mask" x="0" y="0" width="830.24" height="378" maskUnits="userSpaceOnUse">
-<rect class="l g viewport-mask-0" x="48" y="82" width="734.24" height="248" fill="white"/>
+<rect class="l h viewport-mask-0" x="48" y="82" width="734.24" height="248" fill="white"/>
 </mask>
 </defs>
 <use href="#desktop-paint"/>
-<use href="#desktop-paint" class="l g" filter="url(#frost)" clip-path="url(#window-clip-0)"/>
-<rect class="l g viewport-chrome-0" x="48" y="48" width="734.24" height="282" rx="8" ry="8" fill="#000" filter="url(#window-shadow)" mask="url(#window-outside-0)"/>
-<rect class="l g viewport-chrome-0" x="48" y="48" width="734.24" height="282" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1"/>
-<path class="l g viewport-chrome-0" d="M 56,48 H 774.24 Q 782.24,48 782.24,56 V 82 H 48 V 56 Q 48,48 56,48 Z" fill="#323232" fill-opacity="0.7"/>
-<line class="l g viewport-chrome-0" x1="48" y1="82" x2="782.24" y2="82" stroke="#1a1a1a" stroke-width="1"/>
-<text class="l g viewport-chrome-0" x="415.12" y="69.5" style="font:bold 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI','Helvetica Neue',Helvetica,Arial,'Noto Sans','DejaVu Sans',sans-serif" text-anchor="middle" fill="#c8c8c8">Translucent window</text>
-<circle class="l g viewport-chrome-0" cx="70" cy="65" r="8" fill="#ff5f57"/>
-<circle class="l g viewport-chrome-0" cx="96" cy="65" r="8" fill="#febc2e"/>
-<circle class="l g viewport-chrome-0" cx="122" cy="65" r="8" fill="#28c840"/>
+<use href="#desktop-paint" class="l h" filter="url(#frost)" clip-path="url(#window-clip-0)"/>
+<rect class="l h viewport-chrome-0" x="48" y="48" width="734.24" height="282" rx="8" ry="8" fill="#000" filter="url(#window-shadow)" mask="url(#window-outside-0)"/>
+<rect class="l h viewport-chrome-0" x="48" y="48" width="734.24" height="282" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+<path class="l h viewport-chrome-0" d="M 56,48 H 774.24 Q 782.24,48 782.24,56 V 82 H 48 V 56 Q 48,48 56,48 Z" fill="#323232" fill-opacity="0.7"/>
+<line class="l h viewport-chrome-0" x1="48" y1="82" x2="782.24" y2="82" stroke="#1a1a1a" stroke-width="1"/>
+<text class="l h viewport-chrome-0" x="415.12" y="69.5" style="font:bold 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI','Helvetica Neue',Helvetica,Arial,'Noto Sans','DejaVu Sans',sans-serif" text-anchor="middle" fill="#c8c8c8">Translucent window</text>
+<circle class="l h viewport-chrome-0" cx="70" cy="65" r="8" fill="#ff5f57"/>
+<circle class="l h viewport-chrome-0" cx="96" cy="65" r="8" fill="#febc2e"/>
+<circle class="l h viewport-chrome-0" cx="122" cy="65" r="8" fill="#28c840"/>
 <g mask="url(#viewport-mask)" fill="#d0d0d0">
-<rect class="bg l g viewport-bg-0" x="48" y="82" width="734.24" height="248" fill="#282c34" fill-opacity="0.7" clip-path="url(#window-clip-0)"/>
+<rect class="bg l h viewport-bg-0" x="48" y="82" width="734.24" height="248" fill="#282c34" fill-opacity="0.7" clip-path="url(#window-clip-0)"/>
 <text class="l ak a" x="58" y="98.8" textLength="446.4"># The image shows through the window, blurred</text>
 <g class="l al"><text x="58" y="118.8">$</text><use href="#c" x="77.84" y="106"/></g>
 <g class="l am"><text x="58 77.84" y="118.8">$e</text><use href="#c" x="87.76" y="106"/></g>
@@ -243,10 +244,10 @@ text { dominant-baseline: alphabetic; }
 <g class="l a0 b"><text x="58" textLength="168.64">$ echo &quot;opacity 0</text><use href="#c" x="226.64" y="-12.8"/></g>
 <g class="l a1 b"><text x="58" textLength="178.56">$ echo &quot;opacity 0.</text><use href="#c" x="236.56" y="-12.8"/></g>
 <g class="l a2 b"><text x="58" textLength="188.48">$ echo &quot;opacity 0.7</text><use href="#c" x="246.48" y="-12.8"/></g>
-<text class="l a4 b" x="58" textLength="198.4">$ echo &quot;opacity 0.7,</text>
-<g class="l a5 b"><text x="58" textLength="218.24">$ echo &quot;opacity 0.7, b</text><use href="#c" x="276.24" y="-12.8"/></g>
-<g class="l a6 b"><text x="58" textLength="228.16">$ echo &quot;opacity 0.7, bl</text><use href="#c" x="286.16" y="-12.8"/></g>
-<g class="l a7 b"><text x="58" textLength="238.08">$ echo &quot;opacity 0.7, blu</text><use href="#c" x="296.08" y="-12.8"/></g>
+<text class="l a3 b" x="58" textLength="198.4">$ echo &quot;opacity 0.7,</text>
+<g class="l a4 b"><text x="58" textLength="218.24">$ echo &quot;opacity 0.7, b</text><use href="#c" x="276.24" y="-12.8"/></g>
+<g class="l a5 b"><text x="58" textLength="228.16">$ echo &quot;opacity 0.7, bl</text><use href="#c" x="286.16" y="-12.8"/></g>
+<g class="l a6 b"><text x="58" textLength="238.08">$ echo &quot;opacity 0.7, blu</text><use href="#c" x="296.08" y="-12.8"/></g>
 <text class="l a8 b" x="58" textLength="248">$ echo &quot;opacity 0.7, blur</text>
 <g class="l a9 b"><text x="58" textLength="267.84">$ echo &quot;opacity 0.7, blur 6</text><use href="#c" x="325.84" y="-12.8"/></g>
 <text class="l ba b" x="58" textLength="277.76">$ echo &quot;opacity 0.7, blur 6&quot;</text>
@@ -258,38 +259,38 @@ text { dominant-baseline: alphabetic; }
 <g class="l bh"><text x="58 77.84 87.76 97.68" y="178.8">$pri</text><use href="#c" x="107.6" y="166"/></g>
 <g class="l bi d"><text x="58" textLength="59.52">$ prin</text><use href="#c" x="117.52" y="-12.8"/></g>
 <g class="l bj d"><text x="58" textLength="69.44">$ print</text><use href="#c" x="127.44" y="-12.8"/></g>
-<text class="l bl d" x="58" textLength="79.36">$ printf</text>
-<text class="l bn d" x="58" textLength="99.2">$ printf '</text>
-<g class="l bo d"><text x="58" textLength="119.04">$ printf ' P</text><use href="#c" x="177.04" y="-12.8"/></g>
-<g class="l bp d"><text x="58" textLength="128.96">$ printf ' PA</text><use href="#c" x="186.96" y="-12.8"/></g>
-<g class="l bq d"><text x="58" textLength="138.88">$ printf ' PAS</text><use href="#c" x="196.88" y="-12.8"/></g>
-<text class="l bs d" x="58" textLength="148.8">$ printf ' PASS</text>
-<g class="l bt d"><text x="58" textLength="178.56">$ printf ' PASS  r</text><use href="#c" x="236.56" y="-12.8"/></g>
-<g class="l bu d"><text x="58" textLength="188.48">$ printf ' PASS  re</text><use href="#c" x="246.48" y="-12.8"/></g>
-<g class="l bv d"><text x="58" textLength="198.4">$ printf ' PASS  ren</text><use href="#c" x="256.4" y="-12.8"/></g>
-<g class="l bw d"><text x="58" textLength="208.32">$ printf ' PASS  rend</text><use href="#c" x="266.32" y="-12.8"/></g>
-<g class="l bx d"><text x="58" textLength="218.24">$ printf ' PASS  rende</text><use href="#c" x="276.24" y="-12.8"/></g>
-<text class="l bz d" x="58" textLength="228.16">$ printf ' PASS  render</text>
-<g class="l b0 d"><text x="58" textLength="248">$ printf ' PASS  render s</text><use href="#c" x="306" y="-12.8"/></g>
-<g class="l b1 d"><text x="58" textLength="257.92">$ printf ' PASS  render sv</text><use href="#c" x="315.92" y="-12.8"/></g>
-<g class="l b2 d"><text x="58" textLength="267.84">$ printf ' PASS  render svg</text><use href="#c" x="325.84" y="-12.8"/></g>
-<g class="l b3 d"><text x="58" textLength="277.76">$ printf ' PASS  render svg\</text><use href="#c" x="335.76" y="-12.8"/></g>
-<text class="l b5 d" x="58" textLength="287.68">$ printf ' PASS  render svg\n</text>
-<g class="l b6 d"><text x="58" textLength="307.52">$ printf ' PASS  render svg\n P</text><use href="#c" x="365.52" y="-12.8"/></g>
-<g class="l b7 d"><text x="58" textLength="317.44">$ printf ' PASS  render svg\n PA</text><use href="#c" x="375.44" y="-12.8"/></g>
-<g class="l b8 d"><text x="58" textLength="327.36">$ printf ' PASS  render svg\n PAS</text><use href="#c" x="385.36" y="-12.8"/></g>
-<text class="l ca d" x="58" textLength="337.28">$ printf ' PASS  render svg\n PASS</text>
-<g class="l cb d"><text x="58" textLength="367.04">$ printf ' PASS  render svg\n PASS  r</text><use href="#c" x="425.04" y="-12.8"/></g>
-<g class="l cc d"><text x="58" textLength="376.96">$ printf ' PASS  render svg\n PASS  re</text><use href="#c" x="434.96" y="-12.8"/></g>
-<g class="l cd d"><text x="58" textLength="386.88">$ printf ' PASS  render svg\n PASS  ren</text><use href="#c" x="444.88" y="-12.8"/></g>
-<g class="l ce d"><text x="58" textLength="396.8">$ printf ' PASS  render svg\n PASS  rend</text><use href="#c" x="454.8" y="-12.8"/></g>
-<g class="l cf d"><text x="58" textLength="406.72">$ printf ' PASS  render svg\n PASS  rende</text><use href="#c" x="464.72" y="-12.8"/></g>
-<text class="l cg d" x="58" textLength="416.64">$ printf ' PASS  render svg\n PASS  render</text>
-<g class="l ch d"><text x="58" textLength="436.48">$ printf ' PASS  render svg\n PASS  render m</text><use href="#c" x="494.48" y="-12.8"/></g>
-<g class="l ci d"><text x="58" textLength="446.4">$ printf ' PASS  render svg\n PASS  render mp</text><use href="#c" x="504.4" y="-12.8"/></g>
-<g class="l cj d"><text x="58" textLength="456.32">$ printf ' PASS  render svg\n PASS  render mp4</text><use href="#c" x="514.32" y="-12.8"/></g>
-<g class="l ck d"><text x="58" textLength="466.24">$ printf ' PASS  render svg\n PASS  render mp4\</text><use href="#c" x="524.24" y="-12.8"/></g>
-<text class="l cm d" x="58" textLength="476.16">$ printf ' PASS  render svg\n PASS  render mp4\n</text>
+<text class="l bk d" x="58" textLength="79.36">$ printf</text>
+<text class="l bl d" x="58" textLength="99.2">$ printf '</text>
+<g class="l bm d"><text x="58" textLength="119.04">$ printf ' P</text><use href="#c" x="177.04" y="-12.8"/></g>
+<g class="l bn d"><text x="58" textLength="128.96">$ printf ' PA</text><use href="#c" x="186.96" y="-12.8"/></g>
+<g class="l bo d"><text x="58" textLength="138.88">$ printf ' PAS</text><use href="#c" x="196.88" y="-12.8"/></g>
+<text class="l bq d" x="58" textLength="148.8">$ printf ' PASS</text>
+<g class="l br d"><text x="58" textLength="178.56">$ printf ' PASS  r</text><use href="#c" x="236.56" y="-12.8"/></g>
+<g class="l bs d"><text x="58" textLength="188.48">$ printf ' PASS  re</text><use href="#c" x="246.48" y="-12.8"/></g>
+<g class="l bt d"><text x="58" textLength="198.4">$ printf ' PASS  ren</text><use href="#c" x="256.4" y="-12.8"/></g>
+<g class="l bu d"><text x="58" textLength="208.32">$ printf ' PASS  rend</text><use href="#c" x="266.32" y="-12.8"/></g>
+<g class="l bv d"><text x="58" textLength="218.24">$ printf ' PASS  rende</text><use href="#c" x="276.24" y="-12.8"/></g>
+<text class="l bx d" x="58" textLength="228.16">$ printf ' PASS  render</text>
+<g class="l by d"><text x="58" textLength="248">$ printf ' PASS  render s</text><use href="#c" x="306" y="-12.8"/></g>
+<g class="l bz d"><text x="58" textLength="257.92">$ printf ' PASS  render sv</text><use href="#c" x="315.92" y="-12.8"/></g>
+<g class="l b0 d"><text x="58" textLength="267.84">$ printf ' PASS  render svg</text><use href="#c" x="325.84" y="-12.8"/></g>
+<g class="l b1 d"><text x="58" textLength="277.76">$ printf ' PASS  render svg\</text><use href="#c" x="335.76" y="-12.8"/></g>
+<text class="l b3 d" x="58" textLength="287.68">$ printf ' PASS  render svg\n</text>
+<g class="l b4 d"><text x="58" textLength="307.52">$ printf ' PASS  render svg\n P</text><use href="#c" x="365.52" y="-12.8"/></g>
+<g class="l b5 d"><text x="58" textLength="317.44">$ printf ' PASS  render svg\n PA</text><use href="#c" x="375.44" y="-12.8"/></g>
+<g class="l b6 d"><text x="58" textLength="327.36">$ printf ' PASS  render svg\n PAS</text><use href="#c" x="385.36" y="-12.8"/></g>
+<text class="l b8 d" x="58" textLength="337.28">$ printf ' PASS  render svg\n PASS</text>
+<g class="l b9 d"><text x="58" textLength="367.04">$ printf ' PASS  render svg\n PASS  r</text><use href="#c" x="425.04" y="-12.8"/></g>
+<g class="l ca d"><text x="58" textLength="376.96">$ printf ' PASS  render svg\n PASS  re</text><use href="#c" x="434.96" y="-12.8"/></g>
+<g class="l cb d"><text x="58" textLength="386.88">$ printf ' PASS  render svg\n PASS  ren</text><use href="#c" x="444.88" y="-12.8"/></g>
+<g class="l cc d"><text x="58" textLength="396.8">$ printf ' PASS  render svg\n PASS  rend</text><use href="#c" x="454.8" y="-12.8"/></g>
+<g class="l cd d"><text x="58" textLength="406.72">$ printf ' PASS  render svg\n PASS  rende</text><use href="#c" x="464.72" y="-12.8"/></g>
+<text class="l cf d" x="58" textLength="416.64">$ printf ' PASS  render svg\n PASS  render</text>
+<g class="l cg d"><text x="58" textLength="436.48">$ printf ' PASS  render svg\n PASS  render m</text><use href="#c" x="494.48" y="-12.8"/></g>
+<g class="l ch d"><text x="58" textLength="446.4">$ printf ' PASS  render svg\n PASS  render mp</text><use href="#c" x="504.4" y="-12.8"/></g>
+<g class="l ci d"><text x="58" textLength="456.32">$ printf ' PASS  render svg\n PASS  render mp4</text><use href="#c" x="514.32" y="-12.8"/></g>
+<g class="l cj d"><text x="58" textLength="466.24">$ printf ' PASS  render svg\n PASS  render mp4\</text><use href="#c" x="524.24" y="-12.8"/></g>
+<text class="l cl d" x="58" textLength="476.16">$ printf ' PASS  render svg\n PASS  render mp4\n</text>
 <g class="l cn d"><text x="58" textLength="496">$ printf ' PASS  render svg\n PASS  render mp4\n W</text><use href="#c" x="554" y="-12.8"/></g>
 <g class="l co d"><text x="58" textLength="505.92">$ printf ' PASS  render svg\n PASS  render mp4\n WA</text><use href="#c" x="563.92" y="-12.8"/></g>
 <g class="l cp d"><text x="58" textLength="515.84">$ printf ' PASS  render svg\n PASS  render mp4\n WAR</text><use href="#c" x="573.84" y="-12.8"/></g>
@@ -308,16 +309,16 @@ text { dominant-baseline: alphabetic; }
 <g class="l c4 d"><text x="58" textLength="674.56">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright image\</text><use href="#c" x="732.56" y="-12.8"/></g>
 <g class="l c5 d"><text x="58" textLength="684.48">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright image\n</text><use href="#c" x="742.48" y="-12.8"/></g>
 <text class="l c6 d" x="58" textLength="694.4">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright image\n'</text>
-<g class="l ad"><rect x="58" y="186" width="59.52" height="20" fill="#7e8e50"/><text class="e" x="58" y="198.8" font-weight="bold" textLength="49.6"> PASS</text><text x="127.44" y="198.8" textLength="99.2">render svg</text></g>
-<g class="l ad"><rect x="58" y="206" width="59.52" height="20" fill="#7e8e50"/><text class="e" x="58" y="218.8" font-weight="bold" textLength="49.6"> PASS</text><text x="127.44" y="218.8" textLength="99.2">render mp4</text></g>
-<g class="l ad"><rect x="58" y="226" width="59.52" height="20" fill="#e5b567"/><text class="e" x="58" y="238.8" font-weight="bold" textLength="49.6"> WARN</text><text x="127.44" y="238.8" textLength="119.04">bright image</text></g>
+<g class="l ac"><rect x="58" y="186" width="59.52" height="20" fill="#7e8e50"/><text class="e" x="58" y="198.8" font-weight="bold" textLength="49.6"> PASS</text><text x="127.44" y="198.8" textLength="99.2">render svg</text></g>
+<g class="l ac"><rect x="58" y="206" width="59.52" height="20" fill="#7e8e50"/><text class="e" x="58" y="218.8" font-weight="bold" textLength="49.6"> PASS</text><text x="127.44" y="218.8" textLength="99.2">render mp4</text></g>
+<g class="l ac"><rect x="58" y="226" width="59.52" height="20" fill="#e5b567"/><text class="e" x="58" y="238.8" font-weight="bold" textLength="49.6"> WARN</text><text x="127.44" y="238.8" textLength="119.04">bright image</text></g>
 <text class="l c7 a" x="58" y="258.8" textLength="476.16"># Try --opacity and --blur in the render options</text>
 <g class="l c8"><text x="58" y="278.8">$</text><use href="#c" x="77.84" y="266"/></g>
 <g class="l c9"><text x="58 77.84" y="278.8">$e</text><use href="#c" x="87.76" y="266"/></g>
 <g class="l da"><text x="58 77.84 87.76" y="278.8">$ec</text><use href="#c" x="97.68" y="266"/></g>
-<use href="#r4" y="160" class="l ai"/>
+<use href="#r4" y="160" class="l ah"/>
 <text class="l db f" x="58" textLength="59.52">$ echo</text>
-<use href="#r6" class="l aj f"/>
+<use href="#r6" class="l ai f"/>
 <g class="l dc f"><text x="58" textLength="89.28">$ echo &quot;D</text><use href="#c" x="147.28" y="-12.8"/></g>
 <g class="l dd f"><text x="58" textLength="99.2">$ echo &quot;Do</text><use href="#c" x="157.2" y="-12.8"/></g>
 <g class="l de f"><text x="58" textLength="109.12">$ echo &quot;Don</text><use href="#c" x="167.12" y="-12.8"/></g>
@@ -364,15 +365,15 @@ text { dominant-baseline: alphabetic; }
 <use href="#c" x="673.04" y="166" class="l ej"/>
 <use href="#c" x="752.4" y="166" class="l ek"/>
 <use href="#c" x="58" y="186" class="l el"/>
-<use href="#c" x="58" y="246" class="l em"/>
-<use href="#c" x="58" y="266" class="l en"/>
-<use href="#c" x="107.6" y="266" class="l ai"/>
-<use href="#c" x="117.52" y="266" class="l eo"/>
-<use href="#c" x="127.44" y="266" class="l ep"/>
-<use href="#c" x="137.36" y="266" class="l aj"/>
-<use href="#c" x="196.88" y="266" class="l eq"/>
-<use href="#c" x="58" y="286" class="l er"/>
-<use href="#c" x="58" y="306" class="l es"/>
+<use href="#c" x="58" y="246" class="l en"/>
+<use href="#c" x="58" y="266" class="l eo"/>
+<use href="#c" x="107.6" y="266" class="l ah"/>
+<use href="#c" x="117.52" y="266" class="l ep"/>
+<use href="#c" x="127.44" y="266" class="l eq"/>
+<use href="#c" x="137.36" y="266" class="l ai"/>
+<use href="#c" x="196.88" y="266" class="l er"/>
+<use href="#c" x="58" y="286" class="l es"/>
+<use href="#c" x="58" y="306" class="l et"/>
 </g>
-<rect class="l g viewport-chrome-0" x="48.5" y="48.5" width="733.24" height="281" rx="7.5" ry="7.5" fill="none" stroke="#ffffff" stroke-opacity="0.16"/>
+<rect class="l h viewport-chrome-0" x="48.5" y="48.5" width="733.24" height="281" rx="7.5" ry="7.5" fill="none" stroke="#ffffff" stroke-opacity="0.16"/>
 </svg>

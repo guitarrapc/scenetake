@@ -41,9 +41,6 @@ public sealed class ScenarioSchemaTests
     public async Task SamplesNameTheSchema() => await Assert.That(ScenarioSchemaCases.SamplesNameTheSchema()).IsTrue();
 
     [Test]
-    public async Task SchemaLineSeedsNoTyping() => await Assert.That(ScenarioSchemaCases.SchemaLineSeedsNoTyping()).IsTrue();
-
-    [Test]
     public async Task InitAndSavedScenariosNameTheSchema() => await Assert.That(ScenarioSchemaCases.InitAndSavedScenariosNameTheSchema(TestEnv.Binary)).IsTrue();
 
     [Test]
@@ -443,30 +440,6 @@ internal static class ScenarioSchemaCases
             var text = File.ReadAllText(file).Replace("\r\n", "\n");
             ok &= Check(text.StartsWith(ScenarioSchema.ModeLine, StringComparison.Ordinal),
                 $"{Path.GetRelativePath(TestEnv.RepoRoot, file)} should start with {ScenarioSchema.ModeLine.TrimEnd()}, not {text.Split('\n')[0]}");
-        }
-
-        return ok;
-    }
-
-    internal static bool SchemaLineSeedsNoTyping()
-    {
-        // The schema line, and a later version's, give the typing of the file without it, so the line changes no
-        // recording. Another comment still changes the seed, as before.
-        const string scenario = "title: demo\nsteps:\n  - echo hi\n";
-        var seed = ScenarioCast.ComputeDeterministicSeed(scenario);
-        var ok = Check(ScenarioCast.ComputeDeterministicSeed(ScenarioSchema.ModeLine + scenario) == seed, "the line at the top changed the seed");
-        ok &= Check(ScenarioCast.ComputeDeterministicSeed(ScenarioSchema.ModeLine.Replace("/v", "/v9", StringComparison.Ordinal) + scenario) == seed, "another version's line changed the seed");
-        ok &= Check(ScenarioCast.ComputeDeterministicSeed("#  yaml-language-server : $schema=./a.json\r\n" + scenario.Replace("\n", "\r\n", StringComparison.Ordinal)) == seed, "the line with spaces and CRLF changed the seed");
-        ok &= Check(ScenarioCast.ComputeDeterministicSeed("title: demo\n# yaml-language-server: $schema=./a.json\nsteps:\n  - echo hi\n") == seed, "the line between keys changed the seed");
-        ok &= Check(ScenarioCast.ComputeDeterministicSeed("# a comment\n" + scenario) != seed, "another comment should change the seed");
-        ok &= Check(ScenarioCast.ComputeDeterministicSeed("# yaml-language-server-x: y\n" + scenario) != seed, "only the schema comment is left out");
-
-        // A file without the line keeps its seed: the text is read line by line, and put back as it was.
-        foreach (var text in new[] { "", "a", "a\n", "a\n\n", "\n", "a\r\nb", "a\rb\r" })
-        {
-            var normalized = text.Replace("\r\n", "\n").Replace('\r', '\n');
-            ok &= Check(ScenarioCast.ComputeDeterministicSeed(text) == BitConverter.ToInt32(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(normalized)), 0),
-                $"the seed of \"{text.Replace("\r", "\\r", StringComparison.Ordinal).Replace("\n", "\\n", StringComparison.Ordinal)}\" changed");
         }
 
         return ok;

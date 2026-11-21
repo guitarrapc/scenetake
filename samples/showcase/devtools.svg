@@ -4,7 +4,7 @@
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
 .bg,rect:not([class]) { shape-rendering: crispEdges; }
-.l { visibility: hidden; animation: 14.771s step-start infinite; }
+.l { visibility: hidden; animation: 14.641s step-start infinite; }
 .c { fill: #d0d0d0; fill-opacity: 0.5; }
 .a{transform:translate(0,62.8px)}
 .ak{transform:translate(0,82.8px)}
@@ -47,166 +47,168 @@ text { dominant-baseline: alphabetic; }
 .ag{fill:#ffd97c}
 .ah{fill:#7e8e50}
 .ao{fill:#82b8e0}
-@keyframes a7{0.338502%{visibility:visible}}
-.bn{animation-delay:1.1s;animation-name:a7}
-@keyframes be{0.291111%{visibility:visible}}
-.bo{animation-delay:1.15s;animation-name:be}
-@keyframes a0{0.176021%{visibility:visible}}
-.bp{animation-delay:1.193s;animation-name:a0}
-@keyframes bq{0.372352%{visibility:visible}}
-.br{animation-delay:1.219s;animation-name:bq}
-@keyframes bf{0.182791%{visibility:visible}}
-.bs{animation-delay:1.274s;animation-name:bf}
-@keyframes bh{0.264031%{visibility:visible}}
-.bt{animation-delay:1.301s;animation-name:bh}
-@keyframes a8{0.108321%{visibility:visible}}
-.bu{animation-delay:1.34s;animation-name:a8}
-@keyframes a9{0.236951%{visibility:visible}}
-.bv{animation-delay:1.356s;animation-name:a9}
-@keyframes bw{0.128631%{visibility:visible}}
-.bx{animation-delay:1.391s;animation-name:bw}
-@keyframes a1{0.243721%{visibility:visible}}
-.by{animation-delay:1.41s;animation-name:a1}
-@keyframes a2{0.216641%{visibility:visible}}
-.bz{animation-delay:1.446s;animation-name:a2}
-.b0{animation-delay:1.478s;animation-name:a8}
-@keyframes ba{0.284341%{visibility:visible}}
-.b1{animation-delay:1.494s;animation-name:ba}
-@keyframes a3{0.270801%{visibility:visible}}
-.b2{animation-delay:1.536s;animation-name:a3}
-@keyframes ax{0.203101%{visibility:visible}}
-.b3{animation-delay:1.576s;animation-name:ax}
-.b4{animation-delay:1.606s;animation-name:ax}
-@keyframes bi{0.101551%{visibility:visible}}
-.b5{animation-delay:1.636s;animation-name:bi}
-@keyframes b6{0.460362%{visibility:visible}}
-.b7{animation-delay:1.651s;animation-name:b6}
-@keyframes aw{0.162481%{visibility:visible}}
-.b8{animation-delay:1.719s;animation-name:aw}
-.b9{animation-delay:1.743s;animation-name:aw}
-@keyframes ay{0.230181%{visibility:visible}}
-.ca{animation-delay:1.767s;animation-name:ay}
-@keyframes bb{0.297881%{visibility:visible}}
-.cb{animation-delay:1.801s;animation-name:bb}
-@keyframes bj{0.250491%{visibility:visible}}
-.cc{animation-delay:1.845s;animation-name:bj}
-.cd{animation-delay:1.882s;animation-name:ba}
-@keyframes az{0.135401%{visibility:visible}}
-.ce{animation-delay:1.924s;animation-name:az}
-@keyframes cf{27.05301%{visibility:visible}}
-.cg{animation-delay:1.944s;animation-name:cf}
-@keyframes ch{25.753165%{visibility:visible}}
-.bc{animation-delay:2.136s;animation-name:ch}
-@keyframes ci{25.739625%{visibility:visible}}
-.au{animation-delay:2.138s;animation-name:ci}
-@keyframes cj{0.006771%{visibility:visible}}
-.ck{animation-delay:2.138s;animation-name:cj}
-@keyframes cl{25.732855%{visibility:visible}}
-.cm{animation-delay:2.139s;animation-name:cl}
-.cn{animation-delay:4.775s;animation-name:a7}
-.co{animation-delay:4.825s;animation-name:a1}
-@keyframes bk{0.257261%{visibility:visible}}
-.cp{animation-delay:4.861s;animation-name:bk}
-@keyframes cq{0.528062%{visibility:visible}}
-.cr{animation-delay:4.899s;animation-name:cq}
-@keyframes a4{0.209871%{visibility:visible}}
-.cs{animation-delay:4.977s;animation-name:a4}
-@keyframes a5{0.223411%{visibility:visible}}
-.ct{animation-delay:5.008s;animation-name:a5}
-@keyframes cu{0.331732%{visibility:visible}}
-.cv{animation-delay:5.041s;animation-name:cu}
-.cw{animation-delay:5.09s;animation-name:ba}
-.cx{animation-delay:5.132s;animation-name:az}
-@keyframes cy{0.196331%{visibility:visible}}
-.cz{animation-delay:5.152s;animation-name:cy}
-.c0{animation-delay:5.181s;animation-name:a0}
-.c1{animation-delay:5.207s;animation-name:bb}
-.c2{animation-delay:5.251s;animation-name:bh}
-@keyframes c3{0.399432%{visibility:visible}}
-.c4{animation-delay:5.29s;animation-name:c3}
-@keyframes bl{0.148941%{visibility:visible}}
-.c5{animation-delay:5.349s;animation-name:bl}
-.c6{animation-delay:5.371s;animation-name:a5}
-.c7{animation-delay:5.404s;animation-name:ay}
-.c8{animation-delay:5.438s;animation-name:a9}
-.c9{animation-delay:5.473s;animation-name:az}
-.da{animation-delay:5.493s;animation-name:a1}
-.db{animation-delay:5.529s;animation-name:bf}
-.dc{animation-delay:5.556s;animation-name:aw}
-@keyframes dd{0.433282%{visibility:visible}}
-.de{animation-delay:5.58s;animation-name:dd}
-.df{animation-delay:5.644s;animation-name:bk}
-.dg{animation-delay:5.682s;animation-name:az}
-@keyframes a6{0.155711%{visibility:visible}}
-.dh{animation-delay:5.702s;animation-name:a6}
-@keyframes bd{0.189561%{visibility:visible}}
-.di{animation-delay:5.725s;animation-name:bd}
-@keyframes dj{1.265995%{visibility:visible}}
-.dk{animation-delay:5.753s;animation-name:dj}
-@keyframes dl{22.923296%{visibility:visible}}
-.ar{animation-delay:5.94s;animation-name:dl}
-.dm{animation-delay:8.584s;animation-name:a7}
-.dn{animation-delay:8.634s;animation-name:ay}
-@keyframes do{0.318192%{visibility:visible}}
-.dp{animation-delay:8.668s;animation-name:do}
-.dq{animation-delay:8.715s;animation-name:aw}
-.dr{animation-delay:8.739s;animation-name:be}
-.ds{animation-delay:8.782s;animation-name:ax}
-.dt{animation-delay:8.812s;animation-name:bj}
-.du{animation-delay:8.849s;animation-name:a8}
-.dv{animation-delay:8.865s;animation-name:bd}
-.dw{animation-delay:8.893s;animation-name:a6}
-@keyframes dx{0.487442%{visibility:visible}}
-.dy{animation-delay:8.916s;animation-name:dx}
-@keyframes dz{0.169251%{visibility:visible}}
-.d0{animation-delay:8.988s;animation-name:dz}
-.d1{animation-delay:9.013s;animation-name:a2}
-@keyframes d2{0.115091%{visibility:visible}}
-.d3{animation-delay:9.045s;animation-name:d2}
-.d4{animation-delay:9.062s;animation-name:a3}
-.d5{animation-delay:9.102s;animation-name:a4}
-.d6{animation-delay:9.133s;animation-name:a5}
-.d7{animation-delay:9.166s;animation-name:a0}
-.d8{animation-delay:9.192s;animation-name:a1}
-.d9{animation-delay:9.228s;animation-name:az}
-.ea{animation-delay:9.248s;animation-name:bl}
-.eb{animation-delay:9.27s;animation-name:ax}
-.ec{animation-delay:9.3s;animation-name:a0}
-@keyframes bm{1.062894%{visibility:visible}}
-.as{animation-delay:9.326s;animation-name:bm}
-@keyframes at{64.200121%{visibility:hidden}to{visibility:visible}}
+@keyframes a6{0.341507%{visibility:visible}}
+.bm{animation-delay:1.1s;animation-name:a6}
+@keyframes ax{0.273206%{visibility:visible}}
+.bn{animation-delay:1.15s;animation-name:ax}
+@keyframes a0{0.225395%{visibility:visible}}
+.bo{animation-delay:1.19s;animation-name:a0}
+@keyframes bp{0.375658%{visibility:visible}}
+.bq{animation-delay:1.223s;animation-name:bp}
+@keyframes aw{0.239055%{visibility:visible}}
+.br{animation-delay:1.278s;animation-name:aw}
+.bs{animation-delay:1.313s;animation-name:aw}
+@keyframes be{0.191244%{visibility:visible}}
+.bt{animation-delay:1.348s;animation-name:be}
+@keyframes bu{0.143433%{visibility:visible}}
+.bv{animation-delay:1.376s;animation-name:bu}
+@keyframes a7{0.109283%{visibility:visible}}
+.bw{animation-delay:1.397s;animation-name:a7}
+@keyframes a1{0.122943%{visibility:visible}}
+.bx{animation-delay:1.413s;animation-name:a1}
+@keyframes a8{0.280036%{visibility:visible}}
+.by{animation-delay:1.431s;animation-name:a8}
+@keyframes bf{0.245885%{visibility:visible}}
+.bz{animation-delay:1.472s;animation-name:bf}
+@keyframes a9{0.218565%{visibility:visible}}
+.b0{animation-delay:1.508s;animation-name:a9}
+@keyframes ba{0.129773%{visibility:visible}}
+.b1{animation-delay:1.54s;animation-name:ba}
+@keyframes ay{0.102453%{visibility:visible}}
+.b2{animation-delay:1.559s;animation-name:ay}
+.b3{animation-delay:1.574s;animation-name:ba}
+@keyframes a2{0.150263%{visibility:visible}}
+.b4{animation-delay:1.593s;animation-name:a2}
+@keyframes bh{0.348337%{visibility:visible}}
+.b5{animation-delay:1.615s;animation-name:bh}
+@keyframes bb{0.300526%{visibility:visible}}
+.b6{animation-delay:1.666s;animation-name:bb}
+.b7{animation-delay:1.71s;animation-name:a8}
+@keyframes bi{0.286866%{visibility:visible}}
+.b8{animation-delay:1.751s;animation-name:bi}
+.b9{animation-delay:1.793s;animation-name:a8}
+.ca{animation-delay:1.834s;animation-name:ay}
+@keyframes bj{0.163924%{visibility:visible}}
+.cb{animation-delay:1.849s;animation-name:bj}
+.cc{animation-delay:1.873s;animation-name:aw}
+@keyframes cd{26.87658%{visibility:visible}}
+.ce{animation-delay:1.908s;animation-name:cd}
+@keyframes cf{25.558364%{visibility:visible}}
+.bc{animation-delay:2.101s;animation-name:cf}
+@keyframes cg{25.544704%{visibility:visible}}
+.au{animation-delay:2.103s;animation-name:cg}
+@keyframes ch{0.006831%{visibility:visible}}
+.ci{animation-delay:2.103s;animation-name:ch}
+@keyframes cj{25.537874%{visibility:visible}}
+.ck{animation-delay:2.104s;animation-name:cj}
+.cl{animation-delay:4.74s;animation-name:a6}
+.cm{animation-delay:4.79s;animation-name:aw}
+.cn{animation-delay:4.825s;animation-name:bi}
+@keyframes co{0.46445%{visibility:visible}}
+.cp{animation-delay:4.867s;animation-name:co}
+.cq{animation-delay:4.935s;animation-name:a2}
+@keyframes bd{0.177584%{visibility:visible}}
+.cr{animation-delay:4.957s;animation-name:bd}
+@keyframes cs{0.47128%{visibility:visible}}
+.ct{animation-delay:4.983s;animation-name:cs}
+@keyframes a3{0.184414%{visibility:visible}}
+.cu{animation-delay:5.052s;animation-name:a3}
+@keyframes a4{0.157094%{visibility:visible}}
+.cv{animation-delay:5.079s;animation-name:a4}
+.cw{animation-delay:5.102s;animation-name:aw}
+.cx{animation-delay:5.137s;animation-name:a3}
+@keyframes cy{0.232225%{visibility:visible}}
+.cz{animation-delay:5.164s;animation-name:cy}
+@keyframes a5{0.204905%{visibility:visible}}
+.c0{animation-delay:5.198s;animation-name:a5}
+.c1{animation-delay:5.228s;animation-name:bh}
+.c2{animation-delay:5.279s;animation-name:bd}
+.c3{animation-delay:5.305s;animation-name:a3}
+@keyframes az{0.170754%{visibility:visible}}
+.c4{animation-delay:5.332s;animation-name:az}
+.c5{animation-delay:5.357s;animation-name:a5}
+.c6{animation-delay:5.387s;animation-name:a0}
+.c7{animation-delay:5.42s;animation-name:be}
+.c8{animation-delay:5.448s;animation-name:az}
+.c9{animation-delay:5.473s;animation-name:bb}
+@keyframes da{0.314187%{visibility:visible}}
+.db{animation-delay:5.517s;animation-name:da}
+@keyframes dc{0.293696%{visibility:visible}}
+.dd{animation-delay:5.563s;animation-name:dc}
+@keyframes de{0.116113%{visibility:visible}}
+.df{animation-delay:5.606s;animation-name:de}
+.dg{animation-delay:5.623s;animation-name:ay}
+.dh{animation-delay:5.638s;animation-name:a7}
+@keyframes di{1.290896%{visibility:visible}}
+.dj{animation-delay:5.654s;animation-name:di}
+@keyframes dk{22.908272%{visibility:visible}}
+.ar{animation-delay:5.843s;animation-name:dk}
+.dl{animation-delay:8.486s;animation-name:a6}
+.dm{animation-delay:8.536s;animation-name:ax}
+@keyframes dn{0.259546%{visibility:visible}}
+.do{animation-delay:8.576s;animation-name:dn}
+.dp{animation-delay:8.614s;animation-name:a1}
+.dq{animation-delay:8.632s;animation-name:bf}
+.dr{animation-delay:8.668s;animation-name:ax}
+.ds{animation-delay:8.708s;animation-name:a5}
+.dt{animation-delay:8.738s;animation-name:a2}
+.du{animation-delay:8.76s;animation-name:a4}
+.dv{animation-delay:8.783s;animation-name:ba}
+@keyframes dw{0.539581%{visibility:visible}}
+.dx{animation-delay:8.802s;animation-name:dw}
+.dy{animation-delay:8.881s;animation-name:az}
+.dz{animation-delay:8.906s;animation-name:a3}
+.d0{animation-delay:8.933s;animation-name:ay}
+.d1{animation-delay:8.948s;animation-name:az}
+.d2{animation-delay:8.973s;animation-name:a4}
+@keyframes bk{0.266376%{visibility:visible}}
+.d3{animation-delay:8.996s;animation-name:bk}
+@keyframes bl{0.136603%{visibility:visible}}
+.d4{animation-delay:9.035s;animation-name:bl}
+.d5{animation-delay:9.055s;animation-name:bl}
+.d6{animation-delay:9.075s;animation-name:aw}
+.d7{animation-delay:9.11s;animation-name:a1}
+.d8{animation-delay:9.128s;animation-name:ax}
+@keyframes d9{0.198074%{visibility:visible}}
+.ea{animation-delay:9.168s;animation-name:d9}
+@keyframes eb{1.065501%{visibility:visible}}
+.as{animation-delay:9.197s;animation-name:eb}
+@keyframes at{63.882248%{visibility:hidden}to{visibility:visible}}
 .at{animation-name:at}
-@keyframes ed{82.10006%{visibility:hidden}to{visibility:visible}}
-.ed{animation-name:ed}
-.ee{animation-delay:1.219s;animation-name:a6}
-.ef{animation-delay:1.242s;animation-name:a2}
-.eg{animation-delay:1.651s;animation-name:bd}
-.eh{animation-delay:1.679s;animation-name:a3}
-.ei{animation-delay:1.944s;animation-name:a4}
-@keyframes ej{1.089974%{visibility:visible}}
-.ek{animation-delay:1.975s;animation-name:ej}
-@keyframes el{0.013541%{visibility:visible}}
-.em{animation-delay:2.136s;animation-name:el}
-@keyframes en{17.845779%{visibility:visible}}
-.eo{animation-delay:2.139s;animation-name:en}
-.ep{animation-delay:4.899s;animation-name:ay}
-.eq{animation-delay:4.933s;animation-name:bb}
-.er{animation-delay:5.041s;animation-name:ay}
-.es{animation-delay:5.075s;animation-name:bi}
-.et{animation-delay:5.29s;animation-name:a9}
-.eu{animation-delay:5.325s;animation-name:aw}
-.ev{animation-delay:5.58s;animation-name:a5}
-.ew{animation-delay:5.613s;animation-name:a4}
-.ex{animation-delay:5.753s;animation-name:ax}
-.ey{animation-delay:5.783s;animation-name:bm}
-@keyframes ez{17.89994%{visibility:visible}}
-.e0{animation-delay:5.94s;animation-name:ez}
-.e1{animation-delay:8.668s;animation-name:aw}
-.e2{animation-delay:8.692s;animation-name:a6}
-.e3{animation-delay:8.916s;animation-name:a3}
-.e4{animation-delay:8.956s;animation-name:a2}
-@keyframes e5{18.962833%{visibility:visible}}
-.e6{animation-delay:9.326s;animation-name:e5}
+@keyframes ec{81.941124%{visibility:hidden}to{visibility:visible}}
+.ec{animation-name:ec}
+.ed{animation-delay:1.223s;animation-name:a2}
+.ee{animation-delay:1.245s;animation-name:a0}
+.ef{animation-delay:1.615s;animation-name:bd}
+.eg{animation-delay:1.641s;animation-name:az}
+@keyframes eh{0.211735%{visibility:visible}}
+.ei{animation-delay:1.908s;animation-name:eh}
+@keyframes ej{1.106482%{visibility:visible}}
+.ek{animation-delay:1.939s;animation-name:ej}
+@keyframes el{0.013661%{visibility:visible}}
+.em{animation-delay:2.101s;animation-name:el}
+@keyframes en{18.004235%{visibility:visible}}
+.eo{animation-delay:2.104s;animation-name:en}
+.ep{animation-delay:4.867s;animation-name:bb}
+.eq{animation-delay:4.911s;animation-name:bj}
+@keyframes er{0.252715%{visibility:visible}}
+.es{animation-delay:4.983s;animation-name:er}
+.et{animation-delay:5.02s;animation-name:a9}
+.eu{animation-delay:5.228s;animation-name:a1}
+.ev{animation-delay:5.246s;animation-name:a0}
+.ew{animation-delay:5.517s;animation-name:a5}
+.ex{animation-delay:5.547s;animation-name:a7}
+.ey{animation-delay:5.654s;animation-name:a9}
+@keyframes ez{1.072332%{visibility:visible}}
+.e0{animation-delay:5.686s;animation-name:ez}
+@keyframes e1{18.052046%{visibility:visible}}
+.e2{animation-delay:5.843s;animation-name:e1}
+.e3{animation-delay:8.576s;animation-name:ay}
+.e4{animation-delay:8.591s;animation-name:a4}
+.e5{animation-delay:8.802s;animation-name:ax}
+.e6{animation-delay:8.842s;animation-name:bk}
+@keyframes e7{19.124377%{visibility:visible}}
+.e8{animation-delay:9.197s;animation-name:e7}
 .av{visibility:visible}
 </style>
 <defs>
@@ -230,32 +232,32 @@ text { dominant-baseline: alphabetic; }
 <path class="l av viewport-chrome-0" d="M 797.6,24.5 L 807.6,34.5 M 807.6,24.5 L 797.6,34.5" fill="none" stroke="#d6d6d6" stroke-width="1"/>
 <g mask="url(#viewport-mask)" fill="#d0d0d0">
 <rect class="bg l av viewport-bg-0" x="12" y="46" width="813.6" height="528" fill="#282c34"/>
-<g class="l bn"><text x="22" y="62.8">$</text><use href="#c" x="41.84" y="50"/></g>
-<g class="l bo"><text x="22 41.84" y="62.8">$b</text><use href="#c" x="51.76" y="50"/></g>
-<g class="l bp"><text x="22 41.84 51.76" y="62.8">$ba</text><use href="#c" x="61.68" y="50"/></g>
-<text class="l br" x="22 41.84 51.76 61.68" y="62.8">$bat</text>
-<g class="l bs a"><text x="22" textLength="69.44">$ bat -</text><use href="#c" x="91.44" y="-12.8"/></g>
-<g class="l bt a"><text x="22" textLength="79.36">$ bat --</text><use href="#c" x="101.36" y="-12.8"/></g>
-<g class="l bu a"><text x="22" textLength="89.28">$ bat --p</text><use href="#c" x="111.28" y="-12.8"/></g>
+<g class="l bm"><text x="22" y="62.8">$</text><use href="#c" x="41.84" y="50"/></g>
+<g class="l bn"><text x="22 41.84" y="62.8">$b</text><use href="#c" x="51.76" y="50"/></g>
+<g class="l bo"><text x="22 41.84 51.76" y="62.8">$ba</text><use href="#c" x="61.68" y="50"/></g>
+<text class="l bq" x="22 41.84 51.76 61.68" y="62.8">$bat</text>
+<g class="l br a"><text x="22" textLength="69.44">$ bat -</text><use href="#c" x="91.44" y="-12.8"/></g>
+<g class="l bs a"><text x="22" textLength="79.36">$ bat --</text><use href="#c" x="101.36" y="-12.8"/></g>
+<g class="l bt a"><text x="22" textLength="89.28">$ bat --p</text><use href="#c" x="111.28" y="-12.8"/></g>
 <g class="l bv a"><text x="22" textLength="99.2">$ bat --pa</text><use href="#c" x="121.2" y="-12.8"/></g>
-<g class="l bx a"><text x="22" textLength="109.12">$ bat --pag</text><use href="#c" x="131.12" y="-12.8"/></g>
-<g class="l by a"><text x="22" textLength="119.04">$ bat --pagi</text><use href="#c" x="141.04" y="-12.8"/></g>
-<g class="l bz a"><text x="22" textLength="128.96">$ bat --pagin</text><use href="#c" x="150.96" y="-12.8"/></g>
-<g class="l b0 a"><text x="22" textLength="138.88">$ bat --paging</text><use href="#c" x="160.88" y="-12.8"/></g>
-<g class="l b1 a"><text x="22" textLength="148.8">$ bat --paging=</text><use href="#c" x="170.8" y="-12.8"/></g>
-<g class="l b2 a"><text x="22" textLength="158.72">$ bat --paging=n</text><use href="#c" x="180.72" y="-12.8"/></g>
-<g class="l b3 a"><text x="22" textLength="168.64">$ bat --paging=ne</text><use href="#c" x="190.64" y="-12.8"/></g>
-<g class="l b4 a"><text x="22" textLength="178.56">$ bat --paging=nev</text><use href="#c" x="200.56" y="-12.8"/></g>
-<g class="l b5 a"><text x="22" textLength="188.48">$ bat --paging=neve</text><use href="#c" x="210.48" y="-12.8"/></g>
-<text class="l b7 a" x="22" textLength="198.4">$ bat --paging=never</text>
-<g class="l b8 a"><text x="22" textLength="218.24">$ bat --paging=never g</text><use href="#c" x="240.24" y="-12.8"/></g>
-<g class="l b9 a"><text x="22" textLength="228.16">$ bat --paging=never gr</text><use href="#c" x="250.16" y="-12.8"/></g>
-<g class="l ca a"><text x="22" textLength="238.08">$ bat --paging=never gre</text><use href="#c" x="260.08" y="-12.8"/></g>
-<g class="l cb a"><text x="22" textLength="248">$ bat --paging=never gree</text><use href="#c" x="270" y="-12.8"/></g>
-<g class="l cc a"><text x="22" textLength="257.92">$ bat --paging=never greet</text><use href="#c" x="279.92" y="-12.8"/></g>
-<g class="l cd a"><text x="22" textLength="267.84">$ bat --paging=never greet.</text><use href="#c" x="289.84" y="-12.8"/></g>
-<g class="l ce a"><text x="22" textLength="277.76">$ bat --paging=never greet.p</text><use href="#c" x="299.76" y="-12.8"/></g>
-<text class="l cg a" x="22" textLength="287.68">$ bat --paging=never greet.py</text>
+<g class="l bw a"><text x="22" textLength="109.12">$ bat --pag</text><use href="#c" x="131.12" y="-12.8"/></g>
+<g class="l bx a"><text x="22" textLength="119.04">$ bat --pagi</text><use href="#c" x="141.04" y="-12.8"/></g>
+<g class="l by a"><text x="22" textLength="128.96">$ bat --pagin</text><use href="#c" x="150.96" y="-12.8"/></g>
+<g class="l bz a"><text x="22" textLength="138.88">$ bat --paging</text><use href="#c" x="160.88" y="-12.8"/></g>
+<g class="l b0 a"><text x="22" textLength="148.8">$ bat --paging=</text><use href="#c" x="170.8" y="-12.8"/></g>
+<g class="l b1 a"><text x="22" textLength="158.72">$ bat --paging=n</text><use href="#c" x="180.72" y="-12.8"/></g>
+<g class="l b2 a"><text x="22" textLength="168.64">$ bat --paging=ne</text><use href="#c" x="190.64" y="-12.8"/></g>
+<g class="l b3 a"><text x="22" textLength="178.56">$ bat --paging=nev</text><use href="#c" x="200.56" y="-12.8"/></g>
+<g class="l b4 a"><text x="22" textLength="188.48">$ bat --paging=neve</text><use href="#c" x="210.48" y="-12.8"/></g>
+<text class="l b5 a" x="22" textLength="198.4">$ bat --paging=never</text>
+<g class="l b6 a"><text x="22" textLength="218.24">$ bat --paging=never g</text><use href="#c" x="240.24" y="-12.8"/></g>
+<g class="l b7 a"><text x="22" textLength="228.16">$ bat --paging=never gr</text><use href="#c" x="250.16" y="-12.8"/></g>
+<g class="l b8 a"><text x="22" textLength="238.08">$ bat --paging=never gre</text><use href="#c" x="260.08" y="-12.8"/></g>
+<g class="l b9 a"><text x="22" textLength="248">$ bat --paging=never gree</text><use href="#c" x="270" y="-12.8"/></g>
+<g class="l ca a"><text x="22" textLength="257.92">$ bat --paging=never greet</text><use href="#c" x="279.92" y="-12.8"/></g>
+<g class="l cb a"><text x="22" textLength="267.84">$ bat --paging=never greet.</text><use href="#c" x="289.84" y="-12.8"/></g>
+<g class="l cc a"><text x="22" textLength="277.76">$ bat --paging=never greet.p</text><use href="#c" x="299.76" y="-12.8"/></g>
+<text class="l ce a" x="22" textLength="287.68">$ bat --paging=never greet.py</text>
 <text class="l bc b" x="22" y="82.8" textLength="793.6">───────┬────────────────────────────────────────────────────────────────────────</text>
 <g class="l bc"><text class="b" x="91.44" y="102.8" textLength="9.92">│</text><text x="111.28" y="102.8" textLength="49.6">File:</text><text class="d" x="170.8" y="102.8" font-weight="bold" textLength="79.36">greet.py</text></g>
 <text class="l bc b" x="22" y="122.8" textLength="793.6">───────┼────────────────────────────────────────────────────────────────────────</text>
@@ -275,36 +277,36 @@ text { dominant-baseline: alphabetic; }
 <g class="l au s"><g id="r42"><text class="b" x="41.84 51.76 91.44">14│</text><text class="e" x="111.28 121.2 230.32 240.24">if==</text><text class="f" x="141.04 150.96 160.88 170.8 180.72 190.64 200.56 210.48 359.28">__name__:</text><text class="o" x="260.08 270 279.92 289.84 299.76 309.68 319.6 329.52 339.44 349.36">&quot;__main__&quot;</text></g></g>
 <g class="l au t"><g id="r43"><text class="b" x="41.84 51.76 91.44">15│</text><text class="e" x="150.96 160.88 170.8 240.24 250.16">forin</text><text class="f" x="190.64 200.56 210.48 220.4 270 389.04 508.08 518">name(,):</text><text class="o" x="279.92 289.84 299.76 309.68 319.6 329.52 339.44 349.36 359.28 369.2 379.12 408.88 418.8 428.72 438.64 448.56 458.48 468.4 478.32 488.24 498.16">&quot;scenetake&quot;&quot;terminal&quot;</text></g></g>
 <g class="l au u"><g id="r44"><text class="b" x="41.84" textLength="19.84">16</text><text class="b" x="91.44" textLength="9.92">│</text><text class="g" x="190.64" textLength="49.6">print</text><text class="f" x="240.24" textLength="148.8">(Greeting(name,</text><text class="m" x="398.96" textLength="69.44">excited</text><text class="e" x="468.4" textLength="9.92">=</text><text class="j" x="478.32" textLength="39.68">True</text><text class="f" x="518" textLength="109.12">).render())</text></g></g>
-<g class="l ck"><text class="b" x="22" y="462.8" textLength="277.76">───────┴────────────────────</text><use href="#c" x="299.76" y="450"/></g>
-<g class="l cm"><g id="r46"><text class="b" x="22" y="462.8" textLength="793.6">───────┴────────────────────────────────────────────────────────────────────────</text></g></g>
-<g class="l cn"><text x="22" y="482.8">$</text><use href="#c" x="41.84" y="470"/></g>
-<g class="l co"><text x="22 41.84" y="482.8">$g</text><use href="#c" x="51.76" y="470"/></g>
-<g class="l cp"><text x="22 41.84 51.76" y="482.8">$gi</text><use href="#c" x="61.68" y="470"/></g>
-<text class="l cr" x="22 41.84 51.76 61.68" y="482.8">$git</text>
-<g class="l cs v"><text x="22" textLength="69.44">$ git l</text><use href="#c" x="91.44" y="-12.8"/></g>
-<g class="l ct v"><text x="22" textLength="79.36">$ git lo</text><use href="#c" x="101.36" y="-12.8"/></g>
-<text class="l cv v" x="22" textLength="89.28">$ git log</text>
-<g class="l cw v"><text x="22" textLength="109.12">$ git log -</text><use href="#c" x="131.12" y="-12.8"/></g>
-<g class="l cx v"><text x="22" textLength="119.04">$ git log --</text><use href="#c" x="141.04" y="-12.8"/></g>
-<g class="l cz v"><text x="22" textLength="128.96">$ git log --g</text><use href="#c" x="150.96" y="-12.8"/></g>
-<g class="l c0 v"><text x="22" textLength="138.88">$ git log --gr</text><use href="#c" x="160.88" y="-12.8"/></g>
-<g class="l c1 v"><text x="22" textLength="148.8">$ git log --gra</text><use href="#c" x="170.8" y="-12.8"/></g>
-<g class="l c2 v"><text x="22" textLength="158.72">$ git log --grap</text><use href="#c" x="180.72" y="-12.8"/></g>
-<text class="l c4 v" x="22" textLength="168.64">$ git log --graph</text>
-<g class="l c5 v"><text x="22" textLength="188.48">$ git log --graph -</text><use href="#c" x="210.48" y="-12.8"/></g>
-<g class="l c6 v"><text x="22" textLength="198.4">$ git log --graph --</text><use href="#c" x="220.4" y="-12.8"/></g>
-<g class="l c7 v"><text x="22" textLength="208.32">$ git log --graph --o</text><use href="#c" x="230.32" y="-12.8"/></g>
-<g class="l c8 v"><text x="22" textLength="218.24">$ git log --graph --on</text><use href="#c" x="240.24" y="-12.8"/></g>
-<g class="l c9 v"><text x="22" textLength="228.16">$ git log --graph --one</text><use href="#c" x="250.16" y="-12.8"/></g>
-<g class="l da v"><text x="22" textLength="238.08">$ git log --graph --onel</text><use href="#c" x="260.08" y="-12.8"/></g>
-<g class="l db v"><text x="22" textLength="248">$ git log --graph --oneli</text><use href="#c" x="270" y="-12.8"/></g>
-<g class="l dc v"><text x="22" textLength="257.92">$ git log --graph --onelin</text><use href="#c" x="279.92" y="-12.8"/></g>
-<text class="l de v" x="22" textLength="267.84">$ git log --graph --oneline</text>
-<g class="l df v"><text x="22" textLength="287.68">$ git log --graph --oneline -</text><use href="#c" x="309.68" y="-12.8"/></g>
-<g class="l dg v"><text x="22" textLength="297.6">$ git log --graph --oneline --</text><use href="#c" x="319.6" y="-12.8"/></g>
-<g class="l dh v"><text x="22" textLength="307.52">$ git log --graph --oneline --a</text><use href="#c" x="329.52" y="-12.8"/></g>
-<g class="l di v"><text x="22" textLength="317.44">$ git log --graph --oneline --al</text><use href="#c" x="339.44" y="-12.8"/></g>
-<g class="l dk v"><g id="r74"><text x="22" textLength="327.36">$ git log --graph --oneline --all</text></g></g>
+<g class="l ci"><text class="b" x="22" y="462.8" textLength="277.76">───────┴────────────────────</text><use href="#c" x="299.76" y="450"/></g>
+<g class="l ck"><g id="r46"><text class="b" x="22" y="462.8" textLength="793.6">───────┴────────────────────────────────────────────────────────────────────────</text></g></g>
+<g class="l cl"><text x="22" y="482.8">$</text><use href="#c" x="41.84" y="470"/></g>
+<g class="l cm"><text x="22 41.84" y="482.8">$g</text><use href="#c" x="51.76" y="470"/></g>
+<g class="l cn"><text x="22 41.84 51.76" y="482.8">$gi</text><use href="#c" x="61.68" y="470"/></g>
+<text class="l cp" x="22 41.84 51.76 61.68" y="482.8">$git</text>
+<g class="l cq v"><text x="22" textLength="69.44">$ git l</text><use href="#c" x="91.44" y="-12.8"/></g>
+<g class="l cr v"><text x="22" textLength="79.36">$ git lo</text><use href="#c" x="101.36" y="-12.8"/></g>
+<text class="l ct v" x="22" textLength="89.28">$ git log</text>
+<g class="l cu v"><text x="22" textLength="109.12">$ git log -</text><use href="#c" x="131.12" y="-12.8"/></g>
+<g class="l cv v"><text x="22" textLength="119.04">$ git log --</text><use href="#c" x="141.04" y="-12.8"/></g>
+<g class="l cw v"><text x="22" textLength="128.96">$ git log --g</text><use href="#c" x="150.96" y="-12.8"/></g>
+<g class="l cx v"><text x="22" textLength="138.88">$ git log --gr</text><use href="#c" x="160.88" y="-12.8"/></g>
+<g class="l cz v"><text x="22" textLength="148.8">$ git log --gra</text><use href="#c" x="170.8" y="-12.8"/></g>
+<g class="l c0 v"><text x="22" textLength="158.72">$ git log --grap</text><use href="#c" x="180.72" y="-12.8"/></g>
+<text class="l c1 v" x="22" textLength="168.64">$ git log --graph</text>
+<g class="l c2 v"><text x="22" textLength="188.48">$ git log --graph -</text><use href="#c" x="210.48" y="-12.8"/></g>
+<g class="l c3 v"><text x="22" textLength="198.4">$ git log --graph --</text><use href="#c" x="220.4" y="-12.8"/></g>
+<g class="l c4 v"><text x="22" textLength="208.32">$ git log --graph --o</text><use href="#c" x="230.32" y="-12.8"/></g>
+<g class="l c5 v"><text x="22" textLength="218.24">$ git log --graph --on</text><use href="#c" x="240.24" y="-12.8"/></g>
+<g class="l c6 v"><text x="22" textLength="228.16">$ git log --graph --one</text><use href="#c" x="250.16" y="-12.8"/></g>
+<g class="l c7 v"><text x="22" textLength="238.08">$ git log --graph --onel</text><use href="#c" x="260.08" y="-12.8"/></g>
+<g class="l c8 v"><text x="22" textLength="248">$ git log --graph --oneli</text><use href="#c" x="270" y="-12.8"/></g>
+<g class="l c9 v"><text x="22" textLength="257.92">$ git log --graph --onelin</text><use href="#c" x="279.92" y="-12.8"/></g>
+<text class="l db v" x="22" textLength="267.84">$ git log --graph --oneline</text>
+<g class="l dd v"><text x="22" textLength="287.68">$ git log --graph --oneline -</text><use href="#c" x="309.68" y="-12.8"/></g>
+<g class="l df v"><text x="22" textLength="297.6">$ git log --graph --oneline --</text><use href="#c" x="319.6" y="-12.8"/></g>
+<g class="l dg v"><text x="22" textLength="307.52">$ git log --graph --oneline --a</text><use href="#c" x="329.52" y="-12.8"/></g>
+<g class="l dh v"><text x="22" textLength="317.44">$ git log --graph --oneline --al</text><use href="#c" x="339.44" y="-12.8"/></g>
+<g class="l dj v"><g id="r74"><text x="22" textLength="327.36">$ git log --graph --oneline --all</text></g></g>
 <text class="l ar a b" x="51.76 91.44">3│</text>
 <use href="#r32" y="-120" class="l ar"/>
 <use href="#r33" class="l ar w"/>
@@ -330,29 +332,29 @@ text { dominant-baseline: alphabetic; }
 <text class="l ar ac" x="22 31.92" y="502.8">|/</text>
 <g class="l ar"><g id="r98"><text x="22" y="522.8" textLength="9.92">*</text><text class="ac" x="41.84" y="522.8" textLength="69.44">6869725</text><text x="121.2" y="522.8" textLength="238.08">Add package.json scripts</text></g></g>
 <g class="l ar"><g id="r99"><text x="22" y="542.8" textLength="9.92">*</text><text class="ac" x="41.84" y="542.8" textLength="69.44">497b3a3</text><text x="121.2" y="542.8" textLength="188.48">Add greeting script</text></g></g>
-<g class="l dm"><text x="22" y="562.8">$</text><use href="#c" x="41.84" y="550"/></g>
-<g class="l dn"><text x="22 41.84" y="562.8">$j</text><use href="#c" x="51.76" y="550"/></g>
-<text class="l dp" x="22 41.84 51.76" y="562.8">$jq</text>
-<g class="l dq"><text x="22 41.84 51.76 71.6" y="562.8">$jq.</text><use href="#c" x="81.52" y="550"/></g>
-<g class="l dr"><text x="22" y="562.8" textLength="69.44">$ jq .s</text><use href="#c" x="91.44" y="550"/></g>
-<g class="l ds aj"><text x="22" textLength="79.36">$ jq .sc</text><use href="#c" x="101.36" y="-12.8"/></g>
-<g class="l dt aj"><text x="22" textLength="89.28">$ jq .scr</text><use href="#c" x="111.28" y="-12.8"/></g>
-<g class="l du aj"><text x="22" textLength="99.2">$ jq .scri</text><use href="#c" x="121.2" y="-12.8"/></g>
-<g class="l dv aj"><text x="22" textLength="109.12">$ jq .scrip</text><use href="#c" x="131.12" y="-12.8"/></g>
-<g class="l dw aj"><text x="22" textLength="119.04">$ jq .script</text><use href="#c" x="141.04" y="-12.8"/></g>
-<text class="l dy aj" x="22" textLength="128.96">$ jq .scripts</text>
-<g class="l d0 aj"><text x="22" textLength="148.8">$ jq .scripts p</text><use href="#c" x="170.8" y="-12.8"/></g>
-<g class="l d1 aj"><text x="22" textLength="158.72">$ jq .scripts pa</text><use href="#c" x="180.72" y="-12.8"/></g>
-<g class="l d3 aj"><text x="22" textLength="168.64">$ jq .scripts pac</text><use href="#c" x="190.64" y="-12.8"/></g>
-<g class="l d4 aj"><text x="22" textLength="178.56">$ jq .scripts pack</text><use href="#c" x="200.56" y="-12.8"/></g>
-<g class="l d5 aj"><text x="22" textLength="188.48">$ jq .scripts packa</text><use href="#c" x="210.48" y="-12.8"/></g>
-<g class="l d6 aj"><text x="22" textLength="198.4">$ jq .scripts packag</text><use href="#c" x="220.4" y="-12.8"/></g>
-<g class="l d7 aj"><text x="22" textLength="208.32">$ jq .scripts package</text><use href="#c" x="230.32" y="-12.8"/></g>
-<g class="l d8 aj"><text x="22" textLength="218.24">$ jq .scripts package.</text><use href="#c" x="240.24" y="-12.8"/></g>
-<g class="l d9 aj"><text x="22" textLength="228.16">$ jq .scripts package.j</text><use href="#c" x="250.16" y="-12.8"/></g>
-<g class="l ea aj"><text x="22" textLength="238.08">$ jq .scripts package.js</text><use href="#c" x="260.08" y="-12.8"/></g>
-<g class="l eb aj"><text x="22" textLength="248">$ jq .scripts package.jso</text><use href="#c" x="270" y="-12.8"/></g>
-<g class="l ec aj"><g id="r122"><text x="22" textLength="257.92">$ jq .scripts package.json</text></g><use href="#c" x="279.92" y="-12.8"/></g>
+<g class="l dl"><text x="22" y="562.8">$</text><use href="#c" x="41.84" y="550"/></g>
+<g class="l dm"><text x="22 41.84" y="562.8">$j</text><use href="#c" x="51.76" y="550"/></g>
+<text class="l do" x="22 41.84 51.76" y="562.8">$jq</text>
+<g class="l dp"><text x="22 41.84 51.76 71.6" y="562.8">$jq.</text><use href="#c" x="81.52" y="550"/></g>
+<g class="l dq"><text x="22" y="562.8" textLength="69.44">$ jq .s</text><use href="#c" x="91.44" y="550"/></g>
+<g class="l dr aj"><text x="22" textLength="79.36">$ jq .sc</text><use href="#c" x="101.36" y="-12.8"/></g>
+<g class="l ds aj"><text x="22" textLength="89.28">$ jq .scr</text><use href="#c" x="111.28" y="-12.8"/></g>
+<g class="l dt aj"><text x="22" textLength="99.2">$ jq .scri</text><use href="#c" x="121.2" y="-12.8"/></g>
+<g class="l du aj"><text x="22" textLength="109.12">$ jq .scrip</text><use href="#c" x="131.12" y="-12.8"/></g>
+<g class="l dv aj"><text x="22" textLength="119.04">$ jq .script</text><use href="#c" x="141.04" y="-12.8"/></g>
+<text class="l dx aj" x="22" textLength="128.96">$ jq .scripts</text>
+<g class="l dy aj"><text x="22" textLength="148.8">$ jq .scripts p</text><use href="#c" x="170.8" y="-12.8"/></g>
+<g class="l dz aj"><text x="22" textLength="158.72">$ jq .scripts pa</text><use href="#c" x="180.72" y="-12.8"/></g>
+<g class="l d0 aj"><text x="22" textLength="168.64">$ jq .scripts pac</text><use href="#c" x="190.64" y="-12.8"/></g>
+<g class="l d1 aj"><text x="22" textLength="178.56">$ jq .scripts pack</text><use href="#c" x="200.56" y="-12.8"/></g>
+<g class="l d2 aj"><text x="22" textLength="188.48">$ jq .scripts packa</text><use href="#c" x="210.48" y="-12.8"/></g>
+<g class="l d3 aj"><text x="22" textLength="198.4">$ jq .scripts packag</text><use href="#c" x="220.4" y="-12.8"/></g>
+<g class="l d4 aj"><text x="22" textLength="208.32">$ jq .scripts package</text><use href="#c" x="230.32" y="-12.8"/></g>
+<g class="l d5 aj"><text x="22" textLength="218.24">$ jq .scripts package.</text><use href="#c" x="240.24" y="-12.8"/></g>
+<g class="l d6 aj"><text x="22" textLength="228.16">$ jq .scripts package.j</text><use href="#c" x="250.16" y="-12.8"/></g>
+<g class="l d7 aj"><text x="22" textLength="238.08">$ jq .scripts package.js</text><use href="#c" x="260.08" y="-12.8"/></g>
+<g class="l d8 aj"><text x="22" textLength="248">$ jq .scripts package.jso</text><use href="#c" x="270" y="-12.8"/></g>
+<g class="l ea aj"><g id="r122"><text x="22" textLength="257.92">$ jq .scripts package.json</text></g><use href="#c" x="279.92" y="-12.8"/></g>
 <use href="#r32" y="-140" class="l as"/>
 <use href="#r33" class="l as ak"/>
 <use href="#r34" y="-140" class="l as"/>
@@ -403,30 +405,30 @@ text { dominant-baseline: alphabetic; }
 <g class="l at ap"><text class="ao" x="41.84" font-weight="bold" textLength="59.52">&quot;demo&quot;</text><text class="d" x="101.36" font-weight="bold" textLength="9.92">:</text><text class="ah" x="121.2" textLength="337.28">&quot;scenetake --format svg demo.yaml&quot;</text><text class="d" x="458.48" font-weight="bold" textLength="9.92">,</text></g>
 <g class="l at aq"><text class="ao" x="41.84" font-weight="bold" textLength="59.52">&quot;test&quot;</text><text class="d" x="101.36" font-weight="bold" textLength="9.92">:</text><text class="ah" x="121.2" textLength="178.56">&quot;python -m pytest&quot;</text></g>
 <text class="l at an d" x="22" font-weight="bold">}</text>
-<g class="l ed aj"><text x="22">$</text><use href="#c" x="41.84" y="-12.8"/></g>
-<use href="#c" x="71.6" y="50" class="l ee"/>
-<use href="#c" x="81.52" y="50" class="l ef"/>
-<use href="#c" x="220.4" y="50" class="l eg"/>
-<use href="#c" x="230.32" y="50" class="l eh"/>
+<g class="l ec aj"><text x="22">$</text><use href="#c" x="41.84" y="-12.8"/></g>
+<use href="#c" x="71.6" y="50" class="l ed"/>
+<use href="#c" x="81.52" y="50" class="l ee"/>
+<use href="#c" x="220.4" y="50" class="l ef"/>
+<use href="#c" x="230.32" y="50" class="l eg"/>
 <use href="#c" x="309.68" y="50" class="l ei"/>
 <use href="#c" x="22" y="70" class="l ek"/>
 <use href="#c" x="22" y="130" class="l em"/>
 <use href="#c" x="22" y="470" class="l eo"/>
 <use href="#c" x="71.6" y="470" class="l ep"/>
 <use href="#c" x="81.52" y="470" class="l eq"/>
-<use href="#c" x="111.28" y="470" class="l er"/>
-<use href="#c" x="121.2" y="470" class="l es"/>
-<use href="#c" x="190.64" y="470" class="l et"/>
-<use href="#c" x="200.56" y="470" class="l eu"/>
-<use href="#c" x="289.84" y="470" class="l ev"/>
-<use href="#c" x="299.76" y="470" class="l ew"/>
-<use href="#c" x="349.36" y="470" class="l ex"/>
-<use href="#c" x="22" y="490" class="l ey"/>
-<use href="#c" x="22" y="550" class="l e0"/>
-<use href="#c" x="61.68" y="550" class="l e1"/>
-<use href="#c" x="71.6" y="550" class="l e2"/>
-<use href="#c" x="150.96" y="550" class="l e3"/>
-<use href="#c" x="160.88" y="550" class="l e4"/>
-<use href="#c" x="22" y="550" class="l e6"/>
+<use href="#c" x="111.28" y="470" class="l es"/>
+<use href="#c" x="121.2" y="470" class="l et"/>
+<use href="#c" x="190.64" y="470" class="l eu"/>
+<use href="#c" x="200.56" y="470" class="l ev"/>
+<use href="#c" x="289.84" y="470" class="l ew"/>
+<use href="#c" x="299.76" y="470" class="l ex"/>
+<use href="#c" x="349.36" y="470" class="l ey"/>
+<use href="#c" x="22" y="490" class="l e0"/>
+<use href="#c" x="22" y="550" class="l e2"/>
+<use href="#c" x="61.68" y="550" class="l e3"/>
+<use href="#c" x="71.6" y="550" class="l e4"/>
+<use href="#c" x="150.96" y="550" class="l e5"/>
+<use href="#c" x="160.88" y="550" class="l e6"/>
+<use href="#c" x="22" y="550" class="l e8"/>
 </g>
 </svg>

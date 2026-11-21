@@ -745,7 +745,7 @@ internal static class ShellStateCases
           - echo after
         """;
         var started = new List<string>();
-        var (events, failure) = GenerateAsync(ParseScenario(yaml), 1, new GenerateOptions { LogRunning = false }, step =>
+        var (events, failure) = GenerateAsync(ParseScenario(yaml), new GenerateOptions { LogRunning = false }, step =>
         {
             started.Add($"{step.Command.Cmd}:{step.Show}");
             return Task.FromResult(step.Show == StepShow.None
@@ -818,7 +818,7 @@ internal static class ShellStateCases
           - curl localhost
         """;
         var started = new List<StepStart>();
-        var (events, failure) = GenerateAsync(ParseScenario(yaml), 1, new GenerateOptions { LogRunning = false }, step =>
+        var (events, failure) = GenerateAsync(ParseScenario(yaml), new GenerateOptions { LogRunning = false }, step =>
         {
             started.Add(step);
             return Task.FromResult(step.Background
@@ -848,7 +848,7 @@ internal static class ShellStateCases
           - curl localhost
         """;
         var started = new List<string>();
-        var (_, failure) = GenerateAsync(ParseScenario(yaml), 1, new GenerateOptions { LogRunning = false }, step =>
+        var (_, failure) = GenerateAsync(ParseScenario(yaml), new GenerateOptions { LogRunning = false }, step =>
         {
             started.Add(step.Command.Cmd);
             return Task.FromResult(step.Background

@@ -200,7 +200,7 @@ internal static class RerecordCases
         var masker = SecretMasker.ForScenario(scenario, environment: null);
         var result = new Rerecorder(previous, masker);
         var options = new GenerateOptions { LogRunning = false, Masker = masker, Rerecorder = result, TrackPtyCursor = trackCursor };
-        var (events, failure) = GenerateAsync(scenario, 7, options, step => Task.FromResult(run(step))).GetAwaiter().GetResult();
+        var (events, failure) = GenerateAsync(scenario, options, step => Task.FromResult(run(step))).GetAwaiter().GetResult();
         if (failure is not null)
             throw new InvalidOperationException($"step {failure.Number} failed");
 
@@ -391,9 +391,9 @@ internal static class RerecordCases
     {
         var plain = new List<CastEvent>();
         var scenario = ParseScenario(ThreeSteps);
-        (plain, _) = GenerateAsync(scenario, 7, new GenerateOptions { LogRunning = false }, step => Task.FromResult(ThreeStepsOutput(step, 0))).GetAwaiter().GetResult();
+        (plain, _) = GenerateAsync(scenario, new GenerateOptions { LogRunning = false }, step => Task.FromResult(ThreeStepsOutput(step, 0))).GetAwaiter().GetResult();
         var result = new Rerecorder(previous: null, masker: null);
-        var (events, _) = GenerateAsync(scenario, 7, new GenerateOptions { LogRunning = false, Rerecorder = result }, step => Task.FromResult(ThreeStepsOutput(step, 0))).GetAwaiter().GetResult();
+        var (events, _) = GenerateAsync(scenario, new GenerateOptions { LogRunning = false, Rerecorder = result }, step => Task.FromResult(ThreeStepsOutput(step, 0))).GetAwaiter().GetResult();
         return Expect(events.Count == plain.Count && events.Zip(plain).All(static pair => pair.First.Time == pair.Second.Time), "the events changed")
             & Expect(result.Added.Count == 3 && result.KeepMissing.Count == 0, $"added {result.Added.Count}");
     }

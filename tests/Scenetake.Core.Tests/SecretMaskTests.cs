@@ -482,7 +482,7 @@ internal static class SecretMaskCases
     {
         var scenario = ParseScenario("settings:\n  mask:\n    - hunter2secret\nsteps:\n" + step);
         var options = new GenerateOptions { LogRunning = false, Masker = SecretMasker.ForScenario(scenario, null) };
-        var (events, _) = GenerateAsync(scenario, 1, options, _ => Task.FromResult(execution)).GetAwaiter().GetResult();
+        var (events, _) = GenerateAsync(scenario, options, _ => Task.FromResult(execution)).GetAwaiter().GetResult();
         return string.Concat(CastOscFilter.RemovePrivateSequences(events).Select(static ev => ev.HasUtf8Output ? Encoding.UTF8.GetString(ev.Utf8Output.Span) : ev.Data));
     }
 
@@ -824,7 +824,7 @@ internal static class SecretMaskCases
         var recorded = new List<RecordedStep>();
         var masker = SecretMasker.ForScenario(scenario, null);
         var options = new GenerateOptions { LogRunning = false, Record = recorded, Masker = masker };
-        var (events, _) = GenerateAsync(scenario, 1, options, step => Task.FromResult(CommandExecution.FromPipeStream(
+        var (events, _) = GenerateAsync(scenario, options, step => Task.FromResult(CommandExecution.FromPipeStream(
             "welcome, hunter2x\n", "", 0, [new PipeStreamChunk(TimeSpan.Zero, false, "welcome, hunter2x\n")]))).GetAwaiter().GetResult();
 
         var shown = string.Concat(events.Select(static ev => ev.Kind == CastEventKind.Marker ? $"[{ev.Data}]" : ev.HasUtf8Output ? Encoding.UTF8.GetString(ev.Utf8Output.Span) : ev.Data));
@@ -850,7 +850,7 @@ internal static class SecretMaskCases
         var scenario = ParseScenario(yaml);
         var recorded = new List<RecordedStep>();
         var recordingMasker = SecretMasker.ForScenario(scenario, null)!;
-        var (recording, _) = GenerateAsync(scenario, 1, new GenerateOptions { LogRunning = false, Record = recorded, Masker = recordingMasker }, step =>
+        var (recording, _) = GenerateAsync(scenario, new GenerateOptions { LogRunning = false, Record = recorded, Masker = recordingMasker }, step =>
         {
             if (step.Show == StepShow.None)
             {
@@ -868,7 +868,7 @@ internal static class SecretMaskCases
         var outputs = new StepOutputs { Scenetake = "test", Os = "linux", Shell = "bash", Width = 80, Height = 24, Steps = recorded };
 
         var replay = new StepOutputsReplay(outputs);
-        var (replayed, _) = GenerateAsync(scenario, 1, new GenerateOptions { LogRunning = false, Masker = SecretMasker.ForScenario(scenario, null), Replay = replay }, replay.RunAsync).GetAwaiter().GetResult();
+        var (replayed, _) = GenerateAsync(scenario, new GenerateOptions { LogRunning = false, Masker = SecretMasker.ForScenario(scenario, null), Replay = replay }, replay.RunAsync).GetAwaiter().GetResult();
         // The PTY step is a pipe step here: it has no recorded output, but its run text was masked all the same.
         var playgroundCast = PlaygroundText(PlaygroundRender.RenderScenario(yaml.Replace("again\n    pty: true\n", "again\n"), outputs, new PlaygroundOptions()));
 

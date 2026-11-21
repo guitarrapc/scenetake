@@ -119,7 +119,6 @@ internal static partial class ScenarioCast
     /// </summary>
     internal static async Task<(List<CastEvent> Events, FailedStep? StrictFailure)> GenerateAsync(
         Scenario scenario,
-        int deterministicSeed,
         GenerateOptions options,
         StepRunner run)
     {
@@ -144,7 +143,17 @@ internal static partial class ScenarioCast
         var defaultExecutionDuration = settings.ExecutionDuration ?? DefaultExecutionDuration;
         var defaultStderrStyle = ParseStyleOrFallback(settings.StderrColor, SgrNamed(DefaultStderrColorSpec), "settings.stderr-color");
         var events = new List<CastEvent>();
-        var rng    = new Random(deterministicSeed);
+        // Each step types from a random sequence of its own, seeded by the step itself (TypingRandom), so an edit to a
+        // comment, the look, or another step leaves its typing as it was.
+        var typingSeen = new Dictionary<ulong, int>();
+        Random TypingRandom(bool pty, bool interactive, StepShow show, string maskedRun)
+        {
+            var id = Rerecording.StepId(pty, interactive, show, maskedRun);
+            var occurrence = typingSeen.GetValueOrDefault(id);
+            typingSeen[id] = occurrence + 1;
+            return new Random(TypingSeed(id, occurrence));
+        }
+
         double t   = 0.5;
         CastCursorTracker? cursorTracker = null;
         // Whether a step has been shown yet. It does not depend on what the step printed, so a step that printed
@@ -160,6 +169,9 @@ internal static partial class ScenarioCast
         var steps = scenario.Steps ?? [];
         for (var i = 0; i < steps.Count; i++)
         {
+            // Each step starts on a whole millisecond. The cast stores intervals between times rounded to milliseconds, so
+            // a step that types longer than before would otherwise move the rounding of every step after it by 1ms.
+            t = CeilingToMillisecond(t);
             var command = ParseCommand(steps[i]);
             if (command.Card is { } card)
             {
@@ -242,13 +254,14 @@ internal static partial class ScenarioCast
                 var hiddenPty = GetBool(command.Extra, false, "pty");
                 var hiddenInteractive = GetBool(command.Extra, false, "interactive");
                 var hiddenSpeed = GetDouble(command.Extra, speed, "typing-speed");
+                var hiddenRandom = TypingRandom(hiddenPty, hiddenInteractive, StepShow.None, options.Masker?.MaskUncounted(command.Cmd) ?? command.Cmd);
                 var hidden = await run(new StepStart(
                     i, command, hiddenPty, hiddenInteractive,
                     scenario.Width ?? RenderSettingsResolver.DefaultTerminalCols,
                     scenario.Height ?? RenderSettingsResolver.DefaultTerminalRows,
                     null)
                 {
-                    Keys = BuildKeyActions(command.Extra, hiddenSpeed, GetDouble(command.Extra, jitter, "typing-jitter"), rng),
+                    Keys = BuildKeyActions(command.Extra, hiddenSpeed, GetDouble(command.Extra, jitter, "typing-jitter"), hiddenRandom),
                     Timeout = GetStepTimeout(command.Extra),
                     Show = StepShow.None,
                 });
@@ -305,11 +318,12 @@ internal static partial class ScenarioCast
             // show: output leaves out the prompt and the typing: the output appears as if the program drew it by itself.
             // A replay types the run text as the outputs file holds it, masked by the recording, which knew the
             // secrets that pre and earlier steps exported. It masks it again for what the YAML has added.
+            var typed = options.Replay?.MaskedRun(command.Cmd, usePty, useInteractive) ?? command.Cmd;
+            // Seeded by the text as the cast shows it, after masking: a seed from a secret would let the typing confirm
+            // a guess of it.
+            var stepRandom = TypingRandom(usePty, useInteractive, show, masker?.MaskUncounted(typed) ?? typed);
             if (show == StepShow.All)
-            {
-                var typed = options.Replay?.MaskedRun(command.Cmd, usePty, useInteractive) ?? command.Cmd;
-                EmitTypedCommand(events, ref t, Prompt(stepFolder), masker?.MaskText(typed) ?? typed, cmdSpeed, cmdJitter, rng, hasRunHighlight, runHighlightStyle);
-            }
+                EmitTypedCommand(events, ref t, Prompt(stepFolder), masker?.MaskText(typed) ?? typed, cmdSpeed, cmdJitter, stepRandom, hasRunHighlight, runHighlightStyle);
 
             if (options.LogRunning)
                 Console.Error.WriteLine($"  running: {command.Cmd}");
@@ -321,9 +335,9 @@ internal static partial class ScenarioCast
             var ptyStartCursor = usePty && !useInteractive && options.TrackPtyCursor
                 ? (cursorTracker ??= new CastCursorTracker(width, height)).Advance(events)
                 : ((int Row, int Column)?)null;
-            // Drawn here for the playground too, which ignores the keys: their typing delays come from the same
-            // random sequence as the typed commands, so the steps after them type the same way in both.
-            var keys = BuildKeyActions(command.Extra, cmdSpeed, cmdJitter, rng);
+            // The keys' typing delays come from the step's own sequence, after its typed command. The playground ignores
+            // the keys, and the steps after them type the same way in both, as each has a sequence of its own.
+            var keys = BuildKeyActions(command.Extra, cmdSpeed, cmdJitter, stepRandom);
             var execution = await run(new StepStart(i, command, usePty, useInteractive, width, height, ptyStartCursor)
             {
                 Keys = keys,
@@ -1123,6 +1137,23 @@ internal static partial class ScenarioCast
 
         events.Add(CastEvent.Output(Math.Round(t, 6), "\r\n"));
         t += 0.15;
+    }
+
+    /// <summary>
+    /// The seed of a step's typing: the step as recording again finds it (<see cref="Rerecording.StepId"/>, from the
+    /// run text after masking, how it runs, and what it shows) and how many steps before it are the same, so two steps
+    /// that type one command still type it differently.
+    /// </summary>
+    internal static int TypingSeed(ulong stepId, int occurrence)
+    {
+        unchecked
+        {
+            // SplitMix64's finalizer: ids that differ in one bit give unrelated seeds.
+            var mixed = stepId + (ulong)occurrence * 0x9E3779B97F4A7C15UL;
+            mixed = (mixed ^ (mixed >> 30)) * 0xBF58476D1CE4E5B9UL;
+            mixed = (mixed ^ (mixed >> 27)) * 0x94D049BB133111EBUL;
+            return (int)(mixed ^ (mixed >> 31));
+        }
     }
 
     /// <summary>

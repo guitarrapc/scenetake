@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using System.Security.Cryptography;
 using System.Text;
 using VYaml.Annotations;
 using VYaml.Serialization;
@@ -7,7 +6,7 @@ using VYaml.Serialization;
 namespace Scenetake.Core;
 
 /// <summary>
-/// Scenario parsing, step keys, and the deterministic seed, shared by the CLI and the playground. The CLI reaches
+/// Scenario parsing, step keys, and the cast's fixed timestamp, shared by the CLI and the playground. The CLI reaches
 /// these members through <c>using static</c>.
 /// </summary>
 internal static partial class ScenarioCast
@@ -829,48 +828,10 @@ internal static partial class ScenarioCast
     }
 
     /// <summary>
-    /// The seed of the typing jitter and the cast's timestamp: a hash of the YAML text, with line endings normalized and
-    /// the editor schema's comment lines left out, so adding that line, or naming a later version's schema, changes no
-    /// recording.
+    /// The cast header's <c>timestamp</c>, the same for every recording (2023-11-14 UTC). It came from a hash of the YAML
+    /// text, so a new comment changed the header of a recording whose steps were the same.
     /// </summary>
-    internal static int ComputeDeterministicSeed(string yaml)
-    {
-        var normalized = yaml.Replace("\r\n", "\n").Replace("\r", "\n");
-        var builder = new StringBuilder(normalized.Length);
-        foreach (var line in normalized.Split('\n'))
-        {
-            if (!IsSchemaLine(line))
-                builder.Append(line).Append('\n');
-        }
-
-        // Each kept line got a line break back, and the text's own end has none to give back.
-        if (builder.Length > 0)
-            builder.Length--;
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(builder.ToString()));
-        return BitConverter.ToInt32(bytes, 0);
-    }
-
-    /// <summary>
-    /// Whether a line is the comment that names the editor schema, as yaml-language-server reads one:
-    /// <c># yaml-language-server: $schema=...</c>, with spaces allowed around the name and the colon.
-    /// </summary>
-    internal static bool IsSchemaLine(string line)
-    {
-        var text = line.AsSpan().TrimStart();
-        if (text.IsEmpty || text[0] != '#')
-            return false;
-
-        text = text[1..].TrimStart();
-        const string name = "yaml-language-server";
-        return text.StartsWith(name, StringComparison.Ordinal) && text[name.Length..].TrimStart().StartsWith(":", StringComparison.Ordinal);
-    }
-
-    internal static long ComputeDeterministicTimestamp(int seed)
-    {
-        const long baseUnixTime = 1700000000;
-        const long spanSeconds = 365L * 24 * 60 * 60;
-        return baseUnixTime + (uint)seed % spanSeconds;
-    }
+    internal const long CastTimestamp = 1700000000;
 }
 
 record HighlightSpec(string ColorOpen, List<string> At);

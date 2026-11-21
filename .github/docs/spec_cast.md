@@ -45,7 +45,7 @@ Every cast file written by the scenario path includes render metadata in the hea
     "type": "xterm-256color",
     "theme": { "fg": "#d0d0d0", "bg": "#282c34", "palette": "..." }
   },
-  "timestamp": 1701960613,
+  "timestamp": 1700000000,
   "title": "My Demo",
   "env": { "SHELL": "bash" },
   "tags": ["st:font-size=16", "st:font-family=ui-monospace, \"Cascadia Mono\", monospace"]
@@ -58,7 +58,7 @@ Every cast file written by the scenario path includes render metadata in the hea
 | `term.cols`, `term.rows` | scenario `width`, `height` | Valid range `1`–`512` each. |
 | `term.type` | fixed `xterm-256color` | |
 | `term.theme` | scenario `render.theme` (+ CLI preset override) | Resolved hex. Follows asciicast v3 `term.theme`. |
-| `timestamp` | deterministic from YAML | See [spec_scenario.md](spec_scenario.md) → Determinism. |
+| `timestamp` | fixed `1700000000` | The same for every recording, so the header never changes with an edit. See [spec_scenario.md](spec_scenario.md) → Determinism. |
 | `title` | scenario `title` | May be empty. |
 | `env.SHELL` | resolved shell's file name | Name only, without its folder and without `.exe`: `bash`, `pwsh`, `cmd`, also when the scenario gives a path. A cast is shared, and the folder is often under the user's home (`C:\Users\<name>\scoop\...`). `TERM` is represented by `term.type`. |
 | `tags` | `st:font-size=N`, `st:font-family=…`, `st:window=macos\|windows`, `st:window-title=…`, `st:background=#rrggbb …`, `st:margin=N`, `st:padding=N`, `st:opacity=N`, `st:blur=N`, `st:loop=true\|false`, `st:end-hold=N`, `st:fade-out=N`, `st:speed=N`, `st:fit=height\|width\|both`, `st:crop-top=N`, `st:crop-bottom=N`, `st:crop-left=N`, `st:crop-right=N` | SVG and mp4 render metadata. `st:window` is omitted when window chrome is off. The other fifteen are written only when the scenario or the CLI sets them, `st:speed` only when it is not 1, `st:fit` only when it is not the default `height`, and each `st:crop-*` only when it is above 0. The events keep the recorded times at any `st:speed`, so a player that does not read the tag plays the recording as it was. Without `st:window-title`, the title bar shows `title`. `st:background` holds colors only: a cast never names an image file. Unknown tags are ignored by external tools. |

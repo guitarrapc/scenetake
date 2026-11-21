@@ -148,7 +148,7 @@ The UI lists these keys as not applied when the scenario sets them.
 ## Equivalence with the CLI
 
 - For each sample, a replay of `<name>.outputs.json` with the unmodified `<name>.yaml` gives the committed `<name>.cast` byte for byte. The SVG equals `<name>.svg`.
-- The deterministic seed and timestamp come from the YAML text, as in the CLI ([spec_scenario.md](spec_scenario.md) → Determinism). The same edit therefore changes the typing jitter in the same way in both.
+- Each step's typing comes from a random sequence seeded by the step, and the timestamp is fixed, as in the CLI ([spec_scenario.md](spec_scenario.md) → Determinism). The same edit therefore changes the typing in the same way in both.
 - The SVG is rendered from the cast text as written, as on the scenario path ([spec_svg.md](spec_svg.md) → Animation and layout).
 - **Why.** This equivalence is the test that the playground shows scenetake and not an approximation of it. It also catches an outputs file that a YAML edit made stale.
 
@@ -303,7 +303,7 @@ The browser page itself was checked by hand on 2026-11-15: the runtime starts in
 
 - **Removing OSC text from the outputs file would have changed the replayed cast.** The cast's filter removes an event that it empties, but it keeps an event that was already empty. A PTY chunk that held only a window title would become an empty chunk in the outputs file, and the replay would keep an empty event where the run had none. Replacing the text with `x` keeps every chunk's length and every byte that the filter decides on, so the filter removes the same events from both.
 - **PTY chunks are stored after the setup filter, not as read.** Stored before it, they would hold the ConPTY title with the shell's path. Stored as the cast has them, already timed, `execution-duration` and the output timing keys would stop working in a replay. Between the two, the replay starts the timing from the same chunks that the run did.
-- **The committed samples were not all in step with their YAML.** `demo.cast` came from an earlier version of `demo.yaml`: its timestamp, which comes from the YAML text, differed. The equivalence test catches this for every sample that has an outputs file.
+- **The committed samples were not all in step with their YAML.** `demo.cast` came from an earlier version of `demo.yaml`: its timestamp, which then came from the YAML text, differed. The equivalence test catches this for every sample that has an outputs file.
 - **Samples that need a person, Docker, or a clean tree are recorded by hand.** `interactive-pty` and `password-prompt` need keys typed at a real terminal, `demo` runs `scenetake` from `PATH` and Docker, and `git` shows the working tree's state. Each gets an outputs file only when it is recorded again, and until then the playground does not list it.
 
 ### Using it as its readers would

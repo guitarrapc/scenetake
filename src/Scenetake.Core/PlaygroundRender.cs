@@ -124,8 +124,6 @@ internal static class PlaygroundRender
             foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(renderSettings))
                 Console.Error.WriteLine($"Warning: {note}");
 
-            var seed = ComputeDeterministicSeed(yaml);
-            var timestamp = ComputeDeterministicTimestamp(seed);
             var rerecorder = new Rerecorder(previous: null, masker: null);
             var generateOptions = new GenerateOptions
             {
@@ -141,13 +139,13 @@ internal static class PlaygroundRender
             };
 
             // Every step's output is in memory, so the task has already completed.
-            var (events, _) = GenerateAsync(scenario, seed, generateOptions, replay.RunAsync).GetAwaiter().GetResult();
+            var (events, _) = GenerateAsync(scenario, generateOptions, replay.RunAsync).GetAwaiter().GetResult();
             var filterMap = new int[events.Count + 1];
             events = CastOscFilter.RemovePrivateSequences(events, filterMap);
 
             // The same st:steps tag as the CLI writes, so a cast from here gives the CLI's next recording its steps.
             using var castWriter = new StringWriter();
-            WriteCast(castWriter, scenario, events, outputs.Shell, timestamp, renderSettings, Rerecording.MapIndices(rerecorder.Slots, filterMap));
+            WriteCast(castWriter, scenario, events, outputs.Shell, CastTimestamp, renderSettings, Rerecording.MapIndices(rerecorder.Slots, filterMap));
             var castText = castWriter.ToString();
             cast = Encoding.UTF8.GetBytes(castText);
 
