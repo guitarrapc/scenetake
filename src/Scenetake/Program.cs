@@ -3431,9 +3431,7 @@ static void PrintSvgWritten(string path, CastRecording recording, ResolvedRender
         return;
     }
 
-    double? loopDuration = recording.LoopDuration;
-    var events = RenderSettingsResolver.ApplySpeed(recording.Events, render, ref loopDuration);
-    var loop = RenderSettingsResolver.ResolveLoopDuration(loopDuration!.Value, events, render);
+    var loop = SvgRender.PlayedSeconds(recording.Events, render, recording.LoopDuration);
     Console.Error.WriteLine($"Written: {FormatDisplayPath(path)}  ({size}, {PlayedLength(loop, render)})");
 }
 
@@ -3444,13 +3442,7 @@ static void PrintSvgWritten(string path, CastRecording recording, ResolvedRender
 static string SpedUpLength(double recorded, ResolvedRenderSettings render) =>
     render.PlaybackSpeed == 1 ? "" : ", " + PlayedLength(recorded / render.PlaybackSpeed, render);
 
-/// <summary>How long an output plays, such as <c>12.0s</c>, and the speed when it is not the recorded one: <c>8.0s at 1.5x</c>.</summary>
-static string PlayedLength(double seconds, ResolvedRenderSettings render) =>
-    render.Length is double length
-        ? string.Create(CultureInfo.InvariantCulture, $"{seconds:F1}s, length {RenderSettingsResolver.FormatSeconds(length)}s")
-        : render.PlaybackSpeed == 1
-        ? string.Create(CultureInfo.InvariantCulture, $"{seconds:F1}s")
-        : string.Create(CultureInfo.InvariantCulture, $"{seconds:F1}s at {RenderSettingsResolver.FormatSpeed(render.PlaybackSpeed)}");
+static string PlayedLength(double seconds, ResolvedRenderSettings render) => RenderSettingsResolver.FormatPlayed(seconds, render);
 
 /// <summary>A warning when an output does not keep its length (RenderSettingsResolver.LengthNote), named after its outputs entry.</summary>
 static void WarnLength(string label, CastRecording recording, ResolvedRenderSettings settings)

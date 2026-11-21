@@ -88,6 +88,16 @@ internal static class SvgRender
         return SvgDocument.Utf8NoBom.GetString(stream.GetBuffer(), 0, (int)stream.Length);
     }
 
+    /// <summary>
+    /// How many seconds an animated SVG plays: one loop, with speed or length, end-hold, and fade-out applied, as
+    /// <see cref="Render"/> times it.
+    /// </summary>
+    internal static double PlayedSeconds(IReadOnlyList<CastEvent> events, ResolvedRenderSettings render, double? loopDurationOverride = null)
+    {
+        events = RenderSettingsResolver.ApplySpeed(events, render, ref loopDurationOverride);
+        return RenderSettingsResolver.ResolveLoopDuration(loopDurationOverride ?? TerminalReplay.ComputeLoopDuration(events), events, render);
+    }
+
     private static SvgDocument Render(
         IReadOnlyList<CastEvent> events,
         int width,
@@ -839,6 +849,17 @@ internal static class RenderSettingsResolver
 
     /// <summary>A speed as the CLI shows it, such as <c>1.5x</c>.</summary>
     internal static string FormatSpeed(double speed) => FormatSeconds(speed) + "x";
+
+    /// <summary>
+    /// How long an output plays, as the CLI's Written lines and the playground show it: <c>12.0s</c>, with the speed
+    /// when it is not the recorded one (<c>8.0s at 1.5x</c>), or with the length it was fitted to (<c>15.0s, length 15s</c>).
+    /// </summary>
+    internal static string FormatPlayed(double seconds, ResolvedRenderSettings render) =>
+        render.Length is double length
+            ? string.Create(CultureInfo.InvariantCulture, $"{seconds:F1}s, length {FormatSeconds(length)}s")
+            : render.PlaybackSpeed == 1
+            ? string.Create(CultureInfo.InvariantCulture, $"{seconds:F1}s")
+            : string.Create(CultureInfo.InvariantCulture, $"{seconds:F1}s at {FormatSpeed(render.PlaybackSpeed)}");
 
     /// <summary>Seconds as a cast tag holds them: up to three decimals, no exponent.</summary>
     internal static string FormatSeconds(double seconds) => seconds.ToString("0.###", CultureInfo.InvariantCulture);

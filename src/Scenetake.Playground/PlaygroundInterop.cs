@@ -189,6 +189,8 @@ public static partial class PlaygroundInterop
             writer.WriteString("error", result.Error);
         writer.WriteNumber("castBytes", result.Cast?.Length ?? 0);
         writer.WriteNumber("svgBytes", result.Svg?.Length ?? 0);
+        if (result.Played is not null)
+            writer.WriteString("played", result.Played);
         WriteStrings(writer, "warnings", result.Warnings);
         WriteStrings(writer, "notApplied", result.NotApplied);
         writer.WriteStartArray("steps");

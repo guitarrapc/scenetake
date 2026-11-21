@@ -246,6 +246,8 @@ function showResult(view, reply) {
   const parts = [`${Math.round(reply.ms)} ms`];
   if (view.cast) parts.push(`cast ${formatBytes(view.cast.length)}`);
   parts.push(`SVG ${formatBytes(view.svg.length)}`);
+  // How long the SVG plays, as the svg command's Written line gives it: 12.0s, 8.0s at 1.5x, or 15.0s, length 15s.
+  if (meta.played) parts.push(`plays ${meta.played}`);
   view.status.textContent = parts.join(' · ');
   view.replay.disabled = false;
   view.zoom.disabled = false;

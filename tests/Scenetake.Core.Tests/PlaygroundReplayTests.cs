@@ -69,6 +69,9 @@ public sealed class PlaygroundReplayTests
     public async Task LengthAppliesInThePlayground() => await Assert.That(PlaygroundReplayCases.LengthAppliesInThePlayground()).IsTrue();
 
     [Test]
+    public async Task PlayedLengthIsShown() => await Assert.That(PlaygroundReplayCases.PlayedLengthIsShown()).IsTrue();
+
+    [Test]
     public async Task BackgroundImagesComeFromThePage() => await Assert.That(PlaygroundReplayCases.BackgroundImagesComeFromThePage()).IsTrue();
 
     [Test]
@@ -647,6 +650,31 @@ internal static class PlaygroundReplayCases
             & Expect(castTab.Error is null && castTab.Svg!.AsSpan().SequenceEqual(castExpected), $"the Cast tab's length replaces the cast's speed: {castTab.Error}")
             & Expect(both.Error == "--speed and --length both set how long the output plays: give one", $"speed and length: {both.Error}")
             & Expect(tooShort.Error?.Contains("length", StringComparison.Ordinal) == true, $"length out of range: {tooShort.Error}");
+    }
+
+    // The status line says how long the SVG plays, as the svg command's Written line does: the loop, then the speed
+    // or the length when one is set. An error gives no length.
+    internal static bool PlayedLengthIsShown()
+    {
+        const string yaml = "width: 80\nheight: 24\nsettings:\n  post-delay: 3\nsteps:\n  - echo one\n  - echo two\n";
+        var outputs = Outputs(RecordedStep.Pipe("echo one", 0, [Out("one\n")]), RecordedStep.Pipe("echo two", 0, [Out("two\n")]));
+        var plain = PlaygroundRender.RenderScenario(yaml, outputs, new PlaygroundOptions());
+        if (plain.Error is not null)
+            return Expect(false, $"render error: {plain.Error}");
+
+        var castText = Encoding.UTF8.GetString(plain.Cast!);
+        var loop = CastReader.ReadText(castText).LoopDuration;
+        string Seconds(double seconds) => seconds.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + "s";
+        var sped = PlaygroundRender.RenderScenario(yaml, outputs, new PlaygroundOptions(Speed: 2));
+        var held = PlaygroundRender.RenderCast(castText, new PlaygroundOptions(EndHold: 4, FadeOut: 1));
+        var fitted = PlaygroundRender.RenderCast(castText, new PlaygroundOptions(Length: 5));
+        var failed = PlaygroundRender.RenderCast(castText, new PlaygroundOptions(Speed: 2, Length: 5));
+        var events = CastReader.ReadText(castText).Events;
+        return Expect(loop > 5 && plain.Played == Seconds(loop), $"as recorded: {plain.Played}, loop {loop}")
+            & Expect(sped.Played == Seconds(loop / 2) + " at 2x", $"at 2x: {sped.Played}")
+            & Expect(held.Played == Seconds(events[^1].Time + 4 + 1), $"end-hold 4 and fade-out 1: {held.Played}")
+            & Expect(fitted.Played == "5.0s, length 5s", $"length 5: {fitted.Played}")
+            & Expect(failed.Error is not null && failed.Played is null, $"an error gives no length: {failed.Played}");
     }
 
     // The playground has no files: the page gives it each image with a name. A background in the YAML or the option

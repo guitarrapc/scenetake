@@ -40,7 +40,8 @@ internal sealed record PlaygroundOptions(
 /// <summary>
 /// What a render gives the playground. <see cref="Error"/> is set when the CLI would stop before recording, and then
 /// <see cref="Cast"/> and <see cref="Svg"/> are null. <see cref="Warnings"/> are the CLI's stderr warnings without
-/// their "Warning: " prefix.
+/// their "Warning: " prefix. <see cref="Played"/> is how long the SVG plays, as the <c>svg</c> command's Written line
+/// gives it, such as <c>12.0s</c> or <c>15.0s, length 15s</c>.
 /// </summary>
 internal sealed record PlaygroundResult(
     byte[]? Cast,
@@ -48,7 +49,8 @@ internal sealed record PlaygroundResult(
     IReadOnlyList<ReplayedStep> Steps,
     IReadOnlyList<string> Warnings,
     IReadOnlyList<string> NotApplied,
-    string? Error);
+    string? Error,
+    string? Played = null);
 
 /// <summary>
 /// The playground's scenario and cast paths. They follow the CLI's scenario path and <c>svg</c> command step by step,
@@ -64,6 +66,7 @@ internal static class PlaygroundRender
         string? error = null;
         byte[]? cast = null;
         byte[]? svg = null;
+        string? played = null;
         IReadOnlyList<string> notApplied = [];
 
         CaptureWarnings(warnings, () =>
@@ -158,12 +161,13 @@ internal static class PlaygroundRender
                 if (RenderSettingsResolver.LengthNote(written.Events, drawn, written.LoopDuration) is { } lengthNote)
                     Console.Error.WriteLine($"Warning: {lengthNote}");
                 svg = SvgRender.RenderToUtf8(written.Events, written.Width, written.Height, drawn, written.LoopDuration);
+                played = RenderSettingsResolver.FormatPlayed(SvgRender.PlayedSeconds(written.Events, drawn, written.LoopDuration), drawn);
                 if (SvgRender.SizeWarning(svg.LongLength, renderSettings.MaxFps, fromCast: false) is { } sizeWarning)
                     Console.Error.WriteLine($"Warning: {sizeWarning}");
             }
         }, ref error);
 
-        return new PlaygroundResult(cast, svg, replay.Steps, warnings, notApplied, error);
+        return new PlaygroundResult(cast, svg, replay.Steps, warnings, notApplied, error, error is null ? played : null);
     }
 
     internal static PlaygroundResult RenderCast(string castText, PlaygroundOptions options)
@@ -171,6 +175,7 @@ internal static class PlaygroundRender
         var warnings = new List<string>();
         string? error = null;
         byte[]? svg = null;
+        string? played = null;
 
         CaptureWarnings(warnings, () =>
         {
@@ -201,11 +206,12 @@ internal static class PlaygroundRender
             if (RenderSettingsResolver.LengthNote(recording.Events, settings, recording.LoopDuration) is { } lengthNote)
                 Console.Error.WriteLine($"Warning: {lengthNote}");
             svg = SvgRender.RenderToUtf8(recording.Events, recording.Width, recording.Height, settings, recording.LoopDuration);
+            played = RenderSettingsResolver.FormatPlayed(SvgRender.PlayedSeconds(recording.Events, settings, recording.LoopDuration), settings);
             if (SvgRender.SizeWarning(svg.LongLength, settings.MaxFps, fromCast: true) is { } sizeWarning)
                 Console.Error.WriteLine($"Warning: {sizeWarning}");
         }, ref error);
 
-        return new PlaygroundResult(null, svg, [], warnings, [], error);
+        return new PlaygroundResult(null, svg, [], warnings, [], error, error is null ? played : null);
     }
 
     /// <summary>The scenario keys that set something the playground cannot do, with why, for the UI.</summary>
