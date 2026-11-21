@@ -108,6 +108,7 @@ internal static class CastReader
         var renderSettings = new ResolvedRenderSettings(fontSize, fontFamily, new ResolvedTheme(fg, bg, palette), window)
         {
             WindowTitle = style.WindowTitle ?? castTitle,
+            Title = castTitle,
             Background = style.Background,
             Margin = style.Margin,
             Padding = style.Padding,

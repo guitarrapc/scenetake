@@ -263,6 +263,12 @@ internal readonly record struct ResolvedRenderSettings(
     /// </summary>
     internal string? WindowTitle { get; init; }
 
+    /// <summary>
+    /// The recording's own title: the scenario's <c>title</c>, or the cast's. The SVG takes it as its accessible name when
+    /// <see cref="WindowTitle"/> is empty.
+    /// </summary>
+    internal string? Title { get; init; }
+
     /// <summary>What fills the canvas around the terminal, or null for a transparent canvas.</summary>
     internal BackgroundSpec? Background { get; init; }
 
@@ -1099,7 +1105,11 @@ internal static class RenderSettingsResolver
             return false;
         }
 
-        settings = new ResolvedRenderSettings(fontSize, fontFamily, theme, window) { Fit = DefaultFit };
+        settings = new ResolvedRenderSettings(fontSize, fontFamily, theme, window)
+        {
+            Fit = DefaultFit,
+            Title = scenario.Title is { } title ? NormalizeWindowTitle(title) : null,
+        };
         if (render?.WindowTitle is { } windowTitle)
             settings = settings with { WindowTitle = NormalizeWindowTitle(windowTitle) };
 
@@ -1951,7 +1961,7 @@ internal static class SvgFrameRenderer
         var sb = new StringBuilder(64 * 1024);
         sb.AppendLf(CultureInfo.InvariantCulture, $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLf(CultureInfo.InvariantCulture,
-            $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" viewBox=\"0 0 {metrics.SvgWidth:0.##} {metrics.SvgHeight:0.##}\" preserveAspectRatio=\"xMidYMid meet\" role=\"img\" aria-label=\"scenetake output\">");
+            $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" viewBox=\"0 0 {metrics.SvgWidth:0.##} {metrics.SvgHeight:0.##}\" preserveAspectRatio=\"xMidYMid meet\" role=\"img\" aria-label=\"{EscapeXml(AccessibleName(render))}\">");
 
         sb.AppendLf("<style>");
         sb.AppendLf(CultureInfo.InvariantCulture,
@@ -2775,6 +2785,19 @@ internal static class SvgFrameRenderer
             $"<path class=\"{cls}\" d=\"M {closeWindow - 5:0.##},{captionY - 5:0.##} L {closeWindow + 5:0.##},{captionY + 5:0.##} M {closeWindow + 5:0.##},{captionY - 5:0.##} L {closeWindow - 5:0.##},{captionY + 5:0.##}\" {glyph}/>");
     }
 
+    /// <summary>
+    /// The name a screen reader says for the image: the title bar's text, which is the scenario's title unless
+    /// <c>window-title</c> gives another, so the name matches what the image shows. Then the title, when the window title
+    /// is <c>""</c>. A recording with neither is a terminal recording.
+    /// </summary>
+    internal static string AccessibleName(ResolvedRenderSettings render) =>
+        !string.IsNullOrWhiteSpace(render.WindowTitle) ? render.WindowTitle!
+        : !string.IsNullOrWhiteSpace(render.Title) ? render.Title!
+        : DefaultAccessibleName;
+
+    /// <summary>The SVG's accessible name for a recording without a title.</summary>
+    internal const string DefaultAccessibleName = "Terminal recording";
+
     private static string BuildEmptySvg(ResolvedRenderSettings render, int width, int height)
     {
         var metrics = CreateMetrics(render, width, height);
@@ -2786,7 +2809,7 @@ internal static class SvgFrameRenderer
         var sb = new StringBuilder();
         sb.AppendLf(CultureInfo.InvariantCulture, $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLf(CultureInfo.InvariantCulture,
-            $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" viewBox=\"0 0 {metrics.SvgWidth:0.##} {metrics.SvgHeight:0.##}\">");
+            $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{metrics.SvgWidth:0.##}\" height=\"{metrics.SvgHeight:0.##}\" viewBox=\"0 0 {metrics.SvgWidth:0.##} {metrics.SvgHeight:0.##}\" role=\"img\" aria-label=\"{EscapeXml(AccessibleName(render))}\">");
         if (metrics.HasChrome || render.Background is not null)
         {
             sb.AppendLf(CultureInfo.InvariantCulture, $"<style>text {{ font-family: {render.FontFamily}; white-space: pre; }}</style>");

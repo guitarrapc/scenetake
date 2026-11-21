@@ -301,6 +301,20 @@ An unknown value is an error on the scenario path and the CLI. An invalid cast t
 - **Margin** sets the outer margin, which with chrome also holds the shadow. Below 12 px with chrome, the shadow is cut at the canvas edge.
 - **Padding** replaces both inner paddings with one value. The terminal background and the mask grow with it, so text keeps its distance from the window's edge.
 
+### Accessible name
+
+The `<svg>` element has `role="img"` and an `aria-label`, which a screen reader says for the image:
+
+1. The title bar's text: `window-title`, which is the scenario's `title` unless it gives another text. It is the name with and without a drawn window, so the name matches the text the image shows.
+2. The title, when `window-title` is `""`.
+3. `Terminal recording`, for a recording with neither.
+
+It is XML-escaped. An empty recording, which the renderer draws as an empty terminal, has it too, and so does a still SVG.
+
+- **Why not the tool's name.** Every SVG was named `scenetake output`, which says what made the image and nothing of what it shows. A README image of a demo is named after the demo.
+- **Why the title bar's text first.** A visible label and the accessible name should match (WCAG's "label in name"). The theme previews show it: their cast's title is `theme presets`, and each bar shows the theme's name, which is the name each preview gets.
+- The `<picture>` that the CLI prints for a light and a dark SVG takes the scenario's `title` as its `alt` ([spec_cli.md](spec_cli.md) → Outputs list). A README's own `![alt](...)` names the `<img>`, and an `<img>` does not expose the SVG's own name, so the attribute helps where the SVG is opened by itself or embedded with `<object>`.
+
 ### Translucent window: opacity and blur
 
 A background shows only around the window. A translucent window lets it show through the terminal too, as a desktop terminal with a transparent background does. The text is what a recording is for, so only the window's own fill becomes translucent. These settings follow the others: **CLI > cast header > default**.
