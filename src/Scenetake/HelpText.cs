@@ -181,6 +181,10 @@ static class HelpText
                   --speed N                Play the SVG, mp4, or GIF N times as fast as recorded, 0.25-4
                                            (default 1), such as 1.5. Typing, pauses, and output all speed up.
                                            --end-hold and --fade-out stay seconds of the output.
+                  --length N               Play the SVG, mp4, or GIF in at most N seconds, 1-600: waits in
+                                           the output shrink first, then pauses, then typing, each only down
+                                           to what stays readable. A shorter recording stays as it is. Not
+                                           with --speed.
 
                 """
             : "");

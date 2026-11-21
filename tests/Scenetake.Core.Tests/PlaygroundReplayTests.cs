@@ -66,6 +66,9 @@ public sealed class PlaygroundReplayTests
     public async Task FitAndCropApplyInThePlayground() => await Assert.That(PlaygroundReplayCases.FitAndCropApplyInThePlayground()).IsTrue();
 
     [Test]
+    public async Task LengthAppliesInThePlayground() => await Assert.That(PlaygroundReplayCases.LengthAppliesInThePlayground()).IsTrue();
+
+    [Test]
     public async Task BackgroundImagesComeFromThePage() => await Assert.That(PlaygroundReplayCases.BackgroundImagesComeFromThePage()).IsTrue();
 
     [Test]
@@ -610,6 +613,40 @@ internal static class PlaygroundReplayCases
                 && byOption.Svg!.Length > plain.Svg!.Length && Encoding.UTF8.GetString(byOption.Cast!).Contains("\"st:fit=none\"", StringComparison.Ordinal),
                 "the fit option is kept in the cast and drawn as the svg command draws it")
             & Expect(wrong.Error == "unknown fit: wide (expected: none, height, width, both)", $"wrong fit: {wrong.Error}");
+    }
+
+    // The --length option acts as on the CLI. On the Scenario tab the cast keeps it (st:length) and the SVG is the svg
+    // command's from that cast. On the Cast tab it replaces the cast's speed. With --speed, or out of range, it is an error.
+    internal static bool LengthAppliesInThePlayground()
+    {
+        const string yaml = "width: 80\nheight: 24\nsettings:\n  post-delay: 3\nsteps:\n  - echo one\n  - echo two\n";
+        var outputs = Outputs(RecordedStep.Pipe("echo one", 0, [Out("one\n")]), RecordedStep.Pipe("echo two", 0, [Out("two\n")]));
+        var plain = PlaygroundRender.RenderScenario(yaml, outputs, new PlaygroundOptions());
+        var fitted = PlaygroundRender.RenderScenario(yaml, outputs, new PlaygroundOptions(Length: 5));
+        if (plain.Error is not null || fitted.Error is not null)
+            return Expect(false, $"render errors: {plain.Error} {fitted.Error}");
+
+        var castText = Encoding.UTF8.GetString(fitted.Cast!);
+        var recording = CastReader.ReadText(castText);
+        var expected = SvgRender.RenderToUtf8(recording.Events, recording.Width, recording.Height, recording.RenderSettings, recording.LoopDuration);
+        var fit = RenderSettingsResolver.FitLength(recording.Events, recording.RenderSettings, recording.LoopDuration);
+
+        // The Cast tab: a cast recorded at 2x plays in at most 5 seconds instead, as `scenetake svg --length 5` plays it.
+        var plainCast = Encoding.UTF8.GetString(plain.Cast!);
+        var spedCast = PlaygroundRender.RenderScenario(yaml, outputs, new PlaygroundOptions(Speed: 2));
+        var castTab = PlaygroundRender.RenderCast(Encoding.UTF8.GetString(spedCast.Cast!), new PlaygroundOptions(Length: 5));
+        var plainRecording = CastReader.ReadText(plainCast);
+        var castExpected = SvgRender.RenderToUtf8(plainRecording.Events, plainRecording.Width, plainRecording.Height,
+            plainRecording.RenderSettings with { Length = 5 }, plainRecording.LoopDuration);
+
+        var both = PlaygroundRender.RenderCast(plainCast, new PlaygroundOptions(Speed: 1.5, Length: 5));
+        var tooShort = PlaygroundRender.RenderCast(plainCast, new PlaygroundOptions(Length: 0.5));
+        return Expect(castText.Contains("\"st:length=5\"", StringComparison.Ordinal) && recording.RenderSettings.Length == 5, "the cast keeps the length")
+            & Expect(fitted.Svg!.AsSpan().SequenceEqual(expected) && !fitted.Svg!.AsSpan().SequenceEqual(plain.Svg!), "the playground draws what the svg command draws from its cast")
+            & Expect(fit is { Natural: > 5, Played: <= 5.001 }, $"the demo plays in at most 5 seconds: {fit?.Natural} → {fit?.Played}")
+            & Expect(castTab.Error is null && castTab.Svg!.AsSpan().SequenceEqual(castExpected), $"the Cast tab's length replaces the cast's speed: {castTab.Error}")
+            & Expect(both.Error == "--speed and --length both set how long the output plays: give one", $"speed and length: {both.Error}")
+            & Expect(tooShort.Error?.Contains("length", StringComparison.Ordinal) == true, $"length out of range: {tooShort.Error}");
     }
 
     // The playground has no files: the page gives it each image with a name. A background in the YAML or the option

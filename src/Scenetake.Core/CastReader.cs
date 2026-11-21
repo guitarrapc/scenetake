@@ -118,6 +118,7 @@ internal static class CastReader
             EndHold = style.EndHold,
             FadeOut = style.FadeOut,
             Speed = style.Speed,
+            Length = style.Length,
             Fit = style.Fit,
             Crop = new CropSpec(style.CropTop, style.CropBottom, style.CropLeft, style.CropRight),
         };
@@ -125,6 +126,12 @@ internal static class CastReader
         var warnedCodes = new HashSet<string>(StringComparer.Ordinal);
         var usesRelativeTime = version == 3;
         var absoluteTime = 0.0;
+        // The st:steps tag counts the events scenetake writes (output, marker, resize) and times them in whole
+        // milliseconds, as PreviousCast reads it. Markers are not kept here, so each counted event maps to the index of
+        // the next event kept.
+        var counted = new List<int>();
+        long nowMs = 0;
+        long lastCountedMs = 0;
 
         for (var i = headerLineIndex + 1; i < lines.Length; i++)
         {
@@ -132,11 +139,17 @@ internal static class CastReader
             if (line.IsEmpty || line[0] == '#')
                 continue;
 
-            if (!TryParseEventLine(line, i + 1, warnedCodes, out var ev, out var relativeDelay))
+            if (!TryParseEventLine(line, i + 1, warnedCodes, out var ev, out var relativeDelay, out var code))
                 throw new CastReadException($"invalid cast event at line {i + 1}");
 
             if (usesRelativeTime)
                 absoluteTime += relativeDelay;
+            nowMs += (long)Math.Round(relativeDelay * 1000, MidpointRounding.AwayFromZero);
+            if (code is 'o' or 'm' or 'r')
+            {
+                counted.Add(events.Count);
+                lastCountedMs = nowMs;
+            }
 
             if (!ev.HasValue)
                 continue;
@@ -144,9 +157,34 @@ internal static class CastReader
             events.Add(usesRelativeTime ? ev.Value with { Time = absoluteTime } : ev.Value);
         }
 
+        if (style.Steps is { } stepsTag && usesRelativeTime)
+            renderSettings = renderSettings with { StepRanges = MapStepRanges(stepsTag, counted, lastCountedMs, events.Count) };
+
         var loopDuration = TerminalReplay.ComputeLoopDuration(events);
 
         return new CastRecording(width, height, renderSettings, events, loopDuration);
+    }
+
+    /// <summary>
+    /// Where each recorded step's output is among the events kept, as pairs of its first event and its count (see
+    /// <see cref="ResolvedRenderSettings.StepRanges"/>), or null when the tag does not match the events: an edited cast.
+    /// <paramref name="counted"/> gives, for each event the tag counts, the index of the next event kept.
+    /// </summary>
+    private static int[]? MapStepRanges(string tag, List<int> counted, long lastMs, int kept)
+    {
+        if (!Rerecording.TryParseTag(tag, counted.Count, lastMs, out var steps))
+            return null;
+
+        int At(int index) => index < counted.Count ? counted[index] : kept;
+        var ranges = new int[steps.Count * 2];
+        for (var s = 0; s < steps.Count; s++)
+        {
+            var first = At(steps[s].First);
+            ranges[s * 2] = first;
+            ranges[s * 2 + 1] = At(steps[s].First + steps[s].Count) - first;
+        }
+
+        return ranges;
     }
 
     /// <summary>
@@ -165,6 +203,10 @@ internal static class CastReader
         internal double? EndHold;
         internal double? FadeOut;
         internal double? Speed;
+        internal double? Length;
+
+        /// <summary>The st:steps tag's value, which is read once the events are known.</summary>
+        internal string? Steps;
         internal FitMode Fit = RenderSettingsResolver.DefaultFit;
         internal int CropTop;
         internal int CropBottom;
@@ -240,6 +282,13 @@ internal static class CastReader
                 if (ReadTag<double>(value, RenderSettingsResolver.SpeedTagPrefix, "speed", "the recorded speed", RenderSettingsResolver.TryParseSpeed, out var speed))
                     style.Speed = speed;
             }
+            else if (value.StartsWith(RenderSettingsResolver.LengthTagPrefix, StringComparison.Ordinal))
+            {
+                if (ReadTag<double>(value, RenderSettingsResolver.LengthTagPrefix, "length", "the recorded length", RenderSettingsResolver.TryParseLength, out var length))
+                    style.Length = length;
+            }
+            else if (value.StartsWith(Rerecording.TagPrefix, StringComparison.Ordinal))
+                style.Steps = value[Rerecording.TagPrefix.Length..];
             else if (value.StartsWith(RenderSettingsResolver.FitTagPrefix, StringComparison.Ordinal))
             {
                 if (ReadTag<FitMode>(value, RenderSettingsResolver.FitTagPrefix, "fit", "the default fit (height)", RenderSettingsResolver.TryParseFit, out var fit))
@@ -435,10 +484,12 @@ internal static class CastReader
         int lineNumber,
         HashSet<string> warnedCodes,
         out CastEvent? ev,
-        out double relativeDelay)
+        out double relativeDelay,
+        out char eventCode)
     {
         ev = null;
         relativeDelay = 0;
+        eventCode = '\0';
 
         using var doc = ParseJsonOrThrow(line, lineNumber);
         var root = doc.RootElement;
@@ -458,6 +509,7 @@ internal static class CastReader
 
         if (codeText.Length == 3 && codeText[0] == '"' && codeText[2] == '"')
         {
+            eventCode = codeText[1];
             switch (codeText[1])
             {
                 case 'o':

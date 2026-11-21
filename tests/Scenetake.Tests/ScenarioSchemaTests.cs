@@ -245,6 +245,9 @@ internal static class ScenarioSchemaCases
             ("a window scenetake does not draw", "render:\n  window: mac\nsteps:\n  - x\n"),
             ("a terminal wider than a cast", "width: 1000\nsteps:\n  - x\n"),
             ("a speed above 4", "render:\n  speed: 10\nsteps:\n  - x\n"),
+            ("a length below a second", "render:\n  length: 0.5\nsteps:\n  - x\n"),
+            ("both speed and length", "render:\n  speed: 2\n  length: 15\nsteps:\n  - x\n"),
+            ("both speed and length in an outputs entry", "outputs:\n  - format: svg\n    speed: 2\n    length: 15\nsteps:\n  - x\n"),
             ("a step without run", "steps:\n  - name: x\n"),
             ("keys without pty", "steps:\n  - run: x\n    keys:\n      - key: enter\n"),
             ("interactive without pty", "steps:\n  - run: x\n    interactive: true\n"),
@@ -397,7 +400,7 @@ internal static class ScenarioSchemaCases
                     file: b
                   - format: gif
                     max-size: 400X300
-                    speed: 1.5
+                    length: 15s
                     fps: 50
                     loop: false
                     file: c

@@ -330,11 +330,17 @@
           "default": 0
         },
         "speed": {
-          "description": "How many times as fast as recorded the SVG, mp4, and GIF play. The cast keeps the recorded times.",
+          "description": "How many times as fast as recorded the SVG, mp4, and GIF play. The cast keeps the recorded times. Not with length.",
           "type": "number",
           "minimum": 0.25,
           "maximum": 4,
           "default": 1
+        },
+        "length": {
+          "description": "The most seconds the SVG, mp4, and GIF play: waits in the output shrink first, then pauses, then typing, each only down to what stays readable. A shorter recording stays as it is. The cast keeps the recorded times. Not with speed.",
+          "type": "number",
+          "minimum": 1,
+          "maximum": 600
         },
         "fit": {
           "$ref": "#/definitions/fitMode",
@@ -344,6 +350,12 @@
         "crop-bottom": { "$ref": "#/definitions/crop" },
         "crop-left": { "$ref": "#/definitions/crop" },
         "crop-right": { "$ref": "#/definitions/crop" }
+      },
+      "if": { "required": ["speed", "length"] },
+      "then": {
+        "properties": {
+          "length": { "type": "null", "errorMessage": "speed and length both set how long the output plays: keep one." }
+        }
       }
     },
     "crop": {
@@ -383,6 +395,12 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["format"],
+      "if": { "required": ["speed", "length"] },
+      "then": {
+        "properties": {
+          "length": { "type": "null", "errorMessage": "speed and length both set how long the file plays: keep one." }
+        }
+      },
       "properties": {
         "format": { "$ref": "#/definitions/outputFormat" },
         "file": {
@@ -413,6 +431,13 @@
           "minimum": 0.25,
           "maximum": 4,
           "pattern": "^\\s*(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)[xX]\\s*$"
+        },
+        "length": {
+          "description": "The most seconds this file plays, 1-600, such as 15 or 15s. Not with speed.",
+          "type": ["number", "string"],
+          "minimum": 1,
+          "maximum": 600,
+          "pattern": "^\\s*(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)[sS]\\s*$"
         },
         "at": {
           "description": "svg and png: one screen, the one shown this many seconds into the recording, or end for the final screen.",
@@ -447,7 +472,7 @@
               "enum": [
                 "format", "file", "theme", "window", "window-title", "background", "margin", "padding", "opacity",
                 "blur", "fit", "crop-top", "crop-bottom", "crop-left", "crop-right", "font-size", "font-family",
-                "loop", "end-hold", "fade-out", "speed", "at", "max-fps"
+                "loop", "end-hold", "fade-out", "speed", "length", "at", "max-fps"
               ],
               "errorMessage": "An svg entry takes no fps, crf, max-size, size, or font-file: those are for mp4 and gif (font-file also png), and an SVG takes max-fps."
             }
@@ -464,7 +489,7 @@
               "enum": [
                 "format", "file", "theme", "window", "window-title", "background", "margin", "padding", "opacity",
                 "blur", "fit", "crop-top", "crop-bottom", "crop-left", "crop-right", "font-size", "font-family",
-                "loop", "end-hold", "fade-out", "speed", "at", "font-file"
+                "loop", "end-hold", "fade-out", "speed", "length", "at", "font-file"
               ],
               "errorMessage": "A png entry is one screen: it takes no max-fps, fps, crf, max-size, or size."
             }
@@ -481,7 +506,7 @@
               "enum": [
                 "format", "file", "theme", "window", "window-title", "background", "margin", "padding", "opacity",
                 "blur", "fit", "crop-top", "crop-bottom", "crop-left", "crop-right", "font-size", "font-family",
-                "loop", "end-hold", "fade-out", "speed", "fps", "crf", "max-size", "size", "font-file"
+                "loop", "end-hold", "fade-out", "speed", "length", "fps", "crf", "max-size", "size", "font-file"
               ],
               "errorMessage": "An mp4 entry plays the whole recording: it takes no at or max-fps. Use fps for its frame rate."
             }
@@ -498,7 +523,7 @@
               "enum": [
                 "format", "file", "theme", "window", "window-title", "background", "margin", "padding", "opacity",
                 "blur", "fit", "crop-top", "crop-bottom", "crop-left", "crop-right", "font-size", "font-family",
-                "loop", "end-hold", "fade-out", "speed", "fps", "max-size", "size", "font-file"
+                "loop", "end-hold", "fade-out", "speed", "length", "fps", "max-size", "size", "font-file"
               ],
               "errorMessage": "A gif entry plays the whole recording and has no H.264 quality: it takes no at, max-fps, or crf. Use fps for its frame rate."
             }

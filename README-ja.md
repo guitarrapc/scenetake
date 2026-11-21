@@ -196,6 +196,7 @@ npx skills add guitarrapc/scenetake
 | `--end-hold N` | 最初に戻る前や終わる前に、最後の画面を読む時間を取る |
 | `--fade-out N` | 最後に文字をフェードアウトさせて終える |
 | `--speed N` | 録り直さずに、SVG、mp4、GIFを短く（`1.5`）、またはゆっくり（`0.5`）にする |
+| `--length N` | 録り直さずに、SVG、mp4、GIFを最大N秒に収める |
 | `--max-fps N` | 画面がよく変わるSVGを小さくする |
 | `--at TIME` | ある時点の静止画をSVGかPNGで作る。`end`なら最後の画面 |
 | **mp4、GIF、PNG** | |
@@ -393,13 +394,14 @@ steps:
 | `margin`、`padding` | 余白（px） |
 | `loop`、`end-hold`、`fade-out` | 1回だけ再生（`--no-loop`）、最後の画面を表示する秒数、文字を消す秒数 |
 | `speed` | SVG、mp4、GIFを録画の何倍の速さで再生するか。`0.25`〜`4` |
+| `length` | SVG、mp4、GIFを最大何秒で再生するか。`speed`とは併用できません |
 
-`speed`はタイピング、間、出力をまとめて速くするので、デモのリズムは変わりません。castには録画したときの時間が残るので、出力ごとに速さを変えられます。たとえばX用だけを短くできます。
+`speed`はタイピング、間、出力をまとめて速くします。単純に倍速で実行したいときに使います。
 
 ```yaml
 outputs:
   - format: svg              # README用。録画どおりの速さ
-  - format: mp4              # X用。1.5倍速
+  - format: mp4              # 1.5倍速
     speed: 1.5
 ```
 
@@ -408,6 +410,15 @@ outputs:
 | 録画どおり | `speed: 2`（[speed.yaml](samples/speed.yaml)） |
 | --- | --- |
 | ![](samples/speed.svg) | ![](samples/speed-2x.svg) |
+
+`length`を使うと、何秒で再生するかを指定できます。タイピングの速さや間を自分で調整する必要なく、指定した時間の動画に収めます。短縮は、コマンド出力中の待ち時間、次にステップ間の間、最後にタイピングの順で短くします。もともと指定より短いデモはそのままで、短くしても収まらないデモは警告を出します。
+
+```yaml
+outputs:
+  - format: svg              # README用。録画どおり
+  - format: mp4              # X用。最大15秒
+    length: 15
+```
 
 | macOS | Windows |
 | --- | --- |

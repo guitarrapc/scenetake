@@ -318,6 +318,18 @@ internal readonly record struct ResolvedRenderSettings(
     /// <summary>The speed played: the set one, or 1.</summary>
     internal double PlaybackSpeed => Speed ?? 1;
 
+    /// <summary>
+    /// The most seconds an SVG, mp4, or GIF plays, or null for as recorded (<see cref="PlaybackLength"/>). Not with
+    /// <see cref="Speed"/>: each decides how long the output plays.
+    /// </summary>
+    internal double? Length { get; init; }
+
+    /// <summary>
+    /// Where each recorded step's output is among the cast's events, as pairs of its first event and its count, from
+    /// the cast's <c>st:steps</c> tag. <see cref="Length"/> needs them. Null for a cast without the tag.
+    /// </summary>
+    internal int[]? StepRanges { get; init; }
+
     internal bool Loops => Loop ?? true;
 
     /// <summary>The fade an SVG draws: none when it plays once, because it stops on its final screen.</summary>
@@ -436,8 +448,9 @@ internal sealed class BackgroundImageSource
 }
 
 /// <summary>
-/// Window title, background, margin, padding, opacity, blur, loop, end hold, fade-out, and speed from the command
-/// line or the playground: each set one replaces the cast's or the scenario's.
+/// Window title, background, margin, padding, opacity, blur, loop, end hold, fade-out, speed, and length from the
+/// command line or the playground: each set one replaces the cast's or the scenario's. Speed and length each decide
+/// how long the output plays, so the one set replaces the other too.
 /// </summary>
 internal sealed record RenderStyleOverrides(
     string? WindowTitle,
@@ -454,7 +467,8 @@ internal sealed record RenderStyleOverrides(
     int? CropBottom = null,
     int? CropLeft = null,
     int? CropRight = null,
-    double? Speed = null)
+    double? Speed = null,
+    double? Length = null)
 {
     internal static readonly RenderStyleOverrides None = new(null, null, null, null);
 
@@ -469,7 +483,8 @@ internal sealed record RenderStyleOverrides(
         Loop = Loop ?? settings.Loop,
         EndHold = EndHold ?? settings.EndHold,
         FadeOut = FadeOut ?? settings.FadeOut,
-        Speed = Speed ?? settings.Speed,
+        Speed = Length is not null ? null : Speed ?? settings.Speed,
+        Length = Speed is not null ? null : Length ?? settings.Length,
         Fit = Fit ?? settings.Fit,
         Crop = new CropSpec(CropTop ?? settings.Crop.Top, CropBottom ?? settings.Crop.Bottom, CropLeft ?? settings.Crop.Left, CropRight ?? settings.Crop.Right),
     };
@@ -508,6 +523,7 @@ internal static class RenderSettingsResolver
     internal const string EndHoldTagPrefix = "st:end-hold=";
     internal const string FadeOutTagPrefix = "st:fade-out=";
     internal const string SpeedTagPrefix = "st:speed=";
+    internal const string LengthTagPrefix = "st:length=";
     internal const string FitTagPrefix = "st:fit=";
     internal const string CropTopTagPrefix = "st:crop-top=";
     internal const string CropBottomTagPrefix = "st:crop-bottom=";
@@ -533,6 +549,9 @@ internal static class RenderSettingsResolver
     /// a full-screen program that redraws fast.
     /// </summary>
     internal const double MinSpeed = 0.25, MaxSpeed = 4;
+
+    /// <summary>The lengths a recording plays in at most, in seconds: up to X's 140 for a free account and well past it.</summary>
+    internal const double MinLength = 1, MaxLength = 600;
 
     /// <summary>The margin when a background is set and no margin is: enough of the background to show around the window.</summary>
     internal const int DefaultBackgroundMargin = 32;
@@ -807,6 +826,17 @@ internal static class RenderSettingsResolver
 
     internal static bool IsValidSpeed(double speed) => double.IsFinite(speed) && speed is >= MinSpeed and <= MaxSpeed;
 
+    /// <summary>Reads a length, as <c>--length</c> and <c>st:length</c> hold it: seconds such as 15, and a trailing s is read too.</summary>
+    internal static bool TryParseLength(string text, out double seconds, out string error)
+    {
+        var number = text.Trim();
+        if (number.EndsWith('s') || number.EndsWith('S'))
+            number = number[..^1];
+        return TryParseSeconds(number, "length", MinLength, MaxLength, out seconds, out error);
+    }
+
+    internal static bool IsValidLength(double seconds) => double.IsFinite(seconds) && seconds is >= MinLength and <= MaxLength;
+
     /// <summary>A speed as the CLI shows it, such as <c>1.5x</c>.</summary>
     internal static string FormatSpeed(double speed) => FormatSeconds(speed) + "x";
 
@@ -851,10 +881,17 @@ internal static class RenderSettingsResolver
     /// loop with the default hold, divided by the speed. Typing, pauses, and output all go faster together, so the
     /// demo keeps its rhythm. An explicit end hold and the fade-out are added afterwards in seconds of the output
     /// (<see cref="ResolveLoopDuration"/>): they say how long a viewer sees the final screen. A still is not played,
-    /// and its time stays the recording's.
+    /// and its time stays the recording's. With <see cref="ResolvedRenderSettings.Length"/>, the recording fitted to
+    /// that length instead (<see cref="PlaybackLength"/>).
     /// </summary>
     internal static IReadOnlyList<CastEvent> ApplySpeed(IReadOnlyList<CastEvent> events, ResolvedRenderSettings settings, ref double? loopDuration)
     {
+        if (FitLength(events, settings, loopDuration) is { } fitted)
+        {
+            loopDuration = fitted.LoopDuration;
+            return fitted.Events;
+        }
+
         var speed = settings.PlaybackSpeed;
         if (speed == 1)
             return events;
@@ -865,6 +902,37 @@ internal static class RenderSettingsResolver
         if (loopDuration is double loop)
             loopDuration = loop / speed;
         return scaled;
+    }
+
+    /// <summary>
+    /// The recording fitted to <see cref="ResolvedRenderSettings.Length"/>, or null without a length, and for a cast
+    /// without step ranges, which plays as recorded (<see cref="LengthNote"/> says so).
+    /// </summary>
+    internal static PlaybackLength.Result? FitLength(IReadOnlyList<CastEvent> events, ResolvedRenderSettings settings, double? loopDuration) =>
+        settings.Length is double length && settings.StepRanges is { } steps
+            ? PlaybackLength.Fit(events, steps, loopDuration ?? TerminalReplay.ComputeLoopDuration(events), settings.EndHold, settings.FadeOut ?? 0, length)
+            : null;
+
+    /// <summary>
+    /// How much faster than recorded the output plays, for the default frame rate of an mp4 and a GIF: the speed, or
+    /// with a length the recorded length over the played one.
+    /// </summary>
+    internal static double FrameSpeed(IReadOnlyList<CastEvent> events, ResolvedRenderSettings settings, double? loopDuration) =>
+        FitLength(events, settings, loopDuration) is { } fitted && fitted.Played > 0 ? Math.Max(1, fitted.Natural / fitted.Played) : settings.PlaybackSpeed;
+
+    /// <summary>
+    /// A warning for a length that the output does not keep, or null: a recording that is longer at its shortest, and
+    /// a cast without step ranges, written by another tool or an earlier scenetake, which plays as recorded.
+    /// </summary>
+    internal static string? LengthNote(IReadOnlyList<CastEvent> events, ResolvedRenderSettings settings, double? loopDuration)
+    {
+        if (settings.Length is not double length)
+            return null;
+        if (settings.StepRanges is null)
+            return $"length {FormatSeconds(length)}s has no effect: the cast has no step ranges (st:steps), which scenetake writes when it records. It plays as recorded";
+        return FitLength(events, settings, loopDuration) is { } fitted && fitted.Played > length + 0.05
+            ? string.Create(CultureInfo.InvariantCulture, $"length {FormatSeconds(length)}s is shorter than this recording can play: {fitted.Played:F1}s with every wait, pause, and typed character at its shortest. Leave out steps or output, or set speed instead")
+            : null;
     }
 
     /// <summary>
@@ -1202,6 +1270,23 @@ internal static class RenderSettingsResolver
             }
 
             settings = settings with { Speed = speed };
+        }
+
+        if (render?.Length is double length)
+        {
+            if (!IsValidLength(length))
+            {
+                error = $"invalid render.length: must be between {FormatSeconds(MinLength)} and {FormatSeconds(MaxLength)} seconds: {length.ToString(CultureInfo.InvariantCulture)}";
+                return false;
+            }
+
+            if (render.Speed is not null)
+            {
+                error = "render.speed and render.length both set how long the output plays: keep one";
+                return false;
+            }
+
+            settings = settings with { Length = length };
         }
 
         if (render?.Fit is { } fitText)

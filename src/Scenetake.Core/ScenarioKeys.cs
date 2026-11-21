@@ -46,7 +46,7 @@ internal static class ScenarioKeys
         "format", "file",
         "theme", "window", "window-title", "background", "margin", "padding", "opacity", "blur",
         "fit", "crop-top", "crop-bottom", "crop-left", "crop-right",
-        "font-size", "font-family", "loop", "end-hold", "fade-out", "speed",
+        "font-size", "font-family", "loop", "end-hold", "fade-out", "speed", "length",
         "at", "max-fps", "fps", "crf", "max-size", "size", "font-file",
     ];
 

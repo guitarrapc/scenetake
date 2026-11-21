@@ -190,6 +190,32 @@ Sizes are of LF files.
 - **Why one factor.** A demo that feels slow is slow everywhere: the typing, the pauses, and the output. Tuning `typing-speed`, `post-delay`, and each step's timing one by one changes its rhythm, needs a new recording or a `--replay`, and still leaves the length of a PTY step's output. A factor applies to all of it at once, and per output, without running anything again.
 - **Why from 0.25 to 4.** At 4x typing is already a blur, and 0.25x is enough to follow a full-screen program that redraws fast.
 
+### Length
+
+`render.length`, `--length`, or an `outputs` entry's `length` plays the SVG, the mp4, and the GIF in at most that many seconds, from `1` to `600` ([spec_scenario.md](spec_scenario.md) → `render`, [spec_cli.md](spec_cli.md) → Options). The author says how long the demo may be, and scenetake decides where the time goes, instead of the author tuning `typing-speed`, `pre-delay`, and `post-delay` step by step. It is not with `speed`, which decides the same thing: setting both is an error, and a command-line option replaces the other one from the scenario or the cast.
+
+- **What shrinks, in turn.** Each gap between two events of the cast is one kind of time. The kinds give up time in this order, each down to a floor, all gaps of a kind by the same factor:
+
+  | Order | Kind | What it is | Floor |
+  |---|---|---|---|
+  | 1 | Wait | A gap inside a command's output longer than 0.5 s, with nothing drawn: a build's silence, `sleep`, a person thinking in an interactive step | 0.3 s |
+  | 2 | Pause | The gap after a step's output: the time to read it | 0.6 s + 0.08 s per line of its output (at most 3 s), and 0.15 s before the next command |
+  | 2 | Pause | The gap after a card | 1.0 s + 0.25 s per line |
+  | 2 | Pause | The default hold on the final screen, and other gaps over 0.2 s, such as the one before the first step | 1 s for the hold, 0.3 s for the others |
+  | 3 | Typing | The gaps between a command's typed characters | 0.025 s a character |
+  | — | Motion | Gaps inside output up to 0.5 s: a progress bar, a TUI redrawing, keys echoed | Never shrinks |
+  | — | Structure | Gaps up to 0.2 s outside output: the prompt, Enter, a comment line | Never shrinks |
+
+- **What never changes.** A recording that is already within the length plays as recorded: nothing is stretched. An explicit `end-hold` and the `fade-out` are seconds of the output and count toward the length as they are.
+- **When it cannot fit.** With every kind at its floor, the output plays at its shortest, and stderr warns: `length 15s is shorter than this recording can play: 36.6s with every wait, pause, and typed character at its shortest. Leave out steps or output, or set speed instead`. A uniform speed-up past the floors would make the text unreadable, which defeats the demo, so it is left to the author.
+- **Where the steps are.** The kinds come from the cast's `st:steps` tag ([spec_scenario.md](spec_scenario.md) → Recording again): which events are each step's output. The typed characters are the events before a step's Enter, back to its prompt. A cast without the tag, written by another tool or an earlier scenetake, plays as recorded with a warning.
+- **The cast keeps the recorded times.** The length is the `st:length` tag ([spec_cast.md](spec_cast.md)), as speed is `st:speed`, so each output can have its own length from one recording: the README's SVG as recorded, and a 15 s mp4 for X. The same cast always gives the same timing, and a re-recording that keeps every step's output keeps the output too.
+- **Lengths on stderr.** Each `Written:` line of an SVG, mp4, or GIF gives how long it plays and the length: `15.0s, length 15s`.
+- **Frame rates.** Without `--fps`, mp4 and GIF raise their default rate as for speed, by the recorded length over the played one.
+- **Why at render time.** The cast stays as recorded, so the length can differ per output, and the outputs are known in full: a reading pause needs the number of lines a step printed, which a recording knows only after it typed the step. A first prototype on 2026-11-22 set the timing keys before recording from a target. It needed a second pass for the line counts, and wall-clock output times moved the typing speed from run to run.
+- **Why at most, and no stretching.** The same prototype stretched short demos up to the target: a three-command demo reached 30 s only with 5 s pauses, and looked sluggish. Demos have upper limits in practice (X's 140 s, a reader's patience), not lower ones.
+- **Why this order.** A wait shows nothing, so it costs the viewer least. A pause is reading time, kept above what its output needs. Typing is the demo itself, and at 0.025 s a character it still reads as typing. One factor for all of them, as the prototype had, shrank the reading pauses as much as a build's silence.
+
 ### Fit and crop
 
 A render draws a window of the terminal instead of all of it: `render.crop-top`, `crop-bottom`, `crop-left`, and `crop-right` (`--crop-*`) cut cells from each edge, and then `render.fit` (`--fit`) moves the bottom edge (`height`), the right edge (`width`), or both in to the content. SVG, still SVG, mp4, PNG, and GIF draw the same window.

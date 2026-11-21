@@ -191,6 +191,7 @@ The tables below say what each command and option is for. `scenetake --help` and
 | `--end-hold N` | Give viewers time to read the final screen before the animation starts again or ends |
 | `--fade-out N` | End with the text fading out instead of a cut |
 | `--speed N` | Make the SVG, mp4, or GIF shorter (`1.5`) or slower (`0.5`) without recording again |
+| `--length N` | Fit the SVG, mp4, or GIF into at most N seconds without recording again |
 | `--max-fps N` | Make the SVG of a fast-changing screen smaller |
 | `--at TIME` | Make a still SVG or PNG of one moment, such as `end` for the final screen |
 | **mp4, GIF, and PNG** | |
@@ -388,13 +389,14 @@ Set these with a `render` key in the scenario, or with the flag of the same name
 | `margin`, `padding` | Space in pixels |
 | `loop`, `end-hold`, `fade-out` | Play once (`--no-loop`), seconds on the final screen, seconds to fade the text out |
 | `speed` | How many times as fast as recorded the SVG, mp4, and GIF play, `0.25`–`4` |
+| `length` | The most seconds the SVG, mp4, and GIF play. Not with `speed` |
 
-`speed` makes typing, pauses, and output faster together, so a demo keeps its rhythm. The cast keeps the recorded times, so each output can have its own speed, such as a shorter one for X:
+`speed` makes typing, pauses, and output faster together.
 
 ```yaml
 outputs:
   - format: svg              # for the README, as recorded
-  - format: mp4              # for X, one and a half times as fast
+  - format: mp4              # 1.5 times as fast
     speed: 1.5
 ```
 
@@ -403,6 +405,15 @@ outputs:
 | As recorded | `speed: 2` ([speed.yaml](samples/speed.yaml)) |
 | --- | --- |
 | ![](samples/speed.svg) | ![](samples/speed-2x.svg) |
+
+`length` sets how many seconds an output plays. scenetake fits the demo into that time, so you do not tune typing speed and pauses yourself. It shortens waits in a command's output first, then the pauses between steps, then typing. A demo that is already shorter stays as it is, and scenetake warns when a demo still does not fit.
+
+```yaml
+outputs:
+  - format: svg              # for the README, as recorded
+  - format: mp4              # for X, at most 15 seconds
+    length: 15
+```
 
 | macOS | Windows |
 | --- | --- |

@@ -257,6 +257,7 @@ Display metadata for the cast header. Written on every run. Header mapping: [spe
 | `end-hold` | the pause before the last output | Seconds the final screen stays before the SVG starts again or the mp4 ends, `0`–`60` |
 | `fade-out` | `0` | Seconds over which the terminal's contents fade out after `end-hold`, `0`–`10`. The terminal's background, the window, and `background` stay. An SVG that does not loop has no fade, with a warning. |
 | `speed` | `1` | How many times as fast as recorded the SVG, mp4, and GIF play, `0.25`–`4`. The cast keeps the recorded times. `end-hold` and `fade-out` stay seconds of the output. See [spec_svg.md](spec_svg.md#playback-speed) → Playback speed. |
+| `length` | as recorded | The most seconds the SVG, mp4, and GIF play, `1`–`600`: waits in output shrink first, then pauses, then typing, each down to a floor. A shorter recording stays as it is. The cast keeps the recorded times. Not with `speed`. See [spec_svg.md](spec_svg.md#length) → Length. |
 | `fit` | `height` | `none`, `height`, `width`, or `both`: move the bottom edge (`height`), the right edge (`width`), or both in to the last row or column the recording shows, the cursor included, so no empty rows or columns are drawn. The cast keeps `width` and `height`. See [spec_svg.md](spec_svg.md) → Fit and crop. |
 | `crop-top`, `crop-bottom`, `crop-left`, `crop-right` | `0` | Cells cut from that edge before `fit`, `0`–`511`. A crop that leaves no row or no column is an error before anything runs. |
 

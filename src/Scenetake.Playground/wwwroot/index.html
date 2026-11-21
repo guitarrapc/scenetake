@@ -254,10 +254,15 @@
                 <label class="field">--speed
                   <input data-option="speed" type="number" min="0.25" max="4" step="0.25" inputmode="decimal" placeholder="from YAML" data-from-source />
                 </label>
+                <label class="field">--length
+                  <input data-option="length" type="number" min="1" max="600" step="1" inputmode="decimal" placeholder="from YAML" data-from-source />
+                </label>
                 <p class="field__hint field--full"><code>--end-hold 3</code> keeps the final screen for 3 seconds, and
                   <code>--fade-out 1</code> then fades the text out before the demo starts again. With
                   <code>--no-loop</code> (no) the SVG stops on its final screen. <code>--speed 1.5</code> plays the
-                  whole demo one and a half times as fast.</p>
+                  whole demo one and a half times as fast. <code>--length 15</code> plays it in at most 15 seconds:
+                  waits, pauses, and then typing get shorter, each only as far as it stays readable. Give one of
+                  the two.</p>
               </div>
             </details>
           </div>

@@ -119,6 +119,8 @@ if (args[0] is "svg")
 
         foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(svgRenderSettings, svg: svgStillAt is null))
             Console.Error.WriteLine($"Warning: {note}");
+        if (svgStillAt is null)
+            WarnLength("", recording, svgRenderSettings);
         SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath, recording.LoopDuration, svgStillAt);
         PrintSvgWritten(svgOutputPath, recording, svgRenderSettings, svgStillAt);
         if (SvgRender.SizeWarning(new FileInfo(svgOutputPath).Length, svgRenderSettings.MaxFps, fromCast: true) is { } svgSizeWarning)
@@ -208,7 +210,8 @@ if (args[0] is "mp4")
 
         foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(mp4RenderSettings, svg: false))
             Console.Error.WriteLine($"Warning: {note}");
-        var result = Mp4Render.WriteMp4(recording.Events, recording.Width, recording.Height, mp4RenderSettings, mp4Options.ToSettings(mp4RenderSettings.PlaybackSpeed), mp4OutputPath, mp4Ffmpeg, recording.LoopDuration);
+        WarnLength("", recording, mp4RenderSettings);
+        var result = Mp4Render.WriteMp4(recording.Events, recording.Width, recording.Height, mp4RenderSettings, mp4Options.ToSettings(RenderSettingsResolver.FrameSpeed(recording.Events, mp4RenderSettings, recording.LoopDuration)), mp4OutputPath, mp4Ffmpeg, recording.LoopDuration);
         PrintMp4Written(mp4OutputPath, result, mp4RenderSettings);
         Console.Error.WriteLine($"Done: {FormatDisplayPath(mp4OutputPath)}");
         return 0;
@@ -305,7 +308,8 @@ if (args[0] is "gif")
 
         foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(gifRenderSettings, svg: false, gif: true))
             Console.Error.WriteLine($"Warning: {note}");
-        var result = GifRender.WriteGif(recording.Events, recording.Width, recording.Height, gifRenderSettings, gifOptions.ToGifSettings(gifRenderSettings.PlaybackSpeed), gifOutputPath, gifFfmpeg, recording.LoopDuration);
+        WarnLength("", recording, gifRenderSettings);
+        var result = GifRender.WriteGif(recording.Events, recording.Width, recording.Height, gifRenderSettings, gifOptions.ToGifSettings(RenderSettingsResolver.FrameSpeed(recording.Events, gifRenderSettings, recording.LoopDuration)), gifOutputPath, gifFfmpeg, recording.LoopDuration);
         PrintGifWritten(gifOutputPath, result, gifRenderSettings, fromCast: true);
         Console.Error.WriteLine($"Done: {FormatDisplayPath(gifOutputPath)}");
         return 0;
@@ -1202,6 +1206,8 @@ static bool TryRenderOutput(string castPath, OutputPlan plan, ResolvedRenderSett
         if (plan.Format == OutputFormat.Svg)
             settings = settings with { MaxFps = runSettings.MaxFps };
         drawn = settings = plan.Overrides?.Apply(settings) ?? settings;
+        if (plan.Format != OutputFormat.Png && plan.StillAt is null)
+            WarnLength(plan.Label, written, settings);
         switch (plan.Format)
         {
             case OutputFormat.Svg:
@@ -1212,7 +1218,7 @@ static bool TryRenderOutput(string castPath, OutputPlan plan, ResolvedRenderSett
                 break;
             case OutputFormat.Mp4:
                 // WriteMp4 encodes to a temporary file and renames it, so a failure leaves no partial .mp4.
-                PrintMp4Written(plan.Path, Mp4Render.WriteMp4(written.Events, written.Width, written.Height, settings, plan.Mp4.ToSettings(settings.PlaybackSpeed), plan.Path, plan.FfmpegPath!, written.LoopDuration), settings);
+                PrintMp4Written(plan.Path, Mp4Render.WriteMp4(written.Events, written.Width, written.Height, settings, plan.Mp4.ToSettings(RenderSettingsResolver.FrameSpeed(written.Events, settings, written.LoopDuration)), plan.Path, plan.FfmpegPath!, written.LoopDuration), settings);
                 break;
             case OutputFormat.Png:
                 var at = plan.StillAt ?? double.PositiveInfinity;
@@ -1220,7 +1226,7 @@ static bool TryRenderOutput(string castPath, OutputPlan plan, ResolvedRenderSett
                 break;
             default:
                 // WriteGif encodes to a temporary file and renames it, as WriteMp4 does.
-                PrintGifWritten(plan.Path, GifRender.WriteGif(written.Events, written.Width, written.Height, settings, plan.Mp4.ToGifSettings(settings.PlaybackSpeed), plan.Path, plan.FfmpegPath!, written.LoopDuration), settings, fromCast: false);
+                PrintGifWritten(plan.Path, GifRender.WriteGif(written.Events, written.Width, written.Height, settings, plan.Mp4.ToGifSettings(RenderSettingsResolver.FrameSpeed(written.Events, settings, written.LoopDuration)), plan.Path, plan.FfmpegPath!, written.LoopDuration), settings, fromCast: false);
                 break;
         }
 
@@ -1715,6 +1721,7 @@ static string? AnimationOption(bool maxFps, StyleOptions style) =>
     : style.EndHold is not null ? "--end-hold"
     : style.FadeOut is not null ? "--fade-out"
     : style.Speed is not null ? "--speed"
+    : style.Length is not null ? "--length"
     : null;
 
 static bool TryParseRunArgs(
@@ -3277,7 +3284,8 @@ static string CreateInitialScenarioYaml(string? shell)
         # fg: "#d0d0d0"
         # bg: "#282c34"
       end-hold: 2                  # Seconds the last screen stays before the SVG plays again
-      # speed: 1.5                 # Play the SVG, mp4, and GIF 1.5 times as fast as recorded
+      # length: 20                 # Play the SVG, mp4, and GIF in at most 20 seconds: waits, pauses, then typing get shorter
+      # speed: 1.5                 # Or 1.5 times as fast as recorded, everything alike. Not with length
       # font-size: 16
       # font-family: '"JetBrains Mono", Consolas, monospace'
       # fit: height                  # The default: no empty rows below the content. none draws the whole terminal
@@ -3293,7 +3301,7 @@ static string CreateInitialScenarioYaml(string? shell)
       #   fps: 10
       # - format: mp4              # For X. Needs ffmpeg
       #   max-size: 1280x1024
-      #   speed: 1.5               # Shorter than the README's SVG, from the same recording
+      #   length: 15               # At most 15 seconds, shorter than the README's SVG, from the same recording
 
     # Default settings for all steps. Can be overridden per step by using a mapping with "run" and timing keys.
     settings:
@@ -3438,9 +3446,18 @@ static string SpedUpLength(double recorded, ResolvedRenderSettings render) =>
 
 /// <summary>How long an output plays, such as <c>12.0s</c>, and the speed when it is not the recorded one: <c>8.0s at 1.5x</c>.</summary>
 static string PlayedLength(double seconds, ResolvedRenderSettings render) =>
-    render.PlaybackSpeed == 1
+    render.Length is double length
+        ? string.Create(CultureInfo.InvariantCulture, $"{seconds:F1}s, length {RenderSettingsResolver.FormatSeconds(length)}s")
+        : render.PlaybackSpeed == 1
         ? string.Create(CultureInfo.InvariantCulture, $"{seconds:F1}s")
         : string.Create(CultureInfo.InvariantCulture, $"{seconds:F1}s at {RenderSettingsResolver.FormatSpeed(render.PlaybackSpeed)}");
+
+/// <summary>A warning when an output does not keep its length (RenderSettingsResolver.LengthNote), named after its outputs entry.</summary>
+static void WarnLength(string label, CastRecording recording, ResolvedRenderSettings settings)
+{
+    if (RenderSettingsResolver.LengthNote(recording.Events, settings, recording.LoopDuration) is { } note)
+        Console.Error.WriteLine($"Warning: {(label.Length == 0 ? "" : label + ": ")}{note}");
+}
 
 /// <summary>The GIF's line, and a warning when it is larger than Zenn takes, with what makes it smaller.</summary>
 static void PrintGifWritten(string path, GifResult result, ResolvedRenderSettings render, bool fromCast)
@@ -3848,8 +3865,23 @@ static bool TryConsumeStyleArg(string[] args, ref int i, StyleOptions style, out
             return true;
         if (style.Speed is not null)
             error = "duplicate option: --speed";
+        else if (style.Length is not null)
+            error = "--speed and --length both set how long the output plays: give one";
         else if (RenderSettingsResolver.TryParseSpeed(speed, out var parsed, out error))
             style.Speed = parsed;
+        return true;
+    }
+
+    if (TryTakeOptionValue(args, ref i, "--length", out var length, out error))
+    {
+        if (error.Length != 0)
+            return true;
+        if (style.Length is not null)
+            error = "duplicate option: --length";
+        else if (style.Speed is not null)
+            error = "--speed and --length both set how long the output plays: give one";
+        else if (RenderSettingsResolver.TryParseLength(length, out var parsed, out error))
+            style.Length = parsed;
         return true;
     }
 

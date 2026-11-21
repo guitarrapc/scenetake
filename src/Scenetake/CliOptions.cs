@@ -30,6 +30,7 @@ sealed class StyleOptions
     internal double? EndHold { get; set; }
     internal double? FadeOut { get; set; }
     internal double? Speed { get; set; }
+    internal double? Length { get; set; }
     internal FitMode? Fit { get; set; }
     internal int? CropTop { get; set; }
     internal int? CropBottom { get; set; }
@@ -56,7 +57,7 @@ sealed class StyleOptions
     }
 
     internal RenderStyleOverrides ToOverrides() =>
-        new(WindowTitle, Background, Margin, Padding, Opacity, Blur, Loop, EndHold, FadeOut, Fit, CropTop, CropBottom, CropLeft, CropRight, Speed);
+        new(WindowTitle, Background, Margin, Padding, Opacity, Blur, Loop, EndHold, FadeOut, Fit, CropTop, CropBottom, CropLeft, CropRight, Speed, Length);
 }
 
 /// <summary>
@@ -182,6 +183,8 @@ sealed class CaptureRequest
             Key("fade-out", Number(fadeOut));
         if (style.Speed is double speed)
             Key("speed", Number(speed));
+        if (style.Length is double length)
+            Key("length", Number(length));
         if (style.Fit is FitMode fit)
             Key("fit", fit switch { FitMode.None => "none", FitMode.Width => "width", FitMode.Both => "both", _ => "height" });
         foreach (var edge in (ReadOnlySpan<string>)["top", "bottom", "left", "right"])

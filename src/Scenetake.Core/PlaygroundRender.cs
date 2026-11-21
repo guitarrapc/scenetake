@@ -31,7 +31,8 @@ internal sealed record PlaygroundOptions(
     double? EndHold = null,
     double? FadeOut = null,
     string? Fit = null,
-    double? Speed = null)
+    double? Speed = null,
+    double? Length = null)
 {
     internal BackgroundImageSource ImageSource => BackgroundImageSource.FromImages(Images ?? new Dictionary<string, byte[]>());
 }
@@ -153,7 +154,10 @@ internal static class PlaygroundRender
             {
                 // As on the CLI, the SVG comes from the cast as written, with --max-fps applied again.
                 var written = CastReader.ReadText(castText);
-                svg = SvgRender.RenderToUtf8(written.Events, written.Width, written.Height, RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings) with { MaxFps = renderSettings.MaxFps }, written.LoopDuration);
+                var drawn = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings) with { MaxFps = renderSettings.MaxFps };
+                if (RenderSettingsResolver.LengthNote(written.Events, drawn, written.LoopDuration) is { } lengthNote)
+                    Console.Error.WriteLine($"Warning: {lengthNote}");
+                svg = SvgRender.RenderToUtf8(written.Events, written.Width, written.Height, drawn, written.LoopDuration);
                 if (SvgRender.SizeWarning(svg.LongLength, renderSettings.MaxFps, fromCast: false) is { } sizeWarning)
                     Console.Error.WriteLine($"Warning: {sizeWarning}");
             }
@@ -194,6 +198,8 @@ internal static class PlaygroundRender
             settings = style.Apply(settings);
             foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(settings))
                 Console.Error.WriteLine($"Warning: {note}");
+            if (RenderSettingsResolver.LengthNote(recording.Events, settings, recording.LoopDuration) is { } lengthNote)
+                Console.Error.WriteLine($"Warning: {lengthNote}");
             svg = SvgRender.RenderToUtf8(recording.Events, recording.Width, recording.Height, settings, recording.LoopDuration);
             if (SvgRender.SizeWarning(svg.LongLength, settings.MaxFps, fromCast: true) is { } sizeWarning)
                 Console.Error.WriteLine($"Warning: {sizeWarning}");
@@ -353,6 +359,20 @@ internal static class PlaygroundRender
             return false;
         }
 
+        if (options.Length is double length
+            && !RenderSettingsResolver.TryParseLength(length.ToString(System.Globalization.CultureInfo.InvariantCulture), out _, out message))
+        {
+            error = message;
+            return false;
+        }
+
+        // As on the CLI: one of the two in a layer. Either one replaces the other from the YAML or the cast.
+        if (options.Speed is not null && options.Length is not null)
+        {
+            error = "--speed and --length both set how long the output plays: give one";
+            return false;
+        }
+
         FitMode? fit = null;
         if (!string.IsNullOrWhiteSpace(options.Fit))
         {
@@ -376,7 +396,8 @@ internal static class PlaygroundRender
             options.EndHold,
             options.FadeOut,
             fit,
-            Speed: options.Speed);
+            Speed: options.Speed,
+            Length: options.Length);
         return true;
     }
 
