@@ -170,7 +170,7 @@ npx skills add guitarrapc/scenetake
 
 ### オプション
 
-`capture`は`--save-keys`、`--save-outputs`、`--replay`以外のシナリオのオプションを使えます。svg、mp4、png、gifコマンドは、見た目のオプションとその形式のオプションを使えます。
+`capture`は`--save-keys`、`--save-outputs`、`--replay`、`--rerun`以外のシナリオのオプションを使えます。svg、mp4、png、gifコマンドは、見た目のオプションとその形式のオプションを使えます。
 
 | オプション | 用途 |
 | --- | --- |
@@ -180,6 +180,7 @@ npx skills add guitarrapc/scenetake
 | `--save-keys FILE` | `interactive: true`のステップで打ったキーを保存し、次からの録画で自動入力する |
 | `--save-outputs FILE` | 各ステップの出力を`--replay`用に保存する |
 | `--replay FILE` | コマンドを実行し直さず、見た目、タイミング、形式を変える |
+| `--rerun` | `rerun: false`のステップも含めて、すべてのステップを実行する |
 | `--verbose` | 実行中のフェーズと、止まったときのエラーの詳細を見る |
 | **見た目**（シナリオの`render`やcastの保存値を上書き） | |
 | `--theme NAME` | カラーテーマを選ぶ。明るいページには明るいテーマなど |
@@ -603,6 +604,15 @@ Compared with the earlier cast: 4 of 5 steps printed the same, 1 changed
   changed: step 3: npm test
 ```
 
+時間のかかるビルドやデプロイ、実行のたびに料金がかかるコマンドなど撮り直しで実行したくないステップには`rerun: false`を指定します。前回のcastにあるそのステップの出力を、コマンドを実行せずに使います。実行しないので、そのステップの`cd`や`export`も起きません。前回のcastにないときは実行し、`--rerun`を付けるとすべてのステップを実行します。
+
+```yaml
+steps:
+  - run: npm run build      # 遅く、作ったファイルは残る
+    rerun: false
+  - npx my-app --help
+```
+
 ### CI
 
 製品が変わったら、GitHub Actionsでデモを撮り直します。出力が変わらないデモは同じファイルになるので、差分に出るのは変わったデモだけです。
@@ -645,7 +655,7 @@ git diff --exit-code -- 'docs/demos/*.cast'
 
 - 手元でもCIと同じシェル（Linuxのbashなど）で撮ります。Windowsのpwshで撮ったデモは、CIで最初に撮り直したときに全部変わります。
 - 比べるのはcastです。GIFとmp4はffmpegのバージョンでバイトが変わります。
-- `interactive: true`のステップはCIでは撮れません。`keys`のステップは撮れます。
+- `interactive: true`のステップはCIでは撮れません。`keys`のステップと、コミット済みのcastにある`rerun: false`の対話型ステップは撮れます。
 - `--strict`を付けると、ステップのコマンドが0以外で終了したときにエラーにできます。失敗するのが正しいステップには`continue-on-error: true`を付けます。
 
 ## 開発

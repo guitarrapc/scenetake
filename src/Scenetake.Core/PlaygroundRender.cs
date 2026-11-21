@@ -215,6 +215,8 @@ internal static class PlaygroundRender
             notes.Add("pre, post: no command runs in the browser, and their output is never in a cast");
         if ((scenario.Steps ?? []).Select(ParseCommand).Any(static command => IsStepFlagSet(command.Extra, "keep-output")))
             notes.Add("keep-output: there is no earlier cast in the browser, so each step shows the recorded output");
+        if ((scenario.Steps ?? []).Select(ParseCommand).Any(static command => IsStepFlagCleared(command.Extra, "rerun")))
+            notes.Add("rerun: false: there is no earlier cast in the browser, so each step shows the recorded output");
         if (scenario.Outputs is { Count: > 0 })
             notes.Add("outputs: the browser shows one SVG with the render options above, and the CLI writes the files listed");
         return notes;

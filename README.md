@@ -165,7 +165,7 @@ The tables below say what each command and option is for. `scenetake --help` and
 
 ### Options
 
-`capture` takes the options of a scenario, except `--save-keys`, `--save-outputs`, and `--replay`. The svg, mp4, png, and gif commands take the options for the look and for their format.
+`capture` takes the options of a scenario, except `--save-keys`, `--save-outputs`, `--replay`, and `--rerun`. The svg, mp4, png, and gif commands take the options for the look and for their format.
 
 | Option | Use it to |
 | --- | --- |
@@ -175,6 +175,7 @@ The tables below say what each command and option is for. `scenetake --help` and
 | `--save-keys FILE` | Save what you type in `interactive: true` steps, so later recordings type it for you |
 | `--save-outputs FILE` | Save what each step printed, for `--replay` |
 | `--replay FILE` | Change the look, the timing, or the format without running the commands again |
+| `--rerun` | Run every step, also those with `rerun: false` |
 | `--verbose` | See which phase is running, and the details of an error that stops the run |
 | **Look** (overrides the scenario's `render`, or what the cast stores) | |
 | `--theme NAME` | Pick a color theme, such as a light one for a light page |
@@ -598,6 +599,15 @@ Compared with the earlier cast: 4 of 5 steps printed the same, 1 changed
   changed: step 3: npm test
 ```
 
+To keep a step from running again, such as a slow build, a deploy, or a command that costs money on every run, set `rerun: false`. The step shows its output from the earlier cast without running, so its `cd` or `export` does not happen either. It runs when the earlier cast does not have it, and `--rerun` runs every step.
+
+```yaml
+steps:
+  - run: npm run build      # slow, and its files stay
+    rerun: false
+  - npx my-app --help
+```
+
 ### CI
 
 Record the demos again in GitHub Actions when your product changes. A demo whose output did not change gives the same files, so only the demos that changed show in the diff.
@@ -640,7 +650,7 @@ git diff --exit-code -- 'docs/demos/*.cast'
 
 - Record locally in the shell that CI uses, such as bash on Linux. A demo recorded with pwsh on Windows changes completely on its first CI run.
 - Compare the casts, not GIFs or mp4s, whose bytes change with the ffmpeg version.
-- Steps with `interactive: true` cannot run in CI. Steps with `keys` can.
+- Steps with `interactive: true` cannot run in CI. Steps with `keys` can, and so can an interactive step with `rerun: false` that the committed cast has.
 - `--strict` makes a non-zero exit from a step's command an error. Set `continue-on-error: true` on a step that is meant to fail.
 
 ## Development

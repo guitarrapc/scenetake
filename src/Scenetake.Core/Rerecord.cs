@@ -273,6 +273,31 @@ internal sealed class PreviousCast
         return null;
     }
 
+    /// <summary>The step that <see cref="Take"/> would give next for <paramref name="id"/>, without taking it.</summary>
+    internal PreviousStep? Peek(ulong id)
+    {
+        foreach (var step in _steps)
+        {
+            if (!step.Taken && step.Id == id)
+                return step;
+        }
+
+        return null;
+    }
+
+    /// <summary>How many earlier steps have <paramref name="id"/>: the n-th step with it, from 0, finds one when n is below this.</summary>
+    internal int CountOf(ulong id)
+    {
+        var count = 0;
+        foreach (var step in _steps)
+        {
+            if (step.Id == id)
+                count++;
+        }
+
+        return count;
+    }
+
     /// <summary>The text of the step's output events, joined.</summary>
     internal string Text(PreviousStep step)
     {
@@ -332,6 +357,80 @@ internal sealed class Rerecorder(PreviousCast? previous, SecretMasker? masker)
 
     /// <summary>The steps with keep-output that start elsewhere on the screen than their earlier output did. They are in <see cref="Changed"/> too.</summary>
     internal List<StepSlot> KeepMoved { get; } = [];
+
+    /// <summary>The steps with <c>rerun: false</c> that show the earlier output, without running.</summary>
+    internal List<StepSlot> NotRun { get; } = [];
+
+    /// <summary>Why a step with <c>rerun: false</c> ran after all, one line each, for <see cref="Rerecording.Describe"/>.</summary>
+    internal List<string> RerunNotes { get; } = [];
+
+    /// <summary>Whether a step set <c>rerun: false</c>. Without an earlier cast, each such step ran.</summary>
+    internal bool RerunAsked { get; private set; }
+
+    /// <summary>
+    /// For a step with <c>rerun: false</c>, before its command would run: when the earlier cast has the step, adds its
+    /// earlier events at their earlier offsets from <paramref name="start"/>, with their timing, and returns when the
+    /// step ends. Null when the command must run: the earlier cast does not have the step, its earlier output holds
+    /// text that is masked now, or ConPTY would start it elsewhere on the screen (<paramref name="startCursor"/>), as
+    /// for keep-output.
+    /// </summary>
+    internal double? Reuse(
+        List<CastEvent> events,
+        int number,
+        string maskedRun,
+        ulong id,
+        bool keepOutput,
+        double start,
+        double instantAt,
+        (int Row, int Column)? startCursor,
+        int width,
+        int height)
+    {
+        RerunAsked = true;
+        if (previous is null)
+            return null;
+
+        var earlier = previous.Peek(id);
+        string? why = null;
+        if (earlier is null)
+            why = "the earlier cast has no output of it";
+        else if (masker?.Hides(previous.Text(earlier)) == true)
+            why = "its earlier output holds text that is masked now";
+        else if (startCursor is { } cursor && previous.CursorAt(earlier.First, width, height) != cursor)
+            why = "it starts at another place on the screen than its earlier output did";
+        if (earlier is null || why is not null)
+        {
+            RerunNotes.Add($"Note: step {number} sets rerun: false, but {why}, so it ran: {Rerecording.Shorten(maskedRun)}");
+            return null;
+        }
+
+        previous.Take(id);
+        var first = events.Count;
+        double end;
+        if (earlier.Clock)
+        {
+            // Output that the clock timed keeps its earlier offsets from the command's start, in whole milliseconds as
+            // the file has them, as a step that prints the same keeps them.
+            var startMs = Rerecording.ToMs(start);
+            for (var i = earlier.First; i < earlier.First + earlier.Count; i++)
+                events.Add(previous.EventAt(i) with { Time = (startMs + previous.MsAt(i) - earlier.StartMs) / 1000.0 });
+            end = (startMs + earlier.EndMs - earlier.StartMs) / 1000.0;
+        }
+        else
+        {
+            // Output that appears at once does so at this run's time, as a step that runs prints it.
+            var text = previous.Text(earlier);
+            if (text.Length > 0)
+                events.Add(CastEvent.Output(Math.Round(instantAt, 6), text));
+            end = instantAt;
+        }
+
+        // The earlier timing keys stay with the earlier events, so a later recording that runs the step compares as usual.
+        var slot = new StepSlot(number, maskedRun, id, earlier.Timing, earlier.Clock, keepOutput, first, events.Count - first, start, end, instantAt);
+        NotRun.Add(slot);
+        Slots.Add(slot);
+        return end;
+    }
 
     /// <summary>
     /// Takes a composed step, whose events are at the end of <paramref name="events"/>, and returns when it ends.
@@ -737,6 +836,10 @@ internal static class Rerecording
                 lines.Add($"Note: the earlier {castPath} was not compared with this recording: {problem}. The next recording compares with this one.");
             else if (keeps)
                 lines.Add($"Note: keep-output: there is no earlier cast at {castPath} yet, so every step shows what it printed now.");
+            if (result.RerunAsked)
+                lines.Add(problem is null
+                    ? $"Note: rerun: false: there is no earlier cast at {castPath} yet, so every step ran."
+                    : "Note: rerun: false: the earlier cast was not used, so every step ran.");
             return lines;
         }
 
@@ -744,6 +847,8 @@ internal static class Rerecording
         var summary = new StringBuilder(result.Same.Count == total
             ? $"Compared with the earlier cast: all {total} step{(total == 1 ? "" : "s")} printed the same"
             : $"Compared with the earlier cast: {result.Same.Count} of {total} steps printed the same");
+        if (result.NotRun.Count > 0)
+            summary.Append(CultureInfo.InvariantCulture, $", {result.NotRun.Count} not run (rerun: false)");
         if (result.Kept.Count > 0)
             summary.Append(CultureInfo.InvariantCulture, $", {result.Kept.Count} kept the earlier output (keep-output)");
         if (result.Changed.Count > 0)
@@ -763,10 +868,11 @@ internal static class Rerecording
             lines.Add($"Note: step {slot.Number} sets keep-output, but its earlier output holds text that is masked now, so it shows what it printed now: {Shorten(slot.Run)}");
         foreach (var slot in result.KeepMoved)
             lines.Add($"Note: step {slot.Number} sets keep-output, but it starts at another place on the screen than its earlier output did, so it shows what it printed now: {Shorten(slot.Run)}");
+        lines.AddRange(result.RerunNotes);
         return lines;
     }
 
-    private static string Shorten(string run)
+    internal static string Shorten(string run)
     {
         var line = run.ReplaceLineEndings("\n");
         var newline = line.IndexOf('\n');

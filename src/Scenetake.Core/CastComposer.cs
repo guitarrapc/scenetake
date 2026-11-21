@@ -325,8 +325,6 @@ internal static partial class ScenarioCast
             if (show == StepShow.All)
                 EmitTypedCommand(events, ref t, Prompt(stepFolder), masker?.MaskText(typed) ?? typed, cmdSpeed, cmdJitter, stepRandom, hasRunHighlight, runHighlightStyle);
 
-            if (options.LogRunning)
-                Console.Error.WriteLine($"  running: {command.Cmd}");
             var width = scenario.Width ?? RenderSettingsResolver.DefaultTerminalCols;
             var height = scenario.Height ?? RenderSettingsResolver.DefaultTerminalRows;
             // ConPTY addresses rows from where it believes its cursor starts. Telling it where the recording's
@@ -335,6 +333,34 @@ internal static partial class ScenarioCast
             var ptyStartCursor = usePty && !useInteractive && options.TrackPtyCursor
                 ? (cursorTracker ??= new CastCursorTracker(width, height)).Advance(events)
                 : ((int Row, int Column)?)null;
+
+            // rerun: false shows the earlier cast's output without running the command: a slow step, one that costs
+            // money or changes something, or an interactive step recorded once by hand. A replay runs nothing anyway,
+            // and --rerun runs every step.
+            if (!GetBool(command.Extra, true, "rerun") && options.Replay is null && !options.RerunAll && options.Rerecorder is { } reuser)
+            {
+                var reusedRun = masker?.MaskUncounted(command.Cmd) ?? command.Cmd;
+                if (reuser.Reuse(
+                    events,
+                    i + 1,
+                    reusedRun,
+                    Rerecording.StepId(usePty, useInteractive, show, reusedRun),
+                    GetBool(command.Extra, false, "keep-output"),
+                    t,
+                    t + cmdExecutionDuration,
+                    ptyStartCursor,
+                    width,
+                    height) is double reusedEnd)
+                {
+                    if (options.LogRunning)
+                        Console.Error.WriteLine($"  not run (rerun: false): {command.Cmd}");
+                    t = reusedEnd + cmdPost + cmdPre;
+                    continue;
+                }
+            }
+
+            if (options.LogRunning)
+                Console.Error.WriteLine($"  running: {command.Cmd}");
             // The keys' typing delays come from the step's own sequence, after its typed command. The playground ignores
             // the keys, and the steps after them type the same way in both, as each has a sequence of its own.
             var keys = BuildKeyActions(command.Extra, cmdSpeed, cmdJitter, stepRandom);
@@ -1485,6 +1511,9 @@ internal sealed class GenerateOptions
 
     /// <summary>Compares each step with the earlier cast, and keeps where its output is for the st:steps tag. Null does neither.</summary>
     internal Rerecorder? Rerecorder { get; init; }
+
+    /// <summary>--rerun: run every step, also one with <c>rerun: false</c> whose output the earlier cast has.</summary>
+    internal bool RerunAll { get; init; }
 
     /// <summary>
     /// A replay of an outputs file, which gives each typed command as the file holds it, masked by the recording. Null

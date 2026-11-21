@@ -259,11 +259,12 @@ internal static partial class ScenarioCast
         return null;
     }
 
-    // Keys that change how a step looks in the recording, which a step that shows nothing does not have.
+    // Keys about what a step shows in the recording, which a step that shows nothing does not have. rerun: false shows
+    // the earlier cast's output, and a hidden step has none there, so it always runs.
     internal static readonly string[] ShownOnlyKeys =
     [
         "name", "run-highlight", "highlight", "stderr-color", "pre-delay", "post-delay", "execution-duration",
-        "stream-output", "max-duration", "silence-threshold", "max-idle", "keep-output",
+        "stream-output", "max-duration", "silence-threshold", "max-idle", "keep-output", "rerun",
     ];
 
     // The keys a clear step reads besides clear: it shows a comment line and takes time, but runs nothing.
@@ -551,6 +552,50 @@ internal static partial class ScenarioCast
     /// <summary>Whether a step that will be recorded sets <c>interactive: true</c>.</summary>
     internal static bool HasInteractiveStep(Scenario scenario) =>
         (scenario.Steps ?? []).Select(ParseCommand).Any(command => !string.IsNullOrWhiteSpace(command.Cmd) && IsStepFlagSet(command.Extra, "interactive"));
+
+    /// <summary>
+    /// Whether an interactive step will run, so that the recording needs a terminal. A step with <c>rerun: false</c> does
+    /// not run when <paramref name="previous"/> has its output, unless <paramref name="rerunAll"/>: so an interactive step
+    /// recorded once by hand records again in CI. Run text is masked by <paramref name="masker"/>, which knows no secret
+    /// that pre or a step exports yet, so a step whose run text holds one counts as one that runs.
+    /// </summary>
+    internal static bool RunsInteractiveStep(Scenario scenario, PreviousCast? previous, SecretMasker? masker, bool rerunAll)
+    {
+        // The n-th step with an id finds the n-th earlier step with it, as the recording takes them (Rerecorder).
+        var seen = new Dictionary<ulong, int>();
+        foreach (var item in scenario.Steps ?? [])
+        {
+            var command = ParseCommand(item);
+            if (command.Card is not null || command.Clear || string.IsNullOrWhiteSpace(command.Cmd) || IsStepFlagSet(command.Extra, "background"))
+                continue;
+
+            var interactive = IsStepFlagSet(command.Extra, "interactive");
+            var show = GetStepShow(command.Extra);
+            if (show == StepShow.None)
+            {
+                if (interactive)
+                    return true;
+                continue;
+            }
+
+            var maskedRun = masker?.MaskUncounted(command.Cmd) ?? command.Cmd;
+            var id = Rerecording.StepId(IsStepFlagSet(command.Extra, "pty"), interactive, show, maskedRun);
+            var occurrence = seen.GetValueOrDefault(id);
+            seen[id] = occurrence + 1;
+            if (!interactive)
+                continue;
+
+            var shown = !rerunAll && previous is not null && IsStepFlagCleared(command.Extra, "rerun") && occurrence < previous.CountOf(id);
+            if (!shown)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Whether a step sets a flag to <c>false</c>, without a warning for another value, which the recording gives.</summary>
+    internal static bool IsStepFlagCleared(Dictionary<string, object?> extra, string key) =>
+        extra.TryGetValue(key, out var value) && (value is false || (value is string text && bool.TryParse(text, out var parsed) && !parsed));
 
     internal static bool IsStepFlagSet(Dictionary<string, object?> extra, string key) =>
         extra.TryGetValue(key, out var value) && (value is true || (bool.TryParse(value?.ToString(), out var parsed) && parsed));

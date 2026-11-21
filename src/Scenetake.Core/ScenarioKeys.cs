@@ -23,7 +23,7 @@ internal static class ScenarioKeys
         "keys", "timeout",
         "show", "clear", "card",
         "background", "wait", "wait-timeout",
-        "keep-output",
+        "keep-output", "rerun",
     ];
 
     /// <summary>The keys a <c>highlight</c> entry reads.</summary>

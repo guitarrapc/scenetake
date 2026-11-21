@@ -635,9 +635,14 @@
           "$ref": "#/definitions/positiveSeconds"
         },
         "keep-output": {
-          "description": "Show this step's output from the earlier cast when recording again, even when it changed, such as a date.",
+          "description": "Show this step's output from the earlier cast when recording again, even when it changed, such as a date. The command still runs.",
           "type": "boolean",
           "default": false
+        },
+        "rerun": {
+          "description": "false shows this step's output from the earlier cast without running the command: a slow step, one that costs money or changes something, or an interactive step recorded once by hand. Its cd and export do not happen then. It runs when the earlier cast does not have it, and with --rerun.",
+          "type": "boolean",
+          "default": true
         }
       },
       "dependencies": {
@@ -694,7 +699,7 @@
                 "run", "name", "typing-speed", "typing-jitter", "pre-delay", "post-delay", "execution-duration",
                 "stream-output", "max-duration", "silence-threshold", "max-idle", "run-highlight", "highlight", "stderr-color",
                 "pty", "interactive", "normalize-typing", "continue-on-error", "show", "clear", "card",
-                "background", "wait", "wait-timeout", "keep-output"
+                "background", "wait", "wait-timeout", "keep-output", "rerun"
               ],
               "errorMessage": "keys and timeout do not apply to interactive: true, where a person types and ends the step."
             }
@@ -708,7 +713,7 @@
               { "required": ["name"] }, { "required": ["run-highlight"] }, { "required": ["highlight"] }, { "required": ["stderr-color"] },
               { "required": ["pre-delay"] }, { "required": ["post-delay"] }, { "required": ["execution-duration"] },
               { "required": ["stream-output"] }, { "required": ["max-duration"] }, { "required": ["silence-threshold"] },
-              { "required": ["max-idle"] }, { "required": ["keep-output"] }
+              { "required": ["max-idle"] }, { "required": ["keep-output"] }, { "required": ["rerun"] }
             ]
           },
           "then": {
@@ -717,7 +722,7 @@
                 "run", "typing-speed", "typing-jitter", "pty", "interactive", "normalize-typing", "continue-on-error",
                 "keys", "timeout", "show", "clear", "card", "background", "wait", "wait-timeout"
               ],
-              "errorMessage": "show: none shows nothing and takes no time, so it takes no name, highlight, stderr-color, delay, output timing, or keep-output."
+              "errorMessage": "show: none shows nothing and takes no time, so it takes no name, highlight, stderr-color, delay, output timing, keep-output, or rerun."
             }
           }
         },
@@ -732,7 +737,7 @@
                 "run", "name", "typing-speed", "typing-jitter", "pre-delay", "post-delay", "execution-duration",
                 "stream-output", "max-duration", "silence-threshold", "max-idle", "highlight", "stderr-color",
                 "pty", "interactive", "normalize-typing", "continue-on-error", "keys", "timeout", "show", "clear", "card",
-                "background", "wait", "wait-timeout", "keep-output"
+                "background", "wait", "wait-timeout", "keep-output", "rerun"
               ],
               "errorMessage": "show: output types nothing, so run-highlight has no effect."
             }

@@ -186,7 +186,7 @@ internal static class RerecordCases
 
     // Records the scenario with the outputs that run gives each step, compared with an earlier cast when there is one,
     // and returns the cast as scenetake writes it.
-    internal static (string Cast, Rerecorder Result) Record(string yaml, Func<StepStart, CommandExecution> run, string? earlier = null, bool trackCursor = false)
+    internal static (string Cast, Rerecorder Result) Record(string yaml, Func<StepStart, CommandExecution> run, string? earlier = null, bool trackCursor = false, bool rerunAll = false)
     {
         var scenario = ParseScenario(yaml);
         PreviousCast? previous = null;
@@ -199,7 +199,7 @@ internal static class RerecordCases
 
         var masker = SecretMasker.ForScenario(scenario, environment: null);
         var result = new Rerecorder(previous, masker);
-        var options = new GenerateOptions { LogRunning = false, Masker = masker, Rerecorder = result, TrackPtyCursor = trackCursor };
+        var options = new GenerateOptions { LogRunning = false, Masker = masker, Rerecorder = result, TrackPtyCursor = trackCursor, RerunAll = rerunAll };
         var (events, failure) = GenerateAsync(scenario, options, step => Task.FromResult(run(step))).GetAwaiter().GetResult();
         if (failure is not null)
             throw new InvalidOperationException($"step {failure.Number} failed");

@@ -446,7 +446,7 @@ if (args[0] is "capture" && args.Length > 1 && args[1] is "-h" or "--help")
 }
 
 // `capture` comes here too: it records the one-step scenario that its command makes, without a file.
-if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runStyle, out var runStillAt, out var capture, out var saveKeysArg, out var saveOutputsArg, out var replayArg, out var runError, out var formatGiven, out var scenarioIndexes))
+if (!TryParseRunArgs(args, out var scenarioArg, out var outputArg, out var outputFormat, out var verbose, out var strict, out var runFontSize, out var runFontFamily, out var runThemePreset, out var runWindow, out var runMaxFps, out var runMp4Options, out var runStyle, out var runStillAt, out var capture, out var saveKeysArg, out var saveOutputsArg, out var replayArg, out var rerunAll, out var runError, out var formatGiven, out var scenarioIndexes))
 {
     Console.Error.WriteLine($"Error: {runError}");
     if (args[0] is "capture")
@@ -597,7 +597,16 @@ if (replayPath is not null)
 
 // An interactive step needs scenetake's own stdin and stdout to be a terminal. Checking it here stops
 // the run before pre and the steps before it, which otherwise ran only to be thrown away. A replay types nothing.
-if (replayOutputs is null && (Console.IsInputRedirected || Console.IsOutputRedirected) && HasInteractiveStep(scenario))
+// A step with rerun: false that the earlier cast has does not run, so a step recorded once by hand records in CI.
+// An outputs file turns the earlier cast off, as below.
+if (replayOutputs is null && (Console.IsInputRedirected || Console.IsOutputRedirected) && HasInteractiveStep(scenario)
+    && RunsInteractiveStep(
+        scenario,
+        string.IsNullOrWhiteSpace(saveOutputsArg ?? Environment.GetEnvironmentVariable(StepOutputs.EnvironmentVariable))
+            ? PreviousCast.TryRead(outputPath, scenarioWidth, scenarioHeight, out _)
+            : null,
+        SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment()),
+        rerunAll))
 {
     Console.Error.WriteLine($"Error: {InteractiveNeedsTerminalError}");
     return 1;
@@ -952,6 +961,7 @@ var generateOptions = new GenerateOptions
     Masker = masker,
     SavedKeys = savedKeys,
     Rerecorder = rerecorder,
+    RerunAll = rerunAll,
 };
 try
 {
@@ -1406,7 +1416,7 @@ static bool TryReadOutputEntries(List<object?> entries, string scenarioFolder, s
         }
 
         args.Add("outputs-entry.yaml");
-        if (!TryParseRunArgs([.. args], out _, out _, out _, out _, out _, out var fontSize, out var fontFamily, out var theme, out var window, out var maxFps, out var mp4, out var style, out var at, out _, out _, out _, out _, out var parseError, out _, out _))
+        if (!TryParseRunArgs([.. args], out _, out _, out _, out _, out _, out var fontSize, out var fontFamily, out var theme, out var window, out var maxFps, out var mp4, out var style, out var at, out _, out _, out _, out _, out _, out var parseError, out _, out _))
         {
             error = $"{where} ({extension[1..]}): {AsEntryKeys(parseError)}";
             return false;
@@ -1726,6 +1736,7 @@ static bool TryParseRunArgs(
     out string? saveKeysPath,
     out string? saveOutputsPath,
     out string? replayPath,
+    out bool rerunAll,
     out string error,
     out bool formatGiven,
     out List<int> scenarioIndexes)
@@ -1737,6 +1748,7 @@ static bool TryParseRunArgs(
     saveKeysPath = null;
     saveOutputsPath = null;
     replayPath = null;
+    rerunAll = false;
     // `capture` records one command given here instead of a scenario file. It writes an SVG unless --format says
     // otherwise: it is for a quick image, and the cast stays next to it for other formats.
     var captureMode = args.Length > 0 && args[0] == "capture";
@@ -1800,6 +1812,12 @@ static bool TryParseRunArgs(
             if (error.Length != 0)
                 return false;
             replayPath = replayFile;
+            continue;
+        }
+        // capture's one step sets no rerun, so it has nothing to run again.
+        else if (arg == "--rerun")
+        {
+            rerunAll = true;
             continue;
         }
 
@@ -1999,6 +2017,12 @@ static bool TryParseRunArgs(
     if (replayPath is not null && saveKeysPath is not null)
     {
         error = "--save-keys saves the keys typed in interactive steps, and --replay runs none";
+        return false;
+    }
+
+    if (replayPath is not null && rerunAll)
+    {
+        error = "--rerun runs every step, and --replay runs none: record without --replay to run them";
         return false;
     }
 
