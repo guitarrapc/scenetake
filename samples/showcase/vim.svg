@@ -173,19 +173,17 @@ text { dominant-baseline: alphabetic; }
 .d7{animation-name:d7}
 @keyframes z{69.232577%{visibility:hidden}to{visibility:visible}}
 .z{animation-name:z}
-@keyframes d8{81.19638%{visibility:hidden}to{visibility:visible}}
-.d8{animation-name:d8}
-@keyframes d9{0.22917%{visibility:visible}}
-.ea{animation-delay:1.249s;animation-name:d9}
-.eb{animation-delay:1.288s;animation-name:ay}
-.ec{animation-delay:1.7s;animation-name:ac}
-@keyframes ed{0.928429%{visibility:visible}}
-.ee{animation-delay:1.755s;animation-name:ed}
-@keyframes ef{0.193913%{visibility:visible}}
-.eg{animation-delay:3.517s;animation-name:ef}
-@keyframes eh{0.246798%{visibility:visible}}
-.ei{animation-delay:8.543s;animation-name:eh}
-.ej{animation-delay:8.585s;animation-name:b6}
+@keyframes d8{0.22917%{visibility:visible}}
+.d9{animation-delay:1.249s;animation-name:d8}
+.ea{animation-delay:1.288s;animation-name:ay}
+.eb{animation-delay:1.7s;animation-name:ac}
+@keyframes ec{0.928429%{visibility:visible}}
+.ed{animation-delay:1.755s;animation-name:ec}
+@keyframes ee{0.193913%{visibility:visible}}
+.ef{animation-delay:3.517s;animation-name:ee}
+@keyframes eg{0.246798%{visibility:visible}}
+.eh{animation-delay:8.543s;animation-name:eg}
+.ei{animation-delay:8.585s;animation-name:b6}
 .x{visibility:visible}
 </style>
 <defs>
@@ -362,21 +360,20 @@ text { dominant-baseline: alphabetic; }
 <text class="l z u" x="163.28" textLength="347.2">mark = &quot;!&quot; if self.excited else &quot;.&quot;</text>
 <text class="l z n v" x="74" textLength="446.4">+        # Say hello, with a mark at the end.</text>
 <text class="l z w" x="163.28" textLength="337.28">return f&quot;Hello, {self.name}{mark}&quot;</text>
-<text class="l d8 o" x="74">$</text>
-<use href="#c" x="123.6" y="102" class="l ea"/>
-<use href="#c" x="133.52" y="102" class="l eb"/>
-<use href="#c" x="212.88" y="102" class="l ec"/>
-<use href="#c" x="74" y="122" class="l ee"/>
+<use href="#c" x="123.6" y="102" class="l d9"/>
+<use href="#c" x="133.52" y="102" class="l ea"/>
+<use href="#c" x="212.88" y="102" class="l eb"/>
+<use href="#c" x="74" y="122" class="l ed"/>
 <use href="#c" x="74" y="102" class="l ao"/>
-<use href="#c" x="103.76" y="522" class="l eg"/>
+<use href="#c" x="103.76" y="522" class="l ef"/>
 <use href="#c" x="113.68" y="522" class="l aq"/>
 <use href="#c" x="153.36" y="302" class="l au"/>
 <use href="#c" x="74" y="302" class="l av"/>
 <use href="#c" x="153.36" y="302" class="l ax"/>
 <use href="#c" x="510.48" y="302" class="l b4"/>
 <use href="#c" x="500.56" y="302" class="l b5"/>
-<use href="#c" x="103.76" y="522" class="l ei"/>
-<use href="#c" x="74" y="522" class="l ej"/>
+<use href="#c" x="103.76" y="522" class="l eh"/>
+<use href="#c" x="74" y="522" class="l ei"/>
 </g>
 <rect class="l x viewport-chrome-0" x="64.5" y="64.5" width="812.6" height="481" rx="7.5" ry="7.5" fill="none" stroke="#ffffff" stroke-opacity="0.16"/>
 </svg>

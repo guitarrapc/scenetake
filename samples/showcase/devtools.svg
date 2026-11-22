@@ -175,40 +175,38 @@ text { dominant-baseline: alphabetic; }
 .as{animation-delay:9.197s;animation-name:eb}
 @keyframes at{64.074809%{visibility:hidden}to{visibility:visible}}
 .at{animation-name:at}
-@keyframes ec{78.077687%{visibility:hidden}to{visibility:visible}}
-.ec{animation-name:ec}
-.ed{animation-delay:1.223s;animation-name:a2}
-.ee{animation-delay:1.245s;animation-name:a0}
-.ef{animation-delay:1.615s;animation-name:bd}
-.eg{animation-delay:1.641s;animation-name:az}
-@keyframes eh{0.212373%{visibility:visible}}
-.ei{animation-delay:1.908s;animation-name:eh}
-@keyframes ej{1.109818%{visibility:visible}}
-.ek{animation-delay:1.939s;animation-name:ej}
-@keyframes el{0.013702%{visibility:visible}}
-.em{animation-delay:2.101s;animation-name:el}
-@keyframes en{13.948072%{visibility:visible}}
-.eo{animation-delay:2.104s;animation-name:en}
-.ep{animation-delay:4.867s;animation-name:bb}
-.eq{animation-delay:4.911s;animation-name:bj}
-@keyframes er{0.253477%{visibility:visible}}
-.es{animation-delay:4.983s;animation-name:er}
-.et{animation-delay:5.02s;animation-name:a9}
-.eu{animation-delay:5.228s;animation-name:a1}
-.ev{animation-delay:5.246s;animation-name:a0}
-.ew{animation-delay:5.517s;animation-name:a5}
-.ex{animation-delay:5.547s;animation-name:a7}
-.ey{animation-delay:5.654s;animation-name:a9}
-@keyframes ez{1.075564%{visibility:visible}}
-.e0{animation-delay:5.686s;animation-name:ez}
-@keyframes e1{13.996027%{visibility:visible}}
-.e2{animation-delay:5.843s;animation-name:e1}
-.e3{animation-delay:8.576s;animation-name:ay}
-.e4{animation-delay:8.591s;animation-name:a4}
-.e5{animation-delay:8.802s;animation-name:ax}
-.e6{animation-delay:8.842s;animation-name:bk}
-@keyframes e7{15.071591%{visibility:visible}}
-.e8{animation-delay:9.197s;animation-name:e7}
+.ec{animation-delay:1.223s;animation-name:a2}
+.ed{animation-delay:1.245s;animation-name:a0}
+.ee{animation-delay:1.615s;animation-name:bd}
+.ef{animation-delay:1.641s;animation-name:az}
+@keyframes eg{0.212373%{visibility:visible}}
+.eh{animation-delay:1.908s;animation-name:eg}
+@keyframes ei{1.109818%{visibility:visible}}
+.ej{animation-delay:1.939s;animation-name:ei}
+@keyframes ek{0.013702%{visibility:visible}}
+.el{animation-delay:2.101s;animation-name:ek}
+@keyframes em{13.948072%{visibility:visible}}
+.en{animation-delay:2.104s;animation-name:em}
+.eo{animation-delay:4.867s;animation-name:bb}
+.ep{animation-delay:4.911s;animation-name:bj}
+@keyframes eq{0.253477%{visibility:visible}}
+.er{animation-delay:4.983s;animation-name:eq}
+.es{animation-delay:5.02s;animation-name:a9}
+.et{animation-delay:5.228s;animation-name:a1}
+.eu{animation-delay:5.246s;animation-name:a0}
+.ev{animation-delay:5.517s;animation-name:a5}
+.ew{animation-delay:5.547s;animation-name:a7}
+.ex{animation-delay:5.654s;animation-name:a9}
+@keyframes ey{1.075564%{visibility:visible}}
+.ez{animation-delay:5.686s;animation-name:ey}
+@keyframes e0{13.996027%{visibility:visible}}
+.e1{animation-delay:5.843s;animation-name:e0}
+.e2{animation-delay:8.576s;animation-name:ay}
+.e3{animation-delay:8.591s;animation-name:a4}
+.e4{animation-delay:8.802s;animation-name:ax}
+.e5{animation-delay:8.842s;animation-name:bk}
+@keyframes e6{1.370145%{visibility:visible}}
+.e7{animation-delay:9.197s;animation-name:e6}
 .av{visibility:visible}
 </style>
 <defs>
@@ -405,30 +403,29 @@ text { dominant-baseline: alphabetic; }
 <g class="l at ap"><text class="ao" x="41.84" font-weight="bold" textLength="59.52">&quot;demo&quot;</text><text class="d" x="101.36" font-weight="bold" textLength="9.92">:</text><text class="ah" x="121.2" textLength="337.28">&quot;scenetake --format svg demo.yaml&quot;</text><text class="d" x="458.48" font-weight="bold" textLength="9.92">,</text></g>
 <g class="l at aq"><text class="ao" x="41.84" font-weight="bold" textLength="59.52">&quot;test&quot;</text><text class="d" x="101.36" font-weight="bold" textLength="9.92">:</text><text class="ah" x="121.2" textLength="178.56">&quot;python -m pytest&quot;</text></g>
 <text class="l at an d" x="22" font-weight="bold">}</text>
-<g class="l ec aj"><text x="22">$</text><use href="#c" x="41.84" y="-12.8"/></g>
-<use href="#c" x="71.6" y="50" class="l ed"/>
-<use href="#c" x="81.52" y="50" class="l ee"/>
-<use href="#c" x="220.4" y="50" class="l ef"/>
-<use href="#c" x="230.32" y="50" class="l eg"/>
-<use href="#c" x="309.68" y="50" class="l ei"/>
-<use href="#c" x="22" y="70" class="l ek"/>
-<use href="#c" x="22" y="130" class="l em"/>
-<use href="#c" x="22" y="470" class="l eo"/>
-<use href="#c" x="71.6" y="470" class="l ep"/>
-<use href="#c" x="81.52" y="470" class="l eq"/>
-<use href="#c" x="111.28" y="470" class="l es"/>
-<use href="#c" x="121.2" y="470" class="l et"/>
-<use href="#c" x="190.64" y="470" class="l eu"/>
-<use href="#c" x="200.56" y="470" class="l ev"/>
-<use href="#c" x="289.84" y="470" class="l ew"/>
-<use href="#c" x="299.76" y="470" class="l ex"/>
-<use href="#c" x="349.36" y="470" class="l ey"/>
-<use href="#c" x="22" y="490" class="l e0"/>
-<use href="#c" x="22" y="550" class="l e2"/>
-<use href="#c" x="61.68" y="550" class="l e3"/>
-<use href="#c" x="71.6" y="550" class="l e4"/>
-<use href="#c" x="150.96" y="550" class="l e5"/>
-<use href="#c" x="160.88" y="550" class="l e6"/>
-<use href="#c" x="22" y="550" class="l e8"/>
+<use href="#c" x="71.6" y="50" class="l ec"/>
+<use href="#c" x="81.52" y="50" class="l ed"/>
+<use href="#c" x="220.4" y="50" class="l ee"/>
+<use href="#c" x="230.32" y="50" class="l ef"/>
+<use href="#c" x="309.68" y="50" class="l eh"/>
+<use href="#c" x="22" y="70" class="l ej"/>
+<use href="#c" x="22" y="130" class="l el"/>
+<use href="#c" x="22" y="470" class="l en"/>
+<use href="#c" x="71.6" y="470" class="l eo"/>
+<use href="#c" x="81.52" y="470" class="l ep"/>
+<use href="#c" x="111.28" y="470" class="l er"/>
+<use href="#c" x="121.2" y="470" class="l es"/>
+<use href="#c" x="190.64" y="470" class="l et"/>
+<use href="#c" x="200.56" y="470" class="l eu"/>
+<use href="#c" x="289.84" y="470" class="l ev"/>
+<use href="#c" x="299.76" y="470" class="l ew"/>
+<use href="#c" x="349.36" y="470" class="l ex"/>
+<use href="#c" x="22" y="490" class="l ez"/>
+<use href="#c" x="22" y="550" class="l e1"/>
+<use href="#c" x="61.68" y="550" class="l e2"/>
+<use href="#c" x="71.6" y="550" class="l e3"/>
+<use href="#c" x="150.96" y="550" class="l e4"/>
+<use href="#c" x="160.88" y="550" class="l e5"/>
+<use href="#c" x="22" y="550" class="l e7"/>
 </g>
 </svg>

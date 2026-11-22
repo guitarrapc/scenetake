@@ -65,7 +65,7 @@ The playground is a .NET WebAssembly build of the same source files that the CLI
 | `os` | `windows`, `linux`, or `macos` |
 | `shell` | The resolved shell's file name, the same value as the cast's `env.SHELL` ([spec_cast.md](spec_cast.md) → Header) |
 | `width`, `height` | The terminal size of the recording |
-| `endFolder` | Only when the prompt shows `{dir}`: the folder name that the closing prompt showed, masked as it showed it ([spec_scenario.md](spec_scenario.md) → Prompt) |
+| `endFolder` | Only when the prompt shows `{dir}`: the folder the last step left, which the closing prompt shows with `end-prompt: true`, masked as it showed it. It is kept without `end-prompt` too, so a replay may turn it on ([spec_scenario.md](spec_scenario.md) → Prompt) |
 | `steps` | One entry for each step that ran, in order |
 
 Each step entry:

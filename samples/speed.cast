@@ -1,4 +1,4 @@
-{"version":3,"term":{"cols":72,"rows":14,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":1700000000,"title":"Playback speed","env":{"SHELL":"bash"},"tags":["st:font-size=16","st:font-family=ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace","st:window=macos","st:steps=94:12287 ad89ffd881d1e4d6:031aa1b4:d:40:1:2930:2980 c6d40ef01fc60096:f1614565:c:50:4:4865:6219 7dab5b524f9ac9ae:031aa1b4:c:66:26:8260:10387"]}
+{"version":3,"term":{"cols":72,"rows":14,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":1700000000,"title":"Playback speed","env":{"SHELL":"bash"},"tags":["st:font-size=16","st:font-family=ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace","st:window=macos","st:steps=94:11787 ad89ffd881d1e4d6:031aa1b4:d:40:1:2930:2980 c6d40ef01fc60096:f1614565:c:50:4:4865:6219 7dab5b524f9ac9ae:031aa1b4:c:66:26:8260:10387"]}
 [0.500,"m","Typing and pauses play twice as fast at 2x"]
 [0.000,"o","\u001b[36m# Typing and pauses play twice as fast at 2x\u001b[0m\r\n"]
 [0.050,"o","$ "]
@@ -91,6 +91,6 @@
 [0.078,"o","\r[########################] 100%"]
 [0.079,"o","\r\n"]
 [0.051,"o","\u001b[?9001l\u001b[?1004l"]
-[1.000,"o","$ "]
-[0.900,"o","\u001b[0m"]
+[0.000,"o","\u001b[?25l"]
+[1.400,"o","\u001b[0m"]
 [0.050,"x","0"]

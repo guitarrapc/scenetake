@@ -3313,6 +3313,7 @@ static string CreateInitialScenarioYaml(string? shell)
       typing-jitter: {DefaultJitter}     # Random typing variance (+/- seconds).
       pre-delay: {DefaultPreDelay}           # Pause before typing each step.
       post-delay: {DefaultPostDelay}          # Pause after output before the next step.
+      # end-prompt: false          # When true, end with the prompt after the last output, as a terminal does.
       execution-duration: {DefaultExecutionDuration} # Optional cast wait after command execution.
       stderr-color: {DefaultStderrColorSpec}       # Applied only when stderr has no ANSI SGR. "none" keeps it plain (git and many tools print progress to stderr).
       # stream-output: false         # When true, replay captured chunk times in the cast.

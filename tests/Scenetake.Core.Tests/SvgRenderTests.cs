@@ -754,7 +754,7 @@ internal static class SvgRenderCases
     internal static bool EndHoldAndFadeOutSetTheLoop()
     {
         var recording = CastReader.Read(TestEnv.RepoPath("samples/basic.cast"));
-        // The end hold starts at the closing prompt, the event before the one that sets the default hold.
+        // The end hold starts when the final screen shows, the event before the one that sets the default hold.
         var loop = recording.Events[^2].Time + 2 + 0.5;
         var svg = SvgRender.RenderToString(recording.Events, recording.Width, recording.Height,
             recording.RenderSettings with { EndHold = 2, FadeOut = 0.5 }, recording.LoopDuration);
@@ -817,7 +817,7 @@ internal static class SvgRenderCases
             ok &= Expect(expected == actual, $"2x at {t / 2:0.###}s shows 1x at {t:0.###}s: {actual} vs {expected}");
         }
 
-        // The end hold starts at the closing prompt, the event before the one that sets the default hold.
+        // The end hold starts when the final screen shows, the event before the one that sets the default hold.
         ok &= Expect(held.Contains(Loop(recording.Events[^2].Time / 2 + 2 + 0.5), StringComparison.Ordinal), "2x with end-hold 2 and fade-out 0.5: the hold and fade are not halved")
             & Expect(Svg(recording.RenderSettings with { Speed = 1 }) == normal, "1x is the recording");
 

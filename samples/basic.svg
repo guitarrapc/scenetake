@@ -29,358 +29,355 @@ text { dominant-baseline: alphabetic; }
 .g{fill:#505050}
 .u{fill:#ac4142}
 @keyframes an{2.487288%{visibility:visible}}
-.bi{animation-delay:0.5s;animation-name:an}
+.bh{animation-delay:0.5s;animation-name:an}
 @keyframes ah{0.138183%{visibility:visible}}
-.bj{animation-delay:0.95s;animation-name:ah}
+.bi{animation-delay:0.95s;animation-name:ah}
 @keyframes am{0.110547%{visibility:visible}}
-.bk{animation-delay:0.975s;animation-name:am}
+.bj{animation-delay:0.975s;animation-name:am}
 @keyframes af{0.121601%{visibility:visible}}
-.bl{animation-delay:0.995s;animation-name:af}
+.bk{animation-delay:0.995s;animation-name:af}
 @keyframes a4{0.210038%{visibility:visible}}
-.bm{animation-delay:1.017s;animation-name:a4}
+.bl{animation-delay:1.017s;animation-name:a4}
 @keyframes ak{0.093965%{visibility:visible}}
-.bn{animation-delay:1.055s;animation-name:ak}
+.bm{animation-delay:1.055s;animation-name:ak}
 @keyframes al{0.071855%{visibility:visible}}
-.bo{animation-delay:1.072s;animation-name:al}
+.bn{animation-delay:1.072s;animation-name:al}
 @keyframes ao{0.099492%{visibility:visible}}
-.bp{animation-delay:1.085s;animation-name:ao}
+.bo{animation-delay:1.085s;animation-name:ao}
 @keyframes ap{0.154765%{visibility:visible}}
-.bq{animation-delay:1.103s;animation-name:ap}
+.bp{animation-delay:1.103s;animation-name:ap}
 @keyframes au{0.066328%{visibility:visible}}
-.br{animation-delay:1.131s;animation-name:au}
+.bq{animation-delay:1.131s;animation-name:au}
 @keyframes av{0.16582%{visibility:visible}}
-.bs{animation-delay:1.143s;animation-name:av}
-.bt{animation-delay:1.173s;animation-name:av}
+.br{animation-delay:1.143s;animation-name:av}
+.bs{animation-delay:1.173s;animation-name:av}
 @keyframes ai{0.077383%{visibility:visible}}
-.bu{animation-delay:1.203s;animation-name:ai}
+.bt{animation-delay:1.203s;animation-name:ai}
 @keyframes a2{0.14371%{visibility:visible}}
-.bv{animation-delay:1.217s;animation-name:a2}
-.bw{animation-delay:1.243s;animation-name:ai}
-.bx{animation-delay:1.257s;animation-name:ak}
-.by{animation-delay:1.274s;animation-name:av}
-.bz{animation-delay:1.304s;animation-name:af}
-@keyframes b0{36.911343%{visibility:visible}}
-.b1{animation-delay:1.326s;animation-name:b0}
-@keyframes b2{35.734027%{visibility:visible}}
-.b3{animation-delay:1.539s;animation-name:b2}
-@keyframes b4{30.206722%{visibility:visible}}
-.b5{animation-delay:2.539s;animation-name:b4}
-.b6{animation-delay:2.589s;animation-name:an}
-.b7{animation-delay:3.039s;animation-name:af}
-.b8{animation-delay:3.061s;animation-name:af}
+.bu{animation-delay:1.217s;animation-name:a2}
+.bv{animation-delay:1.243s;animation-name:ai}
+.bw{animation-delay:1.257s;animation-name:ak}
+.bx{animation-delay:1.274s;animation-name:av}
+.by{animation-delay:1.304s;animation-name:af}
+@keyframes bz{36.911343%{visibility:visible}}
+.b0{animation-delay:1.326s;animation-name:bz}
+@keyframes b1{35.734027%{visibility:visible}}
+.b2{animation-delay:1.539s;animation-name:b1}
+@keyframes b3{30.206722%{visibility:visible}}
+.b4{animation-delay:2.539s;animation-name:b3}
+.b5{animation-delay:2.589s;animation-name:an}
+.b6{animation-delay:3.039s;animation-name:af}
+.b7{animation-delay:3.061s;animation-name:af}
 .a5{animation-delay:3.083s;animation-name:am}
-@keyframes b9{0.281893%{visibility:visible}}
-.ca{animation-delay:3.103s;animation-name:b9}
+@keyframes b8{0.281893%{visibility:visible}}
+.b9{animation-delay:3.103s;animation-name:b8}
 .a6{animation-delay:3.154s;animation-name:am}
-.cb{animation-delay:3.174s;animation-name:av}
-.cc{animation-delay:3.204s;animation-name:am}
-.cd{animation-delay:3.224s;animation-name:ak}
-.ce{animation-delay:3.241s;animation-name:ah}
-.cf{animation-delay:3.266s;animation-name:ao}
-.cg{animation-delay:3.284s;animation-name:al}
-@keyframes ch{0.187929%{visibility:visible}}
-.ci{animation-delay:3.297s;animation-name:ch}
-.cj{animation-delay:3.331s;animation-name:ai}
-.ck{animation-delay:3.345s;animation-name:al}
-.cl{animation-delay:3.358s;animation-name:ak}
+.ca{animation-delay:3.174s;animation-name:av}
+.cb{animation-delay:3.204s;animation-name:am}
+.cc{animation-delay:3.224s;animation-name:ak}
+.cd{animation-delay:3.241s;animation-name:ah}
+.ce{animation-delay:3.266s;animation-name:ao}
+.cf{animation-delay:3.284s;animation-name:al}
+@keyframes cg{0.187929%{visibility:visible}}
+.ch{animation-delay:3.297s;animation-name:cg}
+.ci{animation-delay:3.331s;animation-name:ai}
+.cj{animation-delay:3.345s;animation-name:al}
+.ck{animation-delay:3.358s;animation-name:ak}
 @keyframes ay{0.060801%{visibility:visible}}
-.cm{animation-delay:3.375s;animation-name:ay}
+.cl{animation-delay:3.375s;animation-name:ay}
 @keyframes aq{0.08291%{visibility:visible}}
-.cn{animation-delay:3.386s;animation-name:aq}
-.co{animation-delay:3.401s;animation-name:aq}
-.cp{animation-delay:3.416s;animation-name:ao}
-.cq{animation-delay:3.434s;animation-name:au}
-.cr{animation-delay:3.446s;animation-name:ah}
+.cm{animation-delay:3.386s;animation-name:aq}
+.cn{animation-delay:3.401s;animation-name:aq}
+.co{animation-delay:3.416s;animation-name:ao}
+.cp{animation-delay:3.434s;animation-name:au}
+.cq{animation-delay:3.446s;animation-name:ah}
 @keyframes az{0.055274%{visibility:visible}}
-.cs{animation-delay:3.471s;animation-name:az}
-@keyframes ct{25%{visibility:visible}}
-.cu{animation-delay:3.481s;animation-name:ct}
-@keyframes cv{23.756357%{visibility:visible}}
-.cw{animation-delay:3.706s;animation-name:cv}
-@keyframes cx{18.229052%{visibility:visible}}
-.cy{animation-delay:4.706s;animation-name:cx}
-.cz{animation-delay:4.756s;animation-name:an}
-.c0{animation-delay:5.206s;animation-name:ah}
-.c1{animation-delay:5.231s;animation-name:ak}
-.c2{animation-delay:5.248s;animation-name:ah}
+.cr{animation-delay:3.471s;animation-name:az}
+@keyframes cs{25%{visibility:visible}}
+.ct{animation-delay:3.481s;animation-name:cs}
+@keyframes cu{23.756357%{visibility:visible}}
+.cv{animation-delay:3.706s;animation-name:cu}
+@keyframes cw{18.229052%{visibility:visible}}
+.cx{animation-delay:4.706s;animation-name:cw}
+.cy{animation-delay:4.756s;animation-name:an}
+.cz{animation-delay:5.206s;animation-name:ah}
+.c0{animation-delay:5.231s;animation-name:ak}
+.c1{animation-delay:5.248s;animation-name:ah}
 @keyframes a7{0.22662%{visibility:visible}}
-.c3{animation-delay:5.273s;animation-name:a7}
+.c2{animation-delay:5.273s;animation-name:a7}
 @keyframes ar{0.132656%{visibility:visible}}
-.c4{animation-delay:5.314s;animation-name:ar}
+.c3{animation-delay:5.314s;animation-name:ar}
 @keyframes as{0.149238%{visibility:visible}}
-.c5{animation-delay:5.338s;animation-name:as}
-.c6{animation-delay:5.365s;animation-name:a7}
-.c7{animation-delay:5.406s;animation-name:a2}
+.c4{animation-delay:5.338s;animation-name:as}
+.c5{animation-delay:5.365s;animation-name:a7}
+.c6{animation-delay:5.406s;animation-name:a2}
 @keyframes aj{0.105019%{visibility:visible}}
-.c8{animation-delay:5.432s;animation-name:aj}
-.c9{animation-delay:5.451s;animation-name:ar}
-.da{animation-delay:5.475s;animation-name:aj}
-.db{animation-delay:5.494s;animation-name:ah}
+.c7{animation-delay:5.432s;animation-name:aj}
+.c8{animation-delay:5.451s;animation-name:ar}
+.c9{animation-delay:5.475s;animation-name:aj}
+.da{animation-delay:5.494s;animation-name:ah}
 @keyframes at{0.088437%{visibility:visible}}
-.dc{animation-delay:5.519s;animation-name:at}
+.db{animation-delay:5.519s;animation-name:at}
 @keyframes aw{0.116074%{visibility:visible}}
-.dd{animation-delay:5.535s;animation-name:aw}
-.de{animation-delay:5.556s;animation-name:ai}
-.df{animation-delay:5.57s;animation-name:ah}
-.dg{animation-delay:5.595s;animation-name:aw}
-.dh{animation-delay:5.616s;animation-name:aq}
-.di{animation-delay:5.631s;animation-name:as}
-.dj{animation-delay:5.658s;animation-name:ap}
-.dk{animation-delay:5.686s;animation-name:az}
-.dl{animation-delay:5.696s;animation-name:ao}
-.dm{animation-delay:5.714s;animation-name:ah}
-.dn{animation-delay:5.739s;animation-name:ak}
-@keyframes do{12.425382%{visibility:visible}}
-.dp{animation-delay:5.756s;animation-name:do}
-@keyframes dq{11.19832%{visibility:visible}}
-.ag{animation-delay:5.978s;animation-name:dq}
-.dr{animation-delay:6.978s;animation-name:an}
-.ds{animation-delay:7.428s;animation-name:aj}
+.dc{animation-delay:5.535s;animation-name:aw}
+.dd{animation-delay:5.556s;animation-name:ai}
+.de{animation-delay:5.57s;animation-name:ah}
+.df{animation-delay:5.595s;animation-name:aw}
+.dg{animation-delay:5.616s;animation-name:aq}
+.dh{animation-delay:5.631s;animation-name:as}
+.di{animation-delay:5.658s;animation-name:ap}
+.dj{animation-delay:5.686s;animation-name:az}
+.dk{animation-delay:5.696s;animation-name:ao}
+.dl{animation-delay:5.714s;animation-name:ah}
+.dm{animation-delay:5.739s;animation-name:ak}
+@keyframes dn{12.425382%{visibility:visible}}
+.do{animation-delay:5.756s;animation-name:dn}
+@keyframes dp{11.19832%{visibility:visible}}
+.ag{animation-delay:5.978s;animation-name:dp}
+.dq{animation-delay:6.978s;animation-name:an}
+.dr{animation-delay:7.428s;animation-name:aj}
 @keyframes a1{0.127129%{visibility:visible}}
-.dt{animation-delay:7.447s;animation-name:a1}
+.ds{animation-delay:7.447s;animation-name:a1}
 .a8{animation-delay:7.47s;animation-name:ap}
-@keyframes du{0.198983%{visibility:visible}}
-.dv{animation-delay:7.498s;animation-name:du}
+@keyframes dt{0.198983%{visibility:visible}}
+.du{animation-delay:7.498s;animation-name:dt}
 .a9{animation-delay:7.534s;animation-name:aj}
-.dw{animation-delay:7.553s;animation-name:at}
-.dx{animation-delay:7.569s;animation-name:ao}
-.dy{animation-delay:7.587s;animation-name:aj}
-@keyframes dz{0.237675%{visibility:visible}}
-.d0{animation-delay:7.606s;animation-name:dz}
-.d1{animation-delay:7.649s;animation-name:aw}
-.d2{animation-delay:7.67s;animation-name:az}
-@keyframes d3{0.28742%{visibility:visible}}
-.d4{animation-delay:7.68s;animation-name:d3}
-@keyframes d5{0.270838%{visibility:visible}}
-.d6{animation-delay:7.732s;animation-name:d5}
-.d7{animation-delay:7.781s;animation-name:ai}
-.d8{animation-delay:7.795s;animation-name:a1}
-.d9{animation-delay:7.818s;animation-name:ah}
-.ea{animation-delay:7.843s;animation-name:ar}
-.eb{animation-delay:7.867s;animation-name:aj}
-.ec{animation-delay:7.886s;animation-name:as}
-.ed{animation-delay:7.913s;animation-name:af}
-.ee{animation-delay:7.935s;animation-name:am}
-.ef{animation-delay:7.955s;animation-name:am}
-.eg{animation-delay:7.975s;animation-name:aq}
-.eh{animation-delay:7.99s;animation-name:ai}
+.dv{animation-delay:7.553s;animation-name:at}
+.dw{animation-delay:7.569s;animation-name:ao}
+.dx{animation-delay:7.587s;animation-name:aj}
+@keyframes dy{0.237675%{visibility:visible}}
+.dz{animation-delay:7.606s;animation-name:dy}
+.d0{animation-delay:7.649s;animation-name:aw}
+.d1{animation-delay:7.67s;animation-name:az}
+@keyframes d2{0.28742%{visibility:visible}}
+.d3{animation-delay:7.68s;animation-name:d2}
+@keyframes d4{0.270838%{visibility:visible}}
+.d5{animation-delay:7.732s;animation-name:d4}
+.d6{animation-delay:7.781s;animation-name:ai}
+.d7{animation-delay:7.795s;animation-name:a1}
+.d8{animation-delay:7.818s;animation-name:ah}
+.d9{animation-delay:7.843s;animation-name:ar}
+.ea{animation-delay:7.867s;animation-name:aj}
+.eb{animation-delay:7.886s;animation-name:as}
+.ec{animation-delay:7.913s;animation-name:af}
+.ed{animation-delay:7.935s;animation-name:am}
+.ee{animation-delay:7.955s;animation-name:am}
+.ef{animation-delay:7.975s;animation-name:aq}
+.eg{animation-delay:7.99s;animation-name:ai}
 @keyframes ax{1.105461%{visibility:visible}}
-.y{animation-delay:8.004s;animation-name:ax}
-@keyframes ei{8.804997%{visibility:visible}}
-.z{animation-delay:8.204s;animation-name:ei}
-.ej{animation-delay:9.204s;animation-name:an}
-.ek{animation-delay:9.654s;animation-name:aj}
-.el{animation-delay:9.673s;animation-name:aw}
-.em{animation-delay:9.694s;animation-name:as}
-.en{animation-delay:9.721s;animation-name:am}
-@keyframes eo{0.221093%{visibility:visible}}
-.ep{animation-delay:9.741s;animation-name:eo}
-.eq{animation-delay:9.781s;animation-name:at}
-@keyframes er{18.803892%{visibility:visible}}
-.aa{animation-delay:9.797s;animation-name:er}
-.es{animation-delay:11.947s;animation-name:an}
-.et{animation-delay:12.397s;animation-name:al}
-.eu{animation-delay:12.41s;animation-name:ah}
-.ev{animation-delay:12.435s;animation-name:af}
+.z{animation-delay:8.004s;animation-name:ax}
+@keyframes eh{8.804997%{visibility:visible}}
+.aa{animation-delay:8.204s;animation-name:eh}
+.ei{animation-delay:9.204s;animation-name:an}
+.ej{animation-delay:9.654s;animation-name:aj}
+.ek{animation-delay:9.673s;animation-name:aw}
+.el{animation-delay:9.694s;animation-name:as}
+.em{animation-delay:9.721s;animation-name:am}
+@keyframes en{0.221093%{visibility:visible}}
+.eo{animation-delay:9.741s;animation-name:en}
+.ep{animation-delay:9.781s;animation-name:at}
+@keyframes eq{18.803892%{visibility:visible}}
+.ab{animation-delay:9.797s;animation-name:eq}
+.er{animation-delay:11.947s;animation-name:an}
+.es{animation-delay:12.397s;animation-name:al}
+.et{animation-delay:12.41s;animation-name:ah}
+.eu{animation-delay:12.435s;animation-name:af}
 @keyframes ba{0.259784%{visibility:visible}}
-.ew{animation-delay:12.457s;animation-name:ba}
+.ev{animation-delay:12.457s;animation-name:ba}
 .bb{animation-delay:12.504s;animation-name:ap}
-.ex{animation-delay:12.532s;animation-name:au}
-.ey{animation-delay:12.544s;animation-name:af}
-.ez{animation-delay:12.566s;animation-name:aq}
-.e0{animation-delay:12.581s;animation-name:ak}
-.e1{animation-delay:12.598s;animation-name:ap}
-.e2{animation-delay:12.626s;animation-name:ba}
-.e3{animation-delay:12.673s;animation-name:as}
-.e4{animation-delay:12.7s;animation-name:au}
-.e5{animation-delay:12.712s;animation-name:am}
+.ew{animation-delay:12.532s;animation-name:au}
+.ex{animation-delay:12.544s;animation-name:af}
+.ey{animation-delay:12.566s;animation-name:aq}
+.ez{animation-delay:12.581s;animation-name:ak}
+.e0{animation-delay:12.598s;animation-name:ap}
+.e1{animation-delay:12.626s;animation-name:ba}
+.e2{animation-delay:12.673s;animation-name:as}
+.e3{animation-delay:12.7s;animation-name:au}
+.e4{animation-delay:12.712s;animation-name:am}
 @keyframes a0{0.160292%{visibility:visible}}
-.e6{animation-delay:12.732s;animation-name:a0}
-.e7{animation-delay:12.761s;animation-name:af}
-.e8{animation-delay:12.783s;animation-name:a0}
-.e9{animation-delay:12.812s;animation-name:ay}
+.e5{animation-delay:12.732s;animation-name:a0}
+.e6{animation-delay:12.761s;animation-name:af}
+.e7{animation-delay:12.783s;animation-name:a0}
+.e8{animation-delay:12.812s;animation-name:ay}
 @keyframes bc{0.182402%{visibility:visible}}
-.fa{animation-delay:12.823s;animation-name:bc}
-.fb{animation-delay:12.856s;animation-name:al}
-.fc{animation-delay:12.869s;animation-name:af}
-@keyframes fd{0.193456%{visibility:visible}}
-.fe{animation-delay:12.891s;animation-name:fd}
-.ff{animation-delay:12.926s;animation-name:ar}
-.fg{animation-delay:12.95s;animation-name:bc}
-.fh{animation-delay:12.983s;animation-name:au}
-.fi{animation-delay:12.995s;animation-name:ay}
-.fj{animation-delay:13.006s;animation-name:au}
-.fk{animation-delay:13.018s;animation-name:as}
-.fl{animation-delay:13.045s;animation-name:ai}
-.fm{animation-delay:13.059s;animation-name:ak}
-.fn{animation-delay:13.076s;animation-name:aq}
-@keyframes fo{0.204511%{visibility:visible}}
-.fp{animation-delay:13.091s;animation-name:fo}
-.fq{animation-delay:13.128s;animation-name:ap}
-.fr{animation-delay:13.156s;animation-name:ai}
-.fs{animation-delay:13.17s;animation-name:az}
-.ft{animation-delay:13.18s;animation-name:aj}
-.ab{animation-delay:13.199s;animation-name:ax}
-@keyframes fu{9.357728%{visibility:visible}}
-.ac{animation-delay:13.399s;animation-name:fu}
-.fv{animation-delay:14.4s;animation-name:an}
-.fw{animation-delay:14.85s;animation-name:aw}
-.fx{animation-delay:14.871s;animation-name:ai}
-.fy{animation-delay:14.885s;animation-name:ai}
-.fz{animation-delay:14.899s;animation-name:a4}
+.e9{animation-delay:12.823s;animation-name:bc}
+.fa{animation-delay:12.856s;animation-name:al}
+.fb{animation-delay:12.869s;animation-name:af}
+@keyframes fc{0.193456%{visibility:visible}}
+.fd{animation-delay:12.891s;animation-name:fc}
+.fe{animation-delay:12.926s;animation-name:ar}
+.ff{animation-delay:12.95s;animation-name:bc}
+.fg{animation-delay:12.983s;animation-name:au}
+.fh{animation-delay:12.995s;animation-name:ay}
+.fi{animation-delay:13.006s;animation-name:au}
+.fj{animation-delay:13.018s;animation-name:as}
+.fk{animation-delay:13.045s;animation-name:ai}
+.fl{animation-delay:13.059s;animation-name:ak}
+.fm{animation-delay:13.076s;animation-name:aq}
+@keyframes fn{0.204511%{visibility:visible}}
+.fo{animation-delay:13.091s;animation-name:fn}
+.fp{animation-delay:13.128s;animation-name:ap}
+.fq{animation-delay:13.156s;animation-name:ai}
+.fr{animation-delay:13.17s;animation-name:az}
+.fs{animation-delay:13.18s;animation-name:aj}
+.ac{animation-delay:13.199s;animation-name:ax}
+@keyframes ft{9.357728%{visibility:visible}}
+.ad{animation-delay:13.399s;animation-name:ft}
+.fu{animation-delay:14.4s;animation-name:an}
+.fv{animation-delay:14.85s;animation-name:aw}
+.fw{animation-delay:14.871s;animation-name:ai}
+.fx{animation-delay:14.885s;animation-name:ai}
+.fy{animation-delay:14.899s;animation-name:a4}
 .bd{animation-delay:14.937s;animation-name:ar}
-.f0{animation-delay:14.961s;animation-name:aj}
-.f1{animation-delay:14.98s;animation-name:al}
-.f2{animation-delay:14.993s;animation-name:a0}
-.f3{animation-delay:15.022s;animation-name:aj}
-.f4{animation-delay:15.041s;animation-name:ah}
-.f5{animation-delay:15.066s;animation-name:a2}
-.ad{animation-delay:15.092s;animation-name:ax}
+.fz{animation-delay:14.961s;animation-name:aj}
+.f0{animation-delay:14.98s;animation-name:al}
+.f1{animation-delay:14.993s;animation-name:a0}
+.f2{animation-delay:15.022s;animation-name:aj}
+.f3{animation-delay:15.041s;animation-name:ah}
+.f4{animation-delay:15.066s;animation-name:a2}
+.y{animation-delay:15.092s;animation-name:ax}
 @keyframes ae{84.523546%{visibility:hidden}to{visibility:visible}}
 .ae{animation-name:ae}
-@keyframes f6{90.050851%{visibility:hidden}to{visibility:visible}}
-.f6{animation-name:f6}
-.f7{animation-delay:1.017s;animation-name:at}
-.f8{animation-delay:1.033s;animation-name:af}
-.f9{animation-delay:1.173s;animation-name:al}
-.ga{animation-delay:1.186s;animation-name:ak}
-.gb{animation-delay:1.326s;animation-name:al}
-.gc{animation-delay:1.339s;animation-name:ax}
+.f5{animation-delay:1.017s;animation-name:at}
+.f6{animation-delay:1.033s;animation-name:af}
+.f7{animation-delay:1.173s;animation-name:al}
+.f8{animation-delay:1.186s;animation-name:ak}
+.f9{animation-delay:1.326s;animation-name:al}
+.ga{animation-delay:1.339s;animation-name:ax}
 @keyframes a3{5.527305%{visibility:visible}}
-.gd{animation-delay:1.539s;animation-name:a3}
+.gb{animation-delay:1.539s;animation-name:a3}
 @keyframes be{0.276366%{visibility:visible}}
-.ge{animation-delay:2.539s;animation-name:be}
-.gf{animation-delay:3.103s;animation-name:a0}
-.gg{animation-delay:3.132s;animation-name:af}
-.gh{animation-delay:3.297s;animation-name:ao}
-.gi{animation-delay:3.315s;animation-name:at}
-.gj{animation-delay:3.481s;animation-name:ah}
-.gk{animation-delay:3.506s;animation-name:ax}
-.gl{animation-delay:3.706s;animation-name:a3}
-.gm{animation-delay:4.706s;animation-name:be}
-.gn{animation-delay:5.273s;animation-name:as}
-.go{animation-delay:5.3s;animation-name:ai}
-.gp{animation-delay:5.365s;animation-name:ak}
-.gq{animation-delay:5.382s;animation-name:ar}
-.gr{animation-delay:5.756s;animation-name:af}
-.gs{animation-delay:5.778s;animation-name:ax}
-.gt{animation-delay:5.978s;animation-name:a3}
-.gu{animation-delay:7.498s;animation-name:ay}
-.gv{animation-delay:7.509s;animation-name:ah}
-.gw{animation-delay:7.606s;animation-name:al}
-.gx{animation-delay:7.619s;animation-name:av}
-.gy{animation-delay:7.68s;animation-name:a1}
-.gz{animation-delay:7.703s;animation-name:a0}
-.g0{animation-delay:7.732s;animation-name:ap}
-.g1{animation-delay:7.76s;animation-name:aw}
-@keyframes bf{6.632766%{visibility:visible}}
-.g2{animation-delay:8.004s;animation-name:bf}
-.g3{animation-delay:9.741s;animation-name:av}
-.g4{animation-delay:9.771s;animation-name:az}
-@keyframes g5{11.883706%{visibility:visible}}
-.g6{animation-delay:9.797s;animation-name:g5}
-.g7{animation-delay:12.457s;animation-name:af}
-.g8{animation-delay:12.479s;animation-name:ah}
-.g9{animation-delay:12.626s;animation-name:a1}
-.ha{animation-delay:12.649s;animation-name:ar}
-.hb{animation-delay:12.783s;animation-name:aq}
-.hc{animation-delay:12.798s;animation-name:ai}
-.hd{animation-delay:12.823s;animation-name:am}
-.he{animation-delay:12.843s;animation-name:al}
-.hf{animation-delay:12.891s;animation-name:aj}
-.hg{animation-delay:12.91s;animation-name:at}
-.hh{animation-delay:12.95s;animation-name:ay}
-.hi{animation-delay:12.961s;animation-name:af}
-.hj{animation-delay:13.091s;animation-name:aj}
-.hk{animation-delay:13.11s;animation-name:ao}
-@keyframes hl{6.638294%{visibility:visible}}
-.hm{animation-delay:13.199s;animation-name:hl}
-.hn{animation-delay:14.899s;animation-name:at}
-.ho{animation-delay:14.915s;animation-name:af}
-.hp{animation-delay:15.092s;animation-name:bf}
-.bh{visibility:visible}
+.gc{animation-delay:2.539s;animation-name:be}
+.gd{animation-delay:3.103s;animation-name:a0}
+.ge{animation-delay:3.132s;animation-name:af}
+.gf{animation-delay:3.297s;animation-name:ao}
+.gg{animation-delay:3.315s;animation-name:at}
+.gh{animation-delay:3.481s;animation-name:ah}
+.gi{animation-delay:3.506s;animation-name:ax}
+.gj{animation-delay:3.706s;animation-name:a3}
+.gk{animation-delay:4.706s;animation-name:be}
+.gl{animation-delay:5.273s;animation-name:as}
+.gm{animation-delay:5.3s;animation-name:ai}
+.gn{animation-delay:5.365s;animation-name:ak}
+.go{animation-delay:5.382s;animation-name:ar}
+.gp{animation-delay:5.756s;animation-name:af}
+.gq{animation-delay:5.778s;animation-name:ax}
+.gr{animation-delay:5.978s;animation-name:a3}
+.gs{animation-delay:7.498s;animation-name:ay}
+.gt{animation-delay:7.509s;animation-name:ah}
+.gu{animation-delay:7.606s;animation-name:al}
+.gv{animation-delay:7.619s;animation-name:av}
+.gw{animation-delay:7.68s;animation-name:a1}
+.gx{animation-delay:7.703s;animation-name:a0}
+.gy{animation-delay:7.732s;animation-name:ap}
+.gz{animation-delay:7.76s;animation-name:aw}
+@keyframes g0{6.632766%{visibility:visible}}
+.g1{animation-delay:8.004s;animation-name:g0}
+.g2{animation-delay:9.741s;animation-name:av}
+.g3{animation-delay:9.771s;animation-name:az}
+@keyframes g4{11.883706%{visibility:visible}}
+.g5{animation-delay:9.797s;animation-name:g4}
+.g6{animation-delay:12.457s;animation-name:af}
+.g7{animation-delay:12.479s;animation-name:ah}
+.g8{animation-delay:12.626s;animation-name:a1}
+.g9{animation-delay:12.649s;animation-name:ar}
+.ha{animation-delay:12.783s;animation-name:aq}
+.hb{animation-delay:12.798s;animation-name:ai}
+.hc{animation-delay:12.823s;animation-name:am}
+.hd{animation-delay:12.843s;animation-name:al}
+.he{animation-delay:12.891s;animation-name:aj}
+.hf{animation-delay:12.91s;animation-name:at}
+.hg{animation-delay:12.95s;animation-name:ay}
+.hh{animation-delay:12.961s;animation-name:af}
+.hi{animation-delay:13.091s;animation-name:aj}
+.hj{animation-delay:13.11s;animation-name:ao}
+@keyframes hk{6.638294%{visibility:visible}}
+.hl{animation-delay:13.199s;animation-name:hk}
+.hm{animation-delay:14.899s;animation-name:at}
+.hn{animation-delay:14.915s;animation-name:af}
+.bf{visibility:visible}
 </style>
 <defs>
 <rect id="c" class="c" width="9.92" height="20"/>
 <mask id="viewport-mask" x="0" y="0" width="829.6" height="504" maskUnits="userSpaceOnUse">
-<rect class="l bh viewport-mask-0" x="8" y="8" width="813.6" height="488" fill="white"/>
+<rect class="l bf viewport-mask-0" x="8" y="8" width="813.6" height="488" fill="white"/>
 </mask>
 </defs>
 <g mask="url(#viewport-mask)" fill="#d0d0d0">
-<rect class="bg l bh viewport-bg-0" x="8" y="8" width="813.6" height="488" fill="#282c34"/>
-<g class="l bi"><text x="18" y="24.8">$</text><use href="#c" x="37.84" y="12"/></g>
-<g class="l bj"><text x="18 37.84" y="24.8">$e</text><use href="#c" x="47.76" y="12"/></g>
-<g class="l bk"><text x="18 37.84 47.76" y="24.8">$ec</text><use href="#c" x="57.68" y="12"/></g>
-<g class="l bl"><g id="r3"><text x="18 37.84 47.76 57.68" y="24.8">$ech</text></g><use href="#c" x="67.6" y="12"/></g>
-<text class="l bm a" x="18" textLength="59.52">$ echo</text>
-<g class="l bn a"><g id="r5"><text x="18" textLength="79.36">$ echo &quot;</text></g><use href="#c" x="97.36" y="-12.8"/></g>
-<g class="l bo a"><text x="18" textLength="89.28">$ echo &quot;H</text><use href="#c" x="107.28" y="-12.8"/></g>
-<g class="l bp a"><text x="18" textLength="99.2">$ echo &quot;He</text><use href="#c" x="117.2" y="-12.8"/></g>
-<g class="l bq a"><text x="18" textLength="109.12">$ echo &quot;Hel</text><use href="#c" x="127.12" y="-12.8"/></g>
-<g class="l br a"><text x="18" textLength="119.04">$ echo &quot;Hell</text><use href="#c" x="137.04" y="-12.8"/></g>
-<g class="l bs a"><text x="18" textLength="128.96">$ echo &quot;Hello</text><use href="#c" x="146.96" y="-12.8"/></g>
-<text class="l bt a" x="18" textLength="138.88">$ echo &quot;Hello,</text>
-<g class="l bu a"><text x="18" textLength="158.72">$ echo &quot;Hello, W</text><use href="#c" x="176.72" y="-12.8"/></g>
-<g class="l bv a"><text x="18" textLength="168.64">$ echo &quot;Hello, Wo</text><use href="#c" x="186.64" y="-12.8"/></g>
-<g class="l bw a"><text x="18" textLength="178.56">$ echo &quot;Hello, Wor</text><use href="#c" x="196.56" y="-12.8"/></g>
-<g class="l bx a"><text x="18" textLength="188.48">$ echo &quot;Hello, Worl</text><use href="#c" x="206.48" y="-12.8"/></g>
-<g class="l by a"><text x="18" textLength="198.4">$ echo &quot;Hello, World</text><use href="#c" x="216.4" y="-12.8"/></g>
-<g class="l bz a"><text x="18" textLength="208.32">$ echo &quot;Hello, World!</text><use href="#c" x="226.32" y="-12.8"/></g>
-<text class="l b1 a" x="18" textLength="218.24">$ echo &quot;Hello, World!&quot;</text>
-<g class="l b3"><g id="r19"><text x="18" y="44.8" textLength="128.96">Hello, World!</text></g></g>
-<g class="l b5"><g id="r20"><text class="b" x="18" y="64.8" textLength="178.56"># Name of the step</text></g></g>
-<g class="l b6"><text x="18" y="84.8">$</text><use href="#c" x="37.84" y="72"/></g>
-<g class="l b7"><text x="18 37.84" y="84.8">$e</text><use href="#c" x="47.76" y="72"/></g>
-<g class="l b8"><text x="18 37.84 47.76" y="84.8">$ec</text><use href="#c" x="57.68" y="72"/></g>
+<rect class="bg l bf viewport-bg-0" x="8" y="8" width="813.6" height="488" fill="#282c34"/>
+<g class="l bh"><text x="18" y="24.8">$</text><use href="#c" x="37.84" y="12"/></g>
+<g class="l bi"><text x="18 37.84" y="24.8">$e</text><use href="#c" x="47.76" y="12"/></g>
+<g class="l bj"><text x="18 37.84 47.76" y="24.8">$ec</text><use href="#c" x="57.68" y="12"/></g>
+<g class="l bk"><g id="r3"><text x="18 37.84 47.76 57.68" y="24.8">$ech</text></g><use href="#c" x="67.6" y="12"/></g>
+<text class="l bl a" x="18" textLength="59.52">$ echo</text>
+<g class="l bm a"><g id="r5"><text x="18" textLength="79.36">$ echo &quot;</text></g><use href="#c" x="97.36" y="-12.8"/></g>
+<g class="l bn a"><text x="18" textLength="89.28">$ echo &quot;H</text><use href="#c" x="107.28" y="-12.8"/></g>
+<g class="l bo a"><text x="18" textLength="99.2">$ echo &quot;He</text><use href="#c" x="117.2" y="-12.8"/></g>
+<g class="l bp a"><text x="18" textLength="109.12">$ echo &quot;Hel</text><use href="#c" x="127.12" y="-12.8"/></g>
+<g class="l bq a"><text x="18" textLength="119.04">$ echo &quot;Hell</text><use href="#c" x="137.04" y="-12.8"/></g>
+<g class="l br a"><text x="18" textLength="128.96">$ echo &quot;Hello</text><use href="#c" x="146.96" y="-12.8"/></g>
+<text class="l bs a" x="18" textLength="138.88">$ echo &quot;Hello,</text>
+<g class="l bt a"><text x="18" textLength="158.72">$ echo &quot;Hello, W</text><use href="#c" x="176.72" y="-12.8"/></g>
+<g class="l bu a"><text x="18" textLength="168.64">$ echo &quot;Hello, Wo</text><use href="#c" x="186.64" y="-12.8"/></g>
+<g class="l bv a"><text x="18" textLength="178.56">$ echo &quot;Hello, Wor</text><use href="#c" x="196.56" y="-12.8"/></g>
+<g class="l bw a"><text x="18" textLength="188.48">$ echo &quot;Hello, Worl</text><use href="#c" x="206.48" y="-12.8"/></g>
+<g class="l bx a"><text x="18" textLength="198.4">$ echo &quot;Hello, World</text><use href="#c" x="216.4" y="-12.8"/></g>
+<g class="l by a"><text x="18" textLength="208.32">$ echo &quot;Hello, World!</text><use href="#c" x="226.32" y="-12.8"/></g>
+<text class="l b0 a" x="18" textLength="218.24">$ echo &quot;Hello, World!&quot;</text>
+<g class="l b2"><g id="r19"><text x="18" y="44.8" textLength="128.96">Hello, World!</text></g></g>
+<g class="l b4"><g id="r20"><text class="b" x="18" y="64.8" textLength="178.56"># Name of the step</text></g></g>
+<g class="l b5"><text x="18" y="84.8">$</text><use href="#c" x="37.84" y="72"/></g>
+<g class="l b6"><text x="18 37.84" y="84.8">$e</text><use href="#c" x="47.76" y="72"/></g>
+<g class="l b7"><text x="18 37.84 47.76" y="84.8">$ec</text><use href="#c" x="57.68" y="72"/></g>
 <use href="#r3" y="60" class="l a5"/>
-<text class="l ca d" x="18" textLength="59.52">$ echo</text>
+<text class="l b9 d" x="18" textLength="59.52">$ echo</text>
 <use href="#r5" class="l a6 d"/>
-<g class="l cb d"><text x="18" textLength="89.28">$ echo &quot;C</text><use href="#c" x="107.28" y="-12.8"/></g>
-<g class="l cc d"><text x="18" textLength="99.2">$ echo &quot;Cu</text><use href="#c" x="117.2" y="-12.8"/></g>
-<g class="l cd d"><text x="18" textLength="109.12">$ echo &quot;Cur</text><use href="#c" x="127.12" y="-12.8"/></g>
-<g class="l ce d"><text x="18" textLength="119.04">$ echo &quot;Curr</text><use href="#c" x="137.04" y="-12.8"/></g>
-<g class="l cf d"><text x="18" textLength="128.96">$ echo &quot;Curre</text><use href="#c" x="146.96" y="-12.8"/></g>
-<g class="l cg d"><text x="18" textLength="138.88">$ echo &quot;Curren</text><use href="#c" x="156.88" y="-12.8"/></g>
-<text class="l ci d" x="18" textLength="148.8">$ echo &quot;Current</text>
-<g class="l cj d"><text x="18" textLength="168.64">$ echo &quot;Current d</text><use href="#c" x="186.64" y="-12.8"/></g>
-<g class="l ck d"><text x="18" textLength="178.56">$ echo &quot;Current di</text><use href="#c" x="196.56" y="-12.8"/></g>
-<g class="l cl d"><text x="18" textLength="188.48">$ echo &quot;Current dir</text><use href="#c" x="206.48" y="-12.8"/></g>
-<g class="l cm d"><text x="18" textLength="198.4">$ echo &quot;Current dire</text><use href="#c" x="216.4" y="-12.8"/></g>
-<g class="l cn d"><text x="18" textLength="208.32">$ echo &quot;Current direc</text><use href="#c" x="226.32" y="-12.8"/></g>
-<g class="l co d"><text x="18" textLength="218.24">$ echo &quot;Current direct</text><use href="#c" x="236.24" y="-12.8"/></g>
-<g class="l cp d"><text x="18" textLength="228.16">$ echo &quot;Current directo</text><use href="#c" x="246.16" y="-12.8"/></g>
-<g class="l cq d"><text x="18" textLength="238.08">$ echo &quot;Current director</text><use href="#c" x="256.08" y="-12.8"/></g>
-<g class="l cr d"><text x="18" textLength="248">$ echo &quot;Current directory</text><use href="#c" x="266" y="-12.8"/></g>
-<g class="l cs d"><text x="18" textLength="257.92">$ echo &quot;Current directory:</text><use href="#c" x="275.92" y="-12.8"/></g>
-<g class="l cu d"><g id="r44"><text x="18" textLength="267.84">$ echo &quot;Current directory:&quot;</text></g></g>
-<g class="l cw"><g id="r45"><text x="18" y="104.8" textLength="178.56">Current directory:</text></g></g>
-<g class="l cy"><g id="r46"><text class="b" x="18" y="124.8" textLength="168.64"># Coloring stdout</text></g></g>
-<g class="l cz"><text x="18" y="144.8">$</text><use href="#c" x="37.84" y="132"/></g>
-<g class="l c0"><text x="18 37.84" y="144.8">$c</text><use href="#c" x="47.76" y="132"/></g>
-<g class="l c1"><text x="18 37.84 47.76" y="144.8">$cu</text><use href="#c" x="57.68" y="132"/></g>
-<g class="l c2"><text x="18 37.84 47.76 57.68" y="144.8">$cur</text><use href="#c" x="67.6" y="132"/></g>
-<text class="l c3 e" x="18" textLength="59.52">$ curl</text>
-<g class="l c4 e"><text x="18" textLength="79.36">$ curl -</text><use href="#c" x="97.36" y="-12.8"/></g>
-<g class="l c5 e"><text x="18" textLength="89.28">$ curl -s</text><use href="#c" x="107.28" y="-12.8"/></g>
-<text class="l c6 e" x="18" textLength="99.2">$ curl -sI</text>
-<g class="l c7 e"><text x="18" textLength="119.04">$ curl -sI h</text><use href="#c" x="137.04" y="-12.8"/></g>
-<g class="l c8 e"><text x="18" textLength="128.96">$ curl -sI ht</text><use href="#c" x="146.96" y="-12.8"/></g>
-<g class="l c9 e"><text x="18" textLength="138.88">$ curl -sI htt</text><use href="#c" x="156.88" y="-12.8"/></g>
-<g class="l da e"><text x="18" textLength="148.8">$ curl -sI http</text><use href="#c" x="166.8" y="-12.8"/></g>
-<g class="l db e"><text x="18" textLength="158.72">$ curl -sI https</text><use href="#c" x="176.72" y="-12.8"/></g>
-<g class="l dc e"><text x="18" textLength="168.64">$ curl -sI https:</text><use href="#c" x="186.64" y="-12.8"/></g>
-<g class="l dd e"><text x="18" textLength="178.56">$ curl -sI https:/</text><use href="#c" x="196.56" y="-12.8"/></g>
-<g class="l de e"><text x="18" textLength="188.48">$ curl -sI https://</text><use href="#c" x="206.48" y="-12.8"/></g>
-<g class="l df e"><text x="18" textLength="198.4">$ curl -sI https://g</text><use href="#c" x="216.4" y="-12.8"/></g>
-<g class="l dg e"><text x="18" textLength="208.32">$ curl -sI https://go</text><use href="#c" x="226.32" y="-12.8"/></g>
-<g class="l dh e"><text x="18" textLength="218.24">$ curl -sI https://goo</text><use href="#c" x="236.24" y="-12.8"/></g>
-<g class="l di e"><text x="18" textLength="228.16">$ curl -sI https://goog</text><use href="#c" x="246.16" y="-12.8"/></g>
-<g class="l dj e"><text x="18" textLength="238.08">$ curl -sI https://googl</text><use href="#c" x="256.08" y="-12.8"/></g>
-<g class="l dk e"><text x="18" textLength="248">$ curl -sI https://google</text><use href="#c" x="266" y="-12.8"/></g>
-<g class="l dl e"><text x="18" textLength="257.92">$ curl -sI https://google.</text><use href="#c" x="275.92" y="-12.8"/></g>
-<g class="l dm e"><text x="18" textLength="267.84">$ curl -sI https://google.c</text><use href="#c" x="285.84" y="-12.8"/></g>
-<g class="l dn e"><text x="18" textLength="277.76">$ curl -sI https://google.co</text><use href="#c" x="295.76" y="-12.8"/></g>
-<g class="l dp e"><g id="r72"><text x="18" textLength="287.68">$ curl -sI https://google.com</text></g></g>
+<g class="l ca d"><text x="18" textLength="89.28">$ echo &quot;C</text><use href="#c" x="107.28" y="-12.8"/></g>
+<g class="l cb d"><text x="18" textLength="99.2">$ echo &quot;Cu</text><use href="#c" x="117.2" y="-12.8"/></g>
+<g class="l cc d"><text x="18" textLength="109.12">$ echo &quot;Cur</text><use href="#c" x="127.12" y="-12.8"/></g>
+<g class="l cd d"><text x="18" textLength="119.04">$ echo &quot;Curr</text><use href="#c" x="137.04" y="-12.8"/></g>
+<g class="l ce d"><text x="18" textLength="128.96">$ echo &quot;Curre</text><use href="#c" x="146.96" y="-12.8"/></g>
+<g class="l cf d"><text x="18" textLength="138.88">$ echo &quot;Curren</text><use href="#c" x="156.88" y="-12.8"/></g>
+<text class="l ch d" x="18" textLength="148.8">$ echo &quot;Current</text>
+<g class="l ci d"><text x="18" textLength="168.64">$ echo &quot;Current d</text><use href="#c" x="186.64" y="-12.8"/></g>
+<g class="l cj d"><text x="18" textLength="178.56">$ echo &quot;Current di</text><use href="#c" x="196.56" y="-12.8"/></g>
+<g class="l ck d"><text x="18" textLength="188.48">$ echo &quot;Current dir</text><use href="#c" x="206.48" y="-12.8"/></g>
+<g class="l cl d"><text x="18" textLength="198.4">$ echo &quot;Current dire</text><use href="#c" x="216.4" y="-12.8"/></g>
+<g class="l cm d"><text x="18" textLength="208.32">$ echo &quot;Current direc</text><use href="#c" x="226.32" y="-12.8"/></g>
+<g class="l cn d"><text x="18" textLength="218.24">$ echo &quot;Current direct</text><use href="#c" x="236.24" y="-12.8"/></g>
+<g class="l co d"><text x="18" textLength="228.16">$ echo &quot;Current directo</text><use href="#c" x="246.16" y="-12.8"/></g>
+<g class="l cp d"><text x="18" textLength="238.08">$ echo &quot;Current director</text><use href="#c" x="256.08" y="-12.8"/></g>
+<g class="l cq d"><text x="18" textLength="248">$ echo &quot;Current directory</text><use href="#c" x="266" y="-12.8"/></g>
+<g class="l cr d"><text x="18" textLength="257.92">$ echo &quot;Current directory:</text><use href="#c" x="275.92" y="-12.8"/></g>
+<g class="l ct d"><g id="r44"><text x="18" textLength="267.84">$ echo &quot;Current directory:&quot;</text></g></g>
+<g class="l cv"><g id="r45"><text x="18" y="104.8" textLength="178.56">Current directory:</text></g></g>
+<g class="l cx"><g id="r46"><text class="b" x="18" y="124.8" textLength="168.64"># Coloring stdout</text></g></g>
+<g class="l cy"><text x="18" y="144.8">$</text><use href="#c" x="37.84" y="132"/></g>
+<g class="l cz"><text x="18 37.84" y="144.8">$c</text><use href="#c" x="47.76" y="132"/></g>
+<g class="l c0"><text x="18 37.84 47.76" y="144.8">$cu</text><use href="#c" x="57.68" y="132"/></g>
+<g class="l c1"><text x="18 37.84 47.76 57.68" y="144.8">$cur</text><use href="#c" x="67.6" y="132"/></g>
+<text class="l c2 e" x="18" textLength="59.52">$ curl</text>
+<g class="l c3 e"><text x="18" textLength="79.36">$ curl -</text><use href="#c" x="97.36" y="-12.8"/></g>
+<g class="l c4 e"><text x="18" textLength="89.28">$ curl -s</text><use href="#c" x="107.28" y="-12.8"/></g>
+<text class="l c5 e" x="18" textLength="99.2">$ curl -sI</text>
+<g class="l c6 e"><text x="18" textLength="119.04">$ curl -sI h</text><use href="#c" x="137.04" y="-12.8"/></g>
+<g class="l c7 e"><text x="18" textLength="128.96">$ curl -sI ht</text><use href="#c" x="146.96" y="-12.8"/></g>
+<g class="l c8 e"><text x="18" textLength="138.88">$ curl -sI htt</text><use href="#c" x="156.88" y="-12.8"/></g>
+<g class="l c9 e"><text x="18" textLength="148.8">$ curl -sI http</text><use href="#c" x="166.8" y="-12.8"/></g>
+<g class="l da e"><text x="18" textLength="158.72">$ curl -sI https</text><use href="#c" x="176.72" y="-12.8"/></g>
+<g class="l db e"><text x="18" textLength="168.64">$ curl -sI https:</text><use href="#c" x="186.64" y="-12.8"/></g>
+<g class="l dc e"><text x="18" textLength="178.56">$ curl -sI https:/</text><use href="#c" x="196.56" y="-12.8"/></g>
+<g class="l dd e"><text x="18" textLength="188.48">$ curl -sI https://</text><use href="#c" x="206.48" y="-12.8"/></g>
+<g class="l de e"><text x="18" textLength="198.4">$ curl -sI https://g</text><use href="#c" x="216.4" y="-12.8"/></g>
+<g class="l df e"><text x="18" textLength="208.32">$ curl -sI https://go</text><use href="#c" x="226.32" y="-12.8"/></g>
+<g class="l dg e"><text x="18" textLength="218.24">$ curl -sI https://goo</text><use href="#c" x="236.24" y="-12.8"/></g>
+<g class="l dh e"><text x="18" textLength="228.16">$ curl -sI https://goog</text><use href="#c" x="246.16" y="-12.8"/></g>
+<g class="l di e"><text x="18" textLength="238.08">$ curl -sI https://googl</text><use href="#c" x="256.08" y="-12.8"/></g>
+<g class="l dj e"><text x="18" textLength="248">$ curl -sI https://google</text><use href="#c" x="266" y="-12.8"/></g>
+<g class="l dk e"><text x="18" textLength="257.92">$ curl -sI https://google.</text><use href="#c" x="275.92" y="-12.8"/></g>
+<g class="l dl e"><text x="18" textLength="267.84">$ curl -sI https://google.c</text><use href="#c" x="285.84" y="-12.8"/></g>
+<g class="l dm e"><text x="18" textLength="277.76">$ curl -sI https://google.co</text><use href="#c" x="295.76" y="-12.8"/></g>
+<g class="l do e"><g id="r72"><text x="18" textLength="287.68">$ curl -sI https://google.com</text></g></g>
 <g class="l ag"><g id="r73"><text class="f" x="18" y="164.8" textLength="297.6">HTTP/1.1 301 Moved Permanently</text></g></g>
 <g class="l ag"><g id="r74"><text class="g" x="18" y="184.8" textLength="327.36">Location: https://www.google.com/</text></g></g>
 <g class="l ag"><g id="r75"><text class="g" x="18" y="204.8" textLength="376.96">Content-Type: text/html; charset=UTF-8</text></g></g>
@@ -396,219 +393,219 @@ text { dominant-baseline: alphabetic; }
 <g class="l ag"><g id="r85"><text class="g" x="18" y="404.8" textLength="188.48">X-XSS-Protection: 0</text></g></g>
 <g class="l ag"><g id="r86"><text class="g" x="18" y="424.8" textLength="267.84">X-Frame-Options: SAMEORIGIN</text></g></g>
 <g class="l ag"><g id="r87"><text class="g" x="18" y="444.8" textLength="545.6">Alt-Svc: h3=&quot;:443&quot;; ma=2592000,h3-29=&quot;:443&quot;; ma=2592000</text></g></g>
-<g class="l dr"><text x="18" y="484.8">$</text><use href="#c" x="37.84" y="472"/></g>
-<g class="l ds"><text x="18 37.84" y="484.8">$e</text><use href="#c" x="47.76" y="472"/></g>
-<g class="l dt"><text x="18 37.84 47.76" y="484.8">$ec</text><use href="#c" x="57.68" y="472"/></g>
+<g class="l dq"><text x="18" y="484.8">$</text><use href="#c" x="37.84" y="472"/></g>
+<g class="l dr"><text x="18 37.84" y="484.8">$e</text><use href="#c" x="47.76" y="472"/></g>
+<g class="l ds"><text x="18 37.84 47.76" y="484.8">$ec</text><use href="#c" x="57.68" y="472"/></g>
 <use href="#r3" y="460" class="l a8"/>
-<text class="l dv h" x="18" textLength="59.52">$ echo</text>
+<text class="l du h" x="18" textLength="59.52">$ echo</text>
 <use href="#r5" class="l a9 h"/>
-<g class="l dw h"><text x="18" textLength="89.28">$ echo &quot;W</text><use href="#c" x="107.28" y="-12.8"/></g>
-<g class="l dx h"><text x="18" textLength="99.2">$ echo &quot;Wa</text><use href="#c" x="117.2" y="-12.8"/></g>
-<g class="l dy h"><text x="18" textLength="109.12">$ echo &quot;Wai</text><use href="#c" x="127.12" y="-12.8"/></g>
-<text class="l d0 h" x="18" textLength="119.04">$ echo &quot;Wait</text>
-<g class="l d1 h"><text x="18" textLength="138.88">$ echo &quot;Wait f</text><use href="#c" x="156.88" y="-12.8"/></g>
-<g class="l d2 h"><text x="18" textLength="148.8">$ echo &quot;Wait fo</text><use href="#c" x="166.8" y="-12.8"/></g>
-<text class="l d4 h" x="18" textLength="158.72">$ echo &quot;Wait for</text>
-<text class="l d6 h" x="18" textLength="178.56">$ echo &quot;Wait for 2</text>
-<g class="l d7 h"><text x="18" textLength="198.4">$ echo &quot;Wait for 2 s</text><use href="#c" x="216.4" y="-12.8"/></g>
-<g class="l d8 h"><text x="18" textLength="208.32">$ echo &quot;Wait for 2 se</text><use href="#c" x="226.32" y="-12.8"/></g>
-<g class="l d9 h"><text x="18" textLength="218.24">$ echo &quot;Wait for 2 sec</text><use href="#c" x="236.24" y="-12.8"/></g>
-<g class="l ea h"><text x="18" textLength="228.16">$ echo &quot;Wait for 2 seco</text><use href="#c" x="246.16" y="-12.8"/></g>
-<g class="l eb h"><text x="18" textLength="238.08">$ echo &quot;Wait for 2 secon</text><use href="#c" x="256.08" y="-12.8"/></g>
-<g class="l ec h"><text x="18" textLength="248">$ echo &quot;Wait for 2 second</text><use href="#c" x="266" y="-12.8"/></g>
-<g class="l ed h"><text x="18" textLength="257.92">$ echo &quot;Wait for 2 seconds</text><use href="#c" x="275.92" y="-12.8"/></g>
-<g class="l ee h"><text x="18" textLength="267.84">$ echo &quot;Wait for 2 seconds.</text><use href="#c" x="285.84" y="-12.8"/></g>
-<g class="l ef h"><text x="18" textLength="277.76">$ echo &quot;Wait for 2 seconds..</text><use href="#c" x="295.76" y="-12.8"/></g>
-<g class="l eg h"><text x="18" textLength="287.68">$ echo &quot;Wait for 2 seconds...</text><use href="#c" x="305.68" y="-12.8"/></g>
-<g class="l eh h"><g id="r112"><text x="18" textLength="297.6">$ echo &quot;Wait for 2 seconds...&quot;</text></g><use href="#c" x="315.6" y="-12.8"/></g>
-<use href="#r19" y="-20" class="l y"/>
-<use href="#r20" y="-20" class="l y"/>
-<use href="#r44" class="l y i"/>
-<use href="#r45" y="-20" class="l y"/>
-<use href="#r46" y="-20" class="l y"/>
-<use href="#r72" class="l y j"/>
-<use href="#r73" y="-20" class="l y"/>
-<use href="#r74" y="-20" class="l y"/>
-<use href="#r75" y="-20" class="l y"/>
-<use href="#r76" y="-20" class="l y"/>
-<use href="#r77" y="-20" class="l y"/>
-<use href="#r78" y="-20" class="l y"/>
-<use href="#r79" y="-20" class="l y"/>
-<use href="#r80" y="-20" class="l y"/>
-<use href="#r81" y="-20" class="l y"/>
-<use href="#r82" y="-20" class="l y"/>
-<use href="#r83" y="-20" class="l y"/>
-<use href="#r84" y="-20" class="l y"/>
-<use href="#r85" y="-20" class="l y"/>
-<use href="#r86" y="-20" class="l y"/>
-<use href="#r87" y="-20" class="l y"/>
-<use href="#r112" class="l y k"/>
-<use href="#r20" y="-40" class="l z"/>
-<use href="#r44" class="l z m"/>
-<use href="#r45" y="-40" class="l z"/>
-<use href="#r46" y="-40" class="l z"/>
-<use href="#r72" class="l z n"/>
-<use href="#r73" y="-40" class="l z"/>
-<use href="#r74" y="-40" class="l z"/>
-<use href="#r75" y="-40" class="l z"/>
-<use href="#r76" y="-40" class="l z"/>
-<use href="#r77" y="-40" class="l z"/>
-<use href="#r78" y="-40" class="l z"/>
-<use href="#r79" y="-40" class="l z"/>
-<use href="#r80" y="-40" class="l z"/>
-<use href="#r81" y="-40" class="l z"/>
-<use href="#r82" y="-40" class="l z"/>
-<use href="#r83" y="-40" class="l z"/>
-<use href="#r84" y="-40" class="l z"/>
-<use href="#r85" y="-40" class="l z"/>
-<use href="#r86" y="-40" class="l z"/>
-<use href="#r87" y="-40" class="l z"/>
-<use href="#r112" class="l z o"/>
-<g class="l z k"><g id="r156"><text x="18" textLength="208.32">Wait for 2 seconds...</text></g></g>
-<g class="l ej h"><text x="18">$</text><use href="#c" x="37.84" y="-12.8"/></g>
-<g class="l ek h"><text x="18 37.84">$s</text><use href="#c" x="47.76" y="-12.8"/></g>
-<g class="l el h"><text x="18 37.84 47.76">$sl</text><use href="#c" x="57.68" y="-12.8"/></g>
-<g class="l em h"><text x="18 37.84 47.76 57.68">$sle</text><use href="#c" x="67.6" y="-12.8"/></g>
-<g class="l en h"><text x="18" textLength="59.52">$ slee</text><use href="#c" x="77.52" y="-12.8"/></g>
-<text class="l ep h" x="18" textLength="69.44">$ sleep</text>
-<g class="l eq h"><g id="r163"><text x="18" textLength="89.28">$ sleep 2</text></g><use href="#c" x="107.28" y="-12.8"/></g>
-<use href="#r44" class="l aa a"/>
-<use href="#r45" y="-60" class="l aa"/>
-<use href="#r46" y="-60" class="l aa"/>
-<use href="#r72" class="l aa d"/>
-<use href="#r73" y="-60" class="l aa"/>
-<use href="#r74" y="-60" class="l aa"/>
-<use href="#r75" y="-60" class="l aa"/>
-<use href="#r76" y="-60" class="l aa"/>
-<use href="#r77" y="-60" class="l aa"/>
-<use href="#r78" y="-60" class="l aa"/>
-<use href="#r79" y="-60" class="l aa"/>
-<use href="#r80" y="-60" class="l aa"/>
-<use href="#r81" y="-60" class="l aa"/>
-<use href="#r82" y="-60" class="l aa"/>
-<use href="#r83" y="-60" class="l aa"/>
-<use href="#r84" y="-60" class="l aa"/>
-<use href="#r85" y="-60" class="l aa"/>
-<use href="#r86" y="-60" class="l aa"/>
-<use href="#r87" y="-60" class="l aa"/>
-<use href="#r112" class="l aa p"/>
-<use href="#r156" class="l aa o"/>
-<use href="#r163" class="l aa k"/>
-<g class="l es h"><text x="18">$</text><use href="#c" x="37.84" y="-12.8"/></g>
-<g class="l et h"><text x="18 37.84">$e</text><use href="#c" x="47.76" y="-12.8"/></g>
-<g class="l eu h"><text x="18 37.84 47.76">$ec</text><use href="#c" x="57.68" y="-12.8"/></g>
-<g class="l ev h"><text x="18 37.84 47.76 57.68">$ech</text><use href="#c" x="67.6" y="-12.8"/></g>
-<text class="l ew h" x="18" textLength="59.52">$ echo</text>
+<g class="l dv h"><text x="18" textLength="89.28">$ echo &quot;W</text><use href="#c" x="107.28" y="-12.8"/></g>
+<g class="l dw h"><text x="18" textLength="99.2">$ echo &quot;Wa</text><use href="#c" x="117.2" y="-12.8"/></g>
+<g class="l dx h"><text x="18" textLength="109.12">$ echo &quot;Wai</text><use href="#c" x="127.12" y="-12.8"/></g>
+<text class="l dz h" x="18" textLength="119.04">$ echo &quot;Wait</text>
+<g class="l d0 h"><text x="18" textLength="138.88">$ echo &quot;Wait f</text><use href="#c" x="156.88" y="-12.8"/></g>
+<g class="l d1 h"><text x="18" textLength="148.8">$ echo &quot;Wait fo</text><use href="#c" x="166.8" y="-12.8"/></g>
+<text class="l d3 h" x="18" textLength="158.72">$ echo &quot;Wait for</text>
+<text class="l d5 h" x="18" textLength="178.56">$ echo &quot;Wait for 2</text>
+<g class="l d6 h"><text x="18" textLength="198.4">$ echo &quot;Wait for 2 s</text><use href="#c" x="216.4" y="-12.8"/></g>
+<g class="l d7 h"><text x="18" textLength="208.32">$ echo &quot;Wait for 2 se</text><use href="#c" x="226.32" y="-12.8"/></g>
+<g class="l d8 h"><text x="18" textLength="218.24">$ echo &quot;Wait for 2 sec</text><use href="#c" x="236.24" y="-12.8"/></g>
+<g class="l d9 h"><text x="18" textLength="228.16">$ echo &quot;Wait for 2 seco</text><use href="#c" x="246.16" y="-12.8"/></g>
+<g class="l ea h"><text x="18" textLength="238.08">$ echo &quot;Wait for 2 secon</text><use href="#c" x="256.08" y="-12.8"/></g>
+<g class="l eb h"><text x="18" textLength="248">$ echo &quot;Wait for 2 second</text><use href="#c" x="266" y="-12.8"/></g>
+<g class="l ec h"><text x="18" textLength="257.92">$ echo &quot;Wait for 2 seconds</text><use href="#c" x="275.92" y="-12.8"/></g>
+<g class="l ed h"><text x="18" textLength="267.84">$ echo &quot;Wait for 2 seconds.</text><use href="#c" x="285.84" y="-12.8"/></g>
+<g class="l ee h"><text x="18" textLength="277.76">$ echo &quot;Wait for 2 seconds..</text><use href="#c" x="295.76" y="-12.8"/></g>
+<g class="l ef h"><text x="18" textLength="287.68">$ echo &quot;Wait for 2 seconds...</text><use href="#c" x="305.68" y="-12.8"/></g>
+<g class="l eg h"><g id="r112"><text x="18" textLength="297.6">$ echo &quot;Wait for 2 seconds...&quot;</text></g><use href="#c" x="315.6" y="-12.8"/></g>
+<use href="#r19" y="-20" class="l z"/>
+<use href="#r20" y="-20" class="l z"/>
+<use href="#r44" class="l z i"/>
+<use href="#r45" y="-20" class="l z"/>
+<use href="#r46" y="-20" class="l z"/>
+<use href="#r72" class="l z j"/>
+<use href="#r73" y="-20" class="l z"/>
+<use href="#r74" y="-20" class="l z"/>
+<use href="#r75" y="-20" class="l z"/>
+<use href="#r76" y="-20" class="l z"/>
+<use href="#r77" y="-20" class="l z"/>
+<use href="#r78" y="-20" class="l z"/>
+<use href="#r79" y="-20" class="l z"/>
+<use href="#r80" y="-20" class="l z"/>
+<use href="#r81" y="-20" class="l z"/>
+<use href="#r82" y="-20" class="l z"/>
+<use href="#r83" y="-20" class="l z"/>
+<use href="#r84" y="-20" class="l z"/>
+<use href="#r85" y="-20" class="l z"/>
+<use href="#r86" y="-20" class="l z"/>
+<use href="#r87" y="-20" class="l z"/>
+<use href="#r112" class="l z k"/>
+<use href="#r20" y="-40" class="l aa"/>
+<use href="#r44" class="l aa m"/>
+<use href="#r45" y="-40" class="l aa"/>
+<use href="#r46" y="-40" class="l aa"/>
+<use href="#r72" class="l aa n"/>
+<use href="#r73" y="-40" class="l aa"/>
+<use href="#r74" y="-40" class="l aa"/>
+<use href="#r75" y="-40" class="l aa"/>
+<use href="#r76" y="-40" class="l aa"/>
+<use href="#r77" y="-40" class="l aa"/>
+<use href="#r78" y="-40" class="l aa"/>
+<use href="#r79" y="-40" class="l aa"/>
+<use href="#r80" y="-40" class="l aa"/>
+<use href="#r81" y="-40" class="l aa"/>
+<use href="#r82" y="-40" class="l aa"/>
+<use href="#r83" y="-40" class="l aa"/>
+<use href="#r84" y="-40" class="l aa"/>
+<use href="#r85" y="-40" class="l aa"/>
+<use href="#r86" y="-40" class="l aa"/>
+<use href="#r87" y="-40" class="l aa"/>
+<use href="#r112" class="l aa o"/>
+<g class="l aa k"><g id="r156"><text x="18" textLength="208.32">Wait for 2 seconds...</text></g></g>
+<g class="l ei h"><text x="18">$</text><use href="#c" x="37.84" y="-12.8"/></g>
+<g class="l ej h"><text x="18 37.84">$s</text><use href="#c" x="47.76" y="-12.8"/></g>
+<g class="l ek h"><text x="18 37.84 47.76">$sl</text><use href="#c" x="57.68" y="-12.8"/></g>
+<g class="l el h"><text x="18 37.84 47.76 57.68">$sle</text><use href="#c" x="67.6" y="-12.8"/></g>
+<g class="l em h"><text x="18" textLength="59.52">$ slee</text><use href="#c" x="77.52" y="-12.8"/></g>
+<text class="l eo h" x="18" textLength="69.44">$ sleep</text>
+<g class="l ep h"><g id="r163"><text x="18" textLength="89.28">$ sleep 2</text></g><use href="#c" x="107.28" y="-12.8"/></g>
+<use href="#r44" class="l ab a"/>
+<use href="#r45" y="-60" class="l ab"/>
+<use href="#r46" y="-60" class="l ab"/>
+<use href="#r72" class="l ab d"/>
+<use href="#r73" y="-60" class="l ab"/>
+<use href="#r74" y="-60" class="l ab"/>
+<use href="#r75" y="-60" class="l ab"/>
+<use href="#r76" y="-60" class="l ab"/>
+<use href="#r77" y="-60" class="l ab"/>
+<use href="#r78" y="-60" class="l ab"/>
+<use href="#r79" y="-60" class="l ab"/>
+<use href="#r80" y="-60" class="l ab"/>
+<use href="#r81" y="-60" class="l ab"/>
+<use href="#r82" y="-60" class="l ab"/>
+<use href="#r83" y="-60" class="l ab"/>
+<use href="#r84" y="-60" class="l ab"/>
+<use href="#r85" y="-60" class="l ab"/>
+<use href="#r86" y="-60" class="l ab"/>
+<use href="#r87" y="-60" class="l ab"/>
+<use href="#r112" class="l ab p"/>
+<use href="#r156" class="l ab o"/>
+<use href="#r163" class="l ab k"/>
+<g class="l er h"><text x="18">$</text><use href="#c" x="37.84" y="-12.8"/></g>
+<g class="l es h"><text x="18 37.84">$e</text><use href="#c" x="47.76" y="-12.8"/></g>
+<g class="l et h"><text x="18 37.84 47.76">$ec</text><use href="#c" x="57.68" y="-12.8"/></g>
+<g class="l eu h"><text x="18 37.84 47.76 57.68">$ech</text><use href="#c" x="67.6" y="-12.8"/></g>
+<text class="l ev h" x="18" textLength="59.52">$ echo</text>
 <use href="#r5" class="l bb h"/>
-<g class="l ex h"><text x="18" textLength="89.28">$ echo &quot;s</text><use href="#c" x="107.28" y="-12.8"/></g>
-<g class="l ey h"><text x="18" textLength="99.2">$ echo &quot;st</text><use href="#c" x="117.2" y="-12.8"/></g>
-<g class="l ez h"><text x="18" textLength="109.12">$ echo &quot;std</text><use href="#c" x="127.12" y="-12.8"/></g>
-<g class="l e0 h"><text x="18" textLength="119.04">$ echo &quot;stde</text><use href="#c" x="137.04" y="-12.8"/></g>
-<g class="l e1 h"><text x="18" textLength="128.96">$ echo &quot;stder</text><use href="#c" x="146.96" y="-12.8"/></g>
-<text class="l e2 h" x="18" textLength="138.88">$ echo &quot;stderr</text>
-<g class="l e3 h"><text x="18" textLength="158.72">$ echo &quot;stderr o</text><use href="#c" x="176.72" y="-12.8"/></g>
-<g class="l e4 h"><text x="18" textLength="168.64">$ echo &quot;stderr ou</text><use href="#c" x="186.64" y="-12.8"/></g>
-<g class="l e5 h"><text x="18" textLength="178.56">$ echo &quot;stderr out</text><use href="#c" x="196.56" y="-12.8"/></g>
-<g class="l e6 h"><text x="18" textLength="188.48">$ echo &quot;stderr outp</text><use href="#c" x="206.48" y="-12.8"/></g>
-<g class="l e7 h"><text x="18" textLength="198.4">$ echo &quot;stderr outpu</text><use href="#c" x="216.4" y="-12.8"/></g>
-<text class="l e8 h" x="18" textLength="208.32">$ echo &quot;stderr output</text>
-<g class="l e9 h"><text x="18" textLength="228.16">$ echo &quot;stderr output i</text><use href="#c" x="246.16" y="-12.8"/></g>
-<text class="l fa h" x="18" textLength="238.08">$ echo &quot;stderr output is</text>
-<g class="l fb h"><text x="18" textLength="257.92">$ echo &quot;stderr output is r</text><use href="#c" x="275.92" y="-12.8"/></g>
-<g class="l fc h"><text x="18" textLength="267.84">$ echo &quot;stderr output is re</text><use href="#c" x="285.84" y="-12.8"/></g>
-<text class="l fe h" x="18" textLength="277.76">$ echo &quot;stderr output is red</text>
-<g class="l ff h"><text x="18" textLength="297.6">$ echo &quot;stderr output is red b</text><use href="#c" x="315.6" y="-12.8"/></g>
-<text class="l fg h" x="18" textLength="307.52">$ echo &quot;stderr output is red by</text>
-<g class="l fh h"><text x="18" textLength="327.36">$ echo &quot;stderr output is red by d</text><use href="#c" x="345.36" y="-12.8"/></g>
-<g class="l fi h"><text x="18" textLength="337.28">$ echo &quot;stderr output is red by de</text><use href="#c" x="355.28" y="-12.8"/></g>
-<g class="l fj h"><text x="18" textLength="347.2">$ echo &quot;stderr output is red by def</text><use href="#c" x="365.2" y="-12.8"/></g>
-<g class="l fk h"><text x="18" textLength="357.12">$ echo &quot;stderr output is red by defa</text><use href="#c" x="375.12" y="-12.8"/></g>
-<g class="l fl h"><text x="18" textLength="367.04">$ echo &quot;stderr output is red by defau</text><use href="#c" x="385.04" y="-12.8"/></g>
-<g class="l fm h"><text x="18" textLength="376.96">$ echo &quot;stderr output is red by defaul</text><use href="#c" x="394.96" y="-12.8"/></g>
-<g class="l fn h"><text x="18" textLength="386.88">$ echo &quot;stderr output is red by default</text><use href="#c" x="404.88" y="-12.8"/></g>
-<text class="l fp h" x="18" textLength="396.8">$ echo &quot;stderr output is red by default&quot;</text>
-<g class="l fq h"><text x="18" textLength="416.64">$ echo &quot;stderr output is red by default&quot; 1</text><use href="#c" x="434.64" y="-12.8"/></g>
-<g class="l fr h"><text x="18" textLength="426.56">$ echo &quot;stderr output is red by default&quot; 1&gt;</text><use href="#c" x="444.56" y="-12.8"/></g>
-<g class="l fs h"><text x="18" textLength="436.48">$ echo &quot;stderr output is red by default&quot; 1&gt;&amp;</text><use href="#c" x="454.48" y="-12.8"/></g>
-<g class="l ft h"><g id="r222"><text x="18" textLength="446.4">$ echo &quot;stderr output is red by default&quot; 1&gt;&amp;2</text></g><use href="#c" x="464.4" y="-12.8"/></g>
-<use href="#r45" y="-80" class="l ab"/>
-<use href="#r46" y="-80" class="l ab"/>
-<use href="#r72" class="l ab i"/>
-<use href="#r73" y="-80" class="l ab"/>
-<use href="#r74" y="-80" class="l ab"/>
-<use href="#r75" y="-80" class="l ab"/>
-<use href="#r76" y="-80" class="l ab"/>
-<use href="#r77" y="-80" class="l ab"/>
-<use href="#r78" y="-80" class="l ab"/>
-<text class="l ab q g" x="18 27.92 37.84">-hp</text>
-<use href="#r80" y="-80" class="l ab"/>
-<use href="#r81" y="-80" class="l ab"/>
-<use href="#r82" y="-80" class="l ab"/>
-<use href="#r83" y="-80" class="l ab"/>
-<use href="#r84" y="-80" class="l ab"/>
-<use href="#r85" y="-80" class="l ab"/>
-<use href="#r86" y="-80" class="l ab"/>
-<use href="#r87" y="-80" class="l ab"/>
-<use href="#r112" class="l ab r"/>
-<use href="#r156" class="l ab p"/>
-<use href="#r163" class="l ab o"/>
-<use href="#r222" class="l ab k"/>
-<use href="#r46" y="-100" class="l ac"/>
-<use href="#r72" class="l ac m"/>
-<use href="#r73" y="-100" class="l ac"/>
-<use href="#r74" y="-100" class="l ac"/>
-<use href="#r75" y="-100" class="l ac"/>
-<use href="#r76" y="-100" class="l ac"/>
-<use href="#r77" y="-100" class="l ac"/>
-<use href="#r78" y="-100" class="l ac"/>
-<text class="l ac s g" x="18 27.92 37.84">-hp</text>
-<use href="#r80" y="-100" class="l ac"/>
-<use href="#r81" y="-100" class="l ac"/>
-<use href="#r82" y="-100" class="l ac"/>
-<use href="#r83" y="-100" class="l ac"/>
-<use href="#r84" y="-100" class="l ac"/>
-<use href="#r85" y="-100" class="l ac"/>
-<use href="#r86" y="-100" class="l ac"/>
-<use href="#r87" y="-100" class="l ac"/>
-<use href="#r112" class="l ac t"/>
-<use href="#r156" class="l ac r"/>
-<use href="#r163" class="l ac p"/>
-<use href="#r222" class="l ac o"/>
-<g class="l ac k"><g id="r266"><text class="u" x="18" textLength="307.52">stderr output is red by default</text></g></g>
-<g class="l fv h"><text x="18">$</text><use href="#c" x="37.84" y="-12.8"/></g>
-<g class="l fw h"><text x="18 37.84">$e</text><use href="#c" x="47.76" y="-12.8"/></g>
-<g class="l fx h"><text x="18 37.84 47.76">$ec</text><use href="#c" x="57.68" y="-12.8"/></g>
-<g class="l fy h"><text x="18 37.84 47.76 57.68">$ech</text><use href="#c" x="67.6" y="-12.8"/></g>
-<text class="l fz h" x="18" textLength="59.52">$ echo</text>
+<g class="l ew h"><text x="18" textLength="89.28">$ echo &quot;s</text><use href="#c" x="107.28" y="-12.8"/></g>
+<g class="l ex h"><text x="18" textLength="99.2">$ echo &quot;st</text><use href="#c" x="117.2" y="-12.8"/></g>
+<g class="l ey h"><text x="18" textLength="109.12">$ echo &quot;std</text><use href="#c" x="127.12" y="-12.8"/></g>
+<g class="l ez h"><text x="18" textLength="119.04">$ echo &quot;stde</text><use href="#c" x="137.04" y="-12.8"/></g>
+<g class="l e0 h"><text x="18" textLength="128.96">$ echo &quot;stder</text><use href="#c" x="146.96" y="-12.8"/></g>
+<text class="l e1 h" x="18" textLength="138.88">$ echo &quot;stderr</text>
+<g class="l e2 h"><text x="18" textLength="158.72">$ echo &quot;stderr o</text><use href="#c" x="176.72" y="-12.8"/></g>
+<g class="l e3 h"><text x="18" textLength="168.64">$ echo &quot;stderr ou</text><use href="#c" x="186.64" y="-12.8"/></g>
+<g class="l e4 h"><text x="18" textLength="178.56">$ echo &quot;stderr out</text><use href="#c" x="196.56" y="-12.8"/></g>
+<g class="l e5 h"><text x="18" textLength="188.48">$ echo &quot;stderr outp</text><use href="#c" x="206.48" y="-12.8"/></g>
+<g class="l e6 h"><text x="18" textLength="198.4">$ echo &quot;stderr outpu</text><use href="#c" x="216.4" y="-12.8"/></g>
+<text class="l e7 h" x="18" textLength="208.32">$ echo &quot;stderr output</text>
+<g class="l e8 h"><text x="18" textLength="228.16">$ echo &quot;stderr output i</text><use href="#c" x="246.16" y="-12.8"/></g>
+<text class="l e9 h" x="18" textLength="238.08">$ echo &quot;stderr output is</text>
+<g class="l fa h"><text x="18" textLength="257.92">$ echo &quot;stderr output is r</text><use href="#c" x="275.92" y="-12.8"/></g>
+<g class="l fb h"><text x="18" textLength="267.84">$ echo &quot;stderr output is re</text><use href="#c" x="285.84" y="-12.8"/></g>
+<text class="l fd h" x="18" textLength="277.76">$ echo &quot;stderr output is red</text>
+<g class="l fe h"><text x="18" textLength="297.6">$ echo &quot;stderr output is red b</text><use href="#c" x="315.6" y="-12.8"/></g>
+<text class="l ff h" x="18" textLength="307.52">$ echo &quot;stderr output is red by</text>
+<g class="l fg h"><text x="18" textLength="327.36">$ echo &quot;stderr output is red by d</text><use href="#c" x="345.36" y="-12.8"/></g>
+<g class="l fh h"><text x="18" textLength="337.28">$ echo &quot;stderr output is red by de</text><use href="#c" x="355.28" y="-12.8"/></g>
+<g class="l fi h"><text x="18" textLength="347.2">$ echo &quot;stderr output is red by def</text><use href="#c" x="365.2" y="-12.8"/></g>
+<g class="l fj h"><text x="18" textLength="357.12">$ echo &quot;stderr output is red by defa</text><use href="#c" x="375.12" y="-12.8"/></g>
+<g class="l fk h"><text x="18" textLength="367.04">$ echo &quot;stderr output is red by defau</text><use href="#c" x="385.04" y="-12.8"/></g>
+<g class="l fl h"><text x="18" textLength="376.96">$ echo &quot;stderr output is red by defaul</text><use href="#c" x="394.96" y="-12.8"/></g>
+<g class="l fm h"><text x="18" textLength="386.88">$ echo &quot;stderr output is red by default</text><use href="#c" x="404.88" y="-12.8"/></g>
+<text class="l fo h" x="18" textLength="396.8">$ echo &quot;stderr output is red by default&quot;</text>
+<g class="l fp h"><text x="18" textLength="416.64">$ echo &quot;stderr output is red by default&quot; 1</text><use href="#c" x="434.64" y="-12.8"/></g>
+<g class="l fq h"><text x="18" textLength="426.56">$ echo &quot;stderr output is red by default&quot; 1&gt;</text><use href="#c" x="444.56" y="-12.8"/></g>
+<g class="l fr h"><text x="18" textLength="436.48">$ echo &quot;stderr output is red by default&quot; 1&gt;&amp;</text><use href="#c" x="454.48" y="-12.8"/></g>
+<g class="l fs h"><g id="r222"><text x="18" textLength="446.4">$ echo &quot;stderr output is red by default&quot; 1&gt;&amp;2</text></g><use href="#c" x="464.4" y="-12.8"/></g>
+<use href="#r45" y="-80" class="l ac"/>
+<use href="#r46" y="-80" class="l ac"/>
+<use href="#r72" class="l ac i"/>
+<use href="#r73" y="-80" class="l ac"/>
+<use href="#r74" y="-80" class="l ac"/>
+<use href="#r75" y="-80" class="l ac"/>
+<use href="#r76" y="-80" class="l ac"/>
+<use href="#r77" y="-80" class="l ac"/>
+<use href="#r78" y="-80" class="l ac"/>
+<text class="l ac q g" x="18 27.92 37.84">-hp</text>
+<use href="#r80" y="-80" class="l ac"/>
+<use href="#r81" y="-80" class="l ac"/>
+<use href="#r82" y="-80" class="l ac"/>
+<use href="#r83" y="-80" class="l ac"/>
+<use href="#r84" y="-80" class="l ac"/>
+<use href="#r85" y="-80" class="l ac"/>
+<use href="#r86" y="-80" class="l ac"/>
+<use href="#r87" y="-80" class="l ac"/>
+<use href="#r112" class="l ac r"/>
+<use href="#r156" class="l ac p"/>
+<use href="#r163" class="l ac o"/>
+<use href="#r222" class="l ac k"/>
+<use href="#r46" y="-100" class="l ad"/>
+<use href="#r72" class="l ad m"/>
+<use href="#r73" y="-100" class="l ad"/>
+<use href="#r74" y="-100" class="l ad"/>
+<use href="#r75" y="-100" class="l ad"/>
+<use href="#r76" y="-100" class="l ad"/>
+<use href="#r77" y="-100" class="l ad"/>
+<use href="#r78" y="-100" class="l ad"/>
+<text class="l ad s g" x="18 27.92 37.84">-hp</text>
+<use href="#r80" y="-100" class="l ad"/>
+<use href="#r81" y="-100" class="l ad"/>
+<use href="#r82" y="-100" class="l ad"/>
+<use href="#r83" y="-100" class="l ad"/>
+<use href="#r84" y="-100" class="l ad"/>
+<use href="#r85" y="-100" class="l ad"/>
+<use href="#r86" y="-100" class="l ad"/>
+<use href="#r87" y="-100" class="l ad"/>
+<use href="#r112" class="l ad t"/>
+<use href="#r156" class="l ad r"/>
+<use href="#r163" class="l ad p"/>
+<use href="#r222" class="l ad o"/>
+<g class="l ad k"><g id="r266"><text class="u" x="18" textLength="307.52">stderr output is red by default</text></g></g>
+<g class="l fu h"><text x="18">$</text><use href="#c" x="37.84" y="-12.8"/></g>
+<g class="l fv h"><text x="18 37.84">$e</text><use href="#c" x="47.76" y="-12.8"/></g>
+<g class="l fw h"><text x="18 37.84 47.76">$ec</text><use href="#c" x="57.68" y="-12.8"/></g>
+<g class="l fx h"><text x="18 37.84 47.76 57.68">$ech</text><use href="#c" x="67.6" y="-12.8"/></g>
+<text class="l fy h" x="18" textLength="59.52">$ echo</text>
 <use href="#r5" class="l bd h"/>
-<g class="l f0 h"><text x="18" textLength="89.28">$ echo &quot;D</text><use href="#c" x="107.28" y="-12.8"/></g>
-<g class="l f1 h"><text x="18" textLength="99.2">$ echo &quot;Do</text><use href="#c" x="117.2" y="-12.8"/></g>
-<g class="l f2 h"><text x="18" textLength="109.12">$ echo &quot;Don</text><use href="#c" x="127.12" y="-12.8"/></g>
-<g class="l f3 h"><text x="18" textLength="119.04">$ echo &quot;Done</text><use href="#c" x="137.04" y="-12.8"/></g>
-<g class="l f4 h"><text x="18" textLength="128.96">$ echo &quot;Done!</text><use href="#c" x="146.96" y="-12.8"/></g>
-<g class="l f5 h"><g id="r278"><text x="18" textLength="138.88">$ echo &quot;Done!&quot;</text></g><use href="#c" x="156.88" y="-12.8"/></g>
-<use href="#r72" class="l ad a"/>
-<use href="#r73" y="-120" class="l ad"/>
-<use href="#r74" y="-120" class="l ad"/>
-<use href="#r75" y="-120" class="l ad"/>
-<use href="#r76" y="-120" class="l ad"/>
-<use href="#r77" y="-120" class="l ad"/>
-<use href="#r78" y="-120" class="l ad"/>
-<text class="l ad v g" x="18 27.92 37.84">-hp</text>
-<use href="#r80" y="-120" class="l ad"/>
-<use href="#r81" y="-120" class="l ad"/>
-<use href="#r82" y="-120" class="l ad"/>
-<use href="#r83" y="-120" class="l ad"/>
-<use href="#r84" y="-120" class="l ad"/>
-<use href="#r85" y="-120" class="l ad"/>
-<use href="#r86" y="-120" class="l ad"/>
-<use href="#r87" y="-120" class="l ad"/>
-<use href="#r112" class="l ad w"/>
-<use href="#r156" class="l ad t"/>
-<use href="#r163" class="l ad r"/>
-<use href="#r222" class="l ad p"/>
-<use href="#r266" class="l ad o"/>
-<use href="#r278" class="l ad k"/>
+<g class="l fz h"><text x="18" textLength="89.28">$ echo &quot;D</text><use href="#c" x="107.28" y="-12.8"/></g>
+<g class="l f0 h"><text x="18" textLength="99.2">$ echo &quot;Do</text><use href="#c" x="117.2" y="-12.8"/></g>
+<g class="l f1 h"><text x="18" textLength="109.12">$ echo &quot;Don</text><use href="#c" x="127.12" y="-12.8"/></g>
+<g class="l f2 h"><text x="18" textLength="119.04">$ echo &quot;Done</text><use href="#c" x="137.04" y="-12.8"/></g>
+<g class="l f3 h"><text x="18" textLength="128.96">$ echo &quot;Done!</text><use href="#c" x="146.96" y="-12.8"/></g>
+<g class="l f4 h"><g id="r278"><text x="18" textLength="138.88">$ echo &quot;Done!&quot;</text></g><use href="#c" x="156.88" y="-12.8"/></g>
+<use href="#r72" class="l y a"/>
+<use href="#r73" y="-120" class="l y"/>
+<use href="#r74" y="-120" class="l y"/>
+<use href="#r75" y="-120" class="l y"/>
+<use href="#r76" y="-120" class="l y"/>
+<use href="#r77" y="-120" class="l y"/>
+<use href="#r78" y="-120" class="l y"/>
+<text class="l y v g" x="18 27.92 37.84">-hp</text>
+<use href="#r80" y="-120" class="l y"/>
+<use href="#r81" y="-120" class="l y"/>
+<use href="#r82" y="-120" class="l y"/>
+<use href="#r83" y="-120" class="l y"/>
+<use href="#r84" y="-120" class="l y"/>
+<use href="#r85" y="-120" class="l y"/>
+<use href="#r86" y="-120" class="l y"/>
+<use href="#r87" y="-120" class="l y"/>
+<use href="#r112" class="l y w"/>
+<use href="#r156" class="l y t"/>
+<use href="#r163" class="l y r"/>
+<use href="#r222" class="l y p"/>
+<use href="#r266" class="l y o"/>
+<use href="#r278" class="l y k"/>
 <use href="#r73" y="-140" class="l ae"/>
 <use href="#r74" y="-140" class="l ae"/>
 <use href="#r75" y="-140" class="l ae"/>
@@ -631,65 +628,64 @@ text { dominant-baseline: alphabetic; }
 <use href="#r266" class="l ae p"/>
 <use href="#r278" class="l ae o"/>
 <text class="l ae k" x="18" textLength="49.6">Done!</text>
-<g class="l f6 h"><text x="18">$</text><use href="#c" x="37.84" y="-12.8"/></g>
-<use href="#c" x="77.52" y="12" class="l f7"/>
-<use href="#c" x="87.44" y="12" class="l f8"/>
-<use href="#c" x="156.88" y="12" class="l f9"/>
-<use href="#c" x="166.8" y="12" class="l ga"/>
-<use href="#c" x="236.24" y="12" class="l gb"/>
-<use href="#c" x="18" y="32" class="l gc"/>
-<use href="#c" x="18" y="52" class="l gd"/>
-<use href="#c" x="18" y="72" class="l ge"/>
+<use href="#c" x="77.52" y="12" class="l f5"/>
+<use href="#c" x="87.44" y="12" class="l f6"/>
+<use href="#c" x="156.88" y="12" class="l f7"/>
+<use href="#c" x="166.8" y="12" class="l f8"/>
+<use href="#c" x="236.24" y="12" class="l f9"/>
+<use href="#c" x="18" y="32" class="l ga"/>
+<use href="#c" x="18" y="52" class="l gb"/>
+<use href="#c" x="18" y="72" class="l gc"/>
 <use href="#c" x="67.6" y="72" class="l a5"/>
-<use href="#c" x="77.52" y="72" class="l gf"/>
-<use href="#c" x="87.44" y="72" class="l gg"/>
+<use href="#c" x="77.52" y="72" class="l gd"/>
+<use href="#c" x="87.44" y="72" class="l ge"/>
 <use href="#c" x="97.36" y="72" class="l a6"/>
-<use href="#c" x="166.8" y="72" class="l gh"/>
-<use href="#c" x="176.72" y="72" class="l gi"/>
-<use href="#c" x="285.84" y="72" class="l gj"/>
-<use href="#c" x="18" y="92" class="l gk"/>
-<use href="#c" x="18" y="112" class="l gl"/>
-<use href="#c" x="18" y="132" class="l gm"/>
-<use href="#c" x="77.52" y="132" class="l gn"/>
-<use href="#c" x="87.44" y="132" class="l go"/>
-<use href="#c" x="117.2" y="132" class="l gp"/>
-<use href="#c" x="127.12" y="132" class="l gq"/>
-<use href="#c" x="305.68" y="132" class="l gr"/>
-<use href="#c" x="18" y="152" class="l gs"/>
-<use href="#c" x="18" y="472" class="l gt"/>
+<use href="#c" x="166.8" y="72" class="l gf"/>
+<use href="#c" x="176.72" y="72" class="l gg"/>
+<use href="#c" x="285.84" y="72" class="l gh"/>
+<use href="#c" x="18" y="92" class="l gi"/>
+<use href="#c" x="18" y="112" class="l gj"/>
+<use href="#c" x="18" y="132" class="l gk"/>
+<use href="#c" x="77.52" y="132" class="l gl"/>
+<use href="#c" x="87.44" y="132" class="l gm"/>
+<use href="#c" x="117.2" y="132" class="l gn"/>
+<use href="#c" x="127.12" y="132" class="l go"/>
+<use href="#c" x="305.68" y="132" class="l gp"/>
+<use href="#c" x="18" y="152" class="l gq"/>
+<use href="#c" x="18" y="472" class="l gr"/>
 <use href="#c" x="67.6" y="472" class="l a8"/>
-<use href="#c" x="77.52" y="472" class="l gu"/>
-<use href="#c" x="87.44" y="472" class="l gv"/>
+<use href="#c" x="77.52" y="472" class="l gs"/>
+<use href="#c" x="87.44" y="472" class="l gt"/>
 <use href="#c" x="97.36" y="472" class="l a9"/>
-<use href="#c" x="137.04" y="472" class="l gw"/>
-<use href="#c" x="146.96" y="472" class="l gx"/>
-<use href="#c" x="176.72" y="472" class="l gy"/>
-<use href="#c" x="186.64" y="472" class="l gz"/>
-<use href="#c" x="196.56" y="472" class="l g0"/>
-<use href="#c" x="206.48" y="472" class="l g1"/>
-<use href="#c" x="18" y="472" class="l g2"/>
-<use href="#c" x="87.44" y="472" class="l g3"/>
-<use href="#c" x="97.36" y="472" class="l g4"/>
-<use href="#c" x="18" y="472" class="l g6"/>
-<use href="#c" x="77.52" y="472" class="l g7"/>
-<use href="#c" x="87.44" y="472" class="l g8"/>
+<use href="#c" x="137.04" y="472" class="l gu"/>
+<use href="#c" x="146.96" y="472" class="l gv"/>
+<use href="#c" x="176.72" y="472" class="l gw"/>
+<use href="#c" x="186.64" y="472" class="l gx"/>
+<use href="#c" x="196.56" y="472" class="l gy"/>
+<use href="#c" x="206.48" y="472" class="l gz"/>
+<use href="#c" x="18" y="472" class="l g1"/>
+<use href="#c" x="87.44" y="472" class="l g2"/>
+<use href="#c" x="97.36" y="472" class="l g3"/>
+<use href="#c" x="18" y="472" class="l g5"/>
+<use href="#c" x="77.52" y="472" class="l g6"/>
+<use href="#c" x="87.44" y="472" class="l g7"/>
 <use href="#c" x="97.36" y="472" class="l bb"/>
-<use href="#c" x="156.88" y="472" class="l g9"/>
-<use href="#c" x="166.8" y="472" class="l ha"/>
-<use href="#c" x="226.32" y="472" class="l hb"/>
-<use href="#c" x="236.24" y="472" class="l hc"/>
-<use href="#c" x="256.08" y="472" class="l hd"/>
-<use href="#c" x="266" y="472" class="l he"/>
-<use href="#c" x="295.76" y="472" class="l hf"/>
-<use href="#c" x="305.68" y="472" class="l hg"/>
-<use href="#c" x="325.52" y="472" class="l hh"/>
-<use href="#c" x="335.44" y="472" class="l hi"/>
-<use href="#c" x="414.8" y="472" class="l hj"/>
-<use href="#c" x="424.72" y="472" class="l hk"/>
-<use href="#c" x="18" y="472" class="l hm"/>
-<use href="#c" x="77.52" y="472" class="l hn"/>
-<use href="#c" x="87.44" y="472" class="l ho"/>
+<use href="#c" x="156.88" y="472" class="l g8"/>
+<use href="#c" x="166.8" y="472" class="l g9"/>
+<use href="#c" x="226.32" y="472" class="l ha"/>
+<use href="#c" x="236.24" y="472" class="l hb"/>
+<use href="#c" x="256.08" y="472" class="l hc"/>
+<use href="#c" x="266" y="472" class="l hd"/>
+<use href="#c" x="295.76" y="472" class="l he"/>
+<use href="#c" x="305.68" y="472" class="l hf"/>
+<use href="#c" x="325.52" y="472" class="l hg"/>
+<use href="#c" x="335.44" y="472" class="l hh"/>
+<use href="#c" x="414.8" y="472" class="l hi"/>
+<use href="#c" x="424.72" y="472" class="l hj"/>
+<use href="#c" x="18" y="472" class="l hl"/>
+<use href="#c" x="77.52" y="472" class="l hm"/>
+<use href="#c" x="87.44" y="472" class="l hn"/>
 <use href="#c" x="97.36" y="472" class="l bd"/>
-<use href="#c" x="18" y="472" class="l hp"/>
+<use href="#c" x="18" y="472" class="l y"/>
 </g>
 </svg>

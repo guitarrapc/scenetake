@@ -208,6 +208,11 @@
           "$ref": "#/definitions/seconds",
           "default": 0.5
         },
+        "end-prompt": {
+          "description": "End with the prompt after the last output, as a terminal does. By default the recording ends on the last output.",
+          "type": "boolean",
+          "default": false
+        },
         "execution-duration": {
           "description": "Seconds after Enter before the output appears, at least.",
           "$ref": "#/definitions/seconds",

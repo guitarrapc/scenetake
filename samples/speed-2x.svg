@@ -129,38 +129,35 @@ text { dominant-baseline: alphabetic; }
 .cs{animation-delay:5.089s;animation-name:g}
 @keyframes ct{77.77356%{visibility:hidden}to{visibility:visible}}
 .ct{animation-name:ct}
-@keyframes cu{86.34261%{visibility:hidden}to{visibility:visible}}
-.cu{animation-name:cu}
-.cv{animation-delay:0.25s;animation-name:i}
-.cw{animation-delay:0.564s;animation-name:i}
-.cx{animation-delay:0.589s;animation-name:m}
-.cy{animation-delay:0.729s;animation-name:i}
-.cz{animation-delay:0.754s;animation-name:r}
-.c0{animation-delay:1.005s;animation-name:k}
-.c1{animation-delay:1.024s;animation-name:u}
-.c2{animation-delay:1.194s;animation-name:p}
-.c3{animation-delay:1.226s;animation-name:u}
-.c4{animation-delay:1.365s;animation-name:i}
+.cu{animation-delay:0.25s;animation-name:i}
+.cv{animation-delay:0.564s;animation-name:i}
+.cw{animation-delay:0.589s;animation-name:m}
+.cx{animation-delay:0.729s;animation-name:i}
+.cy{animation-delay:0.754s;animation-name:r}
+.cz{animation-delay:1.005s;animation-name:k}
+.c0{animation-delay:1.024s;animation-name:u}
+.c1{animation-delay:1.194s;animation-name:p}
+.c2{animation-delay:1.226s;animation-name:u}
+.c3{animation-delay:1.365s;animation-name:i}
 @keyframes v{1.51665%{visibility:visible}}
-.c5{animation-delay:1.39s;animation-name:v}
+.c4{animation-delay:1.39s;animation-name:v}
 @keyframes z{7.58323%{visibility:visible}}
-.c6{animation-delay:1.49s;animation-name:z}
-.c7{animation-delay:1.99s;animation-name:i}
-.c8{animation-delay:2.337s;animation-name:t}
-.c9{animation-delay:2.358s;animation-name:v}
-@keyframes da{3.26079%{visibility:visible}}
-.db{animation-delay:2.458s;animation-name:da}
+.c5{animation-delay:1.49s;animation-name:z}
+.c6{animation-delay:1.99s;animation-name:i}
+.c7{animation-delay:2.337s;animation-name:t}
+.c8{animation-delay:2.358s;animation-name:v}
+@keyframes c9{3.26079%{visibility:visible}}
+.da{animation-delay:2.458s;animation-name:c9}
 @keyframes aa{3.30629%{visibility:visible}}
-.dc{animation-delay:2.673s;animation-name:aa}
-.dd{animation-delay:2.891s;animation-name:aa}
-.de{animation-delay:3.109s;animation-name:z}
-.df{animation-delay:3.609s;animation-name:i}
-.dg{animation-delay:4.034s;animation-name:t}
-.dh{animation-delay:4.055s;animation-name:v}
-@keyframes di{15.36362%{visibility:visible}}
-.dj{animation-delay:4.155s;animation-name:di}
-@keyframes dk{7.96239%{visibility:visible}}
-.dl{animation-delay:5.168s;animation-name:dk}
+.db{animation-delay:2.673s;animation-name:aa}
+.dc{animation-delay:2.891s;animation-name:aa}
+.dd{animation-delay:3.109s;animation-name:z}
+.de{animation-delay:3.609s;animation-name:i}
+.df{animation-delay:4.034s;animation-name:t}
+.dg{animation-delay:4.055s;animation-name:v}
+@keyframes dh{15.36362%{visibility:visible}}
+.di{animation-delay:4.155s;animation-name:dh}
+.dj{animation-delay:5.168s;animation-name:i}
 .h{visibility:visible}
 </style>
 <defs>
@@ -259,31 +256,30 @@ text { dominant-baseline: alphabetic; }
 <text class="l cr f" x="22" textLength="307.52">[######################  ]  91%</text>
 <text class="l cs f" x="22" textLength="307.52">[####################### ]  95%</text>
 <text class="l ct f" x="22" textLength="307.52">[########################] 100%</text>
-<g class="l cu"><text x="22" y="302.8">$</text><use href="#c" x="41.84" y="290"/></g>
-<use href="#c" x="22" y="70" class="l cv"/>
-<use href="#c" x="81.52" y="70" class="l cw"/>
-<use href="#c" x="91.44" y="70" class="l cx"/>
-<use href="#c" x="141.04" y="70" class="l cy"/>
-<use href="#c" x="150.96" y="70" class="l cz"/>
-<use href="#c" x="250.16" y="70" class="l c0"/>
-<use href="#c" x="260.08" y="70" class="l c1"/>
-<use href="#c" x="329.52" y="70" class="l c2"/>
-<use href="#c" x="339.44" y="70" class="l c3"/>
-<use href="#c" x="398.96" y="70" class="l c4"/>
-<use href="#c" x="22" y="90" class="l c5"/>
-<use href="#c" x="22" y="110" class="l c6"/>
-<use href="#c" x="22" y="130" class="l c7"/>
-<use href="#c" x="91.44" y="130" class="l c8"/>
-<use href="#c" x="22" y="150" class="l c9"/>
-<use href="#c" x="22" y="170" class="l db"/>
-<use href="#c" x="22" y="190" class="l dc"/>
-<use href="#c" x="22" y="210" class="l dd"/>
-<use href="#c" x="22" y="230" class="l de"/>
-<use href="#c" x="22" y="250" class="l df"/>
-<use href="#c" x="121.2" y="250" class="l dg"/>
-<use href="#c" x="22" y="270" class="l dh"/>
-<use href="#c" x="329.52" y="270" class="l dj"/>
-<use href="#c" x="22" y="290" class="l dl"/>
+<use href="#c" x="22" y="70" class="l cu"/>
+<use href="#c" x="81.52" y="70" class="l cv"/>
+<use href="#c" x="91.44" y="70" class="l cw"/>
+<use href="#c" x="141.04" y="70" class="l cx"/>
+<use href="#c" x="150.96" y="70" class="l cy"/>
+<use href="#c" x="250.16" y="70" class="l cz"/>
+<use href="#c" x="260.08" y="70" class="l c0"/>
+<use href="#c" x="329.52" y="70" class="l c1"/>
+<use href="#c" x="339.44" y="70" class="l c2"/>
+<use href="#c" x="398.96" y="70" class="l c3"/>
+<use href="#c" x="22" y="90" class="l c4"/>
+<use href="#c" x="22" y="110" class="l c5"/>
+<use href="#c" x="22" y="130" class="l c6"/>
+<use href="#c" x="91.44" y="130" class="l c7"/>
+<use href="#c" x="22" y="150" class="l c8"/>
+<use href="#c" x="22" y="170" class="l da"/>
+<use href="#c" x="22" y="190" class="l db"/>
+<use href="#c" x="22" y="210" class="l dc"/>
+<use href="#c" x="22" y="230" class="l dd"/>
+<use href="#c" x="22" y="250" class="l de"/>
+<use href="#c" x="121.2" y="250" class="l df"/>
+<use href="#c" x="22" y="270" class="l dg"/>
+<use href="#c" x="329.52" y="270" class="l di"/>
+<use href="#c" x="22" y="290" class="l dj"/>
 </g>
 <rect class="l h viewport-chrome-0" x="12.5" y="12.5" width="733.24" height="301" rx="7.5" ry="7.5" fill="none" stroke="#ffffff" stroke-opacity="0.16"/>
 </svg>

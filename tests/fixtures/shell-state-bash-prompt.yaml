@@ -11,6 +11,7 @@ settings:
   typing-jitter: 0
   pre-delay: 0
   post-delay: 0
+  end-prompt: true # the closing prompt shows where the last step left
   prompt:
     - text: "{dir}"
       color: "fg:blue"

@@ -159,9 +159,11 @@ internal static class PlaybackLengthCases
     }
 
     // A program that shows the cursor again 0.4 s after its last line, as it exits, and long pauses around the next prompt.
+    // A prompt of one character is told from typing by the closing prompt, so the recording ends with one.
     private const string StillScenario = """
         settings:
           prompt: "{0}"
+          end-prompt: true
           typing-speed: 0.05
           typing-jitter: 0
           pre-delay: 1.0
@@ -225,8 +227,9 @@ internal static class PlaybackLengthCases
         return (recording, recording.RenderSettings);
     }
 
+    // As the render plays it: with an end-hold, without the event that only sets the default hold.
     private static double Played(CastRecording recording, ResolvedRenderSettings settings) =>
-        RenderSettingsResolver.ResolveLoopDuration(recording.LoopDuration, recording.Events, settings);
+        SvgRender.PlayedSeconds(recording.Events, settings, recording.LoopDuration);
 
     private static double ReadingFloor(int lines) =>
         Math.Min(PlaybackLength.ReadingMax, PlaybackLength.ReadingBase + PlaybackLength.ReadingPerLine * lines) + PlaybackLength.BeforeTyping;

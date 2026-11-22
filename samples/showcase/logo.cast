@@ -1,4 +1,4 @@
-{"version":3,"term":{"cols":60,"rows":12,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":1700000000,"title":"figlet, lolcat, and toilet","env":{"SHELL":"bash"},"tags":["st:font-size=16","st:font-family=ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace","st:steps=133:12692 453d298522a9560b:031aa1b4:c:59:29:2898:3786 060fe96584aabd61:031aa1b4:d:130:1:8292:8342"]}
+{"version":3,"term":{"cols":60,"rows":12,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":1700000000,"title":"figlet, lolcat, and toilet","env":{"SHELL":"bash"},"tags":["st:font-size=16","st:font-family=ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace","st:steps=133:11442 453d298522a9560b:031aa1b4:c:59:29:2898:3786 060fe96584aabd61:031aa1b4:d:130:1:8292:8342"]}
 [0.500,"o","$ "]
 [0.650,"o","f"]
 [0.025,"o","i"]
@@ -130,6 +130,6 @@
 [0.020,"o","\""]
 [0.043,"o","\r\n"]
 [0.200,"o","\u001b[0;1;35;95m╺┳\u001b[0;1;31;91m┓┏\u001b[0;1;33;93m━╸\u001b[0;1;32;92m┏┳\u001b[0;1;36;96m┓┏\u001b[0;1;34;94m━┓\u001b[0;1;35;95m┏━\u001b[0;1;31;91m┓\u001b[0m   \u001b[0;1;32;92m┏━\u001b[0;1;36;96m╸┏\u001b[0;1;34;94m━┓\u001b[0;1;35;95m┏━\u001b[0;1;31;91m┓┏\u001b[0;1;33;93m┳┓\u001b[0m   \u001b[0;1;36;96m╻\u001b[0m \u001b[0;1;34;94m╻\u001b[0;1;35;95m┏━\u001b[0;1;31;91m┓┏\u001b[0;1;33;93m┳┓\u001b[0;1;32;92m╻\u001b[0m  \r\n \u001b[0;1;31;91m┃\u001b[0;1;33;93m┃┣\u001b[0;1;32;92m╸\u001b[0m \u001b[0;1;36;96m┃┃\u001b[0;1;34;94m┃┃\u001b[0m \u001b[0;1;35;95m┃\u001b[0;1;31;91m┗━\u001b[0;1;33;93m┓\u001b[0m   \u001b[0;1;36;96m┣╸\u001b[0m \u001b[0;1;34;94m┣\u001b[0;1;35;95m┳┛\u001b[0;1;31;91m┃\u001b[0m \u001b[0;1;33;93m┃┃\u001b[0;1;32;92m┃┃\u001b[0m   \u001b[0;1;34;94m┗\u001b[0;1;35;95m┳┛\u001b[0;1;31;91m┣━\u001b[0;1;33;93m┫┃\u001b[0;1;32;92m┃┃\u001b[0;1;36;96m┃\u001b[0m  \r\n\u001b[0;1;33;93m╺┻\u001b[0;1;32;92m┛┗\u001b[0;1;36;96m━╸\u001b[0;1;34;94m╹\u001b[0m \u001b[0;1;35;95m╹┗\u001b[0;1;31;91m━┛\u001b[0;1;33;93m┗━\u001b[0;1;32;92m┛\u001b[0m   \u001b[0;1;34;94m╹\u001b[0m  \u001b[0;1;35;95m╹\u001b[0;1;31;91m┗╸\u001b[0;1;33;93m┗━\u001b[0;1;32;92m┛╹\u001b[0m \u001b[0;1;36;96m╹\u001b[0m    \u001b[0;1;31;91m╹\u001b[0m \u001b[0;1;33;93m╹\u001b[0m \u001b[0;1;32;92m╹╹\u001b[0m \u001b[0;1;36;96m╹\u001b[0;1;34;94m┗━\u001b[0;1;35;95m╸\u001b[0m\r\n"]
-[2.500,"o","$ "]
-[1.850,"o","\u001b[0m"]
+[0.000,"o","\u001b[?25l"]
+[3.100,"o","\u001b[0m"]
 [0.050,"x","0"]

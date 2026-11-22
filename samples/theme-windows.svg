@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="877.6" height="326" viewBox="0 0 877.6 326" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Theme Windows">
+<svg xmlns="http://www.w3.org/2000/svg" width="877.6" height="306" viewBox="0 0 877.6 306" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Theme Windows">
 <style>
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
@@ -329,73 +329,69 @@ text { dominant-baseline: alphabetic; }
 .id{animation-name:id}
 @keyframes ie{85.740212%{visibility:hidden}to{visibility:visible}}
 .ie{animation-name:ie}
-@keyframes if{90.925589%{visibility:hidden}to{visibility:visible}}
-.if{animation-name:if}
-.ig{animation-delay:1s;animation-name:x}
-.ih{animation-delay:1.027s;animation-name:x}
-.ii{animation-delay:1.497s;animation-name:t}
-.ij{animation-delay:1.526s;animation-name:v}
-.ik{animation-delay:1.682s;animation-name:aj}
-.il{animation-delay:1.717s;animation-name:ag}
-.im{animation-delay:1.827s;animation-name:v}
-.in{animation-delay:1.861s;animation-name:u}
-.io{animation-delay:2.049s;animation-name:s}
-.ip{animation-delay:2.081s;animation-name:w}
-.iq{animation-delay:2.263s;animation-name:an}
-.ir{animation-delay:2.293s;animation-name:u}
-.is{animation-delay:2.786s;animation-name:an}
+.if{animation-delay:1s;animation-name:x}
+.ig{animation-delay:1.027s;animation-name:x}
+.ih{animation-delay:1.497s;animation-name:t}
+.ii{animation-delay:1.526s;animation-name:v}
+.ij{animation-delay:1.682s;animation-name:aj}
+.ik{animation-delay:1.717s;animation-name:ag}
+.il{animation-delay:1.827s;animation-name:v}
+.im{animation-delay:1.861s;animation-name:u}
+.in{animation-delay:2.049s;animation-name:s}
+.io{animation-delay:2.081s;animation-name:w}
+.ip{animation-delay:2.263s;animation-name:an}
+.iq{animation-delay:2.293s;animation-name:u}
+.ir{animation-delay:2.786s;animation-name:an}
 @keyframes ap{1.296345%{visibility:visible}}
-.it{animation-delay:2.816s;animation-name:ap}
+.is{animation-delay:2.816s;animation-name:ap}
 @keyframes ar{5.191859%{visibility:visible}}
-.iu{animation-delay:3.016s;animation-name:ar}
-.iv{animation-delay:4.317s;animation-name:ad}
-.iw{animation-delay:4.356s;animation-name:t}
-.ix{animation-delay:4.651s;animation-name:u}
-.iy{animation-delay:4.675s;animation-name:aa}
-.iz{animation-delay:5.181s;animation-name:v}
-.i0{animation-delay:5.215s;animation-name:aa}
-.i1{animation-delay:5.83s;animation-name:aa}
-.i2{animation-delay:5.863s;animation-name:s}
-.i3{animation-delay:6.429s;animation-name:aw}
-.i4{animation-delay:6.494s;animation-name:v}
-.i5{animation-delay:6.528s;animation-name:t}
-.i6{animation-delay:7.171s;animation-name:ab}
-.i7{animation-delay:7.192s;animation-name:ap}
-.i8{animation-delay:7.392s;animation-name:ar}
-.i9{animation-delay:8.702s;animation-name:af}
-.ja{animation-delay:8.74s;animation-name:y}
-.jb{animation-delay:9.092s;animation-name:ad}
-.jc{animation-delay:9.131s;animation-name:x}
-.jd{animation-delay:9.823s;animation-name:w}
-.je{animation-delay:9.849s;animation-name:aj}
-.jf{animation-delay:10.5s;animation-name:af}
-.jg{animation-delay:10.538s;animation-name:v}
-.jh{animation-delay:10.815s;animation-name:az}
-.ji{animation-delay:11.277s;animation-name:af}
-.jj{animation-delay:11.315s;animation-name:ap}
-.jk{animation-delay:11.515s;animation-name:ar}
-.jl{animation-delay:12.745s;animation-name:w}
-.jm{animation-delay:12.771s;animation-name:s}
-.jn{animation-delay:12.992s;animation-name:y}
-.jo{animation-delay:13.028s;animation-name:ap}
-@keyframes jp{5.185378%{visibility:visible}}
-.jq{animation-delay:13.228s;animation-name:jp}
+.it{animation-delay:3.016s;animation-name:ar}
+.iu{animation-delay:4.317s;animation-name:ad}
+.iv{animation-delay:4.356s;animation-name:t}
+.iw{animation-delay:4.651s;animation-name:u}
+.ix{animation-delay:4.675s;animation-name:aa}
+.iy{animation-delay:5.181s;animation-name:v}
+.iz{animation-delay:5.215s;animation-name:aa}
+.i0{animation-delay:5.83s;animation-name:aa}
+.i1{animation-delay:5.863s;animation-name:s}
+.i2{animation-delay:6.429s;animation-name:aw}
+.i3{animation-delay:6.494s;animation-name:v}
+.i4{animation-delay:6.528s;animation-name:t}
+.i5{animation-delay:7.171s;animation-name:ab}
+.i6{animation-delay:7.192s;animation-name:ap}
+.i7{animation-delay:7.392s;animation-name:ar}
+.i8{animation-delay:8.702s;animation-name:af}
+.i9{animation-delay:8.74s;animation-name:y}
+.ja{animation-delay:9.092s;animation-name:ad}
+.jb{animation-delay:9.131s;animation-name:x}
+.jc{animation-delay:9.823s;animation-name:w}
+.jd{animation-delay:9.849s;animation-name:aj}
+.je{animation-delay:10.5s;animation-name:af}
+.jf{animation-delay:10.538s;animation-name:v}
+.jg{animation-delay:10.815s;animation-name:az}
+.jh{animation-delay:11.277s;animation-name:af}
+.ji{animation-delay:11.315s;animation-name:ap}
+.jj{animation-delay:11.515s;animation-name:ar}
+.jk{animation-delay:12.745s;animation-name:w}
+.jl{animation-delay:12.771s;animation-name:s}
+.jm{animation-delay:12.992s;animation-name:y}
+.jn{animation-delay:13.028s;animation-name:ap}
 .z{visibility:visible}
 </style>
 <defs>
-<filter id="window-shadow" filterUnits="userSpaceOnUse" x="0" y="0" width="877.6" height="326"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-opacity="0.45"/></filter>
+<filter id="window-shadow" filterUnits="userSpaceOnUse" x="0" y="0" width="877.6" height="306"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-opacity="0.45"/></filter>
 <linearGradient id="desktop" x1="0" y1="0" x2="1" y2="1">
 <stop offset="0" stop-color="#0a2e6e"/>
 <stop offset="1" stop-color="#1f6fd1"/>
 </linearGradient>
 <rect id="c" class="c" width="9.92" height="20"/>
-<mask id="viewport-mask" x="0" y="0" width="877.6" height="326" maskUnits="userSpaceOnUse">
-<rect class="l z viewport-mask-0" x="32" y="66" width="813.6" height="228" fill="white"/>
+<mask id="viewport-mask" x="0" y="0" width="877.6" height="306" maskUnits="userSpaceOnUse">
+<rect class="l z viewport-mask-0" x="32" y="66" width="813.6" height="208" fill="white"/>
 </mask>
 </defs>
-<rect x="0" y="0" width="877.6" height="326" fill="url(#desktop)"/>
-<rect class="l z viewport-chrome-0" x="32" y="32" width="813.6" height="262" rx="8" ry="8" fill="#000" filter="url(#window-shadow)"/>
-<rect class="l z viewport-chrome-0" x="32" y="32" width="813.6" height="262" rx="8" ry="8" fill="none" stroke="#404040" stroke-width="1"/>
+<rect x="0" y="0" width="877.6" height="306" fill="url(#desktop)"/>
+<rect class="l z viewport-chrome-0" x="32" y="32" width="813.6" height="242" rx="8" ry="8" fill="#000" filter="url(#window-shadow)"/>
+<rect class="l z viewport-chrome-0" x="32" y="32" width="813.6" height="242" rx="8" ry="8" fill="none" stroke="#404040" stroke-width="1"/>
 <path class="l z viewport-chrome-0" d="M 40,32 H 837.6 Q 845.6,32 845.6,40 V 66 H 32 V 40 Q 32,32 40,32 Z" fill="#1c1c1c"/>
 <path class="l z viewport-chrome-0" d="M 40,66 V 44 Q 40,38 46,38 H 211.96 Q 217.96,38 217.96,44 V 66 Z" fill="#282c34"/>
 <rect class="l z viewport-chrome-0" x="50.5" y="46.5" width="14" height="11" rx="2" ry="2" fill="none" stroke="#d6d6d6" stroke-width="1"/>
@@ -408,7 +404,7 @@ text { dominant-baseline: alphabetic; }
 <rect class="l z viewport-chrome-0" x="772.1" y="45" width="9" height="9" rx="1" ry="1" fill="none" stroke="#d6d6d6" stroke-width="1"/>
 <path class="l z viewport-chrome-0" d="M 817.6,44.5 L 827.6,54.5 M 827.6,44.5 L 817.6,54.5" fill="none" stroke="#d6d6d6" stroke-width="1"/>
 <g mask="url(#viewport-mask)" fill="#d0d0d0">
-<rect class="bg l z viewport-bg-0" x="32" y="66" width="813.6" height="228" fill="#282c34"/>
+<rect class="bg l z viewport-bg-0" x="32" y="66" width="813.6" height="208" fill="#282c34"/>
 <g class="l a0"><text x="42" y="82.8">$</text><use href="#c" x="61.84" y="70"/></g>
 <g class="l a1"><text x="42 61.84" y="82.8">$p</text><use href="#c" x="71.76" y="70"/></g>
 <g class="l a2"><text x="42 61.84 71.76" y="82.8">$pr</text><use href="#c" x="81.68" y="70"/></g>
@@ -672,56 +668,54 @@ text { dominant-baseline: alphabetic; }
 <g class="l ic r"><text x="42" textLength="128.96">$ echo &quot;Done!</text><use href="#c" x="170.96" y="-12.8"/></g>
 <text class="l id r" x="42" textLength="138.88">$ echo &quot;Done!&quot;</text>
 <text class="l ie" x="42" y="262.8" textLength="49.6">Done!</text>
-<g class="l if"><text x="42" y="282.8">$</text><use href="#c" x="61.84" y="270"/></g>
-<use href="#c" x="121.36" y="70" class="l ig"/>
-<use href="#c" x="131.28" y="70" class="l ih"/>
-<use href="#c" x="280.08" y="70" class="l ii"/>
-<use href="#c" x="290" y="70" class="l ij"/>
-<use href="#c" x="339.6" y="70" class="l ik"/>
-<use href="#c" x="349.52" y="70" class="l il"/>
-<use href="#c" x="389.2" y="70" class="l im"/>
-<use href="#c" x="399.12" y="70" class="l in"/>
-<use href="#c" x="468.56" y="70" class="l io"/>
-<use href="#c" x="478.48" y="70" class="l ip"/>
-<use href="#c" x="538" y="70" class="l iq"/>
-<use href="#c" x="547.92" y="70" class="l ir"/>
-<use href="#c" x="706.64" y="70" class="l is"/>
-<use href="#c" x="42" y="90" class="l it"/>
-<use href="#c" x="42" y="110" class="l iu"/>
+<use href="#c" x="121.36" y="70" class="l if"/>
+<use href="#c" x="131.28" y="70" class="l ig"/>
+<use href="#c" x="280.08" y="70" class="l ih"/>
+<use href="#c" x="290" y="70" class="l ii"/>
+<use href="#c" x="339.6" y="70" class="l ij"/>
+<use href="#c" x="349.52" y="70" class="l ik"/>
+<use href="#c" x="389.2" y="70" class="l il"/>
+<use href="#c" x="399.12" y="70" class="l im"/>
+<use href="#c" x="468.56" y="70" class="l in"/>
+<use href="#c" x="478.48" y="70" class="l io"/>
+<use href="#c" x="538" y="70" class="l ip"/>
+<use href="#c" x="547.92" y="70" class="l iq"/>
+<use href="#c" x="706.64" y="70" class="l ir"/>
+<use href="#c" x="42" y="90" class="l is"/>
+<use href="#c" x="42" y="110" class="l it"/>
 <use href="#c" x="91.6" y="110" class="l au"/>
-<use href="#c" x="121.36" y="110" class="l iv"/>
-<use href="#c" x="131.28" y="110" class="l iw"/>
+<use href="#c" x="121.36" y="110" class="l iu"/>
+<use href="#c" x="131.28" y="110" class="l iv"/>
 <use href="#c" x="141.2" y="110" class="l av"/>
-<use href="#c" x="230.48" y="110" class="l ix"/>
-<use href="#c" x="240.4" y="110" class="l iy"/>
-<use href="#c" x="418.96" y="110" class="l iz"/>
-<use href="#c" x="428.88" y="110" class="l i0"/>
-<use href="#c" x="627.28" y="110" class="l i1"/>
-<use href="#c" x="637.2" y="110" class="l i2"/>
-<use href="#c" x="825.68" y="110" class="l i3"/>
-<use href="#c" x="51.92" y="130" class="l i4"/>
-<use href="#c" x="61.84" y="130" class="l i5"/>
-<use href="#c" x="280.08" y="130" class="l i6"/>
-<use href="#c" x="42" y="150" class="l i7"/>
-<use href="#c" x="42" y="170" class="l i8"/>
+<use href="#c" x="230.48" y="110" class="l iw"/>
+<use href="#c" x="240.4" y="110" class="l ix"/>
+<use href="#c" x="418.96" y="110" class="l iy"/>
+<use href="#c" x="428.88" y="110" class="l iz"/>
+<use href="#c" x="627.28" y="110" class="l i0"/>
+<use href="#c" x="637.2" y="110" class="l i1"/>
+<use href="#c" x="825.68" y="110" class="l i2"/>
+<use href="#c" x="51.92" y="130" class="l i3"/>
+<use href="#c" x="61.84" y="130" class="l i4"/>
+<use href="#c" x="280.08" y="130" class="l i5"/>
+<use href="#c" x="42" y="150" class="l i6"/>
+<use href="#c" x="42" y="170" class="l i7"/>
 <use href="#c" x="91.6" y="170" class="l ax"/>
-<use href="#c" x="121.36" y="170" class="l i9"/>
-<use href="#c" x="131.28" y="170" class="l ja"/>
+<use href="#c" x="121.36" y="170" class="l i8"/>
+<use href="#c" x="131.28" y="170" class="l i9"/>
 <use href="#c" x="141.2" y="170" class="l ay"/>
-<use href="#c" x="240.4" y="170" class="l jb"/>
-<use href="#c" x="250.32" y="170" class="l jc"/>
-<use href="#c" x="488.4" y="170" class="l jd"/>
-<use href="#c" x="498.32" y="170" class="l je"/>
-<use href="#c" x="716.56" y="170" class="l jf"/>
-<use href="#c" x="726.48" y="170" class="l jg"/>
-<use href="#c" x="825.68" y="170" class="l jh"/>
-<use href="#c" x="180.88" y="190" class="l ji"/>
-<use href="#c" x="42" y="210" class="l jj"/>
-<use href="#c" x="42" y="230" class="l jk"/>
-<use href="#c" x="101.52" y="230" class="l jl"/>
-<use href="#c" x="111.44" y="230" class="l jm"/>
-<use href="#c" x="180.88" y="230" class="l jn"/>
-<use href="#c" x="42" y="250" class="l jo"/>
-<use href="#c" x="42" y="270" class="l jq"/>
+<use href="#c" x="240.4" y="170" class="l ja"/>
+<use href="#c" x="250.32" y="170" class="l jb"/>
+<use href="#c" x="488.4" y="170" class="l jc"/>
+<use href="#c" x="498.32" y="170" class="l jd"/>
+<use href="#c" x="716.56" y="170" class="l je"/>
+<use href="#c" x="726.48" y="170" class="l jf"/>
+<use href="#c" x="825.68" y="170" class="l jg"/>
+<use href="#c" x="180.88" y="190" class="l jh"/>
+<use href="#c" x="42" y="210" class="l ji"/>
+<use href="#c" x="42" y="230" class="l jj"/>
+<use href="#c" x="101.52" y="230" class="l jk"/>
+<use href="#c" x="111.44" y="230" class="l jl"/>
+<use href="#c" x="180.88" y="230" class="l jm"/>
+<use href="#c" x="42" y="250" class="l jn"/>
 </g>
 </svg>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="830.24" height="378" viewBox="0 0 830.24 378" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Translucent window">
+<svg xmlns="http://www.w3.org/2000/svg" width="830.24" height="358" viewBox="0 0 830.24 358" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Translucent window">
 <style>
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
@@ -11,215 +11,212 @@ text { dominant-baseline: alphabetic; }
 .f{transform:translate(0,278.8px)}
 .a{fill:#7dd6cf}
 .e{fill:#191919}
-@keyframes al{4.923682%{visibility:hidden}to{visibility:visible}}
-.al{animation-name:al}
+@keyframes ak{4.923682%{visibility:hidden}to{visibility:visible}}
+.ak{animation-name:ak}
 @keyframes z{3.446579%{visibility:visible}}
-.am{animation-delay:0.55s;animation-name:z}
+.al{animation-delay:0.55s;animation-name:z}
 @keyframes r{0.246185%{visibility:visible}}
-.an{animation-delay:0.9s;animation-name:r}
+.am{animation-delay:0.9s;animation-name:r}
 @keyframes k{0.285574%{visibility:visible}}
-.ao{animation-delay:0.925s;animation-name:k}
+.an{animation-delay:0.925s;animation-name:k}
 @keyframes m{0.305269%{visibility:visible}}
-.ap{animation-delay:0.954s;animation-name:m}
-@keyframes aq{0.7484%{visibility:visible}}
-.ar{animation-delay:0.985s;animation-name:aq}
+.ao{animation-delay:0.954s;animation-name:m}
+@keyframes ap{0.7484%{visibility:visible}}
+.aq{animation-delay:0.985s;animation-name:ap}
 @keyframes s{0.22649%{visibility:visible}}
-.as{animation-delay:1.061s;animation-name:s}
-.at{animation-delay:1.084s;animation-name:s}
-.au{animation-delay:1.107s;animation-name:r}
+.ar{animation-delay:1.061s;animation-name:s}
+.as{animation-delay:1.084s;animation-name:s}
+.at{animation-delay:1.107s;animation-name:r}
 @keyframes p{0.295421%{visibility:visible}}
-.av{animation-delay:1.132s;animation-name:p}
+.au{animation-delay:1.132s;animation-name:p}
 @keyframes g{0.334811%{visibility:visible}}
-.aw{animation-delay:1.162s;animation-name:g}
-.ax{animation-delay:1.196s;animation-name:m}
+.av{animation-delay:1.162s;animation-name:g}
+.aw{animation-delay:1.196s;animation-name:m}
 @keyframes i{0.364353%{visibility:visible}}
-.ay{animation-delay:1.227s;animation-name:i}
-@keyframes az{0.60069%{visibility:visible}}
-.a0{animation-delay:1.264s;animation-name:az}
+.ax{animation-delay:1.227s;animation-name:i}
+@keyframes ay{0.60069%{visibility:visible}}
+.az{animation-delay:1.264s;animation-name:ay}
 @keyframes n{0.354506%{visibility:visible}}
-.a1{animation-delay:1.325s;animation-name:n}
+.a0{animation-delay:1.325s;animation-name:n}
 @keyframes t{0.196948%{visibility:visible}}
-.a2{animation-delay:1.361s;animation-name:t}
+.a1{animation-delay:1.361s;animation-name:t}
 @keyframes j{0.236337%{visibility:visible}}
-.a3{animation-delay:1.381s;animation-name:j}
+.a2{animation-delay:1.381s;animation-name:j}
 @keyframes ag{0.630232%{visibility:visible}}
-.a4{animation-delay:1.405s;animation-name:ag}
+.a3{animation-delay:1.405s;animation-name:ag}
 @keyframes u{0.275727%{visibility:visible}}
-.a5{animation-delay:1.469s;animation-name:u}
-.a6{animation-delay:1.497s;animation-name:p}
+.a4{animation-delay:1.469s;animation-name:u}
+.a5{animation-delay:1.497s;animation-name:p}
 @keyframes v{0.206795%{visibility:visible}}
-.a7{animation-delay:1.527s;animation-name:v}
-@keyframes a8{0.5613%{visibility:visible}}
-.a9{animation-delay:1.548s;animation-name:a8}
-.ba{animation-delay:1.605s;animation-name:s}
-@keyframes bb{16.031511%{visibility:hidden}to{visibility:visible}}
+.a6{animation-delay:1.527s;animation-name:v}
+@keyframes a7{0.5613%{visibility:visible}}
+.a8{animation-delay:1.548s;animation-name:a7}
+.a9{animation-delay:1.605s;animation-name:s}
+@keyframes ba{16.031511%{visibility:hidden}to{visibility:visible}}
+.ba{animation-name:ba}
+@keyframes bb{18.394879%{visibility:hidden}to{visibility:visible}}
 .bb{animation-name:bb}
-@keyframes bc{18.394879%{visibility:hidden}to{visibility:visible}}
+@keyframes bc{28.242245%{visibility:hidden}to{visibility:visible}}
 .bc{animation-name:bc}
-@keyframes bd{28.242245%{visibility:hidden}to{visibility:visible}}
-.bd{animation-name:bd}
-.be{animation-delay:2.918s;animation-name:z}
-.bf{animation-delay:3.268s;animation-name:n}
-.bh{animation-delay:3.304s;animation-name:r}
-.bi{animation-delay:3.329s;animation-name:t}
+.bd{animation-delay:2.918s;animation-name:z}
+.be{animation-delay:3.268s;animation-name:n}
+.bf{animation-delay:3.304s;animation-name:r}
+.bh{animation-delay:3.329s;animation-name:t}
 @keyframes q{0.384048%{visibility:visible}}
-.bj{animation-delay:3.349s;animation-name:q}
-.bk{animation-delay:3.388s;animation-name:j}
+.bi{animation-delay:3.349s;animation-name:q}
+.bj{animation-delay:3.388s;animation-name:j}
 @keyframes ah{0.571148%{visibility:visible}}
-.bl{animation-delay:3.412s;animation-name:ah}
-.bm{animation-delay:3.47s;animation-name:ag}
-.bn{animation-delay:3.534s;animation-name:n}
-.bo{animation-delay:3.57s;animation-name:p}
+.bk{animation-delay:3.412s;animation-name:ah}
+.bl{animation-delay:3.47s;animation-name:ag}
+.bm{animation-delay:3.534s;animation-name:n}
+.bn{animation-delay:3.57s;animation-name:p}
 @keyframes o{0.265879%{visibility:visible}}
-.bp{animation-delay:3.6s;animation-name:o}
-@keyframes bq{0.915806%{visibility:visible}}
-.br{animation-delay:3.627s;animation-name:bq}
+.bo{animation-delay:3.6s;animation-name:o}
+@keyframes bp{0.915806%{visibility:visible}}
+.bq{animation-delay:3.627s;animation-name:bp}
 @keyframes aa{0.324964%{visibility:visible}}
-.bs{animation-delay:3.72s;animation-name:aa}
-.bt{animation-delay:3.753s;animation-name:j}
-.bu{animation-delay:3.777s;animation-name:n}
+.br{animation-delay:3.72s;animation-name:aa}
+.bs{animation-delay:3.753s;animation-name:j}
+.bt{animation-delay:3.777s;animation-name:n}
 @keyframes ab{0.393895%{visibility:visible}}
-.bv{animation-delay:3.813s;animation-name:ab}
+.bu{animation-delay:3.813s;animation-name:ab}
 @keyframes w{0.256032%{visibility:visible}}
-.bw{animation-delay:3.853s;animation-name:w}
-@keyframes bx{0.738553%{visibility:visible}}
-.by{animation-delay:3.879s;animation-name:bx}
-.bz{animation-delay:3.954s;animation-name:i}
-.b0{animation-delay:3.991s;animation-name:aa}
-.b1{animation-delay:4.024s;animation-name:j}
-.b2{animation-delay:4.048s;animation-name:r}
-@keyframes b3{0.610537%{visibility:visible}}
-.b4{animation-delay:4.073s;animation-name:b3}
-.b5{animation-delay:4.135s;animation-name:v}
-.b6{animation-delay:4.156s;animation-name:g}
-.b7{animation-delay:4.19s;animation-name:o}
-@keyframes b8{1.014279%{visibility:visible}}
-.b9{animation-delay:4.217s;animation-name:b8}
-.ca{animation-delay:4.32s;animation-name:k}
+.bv{animation-delay:3.853s;animation-name:w}
+@keyframes bw{0.738553%{visibility:visible}}
+.bx{animation-delay:3.879s;animation-name:bw}
+.by{animation-delay:3.954s;animation-name:i}
+.bz{animation-delay:3.991s;animation-name:aa}
+.b0{animation-delay:4.024s;animation-name:j}
+.b1{animation-delay:4.048s;animation-name:r}
+@keyframes b2{0.610537%{visibility:visible}}
+.b3{animation-delay:4.073s;animation-name:b2}
+.b4{animation-delay:4.135s;animation-name:v}
+.b5{animation-delay:4.156s;animation-name:g}
+.b6{animation-delay:4.19s;animation-name:o}
+@keyframes b7{1.014279%{visibility:visible}}
+.b8{animation-delay:4.217s;animation-name:b7}
+.b9{animation-delay:4.32s;animation-name:k}
 @keyframes x{0.344658%{visibility:visible}}
-.cb{animation-delay:4.349s;animation-name:x}
-.cc{animation-delay:4.384s;animation-name:k}
-.cd{animation-delay:4.413s;animation-name:i}
-.ce{animation-delay:4.45s;animation-name:w}
-@keyframes cf{0.551453%{visibility:visible}}
-.cg{animation-delay:4.476s;animation-name:cf}
-.ch{animation-delay:4.532s;animation-name:g}
-.ci{animation-delay:4.566s;animation-name:x}
-.cj{animation-delay:4.601s;animation-name:g}
-.ck{animation-delay:4.635s;animation-name:t}
-@keyframes cl{0.541606%{visibility:visible}}
-.cm{animation-delay:4.655s;animation-name:cl}
-@keyframes cn{0.216643%{visibility:visible}}
-.co{animation-delay:4.71s;animation-name:cn}
-.cp{animation-delay:4.732s;animation-name:i}
-.cq{animation-delay:4.769s;animation-name:g}
-@keyframes cr{1.152142%{visibility:visible}}
-.cs{animation-delay:4.803s;animation-name:cr}
-.ct{animation-delay:4.92s;animation-name:g}
-.cu{animation-delay:4.954s;animation-name:m}
-.cv{animation-delay:4.985s;animation-name:q}
-.cw{animation-delay:5.024s;animation-name:u}
-.cx{animation-delay:5.052s;animation-name:w}
-@keyframes cy{0.728706%{visibility:visible}}
-.cz{animation-delay:5.078s;animation-name:cy}
-.c0{animation-delay:5.152s;animation-name:aa}
-.c1{animation-delay:5.185s;animation-name:j}
-.c2{animation-delay:5.209s;animation-name:u}
-.c3{animation-delay:5.237s;animation-name:v}
-.c4{animation-delay:5.258s;animation-name:u}
-.c5{animation-delay:5.286s;animation-name:g}
-.c6{animation-delay:5.32s;animation-name:g}
-@keyframes c7{52.722796%{visibility:hidden}to{visibility:visible}}
-.c7{animation-name:c7}
+.ca{animation-delay:4.349s;animation-name:x}
+.cb{animation-delay:4.384s;animation-name:k}
+.cc{animation-delay:4.413s;animation-name:i}
+.cd{animation-delay:4.45s;animation-name:w}
+@keyframes ce{0.551453%{visibility:visible}}
+.cf{animation-delay:4.476s;animation-name:ce}
+.cg{animation-delay:4.532s;animation-name:g}
+.ch{animation-delay:4.566s;animation-name:x}
+.ci{animation-delay:4.601s;animation-name:g}
+.cj{animation-delay:4.635s;animation-name:t}
+@keyframes ck{0.541606%{visibility:visible}}
+.cl{animation-delay:4.655s;animation-name:ck}
+@keyframes cm{0.216643%{visibility:visible}}
+.cn{animation-delay:4.71s;animation-name:cm}
+.co{animation-delay:4.732s;animation-name:i}
+.cp{animation-delay:4.769s;animation-name:g}
+@keyframes cq{1.152142%{visibility:visible}}
+.cr{animation-delay:4.803s;animation-name:cq}
+.cs{animation-delay:4.92s;animation-name:g}
+.ct{animation-delay:4.954s;animation-name:m}
+.cu{animation-delay:4.985s;animation-name:q}
+.cv{animation-delay:5.024s;animation-name:u}
+.cw{animation-delay:5.052s;animation-name:w}
+@keyframes cx{0.728706%{visibility:visible}}
+.cy{animation-delay:5.078s;animation-name:cx}
+.cz{animation-delay:5.152s;animation-name:aa}
+.c0{animation-delay:5.185s;animation-name:j}
+.c1{animation-delay:5.209s;animation-name:u}
+.c2{animation-delay:5.237s;animation-name:v}
+.c3{animation-delay:5.258s;animation-name:u}
+.c4{animation-delay:5.286s;animation-name:g}
+.c5{animation-delay:5.32s;animation-name:g}
+@keyframes c6{52.722796%{visibility:hidden}to{visibility:visible}}
+.c6{animation-name:c6}
 @keyframes ac{55.066469%{visibility:hidden}to{visibility:visible}}
 .ac{animation-name:ac}
-@keyframes c8{64.923682%{visibility:hidden}to{visibility:visible}}
-.c8{animation-name:c8}
-.c9{animation-delay:6.643s;animation-name:z}
-.da{animation-delay:6.993s;animation-name:m}
-.db{animation-delay:7.024s;animation-name:j}
+@keyframes c7{64.923682%{visibility:hidden}to{visibility:visible}}
+.c7{animation-name:c7}
+.c8{animation-delay:6.643s;animation-name:z}
+.c9{animation-delay:6.993s;animation-name:m}
+.da{animation-delay:7.024s;animation-name:j}
 .ai{animation-delay:7.048s;animation-name:j}
-.dc{animation-delay:7.072s;animation-name:ah}
+.db{animation-delay:7.072s;animation-name:ah}
 .aj{animation-delay:7.13s;animation-name:g}
-.dd{animation-delay:7.164s;animation-name:k}
-.de{animation-delay:7.193s;animation-name:s}
-.df{animation-delay:7.216s;animation-name:q}
-.dg{animation-delay:7.255s;animation-name:k}
-.dh{animation-delay:7.284s;animation-name:x}
-@keyframes di{72.07287%{visibility:hidden}to{visibility:visible}}
+.dc{animation-delay:7.164s;animation-name:k}
+.dd{animation-delay:7.193s;animation-name:s}
+.de{animation-delay:7.216s;animation-name:q}
+.df{animation-delay:7.255s;animation-name:k}
+.dg{animation-delay:7.284s;animation-name:x}
+@keyframes dh{72.07287%{visibility:hidden}to{visibility:visible}}
+.dh{animation-name:dh}
+@keyframes di{74.396848%{visibility:hidden}to{visibility:visible}}
 .di{animation-name:di}
-@keyframes dj{74.396848%{visibility:hidden}to{visibility:visible}}
-.dj{animation-name:dj}
-@keyframes dk{84.244214%{visibility:hidden}to{visibility:visible}}
-.dk{animation-name:dk}
 @keyframes ad{0.492369%{visibility:visible}}
-.dl{animation-delay:0.5s;animation-name:ad}
-.dm{animation-delay:0.985s;animation-name:q}
-.dn{animation-delay:1.024s;animation-name:i}
-.do{animation-delay:1.264s;animation-name:j}
-.dp{animation-delay:1.288s;animation-name:i}
-.dq{animation-delay:1.405s;animation-name:i}
-.dr{animation-delay:1.442s;animation-name:o}
-.ds{animation-delay:1.548s;animation-name:t}
-.dt{animation-delay:1.568s;animation-name:i}
-.du{animation-delay:1.628s;animation-name:ab}
+.dj{animation-delay:0.5s;animation-name:ad}
+.dk{animation-delay:0.985s;animation-name:q}
+.dl{animation-delay:1.024s;animation-name:i}
+.dm{animation-delay:1.264s;animation-name:j}
+.dn{animation-delay:1.288s;animation-name:i}
+.do{animation-delay:1.405s;animation-name:i}
+.dp{animation-delay:1.442s;animation-name:o}
+.dq{animation-delay:1.548s;animation-name:t}
+.dr{animation-delay:1.568s;animation-name:i}
+.ds{animation-delay:1.628s;animation-name:ab}
 @keyframes ae{1.969474%{visibility:visible}}
-.dv{animation-delay:1.668s;animation-name:ae}
-@keyframes ak{9.847366%{visibility:visible}}
-.dw{animation-delay:1.868s;animation-name:ak}
-.dx{animation-delay:2.868s;animation-name:ad}
-.dy{animation-delay:3.412s;animation-name:o}
-.dz{animation-delay:3.439s;animation-name:m}
-.d0{animation-delay:3.47s;animation-name:p}
-.d1{animation-delay:3.5s;animation-name:g}
-.d2{animation-delay:3.627s;animation-name:m}
-.d3{animation-delay:3.658s;animation-name:p}
+.dt{animation-delay:1.668s;animation-name:ae}
+@keyframes du{9.847366%{visibility:visible}}
+.dv{animation-delay:1.868s;animation-name:du}
+.dw{animation-delay:2.868s;animation-name:ad}
+.dx{animation-delay:3.412s;animation-name:o}
+.dy{animation-delay:3.439s;animation-name:m}
+.dz{animation-delay:3.47s;animation-name:p}
+.d0{animation-delay:3.5s;animation-name:g}
+.d1{animation-delay:3.627s;animation-name:m}
+.d2{animation-delay:3.658s;animation-name:p}
 @keyframes af{0.315116%{visibility:visible}}
-.d4{animation-delay:3.688s;animation-name:af}
+.d3{animation-delay:3.688s;animation-name:af}
 @keyframes y{0.3742%{visibility:visible}}
-.d5{animation-delay:3.879s;animation-name:y}
-.d6{animation-delay:3.917s;animation-name:i}
-.d7{animation-delay:4.073s;animation-name:x}
-.d8{animation-delay:4.108s;animation-name:o}
-.d9{animation-delay:4.217s;animation-name:i}
-.ea{animation-delay:4.254s;animation-name:af}
-.eb{animation-delay:4.286s;animation-name:g}
-.ec{animation-delay:4.476s;animation-name:o}
-.ed{animation-delay:4.503s;animation-name:k}
-.ee{animation-delay:4.655s;animation-name:v}
-.ef{animation-delay:4.676s;animation-name:g}
-.eg{animation-delay:4.803s;animation-name:q}
-.eh{animation-delay:4.842s;animation-name:y}
-.ei{animation-delay:4.88s;animation-name:ab}
-.ej{animation-delay:5.078s;animation-name:n}
-.ek{animation-delay:5.114s;animation-name:y}
-.el{animation-delay:5.354s;animation-name:y}
-.em{animation-delay:5.392s;animation-name:ae}
-@keyframes en{9.857214%{visibility:visible}}
-.eo{animation-delay:5.592s;animation-name:en}
-.ep{animation-delay:6.593s;animation-name:ad}
-.eq{animation-delay:7.072s;animation-name:w}
-.er{animation-delay:7.098s;animation-name:af}
-.es{animation-delay:7.319s;animation-name:n}
-.et{animation-delay:7.355s;animation-name:ae}
-.eu{animation-delay:7.555s;animation-name:ak}
+.d4{animation-delay:3.879s;animation-name:y}
+.d5{animation-delay:3.917s;animation-name:i}
+.d6{animation-delay:4.073s;animation-name:x}
+.d7{animation-delay:4.108s;animation-name:o}
+.d8{animation-delay:4.217s;animation-name:i}
+.d9{animation-delay:4.254s;animation-name:af}
+.ea{animation-delay:4.286s;animation-name:g}
+.eb{animation-delay:4.476s;animation-name:o}
+.ec{animation-delay:4.503s;animation-name:k}
+.ed{animation-delay:4.655s;animation-name:v}
+.ee{animation-delay:4.676s;animation-name:g}
+.ef{animation-delay:4.803s;animation-name:q}
+.eg{animation-delay:4.842s;animation-name:y}
+.eh{animation-delay:4.88s;animation-name:ab}
+.ei{animation-delay:5.078s;animation-name:n}
+.ej{animation-delay:5.114s;animation-name:y}
+.ek{animation-delay:5.354s;animation-name:y}
+.el{animation-delay:5.392s;animation-name:ae}
+@keyframes em{9.857214%{visibility:visible}}
+.en{animation-delay:5.592s;animation-name:em}
+.eo{animation-delay:6.593s;animation-name:ad}
+.ep{animation-delay:7.072s;animation-name:w}
+.eq{animation-delay:7.098s;animation-name:af}
+.er{animation-delay:7.319s;animation-name:n}
+.es{animation-delay:7.355s;animation-name:ae}
 .h{visibility:visible}
 </style>
 <defs>
-<filter id="window-shadow" filterUnits="userSpaceOnUse" x="0" y="0" width="830.24" height="378"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-opacity="0.45"/></filter>
-<image id="desktop-paint" href="data:image/webp;base64,UklGRuwkAABXRUJQVlA4IOAkAAAwEQKdASoABgAEPolEnUwlJCmqoFhYSVARCWlu//a9H4uRX1RX5/yKOtVnwau73/27nG3/o8Mv/Eb+Wn/WxjPDv/ehS2ZcfrxP/64f/+H+UA9Uv8J6P+x/8n4n+QGnWemKv/327yex3kw79MBoyOrVq2joSTXr2ydmzZs2bNmzmDOnTp06fLjZw4cOHDhw4cOHDhxBsyZMmTJqkCcCxrCAzZmuIT19E4cR+ZAmrotaiMde4uBcNjIheTIhwIFUpaMlY4oWbyvdJ8WLCbGSXBDJaUrCAFEQM/62f1NeA57pPCe5ncdCD9dxdg1FoJ/kMmnXuWDnbST69evYMGCIRkCcCP+3pTei/BhGMD/awdXZTH8E7d378zoy2E8XkyZb1JPfxJ169evByusc6hVJZGG+H57ft8dFGnTsiVr21DdL0Ux0VMoppgqX61Zv3UGlabOG/V2lP2PGDYZy8nS+nzh+BgZFQpDAGEIk949vVe3WAIjnX4MpldWA1mcwlEjLNHk2EByerskJUD8WgYMGArMmzZs2dOni5Xb8le6Vd1W0zoifCKf1JZKsupBx4G0qXVdgcUcLQ+DRo0CiGncvd2eeJjshyOa3oyD3Cn9eLU0+lLNv9KGQwCvZU+kB8uRygzGDiQUeBmiqDJO6Vn9YTfV0VeNA+nzzdAm7+WeS67a+VpS61jJs8Jw4ZteaRgbR0wgXOXnJ84XAr9fNQqQM6eQkfBo0eEH9c7tnWFC8mTpe/6wvnz6Y1JUPwMNoQK2ZyeQKkXkSO+yWVBzS1U4NhRWZOKRhWsoxDYUyTpogDYHmTY6boCU6Q0MLtALQD0PGLRZVV/4hK7n2Hv8WerrvgESoKUH9T+a+uJfYPYlKheTJmMpwTblZWpjAwGgZomqYkTtS8S0orDIlRt5Ya885b59hJp8RLlWFo+RjLMi/ad7Yp7yWqSukqPg5oJEJmZ1WnH3UxlqiA2rR4OBK3+fmWTVlUR7SUn4pgrZsQWegrynbBjHOQMtTBDi8P9rBrJmDnP4PYWatWsR/yVX2+dcJGn3Zs0XCSX08BtyotORNgY1/XWftbogLq10k5v+Y89YGk3vSgGZBu6c2AApzsEGSN1kXAtknIs8gnSdcBfFnNA4VUa8C5F+JyQFXy1Z2iUADbUd/fiLvppQZRgYDQMts6dLHHgCvqZeYmVq1byv0MPt/DD53Qt8kqhr+l/lJl5TrI+1yjCIVJult3wC/6aZFRWZxrb2C0e/5j7KQwAW/UQ7MXGd2bR9Vw6gz+BZr9Oih2K8CljdBDustClo+1QnOLu7U+zSdypgg+WwaFD+iw/0XeQ8GScs2bO8BHPN03pDPIWpgJI+1nXfGh3d69dP7nwZDnsL/suu04nOO3oeLUJDWM7cemfK1ZmDxXrs2+zZxMDIUyP7n5AzpyZntj58RzzwvFUbdJkfdZCbwSnNC9Lm/PJalzeysJ0xWCOijInECA5FuMgdtgPnyXU73BZLbEKyZMer5xy2Getf6WgqyQL07wWfKI/VFuszp9O86HzdMKTlNxAeO9I1dT3CmK138l8bQcOHDfyGnStqZFBNPBUwGZWQShtxCF7BwrkdO3fPn0xU1kt5fcZevXql/OLwla7s0gaGC1p06dLCrVY0iXboTG67plaWj4vXggQIkMs8uoUPjuH+h119G7A/0Owbh8GjRoBAEkv4Ilv4icW5WsjtnNkVy4BvBtX9LZtaV3xOA/rAYkZLQxQX0/ero70k9q9O0DVg36p070s88aEUR+OMD83JO3bZGzkf5VeGjtlPMQu7yx/8X2XZrpKlCeWTlq0nswsK+Z05twculCT/C8qsYIFI1/3Jz6BjJeYr5tAVoAFk+IbHbrcZEh7kTphVKqhk8PuwDIZqgU1dC+l90SkOLPsIfe1hRoAC42Pvw/s3mP85bTN57RkEilboLgh8cZghmf9zzt/eZo7uijNnhTCSTtL7tt6Fy10nZhKzB6yPaP6YuV297Lvnij9qMYcWRZR8lcX5RWAjr1IFTH4uCtmLs4z514AqY/VtuKEfugrr3sw0qEeSlRW50wAXNA0BPMFkGsAWFEvh/ose9KZ4YLoWbFjD68vSn/5bFuos1kvsaaVhHa92pDWL5Ai3I2/N8tdKEeYAMUdccORL4z8VbcnlW+XOPncE0ndMpg5DctcNC+GiPO+PqUHpTi+3y0il76gqSscpanIYA1nFv7OBcq9Jq7f63yuuJ8i98vXfBjq3C7AfPn0IRWrU9zqt5EzT/6d2wCXU4IG5HLHAbRDwx3r1ODouXtgCpzRESBK075y87a78Ust8tsgIVMOPwKI/H22DvYtxhhOPgwla+fPnjAiLOqe4+6UI8v8zZqKI/G1w6LTwFPlr+/TS2LwJB6bSKlg8CK3nNN3JdOiAT2kPHIRP+xWYJV1h+VURVNaVNKdmFxL3vmL9g6CCDZJ/XcH44kCqhJEp5QPfeGB4FBZOXTBkfQGMN3F34o0/c9J2UFKy+DUblrKeVnLful8e3ae5a6UKxb5a7I+DbdsVIZxgVr5aSzWAzcqWgycvSjTplK8ElPuzTjqvWu3F/3g49Xzxt8tdKEzXCJxmSyqrhG3y2iT3aossaeAyqPUX8yVhWswYDFlvURg4P6LGCB2egEzv/qoQXgHUmo49J/ghdYmIomL3ZYo+s/Cfw6tgwRgmEWM88crFnR7Co3L28G27rLQuZr22v1Q5PlhLT4+3/v3c+y0wK7hABKIoH5mVUyjccMydzH3d39Scxuj/ABnAoPIThaaqHmI719wA8Ibv58buF9AjODWCwqzsXLSKXvnPPkL7yOlFDpEtClrQuZ+58G27rIKmOf37q0Y7sGjckndqEY62VaQ0bKqcIj4msimw1Ry+iM6XvVNEc9wjgpfdebvwdLyqFpt6KvzRNxG3le68WmcvZicCw/3D1pGA4C4wZNDzO+0RrRKs//ff/pXxbyn0T1vg3rfBvW/ae9mNfFhvlfiGP4kDXD7WCqDaVvJ3HkfliHnL5Tka7fAv5l13MuEE01tGlRZmBlEtH2USciUnpC0ChvZMT7bXDyOi/Xi1SuKFnql54icCoMKS/WDAzN/2h2ka0X5aLIfIEGCUEP+YOxBXo+9jbbFSSgvsZL4t5SqGv9FzO08GQ7VFRmIGIAKzDVYDjrzAmE3JBUrssrExK/uFdtUQEk92HpCABz1eJxtCnuqEB6FQB5w0cu42JhgOijqLWcAOAMVM56K8QEQ0QY7En24QN1EwZ36AbIwRvHTEs1+klMI7H5rcvJmu7vxa2+iF0uUw+f/pwFH7aU5ka0diDFIb2WUiE4CKOwEzU6gU8/8oBq0Z84BQCWsCgCEhNOkZQ71yHeSASW1fIPlszAvYruysUA88d/4xtT2TjQLRfBgw2pUgbxxBb2dUKzm/9jC6fBDNLcPWPPzupjPm983NBNM3OUpIDPYkq04QMwgf1+vVHrQFgROQ5pEOzlfwpwvm9RC3Fo23+hm3DWfFX/Ein/50EMOzJ2BxXOn1cDj9XecJN5O2HNvofu4Ic4b/TV4LWxPnX8HujAc8o53vsHWfsOfU5/yDCkkZ1yV5is2xJ5/PB2Ri435pyuAq9LuuMjiWgf9jGC7ODVUKZJ/AQCkIMCv0BDK/yksBpjtUBgfkSUKVoCpNT6uxEjCGTNNljR3bNy8rnbxCRzMqqoVhBw6ZTJ2oGzJUCLXkksUwOwvmWckA9bPJfdnKADFLTE31oOqAQmgnze9G2shhQgm0NOpReomKSCx28T+jl0EwVXI8hVFBZh2MMYJX84UuDwZZR6ijfCMUYxmkIS7MV79FFyC7oaJI4OVmzNTZDnR8+lcL0YLE/UsmIOaw5Cwmnmu1rPrFMUDvnjroAfUo0qkl2svIwbleICTBn4EfUdJrdC8Mqfhpavr1WIASkgclW/hL0Hb98Hkg6n+Pzu97CCgAhggVd7K/5DrwZFPFAf/YqK3z1y4Lio0JDxXj2TW7oDwsVqrH1mxiROLXrviCvGanBK09sForVtrXNM/zj/lHNn4AZmi/aTTvKkD4cYQbOPzDW1DfKK7CmHWgPo+s70AcOQ1SmvAhHUyrdsCBNLN67jMeHJRG0D0Zzycz026VeTgG0SnfYz1CEjbsXZRUJycCY4Dg/5hIhPe0agbUsfHOadvQeEbxk9D/YixnDLmla/6uRP+S8VWBT5hHuBlqF40CKdnEJO2HRGm4gQIEEzJLvrPSj2SvecIVWl8TlTQWKR+z6FfBW4mz0gMX9t/XpPF+fQV3/g1zltZRhPlBFdHOBf9DzujzVFFum/12BEbejp089bh/ovnQbGtpUbZrizcT6JHoyaGJJbxuZiJ/DdWstlKAQqm0K7lcsQESydErgQ4PrVKuf+tZDQ3EQzwzs2bNt89Zs2bNmzZtw6nFJaMkIRc5nOo4kaJZfyyz3fGoNTVTxpGp3WxLIwMBohQ8cwPECxyuvUxAZC1o2AbpKVDKcu91n8xE4AEzD0Dhw7eZKsdnQSeZpHLf1BkhWKj8n7Chxp7uOyNk4ZLYSZHXKXyr2l/5xpbBrnGkBAkJQP2o+/V8ZYwY7tGA/3/FFLCSzh6fPWbNn8HoWHZ5laX7+SVrO7sg4rIkC+Y4l2CMBvviTr0gvAKoM6cpxzyQzwOKoRCPOXdXoLwVfF5c8VNWrV/BXWOubKAQJz8Y3SsncGbrfJkyhan5K6L+FsJWsj3hHeQ03aAHcPIZrlFdGaWDEtqJKpVdtaJy+c1ZqwwhBmfu9GHX0RE2aNG5HEwL6UI4/hNH7vV8bZLEC7dgMGM87uDeB0Qxy/GnhaCkN/mHtgb+PCOoykYnl8QMVS7P2NwZFMx/uOvjZrYfJZBob8etHlPyLiQ0laSYxDxdJlzsLjY/AuNa7UXA+uFoLkgD+HVacgUwdON+V9OXxzBzhquNJqQ5wWQ9llqq1kPX1M/pmEFLERKa6af1SQh/cLt+P4xFv/uAs6fPZzKcOLxigA25JXQPt3rsFtT3RBDfWrNRRIAoi+DRpX5k//6l+yJbLj8BSBQ2adabT+e2dxfB0KF30Br9o2vBeu2HrMZhiVZ7lsJZmHqlVlmTXr14AwdzrBYlrLbNbhjvtPXvyC49CsoRcuqwldSzScpFwHehsf+ITto5Wlhl/i5Fuh/GjWejZ1BMKG+L4tNVd9p5u+8usywQtHYZcDzdXsCHFIW19StcZRSr0V4vAI5q6Mazqy4/EXHBuMptRHKURvTWjy4CunS+MyFiRgT9PIc7M0suPoDiq0PuWziPsWibYxSZUzuVONWg3wKaiLVlL46yJD5XEmFBGKknOZtbC8o5LgJUurnarsLWfHurHcfc65ia/5QhiLmB/WJIZL4mnPVipfiCVmqGQKmq6WXD2b24khjaTHkvj4FcSGXj8uOimsigSYtgjFmEN77ZuvHocBVAp0Zp6gAgdSJBWDs1FWYcl02S0Av/tTOfSPVvGanC1FGOznoJ1IcZRlZlrLXYqQuTzw6dGehGbC2Qy6CnwXy04AUpQk+SYAc5O/DFba1EVrI8YEW1hQ+iiHfCtCecX9pYozxMnLmrO2l5HAB7Aclc7WAxIyY+f3zvIeGIOcFNu9go0ED33WneojGELbgwTN1SOZ3JTQW7ypQKHjcZkY2aiiQBQr53J0BzAV1QaOM0howAA/vZRfzyOhtN+hwaB6tosm5Gj9W+2IYC4Pt7Z298gQ2kixBtAp2kXJYwVNpHzSCG5bxUeEcpexZarfBXHWsaH9MbZYvXA2+5PNTCvtFPuPZqqnBUY7mlId7MqEZcTsWIK8CcNWAseCc6MZclZ2pPfQIYOJIB+Kt7I5TKbJoVmkHeAhyzuvpKCze7aX9Eec2QtDlRQ4eAVeG5Y6PM5C1kOIFGmpE0TSYLdvlWi+miRK7N6i2VAygIEAACKrK+St6CO0RLwBX9iT818jyoriSGqYa6UhOEyG/IXb9q/8zZTUnWuo3h4HbD9Ww3H1QVxcIQx3fBUEjyTUnZ98KjeNlpVv5MAN3GnFPMKg+pHrg1Nlk51KkpwUv0S81bPo0ygenIHU51tuqlURQA0Fx0U9kTBeCYB4T7csAAB4vWHniE5Z39DuLPkwCLaR+3n36rbP5oSmBPLdlzjoU+tXmKStwk4TfemMlDIu2IIfIIQFYUxejOawreV0jSP2Clpn+BDj4NglkAFRicpL0HoIZ/Lc1svcuDFJltLJEE/VFqIF08auCXOdVzTNsirqNA/Xyrmsgprql+AlC7RZxuIGVvi90RbOFVn/HsACLqSx6NWa7q2kuPHsm4j3VvwciTGb93qzKvB3wudTzMQVGCK7oB4oMpcK0kxOr2B2KxlzIAAKkPw9itmkDI/ha69HQVn2/OZSJGuHb5ad85oApXJnDFMs4pgfh3V4XZkdj6h0lCnlaIg8mpmVyAFGN/wAxLimagewaOCBXUHXAwAdmP8c08x/4r8k0YefwGeYuQAOQSzXjFKrMroI5CASl9PHJsEzj2WZvRgQE4Z0GXh1OM+wRIGvrHA9Iw0aonF32o9DifGuQSz0LLb6z2l9Hvsy1w2bLAvENLZeNGUAk667PjREli9/+LicazEMxYQxUrx/Y2zzwT8itO1SQQieI0eMqOonKKtNF0nnRT01Dm+CtVWJtnrEDlAqXpWZio6WwIIY4bkdZgfpTz4oegLPYxJN/5EAajJWAAgAZCeJxYd4AAwA6AqyUDrFOr35k3yGkYrCjL02xQhvRFeM2uny0CLkbYTF1YL2EBrR7WjDy1bB03lUKh6U10Roh7kvcV3dZeU9sub6lRfpcCvFTsoZJKyCXu/l5CMsaUvqfJBAQcmmN/sTy6Twbp53NJyqvVu++NgmU/kQENK9dA0HFwoiB2AGT2KA8SdwzuRMg/SYLMreoa+Io1DrKi7LYZgS+SE+LiCAAD14ccbDGWJXIA3rLyLax0bAcpNe4GrCfwa/py7yGdsxXxhml7iV/FLDEopbDIjuxBrvIPogXp0hPuYof50w1I/dyRz+UyYGGkKijECzYKQq7ZDxAI9ySvC0QusRzy44ekjkdZOGJ3fymKFJHeQXVHpuL9m6XNbu8k+jBUHqWhxgbiC5/zsqJCXx0KeXjM+wlFWkQJCNDLI7rzKiH/5PUesWJBUHFDXeAr00WxHHop/rYrvnvTAakhvHVoIpu1GIgMYH7i3JACND2UdSgTN+628hK2xO3jr096QJil7E7RZMaG1GbF3oFKenf+/xGpuxXvwGh6ApN+Cu75qn9BrcYoVZuNCd3SMzPh5jeu/7JpHI7uvzAxSLwsZE2Q+JDxBEHlt+OgwEJ4EP9yeISGj2MSWxaQXmWQhcIVSobrp57O3XTOuQU8KUGRc7d88NE+aiwo1GJoFGeCz36nXno7cie0Wcq+ClwM3+fh9lVdQ8mOe3H765h+ebVPDPgz9iDjgmZIbmWfxFKQdqogBfQAf8aIXU9pR9Ld3c9ONCHaSPGQSJLc8eVPH2rZadGAORkPu7+9yCuIwJp0qFGS+SqKPNOMmAmTTNhBxpftjG1swaqeocJJLRmFvsABoGFJGYi/AQwhSN206gHgZAGSv74QovkY6hbJuvY5pdTCZmV56SxjyN/W67EFeQoWB7Ao8rQwwUd1s4o3oA3gZE1KSvVFX/jW9NX4CCJpSrZub2gkBbYYisc0HKxWGQbrbeUs5QCc7n8YZ6E1Kuicf+ANeRX1CVgv2GwmOxJLPmyFmmssQyHwDM6iP/2FVteTFM7bT3rVsVOMgH1G6C7rAAgBKOvq21Y6GtKoJrSOW9wLinW970rkNiYIfOWArmleOS2HjTssqODGk4M2sBynklZLapt0kd6bC+Po4VeM87nQuAMJQkU0AAe8XLb6TzaEsy/nMfR01ct1pGbqU5RJkSuwV7mEHBz6phwKFTZ9E5XC0dObzE4DYOm44jsi93hQVkHUAEFGKQnioOAc8uCwJ0v6o9LYAIYNpR8mA01VzZFR9zS6ofiqKNQmIZfJPSNhuPe0brdJcex/LZ/A0OOM3iPEkN6gYQjIYdMhwLT506vaQgH6obAAz2wnbXJ4oSVt7Bdc0EIElZCxkJpKLAr+UVhVzw2EIWervR8XmHacTUrkWa0H3RWLEaF4QapXgpREO59PSQ9zh82U+xKQoq0qCV6xUA8MvGiHYDsLRd7VcCrmjjbQ5/gMiT2tnGQxnOXtYxRZHx/LejDrleOB0fbFwBtlPPOYYM7s2VVMgqOv+wx/iRSzKBtMqAfXaSieSZJc0LAvTkjHbW+TxxHPZuFozhxKp8IODYccnuaHGcciNwgcQ8wApRmLeZE0EwM9VkXHphi/UQyXPNbWr85jR6vma73V93ve7q0ZcXhG8yniVSSW2ieBCyy0u9W5JCmYBQpIgGSFx5oSszAw87KQM02mluaVIJlDQ4hsqDvAQJZXNFIcIoc3LHV6I9num6gXE+Wwyxlp7lCzWZ8QOSuhTpD9Nu+dxyJmHr+UCCR3XRdx1ZHyfKDvs9ObI11wjSnyMQMN/1P1sGesBllwqEk7k9nLYFdcjO1JhNE1LVbhbyV4S8tZ6eO1vknSJnfszIOt7mkV3tVcrr0+oWkp8CwqBBmzAOmbxULHlNXVasAGSzIAYuHkCHziBojCZOfkoy1jqca1YiJ/6T8iPwXr1LSaZrWPTIokCFgiXxWHAp4E4dJP3KnNeqdtA6cgKCXeVcnxuCw8d5uE0zlphtKdaCs1MZHukWkppPFYGlV+ComStyIVIcpsGZfGa9bQYwZndYmc6FKEgEndj3PVSW9rbYd5WqPUL2tdHYySl48ZWVuM5o8GKr020mo9A2VTNlknP0TDpFtqPfwDwqI7DBv3Oaab1kqkO3Cz4GUv3mka2t85WzU4XwZ9ysrLnm2EFXc2apGNPfeeYHJVIK9B5Vujx7hdc4r7ioBTOD50eSlr/oZPSCASTWvu3MsRCuveDAnAIeR3pvuj52K2r099L3GbKi3OAC7Z8ZujW9tHT9L9Ri/U/4iWOD4xKcYcmmmiVJxqMfq5s9jF1Dp7g6uezsrA5JkNZU4r8GUfHgGRoUJ7eITrBGTf63lr0ET3iXoesZC0jQDrP6Cv988JdRC7wX1inVvnAxGoBxr3VyuOlBajALTNeX7GDdcglrjrJr6z5ojS6wjmzH4PU3ctju/7HKGGKAl3RlMFIgXWFg+GljnAliNCXgV5TlSbGCFiKmlhKArmJA25UlLVTCtxS/RmIjqjjdC0sOelzFIwXiG5oiCsW2cDDnDa/9/hG4eYLDdx6KYhYqbrIBE89UIUGtOiD2TTNTgeKkVYux+p4ycT4DzgxXwC0OJLL6VirrUN/rqZeVTX3X0WoSwa3iNjZg+i99TeY1EHqAHjqJi0sVKKfeOJqFWv6PosTRIplVhMnWFGvCRDnqKofY31Tazauiu/DJoh3Iw+0y4c8XjpDNkx3YsPty9BknHZ7cX6M6fwpzWC3LCwok7Zp4UKu/i4P1q9WpW5zQNcP1RrQIzyma1XaDaOq9imOQkAlL0h57f6UKmqVxhiYfZY+7caDxR0/qeNp+W0PnMxmYjQVzjZ7h91U7+ELBJtSxwIDDKVB+9fhxYndUJUPczlrBZebcV8O3ds6fzDsYdlbA9zB7gtmsFgm3GnDsC/9xCwYuTSIj5E8h0SOkzFim3g0347G76aQ0EBgPKO6aeTdXpxIGE51oHDSPtvvTpl8e5ZOQN823DaWNcGftZBVtDuYmnfqgFnQgXUGE0KKg1C0KVBQpfOJ2u75DFkJskFOsX28wh+X32DyFVEhQ7VLYObjYpqdBZXTqU0Fh0djrM9/GZt2lav5CbOLuTU4Cb+g6ZHftk16wDLwtMw7XNwagsbIhrC4cPBF4J1qFUriZbJ+5N91mNzUrnPutGGfT6QuueLUz5B9am+Jj3AjW8roViqazbIUVuw0d9nFU2Mo+73yxg14K3RLXD1mlAJjgrDujj+ymxXxu9PSwz9ysM267IcqDhhtWhpHX8GjaBlypayAL36ezaM7Dr3/tgDUB7SO4taPYt70fHfdvwBjnht+wsbKg0LgXH3AcNZWbDyQIqAFNOhmVw6ymjw3mawqndWzFJ39Fs6F0n7q2RqiFhz5C5z5ZndaI3v/PRZgL2eTNPyPMYCEVGx+XkadT4FPsuX/I+/Q2GCx11Q9d4Nxbej5ONBiIsdxgEQvhFos2ZbU4i9iBNESRl8tBhQ0J0mwkKXmyYGIf+KAHuwQf61jTQH/1qxzC9qDgUQsSyF+GQ6xaz4oVlr3uA4rfiCEXWhFYMnD5YNk1BXVx7XUe0hCKjc5gMZhQVbLRL3dfh3qv7sWFToN9WyB3QjHyEU/x8scLol5Z5IEdWDva1N8SQzn/BubzmQ7EzrgYp5NhLjmjTyBFuKZhyErx5ubKd2QZaK3nlpU3q1JWhNpmnKxABDz4aEMTqXdJz26MZufdedX4CYL7tgVgqPknWyFDE7ItkA1bfKbziOgHOtl6tqNZCMW8t2xzvAAEpxATh/dNCQc2akaP4Cm1O/d5PndPi3c+/tFXSsufQjBu67EYRMwZFsA6JI3h3qlPiBX0LFs0szbrTVsVt4KmezqVqMBQY/j6DdVJvvAEHfAoJ2K8pPiRydN3gUx6cmyN9ghSCiwoxYV5kKK89JwFs7BkwgJsv9SvP7BsZACdMgR8HUpV75LRGr64OKITO6ymTlORhh1q9PqeUnfFwvm4Q4YajU7bgJ/4D91y2PeN7fUx9IkdGk7azhAK1fPQs7ZYJMwiysPgEIe4kGbVqOhRI7ad96FGpvVaI4gDQKAU/tKGO1wUQZqjU7gGgZXMHfFAtIa2Tzdg60oFzs0AfvZDVJ8yzbroz2aJ9xuP18rG5J9v1EiyxJlqbr0plo0BTubVvHfYpUozhEWOpqJFbcnUHYhjYxPG9+jwDnww5vTadIGAo+6D/hgHvo4U8jgoDcQABm7Ww1JNOxqAlWulZg1lV7g0vFZjGP/jPPsW1xh11fY1gVJcnP8UymrWFFs0Tri/f79wNtyCh7SO21qqXlkxYmCRCLYSIK+qeJLRCVn30sohs0zbjF47mxOb9xaEC0xByWIC3iYHAwuqRnRx7WzQFOZ8JN2fmf29IW2zPikFJnSuXTnCaNR0xW69r9JjkZq88iUzpa2k7K+yTGZCxlcHLerZAKsZT7ADyGeHaDedMG0+BT60BAPi90RaN78ZsqvrLpCxhDkgA+4vr4iAABbV71eS+rz4sIcUyXWPD9kNdOEvTa92BUGQLqQA64dcfljqPdai8YP+MNewKlt8i9s4yY4PPTJZOm19RfSBMrdDXmifiI28c8AhBTWcR4KuX3By365hywi9ZVpbTBkFtBwjK5YnXCOjre5KDWOPw7qeUrIlhPSctusohQqko6TCguEA0vweeVudowBYzIqgLFGAbPTE+382c/T/25+TGw9KYrNVLCYTBG/NygBKHwwoLoUpw81iLBMbqiAAAJHJXnmVuk17TIClV0eqBGfPWKchK6rpMZ3hxjG4EgZfmDdER8fVgfCXm2SRApllUjyNQcJ7Z1x5HgxTGj446VxTcUUqzhlFZDubhcKcBqOKlfcvRBaJrX+HDMS7l8NzVj8cHwAHZGGlWIFMnnlOynl3rsegttaQNrFLHfHqT1XZFkCSrZNgki3Q5XLsJoGBhaugH5SrsKy7pSAAB5mCowQNYOndajgLV4zOLzgAFwiy0p5cu406hakUJSy0wGkl8Y+QaHu4wfiy2LRXEyBHr+oN8nBmS0ed/SoyNqHVddRfSetvGY7qhUnQSIAAooxbML1EHzyJwWHC+SupHkoIMLk+EgCpnFVnmBBN2qnxIYlHESH2SXPIp7CCPSH0AOfLkX9eY2MogDIcps0p2YZIVe5q1vZm3hqztmiJG51idWqjjCKDVMWQlWyvKr6MHGJQjc3J47j4gE3jyDxLVj6ncX7p5KKSCipIS0LaP7Y895vZPGfhguylVMiLKa2W5vXPZzVbAx8tRsGfjcpsFLMiKpfN0Vmg2Dm/aAA3IK2UAAA55irkYG8HUbtbGRdTcE6PORcM5eERZC5QQJjKU/8c4Pj57bArqv49SVG68b97Qhg93/BJG3CABYXVIgMd32B3uYoND+CA9NNjBuXO9CZGJi/6Dwsu3lGIIE7JgHiazVSrASRnzDmYAgvtuwAUswwtfHMyWMgJhcFH2wvpLAQI0ZIhgZ+kEIRVfgy9BU2QCOzcRwDJ53GnAfCAMyu6EuCTiYBYjRg8mlsXBi23BVQ8Pa8elUn2cQLuAAEPaCqDemK/VCaMCTMJhnxHV6DN2oosMJI0BktWDF7AmZIt0gEFmPyJGgQM4AUV7untRRS8oaTGZhAq1aaCiNCA7VOqwrhZu0r+RBrrBhLJukBIIfJRi0D65rCmE8+e/OPxaaQlMAeJGZUMpEVv4lRgAACtpAY5o5XsP/e4OK9wOLKhFas/rugH3uvtA4p77Mg/V/5X33Io2sgPMextKFvjuBMRiz/Vk2AktSIcnLv0ABPUpHuZQD0G9hdDwx1Amj6fEf7MkgdpHLE8kXAHaNcjc14AoQjEqlFvHSTdSwAg8aYCXR0JdLnhYABAaUHQUzpvjIJAq0TUwgAAA==" x="0" y="0" width="830.24" height="378" preserveAspectRatio="xMidYMid slice"/>
+<filter id="window-shadow" filterUnits="userSpaceOnUse" x="0" y="0" width="830.24" height="358"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-opacity="0.45"/></filter>
+<image id="desktop-paint" href="data:image/webp;base64,UklGRuwkAABXRUJQVlA4IOAkAAAwEQKdASoABgAEPolEnUwlJCmqoFhYSVARCWlu//a9H4uRX1RX5/yKOtVnwau73/27nG3/o8Mv/Eb+Wn/WxjPDv/ehS2ZcfrxP/64f/+H+UA9Uv8J6P+x/8n4n+QGnWemKv/327yex3kw79MBoyOrVq2joSTXr2ydmzZs2bNmzmDOnTp06fLjZw4cOHDhw4cOHDhxBsyZMmTJqkCcCxrCAzZmuIT19E4cR+ZAmrotaiMde4uBcNjIheTIhwIFUpaMlY4oWbyvdJ8WLCbGSXBDJaUrCAFEQM/62f1NeA57pPCe5ncdCD9dxdg1FoJ/kMmnXuWDnbST69evYMGCIRkCcCP+3pTei/BhGMD/awdXZTH8E7d378zoy2E8XkyZb1JPfxJ169evByusc6hVJZGG+H57ft8dFGnTsiVr21DdL0Ux0VMoppgqX61Zv3UGlabOG/V2lP2PGDYZy8nS+nzh+BgZFQpDAGEIk949vVe3WAIjnX4MpldWA1mcwlEjLNHk2EByerskJUD8WgYMGArMmzZs2dOni5Xb8le6Vd1W0zoifCKf1JZKsupBx4G0qXVdgcUcLQ+DRo0CiGncvd2eeJjshyOa3oyD3Cn9eLU0+lLNv9KGQwCvZU+kB8uRygzGDiQUeBmiqDJO6Vn9YTfV0VeNA+nzzdAm7+WeS67a+VpS61jJs8Jw4ZteaRgbR0wgXOXnJ84XAr9fNQqQM6eQkfBo0eEH9c7tnWFC8mTpe/6wvnz6Y1JUPwMNoQK2ZyeQKkXkSO+yWVBzS1U4NhRWZOKRhWsoxDYUyTpogDYHmTY6boCU6Q0MLtALQD0PGLRZVV/4hK7n2Hv8WerrvgESoKUH9T+a+uJfYPYlKheTJmMpwTblZWpjAwGgZomqYkTtS8S0orDIlRt5Ya885b59hJp8RLlWFo+RjLMi/ad7Yp7yWqSukqPg5oJEJmZ1WnH3UxlqiA2rR4OBK3+fmWTVlUR7SUn4pgrZsQWegrynbBjHOQMtTBDi8P9rBrJmDnP4PYWatWsR/yVX2+dcJGn3Zs0XCSX08BtyotORNgY1/XWftbogLq10k5v+Y89YGk3vSgGZBu6c2AApzsEGSN1kXAtknIs8gnSdcBfFnNA4VUa8C5F+JyQFXy1Z2iUADbUd/fiLvppQZRgYDQMts6dLHHgCvqZeYmVq1byv0MPt/DD53Qt8kqhr+l/lJl5TrI+1yjCIVJult3wC/6aZFRWZxrb2C0e/5j7KQwAW/UQ7MXGd2bR9Vw6gz+BZr9Oih2K8CljdBDustClo+1QnOLu7U+zSdypgg+WwaFD+iw/0XeQ8GScs2bO8BHPN03pDPIWpgJI+1nXfGh3d69dP7nwZDnsL/suu04nOO3oeLUJDWM7cemfK1ZmDxXrs2+zZxMDIUyP7n5AzpyZntj58RzzwvFUbdJkfdZCbwSnNC9Lm/PJalzeysJ0xWCOijInECA5FuMgdtgPnyXU73BZLbEKyZMer5xy2Getf6WgqyQL07wWfKI/VFuszp9O86HzdMKTlNxAeO9I1dT3CmK138l8bQcOHDfyGnStqZFBNPBUwGZWQShtxCF7BwrkdO3fPn0xU1kt5fcZevXql/OLwla7s0gaGC1p06dLCrVY0iXboTG67plaWj4vXggQIkMs8uoUPjuH+h119G7A/0Owbh8GjRoBAEkv4Ilv4icW5WsjtnNkVy4BvBtX9LZtaV3xOA/rAYkZLQxQX0/ero70k9q9O0DVg36p070s88aEUR+OMD83JO3bZGzkf5VeGjtlPMQu7yx/8X2XZrpKlCeWTlq0nswsK+Z05twculCT/C8qsYIFI1/3Jz6BjJeYr5tAVoAFk+IbHbrcZEh7kTphVKqhk8PuwDIZqgU1dC+l90SkOLPsIfe1hRoAC42Pvw/s3mP85bTN57RkEilboLgh8cZghmf9zzt/eZo7uijNnhTCSTtL7tt6Fy10nZhKzB6yPaP6YuV297Lvnij9qMYcWRZR8lcX5RWAjr1IFTH4uCtmLs4z514AqY/VtuKEfugrr3sw0qEeSlRW50wAXNA0BPMFkGsAWFEvh/ose9KZ4YLoWbFjD68vSn/5bFuos1kvsaaVhHa92pDWL5Ai3I2/N8tdKEeYAMUdccORL4z8VbcnlW+XOPncE0ndMpg5DctcNC+GiPO+PqUHpTi+3y0il76gqSscpanIYA1nFv7OBcq9Jq7f63yuuJ8i98vXfBjq3C7AfPn0IRWrU9zqt5EzT/6d2wCXU4IG5HLHAbRDwx3r1ODouXtgCpzRESBK075y87a78Ust8tsgIVMOPwKI/H22DvYtxhhOPgwla+fPnjAiLOqe4+6UI8v8zZqKI/G1w6LTwFPlr+/TS2LwJB6bSKlg8CK3nNN3JdOiAT2kPHIRP+xWYJV1h+VURVNaVNKdmFxL3vmL9g6CCDZJ/XcH44kCqhJEp5QPfeGB4FBZOXTBkfQGMN3F34o0/c9J2UFKy+DUblrKeVnLful8e3ae5a6UKxb5a7I+DbdsVIZxgVr5aSzWAzcqWgycvSjTplK8ElPuzTjqvWu3F/3g49Xzxt8tdKEzXCJxmSyqrhG3y2iT3aossaeAyqPUX8yVhWswYDFlvURg4P6LGCB2egEzv/qoQXgHUmo49J/ghdYmIomL3ZYo+s/Cfw6tgwRgmEWM88crFnR7Co3L28G27rLQuZr22v1Q5PlhLT4+3/v3c+y0wK7hABKIoH5mVUyjccMydzH3d39Scxuj/ABnAoPIThaaqHmI719wA8Ibv58buF9AjODWCwqzsXLSKXvnPPkL7yOlFDpEtClrQuZ+58G27rIKmOf37q0Y7sGjckndqEY62VaQ0bKqcIj4msimw1Ry+iM6XvVNEc9wjgpfdebvwdLyqFpt6KvzRNxG3le68WmcvZicCw/3D1pGA4C4wZNDzO+0RrRKs//ff/pXxbyn0T1vg3rfBvW/ae9mNfFhvlfiGP4kDXD7WCqDaVvJ3HkfliHnL5Tka7fAv5l13MuEE01tGlRZmBlEtH2USciUnpC0ChvZMT7bXDyOi/Xi1SuKFnql54icCoMKS/WDAzN/2h2ka0X5aLIfIEGCUEP+YOxBXo+9jbbFSSgvsZL4t5SqGv9FzO08GQ7VFRmIGIAKzDVYDjrzAmE3JBUrssrExK/uFdtUQEk92HpCABz1eJxtCnuqEB6FQB5w0cu42JhgOijqLWcAOAMVM56K8QEQ0QY7En24QN1EwZ36AbIwRvHTEs1+klMI7H5rcvJmu7vxa2+iF0uUw+f/pwFH7aU5ka0diDFIb2WUiE4CKOwEzU6gU8/8oBq0Z84BQCWsCgCEhNOkZQ71yHeSASW1fIPlszAvYruysUA88d/4xtT2TjQLRfBgw2pUgbxxBb2dUKzm/9jC6fBDNLcPWPPzupjPm983NBNM3OUpIDPYkq04QMwgf1+vVHrQFgROQ5pEOzlfwpwvm9RC3Fo23+hm3DWfFX/Ein/50EMOzJ2BxXOn1cDj9XecJN5O2HNvofu4Ic4b/TV4LWxPnX8HujAc8o53vsHWfsOfU5/yDCkkZ1yV5is2xJ5/PB2Ri435pyuAq9LuuMjiWgf9jGC7ODVUKZJ/AQCkIMCv0BDK/yksBpjtUBgfkSUKVoCpNT6uxEjCGTNNljR3bNy8rnbxCRzMqqoVhBw6ZTJ2oGzJUCLXkksUwOwvmWckA9bPJfdnKADFLTE31oOqAQmgnze9G2shhQgm0NOpReomKSCx28T+jl0EwVXI8hVFBZh2MMYJX84UuDwZZR6ijfCMUYxmkIS7MV79FFyC7oaJI4OVmzNTZDnR8+lcL0YLE/UsmIOaw5Cwmnmu1rPrFMUDvnjroAfUo0qkl2svIwbleICTBn4EfUdJrdC8Mqfhpavr1WIASkgclW/hL0Hb98Hkg6n+Pzu97CCgAhggVd7K/5DrwZFPFAf/YqK3z1y4Lio0JDxXj2TW7oDwsVqrH1mxiROLXrviCvGanBK09sForVtrXNM/zj/lHNn4AZmi/aTTvKkD4cYQbOPzDW1DfKK7CmHWgPo+s70AcOQ1SmvAhHUyrdsCBNLN67jMeHJRG0D0Zzycz026VeTgG0SnfYz1CEjbsXZRUJycCY4Dg/5hIhPe0agbUsfHOadvQeEbxk9D/YixnDLmla/6uRP+S8VWBT5hHuBlqF40CKdnEJO2HRGm4gQIEEzJLvrPSj2SvecIVWl8TlTQWKR+z6FfBW4mz0gMX9t/XpPF+fQV3/g1zltZRhPlBFdHOBf9DzujzVFFum/12BEbejp089bh/ovnQbGtpUbZrizcT6JHoyaGJJbxuZiJ/DdWstlKAQqm0K7lcsQESydErgQ4PrVKuf+tZDQ3EQzwzs2bNt89Zs2bNmzZtw6nFJaMkIRc5nOo4kaJZfyyz3fGoNTVTxpGp3WxLIwMBohQ8cwPECxyuvUxAZC1o2AbpKVDKcu91n8xE4AEzD0Dhw7eZKsdnQSeZpHLf1BkhWKj8n7Chxp7uOyNk4ZLYSZHXKXyr2l/5xpbBrnGkBAkJQP2o+/V8ZYwY7tGA/3/FFLCSzh6fPWbNn8HoWHZ5laX7+SVrO7sg4rIkC+Y4l2CMBvviTr0gvAKoM6cpxzyQzwOKoRCPOXdXoLwVfF5c8VNWrV/BXWOubKAQJz8Y3SsncGbrfJkyhan5K6L+FsJWsj3hHeQ03aAHcPIZrlFdGaWDEtqJKpVdtaJy+c1ZqwwhBmfu9GHX0RE2aNG5HEwL6UI4/hNH7vV8bZLEC7dgMGM87uDeB0Qxy/GnhaCkN/mHtgb+PCOoykYnl8QMVS7P2NwZFMx/uOvjZrYfJZBob8etHlPyLiQ0laSYxDxdJlzsLjY/AuNa7UXA+uFoLkgD+HVacgUwdON+V9OXxzBzhquNJqQ5wWQ9llqq1kPX1M/pmEFLERKa6af1SQh/cLt+P4xFv/uAs6fPZzKcOLxigA25JXQPt3rsFtT3RBDfWrNRRIAoi+DRpX5k//6l+yJbLj8BSBQ2adabT+e2dxfB0KF30Br9o2vBeu2HrMZhiVZ7lsJZmHqlVlmTXr14AwdzrBYlrLbNbhjvtPXvyC49CsoRcuqwldSzScpFwHehsf+ITto5Wlhl/i5Fuh/GjWejZ1BMKG+L4tNVd9p5u+8usywQtHYZcDzdXsCHFIW19StcZRSr0V4vAI5q6Mazqy4/EXHBuMptRHKURvTWjy4CunS+MyFiRgT9PIc7M0suPoDiq0PuWziPsWibYxSZUzuVONWg3wKaiLVlL46yJD5XEmFBGKknOZtbC8o5LgJUurnarsLWfHurHcfc65ia/5QhiLmB/WJIZL4mnPVipfiCVmqGQKmq6WXD2b24khjaTHkvj4FcSGXj8uOimsigSYtgjFmEN77ZuvHocBVAp0Zp6gAgdSJBWDs1FWYcl02S0Av/tTOfSPVvGanC1FGOznoJ1IcZRlZlrLXYqQuTzw6dGehGbC2Qy6CnwXy04AUpQk+SYAc5O/DFba1EVrI8YEW1hQ+iiHfCtCecX9pYozxMnLmrO2l5HAB7Aclc7WAxIyY+f3zvIeGIOcFNu9go0ED33WneojGELbgwTN1SOZ3JTQW7ypQKHjcZkY2aiiQBQr53J0BzAV1QaOM0howAA/vZRfzyOhtN+hwaB6tosm5Gj9W+2IYC4Pt7Z298gQ2kixBtAp2kXJYwVNpHzSCG5bxUeEcpexZarfBXHWsaH9MbZYvXA2+5PNTCvtFPuPZqqnBUY7mlId7MqEZcTsWIK8CcNWAseCc6MZclZ2pPfQIYOJIB+Kt7I5TKbJoVmkHeAhyzuvpKCze7aX9Eec2QtDlRQ4eAVeG5Y6PM5C1kOIFGmpE0TSYLdvlWi+miRK7N6i2VAygIEAACKrK+St6CO0RLwBX9iT818jyoriSGqYa6UhOEyG/IXb9q/8zZTUnWuo3h4HbD9Ww3H1QVxcIQx3fBUEjyTUnZ98KjeNlpVv5MAN3GnFPMKg+pHrg1Nlk51KkpwUv0S81bPo0ygenIHU51tuqlURQA0Fx0U9kTBeCYB4T7csAAB4vWHniE5Z39DuLPkwCLaR+3n36rbP5oSmBPLdlzjoU+tXmKStwk4TfemMlDIu2IIfIIQFYUxejOawreV0jSP2Clpn+BDj4NglkAFRicpL0HoIZ/Lc1svcuDFJltLJEE/VFqIF08auCXOdVzTNsirqNA/Xyrmsgprql+AlC7RZxuIGVvi90RbOFVn/HsACLqSx6NWa7q2kuPHsm4j3VvwciTGb93qzKvB3wudTzMQVGCK7oB4oMpcK0kxOr2B2KxlzIAAKkPw9itmkDI/ha69HQVn2/OZSJGuHb5ad85oApXJnDFMs4pgfh3V4XZkdj6h0lCnlaIg8mpmVyAFGN/wAxLimagewaOCBXUHXAwAdmP8c08x/4r8k0YefwGeYuQAOQSzXjFKrMroI5CASl9PHJsEzj2WZvRgQE4Z0GXh1OM+wRIGvrHA9Iw0aonF32o9DifGuQSz0LLb6z2l9Hvsy1w2bLAvENLZeNGUAk667PjREli9/+LicazEMxYQxUrx/Y2zzwT8itO1SQQieI0eMqOonKKtNF0nnRT01Dm+CtVWJtnrEDlAqXpWZio6WwIIY4bkdZgfpTz4oegLPYxJN/5EAajJWAAgAZCeJxYd4AAwA6AqyUDrFOr35k3yGkYrCjL02xQhvRFeM2uny0CLkbYTF1YL2EBrR7WjDy1bB03lUKh6U10Roh7kvcV3dZeU9sub6lRfpcCvFTsoZJKyCXu/l5CMsaUvqfJBAQcmmN/sTy6Twbp53NJyqvVu++NgmU/kQENK9dA0HFwoiB2AGT2KA8SdwzuRMg/SYLMreoa+Io1DrKi7LYZgS+SE+LiCAAD14ccbDGWJXIA3rLyLax0bAcpNe4GrCfwa/py7yGdsxXxhml7iV/FLDEopbDIjuxBrvIPogXp0hPuYof50w1I/dyRz+UyYGGkKijECzYKQq7ZDxAI9ySvC0QusRzy44ekjkdZOGJ3fymKFJHeQXVHpuL9m6XNbu8k+jBUHqWhxgbiC5/zsqJCXx0KeXjM+wlFWkQJCNDLI7rzKiH/5PUesWJBUHFDXeAr00WxHHop/rYrvnvTAakhvHVoIpu1GIgMYH7i3JACND2UdSgTN+628hK2xO3jr096QJil7E7RZMaG1GbF3oFKenf+/xGpuxXvwGh6ApN+Cu75qn9BrcYoVZuNCd3SMzPh5jeu/7JpHI7uvzAxSLwsZE2Q+JDxBEHlt+OgwEJ4EP9yeISGj2MSWxaQXmWQhcIVSobrp57O3XTOuQU8KUGRc7d88NE+aiwo1GJoFGeCz36nXno7cie0Wcq+ClwM3+fh9lVdQ8mOe3H765h+ebVPDPgz9iDjgmZIbmWfxFKQdqogBfQAf8aIXU9pR9Ld3c9ONCHaSPGQSJLc8eVPH2rZadGAORkPu7+9yCuIwJp0qFGS+SqKPNOMmAmTTNhBxpftjG1swaqeocJJLRmFvsABoGFJGYi/AQwhSN206gHgZAGSv74QovkY6hbJuvY5pdTCZmV56SxjyN/W67EFeQoWB7Ao8rQwwUd1s4o3oA3gZE1KSvVFX/jW9NX4CCJpSrZub2gkBbYYisc0HKxWGQbrbeUs5QCc7n8YZ6E1Kuicf+ANeRX1CVgv2GwmOxJLPmyFmmssQyHwDM6iP/2FVteTFM7bT3rVsVOMgH1G6C7rAAgBKOvq21Y6GtKoJrSOW9wLinW970rkNiYIfOWArmleOS2HjTssqODGk4M2sBynklZLapt0kd6bC+Po4VeM87nQuAMJQkU0AAe8XLb6TzaEsy/nMfR01ct1pGbqU5RJkSuwV7mEHBz6phwKFTZ9E5XC0dObzE4DYOm44jsi93hQVkHUAEFGKQnioOAc8uCwJ0v6o9LYAIYNpR8mA01VzZFR9zS6ofiqKNQmIZfJPSNhuPe0brdJcex/LZ/A0OOM3iPEkN6gYQjIYdMhwLT506vaQgH6obAAz2wnbXJ4oSVt7Bdc0EIElZCxkJpKLAr+UVhVzw2EIWervR8XmHacTUrkWa0H3RWLEaF4QapXgpREO59PSQ9zh82U+xKQoq0qCV6xUA8MvGiHYDsLRd7VcCrmjjbQ5/gMiT2tnGQxnOXtYxRZHx/LejDrleOB0fbFwBtlPPOYYM7s2VVMgqOv+wx/iRSzKBtMqAfXaSieSZJc0LAvTkjHbW+TxxHPZuFozhxKp8IODYccnuaHGcciNwgcQ8wApRmLeZE0EwM9VkXHphi/UQyXPNbWr85jR6vma73V93ve7q0ZcXhG8yniVSSW2ieBCyy0u9W5JCmYBQpIgGSFx5oSszAw87KQM02mluaVIJlDQ4hsqDvAQJZXNFIcIoc3LHV6I9num6gXE+Wwyxlp7lCzWZ8QOSuhTpD9Nu+dxyJmHr+UCCR3XRdx1ZHyfKDvs9ObI11wjSnyMQMN/1P1sGesBllwqEk7k9nLYFdcjO1JhNE1LVbhbyV4S8tZ6eO1vknSJnfszIOt7mkV3tVcrr0+oWkp8CwqBBmzAOmbxULHlNXVasAGSzIAYuHkCHziBojCZOfkoy1jqca1YiJ/6T8iPwXr1LSaZrWPTIokCFgiXxWHAp4E4dJP3KnNeqdtA6cgKCXeVcnxuCw8d5uE0zlphtKdaCs1MZHukWkppPFYGlV+ComStyIVIcpsGZfGa9bQYwZndYmc6FKEgEndj3PVSW9rbYd5WqPUL2tdHYySl48ZWVuM5o8GKr020mo9A2VTNlknP0TDpFtqPfwDwqI7DBv3Oaab1kqkO3Cz4GUv3mka2t85WzU4XwZ9ysrLnm2EFXc2apGNPfeeYHJVIK9B5Vujx7hdc4r7ioBTOD50eSlr/oZPSCASTWvu3MsRCuveDAnAIeR3pvuj52K2r099L3GbKi3OAC7Z8ZujW9tHT9L9Ri/U/4iWOD4xKcYcmmmiVJxqMfq5s9jF1Dp7g6uezsrA5JkNZU4r8GUfHgGRoUJ7eITrBGTf63lr0ET3iXoesZC0jQDrP6Cv988JdRC7wX1inVvnAxGoBxr3VyuOlBajALTNeX7GDdcglrjrJr6z5ojS6wjmzH4PU3ctju/7HKGGKAl3RlMFIgXWFg+GljnAliNCXgV5TlSbGCFiKmlhKArmJA25UlLVTCtxS/RmIjqjjdC0sOelzFIwXiG5oiCsW2cDDnDa/9/hG4eYLDdx6KYhYqbrIBE89UIUGtOiD2TTNTgeKkVYux+p4ycT4DzgxXwC0OJLL6VirrUN/rqZeVTX3X0WoSwa3iNjZg+i99TeY1EHqAHjqJi0sVKKfeOJqFWv6PosTRIplVhMnWFGvCRDnqKofY31Tazauiu/DJoh3Iw+0y4c8XjpDNkx3YsPty9BknHZ7cX6M6fwpzWC3LCwok7Zp4UKu/i4P1q9WpW5zQNcP1RrQIzyma1XaDaOq9imOQkAlL0h57f6UKmqVxhiYfZY+7caDxR0/qeNp+W0PnMxmYjQVzjZ7h91U7+ELBJtSxwIDDKVB+9fhxYndUJUPczlrBZebcV8O3ds6fzDsYdlbA9zB7gtmsFgm3GnDsC/9xCwYuTSIj5E8h0SOkzFim3g0347G76aQ0EBgPKO6aeTdXpxIGE51oHDSPtvvTpl8e5ZOQN823DaWNcGftZBVtDuYmnfqgFnQgXUGE0KKg1C0KVBQpfOJ2u75DFkJskFOsX28wh+X32DyFVEhQ7VLYObjYpqdBZXTqU0Fh0djrM9/GZt2lav5CbOLuTU4Cb+g6ZHftk16wDLwtMw7XNwagsbIhrC4cPBF4J1qFUriZbJ+5N91mNzUrnPutGGfT6QuueLUz5B9am+Jj3AjW8roViqazbIUVuw0d9nFU2Mo+73yxg14K3RLXD1mlAJjgrDujj+ymxXxu9PSwz9ysM267IcqDhhtWhpHX8GjaBlypayAL36ezaM7Dr3/tgDUB7SO4taPYt70fHfdvwBjnht+wsbKg0LgXH3AcNZWbDyQIqAFNOhmVw6ymjw3mawqndWzFJ39Fs6F0n7q2RqiFhz5C5z5ZndaI3v/PRZgL2eTNPyPMYCEVGx+XkadT4FPsuX/I+/Q2GCx11Q9d4Nxbej5ONBiIsdxgEQvhFos2ZbU4i9iBNESRl8tBhQ0J0mwkKXmyYGIf+KAHuwQf61jTQH/1qxzC9qDgUQsSyF+GQ6xaz4oVlr3uA4rfiCEXWhFYMnD5YNk1BXVx7XUe0hCKjc5gMZhQVbLRL3dfh3qv7sWFToN9WyB3QjHyEU/x8scLol5Z5IEdWDva1N8SQzn/BubzmQ7EzrgYp5NhLjmjTyBFuKZhyErx5ubKd2QZaK3nlpU3q1JWhNpmnKxABDz4aEMTqXdJz26MZufdedX4CYL7tgVgqPknWyFDE7ItkA1bfKbziOgHOtl6tqNZCMW8t2xzvAAEpxATh/dNCQc2akaP4Cm1O/d5PndPi3c+/tFXSsufQjBu67EYRMwZFsA6JI3h3qlPiBX0LFs0szbrTVsVt4KmezqVqMBQY/j6DdVJvvAEHfAoJ2K8pPiRydN3gUx6cmyN9ghSCiwoxYV5kKK89JwFs7BkwgJsv9SvP7BsZACdMgR8HUpV75LRGr64OKITO6ymTlORhh1q9PqeUnfFwvm4Q4YajU7bgJ/4D91y2PeN7fUx9IkdGk7azhAK1fPQs7ZYJMwiysPgEIe4kGbVqOhRI7ad96FGpvVaI4gDQKAU/tKGO1wUQZqjU7gGgZXMHfFAtIa2Tzdg60oFzs0AfvZDVJ8yzbroz2aJ9xuP18rG5J9v1EiyxJlqbr0plo0BTubVvHfYpUozhEWOpqJFbcnUHYhjYxPG9+jwDnww5vTadIGAo+6D/hgHvo4U8jgoDcQABm7Ww1JNOxqAlWulZg1lV7g0vFZjGP/jPPsW1xh11fY1gVJcnP8UymrWFFs0Tri/f79wNtyCh7SO21qqXlkxYmCRCLYSIK+qeJLRCVn30sohs0zbjF47mxOb9xaEC0xByWIC3iYHAwuqRnRx7WzQFOZ8JN2fmf29IW2zPikFJnSuXTnCaNR0xW69r9JjkZq88iUzpa2k7K+yTGZCxlcHLerZAKsZT7ADyGeHaDedMG0+BT60BAPi90RaN78ZsqvrLpCxhDkgA+4vr4iAABbV71eS+rz4sIcUyXWPD9kNdOEvTa92BUGQLqQA64dcfljqPdai8YP+MNewKlt8i9s4yY4PPTJZOm19RfSBMrdDXmifiI28c8AhBTWcR4KuX3By365hywi9ZVpbTBkFtBwjK5YnXCOjre5KDWOPw7qeUrIlhPSctusohQqko6TCguEA0vweeVudowBYzIqgLFGAbPTE+382c/T/25+TGw9KYrNVLCYTBG/NygBKHwwoLoUpw81iLBMbqiAAAJHJXnmVuk17TIClV0eqBGfPWKchK6rpMZ3hxjG4EgZfmDdER8fVgfCXm2SRApllUjyNQcJ7Z1x5HgxTGj446VxTcUUqzhlFZDubhcKcBqOKlfcvRBaJrX+HDMS7l8NzVj8cHwAHZGGlWIFMnnlOynl3rsegttaQNrFLHfHqT1XZFkCSrZNgki3Q5XLsJoGBhaugH5SrsKy7pSAAB5mCowQNYOndajgLV4zOLzgAFwiy0p5cu406hakUJSy0wGkl8Y+QaHu4wfiy2LRXEyBHr+oN8nBmS0ed/SoyNqHVddRfSetvGY7qhUnQSIAAooxbML1EHzyJwWHC+SupHkoIMLk+EgCpnFVnmBBN2qnxIYlHESH2SXPIp7CCPSH0AOfLkX9eY2MogDIcps0p2YZIVe5q1vZm3hqztmiJG51idWqjjCKDVMWQlWyvKr6MHGJQjc3J47j4gE3jyDxLVj6ncX7p5KKSCipIS0LaP7Y895vZPGfhguylVMiLKa2W5vXPZzVbAx8tRsGfjcpsFLMiKpfN0Vmg2Dm/aAA3IK2UAAA55irkYG8HUbtbGRdTcE6PORcM5eERZC5QQJjKU/8c4Pj57bArqv49SVG68b97Qhg93/BJG3CABYXVIgMd32B3uYoND+CA9NNjBuXO9CZGJi/6Dwsu3lGIIE7JgHiazVSrASRnzDmYAgvtuwAUswwtfHMyWMgJhcFH2wvpLAQI0ZIhgZ+kEIRVfgy9BU2QCOzcRwDJ53GnAfCAMyu6EuCTiYBYjRg8mlsXBi23BVQ8Pa8elUn2cQLuAAEPaCqDemK/VCaMCTMJhnxHV6DN2oosMJI0BktWDF7AmZIt0gEFmPyJGgQM4AUV7untRRS8oaTGZhAq1aaCiNCA7VOqwrhZu0r+RBrrBhLJukBIIfJRi0D65rCmE8+e/OPxaaQlMAeJGZUMpEVv4lRgAACtpAY5o5XsP/e4OK9wOLKhFas/rugH3uvtA4p77Mg/V/5X33Io2sgPMextKFvjuBMRiz/Vk2AktSIcnLv0ABPUpHuZQD0G9hdDwx1Amj6fEf7MkgdpHLE8kXAHaNcjc14AoQjEqlFvHSTdSwAg8aYCXR0JdLnhYABAaUHQUzpvjIJAq0TUwgAAA==" x="0" y="0" width="830.24" height="358" preserveAspectRatio="xMidYMid slice"/>
 <filter id="frost" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="6" edgeMode="duplicate"/></filter>
-<clipPath id="window-clip-0"><rect x="48" y="48" width="734.24" height="282" rx="8" ry="8"/></clipPath>
-<mask id="window-outside-0" maskUnits="userSpaceOnUse" x="0" y="0" width="830.24" height="378"><rect width="830.24" height="378" fill="white"/><rect x="48" y="48" width="734.24" height="282" rx="8" ry="8" fill="black"/></mask>
+<clipPath id="window-clip-0"><rect x="48" y="48" width="734.24" height="262" rx="8" ry="8"/></clipPath>
+<mask id="window-outside-0" maskUnits="userSpaceOnUse" x="0" y="0" width="830.24" height="358"><rect width="830.24" height="358" fill="white"/><rect x="48" y="48" width="734.24" height="262" rx="8" ry="8" fill="black"/></mask>
 <rect id="c" class="c" width="9.92" height="20"/>
-<mask id="viewport-mask" x="0" y="0" width="830.24" height="378" maskUnits="userSpaceOnUse">
-<rect class="l h viewport-mask-0" x="48" y="82" width="734.24" height="248" fill="white"/>
+<mask id="viewport-mask" x="0" y="0" width="830.24" height="358" maskUnits="userSpaceOnUse">
+<rect class="l h viewport-mask-0" x="48" y="82" width="734.24" height="228" fill="white"/>
 </mask>
 </defs>
 <use href="#desktop-paint"/>
 <use href="#desktop-paint" class="l h" filter="url(#frost)" clip-path="url(#window-clip-0)"/>
-<rect class="l h viewport-chrome-0" x="48" y="48" width="734.24" height="282" rx="8" ry="8" fill="#000" filter="url(#window-shadow)" mask="url(#window-outside-0)"/>
-<rect class="l h viewport-chrome-0" x="48" y="48" width="734.24" height="282" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+<rect class="l h viewport-chrome-0" x="48" y="48" width="734.24" height="262" rx="8" ry="8" fill="#000" filter="url(#window-shadow)" mask="url(#window-outside-0)"/>
+<rect class="l h viewport-chrome-0" x="48" y="48" width="734.24" height="262" rx="8" ry="8" fill="none" stroke="#1a1a1a" stroke-width="1"/>
 <path class="l h viewport-chrome-0" d="M 56,48 H 774.24 Q 782.24,48 782.24,56 V 82 H 48 V 56 Q 48,48 56,48 Z" fill="#323232" fill-opacity="0.7"/>
 <line class="l h viewport-chrome-0" x1="48" y1="82" x2="782.24" y2="82" stroke="#1a1a1a" stroke-width="1"/>
 <text class="l h viewport-chrome-0" x="415.12" y="69.5" style="font:bold 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI','Helvetica Neue',Helvetica,Arial,'Noto Sans','DejaVu Sans',sans-serif" text-anchor="middle" fill="#c8c8c8">Translucent window</text>
@@ -227,154 +224,152 @@ text { dominant-baseline: alphabetic; }
 <circle class="l h viewport-chrome-0" cx="96" cy="65" r="8" fill="#febc2e"/>
 <circle class="l h viewport-chrome-0" cx="122" cy="65" r="8" fill="#28c840"/>
 <g mask="url(#viewport-mask)" fill="#d0d0d0">
-<rect class="bg l h viewport-bg-0" x="48" y="82" width="734.24" height="248" fill="#282c34" fill-opacity="0.7" clip-path="url(#window-clip-0)"/>
-<text class="l al a" x="58" y="98.8" textLength="446.4"># The image shows through the window, blurred</text>
-<g class="l am"><text x="58" y="118.8">$</text><use href="#c" x="77.84" y="106"/></g>
-<g class="l an"><text x="58 77.84" y="118.8">$e</text><use href="#c" x="87.76" y="106"/></g>
-<g class="l ao"><text x="58 77.84 87.76" y="118.8">$ec</text><use href="#c" x="97.68" y="106"/></g>
-<g class="l ap"><g id="r4"><text x="58 77.84 87.76 97.68" y="118.8">$ech</text></g><use href="#c" x="107.6" y="106"/></g>
-<text class="l ar b" x="58" textLength="59.52">$ echo</text>
-<g class="l as b"><g id="r6"><text x="58" textLength="79.36">$ echo &quot;</text></g><use href="#c" x="137.36" y="-12.8"/></g>
-<g class="l at b"><text x="58" textLength="89.28">$ echo &quot;o</text><use href="#c" x="147.28" y="-12.8"/></g>
-<g class="l au b"><text x="58" textLength="99.2">$ echo &quot;op</text><use href="#c" x="157.2" y="-12.8"/></g>
-<g class="l av b"><text x="58" textLength="109.12">$ echo &quot;opa</text><use href="#c" x="167.12" y="-12.8"/></g>
-<g class="l aw b"><text x="58" textLength="119.04">$ echo &quot;opac</text><use href="#c" x="177.04" y="-12.8"/></g>
-<g class="l ax b"><text x="58" textLength="128.96">$ echo &quot;opaci</text><use href="#c" x="186.96" y="-12.8"/></g>
-<g class="l ay b"><text x="58" textLength="138.88">$ echo &quot;opacit</text><use href="#c" x="196.88" y="-12.8"/></g>
-<text class="l a0 b" x="58" textLength="148.8">$ echo &quot;opacity</text>
-<g class="l a1 b"><text x="58" textLength="168.64">$ echo &quot;opacity 0</text><use href="#c" x="226.64" y="-12.8"/></g>
-<g class="l a2 b"><text x="58" textLength="178.56">$ echo &quot;opacity 0.</text><use href="#c" x="236.56" y="-12.8"/></g>
-<g class="l a3 b"><text x="58" textLength="188.48">$ echo &quot;opacity 0.7</text><use href="#c" x="246.48" y="-12.8"/></g>
-<text class="l a4 b" x="58" textLength="198.4">$ echo &quot;opacity 0.7,</text>
-<g class="l a5 b"><text x="58" textLength="218.24">$ echo &quot;opacity 0.7, b</text><use href="#c" x="276.24" y="-12.8"/></g>
-<g class="l a6 b"><text x="58" textLength="228.16">$ echo &quot;opacity 0.7, bl</text><use href="#c" x="286.16" y="-12.8"/></g>
-<g class="l a7 b"><text x="58" textLength="238.08">$ echo &quot;opacity 0.7, blu</text><use href="#c" x="296.08" y="-12.8"/></g>
-<text class="l a9 b" x="58" textLength="248">$ echo &quot;opacity 0.7, blur</text>
-<g class="l ba b"><text x="58" textLength="267.84">$ echo &quot;opacity 0.7, blur 6</text><use href="#c" x="325.84" y="-12.8"/></g>
-<text class="l bb b" x="58" textLength="277.76">$ echo &quot;opacity 0.7, blur 6&quot;</text>
-<text class="l bc" x="58" y="138.8" textLength="188.48">opacity 0.7, blur 6</text>
-<text class="l bd a" x="58" y="158.8" textLength="357.12"># Text and colored cells stay opaque</text>
-<g class="l be"><text x="58" y="178.8">$</text><use href="#c" x="77.84" y="166"/></g>
-<g class="l bf"><text x="58 77.84" y="178.8">$p</text><use href="#c" x="87.76" y="166"/></g>
-<g class="l bh"><text x="58 77.84 87.76" y="178.8">$pr</text><use href="#c" x="97.68" y="166"/></g>
-<g class="l bi"><text x="58 77.84 87.76 97.68" y="178.8">$pri</text><use href="#c" x="107.6" y="166"/></g>
-<g class="l bj d"><text x="58" textLength="59.52">$ prin</text><use href="#c" x="117.52" y="-12.8"/></g>
-<g class="l bk d"><text x="58" textLength="69.44">$ print</text><use href="#c" x="127.44" y="-12.8"/></g>
-<text class="l bl d" x="58" textLength="79.36">$ printf</text>
-<text class="l bm d" x="58" textLength="99.2">$ printf '</text>
-<g class="l bn d"><text x="58" textLength="119.04">$ printf ' P</text><use href="#c" x="177.04" y="-12.8"/></g>
-<g class="l bo d"><text x="58" textLength="128.96">$ printf ' PA</text><use href="#c" x="186.96" y="-12.8"/></g>
-<g class="l bp d"><text x="58" textLength="138.88">$ printf ' PAS</text><use href="#c" x="196.88" y="-12.8"/></g>
-<text class="l br d" x="58" textLength="148.8">$ printf ' PASS</text>
-<g class="l bs d"><text x="58" textLength="178.56">$ printf ' PASS  r</text><use href="#c" x="236.56" y="-12.8"/></g>
-<g class="l bt d"><text x="58" textLength="188.48">$ printf ' PASS  re</text><use href="#c" x="246.48" y="-12.8"/></g>
-<g class="l bu d"><text x="58" textLength="198.4">$ printf ' PASS  ren</text><use href="#c" x="256.4" y="-12.8"/></g>
-<g class="l bv d"><text x="58" textLength="208.32">$ printf ' PASS  rend</text><use href="#c" x="266.32" y="-12.8"/></g>
-<g class="l bw d"><text x="58" textLength="218.24">$ printf ' PASS  rende</text><use href="#c" x="276.24" y="-12.8"/></g>
-<text class="l by d" x="58" textLength="228.16">$ printf ' PASS  render</text>
-<g class="l bz d"><text x="58" textLength="248">$ printf ' PASS  render s</text><use href="#c" x="306" y="-12.8"/></g>
-<g class="l b0 d"><text x="58" textLength="257.92">$ printf ' PASS  render sv</text><use href="#c" x="315.92" y="-12.8"/></g>
-<g class="l b1 d"><text x="58" textLength="267.84">$ printf ' PASS  render svg</text><use href="#c" x="325.84" y="-12.8"/></g>
-<g class="l b2 d"><text x="58" textLength="277.76">$ printf ' PASS  render svg\</text><use href="#c" x="335.76" y="-12.8"/></g>
-<text class="l b4 d" x="58" textLength="287.68">$ printf ' PASS  render svg\n</text>
-<g class="l b5 d"><text x="58" textLength="307.52">$ printf ' PASS  render svg\n P</text><use href="#c" x="365.52" y="-12.8"/></g>
-<g class="l b6 d"><text x="58" textLength="317.44">$ printf ' PASS  render svg\n PA</text><use href="#c" x="375.44" y="-12.8"/></g>
-<g class="l b7 d"><text x="58" textLength="327.36">$ printf ' PASS  render svg\n PAS</text><use href="#c" x="385.36" y="-12.8"/></g>
-<text class="l b9 d" x="58" textLength="337.28">$ printf ' PASS  render svg\n PASS</text>
-<g class="l ca d"><text x="58" textLength="367.04">$ printf ' PASS  render svg\n PASS  r</text><use href="#c" x="425.04" y="-12.8"/></g>
-<g class="l cb d"><text x="58" textLength="376.96">$ printf ' PASS  render svg\n PASS  re</text><use href="#c" x="434.96" y="-12.8"/></g>
-<g class="l cc d"><text x="58" textLength="386.88">$ printf ' PASS  render svg\n PASS  ren</text><use href="#c" x="444.88" y="-12.8"/></g>
-<g class="l cd d"><text x="58" textLength="396.8">$ printf ' PASS  render svg\n PASS  rend</text><use href="#c" x="454.8" y="-12.8"/></g>
-<g class="l ce d"><text x="58" textLength="406.72">$ printf ' PASS  render svg\n PASS  rende</text><use href="#c" x="464.72" y="-12.8"/></g>
-<text class="l cg d" x="58" textLength="416.64">$ printf ' PASS  render svg\n PASS  render</text>
-<g class="l ch d"><text x="58" textLength="436.48">$ printf ' PASS  render svg\n PASS  render m</text><use href="#c" x="494.48" y="-12.8"/></g>
-<g class="l ci d"><text x="58" textLength="446.4">$ printf ' PASS  render svg\n PASS  render mp</text><use href="#c" x="504.4" y="-12.8"/></g>
-<g class="l cj d"><text x="58" textLength="456.32">$ printf ' PASS  render svg\n PASS  render mp4</text><use href="#c" x="514.32" y="-12.8"/></g>
-<g class="l ck d"><text x="58" textLength="466.24">$ printf ' PASS  render svg\n PASS  render mp4\</text><use href="#c" x="524.24" y="-12.8"/></g>
-<text class="l cm d" x="58" textLength="476.16">$ printf ' PASS  render svg\n PASS  render mp4\n</text>
-<g class="l co d"><text x="58" textLength="496">$ printf ' PASS  render svg\n PASS  render mp4\n W</text><use href="#c" x="554" y="-12.8"/></g>
-<g class="l cp d"><text x="58" textLength="505.92">$ printf ' PASS  render svg\n PASS  render mp4\n WA</text><use href="#c" x="563.92" y="-12.8"/></g>
-<g class="l cq d"><text x="58" textLength="515.84">$ printf ' PASS  render svg\n PASS  render mp4\n WAR</text><use href="#c" x="573.84" y="-12.8"/></g>
-<text class="l cs d" x="58" textLength="525.76">$ printf ' PASS  render svg\n PASS  render mp4\n WARN</text>
-<g class="l ct d"><text x="58" textLength="555.52">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  b</text><use href="#c" x="613.52" y="-12.8"/></g>
-<g class="l cu d"><text x="58" textLength="565.44">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  br</text><use href="#c" x="623.44" y="-12.8"/></g>
-<g class="l cv d"><text x="58" textLength="575.36">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bri</text><use href="#c" x="633.36" y="-12.8"/></g>
-<g class="l cw d"><text x="58" textLength="585.28">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  brig</text><use href="#c" x="643.28" y="-12.8"/></g>
-<g class="l cx d"><text x="58" textLength="595.2">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  brigh</text><use href="#c" x="653.2" y="-12.8"/></g>
-<text class="l cz d" x="58" textLength="605.12">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright</text>
-<g class="l c0 d"><text x="58" textLength="624.96">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright i</text><use href="#c" x="682.96" y="-12.8"/></g>
-<g class="l c1 d"><text x="58" textLength="634.88">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright im</text><use href="#c" x="692.88" y="-12.8"/></g>
-<g class="l c2 d"><text x="58" textLength="644.8">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright ima</text><use href="#c" x="702.8" y="-12.8"/></g>
-<g class="l c3 d"><text x="58" textLength="654.72">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright imag</text><use href="#c" x="712.72" y="-12.8"/></g>
-<g class="l c4 d"><text x="58" textLength="664.64">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright image</text><use href="#c" x="722.64" y="-12.8"/></g>
-<g class="l c5 d"><text x="58" textLength="674.56">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright image\</text><use href="#c" x="732.56" y="-12.8"/></g>
-<g class="l c6 d"><text x="58" textLength="684.48">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright image\n</text><use href="#c" x="742.48" y="-12.8"/></g>
-<text class="l c7 d" x="58" textLength="694.4">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright image\n'</text>
+<rect class="bg l h viewport-bg-0" x="48" y="82" width="734.24" height="228" fill="#282c34" fill-opacity="0.7" clip-path="url(#window-clip-0)"/>
+<text class="l ak a" x="58" y="98.8" textLength="446.4"># The image shows through the window, blurred</text>
+<g class="l al"><text x="58" y="118.8">$</text><use href="#c" x="77.84" y="106"/></g>
+<g class="l am"><text x="58 77.84" y="118.8">$e</text><use href="#c" x="87.76" y="106"/></g>
+<g class="l an"><text x="58 77.84 87.76" y="118.8">$ec</text><use href="#c" x="97.68" y="106"/></g>
+<g class="l ao"><g id="r4"><text x="58 77.84 87.76 97.68" y="118.8">$ech</text></g><use href="#c" x="107.6" y="106"/></g>
+<text class="l aq b" x="58" textLength="59.52">$ echo</text>
+<g class="l ar b"><g id="r6"><text x="58" textLength="79.36">$ echo &quot;</text></g><use href="#c" x="137.36" y="-12.8"/></g>
+<g class="l as b"><text x="58" textLength="89.28">$ echo &quot;o</text><use href="#c" x="147.28" y="-12.8"/></g>
+<g class="l at b"><text x="58" textLength="99.2">$ echo &quot;op</text><use href="#c" x="157.2" y="-12.8"/></g>
+<g class="l au b"><text x="58" textLength="109.12">$ echo &quot;opa</text><use href="#c" x="167.12" y="-12.8"/></g>
+<g class="l av b"><text x="58" textLength="119.04">$ echo &quot;opac</text><use href="#c" x="177.04" y="-12.8"/></g>
+<g class="l aw b"><text x="58" textLength="128.96">$ echo &quot;opaci</text><use href="#c" x="186.96" y="-12.8"/></g>
+<g class="l ax b"><text x="58" textLength="138.88">$ echo &quot;opacit</text><use href="#c" x="196.88" y="-12.8"/></g>
+<text class="l az b" x="58" textLength="148.8">$ echo &quot;opacity</text>
+<g class="l a0 b"><text x="58" textLength="168.64">$ echo &quot;opacity 0</text><use href="#c" x="226.64" y="-12.8"/></g>
+<g class="l a1 b"><text x="58" textLength="178.56">$ echo &quot;opacity 0.</text><use href="#c" x="236.56" y="-12.8"/></g>
+<g class="l a2 b"><text x="58" textLength="188.48">$ echo &quot;opacity 0.7</text><use href="#c" x="246.48" y="-12.8"/></g>
+<text class="l a3 b" x="58" textLength="198.4">$ echo &quot;opacity 0.7,</text>
+<g class="l a4 b"><text x="58" textLength="218.24">$ echo &quot;opacity 0.7, b</text><use href="#c" x="276.24" y="-12.8"/></g>
+<g class="l a5 b"><text x="58" textLength="228.16">$ echo &quot;opacity 0.7, bl</text><use href="#c" x="286.16" y="-12.8"/></g>
+<g class="l a6 b"><text x="58" textLength="238.08">$ echo &quot;opacity 0.7, blu</text><use href="#c" x="296.08" y="-12.8"/></g>
+<text class="l a8 b" x="58" textLength="248">$ echo &quot;opacity 0.7, blur</text>
+<g class="l a9 b"><text x="58" textLength="267.84">$ echo &quot;opacity 0.7, blur 6</text><use href="#c" x="325.84" y="-12.8"/></g>
+<text class="l ba b" x="58" textLength="277.76">$ echo &quot;opacity 0.7, blur 6&quot;</text>
+<text class="l bb" x="58" y="138.8" textLength="188.48">opacity 0.7, blur 6</text>
+<text class="l bc a" x="58" y="158.8" textLength="357.12"># Text and colored cells stay opaque</text>
+<g class="l bd"><text x="58" y="178.8">$</text><use href="#c" x="77.84" y="166"/></g>
+<g class="l be"><text x="58 77.84" y="178.8">$p</text><use href="#c" x="87.76" y="166"/></g>
+<g class="l bf"><text x="58 77.84 87.76" y="178.8">$pr</text><use href="#c" x="97.68" y="166"/></g>
+<g class="l bh"><text x="58 77.84 87.76 97.68" y="178.8">$pri</text><use href="#c" x="107.6" y="166"/></g>
+<g class="l bi d"><text x="58" textLength="59.52">$ prin</text><use href="#c" x="117.52" y="-12.8"/></g>
+<g class="l bj d"><text x="58" textLength="69.44">$ print</text><use href="#c" x="127.44" y="-12.8"/></g>
+<text class="l bk d" x="58" textLength="79.36">$ printf</text>
+<text class="l bl d" x="58" textLength="99.2">$ printf '</text>
+<g class="l bm d"><text x="58" textLength="119.04">$ printf ' P</text><use href="#c" x="177.04" y="-12.8"/></g>
+<g class="l bn d"><text x="58" textLength="128.96">$ printf ' PA</text><use href="#c" x="186.96" y="-12.8"/></g>
+<g class="l bo d"><text x="58" textLength="138.88">$ printf ' PAS</text><use href="#c" x="196.88" y="-12.8"/></g>
+<text class="l bq d" x="58" textLength="148.8">$ printf ' PASS</text>
+<g class="l br d"><text x="58" textLength="178.56">$ printf ' PASS  r</text><use href="#c" x="236.56" y="-12.8"/></g>
+<g class="l bs d"><text x="58" textLength="188.48">$ printf ' PASS  re</text><use href="#c" x="246.48" y="-12.8"/></g>
+<g class="l bt d"><text x="58" textLength="198.4">$ printf ' PASS  ren</text><use href="#c" x="256.4" y="-12.8"/></g>
+<g class="l bu d"><text x="58" textLength="208.32">$ printf ' PASS  rend</text><use href="#c" x="266.32" y="-12.8"/></g>
+<g class="l bv d"><text x="58" textLength="218.24">$ printf ' PASS  rende</text><use href="#c" x="276.24" y="-12.8"/></g>
+<text class="l bx d" x="58" textLength="228.16">$ printf ' PASS  render</text>
+<g class="l by d"><text x="58" textLength="248">$ printf ' PASS  render s</text><use href="#c" x="306" y="-12.8"/></g>
+<g class="l bz d"><text x="58" textLength="257.92">$ printf ' PASS  render sv</text><use href="#c" x="315.92" y="-12.8"/></g>
+<g class="l b0 d"><text x="58" textLength="267.84">$ printf ' PASS  render svg</text><use href="#c" x="325.84" y="-12.8"/></g>
+<g class="l b1 d"><text x="58" textLength="277.76">$ printf ' PASS  render svg\</text><use href="#c" x="335.76" y="-12.8"/></g>
+<text class="l b3 d" x="58" textLength="287.68">$ printf ' PASS  render svg\n</text>
+<g class="l b4 d"><text x="58" textLength="307.52">$ printf ' PASS  render svg\n P</text><use href="#c" x="365.52" y="-12.8"/></g>
+<g class="l b5 d"><text x="58" textLength="317.44">$ printf ' PASS  render svg\n PA</text><use href="#c" x="375.44" y="-12.8"/></g>
+<g class="l b6 d"><text x="58" textLength="327.36">$ printf ' PASS  render svg\n PAS</text><use href="#c" x="385.36" y="-12.8"/></g>
+<text class="l b8 d" x="58" textLength="337.28">$ printf ' PASS  render svg\n PASS</text>
+<g class="l b9 d"><text x="58" textLength="367.04">$ printf ' PASS  render svg\n PASS  r</text><use href="#c" x="425.04" y="-12.8"/></g>
+<g class="l ca d"><text x="58" textLength="376.96">$ printf ' PASS  render svg\n PASS  re</text><use href="#c" x="434.96" y="-12.8"/></g>
+<g class="l cb d"><text x="58" textLength="386.88">$ printf ' PASS  render svg\n PASS  ren</text><use href="#c" x="444.88" y="-12.8"/></g>
+<g class="l cc d"><text x="58" textLength="396.8">$ printf ' PASS  render svg\n PASS  rend</text><use href="#c" x="454.8" y="-12.8"/></g>
+<g class="l cd d"><text x="58" textLength="406.72">$ printf ' PASS  render svg\n PASS  rende</text><use href="#c" x="464.72" y="-12.8"/></g>
+<text class="l cf d" x="58" textLength="416.64">$ printf ' PASS  render svg\n PASS  render</text>
+<g class="l cg d"><text x="58" textLength="436.48">$ printf ' PASS  render svg\n PASS  render m</text><use href="#c" x="494.48" y="-12.8"/></g>
+<g class="l ch d"><text x="58" textLength="446.4">$ printf ' PASS  render svg\n PASS  render mp</text><use href="#c" x="504.4" y="-12.8"/></g>
+<g class="l ci d"><text x="58" textLength="456.32">$ printf ' PASS  render svg\n PASS  render mp4</text><use href="#c" x="514.32" y="-12.8"/></g>
+<g class="l cj d"><text x="58" textLength="466.24">$ printf ' PASS  render svg\n PASS  render mp4\</text><use href="#c" x="524.24" y="-12.8"/></g>
+<text class="l cl d" x="58" textLength="476.16">$ printf ' PASS  render svg\n PASS  render mp4\n</text>
+<g class="l cn d"><text x="58" textLength="496">$ printf ' PASS  render svg\n PASS  render mp4\n W</text><use href="#c" x="554" y="-12.8"/></g>
+<g class="l co d"><text x="58" textLength="505.92">$ printf ' PASS  render svg\n PASS  render mp4\n WA</text><use href="#c" x="563.92" y="-12.8"/></g>
+<g class="l cp d"><text x="58" textLength="515.84">$ printf ' PASS  render svg\n PASS  render mp4\n WAR</text><use href="#c" x="573.84" y="-12.8"/></g>
+<text class="l cr d" x="58" textLength="525.76">$ printf ' PASS  render svg\n PASS  render mp4\n WARN</text>
+<g class="l cs d"><text x="58" textLength="555.52">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  b</text><use href="#c" x="613.52" y="-12.8"/></g>
+<g class="l ct d"><text x="58" textLength="565.44">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  br</text><use href="#c" x="623.44" y="-12.8"/></g>
+<g class="l cu d"><text x="58" textLength="575.36">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bri</text><use href="#c" x="633.36" y="-12.8"/></g>
+<g class="l cv d"><text x="58" textLength="585.28">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  brig</text><use href="#c" x="643.28" y="-12.8"/></g>
+<g class="l cw d"><text x="58" textLength="595.2">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  brigh</text><use href="#c" x="653.2" y="-12.8"/></g>
+<text class="l cy d" x="58" textLength="605.12">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright</text>
+<g class="l cz d"><text x="58" textLength="624.96">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright i</text><use href="#c" x="682.96" y="-12.8"/></g>
+<g class="l c0 d"><text x="58" textLength="634.88">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright im</text><use href="#c" x="692.88" y="-12.8"/></g>
+<g class="l c1 d"><text x="58" textLength="644.8">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright ima</text><use href="#c" x="702.8" y="-12.8"/></g>
+<g class="l c2 d"><text x="58" textLength="654.72">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright imag</text><use href="#c" x="712.72" y="-12.8"/></g>
+<g class="l c3 d"><text x="58" textLength="664.64">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright image</text><use href="#c" x="722.64" y="-12.8"/></g>
+<g class="l c4 d"><text x="58" textLength="674.56">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright image\</text><use href="#c" x="732.56" y="-12.8"/></g>
+<g class="l c5 d"><text x="58" textLength="684.48">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright image\n</text><use href="#c" x="742.48" y="-12.8"/></g>
+<text class="l c6 d" x="58" textLength="694.4">$ printf ' PASS  render svg\n PASS  render mp4\n WARN  bright image\n'</text>
 <g class="l ac"><rect x="58" y="186" width="59.52" height="20" fill="#7e8e50"/><text class="e" x="58" y="198.8" font-weight="bold" textLength="49.6"> PASS</text><text x="127.44" y="198.8" textLength="99.2">render svg</text></g>
 <g class="l ac"><rect x="58" y="206" width="59.52" height="20" fill="#7e8e50"/><text class="e" x="58" y="218.8" font-weight="bold" textLength="49.6"> PASS</text><text x="127.44" y="218.8" textLength="99.2">render mp4</text></g>
 <g class="l ac"><rect x="58" y="226" width="59.52" height="20" fill="#e5b567"/><text class="e" x="58" y="238.8" font-weight="bold" textLength="49.6"> WARN</text><text x="127.44" y="238.8" textLength="119.04">bright image</text></g>
-<text class="l c8 a" x="58" y="258.8" textLength="476.16"># Try --opacity and --blur in the render options</text>
-<g class="l c9"><text x="58" y="278.8">$</text><use href="#c" x="77.84" y="266"/></g>
-<g class="l da"><text x="58 77.84" y="278.8">$e</text><use href="#c" x="87.76" y="266"/></g>
-<g class="l db"><text x="58 77.84 87.76" y="278.8">$ec</text><use href="#c" x="97.68" y="266"/></g>
+<text class="l c7 a" x="58" y="258.8" textLength="476.16"># Try --opacity and --blur in the render options</text>
+<g class="l c8"><text x="58" y="278.8">$</text><use href="#c" x="77.84" y="266"/></g>
+<g class="l c9"><text x="58 77.84" y="278.8">$e</text><use href="#c" x="87.76" y="266"/></g>
+<g class="l da"><text x="58 77.84 87.76" y="278.8">$ec</text><use href="#c" x="97.68" y="266"/></g>
 <use href="#r4" y="160" class="l ai"/>
-<text class="l dc f" x="58" textLength="59.52">$ echo</text>
+<text class="l db f" x="58" textLength="59.52">$ echo</text>
 <use href="#r6" class="l aj f"/>
-<g class="l dd f"><text x="58" textLength="89.28">$ echo &quot;D</text><use href="#c" x="147.28" y="-12.8"/></g>
-<g class="l de f"><text x="58" textLength="99.2">$ echo &quot;Do</text><use href="#c" x="157.2" y="-12.8"/></g>
-<g class="l df f"><text x="58" textLength="109.12">$ echo &quot;Don</text><use href="#c" x="167.12" y="-12.8"/></g>
-<g class="l dg f"><text x="58" textLength="119.04">$ echo &quot;Done</text><use href="#c" x="177.04" y="-12.8"/></g>
-<g class="l dh f"><text x="58" textLength="128.96">$ echo &quot;Done!</text><use href="#c" x="186.96" y="-12.8"/></g>
-<text class="l di f" x="58" textLength="138.88">$ echo &quot;Done!&quot;</text>
-<text class="l dj" x="58" y="298.8" textLength="49.6">Done!</text>
-<g class="l dk"><text x="58" y="318.8">$</text><use href="#c" x="77.84" y="306"/></g>
-<use href="#c" x="58" y="106" class="l dl"/>
-<use href="#c" x="117.52" y="106" class="l dm"/>
-<use href="#c" x="127.44" y="106" class="l dn"/>
-<use href="#c" x="206.8" y="106" class="l do"/>
-<use href="#c" x="216.72" y="106" class="l dp"/>
-<use href="#c" x="256.4" y="106" class="l dq"/>
-<use href="#c" x="266.32" y="106" class="l dr"/>
-<use href="#c" x="306" y="106" class="l ds"/>
-<use href="#c" x="315.92" y="106" class="l dt"/>
-<use href="#c" x="335.76" y="106" class="l du"/>
-<use href="#c" x="58" y="126" class="l dv"/>
-<use href="#c" x="58" y="146" class="l dw"/>
-<use href="#c" x="58" y="166" class="l dx"/>
-<use href="#c" x="137.36" y="166" class="l dy"/>
-<use href="#c" x="147.28" y="166" class="l dz"/>
-<use href="#c" x="157.2" y="166" class="l d0"/>
-<use href="#c" x="167.12" y="166" class="l d1"/>
-<use href="#c" x="206.8" y="166" class="l d2"/>
-<use href="#c" x="216.72" y="166" class="l d3"/>
-<use href="#c" x="226.64" y="166" class="l d4"/>
-<use href="#c" x="286.16" y="166" class="l d5"/>
-<use href="#c" x="296.08" y="166" class="l d6"/>
-<use href="#c" x="345.68" y="166" class="l d7"/>
-<use href="#c" x="355.6" y="166" class="l d8"/>
-<use href="#c" x="395.28" y="166" class="l d9"/>
-<use href="#c" x="405.2" y="166" class="l ea"/>
-<use href="#c" x="415.12" y="166" class="l eb"/>
-<use href="#c" x="474.64" y="166" class="l ec"/>
-<use href="#c" x="484.56" y="166" class="l ed"/>
-<use href="#c" x="534.16" y="166" class="l ee"/>
-<use href="#c" x="544.08" y="166" class="l ef"/>
-<use href="#c" x="583.76" y="166" class="l eg"/>
-<use href="#c" x="593.68" y="166" class="l eh"/>
-<use href="#c" x="603.6" y="166" class="l ei"/>
-<use href="#c" x="663.12" y="166" class="l ej"/>
-<use href="#c" x="673.04" y="166" class="l ek"/>
-<use href="#c" x="752.4" y="166" class="l el"/>
-<use href="#c" x="58" y="186" class="l em"/>
-<use href="#c" x="58" y="246" class="l eo"/>
-<use href="#c" x="58" y="266" class="l ep"/>
+<g class="l dc f"><text x="58" textLength="89.28">$ echo &quot;D</text><use href="#c" x="147.28" y="-12.8"/></g>
+<g class="l dd f"><text x="58" textLength="99.2">$ echo &quot;Do</text><use href="#c" x="157.2" y="-12.8"/></g>
+<g class="l de f"><text x="58" textLength="109.12">$ echo &quot;Don</text><use href="#c" x="167.12" y="-12.8"/></g>
+<g class="l df f"><text x="58" textLength="119.04">$ echo &quot;Done</text><use href="#c" x="177.04" y="-12.8"/></g>
+<g class="l dg f"><text x="58" textLength="128.96">$ echo &quot;Done!</text><use href="#c" x="186.96" y="-12.8"/></g>
+<text class="l dh f" x="58" textLength="138.88">$ echo &quot;Done!&quot;</text>
+<text class="l di" x="58" y="298.8" textLength="49.6">Done!</text>
+<use href="#c" x="58" y="106" class="l dj"/>
+<use href="#c" x="117.52" y="106" class="l dk"/>
+<use href="#c" x="127.44" y="106" class="l dl"/>
+<use href="#c" x="206.8" y="106" class="l dm"/>
+<use href="#c" x="216.72" y="106" class="l dn"/>
+<use href="#c" x="256.4" y="106" class="l do"/>
+<use href="#c" x="266.32" y="106" class="l dp"/>
+<use href="#c" x="306" y="106" class="l dq"/>
+<use href="#c" x="315.92" y="106" class="l dr"/>
+<use href="#c" x="335.76" y="106" class="l ds"/>
+<use href="#c" x="58" y="126" class="l dt"/>
+<use href="#c" x="58" y="146" class="l dv"/>
+<use href="#c" x="58" y="166" class="l dw"/>
+<use href="#c" x="137.36" y="166" class="l dx"/>
+<use href="#c" x="147.28" y="166" class="l dy"/>
+<use href="#c" x="157.2" y="166" class="l dz"/>
+<use href="#c" x="167.12" y="166" class="l d0"/>
+<use href="#c" x="206.8" y="166" class="l d1"/>
+<use href="#c" x="216.72" y="166" class="l d2"/>
+<use href="#c" x="226.64" y="166" class="l d3"/>
+<use href="#c" x="286.16" y="166" class="l d4"/>
+<use href="#c" x="296.08" y="166" class="l d5"/>
+<use href="#c" x="345.68" y="166" class="l d6"/>
+<use href="#c" x="355.6" y="166" class="l d7"/>
+<use href="#c" x="395.28" y="166" class="l d8"/>
+<use href="#c" x="405.2" y="166" class="l d9"/>
+<use href="#c" x="415.12" y="166" class="l ea"/>
+<use href="#c" x="474.64" y="166" class="l eb"/>
+<use href="#c" x="484.56" y="166" class="l ec"/>
+<use href="#c" x="534.16" y="166" class="l ed"/>
+<use href="#c" x="544.08" y="166" class="l ee"/>
+<use href="#c" x="583.76" y="166" class="l ef"/>
+<use href="#c" x="593.68" y="166" class="l eg"/>
+<use href="#c" x="603.6" y="166" class="l eh"/>
+<use href="#c" x="663.12" y="166" class="l ei"/>
+<use href="#c" x="673.04" y="166" class="l ej"/>
+<use href="#c" x="752.4" y="166" class="l ek"/>
+<use href="#c" x="58" y="186" class="l el"/>
+<use href="#c" x="58" y="246" class="l en"/>
+<use href="#c" x="58" y="266" class="l eo"/>
 <use href="#c" x="107.6" y="266" class="l ai"/>
-<use href="#c" x="117.52" y="266" class="l eq"/>
-<use href="#c" x="127.44" y="266" class="l er"/>
+<use href="#c" x="117.52" y="266" class="l ep"/>
+<use href="#c" x="127.44" y="266" class="l eq"/>
 <use href="#c" x="137.36" y="266" class="l aj"/>
-<use href="#c" x="196.88" y="266" class="l es"/>
-<use href="#c" x="58" y="286" class="l et"/>
-<use href="#c" x="58" y="306" class="l eu"/>
+<use href="#c" x="196.88" y="266" class="l er"/>
+<use href="#c" x="58" y="286" class="l es"/>
 </g>
-<rect class="l h viewport-chrome-0" x="48.5" y="48.5" width="733.24" height="281" rx="7.5" ry="7.5" fill="none" stroke="#ffffff" stroke-opacity="0.16"/>
+<rect class="l h viewport-chrome-0" x="48.5" y="48.5" width="733.24" height="261" rx="7.5" ry="7.5" fill="none" stroke="#ffffff" stroke-opacity="0.16"/>
 </svg>

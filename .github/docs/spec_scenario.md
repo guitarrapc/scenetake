@@ -114,6 +114,7 @@ Defaults for all steps. Map-form steps may override individual keys.
 | `typing-jitter` | `0.015` | Random variance (± seconds) per character |
 | `pre-delay` | `0.2` | Pause before typing a step, with its prompt on the screen. See Pauses below. |
 | `post-delay` | `0.5` | Pause after output before the next step's comment and prompt |
+| `end-prompt` | `false` | `true` ends the recording with the prompt after the last output, as a terminal does. By default it ends on the last output. See Pauses below. |
 | `execution-duration` | `0.05` | Minimum cast wait after Enter before step output appears (seconds). With default pipe emit, all output is written at `command_start + execution-duration`. |
 | `stream-output` | `false` | When `true`, emit pipe/PTY output as timed chunks using wall-clock capture instead of a single instant blob |
 | `max-duration` | — | When set, enables stream emit and linearly scales the step output timeline to this ceiling (seconds) |
@@ -134,13 +135,14 @@ From one step's output to the next step's typing:
 
 - **Steps without a prompt.** A `show: output` step's `pre-delay` passes after its comment, before its output. A clear step and a card pause for their `pre-delay` before they draw, and then for their `post-delay`.
 - **The first step** shows its comment and prompt 0.5 s after the recording starts, then pauses for its `pre-delay`.
-- **The end.** The closing prompt shows after the last step's `post-delay`. The final screen stays 2 × (`post-delay` + `pre-delay`) of the last step after its output: an event that draws nothing ends the recording, and the render holds the screen as long again as the pause before it. An `end-hold` counts from the closing prompt instead ([spec_svg.md](spec_svg.md) → Ending).
+- **The end.** The recording ends on the last output: the cursor is hidden as soon as the output ends, and no prompt follows. With `end-prompt: true`, the closing prompt shows after the last step's `post-delay` instead. Either way the final screen stays 2 × (`post-delay` + `pre-delay`) of the last step after its output: an event that draws nothing ends the recording, and the render holds the screen as long again as the pause before it. An `end-hold` counts from when the final screen shows instead ([spec_svg.md](spec_svg.md) → Ending). A card at the end stays as it is ([Card steps](#card-steps)).
+- **Why the output ends it by default** (2026-11-22). Once the closing prompt came right after `post-delay`, it held most of the final screen, 1 to 4 s in the samples, and the eye stopped on `$ █` instead of the result. The final screen is the one viewers look at longest, and the default image of a PNG and `--at end`, where the prompt was one more row. A looping SVG or GIF shows the end by starting again. The line under the output is not left with a lone cursor, which reads as a command still running. `end-prompt` keeps the terminal's ending for a demo that needs it, such as one that ends by quitting a full-screen program, where the restored screen without a prompt looks like the moment before the program starts.
 - **Why the prompt comes before `pre-delay`** (2026-11-22). `pre-delay` used to pass before the next step's comment and prompt, and before the closing prompt. The line under a finished output then held only the cursor, which reads as a command that is still running. With `post-delay: 0` and `pre-delay: 0.5`, the welcome demo seemed to wait after its logo and at its end. A `pre-delay` set in a step also applied before the next step instead of its own.
 - **Why the times stay.** The pauses add up as before, and the final screen stays as long, so a demo without a `pre-delay` set in a step plays as long as before, and only its comments and prompts show earlier. A recording made before 2026-11-22 keeps its old layout until it is recorded again or made again with `--replay`.
 
 ### Prompt
 
-`prompt` is the text before each typed command and at the end of the recording. It is text, as before, or a list of parts, each text or a mapping with `text` and an optional `color`. A color is a style as `highlight` takes one ([spec_highlight.md](spec_highlight.md)), and each colored part ends with a reset.
+`prompt` is the text before each typed command, and at the end of the recording with `end-prompt: true`. It is text, as before, or a list of parts, each text or a mapping with `text` and an optional `color`. A color is a style as `highlight` takes one ([spec_highlight.md](spec_highlight.md)), and each colored part ends with a reset.
 
 ```yaml
 settings:

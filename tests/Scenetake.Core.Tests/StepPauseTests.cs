@@ -13,10 +13,16 @@ public sealed class StepPauseTests
     public async Task PreDelayPassesWithThePrompt() => await Assert.That(StepPauseCases.PreDelayPassesWithThePrompt()).IsTrue();
 
     [Test]
-    public async Task FinalScreenHoldsTheClosingPrompt() => await Assert.That(StepPauseCases.FinalScreenHoldsTheClosingPrompt()).IsTrue();
+    public async Task FinalScreenIsTheLastOutput() => await Assert.That(StepPauseCases.FinalScreenIsTheLastOutput()).IsTrue();
 
     [Test]
-    public async Task EndHoldCountsFromTheClosingPrompt() => await Assert.That(StepPauseCases.EndHoldCountsFromTheClosingPrompt()).IsTrue();
+    public async Task EndPromptDrawsTheClosingPrompt() => await Assert.That(StepPauseCases.EndPromptDrawsTheClosingPrompt()).IsTrue();
+
+    [Test]
+    public async Task EndHoldCountsFromTheFinalScreen() => await Assert.That(StepPauseCases.EndHoldCountsFromTheFinalScreen(endPrompt: false)).IsTrue();
+
+    [Test]
+    public async Task EndHoldCountsFromTheClosingPrompt() => await Assert.That(StepPauseCases.EndHoldCountsFromTheFinalScreen(endPrompt: true)).IsTrue();
 
     [Test]
     public async Task OutputStepPausesBeforeItsOutput() => await Assert.That(StepPauseCases.OutputStepPausesBeforeItsOutput()).IsTrue();
@@ -63,11 +69,24 @@ internal static class StepPauseCases
             && Expect(Near(Gap(events, commentTwo + 2), 1.55), $"step two types {Gap(events, commentTwo + 2):F3} s after its prompt, not after its own pre-delay 1.5");
     }
 
-    internal static bool FinalScreenHoldsTheClosingPrompt()
+    internal static bool FinalScreenIsTheLastOutput()
     {
-        // The closing prompt shows after the last step's post-delay. The final screen stays 2 x (post-delay + pre-delay)
-        // after the last output: an event that draws nothing ends the recording, and the render holds it as long again.
+        // By default the recording ends on the last output, without the closing prompt: the cursor goes as soon as the
+        // output ends, and the final screen stays 2 x (post-delay + pre-delay). An event that draws nothing ends the
+        // recording, and the render holds it as long again.
         var recording = Read(TwoSteps);
+        var events = recording.Events;
+        var outputTwo = Index(events, "two\r\n");
+        return Expect(events.Count == outputTwo + 3, $"{events.Count - outputTwo - 1} events after the last output, expected hiding the cursor and the end")
+            && Expect(events[outputTwo + 1].Data == "\u001b[?25l" && Near(Gap(events, outputTwo + 1), 0), $"the cursor is hidden {Gap(events, outputTwo + 1):F3} s after the output, with {events[outputTwo + 1].Data}")
+            && Expect(PlaybackLength.IsSilent(events[^1]), $"the last event draws: {events[^1].Data}")
+            && Expect(Near(recording.LoopDuration - events[outputTwo].Time, 2 * (0.7 + 1.5)), $"the final screen stays {recording.LoopDuration - events[outputTwo].Time:F3} s, expected 4.4");
+    }
+
+    internal static bool EndPromptDrawsTheClosingPrompt()
+    {
+        // end-prompt: the closing prompt shows after the last step's post-delay, and the final screen stays as long.
+        var recording = Read(EndPrompt(TwoSteps));
         var events = recording.Events;
         var outputTwo = Index(events, "two\r\n");
         return Expect(events.Count == outputTwo + 3, $"{events.Count - outputTwo - 1} events after the last output, expected the prompt and the end")
@@ -76,12 +95,12 @@ internal static class StepPauseCases
             && Expect(Near(recording.LoopDuration - events[outputTwo].Time, 2 * (0.7 + 1.5)), $"the final screen stays {recording.LoopDuration - events[outputTwo].Time:F3} s, expected 4.4");
     }
 
-    internal static bool EndHoldCountsFromTheClosingPrompt()
+    internal static bool EndHoldCountsFromTheFinalScreen(bool endPrompt)
     {
-        // An end-hold replaces the default hold: it starts when the closing prompt shows, without the event after it,
-        // so end-hold 0 starts again at once. At 2x it is still seconds of the output.
-        var recording = Read(TwoSteps);
-        var closing = recording.Events[^2].Time;
+        // An end-hold replaces the default hold: it starts when the final screen shows, the last output or the closing
+        // prompt, without the event after it, so end-hold 0 starts again at once. At 2x it is still seconds of the output.
+        var recording = Read(endPrompt ? EndPrompt(TwoSteps) : TwoSteps);
+        var final = recording.Events[^2];
         double Loop(double? endHold, double speed = 1)
         {
             var settings = recording.RenderSettings with { EndHold = endHold, Speed = speed };
@@ -90,12 +109,15 @@ internal static class StepPauseCases
             return RenderSettingsResolver.ResolveLoopDuration(loop ?? TerminalReplay.ComputeLoopDuration(events), events, settings);
         }
 
-        return Expect(recording.Events[^2].Data == "$ ", "the event before the last is not the closing prompt")
+        var expected = endPrompt ? "$ " : "\u001b[?25l";
+        return Expect(final.Data == expected, $"the event before the last is {final.Data}, not {expected}")
             && Expect(Near(Loop(null), recording.LoopDuration), $"the default hold moved: {Loop(null):F3}, recorded {recording.LoopDuration:F3}")
-            && Expect(Near(Loop(0), closing), $"end-hold 0 loops at {Loop(0):F3}, expected the closing prompt at {closing:F3}")
-            && Expect(Near(Loop(3), closing + 3), $"end-hold 3 loops at {Loop(3):F3}, expected {closing + 3:F3}")
-            && Expect(Near(Loop(3, 2), closing / 2 + 3), $"end-hold 3 at 2x loops at {Loop(3, 2):F3}, expected {closing / 2 + 3:F3}");
+            && Expect(Near(Loop(0), final.Time), $"end-hold 0 loops at {Loop(0):F3}, expected the final screen at {final.Time:F3}")
+            && Expect(Near(Loop(3), final.Time + 3), $"end-hold 3 loops at {Loop(3):F3}, expected {final.Time + 3:F3}")
+            && Expect(Near(Loop(3, 2), final.Time / 2 + 3), $"end-hold 3 at 2x loops at {Loop(3, 2):F3}, expected {final.Time / 2 + 3:F3}");
     }
+
+    private static string EndPrompt(string yaml) => yaml.Replace("settings:", "settings:\n  end-prompt: true", StringComparison.Ordinal);
 
     internal static bool OutputStepPausesBeforeItsOutput()
     {

@@ -908,6 +908,10 @@ public partial class ScenarioSettings
     public double? TypingJitter { get; set; }
     public double? PreDelay { get; set; }
     public double? PostDelay { get; set; }
+
+    /// <summary>Whether the recording ends with the closing prompt. Without it, it ends on the last output.</summary>
+    public bool? EndPrompt { get; set; }
+
     public double? ExecutionDuration { get; set; }
     public double? SilenceThreshold { get; set; }
     public double? MaxIdle { get; set; }

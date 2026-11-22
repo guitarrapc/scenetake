@@ -1,4 +1,4 @@
-{"version":3,"term":{"cols":80,"rows":26,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":1700000000,"title":"Developer tools","env":{"SHELL":"bash"},"tags":["st:font-size=16","st:font-family=ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace","st:window=windows","st:steps=95:12997 3a88a280fb31213d:031aa1b4:c:29:3:2089:2140 1eee93733b39280e:031aa1b4:c:65:1:5836:5886 d9b5f3addd6caa32:031aa1b4:c:92:1:9347:9397"]}
+{"version":3,"term":{"cols":80,"rows":26,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":1700000000,"title":"Developer tools","env":{"SHELL":"bash"},"tags":["st:font-size=16","st:font-family=ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace","st:window=windows","st:steps=95:11997 3a88a280fb31213d:031aa1b4:c:29:3:2089:2140 1eee93733b39280e:031aa1b4:c:65:1:5836:5886 d9b5f3addd6caa32:031aa1b4:c:92:1:9347:9397"]}
 [0.500,"o","$ "]
 [0.650,"o","b"]
 [0.040,"o","a"]
@@ -92,6 +92,6 @@
 [0.040,"o","n"]
 [0.029,"o","\r\n"]
 [0.156,"o","\u001b[1;39m{\r\n  \u001b[0m\u001b[1;34m\"demo\"\u001b[0m\u001b[1;39m: \u001b[0m\u001b[0;32m\"scenetake --format svg demo.yaml\"\u001b[0m\u001b[1;39m,\r\n  \u001b[0m\u001b[1;34m\"test\"\u001b[0m\u001b[1;39m: \u001b[0m\u001b[0;32m\"python -m pytest\"\u001b[0m\u001b[1;39m\r\n\u001b[1;39m}\u001b[0m\r\n"]
-[2.044,"o","$ "]
-[1.600,"o","\u001b[0m"]
+[0.044,"o","\u001b[?25l"]
+[2.600,"o","\u001b[0m"]
 [0.050,"x","0"]

@@ -505,23 +505,37 @@ internal static partial class ScenarioCast
             t += cmdPost;
         }
 
-        // The closing prompt shows the folder the last step left, which the outputs file keeps for a replay. A closing
-        // card stays to the end, without a prompt over it: an event that changes nothing ends the recording after its
-        // post-delay, or the card would show only for the hold after the last event.
+        // The closing prompt shows the folder the last step left, which the outputs file keeps for a replay, also when
+        // the recording ends without the prompt: a replay may draw it. A closing card stays to the end, without a prompt
+        // over it: an event that changes nothing ends the recording after its post-delay, or the card would show only
+        // for the hold after the last event.
         if (promptTemplate.UsesDir)
             options.EndFolder = options.Replay is { } endReplay ? endReplay.EndFolder ?? HomeFolderName : MaskFolder(options.PromptFolder?.Invoke() ?? HomeFolderName);
         if (cardOnScreen)
-            events.Add(CastEvent.Output(Math.Round(t, 6), HideCursor));
-        else if (anyStepShown)
         {
-            // The closing prompt shows after the last step's post-delay, as each step's prompt does. The final screen
-            // stays 2 x (post-delay + pre-delay) after the last output: an event that changes nothing ends the
-            // recording, and the render holds the screen as long again. An end-hold leaves the event out
+            events.Add(CastEvent.Output(Math.Round(t, 6), HideCursor));
+        }
+        else if (anyStepShown && settings.EndPrompt == true)
+        {
+            // end-prompt: the closing prompt shows after the last step's post-delay, as each step's prompt does. The
+            // final screen stays 2 x (post-delay + pre-delay) after the last output: an event that changes nothing ends
+            // the recording, and the render holds the screen as long again. An end-hold leaves the event out
             // (TerminalReplay.WithoutHoldEvent).
             events.Add(CastEvent.Output(Math.Round(t, 6), Prompt(options.EndFolder)));
             var closingHold = lastPost / 2 + lastPre;
             if (closingHold > 0)
                 events.Add(CastEvent.Output(Math.Round(t + closingHold, 6), SgrReset));
+        }
+        else if (anyStepShown)
+        {
+            // The recording ends on the last output: the cursor goes as soon as it ends, so the line below does not
+            // look like a command that is still running, and the final screen stays 2 x (post-delay + pre-delay), as
+            // with the prompt. The render holds it as long again as the gap to the event that ends the recording.
+            var outputEnd = t - lastPost;
+            events.Add(CastEvent.Output(Math.Round(outputEnd, 6), HideCursor));
+            var finalHold = lastPost + lastPre;
+            if (finalHold > 0)
+                events.Add(CastEvent.Output(Math.Round(outputEnd + finalHold, 6), SgrReset));
         }
 
         if (cardEvents.Count > 0)

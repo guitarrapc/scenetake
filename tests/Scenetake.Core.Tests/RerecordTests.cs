@@ -676,7 +676,7 @@ internal static class RerecordCases
         var title = Record(yaml, step => Output(step, "\u001b]0;My demo\u0007")).Cast;
         var printed = Record(yaml, step => Output(step, "text\n")).Cast;
         var silent = Record(yaml, step => Output(step, "")).Cast;
-        var alone = Record("steps:\n  - run: first\n    show: output\n", _ => Pipe("\u001b]0;My demo\u0007")).Cast;
+        var alone = Record("settings:\n  end-prompt: true\nsteps:\n  - run: first\n    show: output\n", _ => Pipe("\u001b]0;My demo\u0007")).Cast;
         return Expect(TimeOf(title, "\"$ \"") == TimeOf(printed, "\"$ \""), $"a title only: {TimeOf(title, "\"$ \"")} against {TimeOf(printed, "\"$ \"")}")
             & Expect(TimeOf(silent, "\"$ \"") == TimeOf(printed, "\"$ \""), $"no output: {TimeOf(silent, "\"$ \"")} against {TimeOf(printed, "\"$ \"")}")
             // The recording still ends at a prompt, though the step left nothing in the cast.

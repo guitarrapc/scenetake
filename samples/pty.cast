@@ -1,4 +1,4 @@
-{"version":3,"term":{"cols":60,"rows":14,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":1700000000,"title":"PTY Demo","env":{"SHELL":"bash"},"tags":["st:font-size=16","st:font-family=ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace","st:steps=281:13720 ea3952224e4329bd:031aa1b4:d:78:1:2488:2538 c1e02b40c0569cc2:031aa1b4:c:108:2:4700:4780 65935aa238bc527d:031aa1b4:c:122:129:6604:9655 84f006b4d6cda8f5:031aa1b4:d:278:1:11770:11820"]}
+{"version":3,"term":{"cols":60,"rows":14,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":1700000000,"title":"PTY Demo","env":{"SHELL":"bash"},"tags":["st:font-size=16","st:font-family=ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace","st:steps=281:13220 ea3952224e4329bd:031aa1b4:d:78:1:2488:2538 c1e02b40c0569cc2:031aa1b4:c:108:2:4700:4780 65935aa238bc527d:031aa1b4:c:122:129:6604:9655 84f006b4d6cda8f5:031aa1b4:d:278:1:11770:11820"]}
 [0.500,"o","$ "]
 [0.450,"o","e"]
 [0.016,"o","c"]
@@ -278,6 +278,6 @@
 [0.023,"o","\""]
 [0.027,"o","\r\n"]
 [0.200,"o","Continue after PTY\r\n"]
-[1.000,"o","$ "]
-[0.900,"o","\u001b[0m"]
+[0.000,"o","\u001b[?25l"]
+[1.400,"o","\u001b[0m"]
 [0.050,"x","0"]

@@ -235,7 +235,7 @@ text { dominant-baseline: alphabetic; }
 @keyframes bi{2.334268%{visibility:visible}}
 .gh{animation-delay:13.151s;animation-name:bi}
 @keyframes gi{9.243698%{visibility:visible}}
-.ak{animation-delay:13.651s;animation-name:gi}
+.al{animation-delay:13.651s;animation-name:gi}
 .gj{animation-delay:13.701s;animation-name:av}
 .gk{animation-delay:13.951s;animation-name:aw}
 .gl{animation-delay:14.011s;animation-name:ax}
@@ -269,10 +269,10 @@ text { dominant-baseline: alphabetic; }
 .ha{animation-delay:15.506s;animation-name:ay}
 .hb{animation-delay:15.57s;animation-name:bd}
 @keyframes az{0.933707%{visibility:visible}}
-.al{animation-delay:15.631s;animation-name:az}
-.am{animation-delay:15.831s;animation-name:bi}
+.am{animation-delay:15.631s;animation-name:az}
+.an{animation-delay:15.831s;animation-name:bi}
 @keyframes hc{7.044818%{visibility:visible}}
-.an{animation-delay:16.331s;animation-name:hc}
+.ao{animation-delay:16.331s;animation-name:hc}
 .hd{animation-delay:16.381s;animation-name:av}
 .he{animation-delay:16.631s;animation-name:ba}
 .hf{animation-delay:16.68s;animation-name:au}
@@ -300,11 +300,11 @@ text { dominant-baseline: alphabetic; }
 .hy{animation-delay:17.684s;animation-name:a4}
 .hz{animation-delay:17.73s;animation-name:bb}
 .h0{animation-delay:17.795s;animation-name:bf}
-.ao{animation-delay:17.84s;animation-name:az}
+.ap{animation-delay:17.84s;animation-name:az}
 @keyframes bq{2.338936%{visibility:visible}}
-.ap{animation-delay:18.04s;animation-name:bq}
+.aq{animation-delay:18.04s;animation-name:bq}
 @keyframes h1{5.971056%{visibility:visible}}
-.aq{animation-delay:18.541s;animation-name:h1}
+.ar{animation-delay:18.541s;animation-name:h1}
 .h2{animation-delay:18.591s;animation-name:av}
 .h3{animation-delay:18.841s;animation-name:a8}
 .h4{animation-delay:18.879s;animation-name:at}
@@ -327,90 +327,86 @@ text { dominant-baseline: alphabetic; }
 .ik{animation-delay:19.656s;animation-name:ax}
 .il{animation-delay:19.707s;animation-name:bj}
 .im{animation-delay:19.762s;animation-name:bk}
-.ar{animation-delay:19.82s;animation-name:az}
+.ak{animation-delay:19.82s;animation-name:az}
 @keyframes as{93.464052%{visibility:hidden}to{visibility:visible}}
 .as{animation-name:as}
-@keyframes in{95.798319%{visibility:hidden}to{visibility:visible}}
-.in{animation-name:in}
-.io{animation-delay:0.5s;animation-name:at}
-.ip{animation-delay:0.961s;animation-name:a1}
-.iq{animation-delay:1.017s;animation-name:bc}
-.ir{animation-delay:1.256s;animation-name:a6}
-.is{animation-delay:1.296s;animation-name:az}
-.it{animation-delay:1.496s;animation-name:bq}
-.iu{animation-delay:1.997s;animation-name:at}
-.iv{animation-delay:2.439s;animation-name:au}
-.iw{animation-delay:2.476s;animation-name:ay}
-.ix{animation-delay:2.708s;animation-name:aw}
-.iy{animation-delay:2.768s;animation-name:az}
-.iz{animation-delay:2.968s;animation-name:bi}
-.i0{animation-delay:3.468s;animation-name:at}
-.i1{animation-delay:3.917s;animation-name:au}
-.i2{animation-delay:3.954s;animation-name:az}
-.i3{animation-delay:4.154s;animation-name:bi}
-.i4{animation-delay:4.654s;animation-name:at}
-.i5{animation-delay:5.073s;animation-name:aw}
-.i6{animation-delay:5.133s;animation-name:az}
-.i7{animation-delay:5.333s;animation-name:bi}
-.i8{animation-delay:5.833s;animation-name:at}
-.i9{animation-delay:6.353s;animation-name:bh}
-.ja{animation-delay:6.388s;animation-name:a3}
-.jb{animation-delay:6.666s;animation-name:ax}
-.jc{animation-delay:6.717s;animation-name:bb}
-.jd{animation-delay:7.344s;animation-name:au}
-.je{animation-delay:7.381s;animation-name:a1}
-.jf{animation-delay:7.57s;animation-name:cf}
-.jg{animation-delay:7.617s;animation-name:a7}
-.jh{animation-delay:8.314s;animation-name:au}
-.ji{animation-delay:8.351s;animation-name:az}
-.jj{animation-delay:8.551s;animation-name:bq}
-.jk{animation-delay:9.052s;animation-name:at}
-.jl{animation-delay:9.504s;animation-name:ay}
-.jm{animation-delay:9.568s;animation-name:a3}
-.jn{animation-delay:9.854s;animation-name:a7}
-.jo{animation-delay:9.89s;animation-name:bc}
-.jp{animation-delay:10.006s;animation-name:bh}
-.jq{animation-delay:10.041s;animation-name:a2}
-.jr{animation-delay:10.364s;animation-name:bl}
-.js{animation-delay:10.403s;animation-name:at}
-.jt{animation-delay:10.618s;animation-name:bb}
-.ju{animation-delay:10.683s;animation-name:az}
-.jv{animation-delay:10.883s;animation-name:bi}
-.jw{animation-delay:11.383s;animation-name:at}
-.jx{animation-delay:11.842s;animation-name:ay}
-.jy{animation-delay:11.906s;animation-name:ba}
-.jz{animation-delay:12.141s;animation-name:ay}
-.j0{animation-delay:12.205s;animation-name:bl}
-.j1{animation-delay:12.308s;animation-name:ba}
-.j2{animation-delay:12.357s;animation-name:bp}
-.j3{animation-delay:12.651s;animation-name:bf}
-.j4{animation-delay:12.696s;animation-name:bp}
-.j5{animation-delay:12.909s;animation-name:a5}
-.j6{animation-delay:12.951s;animation-name:az}
-@keyframes j7{2.567694%{visibility:visible}}
-.j8{animation-delay:13.151s;animation-name:j7}
-.j9{animation-delay:14.126s;animation-name:bd}
-.ka{animation-delay:14.187s;animation-name:a9}
-.kb{animation-delay:14.527s;animation-name:a1}
-.kc{animation-delay:14.583s;animation-name:a1}
-.kd{animation-delay:14.827s;animation-name:a3}
-.ke{animation-delay:14.875s;animation-name:bf}
-.kf{animation-delay:15.284s;animation-name:bj}
-.kg{animation-delay:15.339s;animation-name:bb}
-@keyframes kh{3.501401%{visibility:visible}}
-.ki{animation-delay:15.631s;animation-name:kh}
-.kj{animation-delay:16.849s;animation-name:a1}
-.kk{animation-delay:16.905s;animation-name:bk}
-.kl{animation-delay:17.339s;animation-name:a5}
-.km{animation-delay:17.381s;animation-name:a6}
-@keyframes kn{3.50607%{visibility:visible}}
-.ko{animation-delay:17.84s;animation-name:kn}
-.kp{animation-delay:19.087s;animation-name:a9}
-.kq{animation-delay:19.131s;animation-name:au}
-.kr{animation-delay:19.331s;animation-name:a4}
-.ks{animation-delay:19.377s;animation-name:bd}
-@keyframes kt{3.267974%{visibility:visible}}
-.ku{animation-delay:19.82s;animation-name:kt}
+.in{animation-delay:0.5s;animation-name:at}
+.io{animation-delay:0.961s;animation-name:a1}
+.ip{animation-delay:1.017s;animation-name:bc}
+.iq{animation-delay:1.256s;animation-name:a6}
+.ir{animation-delay:1.296s;animation-name:az}
+.is{animation-delay:1.496s;animation-name:bq}
+.it{animation-delay:1.997s;animation-name:at}
+.iu{animation-delay:2.439s;animation-name:au}
+.iv{animation-delay:2.476s;animation-name:ay}
+.iw{animation-delay:2.708s;animation-name:aw}
+.ix{animation-delay:2.768s;animation-name:az}
+.iy{animation-delay:2.968s;animation-name:bi}
+.iz{animation-delay:3.468s;animation-name:at}
+.i0{animation-delay:3.917s;animation-name:au}
+.i1{animation-delay:3.954s;animation-name:az}
+.i2{animation-delay:4.154s;animation-name:bi}
+.i3{animation-delay:4.654s;animation-name:at}
+.i4{animation-delay:5.073s;animation-name:aw}
+.i5{animation-delay:5.133s;animation-name:az}
+.i6{animation-delay:5.333s;animation-name:bi}
+.i7{animation-delay:5.833s;animation-name:at}
+.i8{animation-delay:6.353s;animation-name:bh}
+.i9{animation-delay:6.388s;animation-name:a3}
+.ja{animation-delay:6.666s;animation-name:ax}
+.jb{animation-delay:6.717s;animation-name:bb}
+.jc{animation-delay:7.344s;animation-name:au}
+.jd{animation-delay:7.381s;animation-name:a1}
+.je{animation-delay:7.57s;animation-name:cf}
+.jf{animation-delay:7.617s;animation-name:a7}
+.jg{animation-delay:8.314s;animation-name:au}
+.jh{animation-delay:8.351s;animation-name:az}
+.ji{animation-delay:8.551s;animation-name:bq}
+.jj{animation-delay:9.052s;animation-name:at}
+.jk{animation-delay:9.504s;animation-name:ay}
+.jl{animation-delay:9.568s;animation-name:a3}
+.jm{animation-delay:9.854s;animation-name:a7}
+.jn{animation-delay:9.89s;animation-name:bc}
+.jo{animation-delay:10.006s;animation-name:bh}
+.jp{animation-delay:10.041s;animation-name:a2}
+.jq{animation-delay:10.364s;animation-name:bl}
+.jr{animation-delay:10.403s;animation-name:at}
+.js{animation-delay:10.618s;animation-name:bb}
+.jt{animation-delay:10.683s;animation-name:az}
+.ju{animation-delay:10.883s;animation-name:bi}
+.jv{animation-delay:11.383s;animation-name:at}
+.jw{animation-delay:11.842s;animation-name:ay}
+.jx{animation-delay:11.906s;animation-name:ba}
+.jy{animation-delay:12.141s;animation-name:ay}
+.jz{animation-delay:12.205s;animation-name:bl}
+.j0{animation-delay:12.308s;animation-name:ba}
+.j1{animation-delay:12.357s;animation-name:bp}
+.j2{animation-delay:12.651s;animation-name:bf}
+.j3{animation-delay:12.696s;animation-name:bp}
+.j4{animation-delay:12.909s;animation-name:a5}
+.j5{animation-delay:12.951s;animation-name:az}
+@keyframes j6{2.567694%{visibility:visible}}
+.j7{animation-delay:13.151s;animation-name:j6}
+.j8{animation-delay:14.126s;animation-name:bd}
+.j9{animation-delay:14.187s;animation-name:a9}
+.ka{animation-delay:14.527s;animation-name:a1}
+.kb{animation-delay:14.583s;animation-name:a1}
+.kc{animation-delay:14.827s;animation-name:a3}
+.kd{animation-delay:14.875s;animation-name:bf}
+.ke{animation-delay:15.284s;animation-name:bj}
+.kf{animation-delay:15.339s;animation-name:bb}
+@keyframes kg{3.501401%{visibility:visible}}
+.kh{animation-delay:15.631s;animation-name:kg}
+.ki{animation-delay:16.849s;animation-name:a1}
+.kj{animation-delay:16.905s;animation-name:bk}
+.kk{animation-delay:17.339s;animation-name:a5}
+.kl{animation-delay:17.381s;animation-name:a6}
+@keyframes km{3.50607%{visibility:visible}}
+.kn{animation-delay:17.84s;animation-name:km}
+.ko{animation-delay:19.087s;animation-name:a9}
+.kp{animation-delay:19.131s;animation-name:au}
+.kq{animation-delay:19.331s;animation-name:a4}
+.kr{animation-delay:19.377s;animation-name:bd}
 .ci{visibility:visible}
 </style>
 <defs>
@@ -555,29 +551,29 @@ text { dominant-baseline: alphabetic; }
 <use href="#r107" class="l cc p"/>
 <use href="#r108" class="l gg p"/>
 <g class="l gh"><g id="r133"><text class="d" x="18" y="464.8" textLength="128.96">this is error</text></g></g>
-<use href="#r10" class="l ak q"/>
-<text class="l ak b" x="18" textLength="49.6">hello</text>
-<use href="#r12" y="-20" class="l ak"/>
-<use href="#r22" class="l ak r"/>
-<text class="l ak e" x="18" textLength="49.6">world</text>
-<use href="#r24" y="-20" class="l ak"/>
-<g class="l ak"><g id="r140"><text x="18" y="144.8" textLength="59.52">$ date</text></g></g>
-<use href="#r30" y="-20" class="l ak"/>
-<use href="#r31" y="-20" class="l ak"/>
-<use href="#r36" class="l ak s"/>
-<use href="#r30" y="40" class="l ak"/>
-<use href="#r38" y="-20" class="l ak"/>
-<use href="#r82" class="l ak t"/>
-<use href="#r83" y="-20" class="l ak"/>
-<use href="#r84" y="-20" class="l ak"/>
-<use href="#r85" y="-20" class="l ak"/>
-<use href="#r86" y="-20" class="l ak"/>
-<use href="#r108" class="l ak u"/>
-<use href="#r109" y="-20" class="l ak"/>
-<use href="#r110" y="-20" class="l ak"/>
-<use href="#r108" class="l ak v"/>
-<use href="#r133" y="-20" class="l ak"/>
-<g class="l ak"><g id="r156"><text class="a" x="18" y="464.8" textLength="396.8"># stderr style override with SGR literal</text></g></g>
+<use href="#r10" class="l al q"/>
+<text class="l al b" x="18" textLength="49.6">hello</text>
+<use href="#r12" y="-20" class="l al"/>
+<use href="#r22" class="l al r"/>
+<text class="l al e" x="18" textLength="49.6">world</text>
+<use href="#r24" y="-20" class="l al"/>
+<g class="l al"><g id="r140"><text x="18" y="144.8" textLength="59.52">$ date</text></g></g>
+<use href="#r30" y="-20" class="l al"/>
+<use href="#r31" y="-20" class="l al"/>
+<use href="#r36" class="l al s"/>
+<use href="#r30" y="40" class="l al"/>
+<use href="#r38" y="-20" class="l al"/>
+<use href="#r82" class="l al t"/>
+<use href="#r83" y="-20" class="l al"/>
+<use href="#r84" y="-20" class="l al"/>
+<use href="#r85" y="-20" class="l al"/>
+<use href="#r86" y="-20" class="l al"/>
+<use href="#r108" class="l al u"/>
+<use href="#r109" y="-20" class="l al"/>
+<use href="#r110" y="-20" class="l al"/>
+<use href="#r108" class="l al v"/>
+<use href="#r133" y="-20" class="l al"/>
+<g class="l al"><g id="r156"><text class="a" x="18" y="464.8" textLength="396.8"># stderr style override with SGR literal</text></g></g>
 <g class="l gj"><text x="18" y="484.8">$</text><use href="#c" x="37.84" y="472"/></g>
 <g class="l gk"><text x="18 37.84" y="484.8">$e</text><use href="#c" x="47.76" y="472"/></g>
 <g class="l gl"><text x="18 37.84 47.76" y="484.8">$ec</text><use href="#c" x="57.68" y="472"/></g>
@@ -607,75 +603,75 @@ text { dominant-baseline: alphabetic; }
 <g class="l g9 w"><text x="18" textLength="317.44">$ echo &quot;stderr style literal&quot; 1&gt;</text><use href="#c" x="335.44" y="-12.8"/></g>
 <g class="l ha w"><text x="18" textLength="327.36">$ echo &quot;stderr style literal&quot; 1&gt;&amp;</text><use href="#c" x="345.36" y="-12.8"/></g>
 <g class="l hb w"><g id="r185"><text x="18" textLength="337.28">$ echo &quot;stderr style literal&quot; 1&gt;&amp;2</text></g><use href="#c" x="355.28" y="-12.8"/></g>
-<text class="l al q" x="18" textLength="49.6">hello</text>
-<use href="#r12" y="-40" class="l al"/>
-<use href="#r22" class="l al x"/>
-<text class="l al r" x="18" textLength="49.6">world</text>
-<use href="#r24" y="-40" class="l al"/>
-<use href="#r140" y="-20" class="l al"/>
-<use href="#r30" y="-40" class="l al"/>
-<use href="#r31" y="-40" class="l al"/>
-<use href="#r36" class="l al y"/>
-<use href="#r30" y="20" class="l al"/>
-<use href="#r38" y="-40" class="l al"/>
-<use href="#r82" class="l al z"/>
-<use href="#r83" y="-40" class="l al"/>
-<use href="#r84" y="-40" class="l al"/>
-<use href="#r85" y="-40" class="l al"/>
-<use href="#r86" y="-40" class="l al"/>
-<use href="#r108" class="l al aa"/>
-<use href="#r109" y="-40" class="l al"/>
-<use href="#r110" y="-40" class="l al"/>
-<use href="#r108" class="l al ab"/>
-<use href="#r133" y="-40" class="l al"/>
-<use href="#r156" y="-20" class="l al"/>
-<use href="#r185" class="l al ac"/>
-<use href="#r12" y="-60" class="l am"/>
-<use href="#r22" class="l am b"/>
-<text class="l am x" x="18" textLength="49.6">world</text>
-<use href="#r24" y="-60" class="l am"/>
-<text class="l am e" x="18" textLength="59.52">$ date</text>
-<use href="#r30" y="-60" class="l am"/>
-<use href="#r31" y="-60" class="l am"/>
-<use href="#r36" class="l am f"/>
-<use href="#r30" y="0" class="l am"/>
-<use href="#r38" y="-60" class="l am"/>
-<use href="#r82" class="l am h"/>
-<use href="#r83" y="-60" class="l am"/>
-<use href="#r84" y="-60" class="l am"/>
-<use href="#r85" y="-60" class="l am"/>
-<use href="#r86" y="-60" class="l am"/>
-<use href="#r108" class="l am ad"/>
-<use href="#r109" y="-60" class="l am"/>
-<use href="#r110" y="-60" class="l am"/>
-<use href="#r108" class="l am o"/>
-<use href="#r133" y="-60" class="l am"/>
-<use href="#r156" y="-40" class="l am"/>
-<use href="#r185" class="l am p"/>
-<g class="l am ac"><g id="r231"><text class="ae" x="18" font-weight="bold" textLength="198.4">stderr style literal</text></g></g>
-<use href="#r22" class="l an q"/>
-<text class="l an b" x="18" textLength="49.6">world</text>
-<use href="#r24" y="-80" class="l an"/>
-<text class="l an r" x="18" textLength="59.52">$ date</text>
-<use href="#r30" y="-80" class="l an"/>
-<use href="#r31" y="-80" class="l an"/>
-<use href="#r36" class="l an af"/>
-<use href="#r30" y="-20" class="l an"/>
-<use href="#r38" y="-80" class="l an"/>
-<use href="#r82" class="l an s"/>
-<use href="#r83" y="-80" class="l an"/>
-<use href="#r84" y="-80" class="l an"/>
-<use href="#r85" y="-80" class="l an"/>
-<use href="#r86" y="-80" class="l an"/>
-<use href="#r108" class="l an ag"/>
-<use href="#r109" y="-80" class="l an"/>
-<use href="#r110" y="-80" class="l an"/>
-<use href="#r108" class="l an u"/>
-<use href="#r133" y="-80" class="l an"/>
-<use href="#r156" y="-60" class="l an"/>
-<use href="#r185" class="l an v"/>
-<use href="#r231" class="l an p"/>
-<g class="l an ac"><g id="r254"><text class="a" x="18" textLength="267.84"># 256-color index highlight</text></g></g>
+<text class="l am q" x="18" textLength="49.6">hello</text>
+<use href="#r12" y="-40" class="l am"/>
+<use href="#r22" class="l am x"/>
+<text class="l am r" x="18" textLength="49.6">world</text>
+<use href="#r24" y="-40" class="l am"/>
+<use href="#r140" y="-20" class="l am"/>
+<use href="#r30" y="-40" class="l am"/>
+<use href="#r31" y="-40" class="l am"/>
+<use href="#r36" class="l am y"/>
+<use href="#r30" y="20" class="l am"/>
+<use href="#r38" y="-40" class="l am"/>
+<use href="#r82" class="l am z"/>
+<use href="#r83" y="-40" class="l am"/>
+<use href="#r84" y="-40" class="l am"/>
+<use href="#r85" y="-40" class="l am"/>
+<use href="#r86" y="-40" class="l am"/>
+<use href="#r108" class="l am aa"/>
+<use href="#r109" y="-40" class="l am"/>
+<use href="#r110" y="-40" class="l am"/>
+<use href="#r108" class="l am ab"/>
+<use href="#r133" y="-40" class="l am"/>
+<use href="#r156" y="-20" class="l am"/>
+<use href="#r185" class="l am ac"/>
+<use href="#r12" y="-60" class="l an"/>
+<use href="#r22" class="l an b"/>
+<text class="l an x" x="18" textLength="49.6">world</text>
+<use href="#r24" y="-60" class="l an"/>
+<text class="l an e" x="18" textLength="59.52">$ date</text>
+<use href="#r30" y="-60" class="l an"/>
+<use href="#r31" y="-60" class="l an"/>
+<use href="#r36" class="l an f"/>
+<use href="#r30" y="0" class="l an"/>
+<use href="#r38" y="-60" class="l an"/>
+<use href="#r82" class="l an h"/>
+<use href="#r83" y="-60" class="l an"/>
+<use href="#r84" y="-60" class="l an"/>
+<use href="#r85" y="-60" class="l an"/>
+<use href="#r86" y="-60" class="l an"/>
+<use href="#r108" class="l an ad"/>
+<use href="#r109" y="-60" class="l an"/>
+<use href="#r110" y="-60" class="l an"/>
+<use href="#r108" class="l an o"/>
+<use href="#r133" y="-60" class="l an"/>
+<use href="#r156" y="-40" class="l an"/>
+<use href="#r185" class="l an p"/>
+<g class="l an ac"><g id="r231"><text class="ae" x="18" font-weight="bold" textLength="198.4">stderr style literal</text></g></g>
+<use href="#r22" class="l ao q"/>
+<text class="l ao b" x="18" textLength="49.6">world</text>
+<use href="#r24" y="-80" class="l ao"/>
+<text class="l ao r" x="18" textLength="59.52">$ date</text>
+<use href="#r30" y="-80" class="l ao"/>
+<use href="#r31" y="-80" class="l ao"/>
+<use href="#r36" class="l ao af"/>
+<use href="#r30" y="-20" class="l ao"/>
+<use href="#r38" y="-80" class="l ao"/>
+<use href="#r82" class="l ao s"/>
+<use href="#r83" y="-80" class="l ao"/>
+<use href="#r84" y="-80" class="l ao"/>
+<use href="#r85" y="-80" class="l ao"/>
+<use href="#r86" y="-80" class="l ao"/>
+<use href="#r108" class="l ao ag"/>
+<use href="#r109" y="-80" class="l ao"/>
+<use href="#r110" y="-80" class="l ao"/>
+<use href="#r108" class="l ao u"/>
+<use href="#r133" y="-80" class="l ao"/>
+<use href="#r156" y="-60" class="l ao"/>
+<use href="#r185" class="l ao v"/>
+<use href="#r231" class="l ao p"/>
+<g class="l ao ac"><g id="r254"><text class="a" x="18" textLength="267.84"># 256-color index highlight</text></g></g>
 <g class="l hd w"><text x="18">$</text><use href="#c" x="37.84" y="-12.8"/></g>
 <g class="l he w"><text x="18 37.84">$p</text><use href="#c" x="47.76" y="-12.8"/></g>
 <g class="l hf w"><text x="18 37.84 47.76">$pr</text><use href="#c" x="57.68" y="-12.8"/></g>
@@ -699,75 +695,75 @@ text { dominant-baseline: alphabetic; }
 <g class="l hy w"><text x="18" textLength="238.08">$ printf 'indexed color\</text><use href="#c" x="256.08" y="-12.8"/></g>
 <g class="l hz w"><text x="18" textLength="248">$ printf 'indexed color\n</text><use href="#c" x="266" y="-12.8"/></g>
 <g class="l h0 w"><g id="r277"><text x="18" textLength="257.92">$ printf 'indexed color\n'</text></g><use href="#c" x="275.92" y="-12.8"/></g>
-<text class="l ao q" x="18" textLength="49.6">world</text>
-<use href="#r24" y="-100" class="l ao"/>
-<text class="l ao x" x="18" textLength="59.52">$ date</text>
-<use href="#r30" y="-100" class="l ao"/>
-<use href="#r31" y="-100" class="l ao"/>
-<use href="#r36" class="l ao ah"/>
-<use href="#r30" y="-40" class="l ao"/>
-<use href="#r38" y="-100" class="l ao"/>
-<use href="#r82" class="l ao y"/>
-<use href="#r83" y="-100" class="l ao"/>
-<use href="#r84" y="-100" class="l ao"/>
-<use href="#r85" y="-100" class="l ao"/>
-<use href="#r86" y="-100" class="l ao"/>
-<use href="#r108" class="l ao i"/>
-<use href="#r109" y="-100" class="l ao"/>
-<use href="#r110" y="-100" class="l ao"/>
-<use href="#r108" class="l ao aa"/>
-<use href="#r133" y="-100" class="l ao"/>
-<use href="#r156" y="-80" class="l ao"/>
-<use href="#r185" class="l ao ab"/>
-<use href="#r231" class="l ao v"/>
-<use href="#r254" class="l ao p"/>
-<use href="#r277" class="l ao ac"/>
-<use href="#r24" y="-120" class="l ap"/>
-<text class="l ap b" x="18" textLength="59.52">$ date</text>
-<use href="#r30" y="-120" class="l ap"/>
-<use href="#r31" y="-120" class="l ap"/>
-<use href="#r36" class="l ap e"/>
-<use href="#r30" y="-60" class="l ap"/>
-<use href="#r38" y="-120" class="l ap"/>
-<use href="#r82" class="l ap f"/>
-<use href="#r83" y="-120" class="l ap"/>
-<use href="#r84" y="-120" class="l ap"/>
-<use href="#r85" y="-120" class="l ap"/>
-<use href="#r86" y="-120" class="l ap"/>
-<use href="#r108" class="l ap t"/>
-<use href="#r109" y="-120" class="l ap"/>
-<use href="#r110" y="-120" class="l ap"/>
-<use href="#r108" class="l ap ad"/>
-<use href="#r133" y="-120" class="l ap"/>
-<use href="#r156" y="-100" class="l ap"/>
-<use href="#r185" class="l ap o"/>
-<use href="#r231" class="l ap ab"/>
-<use href="#r254" class="l ap v"/>
-<use href="#r277" class="l ap p"/>
-<g class="l ap ac"><g id="r323"><rect x="18" y="-12.8" width="128.96" height="20" fill="#262626"/><text class="ai" x="18" textLength="128.96">indexed color</text></g></g>
-<text class="l aq q" x="18" textLength="59.52">$ date</text>
-<use href="#r30" y="-140" class="l aq"/>
-<use href="#r31" y="-140" class="l aq"/>
-<use href="#r36" class="l aq r"/>
-<use href="#r30" y="-80" class="l aq"/>
-<use href="#r38" y="-140" class="l aq"/>
-<use href="#r82" class="l aq af"/>
-<use href="#r83" y="-140" class="l aq"/>
-<use href="#r84" y="-140" class="l aq"/>
-<use href="#r85" y="-140" class="l aq"/>
-<use href="#r86" y="-140" class="l aq"/>
-<use href="#r108" class="l aq z"/>
-<use href="#r109" y="-140" class="l aq"/>
-<use href="#r110" y="-140" class="l aq"/>
-<use href="#r108" class="l aq ag"/>
-<use href="#r133" y="-140" class="l aq"/>
-<use href="#r156" y="-120" class="l aq"/>
-<use href="#r185" class="l aq u"/>
-<use href="#r231" class="l aq o"/>
-<use href="#r254" class="l aq ab"/>
-<use href="#r277" class="l aq v"/>
-<use href="#r323" class="l aq p"/>
-<g class="l aq ac"><g id="r346"><text class="a" x="18" textLength="218.24"># true color highlight</text></g></g>
+<text class="l ap q" x="18" textLength="49.6">world</text>
+<use href="#r24" y="-100" class="l ap"/>
+<text class="l ap x" x="18" textLength="59.52">$ date</text>
+<use href="#r30" y="-100" class="l ap"/>
+<use href="#r31" y="-100" class="l ap"/>
+<use href="#r36" class="l ap ah"/>
+<use href="#r30" y="-40" class="l ap"/>
+<use href="#r38" y="-100" class="l ap"/>
+<use href="#r82" class="l ap y"/>
+<use href="#r83" y="-100" class="l ap"/>
+<use href="#r84" y="-100" class="l ap"/>
+<use href="#r85" y="-100" class="l ap"/>
+<use href="#r86" y="-100" class="l ap"/>
+<use href="#r108" class="l ap i"/>
+<use href="#r109" y="-100" class="l ap"/>
+<use href="#r110" y="-100" class="l ap"/>
+<use href="#r108" class="l ap aa"/>
+<use href="#r133" y="-100" class="l ap"/>
+<use href="#r156" y="-80" class="l ap"/>
+<use href="#r185" class="l ap ab"/>
+<use href="#r231" class="l ap v"/>
+<use href="#r254" class="l ap p"/>
+<use href="#r277" class="l ap ac"/>
+<use href="#r24" y="-120" class="l aq"/>
+<text class="l aq b" x="18" textLength="59.52">$ date</text>
+<use href="#r30" y="-120" class="l aq"/>
+<use href="#r31" y="-120" class="l aq"/>
+<use href="#r36" class="l aq e"/>
+<use href="#r30" y="-60" class="l aq"/>
+<use href="#r38" y="-120" class="l aq"/>
+<use href="#r82" class="l aq f"/>
+<use href="#r83" y="-120" class="l aq"/>
+<use href="#r84" y="-120" class="l aq"/>
+<use href="#r85" y="-120" class="l aq"/>
+<use href="#r86" y="-120" class="l aq"/>
+<use href="#r108" class="l aq t"/>
+<use href="#r109" y="-120" class="l aq"/>
+<use href="#r110" y="-120" class="l aq"/>
+<use href="#r108" class="l aq ad"/>
+<use href="#r133" y="-120" class="l aq"/>
+<use href="#r156" y="-100" class="l aq"/>
+<use href="#r185" class="l aq o"/>
+<use href="#r231" class="l aq ab"/>
+<use href="#r254" class="l aq v"/>
+<use href="#r277" class="l aq p"/>
+<g class="l aq ac"><g id="r323"><rect x="18" y="-12.8" width="128.96" height="20" fill="#262626"/><text class="ai" x="18" textLength="128.96">indexed color</text></g></g>
+<text class="l ar q" x="18" textLength="59.52">$ date</text>
+<use href="#r30" y="-140" class="l ar"/>
+<use href="#r31" y="-140" class="l ar"/>
+<use href="#r36" class="l ar r"/>
+<use href="#r30" y="-80" class="l ar"/>
+<use href="#r38" y="-140" class="l ar"/>
+<use href="#r82" class="l ar af"/>
+<use href="#r83" y="-140" class="l ar"/>
+<use href="#r84" y="-140" class="l ar"/>
+<use href="#r85" y="-140" class="l ar"/>
+<use href="#r86" y="-140" class="l ar"/>
+<use href="#r108" class="l ar z"/>
+<use href="#r109" y="-140" class="l ar"/>
+<use href="#r110" y="-140" class="l ar"/>
+<use href="#r108" class="l ar ag"/>
+<use href="#r133" y="-140" class="l ar"/>
+<use href="#r156" y="-120" class="l ar"/>
+<use href="#r185" class="l ar u"/>
+<use href="#r231" class="l ar o"/>
+<use href="#r254" class="l ar ab"/>
+<use href="#r277" class="l ar v"/>
+<use href="#r323" class="l ar p"/>
+<g class="l ar ac"><g id="r346"><text class="a" x="18" textLength="218.24"># true color highlight</text></g></g>
 <g class="l h2 w"><text x="18">$</text><use href="#c" x="37.84" y="-12.8"/></g>
 <g class="l h3 w"><text x="18 37.84">$p</text><use href="#c" x="47.76" y="-12.8"/></g>
 <g class="l h4 w"><text x="18 37.84 47.76">$pr</text><use href="#c" x="57.68" y="-12.8"/></g>
@@ -788,29 +784,29 @@ text { dominant-baseline: alphabetic; }
 <g class="l ik w"><text x="18" textLength="208.32">$ printf 'true color\</text><use href="#c" x="226.32" y="-12.8"/></g>
 <g class="l il w"><text x="18" textLength="218.24">$ printf 'true color\n</text><use href="#c" x="236.24" y="-12.8"/></g>
 <g class="l im w"><g id="r366"><text x="18" textLength="228.16">$ printf 'true color\n'</text></g><use href="#c" x="246.16" y="-12.8"/></g>
-<use href="#r30" y="-160" class="l ar"/>
-<use href="#r31" y="-160" class="l ar"/>
-<use href="#r36" class="l ar x"/>
-<use href="#r30" y="-100" class="l ar"/>
-<use href="#r38" y="-160" class="l ar"/>
-<use href="#r82" class="l ar ah"/>
-<use href="#r83" y="-160" class="l ar"/>
-<use href="#r84" y="-160" class="l ar"/>
-<use href="#r85" y="-160" class="l ar"/>
-<use href="#r86" y="-160" class="l ar"/>
-<use href="#r108" class="l ar h"/>
-<use href="#r109" y="-160" class="l ar"/>
-<use href="#r110" y="-160" class="l ar"/>
-<use href="#r108" class="l ar i"/>
-<use href="#r133" y="-160" class="l ar"/>
-<use href="#r156" y="-140" class="l ar"/>
-<use href="#r185" class="l ar aa"/>
-<use href="#r231" class="l ar u"/>
-<use href="#r254" class="l ar o"/>
-<use href="#r277" class="l ar ab"/>
-<use href="#r323" class="l ar v"/>
-<use href="#r346" class="l ar p"/>
-<use href="#r366" class="l ar ac"/>
+<use href="#r30" y="-160" class="l ak"/>
+<use href="#r31" y="-160" class="l ak"/>
+<use href="#r36" class="l ak x"/>
+<use href="#r30" y="-100" class="l ak"/>
+<use href="#r38" y="-160" class="l ak"/>
+<use href="#r82" class="l ak ah"/>
+<use href="#r83" y="-160" class="l ak"/>
+<use href="#r84" y="-160" class="l ak"/>
+<use href="#r85" y="-160" class="l ak"/>
+<use href="#r86" y="-160" class="l ak"/>
+<use href="#r108" class="l ak h"/>
+<use href="#r109" y="-160" class="l ak"/>
+<use href="#r110" y="-160" class="l ak"/>
+<use href="#r108" class="l ak i"/>
+<use href="#r133" y="-160" class="l ak"/>
+<use href="#r156" y="-140" class="l ak"/>
+<use href="#r185" class="l ak aa"/>
+<use href="#r231" class="l ak u"/>
+<use href="#r254" class="l ak o"/>
+<use href="#r277" class="l ak ab"/>
+<use href="#r323" class="l ak v"/>
+<use href="#r346" class="l ak p"/>
+<use href="#r366" class="l ak ac"/>
 <use href="#r31" y="-180" class="l as"/>
 <use href="#r36" class="l as b"/>
 <use href="#r30" y="-120" class="l as"/>
@@ -834,101 +830,100 @@ text { dominant-baseline: alphabetic; }
 <use href="#r346" class="l as v"/>
 <use href="#r366" class="l as p"/>
 <g class="l as ac"><rect x="18" y="-12.8" width="99.2" height="20" fill="#282828"/><text class="aj" x="18" textLength="99.2">true color</text></g>
-<g class="l in w"><text x="18">$</text><use href="#c" x="37.84" y="-12.8"/></g>
-<use href="#c" x="18" y="32" class="l io"/>
-<use href="#c" x="77.52" y="32" class="l ip"/>
-<use href="#c" x="87.44" y="32" class="l iq"/>
-<use href="#c" x="137.04" y="32" class="l ir"/>
-<use href="#c" x="18" y="52" class="l is"/>
-<use href="#c" x="18" y="72" class="l it"/>
-<use href="#c" x="18" y="92" class="l iu"/>
+<use href="#c" x="18" y="32" class="l in"/>
+<use href="#c" x="77.52" y="32" class="l io"/>
+<use href="#c" x="87.44" y="32" class="l ip"/>
+<use href="#c" x="137.04" y="32" class="l iq"/>
+<use href="#c" x="18" y="52" class="l ir"/>
+<use href="#c" x="18" y="72" class="l is"/>
+<use href="#c" x="18" y="92" class="l it"/>
 <use href="#c" x="67.6" y="92" class="l br"/>
-<use href="#c" x="77.52" y="92" class="l iv"/>
-<use href="#c" x="87.44" y="92" class="l iw"/>
-<use href="#c" x="137.04" y="92" class="l ix"/>
-<use href="#c" x="18" y="112" class="l iy"/>
-<use href="#c" x="18" y="132" class="l iz"/>
-<use href="#c" x="18" y="152" class="l i0"/>
-<use href="#c" x="77.52" y="152" class="l i1"/>
-<use href="#c" x="18" y="172" class="l i2"/>
-<use href="#c" x="18" y="192" class="l i3"/>
-<use href="#c" x="18" y="212" class="l i4"/>
-<use href="#c" x="77.52" y="212" class="l i5"/>
-<use href="#c" x="18" y="232" class="l i6"/>
-<use href="#c" x="18" y="252" class="l i7"/>
-<use href="#c" x="18" y="272" class="l i8"/>
-<use href="#c" x="97.36" y="272" class="l i9"/>
-<use href="#c" x="107.28" y="272" class="l ja"/>
-<use href="#c" x="166.8" y="272" class="l jb"/>
-<use href="#c" x="176.72" y="272" class="l jc"/>
-<use href="#c" x="295.76" y="272" class="l jd"/>
-<use href="#c" x="305.68" y="272" class="l je"/>
-<use href="#c" x="345.36" y="272" class="l jf"/>
-<use href="#c" x="355.28" y="272" class="l jg"/>
-<use href="#c" x="504.08" y="272" class="l jh"/>
-<use href="#c" x="18" y="292" class="l ji"/>
-<use href="#c" x="18" y="352" class="l jj"/>
-<use href="#c" x="18" y="372" class="l jk"/>
+<use href="#c" x="77.52" y="92" class="l iu"/>
+<use href="#c" x="87.44" y="92" class="l iv"/>
+<use href="#c" x="137.04" y="92" class="l iw"/>
+<use href="#c" x="18" y="112" class="l ix"/>
+<use href="#c" x="18" y="132" class="l iy"/>
+<use href="#c" x="18" y="152" class="l iz"/>
+<use href="#c" x="77.52" y="152" class="l i0"/>
+<use href="#c" x="18" y="172" class="l i1"/>
+<use href="#c" x="18" y="192" class="l i2"/>
+<use href="#c" x="18" y="212" class="l i3"/>
+<use href="#c" x="77.52" y="212" class="l i4"/>
+<use href="#c" x="18" y="232" class="l i5"/>
+<use href="#c" x="18" y="252" class="l i6"/>
+<use href="#c" x="18" y="272" class="l i7"/>
+<use href="#c" x="97.36" y="272" class="l i8"/>
+<use href="#c" x="107.28" y="272" class="l i9"/>
+<use href="#c" x="166.8" y="272" class="l ja"/>
+<use href="#c" x="176.72" y="272" class="l jb"/>
+<use href="#c" x="295.76" y="272" class="l jc"/>
+<use href="#c" x="305.68" y="272" class="l jd"/>
+<use href="#c" x="345.36" y="272" class="l je"/>
+<use href="#c" x="355.28" y="272" class="l jf"/>
+<use href="#c" x="504.08" y="272" class="l jg"/>
+<use href="#c" x="18" y="292" class="l jh"/>
+<use href="#c" x="18" y="352" class="l ji"/>
+<use href="#c" x="18" y="372" class="l jj"/>
 <use href="#c" x="67.6" y="372" class="l bv"/>
-<use href="#c" x="77.52" y="372" class="l jl"/>
-<use href="#c" x="87.44" y="372" class="l jm"/>
-<use href="#c" x="137.04" y="372" class="l jn"/>
-<use href="#c" x="146.96" y="372" class="l jo"/>
-<use href="#c" x="166.8" y="372" class="l jp"/>
-<use href="#c" x="176.72" y="372" class="l jq"/>
-<use href="#c" x="236.24" y="372" class="l jr"/>
-<use href="#c" x="246.16" y="372" class="l js"/>
-<use href="#c" x="285.84" y="372" class="l jt"/>
-<use href="#c" x="18" y="392" class="l ju"/>
-<use href="#c" x="18" y="412" class="l jv"/>
-<use href="#c" x="18" y="432" class="l jw"/>
+<use href="#c" x="77.52" y="372" class="l jk"/>
+<use href="#c" x="87.44" y="372" class="l jl"/>
+<use href="#c" x="137.04" y="372" class="l jm"/>
+<use href="#c" x="146.96" y="372" class="l jn"/>
+<use href="#c" x="166.8" y="372" class="l jo"/>
+<use href="#c" x="176.72" y="372" class="l jp"/>
+<use href="#c" x="236.24" y="372" class="l jq"/>
+<use href="#c" x="246.16" y="372" class="l jr"/>
+<use href="#c" x="285.84" y="372" class="l js"/>
+<use href="#c" x="18" y="392" class="l jt"/>
+<use href="#c" x="18" y="412" class="l ju"/>
+<use href="#c" x="18" y="432" class="l jv"/>
 <use href="#c" x="67.6" y="432" class="l bz"/>
-<use href="#c" x="77.52" y="432" class="l jx"/>
-<use href="#c" x="87.44" y="432" class="l jy"/>
+<use href="#c" x="77.52" y="432" class="l jw"/>
+<use href="#c" x="87.44" y="432" class="l jx"/>
 <use href="#c" x="97.36" y="432" class="l b0"/>
 <use href="#c" x="107.28" y="432" class="l b1"/>
 <use href="#c" x="117.2" y="432" class="l b2"/>
 <use href="#c" x="127.12" y="432" class="l b3"/>
-<use href="#c" x="137.04" y="432" class="l jz"/>
-<use href="#c" x="146.96" y="432" class="l j0"/>
+<use href="#c" x="137.04" y="432" class="l jy"/>
+<use href="#c" x="146.96" y="432" class="l jz"/>
 <use href="#c" x="156.88" y="432" class="l b4"/>
-<use href="#c" x="166.8" y="432" class="l j1"/>
-<use href="#c" x="176.72" y="432" class="l j2"/>
+<use href="#c" x="166.8" y="432" class="l j0"/>
+<use href="#c" x="176.72" y="432" class="l j1"/>
 <use href="#c" x="186.64" y="432" class="l b5"/>
 <use href="#c" x="196.56" y="432" class="l b6"/>
 <use href="#c" x="206.48" y="432" class="l b7"/>
 <use href="#c" x="216.4" y="432" class="l b8"/>
 <use href="#c" x="226.32" y="432" class="l b9"/>
-<use href="#c" x="236.24" y="432" class="l j3"/>
-<use href="#c" x="246.16" y="432" class="l j4"/>
+<use href="#c" x="236.24" y="432" class="l j2"/>
+<use href="#c" x="246.16" y="432" class="l j3"/>
 <use href="#c" x="256.08" y="432" class="l ca"/>
 <use href="#c" x="266" y="432" class="l cb"/>
 <use href="#c" x="275.92" y="432" class="l cc"/>
-<use href="#c" x="285.84" y="432" class="l j5"/>
-<use href="#c" x="18" y="452" class="l j6"/>
-<use href="#c" x="18" y="472" class="l j8"/>
+<use href="#c" x="285.84" y="432" class="l j4"/>
+<use href="#c" x="18" y="452" class="l j5"/>
+<use href="#c" x="18" y="472" class="l j7"/>
 <use href="#c" x="67.6" y="472" class="l cd"/>
-<use href="#c" x="77.52" y="472" class="l j9"/>
-<use href="#c" x="87.44" y="472" class="l ka"/>
+<use href="#c" x="77.52" y="472" class="l j8"/>
+<use href="#c" x="87.44" y="472" class="l j9"/>
 <use href="#c" x="97.36" y="472" class="l ce"/>
-<use href="#c" x="156.88" y="472" class="l kb"/>
-<use href="#c" x="166.8" y="472" class="l kc"/>
-<use href="#c" x="216.4" y="472" class="l kd"/>
-<use href="#c" x="226.32" y="472" class="l ke"/>
-<use href="#c" x="305.68" y="472" class="l kf"/>
-<use href="#c" x="315.6" y="472" class="l kg"/>
-<use href="#c" x="18" y="472" class="l ki"/>
-<use href="#c" x="97.36" y="472" class="l kj"/>
-<use href="#c" x="107.28" y="472" class="l kk"/>
+<use href="#c" x="156.88" y="472" class="l ka"/>
+<use href="#c" x="166.8" y="472" class="l kb"/>
+<use href="#c" x="216.4" y="472" class="l kc"/>
+<use href="#c" x="226.32" y="472" class="l kd"/>
+<use href="#c" x="305.68" y="472" class="l ke"/>
+<use href="#c" x="315.6" y="472" class="l kf"/>
+<use href="#c" x="18" y="472" class="l kh"/>
+<use href="#c" x="97.36" y="472" class="l ki"/>
+<use href="#c" x="107.28" y="472" class="l kj"/>
 <use href="#c" x="117.2" y="472" class="l cg"/>
-<use href="#c" x="186.64" y="472" class="l kl"/>
-<use href="#c" x="196.56" y="472" class="l km"/>
-<use href="#c" x="18" y="472" class="l ko"/>
-<use href="#c" x="97.36" y="472" class="l kp"/>
-<use href="#c" x="107.28" y="472" class="l kq"/>
+<use href="#c" x="186.64" y="472" class="l kk"/>
+<use href="#c" x="196.56" y="472" class="l kl"/>
+<use href="#c" x="18" y="472" class="l kn"/>
+<use href="#c" x="97.36" y="472" class="l ko"/>
+<use href="#c" x="107.28" y="472" class="l kp"/>
 <use href="#c" x="117.2" y="472" class="l ch"/>
-<use href="#c" x="156.88" y="472" class="l kr"/>
-<use href="#c" x="166.8" y="472" class="l ks"/>
-<use href="#c" x="18" y="472" class="l ku"/>
+<use href="#c" x="156.88" y="472" class="l kq"/>
+<use href="#c" x="166.8" y="472" class="l kr"/>
+<use href="#c" x="18" y="472" class="l ak"/>
 </g>
 </svg>

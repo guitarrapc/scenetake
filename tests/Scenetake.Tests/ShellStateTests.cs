@@ -671,7 +671,7 @@ internal static class ShellStateCases
         if (!Expect(parsed.EndFolder == "src" && parsed.Steps[0].Folder == "~" && parsed.Steps[1].Folder == "my-app", "the folders did not round-trip"))
             return false;
 
-        const string yaml = "width: 40\nheight: 8\nsettings:\n  typing-speed: 0.01\n  typing-jitter: 0\n  prompt: \"{dir} $ \"\nsteps:\n  - echo one\n  - cd src\n";
+        const string yaml = "width: 40\nheight: 8\nsettings:\n  typing-speed: 0.01\n  typing-jitter: 0\n  prompt: \"{dir} $ \"\n  end-prompt: true\nsteps:\n  - echo one\n  - cd src\n";
         var result = PlaygroundRender.RenderScenario(yaml, parsed, new PlaygroundOptions(), renderSvg: false);
         var output = CastOutput(Encoding.UTF8.GetString(result.Cast!));
         var noFolders = PlaygroundRender.RenderScenario(yaml, StepOutputs.Parse(Encoding.UTF8.GetString(stream.ToArray()).Replace("\"folder\"", "\"other\"").Replace("\"endFolder\"", "\"other\"")), new PlaygroundOptions(), renderSvg: false);

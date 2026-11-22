@@ -1,4 +1,4 @@
-{"version":3,"term":{"cols":80,"rows":24,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":1700000000,"title":"Highlight Demo","env":{"SHELL":"bash"},"tags":["st:font-size=16","st:font-family=ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace","st:steps=256:20970 141ff646dd3b3c13:031aa1b4:d:14:1:1446:1496 bb52ce5ed6f00bbb:031aa1b4:d:29:1:2918:2968 87465671b6d3249a:031aa1b4:d:38:1:4104:4154 87465671b6d3249a:031aa1b4:d:49:1:5283:5333 ac9e46a5613744a4:031aa1b4:d:101:1:8501:8551 ebcb637f5abe0c78:031aa1b4:d:131:1:10833:10883 ebcb637f5abe0c78:031aa1b4:d:161:1:13101:13151 53aa499982a5cf8e:031aa1b4:d:198:1:15781:15831 ebbd54e09e4771b5:031aa1b4:d:227:1:17990:18040 d4b42c41be40caa6:031aa1b4:d:253:1:19970:20020"]}
+{"version":3,"term":{"cols":80,"rows":24,"type":"xterm-256color","theme":{"fg":"#d0d0d0","bg":"#282c34","palette":"#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"}},"timestamp":1700000000,"title":"Highlight Demo","env":{"SHELL":"bash"},"tags":["st:font-size=16","st:font-family=ui-monospace, \"Cascadia Mono\", \"Cascadia Code\", \"JetBrains Mono\", \"Noto Sans Mono\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace","st:steps=256:20720 141ff646dd3b3c13:031aa1b4:d:14:1:1446:1496 bb52ce5ed6f00bbb:031aa1b4:d:29:1:2918:2968 87465671b6d3249a:031aa1b4:d:38:1:4104:4154 87465671b6d3249a:031aa1b4:d:49:1:5283:5333 ac9e46a5613744a4:031aa1b4:d:101:1:8501:8551 ebcb637f5abe0c78:031aa1b4:d:131:1:10833:10883 ebcb637f5abe0c78:031aa1b4:d:161:1:13101:13151 53aa499982a5cf8e:031aa1b4:d:198:1:15781:15831 ebbd54e09e4771b5:031aa1b4:d:227:1:17990:18040 d4b42c41be40caa6:031aa1b4:d:253:1:19970:20020"]}
 [0.500,"m","comment color is cyan"]
 [0.000,"o","\u001b[36m# comment color is cyan\u001b[0m\r\n"]
 [0.050,"o","$ "]
@@ -253,6 +253,6 @@
 [0.055,"o","'"]
 [0.058,"o","\r\n"]
 [0.200,"o","\u001b[38;2;255;140;0;48;2;40;40;40mtrue color\u001b[0m\r\n"]
-[0.500,"o","$ "]
-[0.450,"o","\u001b[0m"]
+[0.000,"o","\u001b[?25l"]
+[0.700,"o","\u001b[0m"]
 [0.050,"x","0"]

@@ -484,6 +484,7 @@ settings:                        # Defaults for all steps; map-form steps can ov
   typing-jitter: 0.01            # Random variance (+/- seconds) per character
   pre-delay: 0.5                 # Pause before typing each step
   post-delay: 1.0                # Pause after output before the next step
+  # end-prompt: false            # When true, end with the prompt after the last output
   execution-duration: 0.1        # Cast wait after command execution
   stderr-color: red              # When stderr has no ANSI SGR sequences
   # stream-output: false         # When true, replay captured chunk times in the cast
