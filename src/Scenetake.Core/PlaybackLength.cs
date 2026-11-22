@@ -34,7 +34,7 @@ internal static class PlaybackLength
     internal const double ReadingPerLine = 0.08;
     internal const double ReadingMax = 3.0;
 
-    /// <summary>The pause before the next command is typed, kept on top of the reading time.</summary>
+    /// <summary>A moment before a command is typed: kept on top of the reading time, and the least a prompt stays before typing.</summary>
     internal const double BeforeTyping = 0.15;
 
     /// <summary>The time to read a card: this, and <see cref="CardPerLine"/> per line.</summary>
@@ -83,11 +83,23 @@ internal static class PlaybackLength
         for (var i = 0; i <= count; i++)
             Mark(i, gaps[i] > StructuralGap ? Pause : Fixed, PauseFloor);
 
-        // Typing and output first, then the pauses after each step, which win where a one-character prompt looked typed.
-        for (var s = 0; s + 1 < steps.Length; s += 2)
-            MarkStep(steps[s], steps[s + 1]);
-        for (var s = 0; s + 1 < steps.Length; s += 2)
-            MarkReading(steps[s], steps[s + 1]);
+        // Typing and output first, then the still screens between them, which win where a one-character prompt
+        // looked typed. Each step acts at its first typed character, or at its first output when it types nothing.
+        var stepCount = steps.Length / 2;
+        var prompt = OneCharacterPrompt(events);
+        var actions = new int[stepCount];
+        for (var s = 0; s < stepCount; s++)
+            actions[s] = MarkStep(steps[s * 2], steps[s * 2 + 1]);
+
+        // Before the first step: a moment to see the window, and a moment before the first command.
+        if (stepCount > 0 && actions[0] >= 0)
+        {
+            var openingEnd = StillEnd(0, actions[0]);
+            MarkStill(0, openingEnd, openingEnd == actions[0] ? PauseFloor + BeforeTyping : PauseFloor);
+        }
+
+        for (var s = 0; s < stepCount; s++)
+            MarkReading(steps[s * 2], steps[s * 2 + 1], s + 1 < stepCount ? actions[s + 1] : count - 1);
 
         for (var i = 0; i < count; i++)
         {
@@ -136,14 +148,16 @@ internal static class PlaybackLength
             floors[index] = floor;
         }
 
-        // A step's typing, its output, and the pause after it.
-        void MarkStep(int first, int outputs)
+        // A step's typing and its output. Returns where the step acts: its first typed character, or its first output
+        // event when it types nothing. -1 for a range that is not in the cast.
+        int MarkStep(int first, int outputs)
         {
             if (first < 0 || first > count || outputs < 0 || first + outputs > count)
-                return;
+                return -1;
 
-            // The typed command: the characters before Enter, back to the prompt. The gap to the first character is
-            // the prompt's, and stays.
+            // The typed command: the characters before Enter, back to the prompt. The gap to the first character holds
+            // the pause before typing (pre-delay), which keeps a moment.
+            var action = first;
             var j = first - 1;
             if (j >= 0 && events[j].Data == "\r\n")
             {
@@ -156,30 +170,108 @@ internal static class PlaybackLength
                         earliest = j;
                 }
 
+                // A prompt of one character looks typed: the closing prompt tells it, and the command starts after it.
+                if (earliest >= 0 && prompt is not null && events[earliest].Data == prompt)
+                {
+                    var promptIndex = earliest;
+                    Mark(promptIndex, gaps[promptIndex] > StructuralGap ? Pause : Fixed, PauseFloor);
+                    for (earliest = promptIndex + 1; earliest < first - 1 && !IsTypedCharacter(events[earliest]); earliest++)
+                    {
+                    }
+
+                    if (earliest >= first - 1)
+                        earliest = -1;
+                }
+
                 if (earliest >= 0)
-                    Mark(earliest, Fixed, 0);
+                {
+                    Mark(earliest, gaps[earliest] > BeforeTyping ? Pause : Fixed, BeforeTyping);
+                    action = earliest;
+                }
             }
 
             // The output: a long gap with nothing drawn is a wait, a short one is motion.
             for (var i = first; i < first + outputs; i++)
                 Mark(i, gaps[i] > WaitThreshold ? Wait : Fixed, WaitFloor);
+            return action;
         }
 
-        // The pause after a step: the time to read what it printed, and a moment before the next command.
-        void MarkReading(int first, int outputs)
+        // The still screen after a step, from its last output that draws to where the next step acts: the time to read
+        // what it printed, and a moment before the next command. Its post-delay, the next step's comment and prompt, and
+        // that step's pre-delay are all in it, and shrink together. A step at the end keeps it up to the last event.
+        void MarkReading(int first, int outputs, int next)
         {
             if (first < 0 || first > count || outputs < 0 || first + outputs > count)
                 return;
 
+            // A program's last escape codes, such as showing the cursor again, draw nothing, and the screen is already
+            // still before them.
+            var last = first + outputs - 1;
+            while (last >= first && IsSilent(events[last]))
+                last--;
+
             var lines = 0;
-            for (var i = first; i < first + outputs; i++)
+            for (var i = first; i <= last; i++)
             {
                 if (events[i].Kind == CastEventKind.Output)
                     lines += CountLines(events[i].Data);
             }
 
             var reading = Math.Min(ReadingMax, ReadingBase + ReadingPerLine * lines) + BeforeTyping;
-            Mark(first + outputs, Pause, outputs == 0 ? reading + StructuralGap : reading);
+            // Without output that draws, the still screen starts at Enter, and the gap after Enter is in it.
+            var start = last >= first ? last + 1 : first;
+            if (last < first)
+                reading += StructuralGap;
+            if (first + outputs >= count)
+            {
+                // The step's output ends the cast: the default hold on the final screen is part of its still screen.
+                MarkStill(start, count, reading);
+                return;
+            }
+
+            MarkStill(start, StillEnd(start, Math.Max(next, first + outputs)), reading);
+        }
+
+        // The last gap of a still screen from start to end: it stops at the gap to a cleared screen, a card or a clear
+        // step, which shows something else.
+        int StillEnd(int start, int end)
+        {
+            end = Math.Min(end, count - 1);
+            for (var i = start; i < end; i++)
+            {
+                if (events[i].Kind == CastEventKind.Output && events[i].Data.Contains(ScenarioCast.ClearScreen, StringComparison.Ordinal))
+                    return i;
+            }
+
+            return end;
+        }
+
+        // The gaps from start to end as one still screen of at least floor seconds. The short ones, the comment line
+        // and the prompt, stay. The others share the rest of the floor by their length, so one factor shrinks them
+        // together, as one gap would.
+        void MarkStill(int start, int end, double floor)
+        {
+            var still = 0.0;
+            var structural = 0.0;
+            for (var i = start; i <= end; i++)
+            {
+                if (gaps[i] > StructuralGap)
+                    still += gaps[i];
+                else
+                    structural += gaps[i];
+            }
+
+            if (still <= 0)
+                return;
+
+            var share = Math.Min(1, Math.Max(0, floor - structural) / still);
+            for (var i = start; i <= end; i++)
+            {
+                if (gaps[i] > StructuralGap)
+                    Mark(i, Pause, gaps[i] * share);
+                else
+                    Mark(i, Fixed, 0);
+            }
         }
     }
 
@@ -254,6 +346,85 @@ internal static class PlaybackLength
     private static bool IsTypedCharacter(CastEvent ev) =>
         ev.Kind == CastEventKind.Output && !ev.HasUtf8Output && ev.Data.Length > 0 && !char.IsControl(ev.Data[0])
         && StringInfo.GetNextTextElementLength(ev.Data) == ev.Data.Length;
+
+    /// <summary>
+    /// The prompt when it is one character, which looks typed: the closing prompt, the last event that draws. Null for
+    /// a longer prompt, or a cast that ends with a card.
+    /// </summary>
+    private static string? OneCharacterPrompt(IReadOnlyList<CastEvent> events)
+    {
+        for (var i = events.Count - 1; i >= 0; i--)
+        {
+            if (events[i].Kind != CastEventKind.Output || IsSilent(events[i]))
+                continue;
+            return IsTypedCharacter(events[i]) ? events[i].Data : null;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// An event of escape codes that draw nothing: styles, modes such as showing the cursor, and erasing the rest of the
+    /// line, which a program writes as it exits, after its cursor is on an empty line. Switching to or from the
+    /// alternate screen draws.
+    /// </summary>
+    internal static bool IsSilent(CastEvent ev)
+    {
+        if (ev.Kind != CastEventKind.Output || ev.HasUtf8Output || ev.Data.Length == 0)
+            return false;
+
+        var data = ev.Data.AsSpan();
+        var i = 0;
+        while (i < data.Length)
+        {
+            if (data[i] != '\u001b' || i + 1 >= data.Length)
+                return false;
+            if (data[i + 1] is '=' or '>')
+            {
+                // The keypad modes.
+                i += 2;
+                continue;
+            }
+
+            if (data[i + 1] != '[')
+                return false;
+            var end = i + 2;
+            while (end < data.Length && data[end] is >= '0' and <= '?')
+                end++;
+            while (end < data.Length && data[end] is >= ' ' and <= '/')
+                end++;
+            if (end >= data.Length)
+                return false;
+
+            var parameters = data[(i + 2)..end];
+            switch (data[end])
+            {
+                case 'm' or 'K' or 'q':
+                    break;
+                case 'h' or 'l' when !IsAlternateScreen(parameters):
+                    break;
+                default:
+                    return false;
+            }
+
+            i = end + 1;
+        }
+
+        return true;
+
+        static bool IsAlternateScreen(ReadOnlySpan<char> parameters)
+        {
+            if (parameters.IsEmpty || parameters[0] != '?')
+                return false;
+            foreach (var range in parameters[1..].Split(';'))
+            {
+                if (parameters[1..][range] is "47" or "1047" or "1049")
+                    return true;
+            }
+
+            return false;
+        }
+    }
 
     /// <summary>An event that only sets a style, as run-highlight writes around the typed command.</summary>
     private static bool IsStyleOnly(CastEvent ev) =>

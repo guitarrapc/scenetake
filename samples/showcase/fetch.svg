@@ -4,7 +4,7 @@
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
 .bg,rect:not([class]) { shape-rendering: crispEdges; }
-.l { visibility: hidden; animation: 8.862s step-start infinite; }
+.l { visibility: hidden; animation: 8.834s step-start infinite; }
 .c { fill: #d0d0d0; fill-opacity: 0.5; }
 .a{transform:translate(0,82.8px)}
 .e{transform:translate(0,102.8px)}
@@ -13,37 +13,37 @@ text { dominant-baseline: alphabetic; }
 .h{transform:translate(0,202.8px)}
 .b{fill:#fafafa}
 .d{fill:#ce4e4f}
-@keyframes p{0.56421%{visibility:visible}}
-.q{animation-delay:1.1s;animation-name:p}
-@keyframes n{0.38367%{visibility:visible}}
+@keyframes p{7.35794%{visibility:visible}}
+.q{animation-delay:0.5s;animation-name:p}
+@keyframes n{0.38488%{visibility:visible}}
 .r{animation-delay:1.15s;animation-name:n}
-@keyframes s{0.4288%{visibility:visible}}
+@keyframes s{0.43016%{visibility:visible}}
 .t{animation-delay:1.184s;animation-name:s}
-@keyframes o{0.44009%{visibility:visible}}
+@keyframes o{0.44148%{visibility:visible}}
 .u{animation-delay:1.222s;animation-name:o}
-@keyframes v{0.25954%{visibility:visible}}
+@keyframes v{0.26036%{visibility:visible}}
 .w{animation-delay:1.261s;animation-name:v}
 .x{animation-delay:1.284s;animation-name:n}
-@keyframes y{0.24826%{visibility:visible}}
+@keyframes y{0.24904%{visibility:visible}}
 .z{animation-delay:1.318s;animation-name:y}
-@keyframes aa{0.30468%{visibility:visible}}
+@keyframes aa{0.30564%{visibility:visible}}
 .ab{animation-delay:1.34s;animation-name:aa}
 .ac{animation-delay:1.367s;animation-name:o}
-@keyframes ad{15.86549%{visibility:hidden}to{visibility:visible}}
+@keyframes ad{15.91577%{visibility:hidden}to{visibility:visible}}
 .ad{animation-name:ad}
-@keyframes i{18.06589%{visibility:hidden}to{visibility:visible}}
+@keyframes i{18.12316%{visibility:hidden}to{visibility:visible}}
 .i{animation-name:i}
-@keyframes ae{0.05643%{visibility:visible}}
+@keyframes ae{0.0566%{visibility:visible}}
 .k{animation-delay:1.601s;animation-name:ae}
-@keyframes m{18.12232%{visibility:hidden}to{visibility:visible}}
+@keyframes m{18.17976%{visibility:hidden}to{visibility:visible}}
 .m{animation-name:m}
-@keyframes af{59.06116%{visibility:hidden}to{visibility:visible}}
+@keyframes af{52.45641%{visibility:hidden}to{visibility:visible}}
 .af{animation-name:af}
-@keyframes ag{0.31596%{visibility:visible}}
+@keyframes ag{0.31696%{visibility:visible}}
 .ah{animation-delay:1.406s;animation-name:ag}
-@keyframes ai{1.88446%{visibility:visible}}
+@keyframes ai{1.89043%{visibility:visible}}
 .aj{animation-delay:1.434s;animation-name:ai}
-@keyframes ak{40.93884%{visibility:visible}}
+@keyframes ak{34.27666%{visibility:visible}}
 .al{animation-delay:1.606s;animation-name:ak}
 .j{visibility:visible}
 </style>

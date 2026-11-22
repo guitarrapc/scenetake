@@ -22,8 +22,8 @@ text { dominant-baseline: alphabetic; }
 .n{fill:#FF0000}
 .o{fill:#00FF00}
 .p{fill:#005FFF}
-@keyframes ao{0.326734%{visibility:visible}}
-.az{animation-delay:0.8s;animation-name:ao}
+@keyframes ao{2.287134%{visibility:visible}}
+.az{animation-delay:0.5s;animation-name:ao}
 @keyframes ak{0.241783%{visibility:visible}}
 .a0{animation-delay:0.85s;animation-name:ak}
 @keyframes al{0.176436%{visibility:visible}}
@@ -109,7 +109,7 @@ text { dominant-baseline: alphabetic; }
 .cq{animation-name:cq}
 @keyframes cr{18.898255%{visibility:hidden}to{visibility:visible}}
 .cr{animation-name:cr}
-.cs{animation-delay:3.992s;animation-name:ao}
+.cs{animation-delay:3.692s;animation-name:ao}
 .ct{animation-delay:4.042s;animation-name:y}
 .cu{animation-delay:4.075s;animation-name:af}
 .ar{animation-delay:4.114s;animation-name:ad}
@@ -217,7 +217,7 @@ text { dominant-baseline: alphabetic; }
 .fi{animation-name:fi}
 @keyframes fj{47.48742%{visibility:hidden}to{visibility:visible}}
 .fj{animation-name:fj}
-.fk{animation-delay:8.368s;animation-name:ao}
+.fk{animation-delay:8.068s;animation-name:ao}
 .fl{animation-delay:8.418s;animation-name:ad}
 .fm{animation-delay:8.44s;animation-name:ac}
 .au{animation-delay:8.478s;animation-name:ab}
@@ -314,7 +314,7 @@ text { dominant-baseline: alphabetic; }
 .h1{animation-name:h1}
 @keyframes h2{74.42985%{visibility:hidden}to{visibility:visible}}
 .h2{animation-name:h2}
-.h3{animation-delay:12.491s;animation-name:ao}
+.h3{animation-delay:12.191s;animation-name:ao}
 .h4{animation-delay:12.541s;animation-name:am}
 .h5{animation-delay:12.572s;animation-name:x}
 .h6{animation-delay:12.596s;animation-name:x}
@@ -330,7 +330,7 @@ text { dominant-baseline: alphabetic; }
 .if{animation-name:if}
 @keyframes ig{85.623733%{visibility:hidden}to{visibility:visible}}
 .ig{animation-name:ig}
-@keyframes ih{92.811866%{visibility:hidden}to{visibility:visible}}
+@keyframes ih{90.851467%{visibility:hidden}to{visibility:visible}}
 .ih{animation-name:ih}
 .ii{animation-delay:0.998s;animation-name:v}
 .ij{animation-delay:1.032s;animation-name:ae}
@@ -347,7 +347,7 @@ text { dominant-baseline: alphabetic; }
 .iu{animation-delay:2.668s;animation-name:x}
 @keyframes ap{1.306934%{visibility:visible}}
 .iv{animation-delay:2.692s;animation-name:ap}
-@keyframes ax{7.188134%{visibility:visible}}
+@keyframes ax{5.227734%{visibility:visible}}
 .iw{animation-delay:2.892s;animation-name:ax}
 .ix{animation-delay:4.192s;animation-name:af}
 .iy{animation-delay:4.231s;animation-name:t}
@@ -362,7 +362,7 @@ text { dominant-baseline: alphabetic; }
 .i7{animation-delay:6.403s;animation-name:t}
 .i8{animation-delay:7.046s;animation-name:u}
 .i9{animation-delay:7.067s;animation-name:ap}
-@keyframes ay{7.194668%{visibility:visible}}
+@keyframes ay{5.234268%{visibility:visible}}
 .ja{animation-delay:7.267s;animation-name:ay}
 .jb{animation-delay:8.577s;animation-name:ac}
 .jc{animation-delay:8.615s;animation-name:ab}

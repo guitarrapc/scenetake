@@ -2648,6 +2648,22 @@ internal static class TerminalReplay
     }
 
     /// <summary>
+    /// The events without the closing event that scenetake writes after the closing prompt, an SGR reset that draws
+    /// nothing and only sets how long the default hold is (spec_scenario.md → Pauses), when an explicit end hold replaces
+    /// that hold. The end hold then starts when the final screen shows, as it says.
+    /// </summary>
+    internal static IReadOnlyList<CastEvent> WithoutHoldEvent(IReadOnlyList<CastEvent> events, double? endHold)
+    {
+        if (endHold is null || events.Count < 2 || events[^1] is not { Kind: CastEventKind.Output, HasUtf8Output: false, Data: ScenarioCast.SgrReset })
+            return events;
+
+        var trimmed = new CastEvent[events.Count - 1];
+        for (var i = 0; i < trimmed.Length; i++)
+            trimmed[i] = events[i];
+        return trimmed;
+    }
+
+    /// <summary>
     /// Builds the replay timeline: one frame per changed screen state, after trimming a
     /// trailing blank alternate-screen restore. Frames hold no screen contents, so memory
     /// stays proportional to the number of changes, not changes × screen size.

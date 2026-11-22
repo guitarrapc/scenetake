@@ -4,7 +4,7 @@
 text { font-family: ui-monospace, "Cascadia Mono", "Cascadia Code", "JetBrains Mono", "Noto Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 16px; white-space: pre; }
 text { dominant-baseline: alphabetic; }
 .bg,rect:not([class]) { shape-rendering: crispEdges; }
-.l { visibility: hidden; animation: 17.053s step-start infinite; }
+.l { visibility: hidden; animation: 17.018s step-start infinite; }
 .c { fill: #d0d0d0; fill-opacity: 0.5; }
 .a{transform:translate(0,114.8px)}
 .r{transform:translate(0,134.8px)}
@@ -27,164 +27,165 @@ text { dominant-baseline: alphabetic; }
 .j{fill:#282c34}
 .q{fill:#fafafa}
 .v{fill:#7e8e50}
-@keyframes ai{0.293204%{visibility:visible}}
-.b7{animation-delay:1.1s;animation-name:ai}
-@keyframes ab{0.25802%{visibility:visible}}
+@keyframes an{3.819486%{visibility:visible}}
+.b7{animation-delay:0.5s;animation-name:an}
+@keyframes ab{0.25855%{visibility:visible}}
 .b8{animation-delay:1.15s;animation-name:ab}
-@keyframes ac{0.322524%{visibility:visible}}
+@keyframes ac{0.323188%{visibility:visible}}
 .b9{animation-delay:1.194s;animation-name:ac}
-@keyframes ca{0.469126%{visibility:visible}}
+@keyframes ca{0.470091%{visibility:visible}}
 .cb{animation-delay:1.249s;animation-name:ca}
-@keyframes ad{0.340117%{visibility:visible}}
+@keyframes ad{0.340816%{visibility:visible}}
 .cc{animation-delay:1.329s;animation-name:ad}
-@keyframes aj{0.222835%{visibility:visible}}
-.cd{animation-delay:1.387s;animation-name:aj}
-@keyframes ak{0.351845%{visibility:visible}}
-.ce{animation-delay:1.425s;animation-name:ak}
-@keyframes aa{0.375301%{visibility:visible}}
+@keyframes ai{0.223293%{visibility:visible}}
+.cd{animation-delay:1.387s;animation-name:ai}
+@keyframes aj{0.352568%{visibility:visible}}
+.ce{animation-delay:1.425s;animation-name:aj}
+@keyframes aa{0.376073%{visibility:visible}}
 .cf{animation-delay:1.485s;animation-name:aa}
 .cg{animation-delay:1.549s;animation-name:ac}
-.ch{animation-delay:1.604s;animation-name:aj}
+.ch{animation-delay:1.604s;animation-name:ai}
 .ci{animation-delay:1.642s;animation-name:ad}
-@keyframes cj{1.249048%{visibility:visible}}
+@keyframes cj{1.251616%{visibility:visible}}
 .ck{animation-delay:1.7s;animation-name:cj}
-@keyframes cl{0.017593%{visibility:visible}}
+@keyframes cl{0.017629%{visibility:visible}}
 .cm{animation-delay:1.913s;animation-name:cl}
-@keyframes cn{9.013077%{visibility:visible}}
+@keyframes cn{9.031614%{visibility:visible}}
 .co{animation-delay:1.916s;animation-name:cn}
-@keyframes cp{39.142673%{visibility:visible}}
+@keyframes cp{39.223176%{visibility:visible}}
 .y{animation-delay:1.916s;animation-name:cp}
-@keyframes cq{9.388378%{visibility:visible}}
+@keyframes cq{9.407686%{visibility:visible}}
 .cr{animation-delay:1.916s;animation-name:cq}
-@keyframes cs{9.587756%{visibility:visible}}
+@keyframes cs{9.607475%{visibility:visible}}
 .ct{animation-delay:1.916s;animation-name:cs}
-@keyframes cu{17.932329%{visibility:visible}}
+@keyframes cu{17.96921%{visibility:visible}}
 .ae{animation-delay:1.916s;animation-name:cu}
-@keyframes cv{8.749194%{visibility:visible}}
+@keyframes cv{8.767188%{visibility:visible}}
 .ao{animation-delay:1.916s;animation-name:cv}
-@keyframes af{0.263884%{visibility:visible}}
+@keyframes af{0.264426%{visibility:visible}}
 .cw{animation-delay:3.408s;animation-name:af}
 .cx{animation-delay:3.453s;animation-name:aa}
-@keyframes cy{0.369437%{visibility:visible}}
+@keyframes cy{0.370197%{visibility:visible}}
 .cz{animation-delay:3.453s;animation-name:cy}
-@keyframes ap{0.199379%{visibility:visible}}
+@keyframes ap{0.199789%{visibility:visible}}
 .c0{animation-delay:3.516s;animation-name:ap}
-@keyframes c1{29.754296%{visibility:visible}}
+@keyframes c1{29.81549%{visibility:visible}}
 .c2{animation-delay:3.517s;animation-name:c1}
 .c3{animation-delay:3.517s;animation-name:ap}
-@keyframes ag{0.269748%{visibility:visible}}
+@keyframes ag{0.270303%{visibility:visible}}
 .c4{animation-delay:3.55s;animation-name:ag}
-@keyframes c5{29.554918%{visibility:visible}}
+@keyframes c5{29.615702%{visibility:visible}}
 .c6{animation-delay:3.551s;animation-name:c5}
 .aq{animation-delay:3.551s;animation-name:af}
 .ar{animation-delay:3.596s;animation-name:ab}
-@keyframes c7{0.28734%{visibility:visible}}
+@keyframes c7{0.287931%{visibility:visible}}
 .as{animation-delay:3.64s;animation-name:c7}
-@keyframes c8{0.181787%{visibility:visible}}
+@keyframes c8{0.182161%{visibility:visible}}
 .at{animation-delay:3.689s;animation-name:c8}
-@keyframes c9{7.353545%{visibility:visible}}
+@keyframes c9{7.368669%{visibility:visible}}
 .da{animation-delay:3.72s;animation-name:c9}
-@keyframes db{4.996189%{visibility:visible}}
+@keyframes db{5.006464%{visibility:visible}}
 .au{animation-delay:3.72s;animation-name:db}
-@keyframes dc{2.345629%{visibility:visible}}
+@keyframes dc{2.350453%{visibility:visible}}
 .av{animation-delay:4.572s;animation-name:dc}
-@keyframes dd{0.011729%{visibility:visible}}
+@keyframes dd{0.011753%{visibility:visible}}
 .de{animation-delay:4.972s;animation-name:dd}
-@keyframes df{21.210345%{visibility:visible}}
+@keyframes df{21.253967%{visibility:visible}}
 .ah{animation-delay:4.974s;animation-name:df}
-@keyframes aw{0.205243%{visibility:visible}}
+@keyframes aw{0.205665%{visibility:visible}}
 .ax{animation-delay:4.974s;animation-name:aw}
-@keyframes ay{0.240427%{visibility:visible}}
+@keyframes ay{0.240922%{visibility:visible}}
 .az{animation-delay:5.009s;animation-name:ay}
-@keyframes a0{0.345981%{visibility:visible}}
+@keyframes a0{0.346692%{visibility:visible}}
 .a1{animation-delay:5.05s;animation-name:a0}
-@keyframes a2{0.216971%{visibility:visible}}
+@keyframes a2{0.217417%{visibility:visible}}
 .a3{animation-delay:5.109s;animation-name:a2}
 .a4{animation-delay:5.146s;animation-name:aa}
 .a5{animation-delay:5.21s;animation-name:a0}
 .a6{animation-delay:5.269s;animation-name:aw}
-@keyframes a7{0.281476%{visibility:visible}}
+@keyframes a7{0.282055%{visibility:visible}}
 .a8{animation-delay:5.304s;animation-name:a7}
-@keyframes al{0.234563%{visibility:visible}}
-.a9{animation-delay:5.352s;animation-name:al}
+@keyframes ak{0.235046%{visibility:visible}}
+.a9{animation-delay:5.352s;animation-name:ak}
 .ba{animation-delay:5.392s;animation-name:af}
-@keyframes bb{0.357709%{visibility:visible}}
+@keyframes bb{0.358445%{visibility:visible}}
 .bc{animation-delay:5.437s;animation-name:bb}
 .bd{animation-delay:5.498s;animation-name:ac}
 .be{animation-delay:5.553s;animation-name:ag}
-@keyframes bf{0.334253%{visibility:visible}}
+@keyframes bf{0.33494%{visibility:visible}}
 .bh{animation-delay:5.599s;animation-name:bf}
 .bi{animation-delay:5.656s;animation-name:af}
 .bj{animation-delay:5.701s;animation-name:a7}
-.bk{animation-delay:5.749s;animation-name:ak}
-@keyframes dg{0.304932%{visibility:visible}}
+.bk{animation-delay:5.749s;animation-name:aj}
+@keyframes dg{0.305559%{visibility:visible}}
 .bl{animation-delay:5.809s;animation-name:dg}
-@keyframes am{0.310796%{visibility:visible}}
-.bm{animation-delay:5.861s;animation-name:am}
-@keyframes dh{0.363573%{visibility:visible}}
+@keyframes al{0.311435%{visibility:visible}}
+.bm{animation-delay:5.861s;animation-name:al}
+@keyframes dh{0.364321%{visibility:visible}}
 .bn{animation-delay:5.914s;animation-name:dh}
-@keyframes an{0.275612%{visibility:visible}}
-.bo{animation-delay:5.976s;animation-name:an}
-.bp{animation-delay:6.023s;animation-name:an}
-.bq{animation-delay:6.07s;animation-name:aj}
-.br{animation-delay:6.108s;animation-name:am}
-@keyframes di{0.31666%{visibility:visible}}
+@keyframes am{0.276179%{visibility:visible}}
+.bo{animation-delay:5.976s;animation-name:am}
+.bp{animation-delay:6.023s;animation-name:am}
+.bq{animation-delay:6.07s;animation-name:ai}
+.br{animation-delay:6.108s;animation-name:al}
+@keyframes di{0.317312%{visibility:visible}}
 .bs{animation-delay:6.161s;animation-name:di}
 .bt{animation-delay:6.215s;animation-name:ad}
 .bu{animation-delay:6.273s;animation-name:aa}
 .bv{animation-delay:6.337s;animation-name:aa}
-@keyframes dj{0.398757%{visibility:visible}}
+@keyframes dj{0.399577%{visibility:visible}}
 .bw{animation-delay:6.401s;animation-name:dj}
-.bx{animation-delay:6.469s;animation-name:an}
+.bx{animation-delay:6.469s;animation-name:am}
 .by{animation-delay:6.516s;animation-name:ab}
-.bz{animation-delay:6.56s;animation-name:al}
-.b0{animation-delay:6.6s;animation-name:ak}
+.bz{animation-delay:6.56s;animation-name:ak}
+.b0{animation-delay:6.6s;animation-name:aj}
 .b1{animation-delay:6.66s;animation-name:bb}
 .b2{animation-delay:6.721s;animation-name:ag}
 .b3{animation-delay:6.767s;animation-name:bf}
-@keyframes dk{10.361814%{visibility:visible}}
+@keyframes dk{10.383124%{visibility:visible}}
 .dl{animation-delay:6.824s;animation-name:dk}
-@keyframes dm{3.852695%{visibility:visible}}
+@keyframes dm{3.860619%{visibility:visible}}
 .b4{animation-delay:6.824s;animation-name:dm}
-@keyframes dn{0.586408%{visibility:visible}}
+@keyframes dn{0.587614%{visibility:visible}}
 .do{animation-delay:7.481s;animation-name:dn}
-@keyframes dp{5.148655%{visibility:visible}}
+@keyframes dp{5.159244%{visibility:visible}}
 .b5{animation-delay:7.582s;animation-name:dp}
 .dq{animation-delay:8.46s;animation-name:a2}
 .dr{animation-delay:8.497s;animation-name:ag}
-@keyframes ds{0.252156%{visibility:visible}}
+@keyframes ds{0.252674%{visibility:visible}}
 .dt{animation-delay:8.543s;animation-name:ds}
-@keyframes du{0.023457%{visibility:visible}}
+@keyframes du{0.023505%{visibility:visible}}
 .dv{animation-delay:8.586s;animation-name:du}
-@keyframes b6{0.005865%{visibility:visible}}
+@keyframes b6{0.005877%{visibility:visible}}
 .dw{animation-delay:8.59s;animation-name:b6}
-@keyframes dx{50.378232%{visibility:hidden}to{visibility:visible}}
+@keyframes dx{50.481842%{visibility:hidden}to{visibility:visible}}
 .dx{animation-name:dx}
-.dy{animation-delay:11.191s;animation-name:ai}
+.dy{animation-delay:10.591s;animation-name:an}
 .dz{animation-delay:11.241s;animation-name:ad}
-.d0{animation-delay:11.299s;animation-name:am}
-@keyframes d1{0.527767%{visibility:visible}}
+.d0{animation-delay:11.299s;animation-name:al}
+@keyframes d1{0.528852%{visibility:visible}}
 .d2{animation-delay:11.352s;animation-name:d1}
 .d3{animation-delay:11.442s;animation-name:ab}
-.d4{animation-delay:11.486s;animation-name:ai}
-.d5{animation-delay:11.536s;animation-name:al}
-@keyframes d6{67.882484%{visibility:hidden}to{visibility:visible}}
-.d6{animation-name:d6}
-@keyframes z{69.090482%{visibility:hidden}to{visibility:visible}}
-.z{animation-name:z}
-@keyframes d7{84.548173%{visibility:hidden}to{visibility:visible}}
+@keyframes d4{0.293807%{visibility:visible}}
+.d5{animation-delay:11.486s;animation-name:d4}
+.d6{animation-delay:11.536s;animation-name:ak}
+@keyframes d7{68.022094%{visibility:hidden}to{visibility:visible}}
 .d7{animation-name:d7}
-@keyframes d8{0.228699%{visibility:visible}}
-.d9{animation-delay:1.249s;animation-name:d8}
-.ea{animation-delay:1.288s;animation-name:ay}
-.eb{animation-delay:1.7s;animation-name:ac}
-@keyframes ec{0.926524%{visibility:visible}}
-.ed{animation-delay:1.755s;animation-name:ec}
-@keyframes ee{0.193515%{visibility:visible}}
-.ef{animation-delay:3.517s;animation-name:ee}
-@keyframes eg{0.246291%{visibility:visible}}
-.eh{animation-delay:8.543s;animation-name:eg}
-.ei{animation-delay:8.585s;animation-name:b6}
+@keyframes z{69.232577%{visibility:hidden}to{visibility:visible}}
+.z{animation-name:z}
+@keyframes d8{81.19638%{visibility:hidden}to{visibility:visible}}
+.d8{animation-name:d8}
+@keyframes d9{0.22917%{visibility:visible}}
+.ea{animation-delay:1.249s;animation-name:d9}
+.eb{animation-delay:1.288s;animation-name:ay}
+.ec{animation-delay:1.7s;animation-name:ac}
+@keyframes ed{0.928429%{visibility:visible}}
+.ee{animation-delay:1.755s;animation-name:ed}
+@keyframes ef{0.193913%{visibility:visible}}
+.eg{animation-delay:3.517s;animation-name:ef}
+@keyframes eh{0.246798%{visibility:visible}}
+.ei{animation-delay:8.543s;animation-name:eh}
+.ej{animation-delay:8.585s;animation-name:b6}
 .x{visibility:visible}
 </style>
 <defs>
@@ -349,9 +350,9 @@ text { dominant-baseline: alphabetic; }
 <text class="l d0" x="74 93.84 103.76" y="134.8">$gi</text>
 <text class="l d2" x="74" y="134.8" textLength="49.6">$ git</text>
 <text class="l d3 r" x="74" textLength="69.44">$ git d</text>
-<text class="l d4 r" x="74" textLength="79.36">$ git di</text>
-<text class="l d5 r" x="74" textLength="89.28">$ git dif</text>
-<text class="l d6 r" x="74" textLength="99.2">$ git diff</text>
+<text class="l d5 r" x="74" textLength="79.36">$ git di</text>
+<text class="l d6 r" x="74" textLength="89.28">$ git dif</text>
+<text class="l d7 r" x="74" textLength="99.2">$ git diff</text>
 <text class="l z q" x="74" y="154.8" font-weight="bold" textLength="317.44">diff --git a/greet.py b/greet.py</text>
 <text class="l z q" x="74" y="174.8" font-weight="bold" textLength="287.68">index a4011bb..eaa7b78 100644</text>
 <text class="l z m q" x="74" font-weight="bold" textLength="138.88">--- a/greet.py</text>
@@ -361,21 +362,21 @@ text { dominant-baseline: alphabetic; }
 <text class="l z u" x="163.28" textLength="347.2">mark = &quot;!&quot; if self.excited else &quot;.&quot;</text>
 <text class="l z n v" x="74" textLength="446.4">+        # Say hello, with a mark at the end.</text>
 <text class="l z w" x="163.28" textLength="337.28">return f&quot;Hello, {self.name}{mark}&quot;</text>
-<text class="l d7 o" x="74">$</text>
-<use href="#c" x="123.6" y="102" class="l d9"/>
-<use href="#c" x="133.52" y="102" class="l ea"/>
-<use href="#c" x="212.88" y="102" class="l eb"/>
-<use href="#c" x="74" y="122" class="l ed"/>
+<text class="l d8 o" x="74">$</text>
+<use href="#c" x="123.6" y="102" class="l ea"/>
+<use href="#c" x="133.52" y="102" class="l eb"/>
+<use href="#c" x="212.88" y="102" class="l ec"/>
+<use href="#c" x="74" y="122" class="l ee"/>
 <use href="#c" x="74" y="102" class="l ao"/>
-<use href="#c" x="103.76" y="522" class="l ef"/>
+<use href="#c" x="103.76" y="522" class="l eg"/>
 <use href="#c" x="113.68" y="522" class="l aq"/>
 <use href="#c" x="153.36" y="302" class="l au"/>
 <use href="#c" x="74" y="302" class="l av"/>
 <use href="#c" x="153.36" y="302" class="l ax"/>
 <use href="#c" x="510.48" y="302" class="l b4"/>
 <use href="#c" x="500.56" y="302" class="l b5"/>
-<use href="#c" x="103.76" y="522" class="l eh"/>
-<use href="#c" x="74" y="522" class="l ei"/>
+<use href="#c" x="103.76" y="522" class="l ei"/>
+<use href="#c" x="74" y="522" class="l ej"/>
 </g>
 <rect class="l x viewport-chrome-0" x="64.5" y="64.5" width="812.6" height="481" rx="7.5" ry="7.5" fill="none" stroke="#ffffff" stroke-opacity="0.16"/>
 </svg>

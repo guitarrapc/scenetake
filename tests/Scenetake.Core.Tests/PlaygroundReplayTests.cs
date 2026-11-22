@@ -672,7 +672,8 @@ internal static class PlaygroundReplayCases
         var events = CastReader.ReadText(castText).Events;
         return Expect(loop > 5 && plain.Played == Seconds(loop), $"as recorded: {plain.Played}, loop {loop}")
             & Expect(sped.Played == Seconds(loop / 2) + " at 2x", $"at 2x: {sped.Played}")
-            & Expect(held.Played == Seconds(events[^1].Time + 4 + 1), $"end-hold 4 and fade-out 1: {held.Played}")
+            // An end hold starts at the closing prompt, the event before the one that sets the default hold.
+            & Expect(events[^2].Data == "$ " && held.Played == Seconds(events[^2].Time + 4 + 1), $"end-hold 4 and fade-out 1: {held.Played}")
             & Expect(fitted.Played == "5.0s, length 5s", $"length 5: {fitted.Played}")
             & Expect(failed.Error is not null && failed.Played is null, $"an error gives no length: {failed.Played}");
     }

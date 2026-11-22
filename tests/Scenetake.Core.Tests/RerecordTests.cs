@@ -957,7 +957,8 @@ internal static class RerecordCases
             }
 
             var valid = Record(ThreeSteps, step => ThreeStepsOutput(step, 0)).Cast;
-            var halfPair = valid.Replace("[0.050,\"o\",\"h\"]", "[0.050,\"o\",\"\\ud83d\"]", StringComparison.Ordinal);
+            // The first typed character, after the prompt and pre-delay.
+            var halfPair = valid.Replace("[0.250,\"o\",\"h\"]", "[0.250,\"o\",\"\\ud83d\"]", StringComparison.Ordinal);
             return Expect(PreviousCast.TryRead(Path.Combine(directory, "missing.cast"), 80, 24, out var missing) is null && missing is null, $"a missing file: {missing}")
                 & Expect(Problem(valid) == "(read)", $"a valid cast: {Problem(valid)}")
                 // Valid JSON whose string has no text: the recording goes on, and says so.
@@ -965,7 +966,7 @@ internal static class RerecordCases
                 & Expect(Problem("{\"version\":3,\"term\":{\"cols\":80,\"rows\":24}}\n[0.5,\"o\",\"$ \"]\n") is { } noTag && noTag.Contains("no step ranges", StringComparison.Ordinal), "a cast without the tag")
                 & Expect(Problem("{\"version\":2,\"width\":80,\"height\":24}\n") is { } v2 && v2.Contains("v3", StringComparison.Ordinal), "a v2 cast")
                 & Expect(Problem("not json\n") is { } garbage && garbage.Contains("not a cast", StringComparison.Ordinal), "a file that is not JSON")
-                & Expect(Problem(valid.Replace("[0.050,\"o\",\"h\"]", "[0.050,\"i\",\"h\"]", StringComparison.Ordinal)) is { } input && input.Contains("does not write", StringComparison.Ordinal), $"an input event: {Problem(valid.Replace("[0.050,\"o\",\"h\"]", "[0.050,\"i\",\"h\"]", StringComparison.Ordinal))}");
+                & Expect(Problem(valid.Replace("[0.250,\"o\",\"h\"]", "[0.250,\"i\",\"h\"]", StringComparison.Ordinal)) is { } input && input.Contains("does not write", StringComparison.Ordinal), $"an input event: {Problem(valid.Replace("[0.250,\"o\",\"h\"]", "[0.250,\"i\",\"h\"]", StringComparison.Ordinal))}");
         }
         finally
         {

@@ -155,6 +155,9 @@ internal static partial class ScenarioCast
         }
 
         double t   = 0.5;
+        // The pauses of the last step shown, which set how long the final screen stays.
+        var lastPost = 0.0;
+        var lastPre = 0.0;
         CastCursorTracker? cursorTracker = null;
         // Whether a step has been shown yet. It does not depend on what the step printed, so a step that printed
         // nothing the cast keeps lays out the steps after it as in any other recording of the scenario.
@@ -177,24 +180,23 @@ internal static partial class ScenarioCast
             {
                 // A card shows lines centered on a cleared screen, such as a title before the demo and an install
                 // line after it, without a command: the same on every OS and in the playground, which runs nothing.
-                if (!anyStepShown)
-                    t += preDelay;
+                // pre-delay passes before the card shows, and the card stays for its post-delay.
+                t += GetDouble(command.Extra, preDelay, "pre-delay");
                 anyStepShown = true;
                 cardEvents.Add(events.Count);
                 cardLines.Add(card);
                 events.Add(CastEvent.Output(Math.Round(t, 6), HideCursor + ClearScreen));
                 cardOnScreen = true;
                 t += GetDouble(command.Extra, CardPostDelay, "post-delay");
-                t += GetDouble(command.Extra, preDelay, "pre-delay");
                 continue;
             }
 
             if (command.Clear)
             {
                 // A clear step clears the screen as `clear` does, without a command: the same in a terminal
-                // without TERM, on every OS, and in the playground, which runs nothing.
-                if (!anyStepShown)
-                    t += preDelay;
+                // without TERM, on every OS, and in the playground, which runs nothing. pre-delay passes before it clears.
+                lastPre = GetDouble(command.Extra, preDelay, "pre-delay");
+                t += lastPre;
                 anyStepShown = true;
                 events.Add(CastEvent.Output(Math.Round(t, 6), cardOnScreen ? ClearScreen + ShowCursor : ClearScreen));
                 cardOnScreen = false;
@@ -207,8 +209,8 @@ internal static partial class ScenarioCast
                     t += 0.05;
                 }
 
-                t += GetDouble(command.Extra, postDelay, "post-delay");
-                t += GetDouble(command.Extra, preDelay, "pre-delay");
+                lastPost = GetDouble(command.Extra, postDelay, "post-delay");
+                t += lastPost;
                 continue;
             }
 
@@ -288,9 +290,9 @@ internal static partial class ScenarioCast
             var normalizeTyping = GetBool(command.Extra, false, "normalize-typing");
             var continueOnError = GetBool(command.Extra, false, "continue-on-error");
 
-            if (!anyStepShown)
-                t += preDelay;
             anyStepShown = true;
+            lastPre = cmdPre;
+            lastPost = cmdPost;
 
             // After a card the demo goes on from a cleared screen, as after a clear step, with the cursor shown again.
             var afterCard = cardOnScreen;
@@ -322,8 +324,13 @@ internal static partial class ScenarioCast
             // Seeded by the text as the cast shows it, after masking: a seed from a secret would let the typing confirm
             // a guess of it.
             var stepRandom = TypingRandom(usePty, useInteractive, show, masker?.MaskUncounted(typed) ?? typed);
+            // pre-delay passes with the prompt on the screen, as a person pauses before typing, or before the output
+            // of a step that types nothing. The prompt itself shows as soon as the step before has paused for its
+            // post-delay, as a shell draws it when the command ends.
             if (show == StepShow.All)
-                EmitTypedCommand(events, ref t, Prompt(stepFolder), masker?.MaskText(typed) ?? typed, cmdSpeed, cmdJitter, stepRandom, hasRunHighlight, runHighlightStyle);
+                EmitTypedCommand(events, ref t, Prompt(stepFolder), cmdPre, masker?.MaskText(typed) ?? typed, cmdSpeed, cmdJitter, stepRandom, hasRunHighlight, runHighlightStyle);
+            else
+                t += cmdPre;
 
             var width = scenario.Width ?? RenderSettingsResolver.DefaultTerminalCols;
             var height = scenario.Height ?? RenderSettingsResolver.DefaultTerminalRows;
@@ -354,7 +361,7 @@ internal static partial class ScenarioCast
                 {
                     if (options.LogRunning)
                         Console.Error.WriteLine($"  not run (rerun: false): {command.Cmd}");
-                    t = reusedEnd + cmdPost + cmdPre;
+                    t = reusedEnd + cmdPost;
                     continue;
                 }
             }
@@ -496,7 +503,6 @@ internal static partial class ScenarioCast
             }
 
             t += cmdPost;
-            t += cmdPre;
         }
 
         // The closing prompt shows the folder the last step left, which the outputs file keeps for a replay. A closing
@@ -507,7 +513,16 @@ internal static partial class ScenarioCast
         if (cardOnScreen)
             events.Add(CastEvent.Output(Math.Round(t, 6), HideCursor));
         else if (anyStepShown)
+        {
+            // The closing prompt shows after the last step's post-delay, as each step's prompt does. The final screen
+            // stays 2 x (post-delay + pre-delay) after the last output: an event that changes nothing ends the
+            // recording, and the render holds the screen as long again. An end-hold leaves the event out
+            // (TerminalReplay.WithoutHoldEvent).
             events.Add(CastEvent.Output(Math.Round(t, 6), Prompt(options.EndFolder)));
+            var closingHold = lastPost / 2 + lastPre;
+            if (closingHold > 0)
+                events.Add(CastEvent.Output(Math.Round(t + closingHold, 6), SgrReset));
+        }
 
         if (cardEvents.Count > 0)
         {
@@ -1134,6 +1149,7 @@ internal static partial class ScenarioCast
         List<CastEvent> events,
         ref double t,
         string prompt,
+        double pause,
         string cmd,
         double speed,
         double jitter,
@@ -1141,8 +1157,9 @@ internal static partial class ScenarioCast
         bool hasRunHighlight,
         string runHighlightStyle)
     {
+        // The prompt, then the pause before typing (pre-delay).
         events.Add(CastEvent.Output(Math.Round(t, 6), prompt));
-        t += 0.05;
+        t += pause + 0.05;
 
         if (hasRunHighlight && !string.IsNullOrEmpty(runHighlightStyle))
             events.Add(CastEvent.Output(Math.Round(t, 6), runHighlightStyle));

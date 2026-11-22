@@ -102,8 +102,8 @@ text { dominant-baseline: alphabetic; }
 .b5{fill:#97aa60}
 .b6{fill:#96fff8}
 .b7{fill:#82b8e0}
-@keyframes cz{0.343832%{visibility:visible}}
-.dc{animation-delay:1.1s;animation-name:cz}
+@keyframes cz{4.469812%{visibility:visible}}
+.dc{animation-delay:0.5s;animation-name:cz}
 @keyframes ci{0.171916%{visibility:visible}}
 .dd{animation-delay:1.15s;animation-name:ci}
 @keyframes ce{0.18567%{visibility:visible}}
@@ -208,7 +208,7 @@ text { dominant-baseline: alphabetic; }
 .fc{animation-delay:3.577s;animation-name:cb}
 @keyframes fd{24.831522%{visibility:hidden}to{visibility:visible}}
 .fd{animation-name:fd}
-.fe{animation-delay:6.886s;animation-name:cz}
+.fe{animation-delay:6.286s;animation-name:cz}
 @keyframes ct{0.302572%{visibility:visible}}
 .ff{animation-delay:6.936s;animation-name:ct}
 .fg{animation-delay:6.98s;animation-name:cg}
@@ -257,7 +257,7 @@ text { dominant-baseline: alphabetic; }
 .gh{animation-name:gh}
 @keyframes cy{57.364874%{visibility:hidden}to{visibility:visible}}
 .cy{animation-name:cy}
-@keyframes gi{78.682437%{visibility:hidden}to{visibility:visible}}
+@keyframes gi{74.556457%{visibility:hidden}to{visibility:visible}}
 .gi{animation-name:gi}
 .gj{animation-delay:1.283s;animation-name:cd}
 .gk{animation-delay:1.3s;animation-name:cu}
@@ -301,7 +301,7 @@ text { dominant-baseline: alphabetic; }
 @keyframes da{0.955853%{visibility:visible}}
 .hk{animation-delay:3.507s;animation-name:da}
 .hl{animation-delay:3.646s;animation-name:da}
-@keyframes hm{21.32444%{visibility:visible}}
+@keyframes hm{17.19846%{visibility:visible}}
 .hn{animation-delay:3.785s;animation-name:hm}
 .ho{animation-delay:7.105s;animation-name:ck}
 .hp{animation-delay:7.137s;animation-name:cm}
@@ -317,7 +317,7 @@ text { dominant-baseline: alphabetic; }
 .hz{animation-delay:7.959s;animation-name:cv}
 .h0{animation-delay:8.099s;animation-name:cx}
 .h1{animation-delay:8.142s;animation-name:c8}
-@keyframes h2{21.317563%{visibility:visible}}
+@keyframes h2{17.191584%{visibility:visible}}
 .h3{animation-delay:8.342s;animation-name:h2}
 .db{visibility:visible}
 </style>

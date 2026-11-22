@@ -29,6 +29,18 @@ public sealed class PlaybackLengthTests
 
     [Test]
     public async Task StepRangesSkipMarkers() => await Assert.That(PlaybackLengthCases.StepRangesSkipMarkers()).IsTrue();
+
+    [Test]
+    public async Task StillScreenShrinksAsOne() => await Assert.That(PlaybackLengthCases.StillScreenShrinksAsOne("$ ")).IsTrue();
+
+    [Test]
+    public async Task StillScreenShrinksAsOneAfterAOneCharacterPrompt() => await Assert.That(PlaybackLengthCases.StillScreenShrinksAsOne(">")).IsTrue();
+
+    [Test]
+    public async Task StillScreenKeepsItsReadingTime() => await Assert.That(PlaybackLengthCases.StillScreenKeepsItsReadingTime()).IsTrue();
+
+    [Test]
+    public async Task SilentEscapeCodes() => await Assert.That(PlaybackLengthCases.SilentEscapeCodes()).IsTrue();
 }
 
 internal static class PlaybackLengthCases
@@ -86,13 +98,16 @@ internal static class PlaybackLengthCases
         var typingRoom = TypingGaps(recording.Events).Sum(i => Gaps(recording.Events)[i] - PlaybackLength.TypingFloor);
         var length = shortest + typingRoom / 2;
         var fitted = RenderSettingsResolver.FitLength(recording.Events, settings with { Length = length }, recording.LoopDuration)!;
+        var before = Gaps(recording.Events);
         var after = Gaps(fitted.Events);
         var wait = Index(recording.Events, "[#####] done\r\n");
+        // The still screen after build: its post-delay, the comment and prompt of the next step, and that step's pre-delay.
         var pause = Index(recording.Events, "\u001b[36m# show\u001b[0m\r\n");
+        var still = after[pause] + after[pause + 1] + after[pause + 2];
         var typing = TypingGaps(recording.Events);
         return Expect(Math.Abs(fitted.Played - length) < 0.01, $"played {fitted.Played:F3}, expected {length:F3} (natural {natural:F3})")
             && Expect(Math.Abs(after[wait] - PlaybackLength.WaitFloor) < 1e-6, $"the wait is {after[wait]}, not at its floor")
-            && Expect(after[pause] < Gaps(recording.Events)[pause] && after[pause] >= ReadingFloor(1) - 1e-6, $"the pause after build is {after[pause]}")
+            && Expect(after[pause] < before[pause] && Math.Abs(still - ReadingFloor(1)) < 1e-6, $"the still screen after build is {still}, expected {ReadingFloor(1)}")
             && Expect(typing.All(i => after[i] > PlaybackLength.TypingFloor + 1e-6 && after[i] < 0.1 - 1e-6), "typing should be between its floor and as typed");
     }
 
@@ -141,6 +156,66 @@ internal static class PlaybackLengthCases
         return Expect(ranges.Length == 4, $"ranges: [{string.Join(", ", ranges)}]")
             && Expect(recording.Events[ranges[0]].Data == "[#    ]\r" && ranges[1] == 3, $"build: {ranges[0]}+{ranges[1]}")
             && Expect(recording.Events[ranges[2]].Data == "hello\r\n" && ranges[3] == 1, $"show: {ranges[2]}+{ranges[3]}");
+    }
+
+    // A program that shows the cursor again 0.4 s after its last line, as it exits, and long pauses around the next prompt.
+    private const string StillScenario = """
+        settings:
+          prompt: "{0}"
+          typing-speed: 0.05
+          typing-jitter: 0
+          pre-delay: 1.0
+          post-delay: 2.0
+        steps:
+          - run: logo
+            pty: true
+          - echo next
+        """;
+
+    private static CommandExecution StillRun(StepStart step) =>
+        step.UsePty ? Pty((0.1, "LOGO\r\n"), (0.5, "\u001b[?25h")) : Pipe("next\n");
+
+    internal static bool StillScreenShrinksAsOne(string prompt)
+    {
+        // The still screen after the logo, from its last line to the next typed character: the cursor shown again,
+        // post-delay, and the next step's pre-delay with its prompt. One factor shrinks all three, as one pause.
+        var (recording, settings) = Read(StillScenario.Replace("{0}", prompt, StringComparison.Ordinal), StillRun);
+        var natural = Played(recording, settings);
+        var fitted = RenderSettingsResolver.FitLength(recording.Events, settings with { Length = natural - 1 }, recording.LoopDuration)!;
+        var before = Gaps(recording.Events);
+        var after = Gaps(fitted.Events);
+        var tail = Index(recording.Events, "\u001b[?25h");
+        var nextPrompt = tail + 1;
+        var firstTyped = nextPrompt + 1;
+        double Factor(int i) => after[i] / before[i];
+        return Expect(Math.Abs(fitted.Played - (natural - 1)) < 0.01, $"played {fitted.Played:F3}, expected {natural - 1:F3}")
+            && Expect(recording.Events[nextPrompt].Data == prompt && recording.Events[firstTyped].Data == "e", "the events are not the tail, the prompt, and the typing")
+            && Expect(Factor(tail) < 1 - 1e-6, $"the gap before the cursor shows again stayed {after[tail]:F3}: it is motion, not part of the still screen")
+            && Expect(Math.Abs(Factor(tail) - Factor(nextPrompt)) < 1e-6 && Math.Abs(Factor(nextPrompt) - Factor(firstTyped)) < 1e-6,
+                $"the parts shrank by {Factor(tail):F4}, {Factor(nextPrompt):F4}, and {Factor(firstTyped):F4}, not by one factor");
+    }
+
+    internal static bool StillScreenKeepsItsReadingTime()
+    {
+        // At the floors, the still screen after the logo's one line is its reading time, and the first gap to it, the
+        // program's 0.1 s before its line, stays.
+        var (recording, settings) = Read(StillScenario.Replace("{0}", "$ ", StringComparison.Ordinal), StillRun);
+        var fitted = RenderSettingsResolver.FitLength(recording.Events, settings with { Length = 1 }, recording.LoopDuration)!;
+        var after = Gaps(fitted.Events);
+        var tail = Index(recording.Events, "\u001b[?25h");
+        var still = after[tail] + after[tail + 1] + after[tail + 2];
+        var line = Index(recording.Events, "LOGO\r\n");
+        return Expect(Math.Abs(still - ReadingFloor(1)) < 1e-6, $"the still screen is {still:F3}, expected the reading time {ReadingFloor(1):F3}")
+            && Expect(Math.Abs(after[line] - Gaps(recording.Events)[line]) < 1e-6, "the gap before the program's line changed");
+    }
+
+    internal static bool SilentEscapeCodes()
+    {
+        static bool Silent(string data) => PlaybackLength.IsSilent(CastEvent.Output(0, data));
+        return Expect(Silent("\u001b[?25h") && Silent("\u001b[0m\u001b[?25h\u001b[K") && Silent("\u001b[?1h\u001b=") && Silent("\u001b[2 q"), "codes that draw nothing")
+            && Expect(!Silent("\u001b[?1049l") && !Silent("\u001b[?25l\u001b[?1049h"), "the alternate screen draws")
+            && Expect(!Silent("x") && !Silent("\r\n") && !Silent("\u001b[0mok") && !Silent("\u001b[2J") && !Silent("\u001b[H") && !Silent("\u001b]0;title\u0007"), "text, line breaks, clears, moves, and titles")
+            && Expect(!Silent("") && !Silent("\u001b[") && !Silent("\u001b"), "an empty or cut event");
     }
 
     /// <summary>A recording as the renderers read it: composed, written as a cast with its st:steps tag, and read back.</summary>

@@ -675,7 +675,8 @@ internal static class ShellStateCases
         var result = PlaygroundRender.RenderScenario(yaml, parsed, new PlaygroundOptions(), renderSvg: false);
         var output = CastOutput(Encoding.UTF8.GetString(result.Cast!));
         var noFolders = PlaygroundRender.RenderScenario(yaml, StepOutputs.Parse(Encoding.UTF8.GetString(stream.ToArray()).Replace("\"folder\"", "\"other\"").Replace("\"endFolder\"", "\"other\"")), new PlaygroundOptions(), renderSvg: false);
-        return Expect(output.Contains("~ $ echo one", StringComparison.Ordinal) && output.Contains("my-app $ cd src", StringComparison.Ordinal) && output.EndsWith("src $ ", StringComparison.Ordinal), Show(output))
+        // The closing prompt, and the event after it that sets the final screen's hold.
+        return Expect(output.Contains("~ $ echo one", StringComparison.Ordinal) && output.Contains("my-app $ cd src", StringComparison.Ordinal) && output.EndsWith("src $ \u001b[0m", StringComparison.Ordinal), Show(output))
             && Expect(CastOutput(Encoding.UTF8.GetString(noFolders.Cast!)).Contains("~ $ cd src", StringComparison.Ordinal), "a file without folders shows ~");
     }
 

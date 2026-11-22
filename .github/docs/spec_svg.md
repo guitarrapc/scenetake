@@ -78,7 +78,7 @@ A program can load its own glyphs into the terminal with a DECDLD string and dra
 - Output is self-contained animated SVG (CSS only, no JavaScript).
 - Animations **loop indefinitely**; one cycle matches agg GIF timing with `--last-frame-duration 0`: cast playback through the last output event, then hold the final frame for the preceding output-to-output idle gap before restarting at `t = 0`.
 - **Ending** ([spec_scenario.md](spec_scenario.md) → `render`, [spec_cli.md](spec_cli.md) → Options):
-  - `end-hold` replaces that hold: the loop is the last event's time plus `end-hold`.
+  - `end-hold` replaces that hold: the loop is the last event's time plus `end-hold`. A recording ends with an event after the closing prompt that draws nothing and only sets the default hold ([spec_scenario.md](spec_scenario.md) → Pauses). With `end-hold` that event is left out, so the hold starts when the closing prompt shows, as `end-hold: 0` asks.
   - `fade-out` adds its seconds after the hold. Over them the rows and the cursor fade from opacity 1 to 0, linearly, and the loop starts again at full opacity. They sit in one group, `<g class="fade">`, with one `opacity` animation of the loop's length. The terminal's background, the window, and `background` are outside it and stay, so the end looks like the terminal clearing, also through a translucent window. `fade` is never given to a row, color, or timing class.
   - `speed` plays the recording faster or slower before the end is added (Playback speed below): the loop is the last event's time divided by the speed, plus the default hold divided by it, or plus `end-hold` as set.
   - `loop: false` writes the shared rule with `forwards` in place of `infinite`. The SVG plays once, and each element keeps its value at the end of the loop: the elements of the final screen are visible from then on, and no others. Elements visible to the end use a rule without `animation-name` or keyframes that end visible, and every other window ends hidden, so nothing else changes. There is no fade then: it would fade the final screen for good.
@@ -199,22 +199,25 @@ Sizes are of LF files.
   | Order | Kind | What it is | Floor |
   |---|---|---|---|
   | 1 | Wait | A gap inside a command's output longer than 0.5 s, with nothing drawn: a build's silence, `sleep`, a person thinking in an interactive step | 0.3 s |
-  | 2 | Pause | The gap after a step's output: the time to read it | 0.6 s + 0.08 s per line of its output (at most 3 s), and 0.15 s before the next command |
+  | 2 | Pause | The still screen after a step's output, up to the next typed character: the time to read it. The step's `post-delay`, the next comment and prompt, and the next step's `pre-delay` are in it and shrink together, and so are the escape codes at the end of the output that draw nothing, such as a program showing the cursor again as it exits | 0.6 s + 0.08 s per line of its output (at most 3 s), and 0.15 s before the next command |
   | 2 | Pause | The gap after a card | 1.0 s + 0.25 s per line |
-  | 2 | Pause | The default hold on the final screen, and other gaps over 0.2 s, such as the one before the first step | 1 s for the hold, 0.3 s for the others |
+  | 2 | Pause | The screen before the first command: the empty window, the prompt, and the first `pre-delay` | 0.45 s |
+  | 2 | Pause | A prompt's `pre-delay` with no output before it, such as after a card or a clear step | 0.15 s |
+  | 2 | Pause | The default hold on the final screen, and other gaps over 0.2 s | 1 s for the hold, 0.3 s for the others |
   | 3 | Typing | The gaps between a command's typed characters | 0.025 s a character |
   | — | Motion | Gaps inside output up to 0.5 s: a progress bar, a TUI redrawing, keys echoed | Never shrinks |
   | — | Structure | Gaps up to 0.2 s outside output: the prompt, Enter, a comment line | Never shrinks |
 
 - **What never changes.** A recording that is already within the length plays as recorded: nothing is stretched. An explicit `end-hold` and the `fade-out` are seconds of the output and count toward the length as they are.
 - **When it cannot fit.** With every kind at its floor, the output plays at its shortest, and stderr warns: `length 15s is shorter than this recording can play: 36.6s with every wait, pause, and typed character at its shortest. Leave out steps or output, or set speed instead`. A uniform speed-up past the floors would make the text unreadable, which defeats the demo, so it is left to the author.
-- **Where the steps are.** The kinds come from the cast's `st:steps` tag ([spec_scenario.md](spec_scenario.md) → Recording again): which events are each step's output. The typed characters are the events before a step's Enter, back to its prompt. A cast without the tag, written by another tool or an earlier scenetake, plays as recorded with a warning.
+- **Where the steps are.** The kinds come from the cast's `st:steps` tag ([spec_scenario.md](spec_scenario.md) → Recording again): which events are each step's output. The typed characters are the events before a step's Enter, back to its prompt. A prompt of one character looks typed, and the closing prompt tells it apart. A cast without the tag, written by another tool or an earlier scenetake, plays as recorded with a warning.
 - **The cast keeps the recorded times.** The length is the `st:length` tag ([spec_cast.md](spec_cast.md)), as speed is `st:speed`, so each output can have its own length from one recording: the README's SVG as recorded, and a 15 s mp4 for X. The same cast always gives the same timing, and a re-recording that keeps every step's output keeps the output too.
 - **Lengths on stderr.** Each `Written:` line of an SVG, mp4, or GIF gives how long it plays and the length: `15.0s, length 15s`.
 - **Frame rates.** Without `--fps`, mp4 and GIF raise their default rate as for speed, by the recorded length over the played one.
 - **Why at render time.** The cast stays as recorded, so the length can differ per output, and the outputs are known in full: a reading pause needs the number of lines a step printed, which a recording knows only after it typed the step. A first prototype on 2026-11-22 set the timing keys before recording from a target. It needed a second pass for the line counts, and wall-clock output times moved the typing speed from run to run.
 - **Why at most, and no stretching.** The same prototype stretched short demos up to the target: a three-command demo reached 30 s only with 5 s pauses, and looked sluggish. Demos have upper limits in practice (X's 140 s, a reader's patience), not lower ones.
 - **Why this order.** A wait shows nothing, so it costs the viewer least. A pause is reading time, kept above what its output needs. Typing is the demo itself, and at 0.025 s a character it still reads as typing. One factor for all of them, as the prototype had, shrank the reading pauses as much as a build's silence.
+- **Why the still screen shrinks as one** (2026-11-22). The reading floor first applied only to the gap after a step's output, and the gap from the prompt to the first character never shrank. Once `pre-delay` passed after the prompt ([spec_scenario.md](spec_scenario.md) → Pauses), a demo with `post-delay: 0` had nothing to shrink there and kept all of its `pre-delay`. The viewer reads the output for the whole still screen, whichever pause the time comes from. The welcome sample's logo also showed the cursor again 0.25 s after its last line. That gap counted as motion and never shrank, though nothing moved.
 
 ### Fit and crop
 

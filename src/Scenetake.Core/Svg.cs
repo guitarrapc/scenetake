@@ -907,6 +907,7 @@ internal static class RenderSettingsResolver
     /// </summary>
     internal static IReadOnlyList<CastEvent> ApplySpeed(IReadOnlyList<CastEvent> events, ResolvedRenderSettings settings, ref double? loopDuration)
     {
+        events = TerminalReplay.WithoutHoldEvent(events, settings.EndHold);
         if (FitLength(events, settings, loopDuration) is { } fitted)
         {
             loopDuration = fitted.LoopDuration;
@@ -931,7 +932,7 @@ internal static class RenderSettingsResolver
     /// </summary>
     internal static PlaybackLength.Result? FitLength(IReadOnlyList<CastEvent> events, ResolvedRenderSettings settings, double? loopDuration) =>
         settings.Length is double length && settings.StepRanges is { } steps
-            ? PlaybackLength.Fit(events, steps, loopDuration ?? TerminalReplay.ComputeLoopDuration(events), settings.EndHold, settings.FadeOut ?? 0, length)
+            ? PlaybackLength.Fit(TerminalReplay.WithoutHoldEvent(events, settings.EndHold), steps, loopDuration ?? TerminalReplay.ComputeLoopDuration(events), settings.EndHold, settings.FadeOut ?? 0, length)
             : null;
 
     /// <summary>

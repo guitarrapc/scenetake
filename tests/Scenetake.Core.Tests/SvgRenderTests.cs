@@ -754,7 +754,8 @@ internal static class SvgRenderCases
     internal static bool EndHoldAndFadeOutSetTheLoop()
     {
         var recording = CastReader.Read(TestEnv.RepoPath("samples/basic.cast"));
-        var loop = recording.Events[^1].Time + 2 + 0.5;
+        // The end hold starts at the closing prompt, the event before the one that sets the default hold.
+        var loop = recording.Events[^2].Time + 2 + 0.5;
         var svg = SvgRender.RenderToString(recording.Events, recording.Width, recording.Height,
             recording.RenderSettings with { EndHold = 2, FadeOut = 0.5 }, recording.LoopDuration);
         var loopText = loop.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
@@ -805,15 +806,19 @@ internal static class SvgRenderCases
         var fast = Svg(recording.RenderSettings with { Speed = 2 });
         var held = Svg(recording.RenderSettings with { Speed = 2, EndHold = 2, FadeOut = 0.5 });
         var ok = Expect(fast.Contains(Loop(recording.LoopDuration / 2), StringComparison.Ordinal), "2x: half the loop");
-        // Times between the event times, which are whole milliseconds.
+        // Times between the event times, which are whole milliseconds. The SVG keeps whole milliseconds too, so at 2x an
+        // event half a millisecond off may fall on either side of a time near it: those times are left out.
         for (var t = 0.2137; t < recording.LoopDuration; t += 0.7)
         {
+            if (recording.Events.Any(ev => Math.Abs(ev.Time - t) < 0.002))
+                continue;
             var expected = string.Join("|", VisibleRowsAt(normal, t).OrderBy(static row => row.Key).Select(static row => row.Value));
             var actual = string.Join("|", VisibleRowsAt(fast, t / 2).OrderBy(static row => row.Key).Select(static row => row.Value));
             ok &= Expect(expected == actual, $"2x at {t / 2:0.###}s shows 1x at {t:0.###}s: {actual} vs {expected}");
         }
 
-        ok &= Expect(held.Contains(Loop(recording.Events[^1].Time / 2 + 2 + 0.5), StringComparison.Ordinal), "2x with end-hold 2 and fade-out 0.5: the hold and fade are not halved")
+        // The end hold starts at the closing prompt, the event before the one that sets the default hold.
+        ok &= Expect(held.Contains(Loop(recording.Events[^2].Time / 2 + 2 + 0.5), StringComparison.Ordinal), "2x with end-hold 2 and fade-out 0.5: the hold and fade are not halved")
             & Expect(Svg(recording.RenderSettings with { Speed = 1 }) == normal, "1x is the recording");
 
         // A still is not played: --at names the recording's time at any speed.
