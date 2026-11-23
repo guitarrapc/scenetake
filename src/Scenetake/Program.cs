@@ -3374,12 +3374,12 @@ static string CreateInitialScenarioYaml(string? shell)
 
 static void PrintUsage()
 {
-    Console.Error.WriteLine("Usage: scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--save-keys FILE] [--save-outputs FILE] [--replay FILE] [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH | --size WxH] [--font-file PATH] <scenario.yaml> [output]");
+    Console.Error.WriteLine("Usage: scenetake [--verbose] [--strict] [--format cast|svg|mp4|png|gif] [--save-keys FILE] [--save-outputs FILE] [--replay FILE] [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] [--fps N] [--crf N] [--max-size WxH] [--size WxH|W:H] [--font-file PATH] <scenario.yaml> [output]");
     Console.Error.WriteLine("       scenetake [options] <scenario.yaml> <scenario.yaml>... | <folder/*.yaml>");
     Console.Error.WriteLine("       scenetake svg [--at TIME] [--font-size N] [--font-family FAMILIES] [--theme NAME] [--window none|macos|windows] [--max-fps N] <input.cast> [output.svg]");
-    Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
+    Console.Error.WriteLine("       scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH] [--size WxH|W:H] <input.cast> [output.mp4]");
     Console.Error.WriteLine("       scenetake png [--at TIME] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output.png]");
-    Console.Error.WriteLine("       scenetake gif [--fps N] [--max-size WxH | --size WxH] [--no-loop] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output.gif]");
+    Console.Error.WriteLine("       scenetake gif [--fps N] [--max-size WxH] [--size WxH|W:H] [--no-loop] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output.gif]");
     Console.Error.WriteLine("       scenetake capture [options] [-o output] -- <command>");
     Console.Error.WriteLine("       scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]");
     Console.Error.WriteLine("Run 'scenetake --help' for what each option does.");
@@ -3406,7 +3406,7 @@ static void PrintCaptureHelp() =>
 
 static void PrintGifUsage()
 {
-    Console.Error.WriteLine("Usage: scenetake gif [--fps N] [--max-size WxH | --size WxH] [--no-loop] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output.gif]");
+    Console.Error.WriteLine("Usage: scenetake gif [--fps N] [--max-size WxH] [--size WxH|W:H] [--no-loop] [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] <input.cast> [output.gif]");
     Console.Error.WriteLine("Run 'scenetake gif --help' for what each option does.");
 }
 
@@ -3418,7 +3418,7 @@ static void PrintPngUsage()
 
 static void PrintMp4Usage()
 {
-    Console.Error.WriteLine("Usage: scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH | --size WxH] <input.cast> [output.mp4]");
+    Console.Error.WriteLine("Usage: scenetake mp4 [--font-size N] [--font-family FAMILIES] [--font-file PATH] [--theme NAME] [--window none|macos|windows] [--fps N] [--crf N] [--max-size WxH] [--size WxH|W:H] <input.cast> [output.mp4]");
     Console.Error.WriteLine("Run 'scenetake mp4 --help' for what each option does.");
 }
 
@@ -3934,8 +3934,9 @@ static bool TryTakeOptionValue(string[] args, ref int i, string name, out string
 
 static bool TryConsumeMp4Arg(string[] args, ref int i, Mp4Options options, out string error)
 {
-    // --size sets the exact video size, so a --max-size limit would have nothing to do.
-    const string SizeConflictError = "--size and --max-size cannot be used together";
+    // --size WxH sets the exact video size, so a --max-size limit would have nothing to do. --size W:H sets only the
+    // shape, which --max-size then scales.
+    const string SizeConflictError = "--size WxH and --max-size cannot be used together: --size WxH sets the video's size, and --size W:H, a shape such as 16:9, takes --max-size";
     var arg = args[i];
     if (TryTakeOptionValue(args, ref i, "--fps", out var value, out error))
     {
@@ -3962,8 +3963,14 @@ static bool TryConsumeMp4Arg(string[] args, ref int i, Mp4Options options, out s
     }
     else if (TryTakeOptionValue(args, ref i, "--size", out value, out error))
     {
-        if (error.Length == 0 && options.Size.HasValue)
+        var shape = value.Contains(':', StringComparison.Ordinal);
+        if (error.Length == 0 && (options.Size.HasValue || options.Shape.HasValue))
             error = "duplicate option: --size";
+        else if (error.Length == 0 && shape)
+        {
+            if (Mp4Settings.TryParseShape(value, out var shapeWidth, out var shapeHeight, out error))
+                options.Shape = (shapeWidth, shapeHeight);
+        }
         else if (error.Length == 0 && options.MaxSize.HasValue)
             error = SizeConflictError;
         else if (error.Length == 0 && Mp4Settings.TryParseSize(value, out var frameWidth, out var frameHeight, out error))

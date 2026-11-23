@@ -289,6 +289,15 @@ internal static partial class ScenarioCast
             var useInteractive = GetBool(command.Extra, false, "interactive");
             var normalizeTyping = GetBool(command.Extra, false, "normalize-typing");
             var continueOnError = GetBool(command.Extra, false, "continue-on-error");
+            // A terminal gets stderr and stdout as one stream, and a person draws an interactive step's screen, so these
+            // keys have nothing to color there. They used to do nothing without a word.
+            if (usePty && command.Extra.ContainsKey("stderr-color"))
+                Warn("stderr-color", command.Cmd, "does nothing with pty: true, where stderr and stdout are one stream: color it with the program's own options");
+            if (useInteractive && cmdHighlights is not null)
+            {
+                Warn("highlight", command.Cmd, "does nothing with interactive: true, whose screen a person draws");
+                cmdHighlights = null;
+            }
 
             anyStepShown = true;
             lastPre = cmdPre;
@@ -435,7 +444,9 @@ internal static partial class ScenarioCast
                     chunks,
                     cmdExecutionDuration,
                     cmdCastTiming,
-                    options.Verbose);
+                    options.Verbose,
+                    cmdHighlights,
+                    command.Cmd);
             }
             else
             {
@@ -743,14 +754,20 @@ internal static partial class ScenarioCast
         return result;
     }
 
-    /// <summary>Adds a PTY step's output (<see cref="RemovePtyLeadingInit"/>) to the cast, timed by the step's settings.</summary>
+    /// <summary>
+    /// Adds a PTY step's output (<see cref="RemovePtyLeadingInit"/>) to the cast, timed by the step's settings, with the
+    /// step's <paramref name="highlights"/> (<see cref="ScenarioCast.ApplyPtyHighlights"/>). The output file keeps the
+    /// chunks without them, so a replay colors them as the scenario says then.
+    /// </summary>
     internal static double EmitPtyStepOutput(
         List<CastEvent> events,
         double commandStart,
         IReadOnlyList<TimedBytes> chunks,
         double executionDuration,
         CastTimingSettings timing,
-        bool verbose)
+        bool verbose,
+        List<HighlightSpec>? highlights = null,
+        string cmd = "")
     {
         if (chunks.Count == 0)
             return commandStart + executionDuration;
@@ -776,11 +793,27 @@ internal static partial class ScenarioCast
         for (var i = 0; i < timedChunks.Count; i++)
             coalescedInput.Add((timedChunks[i].Time, timedChunks[i].Data));
         var coalesced = CastTimingPipeline.CoalesceTimedUtf8(coalescedInput);
-        foreach (var (time, data) in coalesced)
+        if (highlights is null)
         {
-            events.Add(CastEvent.OutputUtf8(
-                Math.Round(commandStart + time, 6),
-                data));
+            foreach (var (time, data) in coalesced)
+            {
+                events.Add(CastEvent.OutputUtf8(
+                    Math.Round(commandStart + time, 6),
+                    data));
+            }
+        }
+        else
+        {
+            // Each chunk ends on a whole character (CoalesceTimedUtf8), so each decodes by itself.
+            var reads = new string[coalesced.Count];
+            for (var i = 0; i < coalesced.Count; i++)
+                reads[i] = Encoding.UTF8.GetString(coalesced[i].Data);
+            var painted = ApplyPtyHighlights(reads, highlights, cmd);
+            for (var i = 0; i < coalesced.Count; i++)
+            {
+                if (painted[i].Length > 0)
+                    events.Add(CastEvent.Output(Math.Round(commandStart + coalesced[i].Time, 6), painted[i]));
+            }
         }
 
         return Math.Max(commandStart + executionDuration, commandStart + coalesced[^1].Time);

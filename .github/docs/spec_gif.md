@@ -16,7 +16,7 @@ X, Reddit, and Zenn take GIFs, and Zenn takes no video. A GIF plays everywhere w
 
 - **The frames.** The mp4's frames ([spec_mp4.md](spec_mp4.md)): frame `k` shows the screen at `k / fps`, through the same loop as the SVG, with the end hold and the fade-out. So the GIF draws the fonts, the window chrome, the background, opacity, and blur as the mp4 does.
 - **Frame rate.** `--fps` takes `1`–`50`, default `20`. A GIF stores each frame's delay in hundredths of a second, and browsers slow delays under 2 hundredths down to 10, so 50 is the highest rate a GIF plays at. At 20 every delay is 5 hundredths. With `speed` above 1 and no `--fps`, the default is 20 times the speed, rounded up, up to 50: 40 at 2x, whose delays alternate 2 and 3 hundredths, and which has the frames and the size of the GIF at 1x ([spec_svg.md](spec_svg.md#playback-speed) → Playback speed).
-- **Size.** The terminal's own size, as an mp4 without options. `--max-size` scales down to fit, and `--size` pads to an exact size, as for mp4.
+- **Size.** The terminal's own size, as an mp4 without options. `--max-size` scales down to fit, and `--size` pads to an exact size or a shape, as for mp4. Unlike an mp4, a GIF without `--size` is not padded to 3:1.
 - **Loop.** The GIF loops (`NETSCAPE2.0` with no count) unless the scenario's `render.loop`, the cast's `st:loop`, or `--no-loop` says it plays once. Then the loop extension is left out, and, as an SVG that plays once, the GIF has no fade-out and stops on its final screen. A fade-out set anyway gives a warning.
 - **Warning.** A GIF over 3MB, which Zenn does not take, gets a warning: a smaller `--font-size` makes it smaller and keeps the text sharp, a lower `--fps` helps a full-screen program, and X and Reddit take mp4.
 

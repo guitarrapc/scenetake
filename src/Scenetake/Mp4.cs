@@ -5,7 +5,10 @@ using System.Text;
 namespace Scenetake;
 
 /// <summary>mp4 options. Defaults and the reasons for them are in .github/docs/spec_mp4.md.</summary>
-/// <remarks><see cref="FrameWidth"/> and <see cref="FrameHeight"/> are <c>--size</c>; 0 means none.</remarks>
+/// <remarks>
+/// <see cref="FrameWidth"/> and <see cref="FrameHeight"/> are <c>--size WxH</c>, and <see cref="ShapeWidth"/> and
+/// <see cref="ShapeHeight"/> are <c>--size W:H</c>. 0 means none.
+/// </remarks>
 internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int MaxHeight, int FrameWidth, int FrameHeight, string? FontFile)
 {
     internal const int DefaultFps = 30, MinFps = 1, MaxFps = 60;
@@ -21,7 +24,29 @@ internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int 
     internal const int KeyframeSeconds = 30;    // longest gap between keyframes, for seeking
     internal const int Level52DpbMacroblocks = 184_320; // H.264 level 5.2 decoded picture buffer
 
-    internal static Mp4Settings Default => new(DefaultFps, DefaultCrf, 0, 0, 0, 0, null);
+    /// <summary>
+    /// The widest and the tallest shape an mp4 takes without <c>--size</c>: 3:1 and 1:3, the range X's media upload
+    /// guidance gives. A frame beyond it is padded to it (<see cref="RasterLayout.PadToAspect"/>).
+    /// </summary>
+    internal const int MaxAspect = 3;
+
+    internal static Mp4Settings Default => new(DefaultFps, DefaultCrf, 0, 0, 0, 0, null) { LimitAspect = true };
+
+    /// <summary>
+    /// Whether a frame wider than 3:1 or taller than 1:3 is padded to that shape when <c>--size</c> is not given. An
+    /// mp4 sets it and a GIF does not: fit leaves out the empty rows, so a short demo is a strip, which a video site
+    /// takes badly, and a GIF goes into a page, where a strip is what the demo is.
+    /// </summary>
+    internal bool LimitAspect { get; init; }
+
+    /// <summary>
+    /// <c>--size W:H</c>: the shape the frame is padded to at the terminal's own size, such as 16:9 for a video site
+    /// that takes that shape. Unlike <c>--size WxH</c>, it leaves the size to the terminal and to <c>--max-size</c>.
+    /// </summary>
+    internal int ShapeWidth { get; init; }
+
+    /// <inheritdoc cref="ShapeWidth"/>
+    internal int ShapeHeight { get; init; }
 
     /// <summary>
     /// The frame rate when <c>--fps</c> is not given: <paramref name="defaultFps"/> times the playback speed, rounded up,
@@ -45,7 +70,7 @@ internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int 
     /// <summary>Parses <c>--size WxH</c>, for example <c>1920x1080</c>. The video is exactly this size, so both sides must be even for yuv420p.</summary>
     internal static bool TryParseSize(string text, out int width, out int height, out string error)
     {
-        if (!TryParseDimensions(text, "--size", "1920x1080", out width, out height, out error))
+        if (!TryParseDimensions(text, "--size", "1920x1080", out width, out height, out error, ", or a shape W:H such as 16:9"))
             return false;
 
         if (((width | height) & 1) != 0)
@@ -57,7 +82,28 @@ internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int 
         return true;
     }
 
-    private static bool TryParseDimensions(string text, string name, string example, out int width, out int height, out string error)
+    /// <summary>
+    /// Parses <c>--size W:H</c>, a shape such as <c>16:9</c>: the frame is padded to it at the terminal's own size.
+    /// Each side is a whole number, so a shape written in pixels, such as <c>1920:1080</c>, works too.
+    /// </summary>
+    internal static bool TryParseShape(string text, out int width, out int height, out string error)
+    {
+        width = height = 0;
+        var parts = text.Split(':');
+        if (parts.Length != 2
+            || !int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out width)
+            || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out height)
+            || width is < 1 or > MaxSize || height is < 1 or > MaxSize)
+        {
+            error = $"--size W:H must have each side between 1 and {MaxSize} (for example 16:9): {text}";
+            return false;
+        }
+
+        error = "";
+        return true;
+    }
+
+    private static bool TryParseDimensions(string text, string name, string example, out int width, out int height, out string error, string alternative = "")
     {
         width = height = 0;
         var parts = text.Split('x', 'X');
@@ -66,7 +112,7 @@ internal readonly record struct Mp4Settings(int Fps, int Crf, int MaxWidth, int 
             || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out height)
             || width is < MinSize or > MaxSize || height is < MinSize or > MaxSize)
         {
-            error = $"{name} must be WIDTHxHEIGHT with each side between {MinSize} and {MaxSize} (for example {example}): {text}";
+            error = $"{name} must be WIDTHxHEIGHT with each side between {MinSize} and {MaxSize} (for example {example}){alternative}: {text}";
             return false;
         }
 
@@ -404,11 +450,19 @@ internal static class Mp4Render
     internal static RasterLayout CreateLayout(int fontSize, int cols, int rows, WindowStyle window, Mp4Settings settings) =>
         CreateLayout(new ResolvedRenderSettings(fontSize, RenderSettingsResolver.DefaultFontFamily, default, window), cols, rows, settings);
 
-    /// <summary>The drawn frame for <paramref name="render"/>'s font size, window, padding, margin, and background.</summary>
+    /// <summary>
+    /// The drawn frame for <paramref name="render"/>'s font size, window, padding, margin, and background: inside the
+    /// <c>--size WxH</c> frame, padded to the <c>--size W:H</c> shape, or for an mp4 without either, padded to at most
+    /// 3:1 (<see cref="Mp4Settings.LimitAspect"/>).
+    /// </summary>
     internal static RasterLayout CreateLayout(ResolvedRenderSettings render, int cols, int rows, Mp4Settings settings)
     {
         var layout = RasterLayout.Create(render.FontSize, cols, rows, render.Window, render.Padding, render.Margin, render.Background is not null);
-        return settings.FrameWidth > 0 ? layout.FitFrame(settings.FrameWidth, settings.FrameHeight) : layout;
+        if (settings.FrameWidth > 0)
+            return layout.FitFrame(settings.FrameWidth, settings.FrameHeight);
+        if (settings.ShapeWidth > 0)
+            return layout.PadToShape(settings.ShapeWidth, settings.ShapeHeight);
+        return settings.LimitAspect ? layout.PadToAspect(Mp4Settings.MaxAspect) : layout;
     }
 
     /// <summary>

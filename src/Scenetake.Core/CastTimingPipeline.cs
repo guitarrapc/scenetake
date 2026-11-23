@@ -341,7 +341,7 @@ internal static class HighlightSplitter
 
     // ESC [ params m, where params are digits, semicolons, and colons. A private marker such as `>` makes it another
     // sequence that also ends in m.
-    private static bool IsSgrSequence(string text, int start, int end)
+    internal static bool IsSgrSequence(string text, int start, int end)
     {
         if (end <= start + 2 || text[start] != '\u001b' || text[start + 1] != '[' || text[end - 1] != 'm')
             return false;
@@ -357,7 +357,7 @@ internal static class HighlightSplitter
     // Whether an SGR resets (a parameter that is empty or 0) and whether it sets anything. The values after 38, 48, or
     // 58 belong to that color, so a 0 among them, as in `38;2;255;0;0`, is no reset. A colon starts sub-parameters of
     // the one before it, such as the underline style in `4:3`.
-    private static void ReadSgr(string text, int start, int end, out bool resets, out bool sets)
+    internal static void ReadSgr(string text, int start, int end, out bool resets, out bool sets)
     {
         resets = false;
         sets = false;

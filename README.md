@@ -199,6 +199,7 @@ The tables below say what each command and option is for. `scenetake --help` and
 | `--crf N` | Balance mp4 quality and file size |
 | `--max-size WxH` | Stay under a site's upload limit, such as `1280x1024` for X |
 | `--size WxH` | Make a video of an exact size, such as `1920x1080` |
+| `--size W:H` | Make a video of a shape, such as `16:9`, at the terminal's own size |
 | `--font-file PATH` | Use a font file that is not installed. mp4, GIF, and PNG draw the text themselves, and an SVG uses the viewer's fonts |
 | **capture** | |
 | `--width N`, `--height N` | Set the terminal size |
@@ -307,6 +308,17 @@ steps:
 | GIF | SVG |
 | --- | --- |
 | ![](samples/pty.gif) | ![](samples/pty.svg) |
+
+`highlight` colors the lines of a `pty: true` step too, on top of the program's own colors.
+
+```yaml
+steps:
+  - run: git log --oneline -5
+    pty: true
+    highlight:
+      - color: "bold bg:blue"
+        at: "1"             # the newest commit
+```
 
 `keys` sends keystrokes to the TUI, and `timeout` sets when to stop it.
 
@@ -420,6 +432,8 @@ outputs:
 | ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
 
 By default, empty rows below the output are left out. To keep the video at the full resolution, use `--fit none`. With `--fit none`, the default `80×24` is 820×488 as mp4 and 829.6×504 as SVG. For a 1920×1080 video, raise `--font-size`: the text is easier to read, and the size comes close to the resolution.
+
+Many services take an mp4 up to 3:1, so an mp4 wider than that gets space above and below, with the terminal in the middle. For 16:9, use `--size 16:9`.
 
 Set the color theme with `render.theme.preset` or `--theme`.
 

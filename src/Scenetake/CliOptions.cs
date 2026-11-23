@@ -282,6 +282,10 @@ sealed class Mp4Options
     internal int? Crf { get; set; }
     internal (int Width, int Height)? MaxSize { get; set; }
     internal (int Width, int Height)? Size { get; set; }
+
+    /// <summary><c>--size W:H</c>, the shape to pad to. Only one of it and <see cref="Size"/> is set.</summary>
+    internal (int Width, int Height)? Shape { get; set; }
+
     internal string? FontFile { get; set; }
 
     /// <summary>The first mp4 option given, for errors when mp4 output is not selected.</summary>
@@ -301,9 +305,12 @@ sealed class Mp4Options
     /// <paramref name="speed"/> as an mp4's is (<see cref="Mp4Settings.DefaultFpsAt"/>).
     /// </summary>
     internal Mp4Settings ToGifSettings(double speed) =>
-        ToSettings(speed) with { Fps = Fps ?? Mp4Settings.DefaultFpsAt(GifRender.DefaultFps, GifRender.MaxFps, speed) };
+        ToSettings(speed) with { Fps = Fps ?? Mp4Settings.DefaultFpsAt(GifRender.DefaultFps, GifRender.MaxFps, speed), LimitAspect = false };
 
-    /// <summary>The mp4 settings. Without <c>--fps</c>, the frame rate follows the playback <paramref name="speed"/>.</summary>
+    /// <summary>
+    /// The mp4 settings. Without <c>--fps</c>, the frame rate follows the playback <paramref name="speed"/>. Without
+    /// <c>--size</c>, a strip is padded to 3:1 (<see cref="Mp4Settings.LimitAspect"/>).
+    /// </summary>
     internal Mp4Settings ToSettings(double speed) => new(
         Fps ?? Mp4Settings.DefaultFpsAt(Mp4Settings.DefaultFps, Mp4Settings.MaxFps, speed),
         Crf ?? Mp4Settings.DefaultCrf,
@@ -311,5 +318,10 @@ sealed class Mp4Options
         MaxSize?.Height ?? 0,
         Size?.Width ?? 0,
         Size?.Height ?? 0,
-        FontFile);
+        FontFile)
+    {
+        LimitAspect = true,
+        ShapeWidth = Shape?.Width ?? 0,
+        ShapeHeight = Shape?.Height ?? 0,
+    };
 }

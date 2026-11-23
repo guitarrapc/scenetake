@@ -336,8 +336,8 @@ Map-form steps recognize:
 | `typing-speed`, `typing-jitter`, `pre-delay`, `post-delay`, `execution-duration` | no | Override `settings` for this step |
 | `stream-output`, `max-duration`, `silence-threshold`, `max-idle` | no | Override `settings` output-timing keys for this step |
 | `run-highlight` | no | Style for typed command text |
-| `highlight` | no | List of `{ color, at }` for command output |
-| `stderr-color` | no | Override `settings.stderr-color` for this step. Ignored when `pty: true` |
+| `highlight` | no | List of `{ color, at }` for command output, by line and column. With `pty: true`, by the lines the program writes, over its own colors. A warning with `interactive: true`, which it does not color |
+| `stderr-color` | no | Override `settings.stderr-color` for this step. A warning with `pty: true`, where stdout and stderr are one stream |
 | `pty` | no | default `false`. Pseudo-terminal capture for TUI commands. Recording behavior: [spec_pty.md](spec_pty.md) |
 | `interactive` | no | default `false`. Requires `pty: true`. Human operates the host terminal until the child exits. Recording behavior: [spec_pty.md](spec_pty.md) → Interactive PTY |
 | `continue-on-error` | no | Default `false`. Allow a non-zero step exit without a warning, including with `--strict`. Use for expected failures. See Step exit codes. |
@@ -353,7 +353,7 @@ Map-form steps recognize:
 
 Two kinds of step run no command and have no `run`: `- clear: true` (Clear steps below) and `- card: ...` (Card steps below).
 
-Coloring value formats, range grammar, and validation: [spec_highlight.md](spec_highlight.md). Coloring does not apply to PTY-captured output.
+Coloring value formats, range grammar, and validation: [spec_highlight.md](spec_highlight.md). How `highlight` reads PTY output: [spec_highlight.md](spec_highlight.md#pty-output) → PTY output.
 
 ### What a step shows
 
@@ -607,7 +607,7 @@ So a recording compares each step with the cast that is already at its output pa
 - **Who writes the line.** `init` and `capture --save-scenario` start their file with it, for their own version. Every scenario in `samples/` starts with it too, so a reader who copies one gets the checks, and the README's copy of `samples/scenario_format.yaml` shows it. `scripts/set_version.cs` moves those lines to the new version's tag. A scenario written by hand can take the line from one of those. An editor that does not read the comment can map the URL to the scenario files in its settings. No comment seeds the typing (Determinism below), so adding the line, or moving it to a later tag, changes no recording.
 - **Why the version's tag.** The schema at a tag lists the keys that version reads. One on `main` would complete keys that an older binary warns about as unknown. A version that has no tag yet, such as a development build, names a URL that is not found, and the editor then checks nothing.
 - **What it marks.** What scenetake stops at before anything runs or warns about, as far as a schema can say it: an unknown key at any level, a value of the wrong type or out of range, a name that is not a theme, a window, a fit, a show value, a format, or a key name, a step without `run` that is neither a card nor a clear step, a key that a card, clear, background, `show: none`, or `show: output` step does not take, `keys` without `pty: true`, `interactive: true` without `pty: true` or with `keys` or `timeout`, `normalize-typing: true` without `interactive: true`, `wait` without `background: true`, `wait-timeout` without `wait`, and an outputs entry's option that its format does not take (`crf` on a GIF, `at` on an mp4). A message for a key that does not apply comes from `errorMessage`, which yaml-language-server shows and other validators ignore.
-- **What it takes as scenetake does.** A name in any case (`show: None`, `key: Enter`, `format: SVG`), because scenetake reads names so. A number where text goes: a `run`, a `wait` or `type` entry, a card line, a prompt part, a `mask` text, a `pre` or `post` command. A highlight `at` as a number or a list. An outputs entry's `speed: 2x`, `at: end`, and `max-size: 400X300`, as the command line takes them. A flag set to `false` needs nothing else: `interactive: false` without `pty` is no mistake.
+- **What it takes as scenetake does.** A name in any case (`show: None`, `key: Enter`, `format: SVG`), because scenetake reads names so. A number where text goes: a `run`, a `wait` or `type` entry, a card line, a prompt part, a `mask` text, a `pre` or `post` command. A highlight `at` as a number or a list. An outputs entry's `speed: 2x`, `at: end`, `max-size: 400X300`, and `size: 16:9`, as the command line takes them. A flag set to `false` needs nothing else: `interactive: false` without `pty` is no mistake.
 - **Where it is stricter.** A quoted number or a quoted `true` or `false` is marked everywhere. Under `settings` and `render` scenetake refuses it, while a step or an outputs entry reads it. One rule is easier to follow than two.
 - **What it does not check.** What needs the file system or the recording: that `cwd`, a background image, or a font file exists, a card line wider than the terminal, a crop that leaves nothing, a `speed` written as text above 4, and whether a style names a known color. scenetake reports these when it runs.
 - **Why draft-07.** yaml-language-server and the other editors check draft-07 in full, while their support for later drafts varies.

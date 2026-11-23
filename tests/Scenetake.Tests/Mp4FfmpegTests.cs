@@ -183,6 +183,13 @@ public sealed class Mp4FfmpegTests
     }
 
     [Test]
+    public async Task SizeShapeEncodesTheShape()
+    {
+        TestEnv.RequireOnPath("ffmpeg", "ffprobe");
+        await Assert.That(Skipping.Run(() => Mp4FfmpegCases.SizeShapeEncodesTheShape(TestEnv.Binary, TestEnv.RepoRoot, Work))).IsTrue();
+    }
+
+    [Test]
     public async Task ScreenSwitchesAreKeyframes()
     {
         TestEnv.RequireOnPath("ffmpeg", "ffprobe");
@@ -431,7 +438,7 @@ internal static class Mp4FfmpegCases
         (["gif", "--fps", "51", "samples/basic.cast"], "--fps for a GIF must be between 1 and 50: 51"),
         (["gif", "--max-fps", "10", "samples/basic.cast"], "--max-fps applies to SVG, use --fps for GIF"),
         (["gif", "--at", "1", "samples/basic.cast"], "--at applies to SVG and PNG: a GIF plays the whole recording"),
-        (["gif", "--size", "640x480", "--max-size", "640x480", "samples/basic.cast"], "--size and --max-size cannot be used together"),
+        (["gif", "--size", "640x480", "--max-size", "640x480", "samples/basic.cast"], "--size WxH and --max-size cannot be used together"),
         (["gif", scenario], "is a scenario, and gif converts a cast file. To record the scenario with a GIF, run: scenetake --format gif "),
         (["--format", "gif", "--crf", "20", scenario], "--crf applies to mp4"),
         (["--format", "gif", "--at", "1", scenario], "--at applies to SVG and PNG: a GIF plays the whole recording"),
@@ -530,6 +537,54 @@ internal static class Mp4FfmpegCases
         return Size(Probe(padded)) == ("640", "360") && paddedStderr.Contains("(640x360, 12fps", StringComparison.Ordinal)
             && Size(Probe(scaled)) == ("320", "180")
             && Size(Probe(stem + ".mp4")) == ("1280", "720");
+    }
+
+    internal static bool SizeShapeEncodesTheShape(string scenetake, string repoRoot, string work)
+    {
+        // --size 16:9 pads the terminal to 16:9 at its own size, and --max-size, in either order, then scales it.
+        // An outputs entry takes the shape unquoted: YAML reads 16:9 as text, not as a number in base 60.
+        var shaped = Path.Combine(work, "shaped.mp4");
+        var limited = Path.Combine(work, "shaped-limited.mp4");
+        var (shapedExit, shapedStderr) = Exec(scenetake, repoRoot, ["mp4", "--size", "16:9", "--fps", "12", "samples/pty.cast", shaped]);
+        var (limitedExit, limitedStderr) = Exec(scenetake, repoRoot, ["mp4", "--max-size", "320x320", "--size=16:9", "--fps", "12", "samples/pty.cast", limited]);
+        var folder = Directory.CreateDirectory(Path.Combine(work, "outputs-shape")).FullName;
+        var scenario = Path.Combine(folder, "shape.yaml");
+        File.WriteAllText(scenario, """
+        width: 40
+        height: 6
+        steps:
+          - run: echo hello
+        outputs:
+          - format: mp4
+            size: 16:9
+            fps: 12
+          - format: gif
+            size: 1:1
+            max-size: 200x200
+            fps: 10
+        """);
+        var (entryExit, entryStderr) = Exec(scenetake, folder, [scenario]);
+        if (shapedExit != 0 || limitedExit != 0 || entryExit != 0)
+        {
+            Console.Error.WriteLine(shapedStderr + limitedStderr + entryStderr);
+            return false;
+        }
+
+        static (int Width, int Height) Size(Dictionary<string, string> stream) =>
+            (int.Parse(stream["width"], System.Globalization.CultureInfo.InvariantCulture), int.Parse(stream["height"], System.Globalization.CultureInfo.InvariantCulture));
+        // Even sides leave the shape off by less than 2 pixels on the padded side.
+        static bool Near(int width, int height, int w, int h) => Math.Abs((long)width * h - (long)height * w) <= 2L * Math.Max(w, h);
+        var full = Size(Probe(shaped));
+        var small = Size(Probe(limited));
+        var entry = Size(Probe(Path.Combine(folder, "shape.mp4")));
+        var gif = File.ReadAllBytes(Path.Combine(folder, "shape.gif")) is var bytes ? (bytes[6] | (bytes[7] << 8), bytes[8] | (bytes[9] << 8)) : (0, 0);
+        var ok = Near(full.Width, full.Height, 16, 9) && full.Width > 320
+            && Near(small.Width, small.Height, 16, 9) && small.Width == 320
+            && Near(entry.Width, entry.Height, 16, 9)
+            && gif.Item1 == gif.Item2 && gif.Item1 <= 200;
+        if (!ok)
+            Console.Error.WriteLine($"  shaped {full}, limited {small}, entry {entry}, gif {gif}");
+        return ok;
     }
 
     internal static bool ScenarioFormatMp4(string scenetake, string repoRoot, string work)
@@ -2487,11 +2542,20 @@ internal static class Mp4FfmpegCases
         var (duplicateExit, duplicateStderr) = Exec(scenetake, repoRoot, ["mp4", "--size", "1920x1080", "--size=1280x720", "samples/basic.cast", output]);
         var (missingExit, missingStderr) = Exec(scenetake, repoRoot, ["mp4", "--size", "--fps", "30", "samples/basic.cast", output]);
         var (subcommandExit, subcommandStderr) = Exec(scenetake, repoRoot, ["svg", "--size", "1920x1080", "samples/basic.cast"]);
+        // W:H is a shape: one --size all the same, its own range, and a hint from WxH where a shape was meant.
+        var (shapeTwiceExit, shapeTwiceStderr) = Exec(scenetake, repoRoot, ["mp4", "--size", "16:9", "--size=1920x1080", "samples/basic.cast", output]);
+        var (shapeRangeExit, shapeRangeStderr) = Exec(scenetake, repoRoot, ["mp4", "--size", "0:9", "samples/basic.cast", output]);
+        var (shapeAsSizeExit, shapeAsSizeStderr) = Exec(scenetake, repoRoot, ["mp4", "--size", "16x9", "samples/basic.cast", output]);
+        var (shapePngExit, shapePngStderr) = Exec(scenetake, repoRoot, ["png", "--size", "16:9", "samples/basic.cast"]);
         return svgExit == 1 && svgStderr.Contains("--size requires --format mp4", StringComparison.Ordinal)
+            && shapeTwiceExit == 1 && shapeTwiceStderr.Contains("duplicate option: --size", StringComparison.Ordinal)
+            && shapeRangeExit == 1 && shapeRangeStderr.Contains("--size W:H must have each side between 1 and 16384 (for example 16:9): 0:9", StringComparison.Ordinal)
+            && shapeAsSizeExit == 1 && shapeAsSizeStderr.Contains("or a shape W:H such as 16:9: 16x9", StringComparison.Ordinal)
+            && shapePngExit == 1 && shapePngStderr.Contains("--size applies to mp4", StringComparison.Ordinal)
             && oddExit == 1 && oddStderr.Contains("--size must have an even width and height, which yuv420p requires: 1921x1080", StringComparison.Ordinal)
             && rangeExit == 1 && rangeStderr.Contains("--size must be WIDTHxHEIGHT with each side between 16 and 16384", StringComparison.Ordinal)
-            && bothExit == 1 && bothStderr.Contains("--size and --max-size cannot be used together", StringComparison.Ordinal)
-            && reverseExit == 1 && reverseStderr.Contains("--size and --max-size cannot be used together", StringComparison.Ordinal)
+            && bothExit == 1 && bothStderr.Contains("--size WxH and --max-size cannot be used together", StringComparison.Ordinal)
+            && reverseExit == 1 && reverseStderr.Contains("--size WxH and --max-size cannot be used together", StringComparison.Ordinal)
             && duplicateExit == 1 && duplicateStderr.Contains("duplicate option: --size", StringComparison.Ordinal)
             && missingExit == 1 && missingStderr.Contains("--size requires a value", StringComparison.Ordinal)
             && subcommandExit == 1 && subcommandStderr.Contains("unknown option: --size", StringComparison.Ordinal)

@@ -235,6 +235,10 @@ static class HelpText
           --size WxH               Make the video exactly WxH (both even): the terminal is centered on
                                    the theme background, and a larger one is scaled down to fit.
                                    Not with --max-size.
+          --size W:H               Pad the video to the shape W:H, such as 16:9, at the terminal's own
+                                   size, with the terminal centered. --max-size can scale it down.
+                                   Without --size, a video wider than 3:1, the widest X takes, gets
+                                   space above and below up to 3:1.
           --font-file PATH         A font file (TTF, OTF, TTC) to use before the --font-family fonts.
                                    PNG and GIF take it too.
 
@@ -249,6 +253,8 @@ static class HelpText
                                    Scaling blurs text and can make a GIF larger. For a smaller GIF,
                                    such as Zenn's 3MB, use a smaller --font-size.
           --size WxH               Make the GIF exactly WxH (both even), as for mp4. Not with --max-size.
+          --size W:H               Pad the GIF to the shape W:H, as for mp4. A GIF without --size keeps
+                                   the terminal's shape.
           --no-loop                Play the GIF once and stop on the final screen (default: loop)
           --loop                   Loop, also when the scenario or the cast says not to
           --font-file PATH         A font file (TTF, OTF, TTC) to use before the --font-family fonts

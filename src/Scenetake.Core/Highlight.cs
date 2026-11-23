@@ -655,6 +655,152 @@ internal static partial class ScenarioCast
         }
     }
 
+    /// <summary>
+    /// Highlights on a PTY step's output, which keeps its own line breaks: a line ends at a line feed, the carriage
+    /// return before it is not one of its columns, and a carriage return alone, as a progress bar writes it, stays in
+    /// its line. Columns count the characters as written, escape sequences included, as for a pipe step.
+    /// <para>
+    /// <paramref name="reads"/> are the output's parts as the cast times them, and each comes back with the styles that
+    /// fall in it. A style is not closed at the end of a part, because the terminal that plays the cast keeps it from
+    /// one event to the next: the parts joined are the same text however the reads fell, so recording again compares
+    /// them as they are. A style is opened again after each color sequence the program writes inside the range, so the
+    /// program's own colors and resets do not end the highlight, and the attributes the style does not set stay the
+    /// program's. Where the range ends, the program's colors at that point come back after the reset, so the rest of
+    /// the line keeps them.
+    /// </para>
+    /// </summary>
+    internal static string[] ApplyPtyHighlights(IReadOnlyList<string> reads, List<HighlightSpec> specs, string cmd)
+    {
+        var results = new string[reads.Count];
+        var text = string.Concat(reads);
+        if (text.Length == 0)
+        {
+            for (var k = 0; k < reads.Count; k++)
+                results[k] = reads[k];
+            return results;
+        }
+
+        var lineCount = CountLines(text.AsSpan());
+        var lineRangesArray = ArrayPool<int>.Shared.Rent(lineCount * 2);
+        try
+        {
+            var lineRanges = lineRangesArray.AsSpan(0, lineCount * 2);
+            FillLineRanges(text.AsSpan(), lineRanges);
+            // Every line but the last ends at a line feed, and a carriage return just before it ends the line too.
+            for (var li = 0; li < lineCount - 1; li++)
+            {
+                var length = lineRanges[li * 2 + 1];
+                if (length > 0 && text[lineRanges[li * 2] + length - 1] == '\r')
+                    lineRanges[li * 2 + 1] = length - 1;
+            }
+
+            var paint = new ushort[lineCount][];
+            var styleIds = new Dictionary<string, ushort>(StringComparer.Ordinal);
+            var stylesList = new List<string> { "" };
+            foreach (var spec in specs)
+            {
+                var styleId = GetOrAddStyleId(styleIds, stylesList, spec.ColorOpen);
+                foreach (var at in spec.At)
+                    ApplyAt(lineRanges, paint, at, styleId, cmd);
+            }
+
+            var styles = CollectionsMarshal.AsSpan(stylesList);
+            var inside = EscapeSequences.Inside(text);
+            var sb = new StringBuilder(text.Length + specs.Count * 16);
+            var read = 0;
+            var readEnd = reads[0].Length;
+            var line = 0;
+            var lineStart = lineRanges[0];
+            ushort current = 0;
+            // Where the program's last color sequence ends: the highlight opens again there.
+            var reopenAt = -1;
+            // The program's color sequences since its last reset, which a reset that ends a highlight would undo, as
+            // places in the text. Only the last few: a program that colors each character without a reset, as lolcat
+            // does, would otherwise have every one of them written again at each place a highlight ends.
+            var programStyle = new Queue<(int Start, int Length)>(ProgramStylesKept);
+            for (var i = 0; i < text.Length; i++)
+            {
+                while (i >= readEnd && read < reads.Count - 1)
+                {
+                    results[read++] = sb.ToString();
+                    sb.Clear();
+                    readEnd += reads[read].Length;
+                }
+
+                var column = i - lineStart;
+                var row = paint[line];
+                var next = row is not null && column < lineRanges[line * 2 + 1] ? row[column] : (ushort)0;
+                if (!inside[i])
+                {
+                    if (next != current)
+                    {
+                        if (current != 0) AppendResetAndProgramStyle(sb, text, programStyle);
+                        if (next != 0) sb.Append(styles[next]);
+                        current = next;
+                    }
+                    else if (i == reopenAt && current != 0)
+                    {
+                        sb.Append(styles[current]);
+                    }
+
+                    // The program's sequence counts after the change written before it, which restored the colors
+                    // that came before this sequence.
+                    if (text[i] == '\u001b')
+                    {
+                        var end = EscapeSequences.End(text, i);
+                        if (HighlightSplitter.IsSgrSequence(text, i, end))
+                        {
+                            HighlightSplitter.ReadSgr(text, i, end, out var resets, out var sets);
+                            if (resets)
+                                programStyle.Clear();
+                            if (sets)
+                            {
+                                if (programStyle.Count == ProgramStylesKept)
+                                    programStyle.Dequeue();
+                                programStyle.Enqueue((i, end - i));
+                            }
+
+                            reopenAt = end;
+                        }
+                    }
+                }
+
+                sb.Append(text[i]);
+                if (text[i] == '\n' && line < lineCount - 1)
+                {
+                    line++;
+                    lineStart = lineRanges[line * 2];
+                }
+            }
+
+            // A style still open at the end, after the last line, which has no line feed to close it before.
+            if (current != 0 && !inside[text.Length])
+                AppendResetAndProgramStyle(sb, text, programStyle);
+
+            results[read] = sb.ToString();
+            for (var k = read + 1; k < reads.Count; k++)
+                results[k] = "";
+            return results;
+        }
+        finally
+        {
+            ArrayPool<int>.Shared.Return(lineRangesArray, clearArray: false);
+        }
+    }
+
+    /// <summary>
+    /// How many of the program's color sequences since its last reset a PTY highlight writes again where it ends. A
+    /// program sets a few attributes after a reset, such as bold and a color, and a later color replaces an earlier one.
+    /// </summary>
+    private const int ProgramStylesKept = 8;
+
+    private static void AppendResetAndProgramStyle(StringBuilder sb, string text, Queue<(int Start, int Length)> programStyle)
+    {
+        sb.Append(SgrReset);
+        foreach (var (start, length) in programStyle)
+            sb.Append(text, start, length);
+    }
+
     internal static string NormalizeToLf(string text)
     {
         if (text.IndexOf('\r') < 0)

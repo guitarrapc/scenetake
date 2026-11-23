@@ -66,7 +66,48 @@ internal readonly record struct RasterLayout(
     /// padding to the frame's shape instead, and the encoder scales the result down to the frame size.
     /// The title bar stays at the top edge and spans the frame; the padding goes around the terminal below it.
     /// </summary>
-    internal RasterLayout FitFrame(int frameWidth, int frameHeight)
+    internal RasterLayout FitFrame(int frameWidth, int frameHeight) => FitFrame(frameWidth, frameHeight, null);
+
+    /// <summary>
+    /// This layout padded so that neither side is more than <paramref name="maxAspect"/> times the other, as
+    /// <see cref="FitFrame(int, int)"/> pads to a <c>--size</c> frame: the terminal, or the window on its background,
+    /// stays centered, and the rest is the theme's background or the image. A layout within the shape stays as it is.
+    /// </summary>
+    internal RasterLayout PadToAspect(int maxAspect)
+    {
+        if (Width > (long)maxAspect * Height)
+            return PadTo(maxAspect, 1, $"use a smaller --font-size or terminal size, which an mp4 pads to {maxAspect}:1 without --size");
+        if (Height > (long)maxAspect * Width)
+            return PadTo(1, maxAspect, $"use a smaller --font-size or terminal size, which an mp4 pads to 1:{maxAspect} without --size");
+        return this;
+    }
+
+    /// <summary>
+    /// This layout padded to the <c>--size W:H</c> shape: above and below when it is wider, left and right when it is
+    /// taller, as <see cref="PadToAspect"/> pads. Its own size stays, so a larger font size gives a larger video.
+    /// </summary>
+    internal RasterLayout PadToShape(int shapeWidth, int shapeHeight) =>
+        PadTo(shapeWidth, shapeHeight, $"--size {shapeWidth}:{shapeHeight} pads the {Width}x{Height} frame to that shape: use a shape closer to the terminal's, or a smaller --font-size or terminal size");
+
+    private RasterLayout PadTo(int shapeWidth, int shapeHeight, string advice)
+    {
+        // Rounded up, and to an even size, so the padded side reaches the shape and stays even for yuv420p. Long,
+        // because a shape far from the frame's can make a side larger than an int, which the check below rejects.
+        long width = Width, height = Height;
+        if (width * shapeHeight > height * shapeWidth)
+            height = (width * shapeHeight + shapeWidth - 1) / shapeWidth;
+        else if (width * shapeHeight < height * shapeWidth)
+            width = (height * shapeWidth + shapeHeight - 1) / shapeHeight;
+        else
+            return this;
+
+        width += width & 1;
+        height += height & 1;
+        CheckRawFrame(width, height, advice);
+        return FitFrame((int)width, (int)height, advice);
+    }
+
+    private RasterLayout FitFrame(int frameWidth, int frameHeight, string? advice)
     {
         // The terminal before Create rounds it to even sizes. With a background, the window and its margin: the
         // larger frame shows more background, and the window stays centered.
@@ -92,7 +133,7 @@ internal readonly record struct RasterLayout(
         }
 
         CheckRawFrame(width, height,
-            $"--size {frameWidth}x{frameHeight} pads the {terminalWidth}x{terminalHeight} terminal to its shape before scaling: use a --size closer to the terminal's shape");
+            advice ?? $"--size {frameWidth}x{frameHeight} pads the {terminalWidth}x{terminalHeight} terminal to its shape before scaling: use a --size closer to the terminal's shape");
         if (Desktop)
         {
             return this with

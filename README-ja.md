@@ -204,6 +204,7 @@ npx skills add guitarrapc/scenetake
 | `--crf N` | mp4の画質とファイルサイズを調整する |
 | `--max-size WxH` | サイトのアップロード上限に収める。Xなら`1280x1024` |
 | `--size WxH` | `1920x1080`など、決まったサイズの動画を作る |
+| `--size W:H` | `16:9`など、決まった縦横比の動画をターミナルの大きさのまま作る |
 | `--font-file PATH` | インストールしていないフォントファイルを使う。mp4、GIF、PNGは文字を自分で描き、SVGは見る人のフォントを使います |
 | **capture** | |
 | `--width N`、`--height N` | ターミナルのサイズを決める |
@@ -312,6 +313,17 @@ steps:
 | GIF | SVG |
 | --- | --- |
 | ![](samples/pty.gif) | ![](samples/pty.svg) |
+
+`pty: true`のステップでも、`highlight`で行に色を付けられます。プログラム自身の色の上から塗ります。
+
+```yaml
+steps:
+  - run: git log --oneline -5
+    pty: true
+    highlight:
+      - color: "bold bg:blue"
+        at: "1"             # 最新のコミット
+```
 
 `keys`でキー操作をTUIに送り、`timeout`で止めるまでの時間を書けます。
 
@@ -425,6 +437,8 @@ outputs:
 | ![](samples/theme-macos.svg) | ![](samples/theme-windows.svg) |
 
 既定では出力より下の空き行を描きません。動画の解像度そのままにするには`--fit none`を指定します。`--fit none`のとき、デフォルト`80×24`は、mp4で`820×488`、SVGで`829.6×504`です。1920×1080動画を作るときは、`--font-size`を上げると読みやすく解像度もちょうどよくなります。
+
+多くのサービスが3:1までmp4を受け付けることから、横長すぎるmp4は上下に余白を足しターミナルを中央に置きます。16:9にするには`--size 16:9`を指定します。
 
 カラーテーマは`render.theme.preset`か`--theme`で指定します。
 

@@ -459,9 +459,9 @@
           "pattern": "^\\s*[0-9]+[xX][0-9]+\\s*$"
         },
         "size": {
-          "description": "mp4 and gif: exactly WxH (both even), the terminal centered on the theme's background.",
+          "description": "mp4 and gif: WxH makes the video exactly that size (both even), the terminal centered on the theme's background. W:H, such as 16:9, pads it to that shape at the terminal's own size, which max-size can then scale down.",
           "type": "string",
-          "pattern": "^\\s*[0-9]+[xX][0-9]+\\s*$"
+          "pattern": "^\\s*([0-9]+[xX][0-9]+|[0-9]+:[0-9]+)\\s*$"
         },
         "font-file": { "type": "string", "description": "mp4, gif, and png: a font file (TTF, OTF, TTC) to draw with first." }
       },
@@ -604,11 +604,11 @@
         "max-idle": { "description": "Stream output: the seconds a long pause is shortened to.", "$ref": "#/definitions/seconds" },
         "run-highlight": { "description": "The style of the typed command.", "$ref": "#/definitions/style" },
         "highlight": {
-          "description": "Colors for parts of the output, by line and column. Not for pty steps.",
+          "description": "Colors for parts of the output, by line and column. On a pty step, by the lines the program writes, over its own colors. Not for interactive steps.",
           "type": "array",
           "items": { "$ref": "#/definitions/highlight" }
         },
-        "stderr-color": { "description": "The color of stderr that has no colors of its own, for this step.", "$ref": "#/definitions/style" },
+        "stderr-color": { "description": "The color of stderr that has no colors of its own, for this step. Not with pty: true, where stdout and stderr are one stream.", "$ref": "#/definitions/style" },
         "pty": {
           "description": "Run in a pseudo-terminal: for TUIs, progress bars, and tools that color only for a terminal. Needed for keys.",
           "type": "boolean",

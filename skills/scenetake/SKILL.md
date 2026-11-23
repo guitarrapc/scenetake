@@ -100,7 +100,7 @@ Only `steps` is required. The editor schema, https://raw.githubusercontent.com/g
     - run: |-
         jq -r '.[] | "\(.name): \(.city)"' users.json
   ```
-- **Choose the step kind by the output.** A plain step runs in a pipe: plain text, shown at once, and `highlight` can color its lines. `pty: true` runs in a terminal: colors, progress bars, and full-screen programs. `stream-output: true` plays a pipe step's output at its real pace.
+- **Choose the step kind by the output.** A plain step runs in a pipe: plain text, shown at once. `pty: true` runs in a terminal: colors, progress bars, and full-screen programs. `stream-output: true` plays a pipe step's output at its real pace. `highlight` colors lines of either kind, in a terminal over the program's own colors. Point at whole lines (`at: "3"`) there: columns count the program's color codes too.
 - **TUIs and prompts** need `pty: true`, `keys`, and a `timeout`. In `keys`, use `wait: "text"` for the text the program prints before the next key, not a long `sleep`: a `wait` goes on as soon as the text shows. `type` types text, and a line break in it is Enter. `key` sends one key: `enter`, `escape`, `tab`, `up`, `down`, `ctrl+c`, `f1`. To find the text to wait for, record the program alone first: `scenetake capture --timeout 3 -- mycli watch .`, then `scenetake png --at end mycli.cast` and look.
 - **Never use `interactive: true`.** It waits for a person at the keyboard. Write `keys` instead.
 - **Setup and cleanup** go in `pre` and `post`, or in a step with `show: none` between scenes. With `shell: bash`, `zsh`, or `pwsh`, a `cd`, an `export`, an alias, or a function carries to the next steps, and on into `post`: `post` starts in the folder the last step left, so a cleanup of that folder needs `cd ..` first. Use the carry to keep typed commands short: define a function in a `show: none` step and type its name.
@@ -118,7 +118,7 @@ Only `steps` is required. The editor schema, https://raw.githubusercontent.com/g
 | --- | --- | --- |
 | GitHub README | animated SVG | A dark and a light SVG in `outputs` make scenetake print a `<picture>` that follows the reader's theme |
 | Zenn, a blog | GIF | Zenn takes up to 3 MB. scenetake warns above it. A smaller `font-size` and `fps: 10` make it smaller |
-| X, Reddit | mp4 or GIF | X takes an mp4 up to 140 seconds on a free account and a GIF up to 15 MB. `max-size: 1280x1024` fits X and only scales down. A phone shows the video narrow, so a narrower terminal (`width: 60`) keeps the text larger |
+| X, Reddit | mp4 or GIF | X takes an mp4 up to 140 seconds on a free account and a GIF up to 15 MB. `max-size: 1280x1024` fits X and only scales down. An mp4 wider than 3:1, the widest X takes, gets space above and below up to 3:1, and `size: 16:9` makes it 16:9 at the terminal's own size. A phone shows the video narrow, so a narrower terminal (`width: 60`) keeps the text larger |
 | A preview image | PNG | `at: 1` in an outputs entry, such as the title card |
 
 ## When something goes wrong

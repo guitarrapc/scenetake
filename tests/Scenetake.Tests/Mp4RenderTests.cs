@@ -27,6 +27,15 @@ public sealed class Mp4RenderTests
     public async Task SizePaddingUsesBackgroundAndFullTitleBar() => await Assert.That(Skipping.Run(() => Mp4RenderCases.SizePaddingUsesBackgroundAndFullTitleBar())).IsTrue();
 
     [Test]
+    public async Task Mp4PadsAStripToThreeToOne() => await Assert.That(Skipping.Run(() => Mp4RenderCases.Mp4PadsAStripToThreeToOne())).IsTrue();
+
+    [Test]
+    public async Task Mp4StripFramesCenterTheTerminal() => await Assert.That(Skipping.Run(() => Mp4RenderCases.Mp4StripFramesCenterTheTerminal())).IsTrue();
+
+    [Test]
+    public async Task SizeShapePadsAtTheTerminalsOwnSize() => await Assert.That(Skipping.Run(() => Mp4RenderCases.SizeShapePadsAtTheTerminalsOwnSize())).IsTrue();
+
+    [Test]
     public async Task BackgroundPlacesWindowInMargin() => await Assert.That(Skipping.Run(() => Mp4RenderCases.BackgroundPlacesWindowInMargin())).IsTrue();
 
     [Test]
@@ -441,6 +450,134 @@ internal static class Mp4RenderCases
             && CellPixel(last, layout, 0, 0) == (0xd0, 0xd0, 0xd0) && layout.CellX(0) == 60 && layout.RowY(0) == 87;
     }
 
+    internal static bool Mp4PadsAStripToThreeToOne()
+    {
+        var gif = Mp4Settings.Default with { LimitAspect = false };
+        // 80×5 at 16px is 820×108, 7.6:1. An mp4 pads it to 820×274 (820 / 3 rounded up to even), the cells centered:
+        // 4 + (274 - 108) / 2 = 87 above them. A GIF keeps the strip, and --size pads to its own frame instead.
+        var strip = Mp4Render.CreateLayout(16, 80, 5, WindowStyle.None, Mp4Settings.Default);
+        var gifStrip = Mp4Render.CreateLayout(16, 80, 5, WindowStyle.None, gif);
+        var sized = Mp4Render.CreateLayout(16, 80, 5, WindowStyle.None, Mp4Settings.Default with { FrameWidth = 1280, FrameHeight = 720 });
+        // With a title bar, 34 + 80 + 8 = 122: the bar stays at the top, and 76 + 76 go around the terminal below it.
+        var chrome = Mp4Render.CreateLayout(16, 80, 4, WindowStyle.Macos, Mp4Settings.Default);
+        // 2×40 is 40×808, taller than 1:3: padded at the sides to 270×808.
+        var tall = Mp4Render.CreateLayout(16, 2, 40, WindowStyle.None, Mp4Settings.Default);
+        // 80×24 is 820×488, within the shape: nothing changes.
+        var whole = Mp4Render.CreateLayout(16, 80, 24, WindowStyle.None, Mp4Settings.Default);
+        // At the edge: 54×9 at 16px is 560×188, under 3:1 (564), and stays. 55×9 is 570×188, over it, padded to 570×190.
+        var under = Mp4Render.CreateLayout(16, 54, 9, WindowStyle.None, Mp4Settings.Default);
+        var over = Mp4Render.CreateLayout(16, 55, 9, WindowStyle.None, Mp4Settings.Default);
+        var options = new Mp4Options();
+        var ok = strip is { Width: 820, Height: 274, PadX: 10, PadY: 87 } && strip.RowY(0) == 87
+            && gifStrip == RasterLayout.Create(16, 80, 5)
+            && sized is { Width: 1280, Height: 720 }
+            && chrome is { Width: 820, Height: 274, TitleBarHeight: 34, PadY: 80 } && chrome.RowY(0) == 114
+            && tall is { Width: 270, Height: 808, PadX: 125, PadY: 4 }
+            && whole == RasterLayout.Create(16, 80, 24)
+            && under == RasterLayout.Create(16, 54, 9)
+            && over is { Width: 570, Height: 190, PadY: 5 }
+            // --max-size scales the padded frame, keeping its shape.
+            && Mp4Render.OutputSize(strip, Mp4Settings.Default with { MaxWidth = 410, MaxHeight = 1024 }) == (410, 136)
+            && options.ToSettings(1).LimitAspect && !options.ToGifSettings(1).LimitAspect;
+        // 512×1 at 128px is about 40000×180, within ffmpeg's raw frame limit, and over it padded to 3:1.
+        try
+        {
+            Mp4Render.CreateLayout(128, 512, 1, WindowStyle.None, Mp4Settings.Default);
+            ok = false;
+            Console.Error.WriteLine("  a 512x1 terminal at 128px padded to 3:1 was not reported");
+        }
+        catch (FrameTooLargeException e)
+        {
+            ok &= e.Message.Contains("which an mp4 pads to 3:1 without --size", StringComparison.Ordinal);
+        }
+
+        if (!ok)
+            Console.Error.WriteLine($"  strip {strip}, chrome {chrome}, tall {tall}, under {under}, over {over}");
+        return ok;
+    }
+
+    internal static bool Mp4StripFramesCenterTheTerminal()
+    {
+        // A 40×1 terminal is 420×28 at 16px, and 484×92 with the 32px margin of a background, 5.3:1. The mp4 is
+        // 484×162, the window 35 pixels lower and the background above and below it.
+        var path = Path.Combine(Path.GetTempPath(), $"scenetake-mp4-{Guid.NewGuid():N}.cast");
+        try
+        {
+            File.WriteAllText(path,
+                """{"version":3,"term":{"cols":40,"rows":1,"type":"xterm-256color"},"tags":["st:fit=none","st:background=#102030"]}""" + "\n"
+                + """[0.0,"o","█\u001b[?25l"]""" + "\n");
+            var recording = CastReader.Read(path);
+            var renderer = new Mp4FrameRenderer(recording.Events, recording.Width, recording.Height, recording.RenderSettings,
+                Mp4Settings.Default with { Fps = 10 },
+                RenderSettingsResolver.ResolveLoopDuration(recording.LoopDuration, recording.Events, recording.RenderSettings));
+            byte[]? last = null;
+            renderer.Render(pixels => last = (byte[])pixels.Clone());
+            var layout = renderer.Layout;
+            var ok = layout is { Width: 484, Height: 162, WindowX: 32, WindowY: 67, Desktop: true }
+                && Pixel(last!, layout, 2, 2) == (0x10, 0x20, 0x30) && Pixel(last!, layout, 2, 159) == (0x10, 0x20, 0x30)
+                && CellPixel(last!, layout, 0, 0) == (0xd0, 0xd0, 0xd0);
+            if (!ok)
+                Console.Error.WriteLine($"  layout {layout}");
+            return ok;
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    internal static bool SizeShapePadsAtTheTerminalsOwnSize()
+    {
+        static RasterLayout Shaped(int cols, int rows, int w, int h, WindowStyle window = WindowStyle.None) =>
+            Mp4Render.CreateLayout(16, cols, rows, window, Mp4Settings.Default with { ShapeWidth = w, ShapeHeight = h });
+
+        // 80×5 at 16px is 820×108. 16:9 pads it above and below to 820×462 (820 × 9 / 16 = 461.25, up to even), the
+        // cells centered: 4 + (462 - 108) / 2 = 181 above them. Nothing is scaled, so the text keeps its size.
+        var strip = Shaped(80, 5, 16, 9);
+        // 80×24 is 820×488, taller than 16:9: padded at the sides to 868×488 (488 × 16 / 9 = 867.6).
+        var whole = Shaped(80, 24, 16, 9);
+        // 9:16 for a phone, 1:1, and a shape written in pixels.
+        var phone = Shaped(80, 5, 9, 16);
+        var square = Shaped(80, 24, 1, 1);
+        var pixels = Shaped(80, 5, 1920, 1080);
+        // A frame already at the shape stays as it is.
+        var exact = Shaped(80, 24, 820, 488);
+        // The shape asked for wins over the 3:1 an mp4 takes without --size: 5:1 is wider, and stays.
+        var wide = Shaped(80, 5, 5, 1);
+        // With a title bar it stays at the top: 34 + 80 + 8 = 122 is padded to 462, 170 above the terminal below it.
+        var chrome = Shaped(80, 4, 16, 9, WindowStyle.Macos);
+        var options = new Mp4Options { Shape = (16, 9) };
+        var ok = strip is { Width: 820, Height: 462, PadX: 10, PadY: 181, CellWidth: 10, CellHeight: 20 }
+            && whole is { Width: 868, Height: 488, PadX: 34, PadY: 4 }
+            && phone is { Width: 820, Height: 1458 }
+            && square is { Width: 820, Height: 820 }
+            && pixels is { Width: 820, Height: 462 }
+            && exact == RasterLayout.Create(16, 80, 24)
+            && wide is { Width: 820, Height: 164 }
+            && chrome is { Width: 820, Height: 462, TitleBarHeight: 34, PadY: 174 } && chrome.RowY(0) == 208
+            // --max-size scales the shaped frame: 820×462 to 410×230 (231 down to even).
+            && Mp4Render.OutputSize(strip, Mp4Settings.Default with { ShapeWidth = 16, ShapeHeight = 9, MaxWidth = 410, MaxHeight = 1024 }) == (410, 230)
+            // An mp4 and a GIF both take it, and the GIF still has no 3:1 of its own.
+            && options.ToSettings(1) is { ShapeWidth: 16, ShapeHeight: 9, FrameWidth: 0 }
+            && options.ToGifSettings(1) is { ShapeWidth: 16, ShapeHeight: 9, LimitAspect: false }
+            && Mp4Render.CreateLayout(16, 80, 5, WindowStyle.None, Mp4Settings.Default with { LimitAspect = false, ShapeWidth = 16, ShapeHeight = 9 }) == strip;
+        // 1:16384 would make 820×108 over 13 million pixels tall: the error names the shape before any int overflows.
+        try
+        {
+            Shaped(80, 5, 1, 16384);
+            ok = false;
+            Console.Error.WriteLine("  a 1:16384 shape was not reported");
+        }
+        catch (FrameTooLargeException e)
+        {
+            ok &= e.Message.Contains("--size 1:16384 pads the 820x108 frame to that shape", StringComparison.Ordinal);
+        }
+
+        if (!ok)
+            Console.Error.WriteLine($"  strip {strip}, whole {whole}, phone {phone}, square {square}, wide {wide}, chrome {chrome}");
+        return ok;
+    }
+
     internal static bool OptionParsing() =>
         Mp4Settings.TryParseFps("60", out var fps, out _) && fps == 60
         && !Mp4Settings.TryParseFps("0", out _, out _)
@@ -458,9 +595,20 @@ internal static class Mp4RenderCases
         && oddError == "--size must have an even width and height, which yuv420p requires: 1921x1080"
         && !Mp4Settings.TryParseSize("1920x1081", out _, out _, out _)
         && !Mp4Settings.TryParseSize("14x14", out _, out _, out var rangeError)
-        && rangeError == "--size must be WIDTHxHEIGHT with each side between 16 and 16384 (for example 1920x1080): 14x14"
+        && rangeError == "--size must be WIDTHxHEIGHT with each side between 16 and 16384 (for example 1920x1080), or a shape W:H such as 16:9: 14x14"
         && !Mp4Settings.TryParseSize("16386x1080", out _, out _, out _)
-        && !Mp4Settings.TryParseSize("1920", out _, out _, out _);
+        && !Mp4Settings.TryParseSize("1920", out _, out _, out _)
+        // --size W:H: whole numbers from 1, odd ones too, since only the padded frame needs even sides.
+        && Mp4Settings.TryParseShape("16:9", out var shapeWidth, out var shapeHeight, out _) && (shapeWidth, shapeHeight) == (16, 9)
+        && Mp4Settings.TryParseShape("1:1", out _, out _, out _) && Mp4Settings.TryParseShape("1920:1080", out _, out _, out _)
+        && Mp4Settings.TryParseShape("16384:1", out _, out _, out _)
+        && !Mp4Settings.TryParseShape("0:9", out _, out _, out var shapeError)
+        && shapeError == "--size W:H must have each side between 1 and 16384 (for example 16:9): 0:9"
+        && !Mp4Settings.TryParseShape("16384:16385", out _, out _, out _)
+        && !Mp4Settings.TryParseShape("2.39:1", out _, out _, out _)
+        && !Mp4Settings.TryParseShape("16:9:1", out _, out _, out _)
+        && !Mp4Settings.TryParseShape("16:", out _, out _, out _)
+        && !Mp4Settings.TryParseShape("-16:9", out _, out _, out _);
 
     internal static bool GifArgumentsUseOnePaletteWithoutDither()
     {

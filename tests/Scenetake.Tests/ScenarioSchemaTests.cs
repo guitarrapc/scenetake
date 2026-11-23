@@ -279,6 +279,8 @@ internal static class ScenarioSchemaCases
             ("font-file on an SVG", "outputs:\n  - format: svg\n    font-file: a.ttf\nsteps:\n  - x\n"),
             ("max-fps on a PNG", "outputs:\n  - format: PNG\n    max-fps: 10\nsteps:\n  - x\n"),
             ("a size that is no size", "outputs:\n  - format: mp4\n    max-size: 1280\nsteps:\n  - x\n"),
+            ("a shape for max-size", "outputs:\n  - format: mp4\n    max-size: 16:9\nsteps:\n  - x\n"),
+            ("a shape in fractions", "outputs:\n  - format: mp4\n    size: 2.39:1\nsteps:\n  - x\n"),
             ("at that is neither seconds nor end", "outputs:\n  - format: png\n    at: last\nsteps:\n  - x\n"),
             ("blur in fractions of a pixel", "outputs:\n  - format: svg\n    blur: 2.5\nsteps:\n  - x\n"),
         };
@@ -410,6 +412,10 @@ internal static class ScenarioSchemaCases
                     end-hold: 0
                     fade-out: 10
                     file: d
+                  - format: mp4
+                    size: 16:9
+                    max-size: 1280x1024
+                    file: e
                 steps:
                   - x
                 """),
