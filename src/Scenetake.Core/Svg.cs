@@ -944,17 +944,51 @@ internal static class RenderSettingsResolver
 
     /// <summary>
     /// A warning for a length that the output does not keep, or null: a recording that is longer at its shortest, and
-    /// a cast without step ranges, written by another tool or an earlier scenetake, which plays as recorded.
+    /// a cast without step ranges, written by another tool or an earlier scenetake, which plays as recorded. The first
+    /// names the steps that take longest at their shortest: by <paramref name="names"/>, as the time per step names
+    /// them, when the scenario's run gives them, and otherwise by the command each one types.
     /// </summary>
-    internal static string? LengthNote(IReadOnlyList<CastEvent> events, ResolvedRenderSettings settings, double? loopDuration)
+    internal static string? LengthNote(IReadOnlyList<CastEvent> events, ResolvedRenderSettings settings, double? loopDuration, StepNames? names = null)
     {
         if (settings.Length is not double length)
             return null;
-        if (settings.StepRanges is null)
+        if (settings.StepRanges is not { } stepRanges)
             return $"length {FormatSeconds(length)}s has no effect: the cast has no step ranges (st:steps), which scenetake writes when it records. It plays as recorded";
         return FitLength(events, settings, loopDuration) is { } fitted && fitted.Played > length + 0.05
-            ? string.Create(CultureInfo.InvariantCulture, $"length {FormatSeconds(length)}s is shorter than this recording can play: {fitted.Played:F1}s with every wait, pause, and typed character at its shortest. Leave out steps or output, or set speed instead")
+            ? string.Create(CultureInfo.InvariantCulture, $"length {FormatSeconds(length)}s is shorter than this recording can play: {fitted.Played:F1}s with every wait, pause, and typed character at its shortest.{LongestSteps(PlaybackLength.StepsAtShortest(stepRanges, fitted, names))} Leave out steps or output, or set speed instead")
             : null;
+    }
+
+    /// <summary>
+    /// The steps that take longest at their shortest, up to three, as a sentence that starts with a space, or nothing
+    /// for a recording of one step.
+    /// </summary>
+    private static string LongestSteps(PlaybackLength.StepShortest[] steps)
+    {
+        if (steps.Length < 2)
+            return "";
+
+        // Longest first, and in the order of the recording where two are as long.
+        var taken = new bool[steps.Length];
+        var text = new StringBuilder(" At their shortest, ");
+        var shown = Math.Min(3, steps.Length);
+        for (var k = 0; k < shown; k++)
+        {
+            var longest = -1;
+            for (var i = 0; i < steps.Length; i++)
+            {
+                if (!taken[i] && (longest < 0 || steps[i].Seconds > steps[longest].Seconds))
+                    longest = i;
+            }
+
+            taken[longest] = true;
+            var step = steps[longest];
+            if (k > 0)
+                text.Append(k + 1 == shown ? ", and " : ", ");
+            text.Append(CultureInfo.InvariantCulture, $"{step.Label}{(k == 0 ? " takes " : " ")}{step.Seconds:F1}s");
+        }
+
+        return text.Append('.').ToString();
     }
 
     /// <summary>

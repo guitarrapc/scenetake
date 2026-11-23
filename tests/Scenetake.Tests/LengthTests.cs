@@ -17,6 +17,9 @@ public sealed class LengthTests
 
     [Test]
     public async Task Errors() => await Assert.That(LengthCases.Errors(TestEnv.Binary)).IsTrue();
+
+    [Test]
+    public async Task TimePerStep() => await Assert.That(LengthCases.TimePerStep(TestEnv.Binary)).IsTrue();
 }
 
 internal static partial class LengthCases
@@ -100,6 +103,38 @@ internal static partial class LengthCases
 
         return ok;
     });
+
+    internal static bool TimePerStep(string scenetake) => InFolder(folder =>
+    {
+        // The time per step follows the cast's Written line, in a recording and in a replay, and the warning of a
+        // length the recording cannot keep names its steps as the table does. A capture has one command, whose time
+        // the Written line gives.
+        File.WriteAllText(Path.Combine(folder, "demo.yaml"), Steps.Replace("  - echo two", "  - name: Second\n    run: echo two", StringComparison.Ordinal));
+        var (exit, stderr) = Mp4FfmpegCases.Exec(scenetake, folder, ["--format", "svg", "--length", "2", "--save-outputs", "demo.outputs.json", "demo.yaml"]);
+        var (replayExit, replayErr) = Mp4FfmpegCases.Exec(scenetake, folder, ["--format", "svg", "--replay", "demo.outputs.json", "demo.yaml"]);
+        var (captureExit, captureErr) = Mp4FfmpegCases.Exec(scenetake, folder, ["capture", "--pipe", "--shell", "bash", "--format", "cast", "--", "echo", "hi"]);
+        var table = TableAfterTheCast(stderr);
+        return Check(exit == 0 && table.Count == 6, $"recording: exit {exit}{Environment.NewLine}{stderr}")
+            && Check(table[0] == "  Time per step: typing + output + pauses"
+                && table[1].StartsWith("    1  ", StringComparison.Ordinal) && table[1].EndsWith("  echo one", StringComparison.Ordinal)
+                && table[2].EndsWith("  Second", StringComparison.Ordinal) && table[3].EndsWith("  echo three", StringComparison.Ordinal)
+                && table[4].EndsWith("s  final screen", StringComparison.Ordinal) && table[5].StartsWith("  In all: typing ", StringComparison.Ordinal),
+                string.Join(Environment.NewLine, table))
+            && Check(stderr.Contains("at its shortest. At their shortest, step ", StringComparison.Ordinal) && stderr.Contains("step 2 (Second)", StringComparison.Ordinal), stderr)
+            && Check(replayExit == 0 && TableAfterTheCast(replayErr).SequenceEqual(table), $"replay: exit {replayExit}{Environment.NewLine}{replayErr}")
+            && Check(captureExit == 0 && !captureErr.Contains("Time per step", StringComparison.Ordinal), $"capture: exit {captureExit}{Environment.NewLine}{captureErr}");
+    });
+
+    /// <summary>The lines after the cast's Written line, up to the next line that does not start with two spaces.</summary>
+    private static List<string> TableAfterTheCast(string stderr)
+    {
+        var lines = stderr.ReplaceLineEndings("\n").Split('\n');
+        var start = Array.FindIndex(lines, static line => line.StartsWith("Written: demo.cast", StringComparison.Ordinal));
+        var table = new List<string>();
+        for (var i = start + 1; start >= 0 && i < lines.Length && lines[i].StartsWith("  ", StringComparison.Ordinal); i++)
+            table.Add(lines[i]);
+        return table;
+    }
 
     /// <summary>The SVG's loop in seconds, from its animation.</summary>
     private static double Loop(string svgPath) =>

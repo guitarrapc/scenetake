@@ -418,7 +418,7 @@ outputs:
 | --- | --- |
 | ![](samples/speed.svg) | ![](samples/speed-2x.svg) |
 
-`length` sets how many seconds an output plays. scenetake fits the demo into that time, so you do not tune typing speed and pauses yourself. It shortens waits in a command's output first, then the pauses between steps, then typing. A demo that is already shorter stays as it is, and scenetake warns when a demo still does not fit.
+`length` sets how many seconds an output plays. scenetake fits the demo into that time, so you do not tune typing speed and pauses yourself. It shortens waits in a command's output first, then the pauses between steps, then typing. A demo that is already shorter stays as it is, and when a demo still does not fit, scenetake warns and names the steps that take the longest.
 
 ```yaml
 outputs:
@@ -426,6 +426,8 @@ outputs:
   - format: mp4              # for X, at most 15 seconds
     length: 15
 ```
+
+Each recording also prints how long each step takes, split into typing, output, and pauses, so you can see which step or which setting makes a demo long.
 
 | macOS | Windows |
 | --- | --- |

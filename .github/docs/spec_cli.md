@@ -134,6 +134,8 @@ Written: basic.mp4  (820x488, 30fps, 543 frames, 62.7KB, font: Cascadia Mono)
 - The mp4's size is its encoded frame: no margin or shadow, even sides, and `--size` or `--max-size` applied.
 - **Why.** The size decides where a demo fits: a README shows about 830 pixels at its own size, and a video player expects 16:9. It was visible only after opening the file.
 
+After the cast's `Written:` line, a recording and a replay print the time per step: each shown step's time in the cast as typing + output + pauses, the final screen, and the whole cast split the same way ([spec_scenario.md](spec_scenario.md) → Time per step). `capture` prints none.
+
 **`pre` / `post`.** stdout and stderr are forwarded after each command exits (live streaming not required in v1). Failure prints phase, full command text, and exit code unconditionally. See [spec_pre_post.md](spec_pre_post.md).
 
 **Warnings.** Non-fatal issues print `Warning: …` to stderr and execution continues. Feature-specific warn-and-continue rules: [spec_highlight.md](spec_highlight.md), [spec_svg.md](spec_svg.md), [spec_scenario.md](spec_scenario.md) → Step exit codes and → Unknown keys.

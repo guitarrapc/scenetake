@@ -129,8 +129,11 @@ internal static class PlaygroundRender
                 Console.Error.WriteLine($"Warning: {note}");
 
             var rerecorder = new Rerecorder(previous: null, masker: null);
+            // The steps' names for the warning of a length the recording cannot keep, as the CLI gives them.
+            var times = new List<StepTime>();
             var generateOptions = new GenerateOptions
             {
+                Times = times,
                 TrackPtyCursor = replay.TrackPtyCursor,
                 Fit = renderSettings.Fit,
                 Crop = renderSettings.Crop,
@@ -158,7 +161,7 @@ internal static class PlaygroundRender
                 // As on the CLI, the SVG comes from the cast as written, with --max-fps applied again.
                 var written = CastReader.ReadText(castText);
                 var drawn = RenderSettingsResolver.WithImageBackground(written.RenderSettings, renderSettings) with { MaxFps = renderSettings.MaxFps };
-                if (RenderSettingsResolver.LengthNote(written.Events, drawn, written.LoopDuration) is { } lengthNote)
+                if (RenderSettingsResolver.LengthNote(written.Events, drawn, written.LoopDuration, StepTimes.Names(times)) is { } lengthNote)
                     Console.Error.WriteLine($"Warning: {lengthNote}");
                 svg = SvgRender.RenderToUtf8(written.Events, written.Width, written.Height, drawn, written.LoopDuration);
                 played = RenderSettingsResolver.FormatPlayed(SvgRender.PlayedSeconds(written.Events, drawn, written.LoopDuration), drawn);

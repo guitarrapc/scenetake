@@ -93,6 +93,19 @@ internal static partial class ScenarioCast
         return null;
     }
 
+    /// <summary>A card as the time per step names it: <c>card: </c> and its first line with text, as the card shows it.</summary>
+    private static string CardLabel(List<string> lines, SecretMasker? masker)
+    {
+        foreach (var line in lines)
+        {
+            var text = SplitCardStyle(line).Text.Trim();
+            if (text.Length > 0)
+                return "card: " + Rerecording.Shorten(masker?.MaskUncounted(text) ?? text);
+        }
+
+        return "card";
+    }
+
     /// <summary>
     /// The part of the terminal a card is centered in: the window the rest of the recording shows with the scenario's
     /// fit and crop, found as the render finds it, so a card neither sits in cut cells nor grows the canvas that fit
@@ -175,6 +188,8 @@ internal static partial class ScenarioCast
             // Each step starts on a whole millisecond. The cast stores intervals between times rounded to milliseconds, so
             // a step that types longer than before would otherwise move the rounding of every step after it by 1ms.
             t = CeilingToMillisecond(t);
+            // Where this step begins in the time per step: the first shown step holds the moment before it too.
+            var stepStart = options.Times is { Count: > 0 } ? t : 0;
             var command = ParseCommand(steps[i]);
             if (command.Card is { } card)
             {
@@ -188,6 +203,7 @@ internal static partial class ScenarioCast
                 events.Add(CastEvent.Output(Math.Round(t, 6), HideCursor + ClearScreen));
                 cardOnScreen = true;
                 t += GetDouble(command.Extra, CardPostDelay, "post-delay");
+                options.Times?.Add(new StepTime(i + 1, CardLabel(card, options.Masker), stepStart) { End = t });
                 continue;
             }
 
@@ -209,6 +225,7 @@ internal static partial class ScenarioCast
                     t += 0.05;
                 }
 
+                options.Times?.Add(new StepTime(i + 1, clearNameText.Length > 0 ? Rerecording.Shorten(options.Masker?.MaskUncounted(clearNameText) ?? clearNameText) : "clear", stepStart) { End = t });
                 lastPost = GetDouble(command.Extra, postDelay, "post-delay");
                 t += lastPost;
                 continue;
@@ -336,10 +353,15 @@ internal static partial class ScenarioCast
             // pre-delay passes with the prompt on the screen, as a person pauses before typing, or before the output
             // of a step that types nothing. The prompt itself shows as soon as the step before has paused for its
             // post-delay, as a shell draws it when the command ends.
+            var typingFrom = t + cmdPre + 0.05;
             if (show == StepShow.All)
                 EmitTypedCommand(events, ref t, Prompt(stepFolder), cmdPre, masker?.MaskText(typed) ?? typed, cmdSpeed, cmdJitter, stepRandom, hasRunHighlight, runHighlightStyle);
             else
                 t += cmdPre;
+            var stepTyping = show == StepShow.All ? t - typingFrom : 0;
+            // The step as the time per step names it: by its name, or by its run text as the cast shows it.
+            string StepLabel(string run) =>
+                Rerecording.Shorten(nameDisplayText.Length > 0 ? masker?.MaskUncounted(nameDisplayText) ?? nameDisplayText : run);
 
             var width = scenario.Width ?? RenderSettingsResolver.DefaultTerminalCols;
             var height = scenario.Height ?? RenderSettingsResolver.DefaultTerminalRows;
@@ -370,6 +392,7 @@ internal static partial class ScenarioCast
                 {
                     if (options.LogRunning)
                         Console.Error.WriteLine($"  not run (rerun: false): {command.Cmd}");
+                    options.Times?.Add(new StepTime(i + 1, StepLabel(reusedRun), stepStart) { Typing = stepTyping, Output = reusedEnd - t, End = reusedEnd });
                     t = reusedEnd + cmdPost;
                     continue;
                 }
@@ -513,6 +536,7 @@ internal static partial class ScenarioCast
                     colorsFollowReads);
             }
 
+            options.Times?.Add(new StepTime(i + 1, StepLabel(maskedRun), stepStart) { Typing = stepTyping, Output = t - commandStart, End = t });
             t += cmdPost;
         }
 
@@ -1575,6 +1599,9 @@ internal sealed class GenerateOptions
 
     /// <summary>Receives the keys typed in each interactive step, for --save-keys. Null keeps none.</summary>
     internal List<SavedStepKeys>? SavedKeys { get; init; }
+
+    /// <summary>Receives each shown step's time in the cast, for the table after the cast's Written line. Null keeps none.</summary>
+    internal List<StepTime>? Times { get; init; }
 
     /// <summary>Compares each step with the earlier cast, and keeps where its output is for the st:steps tag. Null does neither.</summary>
     internal Rerecorder? Rerecorder { get; init; }

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 
 namespace Scenetake.Core;
 
@@ -66,7 +67,7 @@ internal static class PlaybackLength
     {
         var count = events.Count;
         if (count == 0)
-            return new Result(events, loopDuration, loopDuration + fadeOut, loopDuration + fadeOut, loopDuration + fadeOut);
+            return new Result(events, loopDuration, loopDuration + fadeOut, loopDuration + fadeOut, loopDuration + fadeOut) { Original = events, GapShortest = [0], Actions = [] };
 
         // gaps[i] leads to event i, and gaps[count] is the default hold on the final screen.
         var gaps = new double[count + 1];
@@ -113,12 +114,17 @@ internal static class PlaybackLength
 
         var fixedTail = (endHold ?? 0) + fadeOut;
         var natural = Sum(gaps) + fixedTail;
+        // Each gap at its shortest, which the warning of a length that cannot be kept also splits by step.
         var shortest = fixedTail;
+        var gapShortest = new double[count + 1];
         for (var i = 0; i <= count; i++)
-            shortest += kinds[i] == Fixed ? gaps[i] : Math.Min(gaps[i], floors[i]);
+        {
+            gapShortest[i] = kinds[i] == Fixed ? gaps[i] : Math.Min(gaps[i], floors[i]);
+            shortest += gapShortest[i];
+        }
 
         if (natural <= length)
-            return new Result(events, loopDuration, natural, natural, shortest);
+            return new Result(events, loopDuration, natural, natural, shortest) { Original = events, GapShortest = gapShortest, Actions = actions };
 
         // Each kind in turn gives up time down to its floors, all of its gaps by the same factor, until the recording fits.
         var excess = natural - length;
@@ -137,7 +143,7 @@ internal static class PlaybackLength
             fitted[i] = events[i] with { Time = Math.Round(time, 6) };
         }
 
-        return new Result(fitted, time + gaps[count], natural, Sum(gaps) + fixedTail, shortest);
+        return new Result(fitted, time + gaps[count], natural, Sum(gaps) + fixedTail, shortest) { Original = events, GapShortest = gapShortest, Actions = actions };
 
         // A gap's kind and floor. A floor above the gap leaves the gap as it is.
         void Mark(int index, int kind, double floor)
@@ -461,9 +467,123 @@ internal static class PlaybackLength
         return Math.Max(1, moves - 1);
     }
 
+    /// <summary>
+    /// Each step's part of the shortest the recording can play, for the warning of a length it cannot keep, as the
+    /// time per step splits a recording (<see cref="StepTimes"/>): a step runs from where it begins to where the next
+    /// one begins, so its post-delay is its own, the first holds the moment before it, and the last ends with its
+    /// output, as the final screen is no step's. A gap across where two steps meet is shared by its seconds in each.
+    /// <paramref name="names"/> gives the steps as the scenario's run knew them. Without it, as for a cast alone, the
+    /// steps are those of <paramref name="steps"/>, the <c>st:steps</c> tag's: each begins with the event after the
+    /// output of the step before it, a card's time on the screen is no step's, and each is named by the command it
+    /// types, or by where it is in the cast.
+    /// </summary>
+    internal static StepShortest[] StepsAtShortest(int[] steps, Result fitted, StepNames? names)
+    {
+        var events = fitted.Original;
+        var count = events.Count;
+        var gapShortest = fitted.GapShortest;
+        double[] starts;
+        double end;
+        string[] labels;
+        if (names is not null)
+        {
+            starts = names.Starts;
+            end = names.End;
+            labels = names.Labels;
+        }
+        else
+        {
+            var stepCount = Math.Min(steps.Length / 2, fitted.Actions.Length);
+            starts = new double[stepCount];
+            labels = new string[stepCount];
+            end = 0;
+            gapShortest = (double[])gapShortest.Clone();
+            for (var i = 1; i <= count; i++)
+            {
+                if (events[i - 1].Kind == CastEventKind.Output && events[i - 1].Data.StartsWith(CardStart, StringComparison.Ordinal))
+                    gapShortest[i] = 0;
+            }
+
+            for (var s = 0; s < stepCount; s++)
+            {
+                var first = steps[s * 2];
+                var action = fitted.Actions[s];
+                var after = s == 0 ? 0 : steps[s * 2 - 2] + steps[s * 2 - 1];
+                starts[s] = s == 0 ? 0 : after < count ? events[after].Time : starts[s - 1];
+                if (action < 0)
+                {
+                    labels[s] = "";
+                    continue;
+                }
+
+                // The command as it was typed, from where the step acts to Enter.
+                var typed = new StringBuilder();
+                for (var i = action; i < first && i < count; i++)
+                {
+                    if (IsTypedCharacter(events[i]))
+                        typed.Append(events[i].Data);
+                }
+
+                labels[s] = typed.Length > 0
+                    ? "the step that types " + JsonEscape.JsonString(Rerecording.Shorten(typed.ToString()))
+                    : string.Create(CultureInfo.InvariantCulture, $"the step at {events[Math.Min(action, count - 1)].Time:F1}s in the cast");
+                end = events[Math.Clamp(first + steps[s * 2 + 1] - 1, 0, count - 1)].Time;
+            }
+        }
+
+        var seconds = new double[starts.Length];
+        var previous = 0.0;
+        var step = 0;
+        for (var i = 0; i < count && starts.Length > 0; i++)
+        {
+            var from = previous;
+            var to = events[i].Time;
+            previous = to;
+            if (to <= from || gapShortest[i] <= 0)
+                continue;
+            while (step + 1 < starts.Length && starts[step + 1] <= from)
+                step++;
+            for (var s = step; s < starts.Length && starts[s] < to; s++)
+            {
+                var overlap = Math.Min(to, s + 1 < starts.Length ? starts[s + 1] : end) - Math.Max(from, starts[s]);
+                if (overlap > 0)
+                    seconds[s] += gapShortest[i] * overlap / (to - from);
+            }
+        }
+
+        var named = 0;
+        foreach (var label in labels)
+            named += label.Length > 0 ? 1 : 0;
+        var result = new StepShortest[named];
+        named = 0;
+        for (var s = 0; s < starts.Length; s++)
+        {
+            if (labels[s].Length > 0)
+                result[named++] = new StepShortest(labels[s], seconds[s]);
+        }
+
+        return result;
+    }
+
+    /// <summary>A step named for messages, and its seconds at the shortest (<see cref="StepsAtShortest"/>).</summary>
+    internal sealed class StepShortest(string label, double seconds)
+    {
+        internal string Label { get; } = label;
+        internal double Seconds { get; } = seconds;
+    }
+
     /// <summary>A fitted recording, with how long it played before and now, and the shortest it can play.</summary>
     internal sealed class Result(IReadOnlyList<CastEvent> events, double loopDuration, double natural, double played, double shortest)
     {
+        /// <summary>The events as they were given, before fitting.</summary>
+        internal required IReadOnlyList<CastEvent> Original { get; init; }
+
+        /// <summary>What each gap of <see cref="Original"/> gives at the shortest, the default hold last.</summary>
+        internal required double[] GapShortest { get; init; }
+
+        /// <summary>Where each step of the <c>st:steps</c> tag acts: its first typed character, or its first output. -1 for one not in the cast.</summary>
+        internal required int[] Actions { get; init; }
+
         internal IReadOnlyList<CastEvent> Events { get; } = events;
 
         /// <summary>The loop with the default hold, without an explicit end hold or the fade-out.</summary>

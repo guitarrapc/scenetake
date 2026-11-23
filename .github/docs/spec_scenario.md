@@ -541,6 +541,33 @@ On Windows:
 - bash lookup checks Git and MSYS folders under Program Files and local app data, then PATH.
 - Lookup excludes the current directory and ProgramData. WSL bash is never used, including by path.
 
+## Time per step
+
+After the cast's `Written:` line, a recording and a replay print where the cast's time goes, one line for each shown step:
+
+```
+Written: basic.cast  (188 events, 16.7s)
+  Time per step: typing + output + pauses
+    1  2.5s = 0.5 + 0.0 + 2.0  echo "Hello, World!"
+    2  2.2s = 0.6 + 0.1 + 1.5  Name of the step
+    3  2.3s = 0.7 + 0.1 + 1.5  Coloring stdout
+    4  2.2s = 0.7 + 0.0 + 1.5  echo "Wait for 2 seconds..."
+    5  2.7s = 0.3 + 1.0 + 1.4  sleep 2
+    6  2.5s = 1.0 + 0.0 + 1.5  echo "stderr output is red by default" 1>&2
+    7  0.9s = 0.4 + 0.0 + 0.5  echo "Done!"
+       1.4s  final screen
+  In all: typing 4.2s, output 1.3s, pauses 9.8s, final screen 1.4s
+```
+
+- **A step's time** runs from where it begins, with its comment line, prompt, or `pre-delay`, to where the next shown step begins, so its `post-delay` is its own (Pauses above). The first step holds the 0.5 s before its prompt. The last step ends with its output, and the final screen holds the rest of the cast.
+- **The parts.** Typing runs from the first typed character to the command's start, Enter included: `typing-speed` and the command's length set it. Output runs from the command's start to the end of its output: `execution-duration` for a pipe step, and for a PTY or interactive step the command's own time, which `max-duration`, `silence-threshold`, and `max-idle` shorten. Pauses are the rest: `pre-delay`, `post-delay`, and a comment line. A card's and a clear step's time are pauses.
+- **Which steps.** Every step the cast shows: commands, cards, and clear steps, numbered by their place in `steps`. A `show: none` step and a background step take no time in the cast and get no line. A step is named by its `name`, or else by its `run` text cut at 60 characters, and a card by its first line, after masking.
+- **Tenths that add up.** Each line's parts add up to its time, and the last line's parts and the final screen add up to the length on the cast's `Written:` line. Each part is rounded down, and the tenths left over go to the parts that lost the most.
+- **As recorded.** The times are the cast's, as its `Written:` line is. With `speed` or `length`, the outputs play faster, and their own `Written:` lines say how long.
+- **Not for `capture`.** It records one command, whose time the cast's line already gives.
+- **A length that cannot be kept** gets a warning that names the steps that take longest at their shortest, split the same way ([spec_svg.md](spec_svg.md) → Length).
+- **Why** (2026-11-23). The cast's line gave the total only, and the warning of a length that cannot be kept said `Leave out steps or output` without saying which. The split tells the author what to change: `basic.yaml`'s 16.7 s are 9.8 s of pauses, which `post-delay` and `pre-delay` set, and a slow build shows as one step's output. An agent that writes a scenario reads the run's output, not the SVG, so the table comes with every recording instead of behind an option.
+
 ## Determinism
 
 Each step types from a random sequence of its own. Its seed is the step as recording again finds it (Recording again below): its `run` text after masking, how it runs (pipe, `pty`, or `interactive`), what it shows, and how many steps before it are the same. A step's `keys` draw their typing delays from the same sequence, after its typed command. Each step starts on a whole millisecond. The cast header's `timestamp` is fixed at `1700000000` (2023-11-14 UTC).

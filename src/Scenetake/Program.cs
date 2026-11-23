@@ -953,8 +953,11 @@ string PromptFolderName()
     return PromptTemplate.FolderName(folder, promptHome, promptProfile);
 }
 
+// The time per step, printed after the cast's Written line. A capture has one command, whose time that line gives.
+var stepTimes = capture is null ? new List<StepTime>() : null;
 var generateOptions = new GenerateOptions
 {
+    Times = stepTimes,
     Verbose = verbose,
     Strict = strict,
     TrackPtyCursor = OperatingSystem.IsWindows(),
@@ -1024,6 +1027,8 @@ var duration = events.Count > 0 ? events[^1].Time : 0.0;
 // With the cast as the only output, its line also says how large an SVG or mp4 of it would be.
 var convertedSizes = outputPlans.Count == 0 ? $", {DescribeConvertedSizes(events, scenarioWidth, scenarioHeight, renderSettings)}" : "";
 Console.Error.WriteLine($"Written: {FormatDisplayPath(outputPath)}  ({events.Count} events, {duration:F1}s{SpedUpLength(duration, renderSettings)}{convertedSizes})");
+foreach (var line in StepTimes.Format(stepTimes ?? [], duration))
+    Console.Error.WriteLine(line);
 foreach (var line in Rerecording.Describe(rerecorder, previousCastProblem, FormatDisplayPath(outputPath)))
     Console.Error.WriteLine(line);
 
@@ -1051,7 +1056,7 @@ if (recordedSteps is not null)
     Console.Error.WriteLine($"Written: {FormatDisplayPath(outputsFilePath)}");
 }
 
-var exitCode = RenderOutputs(outputPath, outputPlans, renderSettings, scenario.Title);
+var exitCode = RenderOutputs(outputPath, outputPlans, renderSettings, scenario.Title, StepTimes.Names(stepTimes ?? []));
 if (keysWriteError is not null)
     exitCode = 1;
 
@@ -1084,9 +1089,11 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
     // As when recording: a step whose output is the same as in the cast here keeps its events, and keep-output keeps them.
     var replayPrevious = PreviousCast.TryRead(outputPath, scenarioWidth, scenarioHeight, out var replayPreviousProblem);
     var replayRerecorder = new Rerecorder(replayPrevious, replayMasker);
+    var replayTimes = new List<StepTime>();
     Console.Error.WriteLine("Generating cast...");
     var (replayed, failure) = await GenerateAsync(scenario, new GenerateOptions
     {
+        Times = replayTimes,
         Verbose = verbose,
         Strict = strict,
         TrackPtyCursor = replay.TrackPtyCursor,
@@ -1138,10 +1145,12 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
     var replayDuration = replayed.Count > 0 ? replayed[^1].Time : 0.0;
     var replaySizes = outputPlans.Count == 0 ? $", {DescribeConvertedSizes(replayed, scenarioWidth, scenarioHeight, renderSettings)}" : "";
     Console.Error.WriteLine($"Written: {FormatDisplayPath(outputPath)}  ({replayed.Count} events, {replayDuration:F1}s{SpedUpLength(replayDuration, renderSettings)}{replaySizes})");
+    foreach (var line in StepTimes.Format(replayTimes, replayDuration))
+        Console.Error.WriteLine(line);
     foreach (var line in Rerecording.Describe(replayRerecorder, replayPreviousProblem, FormatDisplayPath(outputPath)))
         Console.Error.WriteLine(line);
 
-    var renderExitCode = RenderOutputs(outputPath, outputPlans, renderSettings, scenario.Title);
+    var renderExitCode = RenderOutputs(outputPath, outputPlans, renderSettings, scenario.Title, StepTimes.Names(replayTimes));
     if (renderExitCode != 0)
         return renderExitCode;
 
@@ -1154,14 +1163,14 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
 // carries the look. --max-fps and an image background are not stored, so they are applied again, and an outputs
 // entry's own look goes on top, as `scenetake svg --theme ...` puts its options on top of the cast's.
 // A failed output is removed and the others are still written. Returns 1 when one failed.
-static int RenderOutputs(string castPath, IReadOnlyList<OutputPlan> plans, ResolvedRenderSettings runSettings, string? title)
+static int RenderOutputs(string castPath, IReadOnlyList<OutputPlan> plans, ResolvedRenderSettings runSettings, string? title, StepNames? stepNames)
 {
     var exitCode = 0;
     string? darkSvg = null;
     string? lightSvg = null;
     foreach (var plan in plans)
     {
-        if (!TryRenderOutput(castPath, plan, runSettings, out var drawn))
+        if (!TryRenderOutput(castPath, plan, runSettings, stepNames, out var drawn))
         {
             exitCode = 1;
             continue;
@@ -1189,7 +1198,7 @@ static int RenderOutputs(string castPath, IReadOnlyList<OutputPlan> plans, Resol
     return exitCode;
 }
 
-static bool TryRenderOutput(string castPath, OutputPlan plan, ResolvedRenderSettings runSettings, out ResolvedRenderSettings drawn)
+static bool TryRenderOutput(string castPath, OutputPlan plan, ResolvedRenderSettings runSettings, StepNames? stepNames, out ResolvedRenderSettings drawn)
 {
     drawn = runSettings;
     var name = plan.Format switch
@@ -1207,7 +1216,7 @@ static bool TryRenderOutput(string castPath, OutputPlan plan, ResolvedRenderSett
             settings = settings with { MaxFps = runSettings.MaxFps };
         drawn = settings = plan.Overrides?.Apply(settings) ?? settings;
         if (plan.Format != OutputFormat.Png && plan.StillAt is null)
-            WarnLength(plan.Label, written, settings);
+            WarnLength(plan.Label, written, settings, stepNames);
         switch (plan.Format)
         {
             case OutputFormat.Svg:
@@ -3445,10 +3454,13 @@ static string SpedUpLength(double recorded, ResolvedRenderSettings render) =>
 
 static string PlayedLength(double seconds, ResolvedRenderSettings render) => RenderSettingsResolver.FormatPlayed(seconds, render);
 
-/// <summary>A warning when an output does not keep its length (RenderSettingsResolver.LengthNote), named after its outputs entry.</summary>
-static void WarnLength(string label, CastRecording recording, ResolvedRenderSettings settings)
+/// <summary>
+/// A warning when an output does not keep its length (RenderSettingsResolver.LengthNote), named after its outputs
+/// entry. A scenario's run names the steps in it as its time per step does.
+/// </summary>
+static void WarnLength(string label, CastRecording recording, ResolvedRenderSettings settings, StepNames? stepNames = null)
 {
-    if (RenderSettingsResolver.LengthNote(recording.Events, settings, recording.LoopDuration) is { } note)
+    if (RenderSettingsResolver.LengthNote(recording.Events, settings, recording.LoopDuration, stepNames) is { } note)
         Console.Error.WriteLine($"Warning: {(label.Length == 0 ? "" : label + ": ")}{note}");
 }
 
