@@ -26,10 +26,11 @@ Binaries for Linux, macOS, and Windows are on https://github.com/guitarrapc/scen
 4. **Read stderr.** Fix every `Warning:` line: an unknown key or a value scenetake ignored. A `Masked` line says what scenetake hid as `*`. Check that it hid nothing the demo needs. A `Note:` line says what a run did not do, such as comparing with an earlier cast, and needs no fix.
 5. **Look at the result.** Render screens as PNG and view them with your image tool:
    - `scenetake png --at end demo.cast final` writes final.png, the last screen.
+   - Give a step `id: compare`, and `scenetake png --at compare demo.cast result` writes the screen right after that step's output. An outputs entry's `at: compare` does the same for a poster or a preview image.
    - `scenetake png --at 4.5 demo.cast mid` writes the screen 4.5 seconds in, in recording time. The cast is JSON lines `[seconds since the previous event, "o", text]`, so the sum of the first numbers up to an event is its time. A step with a `name` starts with a marker event, `[seconds, "m", "the name"]`, which finds that step.
    - Check: the output fits the width, nothing is cut, colors show, no error text, and each screen stays long enough to read: about 1 second for a one-line answer, 2 to 3 seconds for a screen of output.
    - Each `Written:` line gives that file's length. The cast's is the recording. An SVG's adds the final screen's hold (`end-hold`). A file with `speed` or `length` gives its played length. Aim for an SVG of 30 seconds or less.
-   - After the cast's line, `Time per step` gives each step's time as typing + output + pauses, and `In all` the whole cast split the same way. Shorten what holds the most: pauses with `post-delay` and `pre-delay`, typing with `typing-speed`, output with `execution-duration` or the step's command.
+   - After the cast's line, a table gives each step's time with its `typing`, `output`, and `pauses`, and a `total` row. Shorten what holds the most: pauses with `post-delay` and `pre-delay`, typing with `typing-speed`, output with `execution-duration` or the step's command.
 6. **Tune without running the commands again.** Record once with `--save-outputs demo.outputs.json`. Then `scenetake --replay demo.outputs.json demo.yaml` applies changes to typing, cards, comments, theme, and speed in a second. A step whose `run` changed needs a new recording.
 
 ## A scenario

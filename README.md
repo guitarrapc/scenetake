@@ -193,7 +193,7 @@ The tables below say what each command and option is for. `scenetake --help` and
 | `--speed N` | Make the SVG, mp4, or GIF shorter (`1.5`) or slower (`0.5`) without recording again |
 | `--length N` | Fit the SVG, mp4, or GIF into at most N seconds without recording again |
 | `--max-fps N` | Make the SVG of a fast-changing screen smaller |
-| `--at TIME` | Make a still SVG or PNG of one moment, such as `end` for the final screen |
+| `--at TIME` | Make a still SVG or PNG of one moment: seconds, `end` for the final screen, or a step's `id` for the screen right after that step |
 | **mp4, GIF, and PNG** | |
 | `--fps N` | Balance smooth motion and file size for mp4 and GIF. The default rises with `--speed` to keep motion smooth |
 | `--crf N` | Balance mp4 quality and file size |

@@ -198,7 +198,7 @@ npx skills add guitarrapc/scenetake
 | `--speed N` | 録り直さずに、SVG、mp4、GIFを短く（`1.5`）、またはゆっくり（`0.5`）にする |
 | `--length N` | 録り直さずに、SVG、mp4、GIFを最大N秒に収める |
 | `--max-fps N` | 画面がよく変わるSVGを小さくする |
-| `--at TIME` | ある時点の静止画をSVGかPNGで作る。`end`なら最後の画面 |
+| `--at TIME` | ある時点の静止画をSVGかPNGで作る。秒数、`end`なら最後の画面、ステップの`id`ならそのステップの出力直後の画面 |
 | **mp4、GIF、PNG** | |
 | `--fps N` | mp4とGIFの滑らかさとファイルサイズを調整する。滑らかさを維持するため`--speed`を上げると既定値も上がる |
 | `--crf N` | mp4の画質とファイルサイズを調整する |

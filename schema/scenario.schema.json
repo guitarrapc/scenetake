@@ -445,10 +445,10 @@
           "pattern": "^\\s*(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)[sS]\\s*$"
         },
         "at": {
-          "description": "svg and png: one screen, the one shown this many seconds into the recording, or end for the final screen.",
+          "description": "svg and png: one screen: the one shown this many seconds into the recording, end for the final screen, or a step's id for the screen right after that step's output.",
           "type": ["number", "string"],
           "minimum": 0,
-          "pattern": "^\\s*[eE][nN][dD]\\s*$"
+          "pattern": "^\\s*[A-Za-z_][A-Za-z0-9_-]*\\s*$"
         },
         "max-fps": { "type": "integer", "minimum": 0, "maximum": 120, "description": "svg: cap the animation's frame rate. 0 keeps every frame." },
         "fps": { "type": "integer", "minimum": 1, "maximum": 60, "description": "mp4 and gif: frames per second. Default 30 for mp4 and 20 for a GIF, at most 50." },
@@ -593,6 +593,12 @@
           "description": "A comment line shown before the command, with an optional [style] prefix: \"[bright-yellow]Build it\".",
           "type": "string"
         },
+        "id": {
+          "description": "A name for --at and an outputs entry's at: the screen right after this step's output, or where a card or a clear step shows. A letter or _, then letters, digits, - and _. Not shown in the demo.",
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$",
+          "not": { "pattern": "^[eE][nN][dD]$" }
+        },
         "typing-speed": { "description": "Average seconds per typed character, for this step.", "$ref": "#/definitions/seconds" },
         "typing-jitter": { "description": "Random variance (+/- seconds) per typed character, for this step.", "$ref": "#/definitions/seconds" },
         "pre-delay": { "description": "Seconds before this step is typed.", "$ref": "#/definitions/seconds" },
@@ -693,16 +699,16 @@
           "if": { "required": ["card"] },
           "then": {
             "propertyNames": {
-              "enum": ["card", "pre-delay", "post-delay"],
-              "errorMessage": "A card step takes card, pre-delay, and post-delay only."
+              "enum": ["card", "id", "pre-delay", "post-delay"],
+              "errorMessage": "A card step takes card, id, pre-delay, and post-delay only."
             }
           },
           "else": {
             "if": { "required": ["clear"] },
             "then": {
               "propertyNames": {
-                "enum": ["clear", "name", "pre-delay", "post-delay"],
-                "errorMessage": "A clear step takes clear, name, pre-delay, and post-delay only."
+                "enum": ["clear", "name", "id", "pre-delay", "post-delay"],
+                "errorMessage": "A clear step takes clear, name, id, pre-delay, and post-delay only."
               }
             },
             "else": { "required": ["run"] }
@@ -726,7 +732,7 @@
           "then": {
             "propertyNames": {
               "enum": [
-                "run", "name", "typing-speed", "typing-jitter", "pre-delay", "post-delay", "execution-duration",
+                "run", "name", "id", "typing-speed", "typing-jitter", "pre-delay", "post-delay", "execution-duration",
                 "stream-output", "max-duration", "silence-threshold", "max-idle", "run-highlight", "highlight", "stderr-color",
                 "pty", "interactive", "normalize-typing", "continue-on-error", "show", "clear", "card",
                 "background", "wait", "wait-timeout", "keep-output", "rerun"
@@ -740,7 +746,7 @@
             "required": ["show"],
             "properties": { "show": { "type": "string", "pattern": "^[nN][oO][nN][eE]$" } },
             "anyOf": [
-              { "required": ["name"] }, { "required": ["run-highlight"] }, { "required": ["highlight"] }, { "required": ["stderr-color"] },
+              { "required": ["name"] }, { "required": ["id"] }, { "required": ["run-highlight"] }, { "required": ["highlight"] }, { "required": ["stderr-color"] },
               { "required": ["pre-delay"] }, { "required": ["post-delay"] }, { "required": ["execution-duration"] },
               { "required": ["stream-output"] }, { "required": ["max-duration"] }, { "required": ["silence-threshold"] },
               { "required": ["max-idle"] }, { "required": ["keep-output"] }, { "required": ["rerun"] }
@@ -752,7 +758,7 @@
                 "run", "typing-speed", "typing-jitter", "pty", "interactive", "normalize-typing", "continue-on-error",
                 "keys", "timeout", "show", "clear", "card", "background", "wait", "wait-timeout"
               ],
-              "errorMessage": "show: none shows nothing and takes no time, so it takes no name, highlight, stderr-color, delay, output timing, keep-output, or rerun."
+              "errorMessage": "show: none shows nothing and takes no time, so it takes no name, id, highlight, stderr-color, delay, output timing, keep-output, or rerun."
             }
           }
         },
@@ -764,7 +770,7 @@
           "then": {
             "propertyNames": {
               "enum": [
-                "run", "name", "typing-speed", "typing-jitter", "pre-delay", "post-delay", "execution-duration",
+                "run", "name", "id", "typing-speed", "typing-jitter", "pre-delay", "post-delay", "execution-duration",
                 "stream-output", "max-duration", "silence-threshold", "max-idle", "highlight", "stderr-color",
                 "pty", "interactive", "normalize-typing", "continue-on-error", "keys", "timeout", "show", "clear", "card",
                 "background", "wait", "wait-timeout", "keep-output", "rerun"

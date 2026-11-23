@@ -93,6 +93,10 @@ internal static partial class ScenarioCast
         return null;
     }
 
+    /// <summary>A step's <c>id</c>, which <c>--at</c> names, or null.</summary>
+    private static string? StepIdOf(CommandEntry command) =>
+        command.Extra.TryGetValue("id", out var id) ? id?.ToString() : null;
+
     /// <summary>A card as the time per step names it: <c>card: </c> and its first line with text, as the card shows it.</summary>
     private static string CardLabel(List<string> lines, SecretMasker? masker)
     {
@@ -203,7 +207,7 @@ internal static partial class ScenarioCast
                 events.Add(CastEvent.Output(Math.Round(t, 6), HideCursor + ClearScreen));
                 cardOnScreen = true;
                 t += GetDouble(command.Extra, CardPostDelay, "post-delay");
-                options.Times?.Add(new StepTime(i + 1, CardLabel(card, options.Masker), stepStart) { End = t });
+                options.Times?.Add(new StepTime(i + 1, CardLabel(card, options.Masker), stepStart) { End = t, Id = StepIdOf(command), At = events[^1].Time });
                 continue;
             }
 
@@ -225,7 +229,7 @@ internal static partial class ScenarioCast
                     t += 0.05;
                 }
 
-                options.Times?.Add(new StepTime(i + 1, clearNameText.Length > 0 ? Rerecording.Shorten(options.Masker?.MaskUncounted(clearNameText) ?? clearNameText) : "clear", stepStart) { End = t });
+                options.Times?.Add(new StepTime(i + 1, clearNameText.Length > 0 ? Rerecording.Shorten(options.Masker?.MaskUncounted(clearNameText) ?? clearNameText) : "clear", stepStart) { End = t, Id = StepIdOf(command), At = t });
                 lastPost = GetDouble(command.Extra, postDelay, "post-delay");
                 t += lastPost;
                 continue;
@@ -392,7 +396,7 @@ internal static partial class ScenarioCast
                 {
                     if (options.LogRunning)
                         Console.Error.WriteLine($"  not run (rerun: false): {command.Cmd}");
-                    options.Times?.Add(new StepTime(i + 1, StepLabel(reusedRun), stepStart) { Typing = stepTyping, Output = reusedEnd - t, End = reusedEnd });
+                    options.Times?.Add(new StepTime(i + 1, StepLabel(reusedRun), stepStart) { Typing = stepTyping, Output = reusedEnd - t, End = reusedEnd, Id = StepIdOf(command), At = reusedEnd });
                     t = reusedEnd + cmdPost;
                     continue;
                 }
@@ -536,7 +540,7 @@ internal static partial class ScenarioCast
                     colorsFollowReads);
             }
 
-            options.Times?.Add(new StepTime(i + 1, StepLabel(maskedRun), stepStart) { Typing = stepTyping, Output = t - commandStart, End = t });
+            options.Times?.Add(new StepTime(i + 1, StepLabel(maskedRun), stepStart) { Typing = stepTyping, Output = t - commandStart, End = t, Id = StepIdOf(command), At = t });
             t += cmdPost;
         }
 
@@ -1288,15 +1292,17 @@ internal static partial class ScenarioCast
         string shellName,
         long timestamp,
         ResolvedRenderSettings renderSettings,
-        IReadOnlyList<StepSlot>? slots = null)
+        IReadOnlyList<StepSlot>? slots = null,
+        IReadOnlyList<StepTime>? times = null)
     {
         using var writer = new StreamWriter(outputPath, append: false, encoding: new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-        WriteCast(writer, scenario, events, shellName, timestamp, renderSettings, slots);
+        WriteCast(writer, scenario, events, shellName, timestamp, renderSettings, slots, times);
     }
 
     /// <summary>
     /// Writes the cast to <paramref name="writer"/>; <paramref name="shellName"/> is the header's env.SHELL (<see cref="ShellEnvName"/>).
     /// <paramref name="slots"/> become the st:steps tag, which the next recording to the same file reads (<see cref="Rerecording"/>).
+    /// The ids of <paramref name="times"/> become the st:ids tag, which <c>--at</c> with an id reads (<see cref="StepIds"/>).
     /// </summary>
     internal static void WriteCast(
         TextWriter writer,
@@ -1305,7 +1311,8 @@ internal static partial class ScenarioCast
         string shellName,
         long timestamp,
         ResolvedRenderSettings renderSettings,
-        IReadOnlyList<StepSlot>? slots = null)
+        IReadOnlyList<StepSlot>? slots = null,
+        IReadOnlyList<StepTime>? times = null)
     {
         writer.NewLine = "\n";
 
@@ -1358,6 +1365,8 @@ internal static partial class ScenarioCast
             tags.Add(RenderSettingsResolver.CropLeftTagPrefix + renderSettings.Crop.Left.ToString(CultureInfo.InvariantCulture));
         if (renderSettings.Crop.Right > 0)
             tags.Add(RenderSettingsResolver.CropRightTagPrefix + renderSettings.Crop.Right.ToString(CultureInfo.InvariantCulture));
+        if (StepIds.FormatTag(times) is { } idsTag)
+            tags.Add(idsTag);
         if (slots is { Count: > 0 })
             tags.Add(Rerecording.FormatTag(slots, events.Count, WrittenMilliseconds(events)));
         var tagsJson = string.Join(",", tags.ConvertAll(static tag => JsonEscape.JsonString(tag)));

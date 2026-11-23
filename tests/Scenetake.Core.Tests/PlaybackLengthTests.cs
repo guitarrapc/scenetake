@@ -120,7 +120,7 @@ internal static class PlaybackLengthCases
         var note = RenderSettingsResolver.LengthNote(recording.Events, settings with { Length = 1 }, recording.LoopDuration);
         return Expect(Math.Abs(fitted.Played - fitted.Shortest) < 1e-6, $"played {fitted.Played}, shortest {fitted.Shortest}")
             && Expect(TypingGaps(recording.Events).All(i => Math.Abs(after[i] - PlaybackLength.TypingFloor) < 1e-6), "typing is not at its floor")
-            && Expect(note?.Contains($"{fitted.Played:F1}s with every wait, pause, and typed character at its shortest", StringComparison.Ordinal) == true, note ?? "no warning");
+            && Expect(note?.Contains($"is too short for this recording, which takes at least {fitted.Played:F1}s.", StringComparison.Ordinal) == true, note ?? "no warning");
     }
 
     internal static bool ExplicitEndHoldAndFadeStay()

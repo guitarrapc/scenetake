@@ -333,6 +333,7 @@ Map-form steps recognize:
 |---|---|---|
 | `run` | yes | Command string. A missing `run`, or a list or a mapping under it, is an error found before anything runs. The error for a missing `run` names the keys the step has, so an unquoted `- echo key: value` shows up as the key `echo key` |
 | `name` | no | Comment line before typing. Optional `[style]` prefix: [spec_highlight.md](spec_highlight.md) |
+| `id` | no | A name for `--at` and an outputs entry's `at`, which then show the screen right after this step's output. A letter or `_`, then letters, digits, `-`, and `_`. Not shown in the demo. See Step ids below |
 | `typing-speed`, `typing-jitter`, `pre-delay`, `post-delay`, `execution-duration` | no | Override `settings` for this step |
 | `stream-output`, `max-duration`, `silence-threshold`, `max-idle` | no | Override `settings` output-timing keys for this step |
 | `run-highlight` | no | Style for typed command text |
@@ -391,7 +392,7 @@ steps:
 
 ### Clear steps
 
-A step `- clear: true` clears the screen and moves the cursor to the top left, as `clear` does, without running a command. It writes `ESC [H ESC [2J` into the cast, so it works without `TERM`, on every OS, and in the playground. It takes `name`, which prints a comment line at the top of the cleared screen, and `pre-delay` and `post-delay`. Any other step key, `run` with `clear`, or a value other than `true` is an error.
+A step `- clear: true` clears the screen and moves the cursor to the top left, as `clear` does, without running a command. It writes `ESC [H ESC [2J` into the cast, so it works without `TERM`, on every OS, and in the playground. It takes `name`, which prints a comment line at the top of the cleared screen, `id` (Step ids below), and `pre-delay` and `post-delay`. Any other step key, `run` with `clear`, or a value other than `true` is an error.
 
 - **Why not `run: clear`.** That types the command, and `clear` fails in a pipe without `TERM`, as in CI. With `show: output` it would still depend on the host's terminal database, and on Windows on the shell.
 
@@ -417,11 +418,35 @@ steps:
 - **A still of a card stays centered.** A still (PNG or `--at`) keeps only the rows and columns that its own screen uses, which would end at the card's text. So the card puts a bold space, which shows nothing, in the window's last cell, which keeps its last row and column.
 - **Time.** The card stays for `post-delay`, 2 seconds by default instead of the settings' value, because a title and an install line take longer to read than a command's output. `pre-delay` passes before the card shows, as before a clear step.
 - **After it.** The next shown step starts on a cleared screen with the cursor shown again, as after a clear step. A `show: none` or background step between them runs while the card stays. A card that ends the scenario stays for its `post-delay`, and no prompt follows it: an event that changes nothing ends the recording then, because the render holds the last screen only for the gap before it.
-- **Keys and errors.** A card takes `pre-delay` and `post-delay` only. `run` or `clear` with `card`, another step key, a value that is not text, a card with no text, a line wider than the terminal, more lines than its rows, and a control character in a line are errors found before anything runs. A list entry that YAML reads as a mapping, an unquoted line with `: ` in it, gets a hint to quote the line. A card that the crop would cut, with more lines than the rows the crop leaves or a line wider than its columns, is an error too, found once the command line's crop is known. A scenario of cards alone is a recording, unlike one of clear steps alone.
+- **Keys and errors.** A card takes `id`, `pre-delay`, and `post-delay` only. `run` or `clear` with `card`, another step key, a value that is not text, a card with no text, a line wider than the terminal, more lines than its rows, and a control character in a line are errors found before anything runs. A list entry that YAML reads as a mapping, an unquoted line with `: ` in it, gets a hint to quote the line. A card that the crop would cut, with more lines than the rows the crop leaves or a line wider than its columns, is an error too, found once the command line's crop is known. A scenario of cards alone is a recording, unlike one of clear steps alone.
 - **Why centered.** A card is a screen of its own, a title or an end screen, and the middle of the screen is where a reader looks for one.
 - **Why in the window the output shows, not the whole terminal.** Centered in all 24 rows, a card in a demo that used 6 of them made fit keep 13 rows, and the card sat near the bottom of the canvas. Centered in all 80 columns with `fit: both`, it sat at the right edge, and with `crop-top` its first line was cut. The window is known only after the last step, so each card's event is drawn then.
 - **The window comes from the render's own fit** (2026-11-20). The rows in use were first taken from the cursor after each event. A step that writes a low row and moves the cursor home in one event, as a full-screen program does, was missed: fit kept the row, and the card sat high.
 - **Why a step and not `show: output` with `printf`.** A card centers by itself at any terminal size, takes styles without escape codes, works the same in bash and PowerShell, and needs no recording, so the playground and `--replay` show it too.
+
+### Step ids
+
+A step's `id` names it for `--at` and an outputs entry's `at`, which then show one screen of that step instead of a time in seconds:
+
+```yaml
+steps:
+  - card: ["[bold]my-app"]
+    id: title
+  - npm install
+  - id: compare
+    run: my-app diff a.json b.json
+outputs:
+  - format: svg              # the demo
+  - format: png
+    at: compare              # the screen right after the diff, for a preview image
+    file: demo-result
+```
+
+- **The screen.** For a command, the screen right after its output, before its `post-delay` and the next step's comment and prompt. For a card, the card. For a clear step, the cleared screen with its comment line.
+- **Where it works.** The scenario path (`--format svg` or `png` with `--at compare`), an outputs entry's `at`, `--replay`, and the `svg` and `png` commands on the cast: the cast keeps each id and its moment in its `st:ids` tag ([spec_cast.md](spec_cast.md)), so the cast alone resolves it.
+- **The rules.** An id is a letter or `_`, then letters, digits, `-`, and `_`, as GitHub Actions takes a step's id. So `--at` reads a number as seconds and `end` as the final screen, never as an id, and a shell needs no quotes around it. `end` in any case is not an id. Ids are case-sensitive, and two steps with one id are an error. A `show: none` step and a background step have no screen, so an `id` there is an error.
+- **Errors before anything runs.** An `at` that names an id no step has stops the run before `pre`: `--at nope: no step has this id. Give the step 'id: nope'.`, named after its outputs entry when it comes from one. On a cast alone, an id the cast does not have names the ids it has, and a cast without `st:ids`, recorded before ids or without them, says to give seconds or record it again.
+- **Why an id, and not the step's number or its `name`** (2026-11-24). The number, as the time per step shows it, moves when a step is added or removed, and an `at` in `outputs` would then show another step's screen without a word. A `name` always prints a comment line in the demo, so a step without one could not be named, and a reworded comment would break the `at`. An id shows nothing, stays when other steps change, and a missing or repeated one is an error.
 
 ## Step exit codes
 
@@ -543,29 +568,30 @@ On Windows:
 
 ## Time per step
 
-After the cast's `Written:` line, a recording and a replay print where the cast's time goes, one line for each shown step:
+After the cast's `Written:` line, a recording and a replay print where the cast's time goes, a row for each shown step:
 
 ```
 Written: basic.cast  (188 events, 16.7s)
-  Time per step: typing + output + pauses
-    1  2.5s = 0.5 + 0.0 + 2.0  echo "Hello, World!"
-    2  2.2s = 0.6 + 0.1 + 1.5  Name of the step
-    3  2.3s = 0.7 + 0.1 + 1.5  Coloring stdout
-    4  2.2s = 0.7 + 0.0 + 1.5  echo "Wait for 2 seconds..."
-    5  2.7s = 0.3 + 1.0 + 1.4  sleep 2
-    6  2.5s = 1.0 + 0.0 + 1.5  echo "stderr output is red by default" 1>&2
-    7  0.9s = 0.4 + 0.0 + 0.5  echo "Done!"
-       1.4s  final screen
-  In all: typing 4.2s, output 1.3s, pauses 9.8s, final screen 1.4s
+   step   time  typing  output  pauses
+      1   2.5s     0.5     0.0     2.0  echo "Hello, World!"
+      2   2.2s     0.6     0.1     1.5  Name of the step
+      3   2.3s     0.7     0.1     1.5  Coloring stdout
+      4   2.2s     0.7     0.0     1.5  echo "Wait for 2 seconds..."
+      5   2.7s     0.3     1.0     1.4  sleep 2
+      6   2.5s     1.0     0.0     1.5  echo "stderr output is red by default" 1>&2
+      7   0.9s     0.4     0.0     0.5  echo "Done!"
+          1.4s                     1.4  final screen
+  total  16.7s     4.2     1.3    11.2
 ```
 
-- **A step's time** runs from where it begins, with its comment line, prompt, or `pre-delay`, to where the next shown step begins, so its `post-delay` is its own (Pauses above). The first step holds the 0.5 s before its prompt. The last step ends with its output, and the final screen holds the rest of the cast.
+- **A step's time** runs from where it begins, with its comment line, prompt, or `pre-delay`, to where the next shown step begins, so its `post-delay` is its own (Pauses above). The first step holds the 0.5 s before its prompt. The last step ends with its output, and the final screen holds the rest of the cast, as a pause.
 - **The parts.** Typing runs from the first typed character to the command's start, Enter included: `typing-speed` and the command's length set it. Output runs from the command's start to the end of its output: `execution-duration` for a pipe step, and for a PTY or interactive step the command's own time, which `max-duration`, `silence-threshold`, and `max-idle` shorten. Pauses are the rest: `pre-delay`, `post-delay`, and a comment line. A card's and a clear step's time are pauses.
-- **Which steps.** Every step the cast shows: commands, cards, and clear steps, numbered by their place in `steps`. A `show: none` step and a background step take no time in the cast and get no line. A step is named by its `name`, or else by its `run` text cut at 60 characters, and a card by its first line, after masking.
-- **Tenths that add up.** Each line's parts add up to its time, and the last line's parts and the final screen add up to the length on the cast's `Written:` line. Each part is rounded down, and the tenths left over go to the parts that lost the most.
+- **Which steps.** Every step the cast shows: commands, cards, and clear steps, numbered by their place in `steps`. A `show: none` step and a background step take no time in the cast and get no row. A step is named by its `name`, or else by its `run` text cut at 60 characters, and a card by its first line, after masking.
+- **Tenths that add up.** Each row's parts add up to its time, and `total` is the length on the cast's `Written:` line. Each part is rounded down, and the tenths left over go to the parts that lost the most.
+- **Columns, not sentences** (2026-11-24). The first table wrote each row as `2.5s = 0.5 + 0.0 + 2.0` under a `Time per step: typing + output + pauses` line, and ended with `In all: typing 4.2s, output 1.3s, pauses 9.8s, final screen 1.4s`. The user found it wordy. Headed columns name each part once, and `total` is one more row in them.
 - **As recorded.** The times are the cast's, as its `Written:` line is. With `speed` or `length`, the outputs play faster, and their own `Written:` lines say how long.
 - **Not for `capture`.** It records one command, whose time the cast's line already gives.
-- **A length that cannot be kept** gets a warning that names the steps that take longest at their shortest, split the same way ([spec_svg.md](spec_svg.md) → Length).
+- **A length that cannot be kept** gets a warning that names, by their numbers here, the steps that take longest at the shortest pace, split the same way ([spec_svg.md](spec_svg.md) → Length).
 - **Why** (2026-11-23). The cast's line gave the total only, and the warning of a length that cannot be kept said `Leave out steps or output` without saying which. The split tells the author what to change: `basic.yaml`'s 16.7 s are 9.8 s of pauses, which `post-delay` and `pre-delay` set, and a slow build shows as one step's output. An agent that writes a scenario reads the run's output, not the SVG, so the table comes with every recording instead of behind an option.
 
 ## Determinism

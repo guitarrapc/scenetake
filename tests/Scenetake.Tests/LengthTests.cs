@@ -58,7 +58,7 @@ internal static partial class LengthCases
             && Check(shorterExit == 0 && Math.Abs(Loop(Path.Combine(folder, "shorter.svg")) - 6) < 0.1, $"--length 6: exit {shorterExit}{Environment.NewLine}{shorterErr}")
             && Check(keptExit == 0 && Math.Abs(Loop(Path.Combine(folder, "kept.svg")) - 8) < 0.1, $"the cast's length: exit {keptExit}{Environment.NewLine}{keptErr}")
             && Check(speedExit == 0 && natural > 12, $"--speed replaces the cast's length: exit {speedExit}, natural {natural}{Environment.NewLine}{speedErr}")
-            && Check(tooShortExit == 0 && tooShortErr.Contains("Warning: length 2s is shorter than this recording can play", StringComparison.Ordinal)
+            && Check(tooShortExit == 0 && tooShortErr.Contains("Warning: length 2s is too short for this recording, which takes at least ", StringComparison.Ordinal)
                 && Loop(Path.Combine(folder, "tooshort.svg")) > 3, $"--length 2: exit {tooShortExit}{Environment.NewLine}{tooShortErr}");
     });
 
@@ -115,12 +115,12 @@ internal static partial class LengthCases
         var (captureExit, captureErr) = Mp4FfmpegCases.Exec(scenetake, folder, ["capture", "--pipe", "--shell", "bash", "--format", "cast", "--", "echo", "hi"]);
         var table = TableAfterTheCast(stderr);
         return Check(exit == 0 && table.Count == 6, $"recording: exit {exit}{Environment.NewLine}{stderr}")
-            && Check(table[0] == "  Time per step: typing + output + pauses"
-                && table[1].StartsWith("    1  ", StringComparison.Ordinal) && table[1].EndsWith("  echo one", StringComparison.Ordinal)
+            && Check(table[0].TrimStart().StartsWith("step ", StringComparison.Ordinal) && table[0].EndsWith("  typing  output  pauses", StringComparison.Ordinal)
+                && table[1].TrimStart().StartsWith("1  ", StringComparison.Ordinal) && table[1].EndsWith("  echo one", StringComparison.Ordinal)
                 && table[2].EndsWith("  Second", StringComparison.Ordinal) && table[3].EndsWith("  echo three", StringComparison.Ordinal)
-                && table[4].EndsWith("s  final screen", StringComparison.Ordinal) && table[5].StartsWith("  In all: typing ", StringComparison.Ordinal),
+                && table[4].EndsWith("  final screen", StringComparison.Ordinal) && table[5].StartsWith("  total ", StringComparison.Ordinal),
                 string.Join(Environment.NewLine, table))
-            && Check(stderr.Contains("at its shortest. At their shortest, step ", StringComparison.Ordinal) && stderr.Contains("step 2 (Second)", StringComparison.Ordinal), stderr)
+            && Check(LongestPattern().IsMatch(stderr), stderr)
             && Check(replayExit == 0 && TableAfterTheCast(replayErr).SequenceEqual(table), $"replay: exit {replayExit}{Environment.NewLine}{replayErr}")
             && Check(captureExit == 0 && !captureErr.Contains("Time per step", StringComparison.Ordinal), $"capture: exit {captureExit}{Environment.NewLine}{captureErr}");
     });
@@ -141,6 +141,9 @@ internal static partial class LengthCases
         File.Exists(svgPath) && LoopPattern().Match(File.ReadAllText(svgPath)) is { Success: true } match
             ? double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture)
             : double.NaN;
+
+    [GeneratedRegex(@"Warning: length 2s is too short for this recording, which takes at least \d+\.\ds\. Longest steps then: [123] \(\d+\.\ds\), [123] \(\d+\.\ds\), [123] \(\d+\.\ds\)\. Leave out")]
+    private static partial Regex LongestPattern();
 
     [GeneratedRegex(@"animation:\s*([\d.]+)s")]
     private static partial Regex LoopPattern();

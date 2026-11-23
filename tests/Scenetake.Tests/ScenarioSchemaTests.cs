@@ -281,7 +281,12 @@ internal static class ScenarioSchemaCases
             ("a size that is no size", "outputs:\n  - format: mp4\n    max-size: 1280\nsteps:\n  - x\n"),
             ("a shape for max-size", "outputs:\n  - format: mp4\n    max-size: 16:9\nsteps:\n  - x\n"),
             ("a shape in fractions", "outputs:\n  - format: mp4\n    size: 2.39:1\nsteps:\n  - x\n"),
-            ("at that is neither seconds nor end", "outputs:\n  - format: png\n    at: last\nsteps:\n  - x\n"),
+            ("at that is neither seconds, end, nor an id", "outputs:\n  - format: png\n    at: 1st\nsteps:\n  - x\n"),
+            ("an id that starts with a digit", "steps:\n  - run: x\n    id: 1st\n"),
+            ("an id with a space", "steps:\n  - run: x\n    id: my step\n"),
+            ("an id that --at reads as the final screen", "steps:\n  - run: x\n    id: End\n"),
+            ("an id on a step that shows nothing", "steps:\n  - run: x\n    show: none\n    id: setup\n"),
+            ("an id on a background step", "steps:\n  - run: x\n    background: true\n    id: server\n"),
             ("blur in fractions of a pixel", "outputs:\n  - format: svg\n    blur: 2.5\nsteps:\n  - x\n"),
         };
 
@@ -366,6 +371,12 @@ internal static class ScenarioSchemaCases
                   - run: figlet hi
                     show: output
                     name: banner
+                  - run: git diff
+                    id: compare
+                  - clear: true
+                    id: _second-half
+                  - card: bye
+                    id: outro-1
                 """),
             ("highlight ranges", """
                 steps:
@@ -400,6 +411,9 @@ internal static class ScenarioSchemaCases
                     at: End
                     font-file: font.ttf
                     file: b
+                  - format: svg
+                    at: compare
+                    file: f
                   - format: gif
                     max-size: 400X300
                     length: 15s

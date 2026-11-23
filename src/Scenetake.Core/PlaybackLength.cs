@@ -475,7 +475,7 @@ internal static class PlaybackLength
     /// <paramref name="names"/> gives the steps as the scenario's run knew them. Without it, as for a cast alone, the
     /// steps are those of <paramref name="steps"/>, the <c>st:steps</c> tag's: each begins with the event after the
     /// output of the step before it, a card's time on the screen is no step's, and each is named by the command it
-    /// types, or by where it is in the cast.
+    /// types in quotes, or by when it acts in the cast.
     /// </summary>
     internal static StepShortest[] StepsAtShortest(int[] steps, Result fitted, StepNames? names)
     {
@@ -525,8 +525,8 @@ internal static class PlaybackLength
                 }
 
                 labels[s] = typed.Length > 0
-                    ? "the step that types " + JsonEscape.JsonString(Rerecording.Shorten(typed.ToString()))
-                    : string.Create(CultureInfo.InvariantCulture, $"the step at {events[Math.Min(action, count - 1)].Time:F1}s in the cast");
+                    ? JsonEscape.JsonString(Rerecording.Shorten(typed.ToString()))
+                    : string.Create(CultureInfo.InvariantCulture, $"the step at {events[Math.Min(action, count - 1)].Time:F1}s");
                 end = events[Math.Clamp(first + steps[s * 2 + 1] - 1, 0, count - 1)].Time;
             }
         }

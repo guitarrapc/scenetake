@@ -93,7 +93,8 @@ internal static partial class StepTimesCases
         var (events, times) = Compose("settings:\n  end-prompt: true\n  pre-delay: 0.5\n  post-delay: 2\nsteps:\n  - echo one\n", Run);
         var table = StepTimes.Format(times, events[^1].Time);
         return Expect(Near(events[^1].Time - times[^1].End, 2 + 1 + 0.5), $"the final screen: {events[^1].Time - times[^1].End}")
-            && Expect(table.Count == 4 && table[2].EndsWith("3.5s  final screen", StringComparison.Ordinal), string.Join(Environment.NewLine, table));
+            && Expect(table.Count == 4 && FinalPattern().Match(table[2]) is { Success: true } final && final.Groups[1].Value == "3.5" && final.Groups[2].Value == "3.5",
+                string.Join(Environment.NewLine, table));
     }
 
     internal static bool PartsAddUpToEachLine()
@@ -153,10 +154,12 @@ internal static partial class StepTimesCases
         var one = CastReader.ReadText(oneCast);
         var single = RenderSettingsResolver.LengthNote(one.Events, one.RenderSettings with { Length = 1 }, one.LoopDuration, StepTimes.Names(oneTimes)) ?? "";
         // The bar's 3.1 s stay, with its typing and the moment to read it.
-        return Expect(LongestPattern().IsMatch(named) && Takes(named, "At their shortest, step 2 (Build it) takes ") > 3.1, named)
-            && Expect(Takes(alone, "At their shortest, the step that types \"build\" takes ") == Takes(named, "step 2 (Build it) takes ")
-                && alone.Contains("the step that types \"echo one\"", StringComparison.Ordinal), alone)
-            && Expect(single.Contains("is shorter than this recording can play", StringComparison.Ordinal) && !single.Contains("At their shortest", StringComparison.Ordinal), single);
+        // The steps go by their numbers in the table, and a cast alone by what they type.
+        var longest = LongestPattern().Match(named);
+        return Expect(longest.Success && double.Parse(longest.Groups[1].Value, CultureInfo.InvariantCulture) > 3.1, named)
+            && Expect(alone.Contains($"Longest steps then: \"build\" ({longest.Groups[1].Value}s), ", StringComparison.Ordinal)
+                && alone.Contains("\"echo one\" (", StringComparison.Ordinal), alone)
+            && Expect(single.Contains("is too short for this recording", StringComparison.Ordinal) && !single.Contains("Longest steps", StringComparison.Ordinal), single);
     }
 
     internal static bool NoStepIsLongerAtItsShortest()
@@ -178,47 +181,53 @@ internal static partial class StepTimesCases
         return ok;
     }
 
-    [GeneratedRegex(@"takes \d+\.\ds, step \d \([^)]*\) \d+\.\ds, and step \d \([^)]*\) \d+\.\ds\.")]
+    [GeneratedRegex(@"Longest steps then: 2 \((\d+\.\d)s\), \d \(\d+\.\ds\), \d \(\d+\.\ds\)\. Leave out")]
     private static partial Regex LongestPattern();
 
-    [GeneratedRegex(@"^    +(\d+)  +(\d+\.\d)s = +(\d+\.\d) \+ +(\d+\.\d) \+ +(\d+\.\d)  (.+)$")]
+    [GeneratedRegex(@"^ +step +time  typing  output  pauses$")]
+    private static partial Regex HeadingPattern();
+
+    [GeneratedRegex(@"^ +(\d+)  +(\d+\.\d)s  +(\d+\.\d)  +(\d+\.\d)  +(\d+\.\d)  (.+)$")]
     private static partial Regex RowPattern();
 
-    [GeneratedRegex(@"^  In all: typing (\d+\.\d)s, output (\d+\.\d)s, pauses (\d+\.\d)s(?:, final screen (\d+\.\d)s)?$")]
-    private static partial Regex AllPattern();
+    [GeneratedRegex(@"^ +(\d+\.\d)s +(\d+\.\d)  final screen$")]
+    private static partial Regex FinalPattern();
 
-    /// <summary>The table's lines: a row for each step whose parts add up to it, and the last line, which adds up to the cast.</summary>
+    [GeneratedRegex(@"^  total  +(\d+\.\d)s  +(\d+\.\d)  +(\d+\.\d)  +(\d+\.\d)$")]
+    private static partial Regex TotalPattern();
+
+    /// <summary>
+    /// The table's lines: the headings, a row for each step whose parts add up to it, the final screen as a pause, and
+    /// the total, which adds up and is the cast's length, every number ending under its heading.
+    /// </summary>
     private static bool Lines(List<StepTime> times, double castEnd)
     {
         var table = StepTimes.Format(times, castEnd);
         var text = string.Join(Environment.NewLine, table);
-        var ok = Expect(table.Count >= times.Count + 2 && table[0] == "  Time per step: typing + output + pauses", text);
+        var ok = Expect(table.Count >= times.Count + 2 && HeadingPattern().IsMatch(table[0]), text);
+        var heading = table[0];
         var rows = 0;
-        foreach (var line in table)
+        foreach (var line in table.Skip(1))
         {
+            // The pauses column ends where its heading ends.
+            ok &= Expect(line.Length >= heading.Length && char.IsAsciiDigit(line[heading.Length - 1]) && (line.Length == heading.Length || line[heading.Length] == ' '), $"not aligned: {line}");
             if (RowPattern().Match(line) is { Success: true } row)
             {
                 rows++;
                 ok &= Expect(Tenths(row.Groups[2].Value) == Tenths(row.Groups[3].Value) + Tenths(row.Groups[4].Value) + Tenths(row.Groups[5].Value), line);
             }
+            else if (FinalPattern().Match(line) is { Success: true } final)
+            {
+                ok &= Expect(final.Groups[1].Value == final.Groups[2].Value, line);
+            }
         }
 
-        var all = AllPattern().Match(table[^1]);
-        var final = all.Groups[4].Success ? Tenths(all.Groups[4].Value) : 0;
+        var total = TotalPattern().Match(table[^1]);
         var cast = Tenths(castEnd.ToString("F1", CultureInfo.InvariantCulture));
         return ok
             && Expect(rows == times.Count, $"{rows} rows{Environment.NewLine}{text}")
-            && Expect(all.Success && Tenths(all.Groups[1].Value) + Tenths(all.Groups[2].Value) + Tenths(all.Groups[3].Value) + final == cast, $"the cast is {cast} tenths{Environment.NewLine}{text}");
-    }
-
-    /// <summary>The seconds after <paramref name="prefix"/> in <paramref name="text"/>, or -1.</summary>
-    private static double Takes(string text, string prefix)
-    {
-        var at = text.IndexOf(prefix, StringComparison.Ordinal);
-        if (at < 0)
-            return -1;
-        var number = text[(at + prefix.Length)..];
-        return double.Parse(number[..number.IndexOf('s', StringComparison.Ordinal)], CultureInfo.InvariantCulture);
+            && Expect(total.Success && Tenths(total.Groups[1].Value) == cast
+                && Tenths(total.Groups[2].Value) + Tenths(total.Groups[3].Value) + Tenths(total.Groups[4].Value) == cast, $"the cast is {cast} tenths{Environment.NewLine}{text}");
     }
 
     private static int Tenths(string seconds) => (int)Math.Round(double.Parse(seconds, CultureInfo.InvariantCulture) * 10);

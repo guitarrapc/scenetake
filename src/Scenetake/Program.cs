@@ -117,12 +117,14 @@ if (args[0] is "svg")
             return 1;
         }
 
+        if (!TryResolveStillAt(svgStillAt, recording, out var svgAt))
+            return 1;
         foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(svgRenderSettings, svg: svgStillAt is null))
             Console.Error.WriteLine($"Warning: {note}");
         if (svgStillAt is null)
             WarnLength("", recording, svgRenderSettings);
-        SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath, recording.LoopDuration, svgStillAt);
-        PrintSvgWritten(svgOutputPath, recording, svgRenderSettings, svgStillAt);
+        SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath, recording.LoopDuration, svgAt);
+        PrintSvgWritten(svgOutputPath, recording, svgRenderSettings, svgAt, svgStillAt?.Step);
         if (SvgRender.SizeWarning(new FileInfo(svgOutputPath).Length, svgRenderSettings.MaxFps, fromCast: true) is { } svgSizeWarning)
             Console.Error.WriteLine($"Warning: {svgSizeWarning}");
         Console.Error.WriteLine($"Done: {FormatDisplayPath(svgOutputPath)}");
@@ -410,9 +412,11 @@ if (args[0] is "png")
 
         foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(pngRenderSettings, svg: false))
             Console.Error.WriteLine($"Warning: {note}");
-        var at = pngStillAt ?? double.PositiveInfinity;
+        if (!TryResolveStillAt(pngStillAt, recording, out var pngAt))
+            return 1;
+        var at = pngAt ?? double.PositiveInfinity;
         var result = PngRender.WritePng(recording.Events, recording.Width, recording.Height, pngRenderSettings, at, pngOutputPath, pngFontFile, pngFfmpeg);
-        PrintPngWritten(pngOutputPath, result, at);
+        PrintPngWritten(pngOutputPath, result, at, pngStillAt?.Step);
         Console.Error.WriteLine($"Done: {FormatDisplayPath(pngOutputPath)}");
         return 0;
     }
@@ -732,6 +736,16 @@ for (var planIndex = 0; planIndex < outputPlans.Count; planIndex++)
     }
 }
 
+// --at with a step's id needs a step that has it, which the recording then times. Checked before anything runs.
+foreach (var plan in outputPlans)
+{
+    if (plan.StillAt?.Step is { } atStep && !ScenarioHasStepId(scenario, atStep))
+    {
+        Console.Error.WriteLine($"Error: {(plan.Label.Length == 0 ? "" : plan.Label + ": ")}--at {atStep}: no step has this id. Give the step 'id: {atStep}'.");
+        return 1;
+    }
+}
+
 foreach (var plan in outputPlans)
 {
     foreach (var drawn in outputPlans)
@@ -1012,7 +1026,7 @@ var stepSlots = Rerecording.MapIndices(rerecorder.Slots, filterMap);
 
 try
 {
-    WriteCast(scenario, events, outputPath, ShellEnvName(shell.FileName), CastTimestamp, renderSettings, stepSlots);
+    WriteCast(scenario, events, outputPath, ShellEnvName(shell.FileName), CastTimestamp, renderSettings, stepSlots, stepTimes);
 }
 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 {
@@ -1132,7 +1146,7 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
     replayed = CastOscFilter.RemovePrivateSequences(replayed, replayMap);
     try
     {
-        WriteCast(scenario, replayed, outputPath, outputs.Shell, CastTimestamp, renderSettings, Rerecording.MapIndices(replayRerecorder.Slots, replayMap));
+        WriteCast(scenario, replayed, outputPath, outputs.Shell, CastTimestamp, renderSettings, Rerecording.MapIndices(replayRerecorder.Slots, replayMap), replayTimes);
     }
     catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
     {
@@ -1217,11 +1231,20 @@ static bool TryRenderOutput(string castPath, OutputPlan plan, ResolvedRenderSett
         drawn = settings = plan.Overrides?.Apply(settings) ?? settings;
         if (plan.Format != OutputFormat.Png && plan.StillAt is null)
             WarnLength(plan.Label, written, settings, stepNames);
+        // A step's id was checked against the scenario before anything ran, and the cast written now has it.
+        double? stillAt = null;
+        if (plan.StillAt is { } still)
+        {
+            if (!RenderSettingsResolver.TryResolveStillAt(still, written.RenderSettings, out var seconds, out var atError))
+                throw new InvalidOperationException(atError);
+            stillAt = seconds;
+        }
+
         switch (plan.Format)
         {
             case OutputFormat.Svg:
-                SvgRender.WriteSvg(written.Events, written.Width, written.Height, settings, plan.Path, written.LoopDuration, plan.StillAt);
-                PrintSvgWritten(plan.Path, written, settings, plan.StillAt);
+                SvgRender.WriteSvg(written.Events, written.Width, written.Height, settings, plan.Path, written.LoopDuration, stillAt);
+                PrintSvgWritten(plan.Path, written, settings, stillAt, plan.StillAt?.Step);
                 if (SvgRender.SizeWarning(new FileInfo(plan.Path).Length, settings.MaxFps, fromCast: false) is { } svgSizeWarning)
                     Console.Error.WriteLine($"Warning: {svgSizeWarning}");
                 break;
@@ -1230,8 +1253,8 @@ static bool TryRenderOutput(string castPath, OutputPlan plan, ResolvedRenderSett
                 PrintMp4Written(plan.Path, Mp4Render.WriteMp4(written.Events, written.Width, written.Height, settings, plan.Mp4.ToSettings(RenderSettingsResolver.FrameSpeed(written.Events, settings, written.LoopDuration)), plan.Path, plan.FfmpegPath!, written.LoopDuration), settings);
                 break;
             case OutputFormat.Png:
-                var at = plan.StillAt ?? double.PositiveInfinity;
-                PrintPngWritten(plan.Path, PngRender.WritePng(written.Events, written.Width, written.Height, settings, at, plan.Path, plan.Mp4.FontFile, plan.FfmpegPath), at);
+                var at = stillAt ?? double.PositiveInfinity;
+                PrintPngWritten(plan.Path, PngRender.WritePng(written.Events, written.Width, written.Height, settings, at, plan.Path, plan.Mp4.FontFile, plan.FfmpegPath), at, plan.StillAt?.Step);
                 break;
             default:
                 // WriteGif encodes to a temporary file and renames it, as WriteMp4 does.
@@ -1620,7 +1643,7 @@ static bool TryParseSvgArgs(
     out WindowStyle? windowOverride,
     out int? maxFpsOverride,
     out StyleOptions style,
-    out double? stillAt,
+    out StillTime? stillAt,
     out string error)
 {
     castPath = "";
@@ -1710,7 +1733,7 @@ static bool TryParseSvgArgs(
 
     // A still SVG shows one screen, so the options that shape the animation do nothing. Here they are not stored in a
     // cast either, so naming one is a mistake.
-    if (stillAt.HasValue && AnimationOption(maxFpsOverride.HasValue, style) is string animationOption)
+    if (stillAt is not null && AnimationOption(maxFpsOverride.HasValue, style) is string animationOption)
     {
         error = $"{animationOption} has no effect with --at: a still SVG does not play";
         return false;
@@ -1747,7 +1770,7 @@ static bool TryParseRunArgs(
     out int? maxFpsOverride,
     out Mp4Options mp4Options,
     out StyleOptions style,
-    out double? stillAt,
+    out StillTime? stillAt,
     out CaptureRequest? capture,
     out string? saveKeysPath,
     out string? saveOutputsPath,
@@ -1999,7 +2022,7 @@ static bool TryParseRunArgs(
     }
 
     // --at picks one screen, which an SVG or a PNG shows. The cast has every screen, and an mp4 and a GIF play them all.
-    if (stillAt.HasValue && outputFormat is OutputFormat.Cast or OutputFormat.Mp4 or OutputFormat.Gif)
+    if (stillAt is not null && outputFormat is OutputFormat.Cast or OutputFormat.Mp4 or OutputFormat.Gif)
     {
         error = outputFormat switch
         {
@@ -2010,7 +2033,7 @@ static bool TryParseRunArgs(
         return false;
     }
 
-    if (stillAt.HasValue && maxFpsOverride.HasValue)
+    if (stillAt is not null && maxFpsOverride.HasValue)
     {
         error = "--max-fps has no effect with --at: a still SVG does not play";
         return false;
@@ -2398,7 +2421,38 @@ static bool TryParseOutputFormat(string value, out OutputFormat format, out stri
 }
 
 /// <summary>Reads <c>--at</c> and its value when <c>args[i]</c> is one, and returns whether it was.</summary>
-static bool TryConsumeAtArg(string[] args, ref int i, ref double? at, out string error)
+/// <summary>
+/// The seconds of <paramref name="at"/> in <paramref name="recording"/>, or null without --at. False, after printing the
+/// error, for a step's id that the cast does not have.
+/// </summary>
+static bool TryResolveStillAt(StillTime? at, CastRecording recording, out double? seconds)
+{
+    seconds = null;
+    if (at is null)
+        return true;
+    if (!RenderSettingsResolver.TryResolveStillAt(at, recording.RenderSettings, out var resolved, out var error))
+    {
+        Console.Error.WriteLine($"Error: {error}");
+        return false;
+    }
+
+    seconds = resolved;
+    return true;
+}
+
+/// <summary>Whether a step of <paramref name="scenario"/> has the <c>id</c>.</summary>
+static bool ScenarioHasStepId(Scenario scenario, string id)
+{
+    foreach (var step in scenario.Steps ?? [])
+    {
+        if (step is Dictionary<object, object?> map && map.TryGetValue("id", out var value) && value is string text && text == id)
+            return true;
+    }
+
+    return false;
+}
+
+static bool TryConsumeAtArg(string[] args, ref int i, ref StillTime? at, out string error)
 {
     if (!TryTakeOptionValue(args, ref i, "--at", out var value, out error))
         return false;
@@ -3432,12 +3486,12 @@ static void PrintMp4Usage()
 }
 
 /// <summary>The SVG's line: its size in pixels, as a page first shows it, and its loop, or for a still the screen it shows.</summary>
-static void PrintSvgWritten(string path, CastRecording recording, ResolvedRenderSettings render, double? stillAt = null)
+static void PrintSvgWritten(string path, CastRecording recording, ResolvedRenderSettings render, double? stillAt = null, string? stillStep = null)
 {
     var size = SvgRender.FormatSize(SvgRender.Measure(recording.Events, recording.Width, recording.Height, render));
     if (stillAt is double at)
     {
-        Console.Error.WriteLine($"Written: {FormatDisplayPath(path)}  ({size}, still, {RenderSettingsResolver.FormatStillAt(at)})");
+        Console.Error.WriteLine($"Written: {FormatDisplayPath(path)}  ({size}, still, {RenderSettingsResolver.FormatStillAt(at, stillStep)})");
         return;
     }
 
@@ -3479,11 +3533,11 @@ static void PrintGifWritten(string path, GifResult result, ResolvedRenderSetting
     }
 }
 
-static void PrintPngWritten(string path, PngResult result, double at)
+static void PrintPngWritten(string path, PngResult result, double at, string? step = null)
 {
     var colors = result.Colors switch { 0 => "over 256 colors", 1 => "1 color", var n => $"{n} colors" };
     Console.Error.WriteLine(
-        $"Written: {FormatDisplayPath(path)}  ({result.Width}x{result.Height}, {RenderSettingsResolver.FormatStillAt(at)}, {colors}, {FormatBytes(result.Bytes)}, font: {result.Font.Family})");
+        $"Written: {FormatDisplayPath(path)}  ({result.Width}x{result.Height}, {RenderSettingsResolver.FormatStillAt(at, step)}, {colors}, {FormatBytes(result.Bytes)}, font: {result.Font.Family})");
 }
 
 /// <summary>
@@ -4203,7 +4257,7 @@ static bool TryParsePngArgs(
     out WindowStyle? windowOverride,
     out string? fontFile,
     out StyleOptions style,
-    out double? stillAt,
+    out StillTime? stillAt,
     out string error)
 {
     castPath = "";

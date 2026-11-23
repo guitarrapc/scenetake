@@ -256,6 +256,50 @@ internal static partial class ScenarioCast
         if (recorded == 0)
             return "The scenario has no steps to record. Add commands under 'steps:'.";
 
+        return FindStepIdError(steps);
+    }
+
+    /// <summary>
+    /// Whether <paramref name="text"/> can be a step's <c>id</c>: a letter or <c>_</c>, then letters, digits, <c>-</c>,
+    /// and <c>_</c>, as GitHub Actions takes a step's id. <c>--at</c> then reads it neither as seconds nor as
+    /// <c>end</c>, and a shell needs no quotes around it.
+    /// </summary>
+    internal static bool IsStepId(string text)
+    {
+        if (text.Length == 0 || !(char.IsAsciiLetter(text[0]) || text[0] == '_') || text.Equals("end", StringComparison.OrdinalIgnoreCase))
+            return false;
+        foreach (var c in text)
+        {
+            if (!(char.IsAsciiLetterOrDigit(c) || c is '-' or '_'))
+                return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>The error for a step <c>id</c> that <c>--at</c> could not name, or that two steps share. Null when the ids are fine.</summary>
+    private static string? FindStepIdError(List<object?> steps)
+    {
+        var seen = new List<string>();
+        var numbers = new List<int>();
+        for (var index = 0; index < steps.Count; index++)
+        {
+            if (steps[index] is not Dictionary<object, object?> map || !map.TryGetValue("id", out var value))
+                continue;
+            if (value is not string id || !IsStepId(id))
+            {
+                return value is string text && text.Equals("end", StringComparison.OrdinalIgnoreCase)
+                    ? $"Step {index + 1} key 'id' cannot be '{text}', which --at reads as the final screen."
+                    : $"Step {index + 1} key 'id' must start with a letter or '_' and hold only letters, digits, '-', and '_', such as compare or build-1, not {DescribeValue(value)}.";
+            }
+
+            var earlier = seen.IndexOf(id);
+            if (earlier >= 0)
+                return $"Steps {numbers[earlier]} and {index + 1} have the same id '{id}': each id names one step for --at.";
+            seen.Add(id);
+            numbers.Add(index + 1);
+        }
+
         return null;
     }
 
@@ -263,15 +307,15 @@ internal static partial class ScenarioCast
     // the earlier cast's output, and a hidden step has none there, so it always runs.
     internal static readonly string[] ShownOnlyKeys =
     [
-        "name", "run-highlight", "highlight", "stderr-color", "pre-delay", "post-delay", "execution-duration",
+        "name", "id", "run-highlight", "highlight", "stderr-color", "pre-delay", "post-delay", "execution-duration",
         "stream-output", "max-duration", "silence-threshold", "max-idle", "keep-output", "rerun",
     ];
 
     // The keys a clear step reads besides clear: it shows a comment line and takes time, but runs nothing.
-    internal static readonly string[] ClearStepKeys = ["clear", "name", "pre-delay", "post-delay"];
+    internal static readonly string[] ClearStepKeys = ["clear", "name", "id", "pre-delay", "post-delay"];
 
     // The keys a card step reads besides card: it shows its lines and takes time, but runs nothing.
-    internal static readonly string[] CardStepKeys = ["card", "pre-delay", "post-delay"];
+    internal static readonly string[] CardStepKeys = ["card", "id", "pre-delay", "post-delay"];
 
     /// <summary>
     /// Seconds a card stays without <c>post-delay</c>: long enough to read a title and an install line, which a
@@ -409,7 +453,7 @@ internal static partial class ScenarioCast
         {
             var name = key?.ToString() ?? "";
             if (Array.IndexOf(ClearStepKeys, name) < 0 && Array.IndexOf(ScenarioKeys.Step, name) >= 0)
-                return $"Step {number} key '{name}' does not apply to a 'clear: true' step, which takes only 'name', 'pre-delay', and 'post-delay'.";
+                return $"Step {number} key '{name}' does not apply to a 'clear: true' step, which takes only 'name', 'id', 'pre-delay', and 'post-delay'.";
         }
 
         return null;
@@ -430,7 +474,7 @@ internal static partial class ScenarioCast
         {
             var name = key?.ToString() ?? "";
             if (Array.IndexOf(CardStepKeys, name) < 0 && Array.IndexOf(ScenarioKeys.Step, name) >= 0)
-                return $"Step {number} key '{name}' does not apply to a 'card' step, which takes only 'pre-delay' and 'post-delay'.";
+                return $"Step {number} key '{name}' does not apply to a 'card' step, which takes only 'id', 'pre-delay', and 'post-delay'.";
         }
 
         if (CardLines(map["card"]) is not { } lines)

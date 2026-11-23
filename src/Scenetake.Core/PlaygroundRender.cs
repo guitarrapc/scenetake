@@ -129,7 +129,7 @@ internal static class PlaygroundRender
                 Console.Error.WriteLine($"Warning: {note}");
 
             var rerecorder = new Rerecorder(previous: null, masker: null);
-            // The steps' names for the warning of a length the recording cannot keep, as the CLI gives them.
+            // The steps' numbers for the warning of a length the recording cannot keep, and their ids for the cast, as on the CLI.
             var times = new List<StepTime>();
             var generateOptions = new GenerateOptions
             {
@@ -152,7 +152,7 @@ internal static class PlaygroundRender
 
             // The same st:steps tag as the CLI writes, so a cast from here gives the CLI's next recording its steps.
             using var castWriter = new StringWriter();
-            WriteCast(castWriter, scenario, events, outputs.Shell, CastTimestamp, renderSettings, Rerecording.MapIndices(rerecorder.Slots, filterMap));
+            WriteCast(castWriter, scenario, events, outputs.Shell, CastTimestamp, renderSettings, Rerecording.MapIndices(rerecorder.Slots, filterMap), times);
             var castText = castWriter.ToString();
             cast = Encoding.UTF8.GetBytes(castText);
 

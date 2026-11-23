@@ -27,11 +27,78 @@ internal sealed class StepTime(int number, string label, double start)
 
     /// <summary>Where the step ends before its post-delay, or for a card after it: the card's post-delay is the time it shows.</summary>
     internal double End { get; init; }
+
+    /// <summary>The step's <c>id</c>, which <c>--at</c> names, or null.</summary>
+    internal string? Id { get; init; }
+
+    /// <summary>
+    /// The moment <c>--at</c> with the step's id shows: where a command's output has ended, where a clear step has
+    /// cleared the screen, and where a card shows.
+    /// </summary>
+    internal double At { get; init; }
+}
+
+/// <summary><c>--at</c> as written: seconds, infinity for <c>end</c>, or a step's id, which the cast gives a time.</summary>
+internal sealed class StillTime(double seconds, string? step)
+{
+    internal double Seconds { get; } = seconds;
+    internal string? Step { get; } = step;
+}
+
+/// <summary>
+/// The cast's <c>st:ids</c> tag: each step id and its <see cref="StepTime.At"/>, in seconds as recorded. Its value is
+/// <c>id:ms</c> pairs, such as <c>compare:12345 deploy:23456</c>, each in whole milliseconds rounded up, so the moment
+/// is never before the step's last output event, which the cast rounds to the nearest millisecond.
+/// </summary>
+internal sealed class StepIds(string[] ids, double[] times)
+{
+    internal string[] Ids { get; } = ids;
+    internal double[] Times { get; } = times;
+
+    internal double? Find(string id)
+    {
+        var index = Array.IndexOf(Ids, id);
+        return index < 0 ? null : Times[index];
+    }
+
+    /// <summary>The tag for the steps that have an id, or null when none has one.</summary>
+    internal static string? FormatTag(IReadOnlyList<StepTime>? steps)
+    {
+        StringBuilder? text = null;
+        foreach (var step in steps ?? [])
+        {
+            if (step.Id is null)
+                continue;
+            text = text is null ? new StringBuilder(RenderSettingsResolver.IdsTagPrefix) : text.Append(' ');
+            text.Append(step.Id).Append(':').Append(((long)Math.Ceiling(Math.Round(step.At * 1000, 3))).ToString(CultureInfo.InvariantCulture));
+        }
+
+        return text?.ToString();
+    }
+
+    /// <summary>The tag's value after its prefix, or null when it is malformed.</summary>
+    internal static StepIds? Parse(string value)
+    {
+        var entries = value.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var ids = new string[entries.Length];
+        var times = new double[entries.Length];
+        for (var i = 0; i < entries.Length; i++)
+        {
+            var colon = entries[i].LastIndexOf(':');
+            if (colon <= 0 || !ScenarioCast.IsStepId(entries[i][..colon])
+                || !long.TryParse(entries[i].AsSpan(colon + 1), NumberStyles.None, CultureInfo.InvariantCulture, out var ms))
+                return null;
+            ids[i] = entries[i][..colon];
+            times[i] = ms / 1000.0;
+        }
+
+        return entries.Length == 0 ? null : new StepIds(ids, times);
+    }
 }
 
 /// <summary>
 /// A scenario's shown steps for messages about its cast: where each begins in the cast, in seconds as recorded, where
-/// the last one ends, and each one's name, such as <c>step 3 (Coloring stdout)</c>.
+/// the last one ends, and each one's name: its number in the table.
 /// </summary>
 internal sealed class StepNames(double[] starts, double end, string[] labels)
 {
@@ -44,11 +111,11 @@ internal sealed class StepNames(double[] starts, double end, string[] labels)
 internal static class StepTimes
 {
     /// <summary>
-    /// The table: one line for each step, with its time split into typing, output, and pauses, then the final screen,
-    /// and the whole cast split the same way. Each step's time runs to where the next step begins, so its post-delay
-    /// is its own. The last step ends with its output, and the final screen holds the rest of the cast. Empty without
-    /// a shown step. Times are in tenths of a second, and the parts of each line add up to its time, as the parts of
-    /// the last line add up to the cast's length on its <c>Written:</c> line.
+    /// The table: a column for each step's time, typing, output, and pauses, a row for each step, then the final
+    /// screen, whose time is a pause, and the total. Each step's time runs to where the next step begins, so its
+    /// post-delay is its own. The last step ends with its output, and the final screen holds the rest of the cast.
+    /// Empty without a shown step. Times are in tenths of a second. The parts of each row add up to its time, and the
+    /// total is the cast's length on its <c>Written:</c> line.
     /// </summary>
     internal static List<string> Format(IReadOnlyList<StepTime> steps, double castEnd)
     {
@@ -56,8 +123,9 @@ internal static class StepTimes
         if (steps.Count == 0)
             return lines;
 
-        // Four cells for each step: its time, typing, output, and pauses, in tenths.
-        var cells = new int[steps.Count * 4];
+        // Four cells for each row, the steps, the final screen, and the total: time, typing, output, and pauses, in tenths.
+        var rows = steps.Count + 2;
+        var cells = new int[rows * 4];
         var allTyping = 0.0;
         var allOutput = 0.0;
         var allPauses = 0.0;
@@ -75,43 +143,44 @@ internal static class StepTimes
             Split(cells[i * 4], typing, output, pauses, cells, i * 4 + 1);
         }
 
-        var final = ToTenths(Math.Max(0, castEnd - steps[^1].End));
-        var widths = new int[4];
+        var final = Math.Max(0, castEnd - steps[^1].End);
+        var finalRow = steps.Count * 4;
+        cells[finalRow] = cells[finalRow + 3] = ToTenths(final);
+        var totalRow = finalRow + 4;
+        cells[totalRow] = ToTenths(castEnd);
+        Split(cells[totalRow], allTyping, allOutput, allPauses + final, cells, totalRow + 1);
+
+        // Each column as wide as its heading or its widest number, the time with its unit.
+        var widths = new[] { Math.Max(5, steps[^1].Number.ToString(CultureInfo.InvariantCulture).Length), 4, 6, 6, 6 };
         for (var i = 0; i < cells.Length; i++)
-            widths[i % 4] = Math.Max(widths[i % 4], Seconds(cells[i]).Length);
-        widths[0] = Math.Max(widths[0], Seconds(final).Length);
-        var numberWidth = steps[^1].Number.ToString(CultureInfo.InvariantCulture).Length;
-        lines.Add("  Time per step: typing + output + pauses");
-        var line = new StringBuilder();
-        for (var i = 0; i < steps.Count; i++)
-        {
-            line.Clear().Append("    ");
-            Pad(line, steps[i].Number.ToString(CultureInfo.InvariantCulture), numberWidth).Append("  ");
-            Pad(line, Seconds(cells[i * 4]), widths[0]).Append("s = ");
-            Pad(line, Seconds(cells[i * 4 + 1]), widths[1]).Append(" + ");
-            Pad(line, Seconds(cells[i * 4 + 2]), widths[2]).Append(" + ");
-            Pad(line, Seconds(cells[i * 4 + 3]), widths[3]).Append("  ").Append(steps[i].Label);
-            lines.Add(line.ToString());
-        }
+            widths[i % 4 + 1] = Math.Max(widths[i % 4 + 1], Seconds(cells[i]).Length + (i % 4 == 0 ? 1 : 0));
 
-        if (final > 0)
-        {
-            Pad(line.Clear().Append(' ', 6 + numberWidth), Seconds(final), widths[0]).Append("s  final screen");
-            lines.Add(line.ToString());
-        }
-
-        // The whole cast as the Written line gives it, less the final screen as its row gives it.
-        var all = new int[3];
-        Split(ToTenths(castEnd) - final, allTyping, allOutput, allPauses, all, 0);
-        line.Clear().Append("  In all: typing ").Append(Seconds(all[0])).Append("s, output ").Append(Seconds(all[1])).Append("s, pauses ").Append(Seconds(all[2])).Append('s');
-        if (final > 0)
-            line.Append(", final screen ").Append(Seconds(final)).Append('s');
+        var line = new StringBuilder("  ");
+        Pad(line, "step", widths[0]);
+        Pad(line.Append("  "), "time", widths[1]);
+        Pad(line.Append("  "), "typing", widths[2]);
+        Pad(line.Append("  "), "output", widths[3]);
+        Pad(line.Append("  "), "pauses", widths[4]);
         lines.Add(line.ToString());
+        for (var i = 0; i < steps.Count; i++)
+            lines.Add(Row(line, steps[i].Number.ToString(CultureInfo.InvariantCulture), i * 4).Append("  ").Append(steps[i].Label).ToString());
+        if (cells[finalRow] > 0)
+            lines.Add(Row(line, "", finalRow, blankParts: true).Append("  final screen").ToString());
+        lines.Add(Row(line, "total", totalRow).ToString());
         return lines;
+
+        StringBuilder Row(StringBuilder text, string name, int at, bool blankParts = false)
+        {
+            Pad(text.Clear().Append("  "), name, widths[0]);
+            Pad(text.Append("  "), Seconds(cells[at]) + "s", widths[1]);
+            for (var c = 1; c < 4; c++)
+                Pad(text.Append("  "), blankParts && c < 3 ? "" : Seconds(cells[at + c]), widths[c + 1]);
+            return text;
+        }
     }
     /// <summary>
-    /// The steps as messages about the cast name them, such as <c>step 3 (Coloring stdout)</c>, with where each begins
-    /// and where the last ends, as the table splits the cast. Null without a shown step.
+    /// The steps as messages about the cast name them, by their number in the table, with where each begins and where
+    /// the last ends, as the table splits the cast. Null without a shown step.
     /// </summary>
     internal static StepNames? Names(IReadOnlyList<StepTime> steps)
     {
@@ -123,7 +192,7 @@ internal static class StepTimes
         for (var i = 0; i < steps.Count; i++)
         {
             starts[i] = steps[i].Start;
-            labels[i] = $"step {steps[i].Number} ({steps[i].Label})";
+            labels[i] = steps[i].Number.ToString(CultureInfo.InvariantCulture);
         }
 
         return new StepNames(starts, steps[^1].End, labels);

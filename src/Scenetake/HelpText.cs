@@ -200,7 +200,8 @@ static class HelpText
     internal const string StillOptions = """
         Still image (--format png, the png command, or --at with SVG):
           --at TIME                Draw the screen shown TIME seconds into the recording, such as 2.5,
-                                   or end for the final screen. A PNG shows the final screen without it.
+                                   end for the final screen, or a step's id for the screen right after
+                                   that step's output. A PNG shows the final screen without it.
                                    With SVG, --at makes a still SVG without animation, which --max-fps,
                                    --no-loop, --end-hold, --fade-out and --speed do not apply to. TIME
                                    is the recording's, as the cast's line shows it, at any --speed.
@@ -210,7 +211,8 @@ static class HelpText
     internal const string PngOptions = """
         PNG (the png command, or --format png):
           --at TIME                Draw the screen shown TIME seconds into the recording, such as 2.5,
-                                   or end for the final screen (default end)
+                                   end for the final screen (the default), or a step's id for the
+                                   screen right after that step's output
           --font-file PATH         A font file (TTF, OTF, TTC) to use before the --font-family fonts
 
         The PNG is the frame an mp4 shows at that time, at the terminal's own size, with a palette
