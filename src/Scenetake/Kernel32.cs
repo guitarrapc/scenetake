@@ -49,7 +49,38 @@ internal static unsafe class Kernel32
     private static readonly delegate* unmanaged<int, char*, uint*, int> GetComputerNameExWExport =
         (delegate* unmanaged<int, char*, uint*, int>)Export("GetComputerNameExW");
 
+    private static readonly delegate* unmanaged<char*, char*, uint, uint> GetShortPathNameWExport =
+        (delegate* unmanaged<char*, char*, uint, uint>)Export("GetShortPathNameW");
+
+    private static readonly delegate* unmanaged<char*, char*, uint, uint> GetLongPathNameWExport =
+        (delegate* unmanaged<char*, char*, uint, uint>)Export("GetLongPathNameW");
+
     private static nint Export(string name) => NativeLibrary.GetExport(Library, name);
+
+    /// <summary>
+    /// The short (8.3) form of an existing path, such as C:\Users\ADALOV~1 for C:\Users\adalovelace, or null. Windows
+    /// writes the user profile this way in TEMP when its name is longer than 8 characters.
+    /// </summary>
+    internal static string? GetShortPathName(string path) => PathName(GetShortPathNameWExport, path);
+
+    /// <summary>The long form of an existing path, or null: each 8.3 name in it written out.</summary>
+    internal static string? GetLongPathName(string path) => PathName(GetLongPathNameWExport, path);
+
+    private static string? PathName(delegate* unmanaged<char*, char*, uint, uint> function, string path)
+    {
+        // A pinned string ends with a null character, as the function needs.
+        fixed (char* input = path)
+        {
+            // With no buffer, the size it needs, with the terminating null. 0 when the path does not exist.
+            var size = function(input, null, 0);
+            if (size == 0 || size > 32_768)
+                return null;
+
+            var buffer = stackalloc char[(int)size];
+            var length = function(input, buffer, size);
+            return length == 0 || length >= size ? null : new string(buffer, 0, (int)length);
+        }
+    }
 
     // COMPUTER_NAME_FORMAT's ComputerNameDnsHostname.
     private const int ComputerNameDnsHostname = 1;

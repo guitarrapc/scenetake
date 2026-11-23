@@ -41,8 +41,13 @@ internal sealed class SecretMasker
     private readonly Dictionary<string, int> _counts = new(StringComparer.Ordinal);
     // The secrets counted so far, so a value that shows again is not counted again.
     private readonly HashSet<string> _counted = new(StringComparer.Ordinal);
+    // Each way a command may write a folder that shows as a stand-in, longest first, so cwd under the home folder shows
+    // as cwd-as gives it and not as ~/... (FindPaths). The stand-in is written as that way writes its separators.
+    private readonly string[] _pathTexts;
+    private readonly byte[][] _pathStandIns;
+    private readonly string?[] _pathKinds;
 
-    private SecretMasker(List<string> literals, List<string> labels, List<PersonalDetail> personal, bool auto)
+    private SecretMasker(List<string> literals, List<string> labels, List<PersonalDetail> personal, bool auto, List<PathStandIn> paths)
     {
         SortLongestFirst(literals, labels);
         _literals = literals.ToArray();
@@ -51,6 +56,69 @@ internal sealed class SecretMasker
         _personal = personal.ToArray();
         Array.Sort(_personal, static (a, b) => b.Value.Length.CompareTo(a.Value.Length));
         _auto = auto;
+
+        var texts = new List<string>();
+        var standIns = new List<string>();
+        var kinds = new List<string?>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var path in paths)
+            AddSpellings(path, texts, standIns, kinds, seen);
+
+        // Longest first, keeping the order of equal lengths. The lists are short.
+        for (var i = 1; i < texts.Count; i++)
+        {
+            for (var j = i; j > 0 && texts[j].Length > texts[j - 1].Length; j--)
+            {
+                (texts[j], texts[j - 1]) = (texts[j - 1], texts[j]);
+                (standIns[j], standIns[j - 1]) = (standIns[j - 1], standIns[j]);
+                (kinds[j], kinds[j - 1]) = (kinds[j - 1], kinds[j]);
+            }
+        }
+
+        _pathTexts = texts.ToArray();
+        _pathStandIns = new byte[standIns.Count][];
+        for (var i = 0; i < standIns.Count; i++)
+            _pathStandIns[i] = Encoding.UTF8.GetBytes(standIns[i]);
+        _pathKinds = kinds.ToArray();
+    }
+
+    /// <summary>
+    /// Each way a command writes <paramref name="path"/>'s folder, with its stand-in written the same way. A Windows
+    /// folder is <c>C:\Users\ada</c>, <c>C:/Users/ada</c> (Git Bash's <c>pwd -W</c>, Node.js), Git Bash's
+    /// <c>/c/Users/ada</c>, and <c>C:\\Users\\ada</c> in JSON. A Unix folder is its path. A root folder has none: every
+    /// path starts with it. A spelling that an earlier path gave stays with that path, so cwd-as wins over ~ when cwd is
+    /// the home folder.
+    /// </summary>
+    private static void AddSpellings(PathStandIn path, List<string> texts, List<string> standIns, List<string?> kinds, HashSet<string> seen)
+    {
+        var folder = path.Folder.TrimEnd('/', '\\');
+        if (folder.Length >= 2 && char.IsAsciiLetter(folder[0]) && folder[1] == ':')
+        {
+            if (folder.Length == 2)
+                return;
+
+            var back = folder.Replace('/', '\\');
+            var slash = folder.Replace('\\', '/');
+            var standInBack = path.StandIn.Replace('/', '\\');
+            var standInSlash = path.StandIn.Replace('\\', '/');
+            Add(back, standInBack);
+            Add(slash, standInSlash);
+            Add("/" + char.ToLowerInvariant(folder[0]) + slash[2..], standInSlash);
+            Add(back.Replace(@"\", @"\\", StringComparison.Ordinal), standInBack.Replace(@"\", @"\\", StringComparison.Ordinal));
+        }
+        else if (folder.StartsWith('/'))
+        {
+            Add(folder, path.StandIn.Replace('\\', '/'));
+        }
+
+        void Add(string text, string standIn)
+        {
+            if (!seen.Add(text))
+                return;
+            texts.Add(text);
+            standIns.Add(standIn);
+            kinds.Add(path.Kind);
+        }
     }
 
     // Longest first, so a listed text that contains another one is hidden as a whole. The lists are short.
@@ -100,10 +168,12 @@ internal sealed class SecretMasker
     /// The masker for a scenario, or null when it would hide nothing: no <c>settings.mask</c> texts,
     /// <c>settings.mask-auto: false</c>, and no personal details to hide. <paramref name="environment"/> gives the
     /// values of secret variables to hide, and <paramref name="personal"/> the details that name the person who
-    /// records, which <c>settings.mask-personal: false</c> leaves shown. The playground has neither, because its
-    /// outputs were masked when they were recorded.
+    /// records, which <c>settings.mask-personal: false</c> leaves shown. <paramref name="paths"/> gives the folders
+    /// that show as a stand-in: the home folder as <c>~</c>, which is a personal detail too, and cwd as <c>cwd-as</c>
+    /// gives it. The playground has none of them, because its outputs were masked when they were recorded.
     /// </summary>
-    internal static SecretMasker? ForScenario(Scenario scenario, IEnumerable<KeyValuePair<string, string?>>? environment, IEnumerable<PersonalDetail>? personal = null)
+    internal static SecretMasker? ForScenario(Scenario scenario, IEnumerable<KeyValuePair<string, string?>>? environment, IEnumerable<PersonalDetail>? personal = null,
+        IEnumerable<PathStandIn>? paths = null)
     {
         var settings = scenario.Settings;
         var auto = settings?.MaskAuto ?? true;
@@ -131,8 +201,16 @@ internal sealed class SecretMasker
             }
         }
 
+        var maskPersonal = settings?.MaskPersonal ?? true;
+        var standIns = new List<PathStandIn>();
+        foreach (var path in paths ?? [])
+        {
+            if (path.Kind is null || maskPersonal)
+                standIns.Add(path);
+        }
+
         var details = new List<PersonalDetail>();
-        if ((settings?.MaskPersonal ?? true) && personal is not null)
+        if (maskPersonal && personal is not null)
         {
             // Case is ignored: Windows writes C:\Users\Name in one place and /c/Users/name in another.
             var seenDetails = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -144,7 +222,7 @@ internal sealed class SecretMasker
             }
         }
 
-        return literals.Count == 0 && !auto && details.Count == 0 ? null : new SecretMasker(literals, labels, details, auto);
+        return literals.Count == 0 && !auto && details.Count == 0 && standIns.Count == 0 ? null : new SecretMasker(literals, labels, details, auto, standIns);
     }
 
     // Accounts and host names that name no person: containers, CI runners, and cloud images use them, and they are
@@ -386,19 +464,25 @@ internal sealed class SecretMasker
         segmentStarts[^1] = total;
 
         var text = VisibleText.Read(all, cuts ?? []);
-        var hidden = Find(text.Text, count);
-        if (hidden is null)
+        var paths = FindPaths(text, count);
+        var hidden = Find(text.Text, count, paths);
+        if (hidden is null && paths is null)
             return null;
 
         // The visible characters to replace, in byte order. Each has its first byte, its byte count, and how many *
         // stand for it. Stand-ins have no bytes, and the second half of a surrogate pair has its first half's bytes.
+        // A path's first character becomes the path's stand-in, and its other characters go. The color codes between
+        // them stay, so the text after the path keeps its colors.
         var replaced = new List<int>();
+        var replacements = new List<byte[]?>();
         var lastStart = -1;
-        for (var k = 0; k < hidden.Length; k++)
+        for (var k = 0; k < text.Text.Length; k++)
         {
-            if (!hidden[k] || text.Starts[k] < 0 || text.Starts[k] == lastStart)
+            var path = paths is null ? 0 : paths[k];
+            if ((path == 0 && (hidden is null || !hidden[k])) || text.Starts[k] < 0 || text.Starts[k] == lastStart)
                 continue;
             replaced.Add(k);
+            replacements.Add(path > 0 ? _pathStandIns[path - 1] : path < 0 ? [] : null);
             lastStart = text.Starts[k];
         }
 
@@ -419,10 +503,19 @@ internal sealed class SecretMasker
 
                 if (next < replaced.Count && text.Starts[replaced[next]] == b)
                 {
-                    var k = replaced[next++];
-                    var width = text.Widths[k];
-                    writer.GetSpan(width)[..width].Fill((byte)MaskChar);
-                    writer.Advance(width);
+                    var k = replaced[next];
+                    if (replacements[next++] is { } replacement)
+                    {
+                        replacement.CopyTo(writer.GetSpan(replacement.Length));
+                        writer.Advance(replacement.Length);
+                    }
+                    else
+                    {
+                        var width = text.Widths[k];
+                        writer.GetSpan(width)[..width].Fill((byte)MaskChar);
+                        writer.Advance(width);
+                    }
+
                     skipUntil = b + text.Lengths[k];
                     continue;
                 }
@@ -437,8 +530,69 @@ internal sealed class SecretMasker
         return result;
     }
 
-    /// <summary>Which characters of <paramref name="text"/> to hide, or null when none.</summary>
-    private bool[]? Find(string text, bool count = true)
+    /// <summary>
+    /// Where a folder that shows as a stand-in starts and ends in <paramref name="visible"/>, or null when none does:
+    /// <c>i + 1</c> at the first character of a path written as spelling <c>i</c>, and −1 at its other characters. A
+    /// path is the folder itself or the start of a path under it. It stands apart from the text around it: no letter,
+    /// digit, <c>_</c>, <c>-</c>, <c>.</c>, <c>~</c>, or separator before it (<c>/mnt/c/Users/ada</c> is not
+    /// <c>/c/Users/ada</c>), and no name goes on after it (<c>/home/ada2</c>, <c>/home/ada.old</c>). Case is ignored,
+    /// as Windows and macOS ignore it.
+    /// </summary>
+    /// <remarks>
+    /// A stand-in changes the line's width. A full-screen program places its text by column and redraws only what
+    /// changed, so a path drawn on its screen (the alternate screen) is left, and the masking of personal details
+    /// stars the names in it as before. So is a path that a cursor move cuts: it was drawn in parts.
+    /// </remarks>
+    private int[]? FindPaths(VisibleText visible, bool count)
+    {
+        var text = visible.Text;
+        int[]? paths = null;
+        for (var i = 0; i < _pathTexts.Length; i++)
+        {
+            var path = _pathTexts[i];
+            for (var at = text.IndexOf(path, StringComparison.OrdinalIgnoreCase); at >= 0; at = text.IndexOf(path, at + 1, StringComparison.OrdinalIgnoreCase))
+            {
+                var end = at + path.Length;
+                if ((at > 0 && IsPathChar(text[at - 1])) || NameGoesOn(text, end) || !Replaceable(at, end))
+                    continue;
+
+                paths ??= new int[text.Length];
+                paths[at] = i + 1;
+                for (var k = at + 1; k < end; k++)
+                    paths[k] = -1;
+
+                if (count && _pathKinds[i] is { } kind)
+                    _counts[kind] = _counts.GetValueOrDefault(kind) + 1;
+            }
+        }
+
+        return paths;
+
+        // Drawn in one piece outside a full-screen program, and not part of a longer path found before.
+        bool Replaceable(int start, int end)
+        {
+            for (var k = start; k < end; k++)
+            {
+                if (visible.Starts[k] < 0 || visible.Fixed[k] || (paths is not null && paths[k] != 0))
+                    return false;
+            }
+
+            return true;
+        }
+
+        static bool IsPathChar(char c) => char.IsLetterOrDigit(c) || c is '_' or '-' or '.' or '~' or '/' or '\\';
+
+        static bool IsNameChar(char c) => char.IsLetterOrDigit(c) || c is '_' or '-' or '~';
+
+        static bool NameGoesOn(string text, int end) =>
+            end < text.Length && (IsNameChar(text[end]) || (text[end] == '.' && end + 1 < text.Length && IsNameChar(text[end + 1])));
+    }
+
+    /// <summary>
+    /// Which characters of <paramref name="text"/> to hide, or null when none. A character of a path that shows as a
+    /// stand-in (<paramref name="paths"/>) is not hidden: the stand-in takes its place.
+    /// </summary>
+    private bool[]? Find(string text, bool count, int[]? paths)
     {
         bool[]? hidden = null;
         // For the count: the kind of each hide, and which hide reached each character first (CountSecrets).
@@ -452,7 +606,7 @@ internal sealed class SecretMasker
             for (var k = start; k < end; k++)
             {
                 hidden ??= new bool[text.Length];
-                if (hidden[k])
+                if (hidden[k] || (paths is not null && paths[k] != 0))
                     continue;
 
                 hidden[k] = true;
@@ -562,8 +716,13 @@ internal sealed class SecretMasker
             start--;
 
         var before = text.AsSpan(start, at - start);
-        if (before is "@" || before.IndexOf("://", StringComparison.Ordinal) >= 0)
+        if (before is "@")
             return true;
+
+        // A file URL names a local path, such as file:///C:/Users/name, and no published name.
+        var scheme = before.IndexOf("://", StringComparison.Ordinal);
+        if (scheme >= 0)
+            return !before[..scheme].EndsWith("file", StringComparison.OrdinalIgnoreCase);
 
         // A host name before the first / or :, as github.com is in github.com/name and git@github.com:name/repo.
         var hostEnd = before.IndexOfAny('/', ':');
@@ -991,8 +1150,11 @@ internal sealed class SecretMasker
         private readonly List<int> _starts;
         private readonly List<int> _lengths;
         private readonly List<int> _widths;
+        private readonly List<bool> _fixed;
         private readonly int[] _cuts;
         private int _nextCut;
+        // Between a program's switch to the alternate screen and its switch back: a full-screen program draws there.
+        private bool _alternate;
 
         private VisibleText(int capacity, int[] cuts)
         {
@@ -1000,6 +1162,7 @@ internal sealed class SecretMasker
             _starts = new List<int>(capacity);
             _lengths = new List<int>(capacity);
             _widths = new List<int>(capacity);
+            _fixed = new List<bool>(capacity);
             _cuts = cuts;
         }
 
@@ -1007,6 +1170,9 @@ internal sealed class SecretMasker
         internal int[] Starts { get; private set; } = [];
         internal int[] Lengths { get; private set; } = [];
         internal int[] Widths { get; private set; } = [];
+
+        /// <summary>Whether each character is on the alternate screen, where a full-screen program places text by column.</summary>
+        internal bool[] Fixed { get; private set; } = [];
 
         private bool _lastIsBreak;
 
@@ -1016,6 +1182,7 @@ internal sealed class SecretMasker
             _starts.Add(start);
             _lengths.Add(length);
             _widths.Add(width);
+            _fixed.Add(_alternate);
             _lastIsBreak = false;
         }
 
@@ -1102,6 +1269,7 @@ internal sealed class SecretMasker
             visible.Starts = [.. visible._starts];
             visible.Lengths = [.. visible._lengths];
             visible.Widths = [.. visible._widths];
+            visible.Fixed = [.. visible._fixed];
             return visible;
         }
 
@@ -1147,6 +1315,10 @@ internal sealed class SecretMasker
                     return j;
                 if (final is 0x18 or 0x1A)
                     return j + 1;
+
+                // ?1049, ?1047, and ?47 switch to the alternate screen (h) and back (l), as vim, less, and htop do.
+                if (final is (byte)'h' or (byte)'l' && j > i + 2 && bytes[i + 2] == (byte)'?' && NamesAlternateScreen(bytes.AsSpan(i + 3, j - i - 3)))
+                    _alternate = final == (byte)'h';
 
                 if (final == (byte)'C')
                 {
@@ -1231,6 +1403,30 @@ internal sealed class SecretMasker
             return limit < bytes.Length ? limit : -1;
         }
 
+        private static bool NamesAlternateScreen(ReadOnlySpan<byte> parameters)
+        {
+            var mode = 0;
+            for (var k = 0; k <= parameters.Length; k++)
+            {
+                if (k == parameters.Length || parameters[k] == (byte)';')
+                {
+                    if (mode is 47 or 1047 or 1049)
+                        return true;
+                    mode = 0;
+                }
+                else if (parameters[k] is >= (byte)'0' and <= (byte)'9')
+                {
+                    mode = Math.Min(mode * 10 + (parameters[k] - '0'), 100_000);
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            return false;
+        }
+
         private static int ParseCount(ReadOnlySpan<byte> parameters)
         {
             var count = 0;
@@ -1256,6 +1452,8 @@ internal sealed class SecretMasker
 /// </summary>
 internal sealed class PersonalDetail(string value, string kind)
 {
+    /// <summary>The kind of the home folder's path, which shows as <c>~</c> (<see cref="PathStandIn"/>).</summary>
+    internal const string HomeFolder = "home folder as ~";
     internal const string UserName = "user name";
     internal const string HomeFolderName = "home folder name";
     internal const string ComputerName = "computer name";
@@ -1263,7 +1461,7 @@ internal sealed class PersonalDetail(string value, string kind)
     internal const string GitEmail = "git email";
 
     /// <summary>The kinds, in the order the CLI names them.</summary>
-    internal static readonly string[] Kinds = [UserName, HomeFolderName, ComputerName, GitName, GitEmail];
+    internal static readonly string[] Kinds = [HomeFolder, UserName, HomeFolderName, ComputerName, GitName, GitEmail];
 
     internal string Value { get; } = value;
     internal string Kind { get; } = kind;
@@ -1275,4 +1473,21 @@ internal sealed class PersonalDetail(string value, string kind)
     internal bool StaysInAddress => Kind is UserName or HomeFolderName or GitName;
 
     internal static bool IsKind(string label) => Array.IndexOf(Kinds, label) >= 0;
+}
+
+/// <summary>
+/// A folder whose path the recording shows as another text: the home folder as <c>~</c>, with
+/// <c>settings.mask-personal</c>, and the folder the steps start in as <c>cwd-as</c> gives it. <c>pwd</c>, a stack
+/// trace, and an error message then show the same path on every machine, and no user folder. The CLI gives each form
+/// of a folder that a command may print: the long and the short (8.3) name on Windows, and the path with its links
+/// resolved on Unix, which <c>pwd</c> prints when it reads the folder from the system.
+/// </summary>
+/// <param name="folder">A full path in the form of the machine that records.</param>
+/// <param name="standIn">What shows in its place. Its <c>/</c> and <c>\</c> are written as the path's own.</param>
+/// <param name="kind">The personal detail the folder is, which <c>mask-personal: false</c> shows, or null for <c>cwd-as</c>.</param>
+internal sealed class PathStandIn(string folder, string standIn, string? kind)
+{
+    internal string Folder { get; } = folder;
+    internal string StandIn { get; } = standIn;
+    internal string? Kind { get; } = kind;
 }

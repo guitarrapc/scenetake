@@ -288,6 +288,9 @@ internal static class ScenarioSchemaCases
             ("an id on a step that shows nothing", "steps:\n  - run: x\n    show: none\n    id: setup\n"),
             ("an id on a background step", "steps:\n  - run: x\n    background: true\n    id: server\n"),
             ("blur in fractions of a pixel", "outputs:\n  - format: svg\n    blur: 2.5\nsteps:\n  - x\n"),
+            ("an empty cwd-as", "cwd-as: \"\"\nsteps:\n  - x\n"),
+            ("a blank cwd-as", "cwd-as: \"  \"\nsteps:\n  - x\n"),
+            ("a cwd-as of two lines", "cwd-as: \"~/a\\n~/b\"\nsteps:\n  - x\n"),
         };
 
         var ok = true;
@@ -302,6 +305,7 @@ internal static class ScenarioSchemaCases
         // where text goes, the forms of a highlight range, and an outputs entry's values as the command line takes them.
         var accepted = new (string What, string Yaml)[]
         {
+            ("a path for cwd", "cwd: ./demo\ncwd-as: ~/my-app\nsteps:\n  - x\n"),
             ("names in another case", """
                 render:
                   window: MacOS

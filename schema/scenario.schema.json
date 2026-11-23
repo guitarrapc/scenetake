@@ -29,6 +29,13 @@
       "description": "The folder that pre, steps, and post start in. A relative path starts at this file's folder. Default: the folder scenetake runs in. The folder must exist.",
       "type": "string"
     },
+    "cwd-as": {
+      "description": "The path the recording shows for cwd wherever a command prints it, such as ~/my-app: pwd, an error, a stack trace. The same on every machine, and no user folder. The prompt's {dir} shows its last name. Its / and \\ are written as each printed path writes them.",
+      "type": "string",
+      "pattern": "^[^\\x00-\\x1f\\x7f]*\\S[^\\x00-\\x1f\\x7f]*$",
+      "errorMessage": "cwd-as is one path, such as ~/my-app.",
+      "examples": ["~/my-app", "/work/my-app"]
+    },
     "shell": {
       "description": "The shell for every command: bash, pwsh, powershell, or a path. Default: $SHELL, and pwsh on Windows. On Windows, bash is Git Bash. With bash, zsh, and PowerShell, a cd or an export carries to the next steps.",
       "type": "string",
@@ -253,7 +260,7 @@
           "default": true
         },
         "mask-personal": {
-          "description": "Hide the user name, home folder name, computer name, and git name and email of the machine that records.",
+          "description": "Hide the user name, home folder name, computer name, and git name and email of the machine that records. The home folder's path shows as ~.",
           "type": "boolean",
           "default": true
         }

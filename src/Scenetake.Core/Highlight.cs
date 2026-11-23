@@ -1094,7 +1094,7 @@ internal sealed class PromptTemplate(PromptPart[] parts)
     internal static string FolderName(string folder, string? home, string? profile = null)
     {
         var path = NativePath(folder);
-        if ((home is { Length: > 0 } && SamePath(path, NativePath(home))) || (profile is { Length: > 0 } && SamePath(path, NativePath(profile))))
+        if ((home is { Length: > 0 } && SameFolder(path, home)) || (profile is { Length: > 0 } && SameFolder(path, profile)))
             return "~";
 
         var trimmed = path.TrimEnd('/', '\\');
@@ -1106,10 +1106,11 @@ internal sealed class PromptTemplate(PromptPart[] parts)
 
         var slash = trimmed.LastIndexOfAny(['/', '\\']);
         return slash < 0 ? trimmed : trimmed[(slash + 1)..];
-
-        static bool SamePath(string a, string b) =>
-            string.Equals(a.TrimEnd('/', '\\'), b.TrimEnd('/', '\\'), OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
     }
+
+    /// <summary>Whether two paths name one folder, Git Bash's /c/Users/name and C:\Users\name included.</summary>
+    internal static bool SameFolder(string a, string b) =>
+        string.Equals(NativePath(a).TrimEnd('/', '\\'), NativePath(b).TrimEnd('/', '\\'), OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
 
     /// <summary>A Git Bash or Cygwin drive path on Windows (<c>/c/Users</c>, <c>/cygdrive/c/Users</c>) as Windows writes it.</summary>
     internal static string NativePath(string path)

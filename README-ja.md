@@ -603,11 +603,18 @@ settings:
     - "internal.example.com"
 ```
 
-録画した人の情報をマスクします。対象は`/home/<名前>`や`ls -l`に出るユーザー名、コンピューター名、`git log`に出るgitの名前とメールです。表示したいときは`mask-personal: false`にします。webアドレス中の名前（例: `github.com/<名前>/tool`）はマスクしません。
+録画した人の情報をマスクします。対象は`ls -l`に出るユーザー名、コンピューター名、`git log`に出るgitの名前とメールです。ホームフォルダーのパスは`~`と表示するので、`pwd`は`~/src/app`と出ます。表示したいときは`mask-personal: false`にします。webアドレス中の名前（例: `github.com/<名前>/tool`）はマスクしません。
 
 ```yaml
 settings:
   mask-personal: false
+```
+
+ステップを実行するフォルダーをどのマシンでも（CIでも）同じパスで見せたいときは、`cwd-as`で指定します。`pwd`やエラー、スタックトレースはそのパスで出て、プロンプトの`{dir}`は`my-app`になります。
+
+```yaml
+cwd: ./demo
+cwd-as: ~/my-app
 ```
 
 ## 撮り直し

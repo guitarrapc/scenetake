@@ -598,11 +598,18 @@ settings:
     - "internal.example.com"
 ```
 
-It also hides who recorded the demo: your user name in `/home/<name>` or `ls -l`, your computer's name, and your git name and email in `git log`. Your name in a web address, such as `github.com/<name>/tool`, stays. To show them, set `mask-personal: false`.
+It also hides who recorded the demo: your user name in `ls -l`, your computer's name, and your git name and email in `git log`. Your home folder's path shows as `~`, so `pwd` prints `~/src/app`. Your name in a web address, such as `github.com/<name>/tool`, stays. To show them, set `mask-personal: false`.
 
 ```yaml
 settings:
   mask-personal: false
+```
+
+To show the folder the steps run in as the same path on every machine, CI included, give it with `cwd-as`. `pwd`, errors, and stack traces then print it, and the prompt's `{dir}` shows `my-app`.
+
+```yaml
+cwd: ./demo
+cwd-as: ~/my-app
 ```
 
 ## Recording again

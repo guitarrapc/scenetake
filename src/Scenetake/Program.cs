@@ -613,7 +613,8 @@ if (replayOutputs is null && (Console.IsInputRedirected || Console.IsOutputRedir
         string.IsNullOrWhiteSpace(saveOutputsArg ?? Environment.GetEnvironmentVariable(StepOutputs.EnvironmentVariable))
             ? PreviousCast.TryRead(outputPath, scenarioWidth, scenarioHeight, out _)
             : null,
-        SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment()),
+        // Masked as the recording masks it, so a step is found under the run text the earlier cast has.
+        SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment(), CollectPersonalDetails(scenario), CollectPathStandIns(scenario, scenarioPath)),
         rerunAll))
 {
     Console.Error.WriteLine($"Error: {InteractiveNeedsTerminalError}");
@@ -896,7 +897,8 @@ List<RecordedStep>? recordedSteps = string.IsNullOrWhiteSpace(outputsFileArg) ? 
 // The commands inherit scenetake's environment, so a secret variable's value is hidden wherever a step prints it.
 // So is one that pre or a step exports for the commands after it. mask-personal hides who records: the user name,
 // the home folder, the computer's name, and the git identity, which pwd, ls -l, and git log print.
-var masker = SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment(), CollectPersonalDetails(scenario));
+// The home folder's path shows as ~ with mask-personal, and cwd's as cwd-as gives it.
+var masker = SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment(), CollectPersonalDetails(scenario), CollectPathStandIns(scenario, scenarioPath));
 masker?.Learn(shellState?.TakeExports());
 
 // After each step: what the shell state could not restore, and the secrets the step exported, before its output is masked.
@@ -964,7 +966,10 @@ string PromptFolderName()
         && (!Path.IsPathFullyQualified(PromptTemplate.NativePath(carried)) || Directory.Exists(PromptTemplate.NativePath(carried)))
         ? carried
         : promptStartFolder;
-    return PromptTemplate.FolderName(folder, promptHome, promptProfile);
+    // cwd-as names the folder the steps start in, so the prompt there shows the last name of what it gives.
+    return scenario.CwdAs is { } cwdAs && !string.IsNullOrWhiteSpace(cwdAs) && PromptTemplate.SameFolder(folder, promptStartFolder)
+        ? PromptTemplate.FolderName(cwdAs.Trim(), "~")
+        : PromptTemplate.FolderName(folder, promptHome, promptProfile);
 }
 
 // The time per step, printed after the cast's Written line. A capture has one command, whose time that line gives.
@@ -1099,7 +1104,7 @@ async Task<int> ReplayAsync(StepOutputs outputs, string path)
     var replay = new StepOutputsReplay(outputs);
     // The outputs were masked when they were recorded. Masking again hides what the YAML adds, such as a new
     // settings.mask text, and the secrets and personal details of this machine.
-    var replayMasker = SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment(), CollectPersonalDetails(scenario));
+    var replayMasker = SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment(), CollectPersonalDetails(scenario), CollectPathStandIns(scenario, scenarioPath));
     // As when recording: a step whose output is the same as in the cast here keeps its events, and keep-output keeps them.
     var replayPrevious = PreviousCast.TryRead(outputPath, scenarioWidth, scenarioHeight, out var replayPreviousProblem);
     var replayRerecorder = new Rerecorder(replayPrevious, replayMasker);
@@ -3088,6 +3093,38 @@ static ShellLaunch ResolveShell(Scenario scenario)
 // The details that name the person who records, or null when settings.mask-personal is false: collecting them runs git.
 static List<PersonalDetail>? CollectPersonalDetails(Scenario scenario) =>
     (scenario.Settings?.MaskPersonal ?? true) ? PersonalDetails.Collect(scenario.Cwd) : null;
+
+// The folders whose paths show as a stand-in: cwd as cwd-as gives it, and with mask-personal the home folder as ~. A
+// replay does not resolve cwd, so it is resolved here as the recording resolves it, against the scenario's folder.
+static List<PathStandIn> CollectPathStandIns(Scenario scenario, string scenarioPath)
+{
+    var paths = new List<PathStandIn>();
+    if (scenario.CwdAs is { } cwdAs && !string.IsNullOrWhiteSpace(cwdAs))
+    {
+        string? cwd;
+        try
+        {
+            cwd = string.IsNullOrWhiteSpace(scenario.Cwd)
+                ? Directory.GetCurrentDirectory()
+                : Path.GetFullPath(scenario.Cwd, Path.GetDirectoryName(Path.GetFullPath(scenarioPath)) ?? Directory.GetCurrentDirectory());
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException or IOException or UnauthorizedAccessException)
+        {
+            cwd = null;
+        }
+
+        foreach (var form in FolderPaths.Forms(cwd))
+            paths.Add(new PathStandIn(form, cwdAs.Trim(), kind: null));
+    }
+
+    if (scenario.Settings?.MaskPersonal ?? true)
+    {
+        foreach (var home in PersonalDetails.HomeFolders())
+            paths.Add(new PathStandIn(home, "~", PersonalDetail.HomeFolder));
+    }
+
+    return paths;
+}
 
 // What masking hid, with the key that turns each kind off.
 static void PrintMaskSummary(SecretMasker? masker)

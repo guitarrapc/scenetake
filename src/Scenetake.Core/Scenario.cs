@@ -185,6 +185,9 @@ internal static partial class ScenarioCast
         if (FindPromptError(scenario.Settings?.Prompt) is { } promptError)
             return promptError;
 
+        if (FindCwdAsError(scenario.CwdAs) is { } cwdAsError)
+            return cwdAsError;
+
         var steps = scenario.Steps ?? [];
         var recorded = 0;
         for (var index = 0; index < steps.Count; index++)
@@ -278,6 +281,22 @@ internal static partial class ScenarioCast
     }
 
     /// <summary>The error for a step <c>id</c> that <c>--at</c> could not name, or that two steps share. Null when the ids are fine.</summary>
+    /// <summary>The error for a <c>cwd-as</c> that is blank or holds a control character, such as a line break, or null.</summary>
+    internal static string? FindCwdAsError(string? value)
+    {
+        if (value is null)
+            return null;
+        if (string.IsNullOrWhiteSpace(value))
+            return "cwd-as cannot be empty: give the path the recording shows for cwd, such as ~/my-app.";
+        foreach (var c in value)
+        {
+            if (char.IsControl(c))
+                return "cwd-as cannot hold a line break or another control character: give one path, such as ~/my-app.";
+        }
+
+        return null;
+    }
+
     private static string? FindStepIdError(List<object?> steps)
     {
         var seen = new List<string>();
@@ -932,6 +951,7 @@ public partial class Scenario
     public int? Width { get; set; }
     public int? Height { get; set; }
     public string? Cwd { get; set; }
+    public string? CwdAs { get; set; }
     public string? Shell { get; set; }
     public ScenarioSettings? Settings { get; set; }
     public ScenarioRender? Render { get; set; }
