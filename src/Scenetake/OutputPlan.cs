@@ -12,7 +12,7 @@ sealed class OutputPlan(
     string path,
     ResolvedRenderSettings settings,
     Mp4Options mp4,
-    double? stillAt,
+    StillTime? stillAt,
     OutputOverrides? overrides)
 {
     /// <summary>How errors name it: empty for <c>--format</c>, "outputs entry 2" for an entry.</summary>
@@ -21,7 +21,7 @@ sealed class OutputPlan(
     internal string Path { get; } = path;
     internal ResolvedRenderSettings Settings { get; } = settings;
     internal Mp4Options Mp4 { get; } = mp4;
-    internal double? StillAt { get; } = stillAt;
+    internal StillTime? StillAt { get; } = stillAt;
     internal OutputOverrides? Overrides { get; } = overrides;
 
     /// <summary>The ffmpeg that draws it, found by the checks before anything runs. Null for an SVG.</summary>

@@ -15,7 +15,7 @@ internal static class ScenarioKeys
     /// <summary>The keys a map-form step reads. Kept in step with the step key table in spec_scenario.md.</summary>
     internal static readonly string[] Step =
     [
-        "run", "name",
+        "run", "name", "id",
         "typing-speed", "typing-jitter", "pre-delay", "post-delay", "execution-duration",
         "stream-output", "max-duration", "silence-threshold", "max-idle",
         "run-highlight", "highlight", "stderr-color",

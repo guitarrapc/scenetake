@@ -340,6 +340,12 @@ internal readonly record struct ResolvedRenderSettings(
     /// </summary>
     internal int[]? StepRanges { get; init; }
 
+    /// <summary>
+    /// Each step <c>id</c> and where its step's output has ended, from the cast's <c>st:ids</c> tag: the screen that
+    /// <c>--at</c> with the id shows. Null for a cast without the tag.
+    /// </summary>
+    internal StepIds? StepIds { get; init; }
+
     internal bool Loops => Loop ?? true;
 
     /// <summary>The fade an SVG draws: none when it plays once, because it stops on its final screen.</summary>
@@ -534,6 +540,7 @@ internal static class RenderSettingsResolver
     internal const string FadeOutTagPrefix = "st:fade-out=";
     internal const string SpeedTagPrefix = "st:speed=";
     internal const string LengthTagPrefix = "st:length=";
+    internal const string IdsTagPrefix = "st:ids=";
     internal const string FitTagPrefix = "st:fit=";
     internal const string CropTopTagPrefix = "st:crop-top=";
     internal const string CropBottomTagPrefix = "st:crop-bottom=";
@@ -944,17 +951,51 @@ internal static class RenderSettingsResolver
 
     /// <summary>
     /// A warning for a length that the output does not keep, or null: a recording that is longer at its shortest, and
-    /// a cast without step ranges, written by another tool or an earlier scenetake, which plays as recorded.
+    /// a cast without step ranges, written by another tool or an earlier scenetake, which plays as recorded. The first
+    /// names the steps that take longest at the shortest pace: by their number in the time per step when the
+    /// scenario's run gives <paramref name="names"/>, and otherwise by the command each one types.
     /// </summary>
-    internal static string? LengthNote(IReadOnlyList<CastEvent> events, ResolvedRenderSettings settings, double? loopDuration)
+    internal static string? LengthNote(IReadOnlyList<CastEvent> events, ResolvedRenderSettings settings, double? loopDuration, StepNames? names = null)
     {
         if (settings.Length is not double length)
             return null;
-        if (settings.StepRanges is null)
+        if (settings.StepRanges is not { } stepRanges)
             return $"length {FormatSeconds(length)}s has no effect: the cast has no step ranges (st:steps), which scenetake writes when it records. It plays as recorded";
         return FitLength(events, settings, loopDuration) is { } fitted && fitted.Played > length + 0.05
-            ? string.Create(CultureInfo.InvariantCulture, $"length {FormatSeconds(length)}s is shorter than this recording can play: {fitted.Played:F1}s with every wait, pause, and typed character at its shortest. Leave out steps or output, or set speed instead")
+            ? string.Create(CultureInfo.InvariantCulture, $"length {FormatSeconds(length)}s is too short for this recording, which takes at least {fitted.Played:F1}s.{LongestSteps(PlaybackLength.StepsAtShortest(stepRanges, fitted, names))} Leave out steps or output, or set speed instead")
             : null;
+    }
+
+    /// <summary>
+    /// The steps that take longest at their shortest, up to three, as a sentence that starts with a space, or nothing
+    /// for a recording of one step.
+    /// </summary>
+    private static string LongestSteps(PlaybackLength.StepShortest[] steps)
+    {
+        if (steps.Length < 2)
+            return "";
+
+        // Longest first, and in the order of the recording where two are as long.
+        var taken = new bool[steps.Length];
+        var text = new StringBuilder(" Longest steps then: ");
+        var shown = Math.Min(3, steps.Length);
+        for (var k = 0; k < shown; k++)
+        {
+            var longest = -1;
+            for (var i = 0; i < steps.Length; i++)
+            {
+                if (!taken[i] && (longest < 0 || steps[i].Seconds > steps[longest].Seconds))
+                    longest = i;
+            }
+
+            taken[longest] = true;
+            var step = steps[longest];
+            if (k > 0)
+                text.Append(", ");
+            text.Append(CultureInfo.InvariantCulture, $"{step.Label} ({step.Seconds:F1}s)");
+        }
+
+        return text.Append('.').ToString();
     }
 
     /// <summary>
@@ -1452,29 +1493,64 @@ internal static class RenderSettingsResolver
         ResolveOutputPath(castPath, outputArg, ".gif");
 
     /// <summary>
-    /// <c>--at</c>: seconds from the start of the recording, 0 or more with decimals, or <c>end</c> for the final
-    /// screen (<see cref="double.PositiveInfinity"/>). A time past the end gives the final screen too.
+    /// <c>--at</c>: seconds from the start of the recording, 0 or more with decimals, <c>end</c> for the final screen
+    /// (<see cref="double.PositiveInfinity"/>), or a step's <c>id</c>, which the cast gives a time
+    /// (<see cref="TryResolveStillAt"/>). A time past the end gives the final screen too.
     /// </summary>
-    internal static bool TryParseStillAt(string text, out double at, out string error)
+    internal static bool TryParseStillAt(string text, out StillTime at, out string error)
     {
         error = "";
         var value = text.Trim();
         if (value.Equals("end", StringComparison.OrdinalIgnoreCase))
         {
-            at = double.PositiveInfinity;
+            at = new StillTime(double.PositiveInfinity, null);
             return true;
         }
 
-        if (double.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out at) && double.IsFinite(at))
+        if (double.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var seconds) && double.IsFinite(seconds))
+        {
+            at = new StillTime(seconds, null);
             return true;
+        }
 
-        error = $"invalid --at value: {text} (expected seconds from the start, such as 2.5, or end)";
+        if (ScenarioCast.IsStepId(value))
+        {
+            at = new StillTime(0, value);
+            return true;
+        }
+
+        at = new StillTime(0, null);
+        error = $"invalid --at value: {text} (expected seconds from the start, such as 2.5, end, or a step's id)";
         return false;
     }
 
-    /// <summary>The still's time as the log prints it: <c>at 2.5s</c>, or <c>final screen</c>.</summary>
-    internal static string FormatStillAt(double at) =>
-        double.IsPositiveInfinity(at) ? "final screen" : $"at {FormatSeconds(at)}s";
+    /// <summary>
+    /// The seconds of <paramref name="at"/> in a cast read with <paramref name="settings"/>: its own, or for a step's
+    /// id where the cast's <c>st:ids</c> tag says the step's output has ended. False, with the error, for an id that
+    /// the cast does not have.
+    /// </summary>
+    internal static bool TryResolveStillAt(StillTime at, ResolvedRenderSettings settings, out double seconds, out string error)
+    {
+        error = "";
+        seconds = at.Seconds;
+        if (at.Step is not { } step)
+            return true;
+        if (settings.StepIds?.Find(step) is double time)
+        {
+            seconds = time;
+            return true;
+        }
+
+        error = settings.StepIds is { } ids
+            ? $"--at {step}: no step in the cast has this id (it has {string.Join(", ", ids.Ids)})"
+            : $"--at {step}: the cast has no step ids, which scenetake writes when a step has an id. Give the time in seconds, or record it again";
+        return false;
+    }
+
+    /// <summary>The still's time as the log prints it: <c>at 2.5s</c>, <c>final screen</c>, or <c>at compare (12.3s)</c>.</summary>
+    internal static string FormatStillAt(double at, string? step = null) =>
+        step is not null ? $"at {step} ({FormatSeconds(at)}s)"
+        : double.IsPositiveInfinity(at) ? "final screen" : $"at {FormatSeconds(at)}s";
 
     internal static string ResolveOutputStem(string scenarioPath, string? outputArg) =>
         ResolveOutputPath(scenarioPath, outputArg, null);

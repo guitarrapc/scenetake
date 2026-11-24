@@ -193,7 +193,7 @@ The tables below say what each command and option is for. `scenetake --help` and
 | `--speed N` | Make the SVG, mp4, or GIF shorter (`1.5`) or slower (`0.5`) without recording again |
 | `--length N` | Fit the SVG, mp4, or GIF into at most N seconds without recording again |
 | `--max-fps N` | Make the SVG of a fast-changing screen smaller |
-| `--at TIME` | Make a still SVG or PNG of one moment, such as `end` for the final screen |
+| `--at TIME` | Make a still SVG or PNG of one moment: seconds, `end` for the final screen, or a step's `id` for the screen right after that step |
 | **mp4, GIF, and PNG** | |
 | `--fps N` | Balance smooth motion and file size for mp4 and GIF. The default rises with `--speed` to keep motion smooth |
 | `--crf N` | Balance mp4 quality and file size |
@@ -418,7 +418,7 @@ outputs:
 | --- | --- |
 | ![](samples/speed.svg) | ![](samples/speed-2x.svg) |
 
-`length` sets how many seconds an output plays. scenetake fits the demo into that time, so you do not tune typing speed and pauses yourself. It shortens waits in a command's output first, then the pauses between steps, then typing. A demo that is already shorter stays as it is, and scenetake warns when a demo still does not fit.
+`length` sets how many seconds an output plays. scenetake fits the demo into that time, so you do not tune typing speed and pauses yourself. It shortens waits in a command's output first, then the pauses between steps, then typing. A demo that is already shorter stays as it is, and when a demo still does not fit, scenetake warns and names the steps that take the longest.
 
 ```yaml
 outputs:
@@ -426,6 +426,8 @@ outputs:
   - format: mp4              # for X, at most 15 seconds
     length: 15
 ```
+
+Each recording also prints how long each step takes, split into typing, output, and pauses, so you can see which step or which setting makes a demo long.
 
 | macOS | Windows |
 | --- | --- |
@@ -596,11 +598,18 @@ settings:
     - "internal.example.com"
 ```
 
-It also hides who recorded the demo: your user name in `/home/<name>` or `ls -l`, your computer's name, and your git name and email in `git log`. Your name in a web address, such as `github.com/<name>/tool`, stays. To show them, set `mask-personal: false`.
+It also hides who recorded the demo: your user name in `ls -l`, your computer's name, and your git name and email in `git log`. Your home folder's path shows as `~`, so `pwd` prints `~/src/app`. Your name in a web address, such as `github.com/<name>/tool`, stays. To show them, set `mask-personal: false`.
 
 ```yaml
 settings:
   mask-personal: false
+```
+
+To show the folder the steps run in as the same path on every machine, CI included, give it with `cwd-as`. `pwd`, errors, and stack traces then print it, and the prompt's `{dir}` shows `my-app`.
+
+```yaml
+cwd: ./demo
+cwd-as: ~/my-app
 ```
 
 ## Recording again

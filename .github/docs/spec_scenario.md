@@ -98,6 +98,7 @@ post:
 | `width` | `80` | Terminal columns in the cast header and PTY geometry when a step uses `pty: true`. `1`–`512`, the cast's range. Checked before `pre` runs. |
 | `height` | `24` | Terminal rows in the cast header and PTY geometry when a step uses `pty: true`. `1`–`512`, checked before `pre` runs. |
 | `cwd` | process cwd | Working directory for `pre`, `steps`, and `post`. Relative paths, including `..`, use the scenario file's folder, independent of the caller's location. Without `cwd`, commands use the caller's folder. The directory must exist before `pre`. An error names the resolved directory if it is missing. |
+| `cwd-as` | — | The path the recording shows for `cwd`, or for the caller's folder without it, wherever a command prints it, such as `~/my-app`. The same on every machine. The prompt's `{dir}` there shows its last name. See [Paths in the recording](#paths-in-the-recording). |
 | `shell` | `$SHELL` / `pwsh` | Shell for all commands. Values: `bash`, `pwsh`, `powershell`, or a path |
 | `outputs` | — | The files a recording writes besides the cast, each with its own format and options, such as a dark and a light SVG, a GIF, and an mp4. Written when no `--format` is given. See [spec_cli.md](spec_cli.md) → Outputs list. |
 
@@ -157,7 +158,7 @@ settings:
     - " $ "
 ```
 
-- **`{dir}`** is the name of the folder the step starts in: its last name, `~` for the home folder, and `/` for the root, as bash's `\W` shows it. The rest of the path never appears, so a recording names no user folder. Both `HOME` and the user profile are `~`, because PowerShell on Windows takes the profile as its home while Git Bash takes `HOME`, which may name another folder.
+- **`{dir}`** is the name of the folder the step starts in: its last name, `~` for the home folder, and `/` for the root, as bash's `\W` shows it. With `cwd-as`, the folder the steps start in shows the last name of what `cwd-as` gives: `my-app` for `~/my-app` ([Paths in the recording](#paths-in-the-recording)). The rest of the path never appears, so a recording names no user folder. Both `HOME` and the user profile are `~`, because PowerShell on Windows takes the profile as its home while Git Bash takes `HOME`, which may name another folder.
 - **Which folder.** With a shell that carries the folder (Shell state across steps below), `{dir}` follows each `cd` in `pre`, in a shown step, and in a `show: none` step. The prompt is drawn before its step runs, so a step's own `cd` moves the next prompt. The closing prompt shows where the last step left. A folder that a step removed is not returned to, so the next prompt shows the scenario's `cwd`, as the next command starts there. The shell tells scenetake that the folder is gone, because a Git Bash path such as `/tmp/x` has no Windows path to look up. A shell that carries no state starts every command in `cwd` (or the caller's folder), and `{dir}` always shows that.
 - **Replay and the playground.** When the prompt shows `{dir}`, the outputs file keeps each step's folder name and the closing one, masked as the prompt shows them (`folder`, `endFolder`, [spec_playground.md](spec_playground.md) → Outputs file), and a replay draws the same prompts. A file without them shows `~`. Without `{dir}`, the file keeps no folder names.
 - **Errors and warnings.** A value that is neither text nor a list, a part that is neither text nor a mapping, a mapping without `text`, and a `color` that is not text are errors found before anything runs. An unknown style is a warning, and its part is drawn plain. A misspelled part key is an unknown-key warning.
@@ -220,7 +221,7 @@ settings:
 
 ### Masking personal details
 
-The prompt never names the person who records (`{dir}` shows a folder's name, Prompt above), but commands do, without being asked: `pwd` under the home folder prints `/c/Users/<name>/...`, `ls -l` prints the owner, `git log` prints the author's name and email, and a stack trace prints the paths of the files. `mask-personal` hides them, as `*` like a secret. It is on unless it is `false`, and it does not depend on `mask-auto`.
+The prompt never names the person who records (`{dir}` shows a folder's name, Prompt above), but commands do, without being asked: `pwd` under the home folder prints `/c/Users/<name>/...`, `ls -l` prints the owner, `git log` prints the author's name and email, and a stack trace prints the paths of the files. `mask-personal` hides them, as `*` like a secret, and the home folder's path shows as `~` ([Paths in the recording](#paths-in-the-recording) below). It is on unless it is `false`, and it does not depend on `mask-auto`.
 
 ```yaml
 settings:
@@ -232,15 +233,15 @@ settings:
   | Kind | From |
   |---|---|
   | User name | The account's name |
-  | Home folder name | The last name of the home folder, and of `HOME` (Git Bash may set it to another folder), when it differs from the user name |
+  | Home folder name | The last name of the home folder, and of `HOME` (Git Bash may set it to another folder), when it differs from the user name, and on Windows its 8.3 name, such as `ADALOV~1`, which `TEMP` holds |
   | Computer name | The machine's name, and on Windows also its DNS host name, which `hostname` prints: the other is cut to 15 characters |
   | Git name and git email | `user.name` and `user.email` of the global and system git config, as git reads them in the scenario's `cwd` (an `includeIf` for that folder applies), and `GIT_AUTHOR_NAME`, `GIT_AUTHOR_EMAIL`, `GIT_COMMITTER_NAME`, and `GIT_COMMITTER_EMAIL` |
 
 - **Where.** Wherever the masking of secrets looks: every step's output, the typed command, comments, and cards. It is found across reads and color codes as a secret is.
 - **As a whole word, case ignored.** A detail is hidden where the characters on either side are not ASCII letters, digits, `_`, or `-`: `/home/ada/app`, `ada  staff` in `ls -l`, `ada@host`, `uid=501(ada)`. User name `ada` in `adam`, `ada-work`, or `ada_x` is another word and stays. Case is ignored, because Windows writes `C:\Users\Ada` in one place and `/c/Users/ada` in another, and gives the computer name in upper case while `hostname` prints it as it was set.
-- **A published name stays.** A user name, home folder name, or git name inside a web address or after a leading `@` stays: `https://github.com/ada`, `github.com/ada/tool`, `git@github.com:ada/tool.git`, `@ada/tool`, `@ada`. There it is the name the author publishes under, which a demo shows on purpose. A word is in an address when the text before it, back to a space, a quote, or a bracket, holds `://`, or starts with a host name that has a dot (`github.com`) before a `/` or `:`. A path is not an address: `/home/ada`, `C:/Users/ada`, `./ada`, `~/ada`, `D:\src\ada`. A computer name and an email are not published names, and are hidden in an address too.
+- **A published name stays.** A user name, home folder name, or git name inside a web address or after a leading `@` stays: `https://github.com/ada`, `github.com/ada/tool`, `git@github.com:ada/tool.git`, `@ada/tool`, `@ada`. There it is the name the author publishes under, which a demo shows on purpose. A word is in an address when the text before it, back to a space, a quote, or a bracket, holds `://`, or starts with a host name that has a dot (`github.com`) before a `/` or `:`. A path is not an address: `/home/ada`, `C:/Users/ada`, `./ada`, `~/ada`, `D:\src\ada`, and a file URL, `file:///C:/Users/ada`, which names a path too. A computer name and an email are not published names, and are hidden in an address too.
 - **What is not hidden.** A name shorter than 3 characters, one that is all digits, and names that name no person, which containers, CI runners, and cloud images use: `root`, `admin`, `administrator`, `user`, `guest`, `nobody`, `demo`, `test`, `dev`, `runner`, `runneradmin`, `ubuntu`, `debian`, `vscode`, `node`, `codespace`, `gitpod`, `docker`, `vagrant`, `ec2-user`, `app`, `api`, `web`, and `localhost`. Hidden, they would star words that demos print for other reasons, such as `npm run dev` or the `root` folder, and a recording in CI would differ from one made locally. An email is always hidden. A repository's own `user.name` and `user.email` are not: a demo repository may set an identity on purpose. Add one to `mask` to hide it.
-- **The CLI says what it hid**, on its own line, by kind: `Masked personal details: user name, git email (settings.mask-personal: false shows them)`. It names no value: a CI log may be public.
+- **The CLI says what it hid**, on its own line, by kind: `Masked personal details: home folder as ~, user name, git email (settings.mask-personal: false shows them)`. It names no value: a CI log may be public.
 - **Replay and the playground.** `--replay` masks again with the personal details of the machine that replays, as it does with its environment. The playground has no machine to read, and the outputs file was masked when it was recorded.
 - **Collecting.** One `git config` process reads the git identity, from git on PATH, never from the current directory. Without git, or when it fails, there is no git detail to hide. A git older than 2.26 has no `--show-scope`, and then the global config alone is read.
 
@@ -249,6 +250,30 @@ settings:
 **Why a published name stays.** For many developers the user name is also their GitHub account. Hidden everywhere, it would star `github.com/<name>/<tool>` in an end card or in `git remote -v`, which the author shows on purpose. A home path and an `ls -l` owner are not chosen: they come with the machine.
 
 **Why whole words and a list of generic names, not every occurrence.** A login is often a short common word. Hiding `ann` in `annual`, or `runner` in `test runner` on a GitHub Actions runner, would make stars appear where nothing personal was. The list keeps out the names that come with a container or a CI runner. A personal name that is also a common word still stars that word: the CLI's line names the kind, and `mask-personal: false` turns it off.
+
+### Paths in the recording
+
+Commands print full paths without being asked: `pwd`, an error that names a file, a stack trace, a tool's JSON. Each names a folder of the machine that records, so one scenario shows `/c/Users/<name>/src/my-app` on one machine and `/home/runner/work/my-app/my-app` on a CI runner. Two folders show as a stand-in instead:
+
+```yaml
+cwd: ./demo
+cwd-as: ~/my-app     # pwd prints ~/my-app here, on every machine
+```
+
+- **The home folder shows as `~`**, as the prompt's `{dir}` shows it: `/home/ada/src/app` is `~/src/app`, and `C:\Users\Ada\AppData` is `~\AppData`. It is part of `mask-personal`, so `mask-personal: false` shows the path. The home folder is the user profile and `HOME`, as for `{dir}`. The CLI's line names it: `Masked personal details: home folder as ~`.
+- **`cwd-as` gives what the folder the steps start in shows as**: `cwd`, or the caller's folder without it. It holds with `mask-personal: false` too, since it is the scenario's choice and no detail of the machine. The prompt's `{dir}` there shows its last name. A folder above it shows as it is, or from `~`. A blank `cwd-as`, or one with a line break, is an error found before anything runs.
+- **Every spelling.** A Windows folder is found in each way a command writes it: `C:\Users\Ada`, `C:/Users/Ada` (Git Bash's `pwd -W`, Node.js), Git Bash's `/c/Users/Ada`, and JSON's `C:\\Users\\Ada`. The stand-in's `/` and `\` are written as that spelling writes them: `cwd-as: ~/my-app` shows as `~\my-app` where PowerShell prints the folder, and as `~\\my-app` in JSON. The 8.3 form of a folder, such as `C:\Users\ADALOV~1` in `TEMP`, is found too. On Unix, so is the folder with its links resolved, which `pwd` prints when the shell reads the folder from the system: `/private/var/...` for `/var/...` on macOS. Case is ignored, as for the personal details.
+- **Only a whole path.** A path is the folder or a path under it, and it stands apart: no letter, digit, `_`, `-`, `.`, `~`, `/`, or `\` before it, and no name going on after it. `/home/ada2`, `/home/ada.old`, WSL's `/mnt/c/Users/Ada`, `\\?\C:\Users\Ada`, and `file:///C:/Users/Ada` are not the home folder, and the user name in them is starred as a word. A root folder (`/`, `C:\`) has no stand-in: every path starts with it.
+- **Where.** Wherever masking looks: every step's output, the typed command, comments, and cards. A colored path keeps its colors, and a path split across two reads is found, as a secret is.
+- **A full-screen program keeps the stars.** On the alternate screen, where vim, less, and htop draw, a path keeps its width, and the user name in it is starred. So is the name in a path that a cursor move cuts.
+- **Replay and the playground.** The outputs file holds the stand-ins as the recording showed them. `--replay` finds the folders of the machine that replays, which an outputs file recorded elsewhere does not hold, so a path recorded without a stand-in stays as it was recorded. The playground has no machine.
+- **Typing.** A step's typing comes from its run text after masking (Determinism below), so a run that names the home folder types the same on every machine. Such a step types differently once, compared with a cast recorded before 2026-11-24.
+
+**Why a stand-in, and not a container or a folder made for the recording** (2026-11-24). The evaluation of 2026-11-23 found that a scenario cannot hold its stage, and `pwd` printed `/c/Users/**********/AppData/Local/Temp/...`. A container makes the paths the same, but asks every author for Docker. A folder that scenetake made for the recording would not help: it would be under the temp folder, as in `/c/Users/**********/AppData/Local/Temp/scenetake-k3j2/demo`, which still names the machine and changes with every run, so each recording would differ from the last. A stand-in needs neither, and gives the same path on every machine.
+
+**Why the width changes here.** The masking of secrets keeps each line's width, so that a full-screen program's columns stay where they were. A stand-in is shorter than its path. Line output does not mind: ConPTY on Windows 11 passes a program's line output through as written, a progress line redrawn after `\r` included (checked 2026-11-24 with a PTY step), so each draw is shortened alike. A full-screen program places text by column and redraws only the cells that changed, so a shorter path would put its later draws in the wrong cells. There the width stays.
+
+**Why `~` belongs to `mask-personal`.** The home folder's path names the user, which the stars were there to hide. `~` hides it too, reads as a path, and is the same for every author.
 
 ## `render`
 
@@ -333,6 +358,7 @@ Map-form steps recognize:
 |---|---|---|
 | `run` | yes | Command string. A missing `run`, or a list or a mapping under it, is an error found before anything runs. The error for a missing `run` names the keys the step has, so an unquoted `- echo key: value` shows up as the key `echo key` |
 | `name` | no | Comment line before typing. Optional `[style]` prefix: [spec_highlight.md](spec_highlight.md) |
+| `id` | no | A name for `--at` and an outputs entry's `at`, which then show the screen right after this step's output. A letter or `_`, then letters, digits, `-`, and `_`. Not shown in the demo. See Step ids below |
 | `typing-speed`, `typing-jitter`, `pre-delay`, `post-delay`, `execution-duration` | no | Override `settings` for this step |
 | `stream-output`, `max-duration`, `silence-threshold`, `max-idle` | no | Override `settings` output-timing keys for this step |
 | `run-highlight` | no | Style for typed command text |
@@ -391,7 +417,7 @@ steps:
 
 ### Clear steps
 
-A step `- clear: true` clears the screen and moves the cursor to the top left, as `clear` does, without running a command. It writes `ESC [H ESC [2J` into the cast, so it works without `TERM`, on every OS, and in the playground. It takes `name`, which prints a comment line at the top of the cleared screen, and `pre-delay` and `post-delay`. Any other step key, `run` with `clear`, or a value other than `true` is an error.
+A step `- clear: true` clears the screen and moves the cursor to the top left, as `clear` does, without running a command. It writes `ESC [H ESC [2J` into the cast, so it works without `TERM`, on every OS, and in the playground. It takes `name`, which prints a comment line at the top of the cleared screen, `id` (Step ids below), and `pre-delay` and `post-delay`. Any other step key, `run` with `clear`, or a value other than `true` is an error.
 
 - **Why not `run: clear`.** That types the command, and `clear` fails in a pipe without `TERM`, as in CI. With `show: output` it would still depend on the host's terminal database, and on Windows on the shell.
 
@@ -417,11 +443,35 @@ steps:
 - **A still of a card stays centered.** A still (PNG or `--at`) keeps only the rows and columns that its own screen uses, which would end at the card's text. So the card puts a bold space, which shows nothing, in the window's last cell, which keeps its last row and column.
 - **Time.** The card stays for `post-delay`, 2 seconds by default instead of the settings' value, because a title and an install line take longer to read than a command's output. `pre-delay` passes before the card shows, as before a clear step.
 - **After it.** The next shown step starts on a cleared screen with the cursor shown again, as after a clear step. A `show: none` or background step between them runs while the card stays. A card that ends the scenario stays for its `post-delay`, and no prompt follows it: an event that changes nothing ends the recording then, because the render holds the last screen only for the gap before it.
-- **Keys and errors.** A card takes `pre-delay` and `post-delay` only. `run` or `clear` with `card`, another step key, a value that is not text, a card with no text, a line wider than the terminal, more lines than its rows, and a control character in a line are errors found before anything runs. A list entry that YAML reads as a mapping, an unquoted line with `: ` in it, gets a hint to quote the line. A card that the crop would cut, with more lines than the rows the crop leaves or a line wider than its columns, is an error too, found once the command line's crop is known. A scenario of cards alone is a recording, unlike one of clear steps alone.
+- **Keys and errors.** A card takes `id`, `pre-delay`, and `post-delay` only. `run` or `clear` with `card`, another step key, a value that is not text, a card with no text, a line wider than the terminal, more lines than its rows, and a control character in a line are errors found before anything runs. A list entry that YAML reads as a mapping, an unquoted line with `: ` in it, gets a hint to quote the line. A card that the crop would cut, with more lines than the rows the crop leaves or a line wider than its columns, is an error too, found once the command line's crop is known. A scenario of cards alone is a recording, unlike one of clear steps alone.
 - **Why centered.** A card is a screen of its own, a title or an end screen, and the middle of the screen is where a reader looks for one.
 - **Why in the window the output shows, not the whole terminal.** Centered in all 24 rows, a card in a demo that used 6 of them made fit keep 13 rows, and the card sat near the bottom of the canvas. Centered in all 80 columns with `fit: both`, it sat at the right edge, and with `crop-top` its first line was cut. The window is known only after the last step, so each card's event is drawn then.
 - **The window comes from the render's own fit** (2026-11-20). The rows in use were first taken from the cursor after each event. A step that writes a low row and moves the cursor home in one event, as a full-screen program does, was missed: fit kept the row, and the card sat high.
 - **Why a step and not `show: output` with `printf`.** A card centers by itself at any terminal size, takes styles without escape codes, works the same in bash and PowerShell, and needs no recording, so the playground and `--replay` show it too.
+
+### Step ids
+
+A step's `id` names it for `--at` and an outputs entry's `at`, which then show one screen of that step instead of a time in seconds:
+
+```yaml
+steps:
+  - card: ["[bold]my-app"]
+    id: title
+  - npm install
+  - id: compare
+    run: my-app diff a.json b.json
+outputs:
+  - format: svg              # the demo
+  - format: png
+    at: compare              # the screen right after the diff, for a preview image
+    file: demo-result
+```
+
+- **The screen.** For a command, the screen right after its output, before its `post-delay` and the next step's comment and prompt. For a card, the card. For a clear step, the cleared screen with its comment line.
+- **Where it works.** The scenario path (`--format svg` or `png` with `--at compare`), an outputs entry's `at`, `--replay`, and the `svg` and `png` commands on the cast: the cast keeps each id and its moment in its `st:ids` tag ([spec_cast.md](spec_cast.md)), so the cast alone resolves it.
+- **The rules.** An id is a letter or `_`, then letters, digits, `-`, and `_`, as GitHub Actions takes a step's id. So `--at` reads a number as seconds and `end` as the final screen, never as an id, and a shell needs no quotes around it. `end` in any case is not an id. Ids are case-sensitive, and two steps with one id are an error. A `show: none` step and a background step have no screen, so an `id` there is an error.
+- **Errors before anything runs.** An `at` that names an id no step has stops the run before `pre`: `--at nope: no step has this id. Give the step 'id: nope'.`, named after its outputs entry when it comes from one. On a cast alone, an id the cast does not have names the ids it has, and a cast without `st:ids`, recorded before ids or without them, says to give seconds or record it again.
+- **Why an id, and not the step's number or its `name`** (2026-11-24). The number, as the time per step shows it, moves when a step is added or removed, and an `at` in `outputs` would then show another step's screen without a word. A `name` always prints a comment line in the demo, so a step without one could not be named, and a reworded comment would break the `at`. An id shows nothing, stays when other steps change, and a missing or repeated one is an error.
 
 ## Step exit codes
 
@@ -541,6 +591,34 @@ On Windows:
 - bash lookup checks Git and MSYS folders under Program Files and local app data, then PATH.
 - Lookup excludes the current directory and ProgramData. WSL bash is never used, including by path.
 
+## Time per step
+
+After the cast's `Written:` line, a recording and a replay print where the cast's time goes, a row for each shown step:
+
+```
+Written: basic.cast  (188 events, 16.7s)
+   step   time  typing  output  pauses
+      1   2.5s     0.5     0.0     2.0  echo "Hello, World!"
+      2   2.2s     0.6     0.1     1.5  Name of the step
+      3   2.3s     0.7     0.1     1.5  Coloring stdout
+      4   2.2s     0.7     0.0     1.5  echo "Wait for 2 seconds..."
+      5   2.7s     0.3     1.0     1.4  sleep 2
+      6   2.5s     1.0     0.0     1.5  echo "stderr output is red by default" 1>&2
+      7   0.9s     0.4     0.0     0.5  echo "Done!"
+          1.4s                     1.4  final screen
+  total  16.7s     4.2     1.3    11.2
+```
+
+- **A step's time** runs from where it begins, with its comment line, prompt, or `pre-delay`, to where the next shown step begins, so its `post-delay` is its own (Pauses above). The first step holds the 0.5 s before its prompt. The last step ends with its output, and the final screen holds the rest of the cast, as a pause.
+- **The parts.** Typing runs from the first typed character to the command's start, Enter included: `typing-speed` and the command's length set it. Output runs from the command's start to the end of its output: `execution-duration` for a pipe step, and for a PTY or interactive step the command's own time, which `max-duration`, `silence-threshold`, and `max-idle` shorten. Pauses are the rest: `pre-delay`, `post-delay`, and a comment line. A card's and a clear step's time are pauses.
+- **Which steps.** Every step the cast shows: commands, cards, and clear steps, numbered by their place in `steps`. A `show: none` step and a background step take no time in the cast and get no row. A step is named by its `name`, or else by its `run` text cut at 60 characters, and a card by its first line, after masking.
+- **Tenths that add up.** Each row's parts add up to its time, and `total` is the length on the cast's `Written:` line. Each part is rounded down, and the tenths left over go to the parts that lost the most.
+- **Columns, not sentences** (2026-11-24). The first table wrote each row as `2.5s = 0.5 + 0.0 + 2.0` under a `Time per step: typing + output + pauses` line, and ended with `In all: typing 4.2s, output 1.3s, pauses 9.8s, final screen 1.4s`. The user found it wordy. Headed columns name each part once, and `total` is one more row in them.
+- **As recorded.** The times are the cast's, as its `Written:` line is. With `speed` or `length`, the outputs play faster, and their own `Written:` lines say how long.
+- **Not for `capture`.** It records one command, whose time the cast's line already gives.
+- **A length that cannot be kept** gets a warning that names, by their numbers here, the steps that take longest at the shortest pace, split the same way ([spec_svg.md](spec_svg.md) → Length).
+- **Why** (2026-11-23). The cast's line gave the total only, and the warning of a length that cannot be kept said `Leave out steps or output` without saying which. The split tells the author what to change: `basic.yaml`'s 16.7 s are 9.8 s of pauses, which `post-delay` and `pre-delay` set, and a slow build shows as one step's output. An agent that writes a scenario reads the run's output, not the SVG, so the table comes with every recording instead of behind an option.
+
 ## Determinism
 
 Each step types from a random sequence of its own. Its seed is the step as recording again finds it (Recording again below): its `run` text after masking, how it runs (pipe, `pty`, or `interactive`), what it shows, and how many steps before it are the same. A step's `keys` draw their typing delays from the same sequence, after its typed command. Each step starts on a whole millisecond. The cast header's `timestamp` is fixed at `1700000000` (2023-11-14 UTC).
@@ -550,7 +628,7 @@ So a comment, the title, `render`, `outputs`, `settings` other than the typing k
 - **Why a sequence for each step.** The seed was a hash of the whole YAML text, and one sequence ran through every step. A comment added to `samples/basic.yaml` changed 153 of its cast's 189 lines (2026-11-21): the header's timestamp and every typed interval. A new command in one step moved the sequence for every step after it. Recording again kept each step's output, but the typing around it changed, so a diff showed the whole cast.
 - **Why the text after masking.** The cast is published. A seed from a secret would let anyone who guesses the secret draw the same delays and check them against the cast. Two secrets of one length now type the same.
 - **Why each step starts on a whole millisecond.** The cast stores intervals between times rounded to milliseconds. A step that typed longer than before moved the fraction of a millisecond every later step started at, and the rounding of their intervals by 1 ms with it.
-- **What a step's seed still depends on.** A `run` text that masking changes on one machine and not on another, such as a user name that `mask-personal` hides, types differently on the two, as recording again does not find the step on the other machine either. Two steps that type the same command count apart, so the second does not repeat the first one's typing.
+- **What a step's seed still depends on.** A `run` text that masking changes on one machine and not on another, such as a user name that `mask-personal` hides, types differently on the two, as recording again does not find the step on the other machine either. A path under the home folder, or under `cwd` with `cwd-as`, shows the same on every machine ([Paths in the recording](#paths-in-the-recording)), so it types the same. Two steps that type the same command count apart, so the second does not repeat the first one's typing.
 
 Instant pipe output produces identical casts across runs if commands print identical output. PTY, interactive, and stream output use wall-clock timing. Their output events and the interval to the next event can differ between runs, unless the run records again to an earlier cast (Recording again below).
 
@@ -664,6 +742,8 @@ Template commands must run in the selected shell. `scenetake init --shell bash|p
 - **Another key spelling took effect while the warning said it had none.** VYaml converts each YAML key to kebab case before it compares it with the class's keys, unless the options name kebab case themselves. scenetake parsed with the default options, so under `settings`, `render`, and the top level, `typing_speed: 0.3` changed the typing speed. The unknown-key warning said scenetake did not read it. A step key, read from a plain map, never took effect. The playground found this on 2026-11-15, when a scenario written the way an AI assistant often writes one was pasted into it. The parse now names kebab case in the options, so one spelling works everywhere.
 - **The YAML library's type errors named neither the key nor the type.** `typing-speed: 50ms` gave `Cannot detect a scalar value as double : Scalar 50ms at Line: 9, Col: 9`, and the line was the one after the value. Units such as `ms` and `s` are a common guess. When the typed parse fails, scenetake reads the file again as plain maps and finds the first value that does not fit its key's type. The key types come from the schema that VYaml generates for the unknown-key check. A step value used to fall back to the default with no message, and it now warns.
 - **Native AOT needs VYaml's `object` formatter.** `Dictionary<object, object?>` parsed under `dotnet run` but failed after publishing because its formatter required reflection metadata. Reading as `object` uses an AOT-compatible formatter with the same maps. A published-binary test protects the warning behavior.
+- **The profile's 8.3 name showed the user name.** Windows writes `TEMP` as `C:\Users\ADALOV~1\AppData\Local\Temp` when the name is longer than 8 characters, and `$env:TEMP` in PowerShell and `cygpath -w /tmp` in Git Bash print it. `mask-personal` looked for the whole name, so the first six letters showed (found 2026-11-24). The 8.3 name is now a home folder name, and the path shows as `~`.
+- **A file URL counted as a web address.** The rule that keeps a published name in an address took `file:///C:/Users/ada` for one, because of its `://`, and showed the user name. A file URL is a path, and the name in it is now starred.
 - **Relative `cwd` must follow the scenario location.** Previously, `cwd: work/repo` referred to different folders when the caller changed directories. Relative paths now use the scenario file's folder. This affects only relative `cwd` values when scenetake starts elsewhere. Without `cwd`, commands still use the caller's folder. The interactive sample relies on this to edit that folder's `README.md`.
 - **A step that does not run takes this run's time for output that appears at once** (2026-11-21). Its earlier events were first put at their offsets in whole milliseconds, which ended the step on a whole millisecond. A run ends a step with instant output at its start plus `execution-duration`, so the next step started 1 ms off the earlier cast, and a recording with nothing changed was not the same file.
 - **The schema's values were found by running scenetake, not from the tables** (2026-11-21). The tables give one spelling for each value, and scenetake reads more: `window: MacOS`, `key: Enter`, `wait: 123`, `card: 1.10`, `at: 1`, `pty: "true"` in a step, and `font-size: "12"` in an outputs entry all record without a warning, while `typing-speed: "0.05"` under `settings` stops the run. A schema built from the tables alone would have marked scenarios that record. Each value form was tried with the binary first.

@@ -119,6 +119,7 @@ internal static class CastReader
             FadeOut = style.FadeOut,
             Speed = style.Speed,
             Length = style.Length,
+            StepIds = style.Ids,
             Fit = style.Fit,
             Crop = new CropSpec(style.CropTop, style.CropBottom, style.CropLeft, style.CropRight),
         };
@@ -207,6 +208,7 @@ internal static class CastReader
 
         /// <summary>The st:steps tag's value, which is read once the events are known.</summary>
         internal string? Steps;
+        internal StepIds? Ids;
         internal FitMode Fit = RenderSettingsResolver.DefaultFit;
         internal int CropTop;
         internal int CropBottom;
@@ -289,6 +291,8 @@ internal static class CastReader
             }
             else if (value.StartsWith(Rerecording.TagPrefix, StringComparison.Ordinal))
                 style.Steps = value[Rerecording.TagPrefix.Length..];
+            else if (value.StartsWith(RenderSettingsResolver.IdsTagPrefix, StringComparison.Ordinal))
+                style.Ids = StepIds.Parse(value[RenderSettingsResolver.IdsTagPrefix.Length..]);
             else if (value.StartsWith(RenderSettingsResolver.FitTagPrefix, StringComparison.Ordinal))
             {
                 if (ReadTag<FitMode>(value, RenderSettingsResolver.FitTagPrefix, "fit", "the default fit (height)", RenderSettingsResolver.TryParseFit, out var fit))

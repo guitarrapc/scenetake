@@ -24,9 +24,9 @@ internal static class PersonalDetails
         Add(details, Environment.UserName, PersonalDetail.UserName);
 
         // The home folder's name is usually the user name, but not always: Windows can cut it or add the domain.
-        // Git Bash may set HOME to another folder than the user profile.
-        Add(details, LastName(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)), PersonalDetail.HomeFolderName);
-        Add(details, LastName(Environment.GetEnvironmentVariable("HOME")), PersonalDetail.HomeFolderName);
+        // Git Bash may set HOME to another folder than the user profile. Its 8.3 name, such as ADALOV~1, is in TEMP.
+        foreach (var home in HomeFolders())
+            Add(details, LastName(home), PersonalDetail.HomeFolderName);
 
         try
         {
@@ -48,6 +48,19 @@ internal static class PersonalDetails
 
         ReadGitIdentity(details, folder is not null && Path.IsPathRooted(folder) && Directory.Exists(folder) ? folder : Environment.CurrentDirectory);
         return details;
+    }
+
+    /// <summary>
+    /// The home folder in each form a command may print it, for its path to show as ~ (PathStandIn): the user profile,
+    /// which PowerShell on Windows takes as home, and HOME, which Git Bash and Unix shells take, each in its forms
+    /// (<see cref="FolderPaths.Forms"/>).
+    /// </summary>
+    internal static List<string> HomeFolders()
+    {
+        var folders = FolderPaths.Forms(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+        foreach (var form in FolderPaths.Forms(Environment.GetEnvironmentVariable("HOME")))
+            FolderPaths.AddNew(folders, form);
+        return folders;
     }
 
     private static void Add(List<PersonalDetail> details, string? value, string kind)

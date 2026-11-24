@@ -127,11 +127,14 @@ internal static class PngRenderCases
 
     internal static bool StillTimeParsing()
     {
-        bool Parses(string text, double expected) => RenderSettingsResolver.TryParseStillAt(text, out var at, out _) && at.Equals(expected);
+        bool Parses(string text, double expected) => RenderSettingsResolver.TryParseStillAt(text, out var at, out _) && at.Step is null && at.Seconds.Equals(expected);
         bool Fails(string text) => !RenderSettingsResolver.TryParseStillAt(text, out _, out var error) && error.Contains("--at", StringComparison.Ordinal);
+        // A word is a step's id (StepIdTests), NaN and Infinity too, as no number they could be is a screen.
+        bool Names(string text) => RenderSettingsResolver.TryParseStillAt(text, out var at, out _) && at.Step == text;
         return Parses("end", double.PositiveInfinity) && Parses("END", double.PositiveInfinity) && Parses("2.5", 2.5) && Parses("0", 0)
             && Parses(" 3 ", 3) && Parses("120", 120)
-            && Fails("-1") && Fails("1e3") && Fails("abc") && Fails("") && Fails("NaN") && Fails("Infinity") && Fails("1,5")
+            && Fails("-1") && Fails("1e3") && Fails("") && Fails("1,5") && Fails("2s")
+            && Names("abc") && Names("NaN") && Names("Infinity")
             && RenderSettingsResolver.FormatStillAt(double.PositiveInfinity) == "final screen" && RenderSettingsResolver.FormatStillAt(2.5) == "at 2.5s";
     }
 

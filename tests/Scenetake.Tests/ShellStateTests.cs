@@ -1101,6 +1101,7 @@ internal static class ShellStateCases
     }
 
     // HOME is a folder of login files that move ZDOTDIR and reorder PATH, as many users' files and macOS's path_helper do.
+    // mask-personal shows that HOME as ~, so ZDOTDIR prints as ~/zdot.
     internal static bool IntegrationZshCarriesState(string repoRoot)
     {
         if (!TryGetBinary(out var bin))
@@ -1130,7 +1131,8 @@ internal static class ShellStateCases
                 && Expect(text.Contains("now=fixtures", StringComparison.Ordinal), "a step's cd")
                 && Expect(text.Contains("demo=carried plain=plain-value pre=pre-value sky=blue", StringComparison.Ordinal), "variables")
                 && Expect(text.Contains("hello alias", StringComparison.Ordinal) && text.Contains("HELLO FUNCTION", StringComparison.Ordinal), "the alias, the global alias, and the function")
-                && Expect(text.Contains($"child=[0][][carried][{home}/zdot]", StringComparison.Ordinal), "a child zsh saw more than the exported variables, or another ZDOTDIR")
+                && Expect(text.Contains("child=[0][][carried][~/zdot]", StringComparison.Ordinal), $"a child zsh saw more than the exported variables, or another ZDOTDIR: {Show(text)}")
+                && Expect(!text.Contains(home, StringComparison.Ordinal), "the home folder's path is not shown as ~")
                 && Expect(text.Contains("demo=[unset] hi=[0]", StringComparison.Ordinal), "unset and unalias")
                 && Expect(text.Contains("first=/opt/scenetake-step login=login-value", StringComparison.Ordinal), "the step's PATH after the login files, or the login files did not run")
                 && Expect(text.Contains(":2: command not found: nosuchcommand", StringComparison.Ordinal), "the error's line number")
