@@ -566,9 +566,11 @@ internal static class Ffmpeg
             UseShellExecute = false,
             CreateNoWindow = true,
         };
+        // -nostdin: with a file input ffmpeg reads keys from its stdin, which is scenetake's, and on a terminal it
+        // changes the terminal's mode while it runs. The libx264 check closes stdin for the same reason.
         foreach (var argument in new[]
         {
-            "-hide_banner", "-loglevel", "error", "-i", imagePath,
+            "-nostdin", "-hide_banner", "-loglevel", "error", "-i", imagePath,
             "-vf", string.Create(CultureInfo.InvariantCulture, $"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height}"),
             "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1",
         })
@@ -619,9 +621,14 @@ internal static class Ffmpeg
         }
 
         var name = OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg";
-        foreach (var directory in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+        foreach (var entry in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
         {
-            var candidate = Path.Combine(directory.Trim().Trim('"'), name);
+            // A relative entry such as "." names the current directory, which could hold its own ffmpeg.
+            var directory = entry.Trim().Trim('"');
+            if (!Path.IsPathFullyQualified(directory))
+                continue;
+
+            var candidate = Path.Combine(directory, name);
             if (File.Exists(candidate))
             {
                 path = candidate;

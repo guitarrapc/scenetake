@@ -9,7 +9,11 @@ internal static class SvgRender
     /// Seconds into the recording for a still SVG of the screen shown then, without animation, or
     /// <see cref="double.PositiveInfinity"/> for the final screen. Null renders the animation.
     /// </param>
-    internal static void WriteSvg(
+    /// <returns>
+    /// The SVG's size in pixels, as <see cref="Measure"/> gives it, for the canvas this SVG drew: a still's fit looks
+    /// at its own screen only.
+    /// </returns>
+    internal static (double Width, double Height) WriteSvg(
         IReadOnlyList<CastEvent> events,
         int width,
         int height,
@@ -19,9 +23,10 @@ internal static class SvgRender
         double? stillAt = null)
     {
         // Render fully before opening the file, so a render failure leaves no file behind.
-        var svg = Render(events, width, height, render, loopDurationOverride, stillAt);
+        var svg = Render(events, width, height, render, loopDurationOverride, stillAt, out var size);
         using var stream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 1 << 16);
         svg.WriteTo(stream);
+        return size;
     }
 
     /// <summary>
@@ -70,7 +75,7 @@ internal static class SvgRender
         double? stillAt = null)
     {
         using var stream = new MemoryStream();
-        Render(events, width, height, render, loopDurationOverride, stillAt).WriteTo(stream);
+        Render(events, width, height, render, loopDurationOverride, stillAt, out _).WriteTo(stream);
         return stream.ToArray();
     }
 
@@ -84,7 +89,7 @@ internal static class SvgRender
         double? stillAt = null)
     {
         using var stream = new MemoryStream();
-        Render(events, width, height, render, loopDurationOverride, stillAt).WriteTo(stream);
+        Render(events, width, height, render, loopDurationOverride, stillAt, out _).WriteTo(stream);
         return SvgDocument.Utf8NoBom.GetString(stream.GetBuffer(), 0, (int)stream.Length);
     }
 
@@ -104,10 +109,12 @@ internal static class SvgRender
         int height,
         ResolvedRenderSettings render,
         double? loopDurationOverride,
-        double? stillAt = null)
+        double? stillAt,
+        out (double Width, double Height) size)
     {
         var theme = TerminalTheme.FromResolved(render.Theme);
         var canvas = TerminalReplay.ResolveCanvas(events, width, height, render.Crop, render.Fit, theme, stillAt);
+        size = SvgFrameRenderer.Measure(render, canvas.Width, canvas.Height);
         if (stillAt is double at)
         {
             // The one screen shown at that time, drawn from the start: the animation's frames, timing, and fade do

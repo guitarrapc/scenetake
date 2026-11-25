@@ -148,6 +148,9 @@ public sealed class ShellStateTests
 
     [Test]
     public async Task IntegrationBackgroundContinueOnError() => await Assert.That(ShellStateCases.IntegrationBackgroundContinueOnError(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationBackgroundWaitReadsTheConsoleCodePage() => await Assert.That(ShellStateCases.IntegrationBackgroundWaitReadsTheConsoleCodePage(TestEnv.RepoRoot)).IsTrue();
 }
 
 internal static class ShellStateCases
@@ -946,6 +949,62 @@ internal static class ShellStateCases
         return Expect(run.ExitCode == 0, $"exit {run.ExitCode}\n{run.Stderr}")
             && Expect(run.Stderr.Contains("Warning: background step 1 exited 3 before it printed \"never printed\", and the steps go on (continue-on-error)", StringComparison.Ordinal), run.Stderr)
             && Expect(run.Text.Contains("after", StringComparison.Ordinal), "the next step");
+    }
+
+    internal static bool IntegrationBackgroundWaitReadsTheConsoleCodePage(string repoRoot)
+    {
+        // cmd writes the code page of its console, not UTF-8, as it does in a pipe step, which reads it with
+        // PipeOutputDecoder. A background step read only UTF-8, so a wait for a word outside ASCII never matched.
+        if (!OperatingSystem.IsWindows())
+        {
+            Skip.Test("Windows only: the console code page");
+            return true;
+        }
+
+        if (!TryGetBinary(out var bin))
+            return true;
+
+        var codePage = Kernel32.GetOEMCP();
+        var word = codePage switch
+        {
+            932 => "準備",
+            437 or 850 or 858 => "prêt",
+            _ => null,
+        };
+        if (word is null)
+        {
+            Skip.Test($"no test word for code page {codePage}");
+            return true;
+        }
+
+        var folder = Path.Combine(Path.GetTempPath(), $"scenetake-background-cp-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(folder);
+        try
+        {
+            var scenario = Path.Combine(folder, "background-cmd.yaml");
+            File.WriteAllText(scenario, $"""
+                shell: cmd
+                width: 60
+                height: 6
+                settings:
+                  typing-speed: 0.001
+                  pre-delay: 0
+                  post-delay: 0
+                steps:
+                  - run: echo {word} & ping -n 30 127.0.0.1 >nul
+                    background: true
+                    wait: "{word}"
+                    wait-timeout: 10
+                  - run: echo after
+                """);
+            var (exitCode, stderr) = RunBinary(bin, repoRoot, [scenario, Path.Combine(folder, "out")]);
+            return Expect(exitCode == 0, $"exit {exitCode}\n{stderr}")
+                && Expect(stderr.Contains("ready after", StringComparison.Ordinal), stderr);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
     }
 
     internal static bool IntegrationBashCarriesState(string repoRoot)

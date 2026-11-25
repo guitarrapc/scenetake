@@ -10,6 +10,9 @@ namespace Scenetake.Core.Tests;
 public sealed class PlaybackLengthTests
 {
     [Test]
+    public async Task CardLinesWithAndWithoutCornerMark() => await Assert.That(PlaybackLengthCases.CardLinesWithAndWithoutCornerMark()).IsTrue();
+
+    [Test]
     public async Task ShorterRecordingStaysAsItIs() => await Assert.That(PlaybackLengthCases.ShorterRecordingStaysAsItIs()).IsTrue();
 
     [Test]
@@ -45,6 +48,21 @@ public sealed class PlaybackLengthTests
 
 internal static class PlaybackLengthCases
 {
+    internal static bool CardLinesWithAndWithoutCornerMark()
+    {
+        // A card's reading time counts its lines. The corner mark (fit) is one more cursor move, which only a recording
+        // that fits its canvas has: with fit none, three lines counted as two.
+        var window = new CanvasWindow(0, 0, 20, 6);
+        string[] three = ["one", "[bold]two", "three"];
+        var marked = ScenarioCast.ComposeCard(three, window, masker: null, markCorner: true);
+        var plain = ScenarioCast.ComposeCard(three, window, masker: null, markCorner: false);
+        var single = ScenarioCast.ComposeCard(["only"], window, masker: null, markCorner: false);
+        return Expect(marked.Contains(ScenarioCast.CardCornerMark, StringComparison.Ordinal), "the fitted card has no mark")
+            & Expect(PlaybackLength.CardLines(marked) == 3, $"marked: {PlaybackLength.CardLines(marked)}")
+            & Expect(PlaybackLength.CardLines(plain) == 3, $"no mark: {PlaybackLength.CardLines(plain)}")
+            & Expect(PlaybackLength.CardLines(single) == 1, $"one line: {PlaybackLength.CardLines(single)}");
+    }
+
     // A step that waits 3 s with nothing drawn, between two lines of a progress bar 0.1 s apart (motion), and a step
     // that types slowly and pauses long after its output.
     private const string Scenario = """

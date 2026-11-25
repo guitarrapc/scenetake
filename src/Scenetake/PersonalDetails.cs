@@ -194,7 +194,7 @@ internal static class PersonalDetails
         foreach (var folder in path.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             // A relative PATH entry names the current directory or a folder under it.
-            if (!Path.IsPathRooted(folder))
+            if (!Path.IsPathFullyQualified(folder))
                 continue;
 
             foreach (var extension in extensions)

@@ -449,10 +449,14 @@ internal static class PlaybackLength
         return lines;
     }
 
-    /// <summary>A card's lines: one cursor move each, less the one that keeps its last row (CastComposer.ComposeCard).</summary>
-    private static int CardLines(string data)
+    /// <summary>
+    /// A card's lines: one cursor move each, less the one that marks its corner (CastComposer.ComposeCard). Only a
+    /// recording that fits its canvas has the mark, as the first cursor move followed by a bold space.
+    /// </summary>
+    internal static int CardLines(string data)
     {
         var moves = 0;
+        var marked = false;
         for (var i = 0; i + 1 < data.Length; i++)
         {
             if (data[i] != '\u001b' || data[i + 1] != '[')
@@ -461,10 +465,14 @@ internal static class PlaybackLength
             while (end < data.Length && (char.IsAsciiDigit(data[end]) || data[end] == ';'))
                 end++;
             if (end < data.Length && data[end] == 'H' && end > i + 2)
+            {
+                if (moves == 0)
+                    marked = data.AsSpan(end + 1).StartsWith(ScenarioCast.CardCornerMark, StringComparison.Ordinal);
                 moves++;
+            }
         }
 
-        return Math.Max(1, moves - 1);
+        return Math.Max(1, marked ? moves - 1 : moves);
     }
 
     /// <summary>

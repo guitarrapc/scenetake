@@ -54,6 +54,9 @@ public sealed class PlaygroundReplayTests
     public async Task ErrorsAreValuesNotExceptions() => await Assert.That(PlaygroundReplayCases.ErrorsAreValuesNotExceptions()).IsTrue();
 
     [Test]
+    public async Task CropLeavingNothingStopsBeforeComposing() => await Assert.That(PlaygroundReplayCases.CropLeavingNothingStopsBeforeComposing()).IsTrue();
+
+    [Test]
     public async Task NotAppliedKeysAreListed() => await Assert.That(PlaygroundReplayCases.NotAppliedKeysAreListed()).IsTrue();
 
     [Test]
@@ -485,6 +488,25 @@ internal static class PlaygroundReplayCases
         var yaml = "width: 80\nheight: 24\nsteps:\n  - exit 1\n  - run: exit 2\n    continue-on-error: true\n";
         var result = Render(yaml, outputs);
         return Expect(result.Warnings.Count(static warning => warning.StartsWith("step exited", StringComparison.Ordinal)) == 1, string.Join("; ", result.Warnings));
+    }
+
+    internal static bool CropLeavingNothingStopsBeforeComposing()
+    {
+        // The CLI checks the crop against the terminal before anything runs, and the svg command before it renders. The
+        // playground composed the cast first and then failed inside the render, as "render failed: ...", with a cast.
+        var outputs = Outputs(RecordedStep.Pipe("echo hi", 0, [Out("hi\n")]));
+        var scenario = Render("width: 20\nheight: 5\nrender:\n  crop-left: 20\nsteps:\n  - echo hi\n", outputs);
+
+        var valid = Render("width: 20\nheight: 5\nrender:\n  crop-left: 5\nsteps:\n  - echo hi\n", outputs);
+        var castText = valid.Cast is null ? "" : Encoding.UTF8.GetString(valid.Cast);
+        var narrowed = castText.Replace("\"cols\":20", "\"cols\":4", StringComparison.Ordinal);
+        var cast = PlaygroundRender.RenderCast(narrowed, new PlaygroundOptions());
+
+        return Expect(scenario.Error == "crop-left 20 and crop-right 0 leave no column of the 20-column terminal", $"scenario: {scenario.Error}")
+            & Expect(scenario.Cast is null, "the scenario's cast was composed")
+            & Expect(valid.Error is null && narrowed != castText, $"the cast to narrow: {valid.Error}")
+            & Expect(cast.Error == "crop-left 5 and crop-right 0 leave no column of the 4-column terminal", $"cast: {cast.Error}")
+            & Expect(cast.Svg is null, "the cast was rendered");
     }
 
     internal static bool ErrorsAreValuesNotExceptions()

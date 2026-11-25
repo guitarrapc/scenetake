@@ -176,16 +176,22 @@ internal sealed class BackgroundSteps : IDisposable
 
         private async Task PumpAsync(Stream stream, PtyOutputWatcher watcher)
         {
-            var decoder = Encoding.UTF8.GetDecoder();
+            // Read as a pipe step's output is (PipeStreamCapture): on Windows a command such as cmd writes the code
+            // page of its console unless it writes UTF-8, so a wait for non-ASCII text would never match as UTF-8.
+            // One decoder per stream serves both the wait and the tail.
+            Decoder decoder = OperatingSystem.IsWindows()
+                ? new PipeOutputDecoder(new WindowsCodePageDecoder(WindowsCodePageDecoder.OemCodePage()))
+                : Encoding.UTF8.GetDecoder();
             var buffer = new byte[4096];
-            var chars = new char[Encoding.UTF8.GetMaxCharCount(buffer.Length)];
+            // UTF-8 gives at most one char per byte plus one, and PipeOutputDecoder one per byte with its held-back bytes.
+            var chars = new char[buffer.Length + PipeOutputDecoder.MaxPendingBytes];
             try
             {
                 int read;
                 while ((read = await stream.ReadAsync(buffer).ConfigureAwait(false)) > 0)
                 {
-                    watcher.Append(buffer.AsSpan(0, read));
                     var count = decoder.GetChars(buffer, 0, read, chars, 0, flush: false);
+                    watcher.Append(chars.AsSpan(0, count));
                     lock (_tail)
                     {
                         _tail.Append(chars, 0, count);

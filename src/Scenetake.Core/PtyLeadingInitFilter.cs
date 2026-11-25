@@ -8,6 +8,8 @@ internal sealed class PtyLeadingInitFilter
     private const int CleanupByteLimit = 4096;
     private const byte Esc = 0x1B;
     private const byte Bel = 0x07;
+    private const byte Can = 0x18;
+    private const byte Sub = 0x1A;
 
     private readonly List<byte> pending = [];
     private FilterMode mode = FilterMode.LeadingInit;
@@ -292,36 +294,41 @@ internal sealed class PtyLeadingInitFilter
         }
     }
 
+    // An OSC ends where CastOscFilter and the terminal end it: at BEL, CAN, SUB, or ESC \, which belong to it, or before
+    // the ESC of another sequence. Ending only at BEL or ESC \ hid the text after an OSC that another sequence cut
+    // short until a later BEL: up to the byte limits here, and in Passthrough until the step ended.
     private bool TryConsumeOsc(List<byte> output, EscapeContext context, out bool incomplete)
     {
         incomplete = false;
         for (var i = 2; i < pending.Count; i++)
         {
-            if (pending[i] == Bel)
+            int end;
+            var value = pending[i];
+            if (value is Bel or Can or Sub)
             {
-                if (context == EscapeContext.Passthrough)
-                {
-                    AppendRange(output, pending, 0, i + 1);
-                    pending.RemoveRange(0, i + 1);
-                    return true;
-                }
+                end = i + 1;
+            }
+            else if (value == Esc)
+            {
+                // ESC \ ends it, and any other ESC starts the next sequence. Which one it is needs the next byte.
+                if (i + 1 >= pending.Count)
+                    break;
+                end = pending[i + 1] == (byte)'\\' ? i + 2 : i;
+            }
+            else
+            {
+                continue;
+            }
 
-                StripPending(i + 1);
+            if (context == EscapeContext.Passthrough)
+            {
+                AppendRange(output, pending, 0, end);
+                pending.RemoveRange(0, end);
                 return true;
             }
 
-            if (pending[i] == Esc && i + 1 < pending.Count && pending[i + 1] == (byte)'\\')
-            {
-                if (context == EscapeContext.Passthrough)
-                {
-                    AppendRange(output, pending, 0, i + 2);
-                    pending.RemoveRange(0, i + 2);
-                    return true;
-                }
-
-                StripPending(i + 2);
-                return true;
-            }
+            StripPending(end);
+            return true;
         }
 
         incomplete = true;

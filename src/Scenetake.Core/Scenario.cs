@@ -711,7 +711,9 @@ internal static partial class ScenarioCast
             if (!d.TryGetValue(key, out var value) || value is null)
                 continue;
 
-            if (double.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed))
+            // As settings read their numbers (FindValueTypeError) and sleep and timeout read theirs: "0,05" is not 5,
+            // "(1)" is not -1, and infinity is not a time.
+            if (TryReadSeconds(value, out var parsed))
                 return parsed;
 
             // A step value such as `typing-speed: 50ms` used to fall back to the default with no message. The same

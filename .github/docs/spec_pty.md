@@ -49,7 +49,7 @@ Before the first meaningful output, the filter removes these shell startup contr
 - Cursor home and position: `CSI H`, `CSI row;col H`, and `CSI row;col f`.
 - Cursor position queries: `CSI 6 n`.
 - Cursor visibility changes and SGR reset.
-- OSC title updates.
+- OSC title updates. An OSC ends where the cast filter ends it: at BEL, CAN, SUB, or `ESC \`, or before the ESC of another sequence. Until 2026-11-26 the filter ended one only at BEL or `ESC \`, so an OSC that another sequence cut short took the text after it along: removed with it at the start of a step, and held until the step ended once output had begun.
 - ConPTY, focus, and bracketed-paste private modes.
 
 Cast writing also removes later non-color OSC sequences, including in interactive steps ([spec_cast.md](spec_cast.md) → Sequences left out). ConPTY can send the shell's full path as a title after the first output.

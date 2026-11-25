@@ -119,6 +119,13 @@ internal static class PlaygroundRender
             if (maxFps is int maxFpsValue)
                 renderSettings = renderSettings with { MaxFps = maxFpsValue };
             renderSettings = style.Apply(renderSettings);
+            // As on the CLI, a crop that leaves nothing of the terminal stops before the recording is composed.
+            if (TerminalReplay.CheckCrop(renderSettings.Crop, width, height) is { } cropError)
+            {
+                error = cropError;
+                return;
+            }
+
             if (FindCardCropError(scenario, renderSettings.Crop) is { } cardCropError)
             {
                 error = cardCropError;
@@ -204,6 +211,14 @@ internal static class PlaygroundRender
             }
 
             settings = style.Apply(settings);
+            // As the svg command does, so the error names the crop instead of coming from inside the render.
+            var (canvasWidth, canvasHeight) = TerminalReplay.ResolveCanvasSize(recording.Width, recording.Height, recording.Events);
+            if (TerminalReplay.CheckCrop(settings.Crop, canvasWidth, canvasHeight) is { } cropError)
+            {
+                error = cropError;
+                return;
+            }
+
             foreach (var note in RenderSettingsResolver.FindIneffectiveStyle(settings))
                 Console.Error.WriteLine($"Warning: {note}");
             if (RenderSettingsResolver.LengthNote(recording.Events, settings, recording.LoopDuration) is { } lengthNote)
