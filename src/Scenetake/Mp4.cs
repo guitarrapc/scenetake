@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Globalization;
-using System.Text;
 
 namespace Scenetake;
 
@@ -587,18 +586,18 @@ internal static class Ffmpeg
 
     internal const string PathVariable = "SCENETAKE_FFMPEG";
 
-    /// <summary>Resolves ffmpeg from <c>SCENETAKE_FFMPEG</c>, else <c>PATH</c>, and checks for libx264. The error ends with install hints.</summary>
+    /// <summary>Resolves ffmpeg from <c>SCENETAKE_FFMPEG</c>, else <c>PATH</c>, and checks for libx264. The error ends by saying to install ffmpeg or set the variable.</summary>
     internal static bool TryResolve(out string path, out string error)
     {
         if (!TryLocate(out path, out error))
         {
-            error += Environment.NewLine + InstallHint();
+            error += Environment.NewLine + InstallWithLibx264;
             return false;
         }
 
         if (!HasLibx264(path, out error))
         {
-            error += Environment.NewLine + InstallHint();
+            error += Environment.NewLine + InstallWithLibx264;
             return false;
         }
 
@@ -686,7 +685,7 @@ internal static class Ffmpeg
             return true;
 
         if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(PathVariable)))
-            error = $"a PNG with a background image needs ffmpeg to decode the image, which was not found on PATH. Install ffmpeg, or set {PathVariable} to its path. A background color or gradient needs no ffmpeg.";
+            error = $"a PNG with a background image needs ffmpeg to decode the image, which was not found on PATH. {InstallAny} A background color or gradient needs no ffmpeg.";
         return false;
     }
 
@@ -701,25 +700,13 @@ internal static class Ffmpeg
 
         if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(PathVariable)))
             error = "GIF output needs ffmpeg, which was not found on PATH";
-        error += Environment.NewLine + InstallHint(libx264: false);
+        error += Environment.NewLine + InstallAny;
         return false;
     }
 
-    /// <param name="libx264">Whether the output needs libx264, as mp4 does. A GIF needs any ffmpeg.</param>
-    internal static string InstallHint(bool libx264 = true)
-    {
-        var hint = new StringBuilder(libx264 ? "Install ffmpeg with libx264, or set " : "Install ffmpeg, or set ");
-        hint.Append(PathVariable).Append(" to its path:");
-        if (OperatingSystem.IsWindows())
-            hint.Append(Environment.NewLine).Append("  winget install Gyan.FFmpeg   (or: scoop install ffmpeg)");
-        else if (OperatingSystem.IsMacOS())
-            hint.Append(Environment.NewLine).Append("  brew install ffmpeg");
-        else if (libx264)
-            hint.Append(Environment.NewLine).Append("  sudo apt install ffmpeg   (Fedora: ffmpeg from RPM Fusion, as ffmpeg-free has no libx264)");
-        else
-            hint.Append(Environment.NewLine).Append("  sudo apt install ffmpeg   (Fedora: sudo dnf install ffmpeg-free)");
-        return hint.ToString();
-    }
+    // The README lists install commands per OS. The error names no command, since package names change over time.
+    private const string InstallWithLibx264 = $"Install ffmpeg with libx264, or set {PathVariable} to its path.";
+    private const string InstallAny = $"Install ffmpeg, or set {PathVariable} to its path.";
 }
 
 /// <summary>An ffmpeg process reading raw frames on stdin. Keeps the tail of its stderr for error messages.</summary>

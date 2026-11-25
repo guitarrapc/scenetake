@@ -96,7 +96,19 @@ scoop bucket add guitarrapc https://github.com/guitarrapc/scoop-bucket
 scoop install scenetake
 ```
 
-mp4とGIFには[ffmpeg](https://ffmpeg.org/)が必要です。`winget install Gyan.FFmpeg`、`brew install ffmpeg`、`sudo apt install ffmpeg`などでインストールできます。
+mp4とGIFと背景画像を使うPNGには[ffmpeg](https://ffmpeg.org/)が必要です。各OSでインストールしてください。
+
+```sh
+# Windowsの例
+winget install Gyan.FFmpeg
+scoop install ffmpeg
+
+# macOSの例
+brew install ffmpeg
+
+# Debian、Ubuntuの例
+sudo apt install ffmpeg
+```
 
 ### 録画する
 

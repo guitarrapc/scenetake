@@ -298,8 +298,6 @@ static class HelpText
 
         Converts an asciinema v2 or v3 cast file to an H.264 mp4 with ffmpeg (libx264). [output]
         names the mp4. Without it, the mp4 is written next to the cast with the same name and .mp4.
-        Install ffmpeg with 'winget install Gyan.FFmpeg' or 'scoop install ffmpeg' (Windows),
-        'brew install ffmpeg' (macOS), or 'sudo apt install ffmpeg' (Debian, Ubuntu).
 
         """;
 

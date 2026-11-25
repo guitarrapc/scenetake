@@ -266,7 +266,7 @@ internal static class Mp4FfmpegCases
         var (exit, stderr) = Exec(scenetake, repoRoot, ["mp4", "samples/basic.cast", output],
             new() { ["SCENETAKE_FFMPEG"] = Path.Combine(work, "no-such-ffmpeg") });
         return exit == 1 && stderr.Contains("SCENETAKE_FFMPEG points to a file that does not exist", StringComparison.Ordinal)
-            && stderr.Contains("Install ffmpeg with libx264", StringComparison.Ordinal)
+            && stderr.Contains("Install ffmpeg with libx264, or set SCENETAKE_FFMPEG to its path.", StringComparison.Ordinal)
             && !File.Exists(output);
     }
 

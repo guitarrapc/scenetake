@@ -183,11 +183,7 @@ Without `--size`, an mp4 wider than 3:1 is padded to 3:1, and one taller than 1:
 ## ffmpeg
 
 - **Locating ffmpeg.** The `SCENETAKE_FFMPEG` environment variable names the binary. Otherwise scenetake uses `ffmpeg` on `PATH`.
-- **Required encoder.** scenetake checks for the libx264 encoder before rendering. An ffmpeg that does not answer within 15 seconds is an error. When ffmpeg is missing or lacks libx264, the error ends with install hints:
-  - Windows: `winget install Gyan.FFmpeg`, or `scoop install ffmpeg`;
-  - macOS: `brew install ffmpeg`;
-  - Debian/Ubuntu: `sudo apt install ffmpeg`;
-  - Fedora: RPM Fusion's `ffmpeg`, because the default `ffmpeg-free` has no libx264.
+- **Required encoder.** scenetake checks for the libx264 encoder before rendering. An ffmpeg that does not answer within 15 seconds is an error. When ffmpeg is missing or lacks libx264, the error ends with "Install ffmpeg with libx264, or set `SCENETAKE_FFMPEG` to its path." A GIF or a PNG's background image leaves "with libx264" out. The install commands for each OS are in the README, not in the error or `--help` (Alternatives Not Chosen).
 - **Output path.** The output folder must exist, the output path must not be a directory, and it must not be the input file. These are checked before rendering. On the scenario path all three are checked before `pre`, except the folder when `pre` has commands, and all three again after `pre`, which may create the folder, or put a directory or a link to the scenario where an output goes ([spec_cli.md](spec_cli.md) → Output Paths).
 - **Earlier output.** A file already at the output path is deleted when encoding starts, so a failed encode or a Ctrl+C never leaves a video from an earlier run. Font and frame-size errors found by the checks before `pre`, or by the `mp4` subcommand, keep it. On the scenario path any render failure after the recording deletes it, because it no longer matches the new cast. On the `mp4` subcommand a cast that cannot be read deletes it, as with SVG.
 - **Partial files.** scenetake encodes to a temporary file in the output folder, named `.<output name>.<id>.partial`, and renames it when ffmpeg succeeds. On failure or Ctrl+C, ffmpeg is stopped and the temporary file is deleted, so a partial `.mp4` is not left behind. A crash inside stb_truetype, on a font whose glyph data is damaged, would still leave one. Ctrl+C ends scenetake about one second later, with the platform's interrupt exit code (130 on Unix, `0xC000013A` on Windows).
@@ -213,7 +209,7 @@ Without `--size`, an mp4 wider than 3:1 is padded to 3:1, and one taller than 1:
 |---|---|
 | The output is the input file (for example `scenetake mp4 clip.mp4`) | Error before anything is read; the input is untouched; exit `1` |
 | Cast errors | Same as the `svg` subcommand: a cast that is not found keeps an `.mp4` from an earlier run, and a cast that cannot be read deletes it |
-| ffmpeg missing or no libx264 | Error with install hints; exit `1` |
+| ffmpeg missing or no libx264 | Error saying to install ffmpeg with libx264 or set `SCENETAKE_FFMPEG`; exit `1` |
 | Output folder missing, or output path is a directory | Error naming the path, before rendering; exit `1` |
 | Font not found | Error naming `--font-file`; an `.mp4` from an earlier run is kept; exit `1` |
 | Frame over the size limits | Error suggesting a smaller `--font-size` or terminal, `--max-size` when a side is over x264's 16384, or a `--size` or shape closer to the terminal's when the padded frame is over ffmpeg's limit; an `.mp4` from an earlier run is kept; exit `1` |
@@ -249,7 +245,9 @@ Sizes are for `matrix --fps 60` at 200×60, 7.5s, 60fps unless noted. CRF values
 | yuv444 | Sharper colored text, but larger (13.7MB vs 12.5MB), and many players reject it. Colored text looked nearly identical after yuv420p. |
 | GIF from ffmpeg | Larger than agg (27MB vs 19MB at 30fps) and still limited to 256 colors and 10ms frame delays. X caps GIFs at 15MB and 350 frames. |
 | `-tune animation` or `stillimage` | Neither helped consistently. `animation` was 7% larger on matrix and 4% smaller on typing; `stillimage` was 7% and 10% larger. |
-| A fallback encoder when libx264 is missing | `libopenh264` has no CRF mode, and Fedora's build may be a stub. scenetake errors with an install hint instead. |
+| A fallback encoder when libx264 is missing | `libopenh264` has no CRF mode, and Fedora's build may be a stub. scenetake errors instead, saying to install ffmpeg with libx264. |
+| Install commands for each OS in the error and `mp4 --help` | They were there until 2026-11-26. Package names and their caveats differ by OS and change over time (Fedora's default `ffmpeg-free` has no libx264, and winget's PATH change reaches only terminals opened later), so keeping them right in the binary took a release for each change. The README lists them, and the error says what is missing. |
+| Bundling ffmpeg in the release archives (as Console2Svg does on Windows) | mp4 needs libx264, which only GPL builds have. The archives would then carry a GPLv3 binary of about 85MB against scenetake's 2MB, and its source would have to be offered too. BtbN's builds cover Windows and glibc Linux, not macOS or musl. Checked 2026-11-24. |
 | Named presets (`--preset x`) | `--max-size 1280x1024`, documented in the README, covers X. |
 | A pixel size in the scenario that picks columns and rows | Columns and rows are what the program sees through the PTY, while pixels also depend on font size, window chrome, and format (SVG cells are 9.92 pixels wide, mp4 cells 10). A render option would then change the recording, existing casts could not use it, and rows still would not land on 1080. `--size` pads the video instead, and the README lists the columns and rows for common resolutions. |
 | Picking `--font-size` to fill `--size` | Font sizes are whole numbers, so the frame would still need padding. Small text drawn directly is also less legible than larger text scaled down (Lessons Learned → Small text). |
