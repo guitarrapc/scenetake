@@ -10,6 +10,9 @@ namespace Scenetake.Core.Tests;
 public sealed class StepPauseTests
 {
     [Test]
+    public async Task StepTimingValuesReadAsSettingsDo() => await Assert.That(StepPauseCases.StepTimingValuesReadAsSettingsDo()).IsTrue();
+
+    [Test]
     public async Task PreDelayPassesWithThePrompt() => await Assert.That(StepPauseCases.PreDelayPassesWithThePrompt()).IsTrue();
 
     [Test]
@@ -33,6 +36,37 @@ public sealed class StepPauseTests
 
 internal static class StepPauseCases
 {
+    internal static bool StepTimingValuesReadAsSettingsDo()
+    {
+        // A step's timing keys read a number as settings and sleep do: a decimal comma, parentheses, or a currency
+        // sign used to give 5, -1, or 1, and infinity passed as a time. Each warns and keeps the default instead.
+        var original = Console.Error;
+        using var captured = new StringWriter();
+#pragma warning disable TUnit0055
+        Console.SetError(captured);
+        try
+        {
+            static double Read(object? value) =>
+                ScenarioCast.GetDouble(new Dictionary<string, object?> { ["typing-speed"] = value }, 0.05, "typing-speed");
+
+            var refused = new object?[] { "0,05", "(1)", "$1", double.PositiveInfinity, double.NaN, "Infinity", true };
+            var refusedOk = true;
+            foreach (var value in refused)
+                refusedOk &= Expect(Read(value) == 0.05, $"{value} was read as a number");
+
+            var warnings = captured.ToString();
+            return refusedOk
+                & Expect(warnings.Contains("Warning: typing-speed: '0,05' is not a number of seconds (such as 0.5), using 0.05", StringComparison.Ordinal), warnings)
+                & Expect(Read("0.5") == 0.5 && Read(0.25) == 0.25 && Read(1) == 1 && Read("1e-2") == 0.01 && Read(" 0.3 ") == 0.3, "a plain number is read")
+                & Expect(ScenarioCast.GetOptionalDouble(new Dictionary<string, object?> { ["max-duration"] = "1,5" }, null, "max-duration") is null, "an optional key keeps null");
+        }
+        finally
+        {
+            Console.SetError(original);
+        }
+#pragma warning restore TUnit0055
+    }
+
     // Step two sets a pre-delay of its own.
     private const string TwoSteps = """
         settings:

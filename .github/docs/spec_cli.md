@@ -51,7 +51,7 @@ scenetake init [--shell bash|pwsh|powershell] [scenario.yaml]
   - The `gif` subcommand rejects `--crf`, `--max-fps`, and `--at` with the messages above.
   - A value that is neither seconds, `end`, nor an id fails with `invalid --at value: 2s (expected seconds from the start, such as 2.5, end, or a step's id)`. On the scenario path an id that no step has fails before anything runs: `--at nope: no step has this id. Give the step 'id: nope'.` On a cast, an id it does not have fails with `--at nope: no step in the cast has this id (it has title, compare)`, and a cast without ids with `--at nope: the cast has no step ids, which scenetake writes when a step has an id. Give the time in seconds, or record it again`.
   - A still's `Written:` line names its moment: `still, at 2.5s`, `still, final screen`, or `still, at compare (4.56s)`.
-- For `--fps`, `--crf`, `--max-size`, `--size`, and `--font-file`, a next argument that starts with `--` is not taken as the value: `--font-file --fps 30` fails with `--font-file requires a value`.
+- For the options that take a value, such as `--fps`, `--crf`, `--max-size`, `--size`, `--font-file`, `--font-size`, `--font-family`, `--theme`, `--window`, and `--max-fps`, a next argument that starts with `--` is not taken as the value: `--font-file --fps 30` fails with `--font-file requires a value`. The look options read their values alone until 2026-11-26, so `--font-family --theme nord demo.yaml` took `--theme` as the font and `nord` as the scenario.
 - Range errors use plain ASCII ("between 1 and 60"), so every console code page shows them.
 
 ## Options
@@ -117,7 +117,7 @@ Path comparison ignores case because any OS can use a volume that ignores case. 
 
 
 
-The output folder must exist as well. When the scenario has `pre` commands, the folder is checked after `pre`, which may create it. Every other check runs again then, because `pre` may also put a directory, or a link to the input, where an output goes. A failure then stops the run before the recording, and `post` runs because `pre` succeeded. Without `pre` commands the folder is checked before anything runs.
+The output folder must exist as well, for the cast, every rendered output, and the `--save-keys` and `--save-outputs` files. When the scenario has `pre` commands, the folder is checked after `pre`, which may create it. Every other check runs again then, because `pre` may also put a directory, or a link to the input, where an output goes. A failure then stops the run before the recording, and `post` runs because `pre` succeeded. Without `pre` commands the folder is checked before anything runs.
 
 ## Logging
 
@@ -288,7 +288,7 @@ scenetake --strict --format svg intro.yaml usage.yaml
 - Unknown options should fail explicitly. Otherwise mistyped flags are misread as file paths.
 - Default logs should stay focused on cast content. `--verbose` is the right place for successful `pre`/`post` labels.
 - Reject options for another output format. This catches `--fps` on SVG runs and `--max-fps` on mp4 runs immediately.
-- **Setup may create the output folder.** Check that folder after `pre` when setup commands exist. Check ffmpeg, fonts, and frame size before `pre` to avoid failures after a long recording. Setup therefore cannot install ffmpeg or the only usable font.
+- **Setup may create the output folder.** Check that folder after `pre` when setup commands exist. Check ffmpeg, fonts, and frame size before `pre` to avoid failures after a long recording. Setup therefore cannot install ffmpeg or the only usable font. The check after `pre` left out the `--save-outputs` file until 2026-11-26: with a missing folder the whole recording ran, then writing the file failed and no output was rendered.
 - **Unix link targets need full resolution.** A target may contain further links and `..`. Unix applies `..` after resolving preceding links. This matters for macOS paths such as `/var`, which links to `/private/var`.
 - **Link limits must cover the whole path.** A per-link depth limit allowed repeated traversal to double work at each level. A chain 22 links deep took 9 seconds in Linux under WSL. A shared limit of 40 links bounds the walk.
 - **Windows identity checks need no read access.** Opening files for reading failed when another process denied read sharing. Opening with no access rights still permits identity checks. WSL shares report volume serial number `0` and use Linux inodes as indices. Files on different Linux filesystems can therefore have matching indices.

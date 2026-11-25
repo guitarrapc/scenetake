@@ -15,6 +15,15 @@ public sealed class TerminalTests
     public async Task CjkWideCharacter() => await Assert.That(TerminalCases.CjkWideCharacter()).IsTrue();
 
     [Test]
+    public async Task NonBmpAfterFullLineWraps() => await Assert.That(TerminalCases.NonBmpAfterFullLineWraps()).IsTrue();
+
+    [Test]
+    public async Task CombiningMarkAfterLastColumn() => await Assert.That(TerminalCases.CombiningMarkAfterLastColumn()).IsTrue();
+
+    [Test]
+    public async Task BackspaceCancelsPendingWrap() => await Assert.That(TerminalCases.BackspaceCancelsPendingWrap()).IsTrue();
+
+    [Test]
     public async Task TrueColorForeground() => await Assert.That(TerminalCases.TrueColorForeground()).IsTrue();
 
     [Test]
@@ -194,6 +203,50 @@ internal static class TerminalCases
             && buffer.GetCell(0, 0).IsWide
             && buffer.GetCell(0, 1).IsWideContinuation
             && buffer.CursorCol == 2;
+    }
+
+    internal static bool NonBmpAfterFullLineWraps()
+    {
+        // A full line leaves the cursor on its last column. The next character starts the next line and keeps the
+        // last one: an emoji (wide) and a math letter (narrow) are both outside the BMP, as Nerd Font icons are.
+        var theme = DarkTheme();
+        var wide = new ScreenBuffer(4, 3, theme);
+        new AnsiParser(wide, theme).Process("abcd\U0001F600x");
+        var narrow = new ScreenBuffer(4, 3, theme);
+        new AnsiParser(narrow, theme).Process("abcd\U0001D400x");
+
+        return wide.GetCell(0, 3).Text == "d"
+            && wide.GetCell(1, 0).Text == "\U0001F600" && wide.GetCell(1, 0).IsWide
+            && wide.GetCell(1, 2).Text == "x" && wide.CursorRow == 1
+            && narrow.GetCell(0, 3).Text == "d"
+            && narrow.GetCell(1, 0).Text == "\U0001D400"
+            && narrow.GetCell(1, 1).Text == "x" && narrow.CursorRow == 1;
+    }
+
+    internal static bool CombiningMarkAfterLastColumn()
+    {
+        // e + U+0301, as macOS writes file names, that ends at the margin: the accent goes on the e in the last column.
+        var theme = DarkTheme();
+        var buffer = new ScreenBuffer(4, 2, theme);
+        new AnsiParser(buffer, theme).Process("abcé");
+
+        return buffer.GetCell(0, 2).Text == "c"
+            && buffer.GetCell(0, 3).Text == "é"
+            && buffer.CursorRow == 0;
+    }
+
+    internal static bool BackspaceCancelsPendingWrap()
+    {
+        // After a write to the last column, BS moves back one and the next character overwrites there.
+        var theme = DarkTheme();
+        var buffer = new ScreenBuffer(4, 2, theme);
+        new AnsiParser(buffer, theme).Process("abcd\bX");
+
+        return buffer.GetCell(0, 0).Text == "a"
+            && buffer.GetCell(0, 2).Text == "X"
+            && buffer.GetCell(0, 3).Text == "d"
+            && buffer.GetCell(1, 0).Text == " "
+            && buffer.CursorRow == 0 && buffer.CursorCol == 3;
     }
 
     internal static bool TrueColorForeground()

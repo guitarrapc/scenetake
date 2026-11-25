@@ -144,7 +144,7 @@ The UI lists these keys as not applied when the scenario sets them.
 
 - A recorded non-zero exit code warns as in the CLI, unless the step sets `continue-on-error: true` ([spec_scenario.md](spec_scenario.md) → Step exit codes).
 - Each warning that the CLI would write to stderr for the scenario goes to the warnings list instead. This includes unknown keys, invalid styles, cast header warnings, and the SVG size warning.
-- An error that stops the CLI before any command runs stops the render. Examples are a YAML syntax error, an invalid terminal size, a step key error, and an invalid render option. The playground shows the error, and the preview keeps the last good result.
+- An error that stops the CLI before any command runs stops the render. Examples are a YAML syntax error, an invalid terminal size, a step key error, an invalid render option, and a crop that leaves nothing of the terminal. The Cast tab checks the crop as the `svg` command does. Until 2026-11-26 the crop was found only inside the SVG render, after the cast was composed, as `render failed: crop-left ...`. The playground shows the error, and the preview keeps the last good result.
 
 ## Equivalence with the CLI
 

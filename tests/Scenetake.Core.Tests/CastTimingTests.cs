@@ -54,10 +54,40 @@ public sealed class CastTimingTests
 
     [Test]
     public async Task HighlightSplitterCountsACrlfOnce() => await Assert.That(CastTimingCases.HighlightSplitterCountsACrlfOnce()).IsTrue();
+
+    [Test]
+    public async Task StreamedReadsCountACrlfOnce() => await Assert.That(CastTimingCases.StreamedReadsCountACrlfOnce()).IsTrue();
 }
 
 internal static class CastTimingCases
 {
+    internal static bool StreamedReadsCountACrlfOnce()
+    {
+        // stream-output keeps each read as its own event. A CRLF that two reads split is still one line break, as the
+        // joined output of the same reads gives, and a read that held only the LF adds no event.
+        (double Time, string Text)[][] cases =
+        [
+            [(0, "100%\r"), (0.1, "\ndone\r\n")],
+            [(0, "a\r"), (0.1, "\n"), (0.2, "b\r"), (0.3, "\r\n")],
+            [(0, "a\r"), (0.1, ""), (0.2, "\n\nb")],
+            [(0, "a\n"), (0.1, "\nb")],
+        ];
+        var ok = true;
+        foreach (var reads in cases)
+        {
+            var events = new List<CastEvent>();
+            ScenarioCast.EmitTimedTextCastEvents(events, 0, reads, highlights: null, "cmd");
+            var written = string.Concat(events.Select(static e => e.Data));
+            var joined = ScenarioCast.NormalizeNewlines(string.Concat(reads.Select(static r => r.Text)));
+            if (written != joined || events.Any(static e => e.Data.Length == 0))
+            {
+                Console.Error.WriteLine($"  {string.Join(" | ", reads.Select(static r => r.Text.Replace("\r", "\\r").Replace("\n", "\\n")))}: {written.Replace("\r", "\\r").Replace("\n", "\\n")}");
+                ok = false;
+            }
+        }
+
+        return ok;
+    }
 
     internal static bool CollapseIdleGapLong()
     {

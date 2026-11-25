@@ -526,13 +526,7 @@ internal sealed class ScreenBuffer
     /// <summary>Writes a soft font glyph for character code <paramref name="code"/> at the cursor, one cell wide.</summary>
     internal void PutSoftGlyph(char code, SoftGlyph glyph, CellStyle style)
     {
-        if (_pendingWrap)
-        {
-            _pendingWrap = false;
-            CursorCol = 0;
-            Index();
-        }
-
+        WrapIfPending();
         _cells[CursorRow, CursorCol] = new ScreenCell(CharStr(code), style, glyph: glyph);
         CursorCol++;
         if (CursorCol >= Width)
@@ -542,12 +536,17 @@ internal sealed class ScreenBuffer
         }
     }
 
-    internal void PutSurrogatePair(char high, char low, CellStyle style) =>
+    internal void PutSurrogatePair(char high, char low, CellStyle style)
+    {
+        // An emoji or another character outside the BMP after a full line starts the next line, as any other does.
+        WrapIfPending();
         PutCodePoint(char.ConvertToUtf32(high, low), string.Create(2, (high, low), static (s, t) => { s[0] = t.high; s[1] = t.low; }), style);
+    }
 
     internal void AppendToPreviousCell(string combining)
     {
-        var col = CursorCol - 1;
+        // After a write to the last column the cursor stays on it, and the character is there, not before it.
+        var col = _pendingWrap ? CursorCol : CursorCol - 1;
         var row = CursorRow;
         if (col < 0)
         {
@@ -650,7 +649,12 @@ internal sealed class ScreenBuffer
         MoveCursorTo(0, 0);
     }
 
-    internal void Backspace() => CursorCol = Math.Max(0, CursorCol - 1);
+    internal void Backspace()
+    {
+        // As every other cursor move does: the next character goes where the cursor now is, not to a new line.
+        _pendingWrap = false;
+        CursorCol = Math.Max(0, CursorCol - 1);
+    }
 
     internal void ClearLine(int mode, CellStyle? style = null)
     {
@@ -834,15 +838,19 @@ internal sealed class ScreenBuffer
         }
     }
 
+    private void WrapIfPending()
+    {
+        if (!_pendingWrap)
+            return;
+
+        _pendingWrap = false;
+        CursorCol = 0;
+        Index();
+    }
+
     private void PutPrintable(string text, CellStyle style)
     {
-        if (_pendingWrap)
-        {
-            _pendingWrap = false;
-            CursorCol = 0;
-            Index();
-        }
-
+        WrapIfPending();
         var cp = Utf16CodePoint(text);
         if (cp < 0)
             return;

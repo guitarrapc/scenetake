@@ -17,6 +17,9 @@ public sealed class CanvasFitTests
     public async Task StillFitLooksAtItsScreenOnly() => await Assert.That(CanvasFitCases.StillFitLooksAtItsScreenOnly()).IsTrue();
 
     [Test]
+    public async Task StillSvgSizeIsItsOwnScreen() => await Assert.That(CanvasFitCases.StillSvgSizeIsItsOwnScreen()).IsTrue();
+
+    [Test]
     public async Task HiddenCursorIsNotContent() => await Assert.That(CanvasFitCases.HiddenCursorIsNotContent()).IsTrue();
 
     [Test]
@@ -102,6 +105,29 @@ internal static class CanvasFitCases
         var events = Events("a long line\r\n", "\u001b[2J\u001b[Hx");
         return SameWindow("final screen", "0,0,2x1", Resolve(events, 20, 10, FitMode.Both, stillAt: double.PositiveInfinity))
             & SameWindow("first screen", "0,0,11x2", Resolve(events, 20, 10, FitMode.Both, stillAt: 0.15));
+    }
+
+    internal static bool StillSvgSizeIsItsOwnScreen()
+    {
+        // The Written: line prints the size WriteSvg returns. For a still it must be the size of the file, whose fit
+        // looks at its own screen, not the size of the animation, whose fit covers every screen.
+        var events = Events("a long line\r\n", "\u001b[2J\u001b[Hx");
+        var render = Render(FitMode.Both);
+        var path = Path.Combine(Path.GetTempPath(), $"scenetake-still-size-{Guid.NewGuid():N}.svg");
+        try
+        {
+            var returned = SvgRender.WriteSvg(events, 20, 10, render, path, 1, stillAt: double.PositiveInfinity);
+            var svg = File.ReadAllText(path);
+            var expected = SvgRender.Measure(Events("x"), 2, 1, Render());
+            var attributes = $"width=\"{returned.Width.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}\" height=\"{returned.Height.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}\"";
+            return Expect(returned == expected, $"returned {returned}, the 2x1 screen measures {expected}")
+                & Expect(svg.Contains(attributes, StringComparison.Ordinal), $"the file has no {attributes}")
+                & Expect(returned != SvgRender.Measure(events, 20, 10, render), "the animation's size is the same, so this checks nothing");
+        }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 
     internal static bool HiddenCursorIsNotContent() =>

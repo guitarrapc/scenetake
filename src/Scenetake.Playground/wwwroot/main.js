@@ -118,6 +118,9 @@ function makeRenderLoop(render) {
   let again = false;
 
   async function run() {
+    // A run started directly (again, below) renders the current state, which a timer still pending would render a
+    // second time: a stale result schedules one, and a change during the render may have too.
+    if (timer) clearTimeout(timer);
     timer = 0;
     if (!state.ready || !state.alive) return;
     if (inFlight) {

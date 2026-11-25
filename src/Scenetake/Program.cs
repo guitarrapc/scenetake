@@ -123,8 +123,8 @@ if (args[0] is "svg")
             Console.Error.WriteLine($"Warning: {note}");
         if (svgStillAt is null)
             WarnLength("", recording, svgRenderSettings);
-        SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath, recording.LoopDuration, svgAt);
-        PrintSvgWritten(svgOutputPath, recording, svgRenderSettings, svgAt, svgStillAt?.Step);
+        var svgSize = SvgRender.WriteSvg(recording.Events, recording.Width, recording.Height, svgRenderSettings, svgOutputPath, recording.LoopDuration, svgAt);
+        PrintSvgWritten(svgOutputPath, svgSize, recording, svgRenderSettings, svgAt, svgStillAt?.Step);
         if (SvgRender.SizeWarning(new FileInfo(svgOutputPath).Length, svgRenderSettings.MaxFps, fromCast: true) is { } svgSizeWarning)
             Console.Error.WriteLine($"Warning: {svgSizeWarning}");
         Console.Error.WriteLine($"Done: {FormatDisplayPath(svgOutputPath)}");
@@ -879,7 +879,7 @@ async Task<int> StopAfterPreAsync(string error)
 // pre may create the output folder, or put a directory or a link to the input where an output goes, so
 // every output check runs again. Found here, they stop the run before the recording, instead of failing
 // the cast write or overwriting the input.
-if (!TryCheckOutputPaths(scenarioPath, [outputPath, .. renderedPaths, saveKeysPath], out var outputCheckError))
+if (!TryCheckOutputPaths(scenarioPath, [outputPath, .. renderedPaths, saveKeysPath, saveOutputsPath], out var outputCheckError))
     return await StopAfterPreAsync(outputCheckError);
 
 // pre or the steps may install fonts. The mp4 render scans again when it starts, instead of using
@@ -1248,8 +1248,8 @@ static bool TryRenderOutput(string castPath, OutputPlan plan, ResolvedRenderSett
         switch (plan.Format)
         {
             case OutputFormat.Svg:
-                SvgRender.WriteSvg(written.Events, written.Width, written.Height, settings, plan.Path, written.LoopDuration, stillAt);
-                PrintSvgWritten(plan.Path, written, settings, stillAt, plan.StillAt?.Step);
+                var svgSize = SvgRender.WriteSvg(written.Events, written.Width, written.Height, settings, plan.Path, written.LoopDuration, stillAt);
+                PrintSvgWritten(plan.Path, svgSize, written, settings, stillAt, plan.StillAt?.Step);
                 if (SvgRender.SizeWarning(new FileInfo(plan.Path).Length, settings.MaxFps, fromCast: false) is { } svgSizeWarning)
                     Console.Error.WriteLine($"Warning: {svgSizeWarning}");
                 break;
@@ -2165,33 +2165,10 @@ static bool TryConsumeCaptureArg(string[] args, ref int i, CaptureRequest captur
 
 static bool TryConsumeFontSizeArg(string[] args, ref int i, ref int? fontSizeOverride, out string error)
 {
-    error = "";
-    var arg = args[i];
-    string? value;
-
-    if (arg == "--font-size")
-    {
-        if (i + 1 >= args.Length)
-        {
-            error = "--font-size requires a value";
-            return true;
-        }
-
-        value = args[++i];
-    }
-    else if (arg.StartsWith("--font-size=", StringComparison.Ordinal))
-    {
-        value = arg["--font-size=".Length..];
-        if (value.Length == 0)
-        {
-            error = "--font-size requires a value";
-            return true;
-        }
-    }
-    else
-    {
+    if (!TryTakeOptionValue(args, ref i, "--font-size", out var value, out error))
         return false;
-    }
+    if (error.Length != 0)
+        return true;
 
     if (fontSizeOverride.HasValue)
     {
@@ -2208,33 +2185,10 @@ static bool TryConsumeFontSizeArg(string[] args, ref int i, ref int? fontSizeOve
 
 static bool TryConsumeMaxFpsArg(string[] args, ref int i, ref int? maxFpsOverride, out string error)
 {
-    error = "";
-    var arg = args[i];
-    string? value;
-
-    if (arg == "--max-fps")
-    {
-        if (i + 1 >= args.Length)
-        {
-            error = "--max-fps requires a value";
-            return true;
-        }
-
-        value = args[++i];
-    }
-    else if (arg.StartsWith("--max-fps=", StringComparison.Ordinal))
-    {
-        value = arg["--max-fps=".Length..];
-        if (value.Length == 0)
-        {
-            error = "--max-fps requires a value";
-            return true;
-        }
-    }
-    else
-    {
+    if (!TryTakeOptionValue(args, ref i, "--max-fps", out var value, out error))
         return false;
-    }
+    if (error.Length != 0)
+        return true;
 
     if (maxFpsOverride.HasValue)
     {
@@ -2251,33 +2205,10 @@ static bool TryConsumeMaxFpsArg(string[] args, ref int i, ref int? maxFpsOverrid
 
 static bool TryConsumeFontFamilyArg(string[] args, ref int i, ref string? fontFamilyOverride, out string error)
 {
-    error = "";
-    var arg = args[i];
-    string? value;
-
-    if (arg == "--font-family")
-    {
-        if (i + 1 >= args.Length)
-        {
-            error = "--font-family requires a value";
-            return true;
-        }
-
-        value = args[++i];
-    }
-    else if (arg.StartsWith("--font-family=", StringComparison.Ordinal))
-    {
-        value = arg["--font-family=".Length..];
-        if (value.Length == 0)
-        {
-            error = "--font-family requires a value";
-            return true;
-        }
-    }
-    else
-    {
+    if (!TryTakeOptionValue(args, ref i, "--font-family", out var value, out error))
         return false;
-    }
+    if (error.Length != 0)
+        return true;
 
     if (fontFamilyOverride is not null)
     {
@@ -2297,33 +2228,10 @@ static bool TryConsumeFontFamilyArg(string[] args, ref int i, ref string? fontFa
 
 static bool TryConsumeThemeArg(string[] args, ref int i, ref string? themePresetOverride, out string error)
 {
-    error = "";
-    var arg = args[i];
-    string? value;
-
-    if (arg == "--theme")
-    {
-        if (i + 1 >= args.Length)
-        {
-            error = "--theme requires a value";
-            return true;
-        }
-
-        value = args[++i];
-    }
-    else if (arg.StartsWith("--theme=", StringComparison.Ordinal))
-    {
-        value = arg["--theme=".Length..];
-        if (value.Length == 0)
-        {
-            error = "--theme requires a value";
-            return true;
-        }
-    }
-    else
-    {
+    if (!TryTakeOptionValue(args, ref i, "--theme", out var value, out error))
         return false;
-    }
+    if (error.Length != 0)
+        return true;
 
     if (themePresetOverride is not null)
     {
@@ -2340,33 +2248,10 @@ static bool TryConsumeThemeArg(string[] args, ref int i, ref string? themePreset
 
 static bool TryConsumeWindowArg(string[] args, ref int i, ref WindowStyle? windowOverride, out string error)
 {
-    error = "";
-    var arg = args[i];
-    string? value;
-
-    if (arg == "--window")
-    {
-        if (i + 1 >= args.Length)
-        {
-            error = "--window requires a value";
-            return true;
-        }
-
-        value = args[++i];
-    }
-    else if (arg.StartsWith("--window=", StringComparison.Ordinal))
-    {
-        value = arg["--window=".Length..];
-        if (value.Length == 0)
-        {
-            error = "--window requires a value";
-            return true;
-        }
-    }
-    else
-    {
+    if (!TryTakeOptionValue(args, ref i, "--window", out var value, out error))
         return false;
-    }
+    if (error.Length != 0)
+        return true;
 
     if (windowOverride is not null)
     {
@@ -3303,6 +3188,10 @@ static bool TryResolveExecutableOnWindows(string executableName, out string reso
 
         foreach (var directory in paths)
         {
+            // A relative entry such as "." names the current directory or a folder under it.
+            if (!Path.IsPathFullyQualified(directory))
+                continue;
+
             if (Path.HasExtension(executableName))
             {
                 var candidate = Path.Combine(directory, executableName);
@@ -3522,10 +3411,13 @@ static void PrintMp4Usage()
     Console.Error.WriteLine("Run 'scenetake mp4 --help' for what each option does.");
 }
 
-/// <summary>The SVG's line: its size in pixels, as a page first shows it, and its loop, or for a still the screen it shows.</summary>
-static void PrintSvgWritten(string path, CastRecording recording, ResolvedRenderSettings render, double? stillAt = null, string? stillStep = null)
+/// <summary>
+/// The SVG's line: its size in pixels, as a page first shows it (what <see cref="SvgRender.WriteSvg"/> returned), and
+/// its loop, or for a still the screen it shows.
+/// </summary>
+static void PrintSvgWritten(string path, (double Width, double Height) measured, CastRecording recording, ResolvedRenderSettings render, double? stillAt = null, string? stillStep = null)
 {
-    var size = SvgRender.FormatSize(SvgRender.Measure(recording.Events, recording.Width, recording.Height, render));
+    var size = SvgRender.FormatSize(measured);
     if (stillAt is double at)
     {
         Console.Error.WriteLine($"Written: {FormatDisplayPath(path)}  ({size}, still, {RenderSettingsResolver.FormatStillAt(at, stillStep)})");

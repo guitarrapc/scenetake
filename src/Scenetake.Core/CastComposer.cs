@@ -24,6 +24,9 @@ internal static partial class ScenarioCast
     /// <paramref name="markCorner"/>, the window's last cell gets a bold space, which shows nothing but is not a blank
     /// cell, so fit keeps the blank rows and columns around the text and a still of the card stays centered.
     /// </summary>
+    /// <summary>What a card writes after the cursor move to its window's last cell when it marks the corner.</summary>
+    internal const string CardCornerMark = "\u001b[1m " + SgrReset;
+
     internal static string ComposeCard(IReadOnlyList<string> lines, CanvasWindow window, SecretMasker? masker, bool markCorner)
     {
         var card = new StringBuilder(HideCursor).Append(ClearScreen);
@@ -35,7 +38,7 @@ internal static partial class ScenarioCast
         var lastWidth = lines.Count == 0 ? 0 : DisplayWidth(SplitCardStyle(lines[^1]).Text);
         var lastEnd = window.Left + Math.Max(0, (window.Width - lastWidth) / 2) + lastWidth;
         if (markCorner && (top + lines.Count < bottom || lastEnd < right))
-            card.Append("\u001b[").Append(bottom).Append(';').Append(right).Append("H\u001b[1m ").Append(SgrReset);
+            card.Append("\u001b[").Append(bottom).Append(';').Append(right).Append('H').Append(CardCornerMark);
         for (var i = 0; i < lines.Count; i++)
         {
             var (styleName, raw) = SplitCardStyle(lines[i]);
@@ -1188,10 +1191,18 @@ internal static partial class ScenarioCast
 
         if (highlights is null)
         {
+            // Each read is normalized on its own, so a CRLF that two reads split is one line break here as in the
+            // joined output: the CR that ends a read became CRLF already, and the LF that starts the next is dropped.
+            var afterCr = false;
             foreach (var (time, text) in coalesced)
             {
-                if (text.Length > 0)
-                    events.Add(CastEvent.Output(Math.Round(commandStart + time, 6), NormalizeNewlines(text)));
+                if (text.Length == 0)
+                    continue;
+
+                var part = afterCr && text[0] == '\n' ? text[1..] : text;
+                afterCr = text[^1] == '\r';
+                if (part.Length > 0)
+                    events.Add(CastEvent.Output(Math.Round(commandStart + time, 6), NormalizeNewlines(part)));
             }
 
             return;

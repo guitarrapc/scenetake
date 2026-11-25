@@ -1220,6 +1220,9 @@ internal static class Mp4FfmpegCases
         var scenario = WriteScenario(work, "rules.yaml");
         var (maxFpsExit, maxFpsStderr) = Exec(scenetake, repoRoot, ["--max-fps", "10", scenario]);
         var (fontExit, fontStderr) = Exec(scenetake, repoRoot, ["--format", "mp4", "--font-file", "--fps", "30", scenario]);
+        // The look options follow the same rule: "--theme" is not a font family, and "nord" is not the scenario.
+        var (familyExit, familyStderr) = Exec(scenetake, repoRoot, ["--format", "svg", "--font-family", "--theme", "nord", scenario]);
+        var (themeExit, themeStderr) = Exec(scenetake, repoRoot, ["svg", "--theme", "--window", "none", "samples/basic.cast", Path.Combine(work, "theme-missing.svg")]);
         var (fpsExit, fpsStderr) = Exec(scenetake, repoRoot, ["mp4", "--fps", "99", "samples/basic.cast"]);
         // svg and mp4 take a cast. Given a scenario, they say so and give the command that records it, instead
         // of the JSON parser's error about the first YAML line. mp4 says it before looking for ffmpeg. The
@@ -1244,6 +1247,10 @@ internal static class Mp4FfmpegCases
             && formatExit == 1 && formatStderr.Contains("--format takes one format. List several under 'outputs:' in the scenario, or record once and convert the cast for each other format", StringComparison.Ordinal)
             && !formatStderr.Contains("Generating cast", StringComparison.Ordinal)
             && fontExit == 1 && fontStderr.Contains("--font-file requires a value", StringComparison.Ordinal)
+            && familyExit == 1 && familyStderr.Contains("--font-family requires a value", StringComparison.Ordinal)
+            && !familyStderr.Contains("Generating cast", StringComparison.Ordinal)
+            && themeExit == 1 && themeStderr.Contains("--theme requires a value", StringComparison.Ordinal)
+            && !File.Exists(Path.Combine(work, "theme-missing.svg"))
             && fpsExit == 1 && fpsStderr.Contains("--fps must be between 1 and 60: 99", StringComparison.Ordinal)
             && yamlExit == 1 && yamlStderr.Contains("is a scenario, and svg converts a cast file. To record the scenario with an SVG, run: scenetake --format svg ", StringComparison.Ordinal)
             && !yamlStderr.Contains("JSON", StringComparison.Ordinal)
@@ -1252,7 +1259,7 @@ internal static class Mp4FfmpegCases
             && ownOutputsKept
             && castYamlExit == 0;
         if (!ok)
-            Console.Error.WriteLine($"{maxFpsStderr}{fontStderr}{fpsStderr}{yamlStderr}{mp4YamlStderr}{castYamlStderr}{formatStderr}");
+            Console.Error.WriteLine($"{maxFpsStderr}{fontStderr}{familyStderr}{themeStderr}{fpsStderr}{yamlStderr}{mp4YamlStderr}{castYamlStderr}{formatStderr}");
         return ok;
     }
 
@@ -1793,6 +1800,11 @@ internal static class Mp4FfmpegCases
         var linkingText = File.ReadAllText(linking);
         var (linkExit, linkStderr) = Exec(scenetake, repoRoot, [linking, Path.Combine(directory, "linked")]);
 
+        // The --save-outputs file is written after the recording too, so its folder is checked after pre as well.
+        File.Delete(postRan);
+        var (outputsExit, outputsStderr) = Exec(scenetake, repoRoot, ["--save-outputs", Path.Combine(directory, "no-outputs-folder", "o.json"), scenario, Path.Combine(directory, "outputs-out")]);
+        var outputsRanPost = File.Exists(postRan);
+
         var noPre = Path.Combine(directory, "no-pre.yaml");
         var noPrePostRan = Path.Combine(directory, "no-pre-post-ran.txt");
         File.WriteAllText(noPre, $"""
@@ -1814,7 +1826,10 @@ internal static class Mp4FfmpegCases
             && dirExit == 1 && dirStderr.Contains("output path is a directory", StringComparison.Ordinal)
             && !dirStderr.Contains("Generating cast", StringComparison.Ordinal) && dirRanPost
             && linkExit == 1 && linkStderr.Contains("would replace the input file", StringComparison.Ordinal)
-            && File.ReadAllText(linking) == linkingText;
+            && File.ReadAllText(linking) == linkingText
+            && outputsExit == 1 && outputsStderr.Contains("output folder does not exist", StringComparison.Ordinal)
+            && !outputsStderr.Contains("Generating cast", StringComparison.Ordinal) && outputsRanPost
+            && !File.Exists(Path.Combine(directory, "outputs-out.cast"));
     }
 
     internal static bool ScenarioErrorsAfterPreRunPost(string scenetake, string repoRoot, string work)
@@ -2464,19 +2479,27 @@ internal static class Mp4FfmpegCases
         // A repository could hold its own pwsh.exe or cmd.exe. scenetake used to check the current directory
         // before PATH, and the extensionless name made it pick these files. They are not programs, so starting
         // one fails; the shell from PATH writes the pre marker. The default shell (pwsh, then powershell) and
-        // "shell: cmd" are both checked.
+        // "shell: cmd" are both checked. A relative PATH entry such as "." names the current directory too, so it
+        // is skipped as well.
         var directory = Directory.CreateDirectory(Path.Combine(work, "cwd-shell-windows")).FullName;
         var binary = Path.GetFullPath(scenetake);
         foreach (var name in new[] { "pwsh", "pwsh.exe", "powershell", "powershell.exe", "cmd", "cmd.exe" })
             File.WriteAllText(Path.Combine(directory, name), "not a program");
         var cwd = directory.Replace('\\', '/');
+        var dotFirst = new Dictionary<string, string> { ["PATH"] = ".;" + Environment.GetEnvironmentVariable("PATH") };
 
         var passed = true;
-        foreach (var (name, shellKey) in new[] { ("default", ""), ("cmd", "shell: cmd\n") })
+        foreach (var (name, shellKey, environment) in new[]
+        {
+            ("default", "", (Dictionary<string, string>?)null),
+            ("cmd", "shell: cmd\n", null),
+            ("dot-default", "", dotFirst),
+            ("dot-cmd", "shell: cmd\n", dotFirst),
+        })
         {
             var scenario = Path.Combine(directory, $"{name}.yaml");
             File.WriteAllText(scenario, $"cwd: '{cwd}'\n{shellKey}pre:\n  - echo ran > {name}-pre-ran.txt\nsteps:\n  - run: echo hi\n");
-            var (exit, stderr) = Exec(binary, directory, [scenario, Path.Combine(directory, name)]);
+            var (exit, stderr) = Exec(binary, directory, [scenario, Path.Combine(directory, name)], environment);
             var marker = Path.Combine(directory, $"{name}-pre-ran.txt");
             if (exit != 0 || stderr.Contains("Unhandled", StringComparison.Ordinal) || !File.Exists(marker)
                 || !File.ReadAllText(marker).Contains("ran", StringComparison.Ordinal))

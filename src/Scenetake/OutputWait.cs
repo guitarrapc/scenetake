@@ -41,18 +41,33 @@ internal sealed class PtyOutputWatcher
         {
             var chars = new char[decoder.GetCharCount(data, flush: false)];
             decoder.GetChars(data, chars, flush: false);
-            foreach (var c in chars)
-                Feed(c);
+            AppendLocked(chars);
+        }
+    }
 
-            if (text.Length > MaxText)
-                text.Remove(0, text.Length - MaxText / 2);
+    /// <summary>
+    /// Adds output that its stream's own decoder read, such as a background command's, which on Windows may be in the
+    /// console's code page rather than UTF-8 (<see cref="PipeOutputDecoder"/>).
+    /// </summary>
+    internal void Append(ReadOnlySpan<char> chars)
+    {
+        lock (gate)
+            AppendLocked(chars);
+    }
 
-            if (pending is not null && TryTake(pending))
-            {
-                found!.TrySetResult();
-                pending = null;
-                found = null;
-            }
+    private void AppendLocked(ReadOnlySpan<char> chars)
+    {
+        foreach (var c in chars)
+            Feed(c);
+
+        if (text.Length > MaxText)
+            text.Remove(0, text.Length - MaxText / 2);
+
+        if (pending is not null && TryTake(pending))
+        {
+            found!.TrySetResult();
+            pending = null;
+            found = null;
         }
     }
 

@@ -49,6 +49,9 @@ public sealed class PtyContinueTests
 
     [Test]
     public async Task StripLeadingCursorPositionQuery() => await Assert.That(PtyContinueCases.StripLeadingCursorPositionQuery()).IsTrue();
+
+    [Test]
+    public async Task OscEndsWhereTheCastFilterEndsIt() => await Assert.That(PtyContinueCases.OscEndsWhereTheCastFilterEndsIt()).IsTrue();
 }
 
 internal static class PtyContinueCases
@@ -164,6 +167,28 @@ internal static class PtyContinueCases
             "   \u001b[38;2;145;152;161m▔▔▔▔    Resume     \u001b[mcopilot --resume=d8f9c819-9dde-4249-a215-bb41236820c5\u001b[8;1H\u001b[?25h",
             "$ ");
         return output == "\u001b[?1049hcopilot\u001b[=0;1u\u001b[>4;0m\u001b[?1049l$ ";
+    }
+
+    internal static bool OscEndsWhereTheCastFilterEndsIt()
+    {
+        // An OSC ends at BEL, CAN, SUB, ESC \, or before the ESC of another sequence, as CastOscFilter and the
+        // terminal end it. Ending only at BEL or ESC \ kept the text after it as part of the OSC: stripped or held
+        // with it at the start of a step, and held until the step ended once the output had begun.
+        var leading = Filter("\u001b]0;title\u001b[?25lhello");
+        var cancelled = Filter("\u001b]0;title\u0018hello");
+        var substituted = Filter("\u001b]0;title\u001ahello");
+        var stringEnd = Filter("\u001b]0;title\u001b\\hello");
+
+        var filter = new PtyLeadingInitFilter();
+        var first = Encoding.UTF8.GetString(filter.Process(Encoding.UTF8.GetBytes("$ ")).Span);
+        var second = Encoding.UTF8.GetString(filter.Process(Encoding.UTF8.GetBytes("\u001b]0;t\u001b[31mred")).Span);
+        // An ESC at the end of a read may begin ESC \, so the OSC waits for the next byte.
+        var split = Encoding.UTF8.GetString(filter.Process(Encoding.UTF8.GetBytes("\u001b]0;u\u001b")).Span);
+        var afterSplit = Encoding.UTF8.GetString(filter.Process(Encoding.UTF8.GetBytes("\\blue")).Span);
+
+        return leading == "hello" && cancelled == "hello" && substituted == "hello" && stringEnd == "hello"
+            && first == "$ " && second == "\u001b]0;t\u001b[31mred"
+            && split == "" && afterSplit == "\u001b]0;u\u001b\\blue";
     }
 
     internal static bool FastPathOutputIsBufferIndependent()
