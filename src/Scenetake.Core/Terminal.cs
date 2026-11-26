@@ -983,12 +983,6 @@ internal sealed class ScreenBuffer
     private Span<ScreenCell> RegionCells(int top, int bottom) =>
         System.Runtime.InteropServices.MemoryMarshal.CreateSpan(ref _cells[top, 0], (bottom - top + 1) * Width);
 
-    private void ClearRow(int row)
-    {
-        for (var col = 0; col < Width; col++)
-            _cells[row, col] = BlankCell();
-    }
-
     private ScreenCell BlankCell() => new(Space, DefaultStyle);
 
     private ScreenCell[,] CreateBlankCells()
@@ -1038,23 +1032,6 @@ internal sealed class ScreenBuffer
         if (value < min) return min;
         if (value > max) return max;
         return value;
-    }
-
-    internal string GetTrimmedRowText(int row)
-    {
-        if ((uint)row >= (uint)Height)
-            return "";
-
-        var sb = new StringBuilder(Width);
-        for (var col = 0; col < Width; col++)
-        {
-            var cell = GetCell(row, col);
-            if (cell.IsWideContinuation)
-                continue;
-            sb.Append(cell.Text);
-        }
-
-        return sb.ToString().TrimEnd();
     }
 }
 
@@ -2383,15 +2360,7 @@ internal sealed class CastCursorTracker
     {
         for (; _next < end; _next++)
         {
-            var castEvent = events[_next];
-            if (castEvent.Kind == CastEventKind.Resize)
-                _buffer.Resize(castEvent.ResizeWidth, castEvent.ResizeHeight);
-            else if (castEvent.Kind != CastEventKind.Output)
-                continue;
-            else if (castEvent.HasUtf8Output)
-                _parser.ProcessUtf8(castEvent.Utf8Output.Span);
-            else
-                _parser.Process(castEvent.Data);
+            TerminalReplay.Apply(_buffer, _parser, events[_next]);
         }
 
         return (_buffer.CursorRow + 1, _buffer.CursorCol + 1);
@@ -2640,17 +2609,7 @@ internal sealed class ReplayStepper
         var applied = false;
         while (_next < _stopIndex && _events[_next].Time <= time + TimeEpsilon)
         {
-            var ev = _events[_next++];
-            if (ev.Kind == CastEventKind.Marker)
-                continue;
-
-            if (ev.Kind == CastEventKind.Resize)
-                _buffer.Resize(ev.ResizeWidth, ev.ResizeHeight);
-            else if (ev.HasUtf8Output)
-                _parser.ProcessUtf8(ev.Utf8Output.Span);
-            else
-                _parser.Process(ev.Data);
-            applied = true;
+            applied |= TerminalReplay.Apply(_buffer, _parser, _events[_next++]);
         }
 
         if (!applied)
@@ -2843,7 +2802,7 @@ internal static class TerminalReplay
     }
 
     /// <summary>Applies one event as every replay does. Returns false for a marker, which changes nothing.</summary>
-    private static bool Apply(ScreenBuffer buffer, AnsiParser parser, CastEvent ev)
+    internal static bool Apply(ScreenBuffer buffer, AnsiParser parser, CastEvent ev)
     {
         if (ev.Kind == CastEventKind.Marker)
             return false;
@@ -2893,15 +2852,8 @@ internal static class TerminalReplay
         for (var eventIndex = 0; eventIndex < events.Count; eventIndex++)
         {
             var ev = events[eventIndex];
-            if (ev.Kind == CastEventKind.Marker)
+            if (!Apply(buffer, parser, ev))
                 continue;
-
-            if (ev.Kind == CastEventKind.Resize)
-                buffer.Resize(ev.ResizeWidth, ev.ResizeHeight);
-            else if (ev.HasUtf8Output)
-                parser.ProcessUtf8(ev.Utf8Output.Span);
-            else
-                parser.Process(ev.Data);
 
             if (lastOfSameTime && NextAppliedEventHasSameTime(events, eventIndex))
                 continue;
@@ -2960,15 +2912,8 @@ internal static class TerminalReplay
         for (var eventIndex = 0; eventIndex < events.Count && next < frames.Count; eventIndex++)
         {
             var ev = events[eventIndex];
-            if (ev.Kind == CastEventKind.Marker)
+            if (!Apply(buffer, parser, ev))
                 continue;
-
-            if (ev.Kind == CastEventKind.Resize)
-                buffer.Resize(ev.ResizeWidth, ev.ResizeHeight);
-            else if (ev.HasUtf8Output)
-                parser.ProcessUtf8(ev.Utf8Output.Span);
-            else
-                parser.Process(ev.Data);
 
             if (frames[next].EventIndex == eventIndex)
                 yield return (frames[next++], ViewForCanvas(buffer, canvas, ref viewCopy));
@@ -3409,9 +3354,6 @@ internal static class InteractivePtyCastEmit
 {
     private const double InputEchoGraceSeconds = 0.45;
     private const double InputEchoMergeGapSeconds = 0.12;
-
-    internal static List<(double Start, double End)> BuildInputWindows(IReadOnlyList<double> inputTimes) =>
-        BuildInputEchoWindows(inputTimes);
 
     internal static List<(double Start, double End)> BuildInputEchoWindows(IReadOnlyList<double> inputTimes)
     {

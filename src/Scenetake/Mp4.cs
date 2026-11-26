@@ -425,7 +425,10 @@ internal static class Mp4Render
         if (keyframes is { Count: > 0 })
         {
             arguments.Add("-force_key_frames");
-            arguments.Add(string.Join(',', keyframes.Select(frame => ((frame - 0.5) / settings.Fps).ToString("0.######", CultureInfo.InvariantCulture))));
+            var times = new System.Text.StringBuilder();
+            foreach (var frame in keyframes)
+                times.Append(times.Length == 0 ? "" : ",").Append(((frame - 0.5) / settings.Fps).ToString("0.######", CultureInfo.InvariantCulture));
+            arguments.Add(times.ToString());
         }
 
         arguments.AddRange(

@@ -2374,8 +2374,8 @@ internal static class SvgFrameRenderer
         /// </summary>
         internal void AssignNames(ClassNamePool pool)
         {
-            var lengths = new Dictionary<long, (int Uses, int First)>();
-            var entries = new List<(int Uses, int First, int Window, long Length)>();
+            var lengths = new Dictionary<long, NameEntry>();
+            var entries = new List<NameEntry>();
             for (var id = 0; id < _windows.Count; id++)
             {
                 if (_uses[id] == 0)
@@ -2385,20 +2385,26 @@ internal static class SvgFrameRenderer
                 if (KindOf(id) == WindowKind.Span)
                 {
                     var length = hide - show;
-                    var (uses, first) = lengths.TryGetValue(length, out var seen) ? seen : (0, id);
-                    lengths[length] = (uses + (show == 0 ? _uses[id] : 1), first);
+                    if (!lengths.TryGetValue(length, out var shared))
+                    {
+                        shared = new NameEntry(0, id, -1, length);
+                        lengths[length] = shared;
+                        entries.Add(shared);
+                    }
+
+                    shared.Uses += show == 0 ? _uses[id] : 1;
                     if (show == 0)
                         continue;
                 }
 
-                entries.Add((_uses[id], id, id, 0));
+                entries.Add(new NameEntry(_uses[id], id, id, 0));
             }
 
-            foreach (var (length, (uses, first)) in lengths)
-                entries.Add((uses, first, -1, length));
-
             _names = new string?[_windows.Count];
-            foreach (var entry in entries.OrderByDescending(e => e.Uses).ThenBy(e => e.First).ThenBy(e => e.Window))
+            // No two entries are alike in all three, so this order is the one a stable sort gives.
+            var ordered = entries.ToArray();
+            Array.Sort(ordered, NameEntry.Compare);
+            foreach (var entry in ordered)
             {
                 var name = pool.Next();
                 if (entry.Window < 0)
@@ -2406,6 +2412,19 @@ internal static class SvgFrameRenderer
                 else
                     _names[entry.Window] = name;
             }
+        }
+
+        // A window's class, or (Window -1) the keyframes that the spans of one length share. The most used get the
+        // shortest names, then the one first used. A class over a value tuple keeps LINQ's sort out of the binary.
+        private sealed class NameEntry(int uses, int first, int window, long length)
+        {
+            internal int Uses { get; set; } = uses;
+            internal int First { get; } = first;
+            internal int Window { get; } = window;
+            internal long Length { get; } = length;
+
+            internal static int Compare(NameEntry a, NameEntry b) =>
+                a.Uses != b.Uses ? b.Uses.CompareTo(a.Uses) : a.First != b.First ? a.First.CompareTo(b.First) : a.Window.CompareTo(b.Window);
         }
 
         internal string Name(int id)

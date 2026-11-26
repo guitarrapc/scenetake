@@ -4,7 +4,6 @@ using MiniPty.Console;
 using System.Diagnostics;
 using System.Globalization;
 using System.Buffers;
-using System.Runtime.InteropServices;
 using System.Text;
 using Scenetake;
 using static Scenetake.Core.ScenarioCast;
@@ -2398,26 +2397,10 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
         return new CommandExecution(result.ExitCode, true, "", "", ToTimedBytes(result.Chunks), null, null);
     }
 
-    var psi = new ProcessStartInfo(shell.FileName)
-    {
-        RedirectStandardInput  = true,
-        RedirectStandardOutput = true,
-        RedirectStandardError  = true,
-        UseShellExecute        = false,
-        CreateNoWindow         = true,
-    };
-    foreach (var arg in shell.Arguments)
-        psi.ArgumentList.Add(arg);
-    psi.ArgumentList.Add(OperatingSystem.IsWindows() && IsPowerShellLaunch(shell) ? PowerShellUtf8OutputPrefix + prepared.Command : prepared.Command);
-    if (!string.IsNullOrWhiteSpace(cwd)) psi.WorkingDirectory = cwd;
-    foreach (var (name, value) in ChildEnvironment(prepared))
-    {
-        // A null value removes the variable from the child's environment.
-        if (value is null)
-            psi.Environment.Remove(name);
-        else
-            psi.Environment[name] = value;
-    }
+    var psi = CreateShellStartInfo(shell, prepared, cwd);
+    psi.RedirectStandardInput = true;
+    psi.RedirectStandardOutput = true;
+    psi.RedirectStandardError = true;
 
     using var proc = new Process { StartInfo = psi };
     proc.Start();
@@ -2706,7 +2689,7 @@ static async Task<CommandExecution> RunInteractivePtyAsync(
 
     var stopwatch = Stopwatch.StartNew();
     var chunks = new List<PtyCaptureChunk>();
-    var inputChunks = new List<PtyInputChunk>();
+    var inputChunks = new List<TimedBytes>();
     var hiddenInput = new List<TimeSpan>();
     var inputRecorder = new InteractivePtyInputRecorder(stopwatch, inputChunks, () => session.InputMode, hiddenInput);
     var pumpTask = PumpInteractiveOutputAsync(session, chunks, stopwatch, verbose);
@@ -2744,7 +2727,7 @@ static async Task<CommandExecution> RunInteractivePtyAsync(
         Console.Error.WriteLine($"scenetake: interactive pty verbose: chunks={chunks.Count} input={inputChunks.Count}");
     }
 
-    return new CommandExecution(exitCode, true, "", "", ToTimedBytes(chunks), inputChunks.ConvertAll(static chunk => new TimedBytes(chunk.Time, chunk.Data)), null)
+    return new CommandExecution(exitCode, true, "", "", ToTimedBytes(chunks), inputChunks.ToArray(), null)
     {
         HiddenInputTimes = hiddenInput,
     };
@@ -2789,16 +2772,8 @@ static void ResetUnixHostCursorColumn()
 static Dictionary<string, string?> CreateChildEnvironmentOverlay() =>
     new(StringComparer.Ordinal) { ["COLORTERM"] = "truecolor" };
 
-static string[] BuildPtyShellArguments(ShellLaunch shell, string cmd)
-{
-    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && IsPowerShellName(shell.DisplayName))
-        return [.. shell.Arguments.TakeWhile(static x => !string.Equals(x, "-Command", StringComparison.OrdinalIgnoreCase)), "-Command", cmd];
-
-    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && string.Equals(shell.DisplayName, "cmd", StringComparison.OrdinalIgnoreCase))
-        return ["/c", cmd];
-
-    return [.. shell.Arguments, cmd];
-}
+// Every shell's arguments end with the switch that takes the command: PowerShell's with -Command, cmd's with /c.
+static string[] BuildPtyShellArguments(ShellLaunch shell, string cmd) => [.. shell.Arguments, cmd];
 
 static async Task<int> RunScenarioCommandsAsync(List<string>? commands, string phase, string? cwd, ShellLaunch shell, ShellState? state, bool verbose)
 {
@@ -2890,6 +2865,16 @@ static string FormatStrictFailure(FailedStep failure, CaptureRequest? capture = 
 static Task<CommandExecution> RunBackgroundAsync(StepStart step, string? cwd, ShellLaunch shell, ShellState? state, BackgroundSteps background)
 {
     var prepared = state?.PrepareDetached(step.Command.Cmd) ?? new PreparedCommand(step.Command.Cmd, null);
+    var psi = CreateShellStartInfo(shell, prepared, cwd);
+    return background.StartAsync(step.Index + 1, step.Command.Cmd, IsStepFlagSet(step.Command.Extra, "continue-on-error"), psi, step.WaitFor, step.WaitLimit);
+}
+
+/// <summary>
+/// How a pipe step and a background step start the shell with <paramref name="prepared"/>: its arguments and the
+/// command, the step's folder, and the variables every command gets. The caller sets what it reads from the process.
+/// </summary>
+static ProcessStartInfo CreateShellStartInfo(ShellLaunch shell, PreparedCommand prepared, string? cwd)
+{
     var psi = new ProcessStartInfo(shell.FileName)
     {
         UseShellExecute = false,
@@ -2902,13 +2887,14 @@ static Task<CommandExecution> RunBackgroundAsync(StepStart step, string? cwd, Sh
         psi.WorkingDirectory = cwd;
     foreach (var (name, value) in ChildEnvironment(prepared))
     {
+        // A null value removes the variable from the child's environment.
         if (value is null)
             psi.Environment.Remove(name);
         else
             psi.Environment[name] = value;
     }
 
-    return background.StartAsync(step.Index + 1, step.Command.Cmd, IsStepFlagSet(step.Command.Extra, "continue-on-error"), psi, step.WaitFor, step.WaitLimit);
+    return psi;
 }
 
 static void ReportShellStateWarnings(ShellState? state)
@@ -2946,7 +2932,7 @@ static ShellLaunch ResolveShell(Scenario scenario)
     if (requested is not null && requested.Contains('\0'))
         throw new InvalidOperationException($"Shell '{requested}' was requested, but a shell cannot contain a NUL character.");
 
-    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+    if (OperatingSystem.IsWindows())
         return ResolveWindowsShell(requested);
 
     if (string.IsNullOrWhiteSpace(requested))

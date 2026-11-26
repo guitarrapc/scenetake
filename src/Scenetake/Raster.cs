@@ -2164,8 +2164,9 @@ internal static class DesktopRaster
             return decodeImage(width, height);
 
         var pixels = new byte[width * height * 3];
-        var stops = background.Colors.Select(static color =>
-            CellColors.TryParseHexColor(color, out var r, out var g, out var b) ? (R: (double)r, G: (double)g, B: (double)b) : (R: 0d, G: 0d, B: 0d)).ToArray();
+        var stops = new (double R, double G, double B)[background.Colors.Count];
+        for (var i = 0; i < stops.Length; i++)
+            stops[i] = CellColors.TryParseHexColor(background.Colors[i], out var r, out var g, out var b) ? (r, g, b) : (0, 0, 0);
         if (stops.Length == 1)
         {
             for (var i = 0; i < pixels.Length; i += 3)

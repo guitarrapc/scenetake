@@ -926,7 +926,9 @@ internal static partial class ScenarioCast
                 normalized,
                 castTiming.SilenceThreshold,
                 castTiming.MaxIdle);
-            emitChunks = normalized.Select(c => (c.Time, c.Data)).ToList();
+            emitChunks = new List<(double Time, ReadOnlyMemory<byte> Data)>(normalized.Count);
+            foreach (var chunk in normalized)
+                emitChunks.Add((chunk.Time, chunk.Data));
         }
         else
         {

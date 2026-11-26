@@ -252,11 +252,21 @@ internal static class ScenarioKeys
         }
 
         // A key of another map, such as pty under settings or font-size at the top level.
-        var elsewhere = levels
-            .Where(level => !ReferenceEquals(level.Keys, keys) && level.Keys.Any(known => Normalize(known) == normalized))
-            .Select(level => level.Where)
-            .Distinct()
-            .ToList();
+        var elsewhere = new List<string>();
+        foreach (var level in levels)
+        {
+            if (ReferenceEquals(level.Keys, keys) || elsewhere.Contains(level.Where))
+                continue;
+
+            foreach (var known in level.Keys)
+            {
+                if (Normalize(known) == normalized)
+                {
+                    elsewhere.Add(level.Where);
+                    break;
+                }
+            }
+        }
         // An outputs entry repeats render's keys for one file. Where render has the key too, render is the likely place.
         if (elsewhere.Count > 1)
             elsewhere.Remove(OutputEntryWhere);
