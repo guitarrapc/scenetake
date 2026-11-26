@@ -448,6 +448,25 @@ internal sealed class ScreenBuffer
     }
 
     /// <summary>
+    /// A copy of what this screen shows, its cells and its cursor, for a caller that keeps a screen while the replay
+    /// goes on. <paramref name="reuse"/>, an earlier copy of this size, is filled again.
+    /// </summary>
+    internal ScreenBuffer CopyScreen(ScreenBuffer? reuse)
+    {
+        var copy = reuse is not null && !ReferenceEquals(reuse, this) && reuse._theme == _theme && reuse.Width == Width && reuse.Height == Height
+            ? reuse
+            : new ScreenBuffer(Width, Height, _theme);
+        Array.Copy(_cells, copy._mainCells, _cells.Length);
+        copy._cells = copy._mainCells;
+        copy.CursorRow = CursorRow;
+        copy.CursorCol = CursorCol;
+        copy.CursorVisible = CursorVisible;
+        copy._isAltScreen = _isAltScreen;
+        copy.AlternateScreenSwitches = AlternateScreenSwitches;
+        return copy;
+    }
+
+    /// <summary>
     /// How many rows and columns of <paramref name="canvas"/> hold something to see: the last row and the last
     /// column with a cell that is not blank (<see cref="IsRowBlank(int)"/>), or with the visible cursor, plus one.
     /// Zero when the window shows nothing.
@@ -3055,30 +3074,49 @@ internal static class TerminalReplay
         if (fit == FitMode.None)
             return cropped;
 
+        if (stillAt is double at)
+            return FitStill(events, width, height, cropped, CanvasWindow.Whole(canvasWidth, canvasHeight), fit, theme, at, out _);
+
         // Every screen the recording shows, on the whole canvas so that the live buffer needs no copy. A screen that
-        // changes only outside the window shows the same cells inside it, so looking at it changes nothing.
+        // changes only outside the window shows the same cells inside it, so looking at it changes nothing. The
+        // screen is looked at after the last of the events that share a time, as the renders see it. It is not hashed
+        // to skip a screen seen before: the same screen gives the same extent again, and hashing cost more than the
+        // look.
         var whole = CanvasWindow.Whole(canvasWidth, canvasHeight);
+        var fitRows = fit is FitMode.Height or FitMode.Both;
+        var fitCols = fit is FitMode.Width or FitMode.Both;
         var rows = 0;
         var cols = 0;
-        if (stillAt is double at)
+        var buffer = new ScreenBuffer(width, height, theme);
+        var parser = new AnsiParser(buffer, theme);
+        ScreenBuffer? viewCopy = null;
+        var looked = false;
+
+        // Once the content reaches the edges that fit moves, nothing can move them further: a full-screen program's
+        // first screen ends the pass.
+        bool Look()
         {
-            if (SelectStill(BuildFrames(events, width, height, whole, theme, lastOfSameTime: true), at) is { } frame)
-                (rows, cols) = ReplayStill(events, width, height, whole, theme, frame).ContentExtent(cropped);
+            var (screenRows, screenCols) = ViewForCanvas(buffer, whole, ref viewCopy).ContentExtent(cropped);
+            rows = Math.Max(rows, screenRows);
+            cols = Math.Max(cols, screenCols);
+            looked = true;
+            return (!fitRows || rows == cropped.Height) && (!fitCols || cols == cropped.Width);
         }
-        else
+
+        // A screen with something on it before any event is shown first, as EnumerateCaptures yields it.
+        if (IsBlankBuffer(buffer) || !Look())
         {
-            // Once the content reaches the edges that fit moves, nothing can move them further: a full-screen program's
-            // first screen ends the pass.
-            var fitRows = fit is FitMode.Height or FitMode.Both;
-            var fitCols = fit is FitMode.Width or FitMode.Both;
-            foreach (var capture in EnumerateCaptures(events, width, height, whole, theme, lastOfSameTime: true))
+            for (var eventIndex = 0; eventIndex < events.Count; eventIndex++)
             {
-                var (captureRows, captureCols) = capture.View.ContentExtent(cropped);
-                rows = Math.Max(rows, captureRows);
-                cols = Math.Max(cols, captureCols);
-                if ((!fitRows || rows == cropped.Height) && (!fitCols || cols == cropped.Width))
+                if (!Apply(buffer, parser, events[eventIndex]) || NextAppliedEventHasSameTime(events, eventIndex))
+                    continue;
+                if (Look())
                     break;
             }
+
+            // A recording with no output or resize events shows its screen as it is.
+            if (!looked)
+                Look();
         }
 
         return new CanvasWindow(
@@ -3086,6 +3124,159 @@ internal static class TerminalReplay
             cropped.Top,
             fit is FitMode.Width or FitMode.Both ? Math.Max(1, cols) : cropped.Width,
             fit is FitMode.Height or FitMode.Both ? Math.Max(1, rows) : cropped.Height);
+    }
+
+    /// <summary>
+    /// <see cref="ResolveCanvas"/> for a still image at <paramref name="at"/>, with the screen it shows on that canvas
+    /// (<see cref="StillScreen"/>), or null before the first screen. Fit looks at the still's screen on the whole
+    /// canvas. When the canvas is the whole terminal, that screen is the still, and no second replay is needed.
+    /// </summary>
+    internal static CanvasWindow ResolveStill(
+        IReadOnlyList<CastEvent> events,
+        int width,
+        int height,
+        CropSpec crop,
+        FitMode fit,
+        TerminalTheme theme,
+        double at,
+        out ScreenBuffer? screen)
+    {
+        var (canvasWidth, canvasHeight) = ResolveCanvasSize(width, height, events);
+        if (CheckCrop(crop, canvasWidth, canvasHeight) is { } error)
+            throw new ArgumentException(error);
+
+        var cropped = new CanvasWindow(crop.Left, crop.Top, canvasWidth - crop.Left - crop.Right, canvasHeight - crop.Top - crop.Bottom);
+        if (fit == FitMode.None)
+        {
+            screen = StillScreen(events, width, height, cropped, theme, at);
+            return cropped;
+        }
+
+        var whole = CanvasWindow.Whole(canvasWidth, canvasHeight);
+        var canvas = FitStill(events, width, height, cropped, whole, fit, theme, at, out var wholeScreen);
+        screen = canvas.Left == 0 && canvas.Top == 0 && canvas.Width == whole.Width && canvas.Height == whole.Height
+            ? wholeScreen
+            : StillScreen(events, width, height, canvas, theme, at);
+        return canvas;
+    }
+
+    // Fit for a still: the edges move in to what the still's screen on the whole canvas shows, which wholeScreen gives.
+    private static CanvasWindow FitStill(
+        IReadOnlyList<CastEvent> events,
+        int width,
+        int height,
+        CanvasWindow cropped,
+        CanvasWindow whole,
+        FitMode fit,
+        TerminalTheme theme,
+        double at,
+        out ScreenBuffer? wholeScreen)
+    {
+        wholeScreen = StillScreen(events, width, height, whole, theme, at);
+        var rows = 0;
+        var cols = 0;
+        if (wholeScreen is not null)
+            (rows, cols) = wholeScreen.ContentExtent(cropped);
+        return new CanvasWindow(
+            cropped.Left,
+            cropped.Top,
+            fit is FitMode.Width or FitMode.Both ? Math.Max(1, cols) : cropped.Width,
+            fit is FitMode.Height or FitMode.Both ? Math.Max(1, rows) : cropped.Height);
+    }
+
+    /// <summary>
+    /// The canvas-sized screen that a still shows at <paramref name="at"/>, or null before the first screen: the frame
+    /// <see cref="SelectStill"/> picks from <see cref="BuildFrames"/>, drawn as <see cref="ReplayStill"/> draws it.
+    /// </summary>
+    /// <remarks>
+    /// The frames come from one replay, which can keep a copy of the screen of each frame that may be the one shown, so
+    /// that no second replay up to it is needed. A copy of a cell costs about what parsing a character does, so each
+    /// frame is copied only when the copies of all frames there can be would cost no more than the recording's output:
+    /// a full-screen program, not typing, where a frame follows every key. Otherwise the screen comes from a replay up
+    /// to the frame, as before. When the times never fall, the frame shown is known once the next event comes after
+    /// <paramref name="at"/>, and that one frame is copied anyway. When the final screen is blank, the frames come from
+    /// the pass that may trim a restore, as in BuildFrames.
+    /// </remarks>
+    internal static ScreenBuffer? StillScreen(
+        IReadOnlyList<CastEvent> events,
+        int initialWidth,
+        int initialHeight,
+        CanvasWindow canvas,
+        TerminalTheme theme,
+        double at)
+    {
+        var until = at + ReplayStepper.TimeEpsilon;
+        var timesRise = true;
+        long output = 0;
+        // The frames there can be by then: one per run of events that share a time, which ends a frame or none.
+        long groups = 0;
+        var previous = -1;
+        for (var i = 0; i < events.Count; i++)
+        {
+            var ev = events[i];
+            output += ev.HasUtf8Output ? ev.Utf8Output.Length : ev.Data.Length;
+            timesRise &= i == 0 || ev.Time >= events[i - 1].Time;
+            if (ev.Kind == CastEventKind.Marker)
+                continue;
+            if (previous >= 0 && events[previous].Time != ev.Time && events[previous].Time <= until)
+                groups++;
+            previous = i;
+        }
+
+        if (previous >= 0 && events[previous].Time <= until)
+            groups++;
+
+        // Decided before the pass, so no copy is made that a replay then repeats.
+        var copyEach = groups * canvas.Width * canvas.Height <= output;
+        ScreenBuffer? kept = null;
+        var count = 0;
+        var shown = -1;
+        var shownEventIndex = 0;
+        var copied = -1;
+        var lastIsBlank = false;
+        foreach (var capture in EnumerateCaptures(events, initialWidth, initialHeight, canvas, theme, lastOfSameTime: true))
+        {
+            var number = count++;
+            lastIsBlank = IsBlankBuffer(capture.View);
+
+            // SelectStill takes the last frame shown by then, whatever the order of the times.
+            if (capture.Time > until)
+                continue;
+
+            shown = number;
+            shownEventIndex = capture.EventIndex;
+            if (copyEach || (timesRise && NextAppliedEventTime(events, capture.EventIndex) > until))
+            {
+                kept = capture.View.CopyScreen(kept);
+                copied = number;
+            }
+        }
+
+        // BuildFrames gives these frames as they are unless the last one is blank.
+        if (!lastIsBlank)
+        {
+            if (shown < 0)
+                return null;
+            if (copied == shown)
+                return kept;
+            // ReplaySelected stops at the frame's event, and reads nothing else of it.
+            return ReplayStill(events, initialWidth, initialHeight, canvas, theme, new ReplayFrame(0, 0, 0, 0, false, shownEventIndex));
+        }
+
+        var frames = TrimTrailingBlankRestore(CollectFrames(EnumerateCaptures(events, initialWidth, initialHeight, canvas, theme)), events);
+        return SelectStill(frames, at) is { } selected ? ReplayStill(events, initialWidth, initialHeight, canvas, theme, selected) : null;
+    }
+
+    // The time of the first event after `index` that changes the screen, or infinity when none does.
+    private static double NextAppliedEventTime(IReadOnlyList<CastEvent> events, int index)
+    {
+        for (var next = Math.Max(index + 1, 0); next < events.Count; next++)
+        {
+            if (events[next].Kind != CastEventKind.Marker)
+                return events[next].Time;
+        }
+
+        return double.PositiveInfinity;
     }
 
     /// <summary>An error when <paramref name="crop"/> leaves no row or no column of a canvas this size, else null.</summary>
