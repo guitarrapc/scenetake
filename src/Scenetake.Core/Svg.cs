@@ -1726,6 +1726,8 @@ internal static class SvgFrameRenderer
     [ThreadStatic] private static StringBuilder? t_runForm;
     [ThreadStatic] private static StringBuilder? t_listForm;
     [ThreadStatic] private static List<GlyphGroup>? t_glyphGroups;
+    [ThreadStatic] private static Dictionary<string, GlyphGroup>[]? t_glyphGroupsByStyle;
+    [ThreadStatic] private static string?[]? t_rowForegrounds;
     [ThreadStatic] private static List<BlockPart>? t_blockParts;
     [ThreadStatic] private static StringBuilder? t_escape;
 
@@ -1757,7 +1759,7 @@ internal static class SvgFrameRenderer
         var theme = TerminalTheme.FromResolved(render.Theme);
         var metrics = CreateMetrics(render, canvasWidth, canvasHeight);
 
-        var context = new EncodeContext(metrics, theme, canvasHeight);
+        var context = new EncodeContext(metrics, theme, canvasWidth, canvasHeight);
         var layers = BuildLayers(events, initialWidth, initialHeight, frames, canvas, context);
         loopDuration = ResolveLoopDuration(loopDuration, layers);
 
@@ -2575,14 +2577,45 @@ internal static class SvgFrameRenderer
     /// <summary>State shared by row encoding and the text around it.</summary>
     private sealed class EncodeContext
     {
-        internal EncodeContext(SvgMetrics metrics, TerminalTheme theme, int canvasHeight)
+        // The text of each column's x at the content's left edge, and of the width of a run of n columns, made when a
+        // row first needs it. Every glyph and run writes one, and formatting it each time made a new string. Index
+        // canvasWidth is the right edge, for a span that ends there.
+        private readonly double _originX;
+        private readonly string?[] _columnX;
+        private readonly string?[] _columnsWidth;
+
+        internal EncodeContext(SvgMetrics metrics, TerminalTheme theme, int canvasWidth, int canvasHeight)
         {
             Metrics = metrics;
             Theme = theme;
             RowClasses = new string?[canvasHeight];
             RowSavings = new int[canvasHeight];
             Fills = new FillClasses(theme.Foreground, Names);
+            _originX = metrics.ContentOrigin.X;
+            _columnX = new string?[canvasWidth + 1];
+            _columnsWidth = new string?[canvasWidth + 1];
+            LineHeightText = Format(metrics.LineHeight);
         }
+
+        /// <summary><see cref="Format"/> of <c>originX + col × CharWidth</c>.</summary>
+        internal string ColumnX(double originX, int col)
+        {
+            // Same expression as the uncached one, so the double and its text are the same.
+            if (originX != _originX || (uint)col >= (uint)_columnX.Length)
+                return Format(originX + col * Metrics.CharWidth);
+            return _columnX[col] ??= Format(originX + col * Metrics.CharWidth);
+        }
+
+        /// <summary><see cref="Format"/> of <c>count × CharWidth</c>.</summary>
+        internal string ColumnsWidth(int count)
+        {
+            if ((uint)count >= (uint)_columnsWidth.Length)
+                return Format(count * Metrics.CharWidth);
+            return _columnsWidth[count] ??= Format(count * Metrics.CharWidth);
+        }
+
+        /// <summary><see cref="Format"/> of the line height.</summary>
+        internal string LineHeightText { get; }
 
         internal SvgMetrics Metrics { get; }
         internal TerminalTheme Theme { get; }
@@ -3077,14 +3110,16 @@ internal static class SvgFrameRenderer
         var start = sb.Length;
         var absoluteTextY = string.Create(CultureInfo.InvariantCulture, $" y=\"{absoluteRowTop + metrics.BaselineOffset:0.##}\"");
         var textYAttribute = rowLocal ? "" : absoluteTextY;
-        var hasUnderline = AppendBackgroundSpans(sb, buffer, row, originX, rowTop, metrics, theme, out var backgroundRects);
-        var blockRects = AppendBlockRects(sb, buffer, row, originX, rowTop, metrics, theme, absoluteRowTop, out var blockYGrowth);
-        var glyphUses = AppendSoftGlyphs(sb, buffer, row, originX, textYAttribute, context);
+        // Each cell's foreground, resolved once for the forms below, which each looked it up again.
+        var foregrounds = ResolveRowForegrounds(buffer, row, theme);
+        var hasUnderline = AppendBackgroundSpans(sb, buffer, row, originX, rowTop, context, out var backgroundRects);
+        var blockRects = AppendBlockRects(sb, buffer, row, originX, rowTop, metrics, foregrounds, absoluteRowTop, out var blockYGrowth);
+        var glyphUses = AppendSoftGlyphs(sb, buffer, row, originX, textYAttribute, context, foregrounds);
         var rectsLength = sb.Length - start;
 
         var runForm = t_runForm ??= new StringBuilder(1024);
         runForm.Clear();
-        var runTexts = AppendRunText(runForm, buffer, row, originX, textYAttribute, context);
+        var runTexts = AppendRunText(runForm, buffer, row, originX, textYAttribute, context, foregrounds);
         var texts = runTexts;
         var listLength = int.MaxValue;
         var listTexts = 0;
@@ -3096,7 +3131,7 @@ internal static class SvgFrameRenderer
         {
             var listForm = t_listForm ??= new StringBuilder(1024);
             listForm.Clear();
-            listTexts = AppendGlyphListText(listForm, buffer, row, originX, textYAttribute, context);
+            listTexts = AppendGlyphListText(listForm, buffer, row, originX, textYAttribute, context, foregrounds);
             listLength = listForm.Length;
             if (listForm.Length < runForm.Length)
             {
@@ -3128,17 +3163,37 @@ internal static class SvgFrameRenderer
     private static string Format(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
 
     /// <summary>
+    /// Each cell's foreground as <see cref="CellColors.ResolveTintedForeground"/> gives it, in a buffer that the next
+    /// call fills again. A wide cell's continuation gets null: no form draws one.
+    /// </summary>
+    private static string?[] ResolveRowForegrounds(ScreenBuffer buffer, int row, TerminalTheme theme)
+    {
+        var foregrounds = t_rowForegrounds;
+        if (foregrounds is null || foregrounds.Length < buffer.Width)
+            t_rowForegrounds = foregrounds = new string?[buffer.Width];
+        for (var col = 0; col < buffer.Width; col++)
+        {
+            var cell = buffer.GetCell(row, col);
+            foregrounds[col] = cell.IsWideContinuation ? null : CellColors.ResolveTintedForeground(buffer, row, col, cell, theme);
+        }
+
+        return foregrounds;
+    }
+
+    /// <summary>
     /// One rect per run of cells with the same non-theme background, regardless of foreground
     /// or style. A wide cell's continuation takes the wide cell's background. Returns whether
     /// any cell in the row is underlined.
     /// </summary>
     private static bool AppendBackgroundSpans(
-        StringBuilder sb, ScreenBuffer buffer, int row, double originX, double rowTop, SvgMetrics metrics, TerminalTheme theme, out int rects)
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, double rowTop, EncodeContext context, out int rects)
     {
+        var theme = context.Theme;
         rects = 0;
         var hasUnderline = false;
         string? spanBg = null;
         string? previousBg = null;
+        string? rowTopText = null;
         var spanStart = 0;
         for (var col = 0; col <= buffer.Width; col++)
         {
@@ -3154,8 +3209,11 @@ internal static class SvgFrameRenderer
             {
                 if (spanBg is not null)
                 {
-                    sb.Append(CultureInfo.InvariantCulture,
-                        $"<rect x=\"{originX + spanStart * metrics.CharWidth:0.##}\" y=\"{rowTop:0.##}\" width=\"{(col - spanStart) * metrics.CharWidth:0.##}\" height=\"{metrics.LineHeight:0.##}\" fill=\"{spanBg}\"/>");
+                    sb.Append("<rect x=\"").Append(context.ColumnX(originX, spanStart))
+                        .Append("\" y=\"").Append(rowTopText ??= Format(rowTop))
+                        .Append("\" width=\"").Append(context.ColumnsWidth(col - spanStart))
+                        .Append("\" height=\"").Append(context.LineHeightText)
+                        .Append("\" fill=\"").Append(spanBg).Append("\"/>");
                     rects++;
                 }
 
@@ -3176,7 +3234,7 @@ internal static class SvgFrameRenderer
     /// height. Parts of one color and height that touch along the row merge into one rect.
     /// </summary>
     private static int AppendBlockRects(
-        StringBuilder sb, ScreenBuffer buffer, int row, double originX, double rowTop, SvgMetrics metrics, TerminalTheme theme,
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, double rowTop, SvgMetrics metrics, string?[] foregrounds,
         double absoluteRowTop, out int absoluteYGrowth)
     {
         absoluteYGrowth = 0;
@@ -3188,8 +3246,7 @@ internal static class SvgFrameRenderer
             if (cell.IsWideContinuation || !TryGetBlockCodepoint(cell.Text, out var codepoint))
                 continue;
 
-            var fill = CellColors.ResolveTintedForeground(buffer, row, col, cell, theme);
-            AddBlockParts(parts, codepoint, col * 8, cell.IsWide ? 2 : 1, fill);
+            AddBlockParts(parts, codepoint, col * 8, cell.IsWide ? 2 : 1, foregrounds[col]!);
         }
 
         if (parts.Count == 0)
@@ -3279,7 +3336,7 @@ internal static class SvgFrameRenderer
     /// inherited for the theme's foreground. Returns the number of &lt;use&gt;s.
     /// </summary>
     private static int AppendSoftGlyphs(
-        StringBuilder sb, ScreenBuffer buffer, int row, double originX, string textYAttribute, EncodeContext context)
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, string textYAttribute, EncodeContext context, string?[] foregrounds)
     {
         var uses = 0;
         for (var col = 0; col < buffer.Width; col++)
@@ -3288,9 +3345,10 @@ internal static class SvgFrameRenderer
             if (cell.Glyph is not { } glyph)
                 continue;
 
-            var fill = CellColors.ResolveTintedForeground(buffer, row, col, cell, context.Theme);
+            // A soft glyph's cell may be a wide continuation, which ResolveRowForegrounds leaves out.
+            var fill = foregrounds[col] ?? CellColors.ResolveTintedForeground(buffer, row, col, cell, context.Theme);
             sb.Append("<use href=\"#").Append(context.Glyphs.IdFor(glyph)).Append('"')
-                .Append(CultureInfo.InvariantCulture, $" x=\"{originX + col * context.Metrics.CharWidth:0.##}\"").Append(textYAttribute);
+                .Append(" x=\"").Append(context.ColumnX(originX, col)).Append('"').Append(textYAttribute);
             if (context.Fills.ClassFor(fill) is { } fillClass)
                 sb.Append(" class=\"").Append(fillClass).Append('"');
             sb.Append("/>");
@@ -3406,9 +3464,8 @@ internal static class SvgFrameRenderer
     /// </list>
     /// </summary>
     private static int AppendRunText(
-        StringBuilder sb, ScreenBuffer buffer, int row, double originX, string textYAttribute, EncodeContext context)
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, string textYAttribute, EncodeContext context, string?[] foregrounds)
     {
-        var metrics = context.Metrics;
         var theme = context.Theme;
         var lastUnderlined = -1;
         for (var c = 0; c < buffer.Width; c++)
@@ -3440,7 +3497,7 @@ internal static class SvgFrameRenderer
             }
 
             var runStart = col;
-            var runFg = CellColors.ResolveTintedForeground(buffer, row, col, cell, theme);
+            var runFg = foregrounds[col]!;
             var runBg = CellColors.ResolveBackground(cell, theme);
             var runBold = cell.Bold;
             var runItalic = cell.Italic;
@@ -3467,7 +3524,7 @@ internal static class SvgFrameRenderer
                 if (SkipsText(next))
                     break;
 
-                var nextFg = CellColors.ResolveTintedForeground(buffer, row, col, next, theme);
+                var nextFg = foregrounds[col];
                 var nextBg = CellColors.ResolveBackground(next, theme);
                 if (nextFg != runFg || nextBg != runBg || next.Bold != runBold
                     || next.Italic != runItalic || next.Underline != runUnderline || next.IsWide)
@@ -3488,15 +3545,52 @@ internal static class SvgFrameRenderer
             if (drawnChars == 0)
                 continue; // only spaces: the background span already covers them
 
-            var drawText = drawnChars == runText.Length ? runText.ToString() : runText.ToString(0, drawnChars);
             AppendTextStart(sb, runFg, context.Fills);
-            sb.Append(CultureInfo.InvariantCulture, $" x=\"{originX + runStart * metrics.CharWidth:0.##}\"").Append(textYAttribute);
+            sb.Append(" x=\"").Append(context.ColumnX(originX, runStart)).Append('"').Append(textYAttribute);
             AppendFontStyle(sb, runBold, runItalic, runUnderline);
-            sb.Append(CultureInfo.InvariantCulture, $" textLength=\"{(drawnEnd - runStart) * metrics.CharWidth:0.##}\">{EscapeXml(drawText)}</text>");
+            sb.Append(" textLength=\"").Append(context.ColumnsWidth(drawnEnd - runStart)).Append("\">");
+            AppendEscapedXml(sb, runText, drawnChars);
+            sb.Append("</text>");
             texts++;
         }
 
         return texts;
+    }
+
+    /// <summary>The first <paramref name="length"/> characters of <paramref name="text"/>, escaped as <see cref="EscapeXml"/> escapes them.</summary>
+    private static void AppendEscapedXml(StringBuilder sb, StringBuilder text, int length)
+    {
+        foreach (var chunk in text.GetChunks())
+        {
+            if (length == 0)
+                break;
+
+            var span = chunk.Span;
+            if (span.Length > length)
+                span = span[..length];
+            length -= span.Length;
+            var start = 0;
+            for (var i = 0; i < span.Length; i++)
+            {
+                var c = span[i];
+                if (c is not ('&' or '<' or '>' or '"') && !IsXmlInvalid(c))
+                    continue;
+
+                sb.Append(span[start..i]);
+                switch (c)
+                {
+                    case '&': sb.Append("&amp;"); break;
+                    case '<': sb.Append("&lt;"); break;
+                    case '>': sb.Append("&gt;"); break;
+                    case '"': sb.Append("&quot;"); break;
+                    default: sb.Append('�'); break;
+                }
+
+                start = i + 1;
+            }
+
+            sb.Append(span[start..]);
+        }
     }
 
     /// <summary>
@@ -3506,12 +3600,14 @@ internal static class SvgFrameRenderer
     /// differently for those. Returns the number of &lt;text&gt; elements.
     /// </summary>
     private static int AppendGlyphListText(
-        StringBuilder sb, ScreenBuffer buffer, int row, double originX, string textYAttribute, EncodeContext context)
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, string textYAttribute, EncodeContext context, string?[] foregrounds)
     {
-        var metrics = context.Metrics;
-        var theme = context.Theme;
         var texts = 0;
         var groups = t_glyphGroups ??= [];
+        // The groups by foreground, one table per bold and italic pair. A program with many colors, such as a matrix
+        // rain with ~190 shades of green, has as many groups in a row, and finding each glyph's group by walking the
+        // list cost a pass over them per glyph.
+        var byStyle = t_glyphGroupsByStyle ??= new Dictionary<string, GlyphGroup>[4];
         var used = 0;
         for (var col = 0; col < buffer.Width; col++)
         {
@@ -3520,44 +3616,38 @@ internal static class SvgFrameRenderer
             if (cell.IsWideContinuation || text.Length == 0 || (text.Length == 1 && char.IsWhiteSpace(text[0])) || cell.Glyph is not null || IsBlockCell(text))
                 continue;
 
-            var fg = CellColors.ResolveTintedForeground(buffer, row, col, cell, theme);
-            var x = originX + col * metrics.CharWidth;
+            var fg = foregrounds[col]!;
+            var x = context.ColumnX(originX, col);
             if (text.Length != 1)
             {
                 AppendTextStart(sb, fg, context.Fills);
-                sb.Append(CultureInfo.InvariantCulture, $" x=\"{x:0.##}\"").Append(textYAttribute);
+                sb.Append(" x=\"").Append(x).Append('"').Append(textYAttribute);
                 AppendFontStyle(sb, cell.Bold, cell.Italic, underline: false);
                 sb.Append('>').Append(EscapeXml(text)).Append("</text>");
                 texts++;
                 continue;
             }
 
-            GlyphGroup? group = null;
-            for (var i = 0; i < used; i++)
+            var byFg = byStyle[(cell.Bold ? 1 : 0) | (cell.Italic ? 2 : 0)] ??= [];
+            if (byFg.TryGetValue(fg, out var group))
             {
-                var candidate = groups[i];
-                if (candidate.Bold == cell.Bold && candidate.Italic == cell.Italic && string.Equals(candidate.Fg, fg, StringComparison.Ordinal))
-                {
-                    group = candidate;
-                    break;
-                }
+                group.Xs.Append(' ');
             }
-
-            if (group is null)
+            else
             {
                 if (used == groups.Count)
                     groups.Add(new GlyphGroup());
                 group = groups[used++];
                 group.Reset(fg, cell.Bold, cell.Italic);
-            }
-            else
-            {
-                group.Xs.Append(' ');
+                byFg.Add(fg, group);
             }
 
-            group.Xs.Append(x.ToString("0.##", CultureInfo.InvariantCulture));
+            group.Xs.Append(x);
             group.Text.Append(EscapeXml(text));
         }
+
+        foreach (var byFg in byStyle)
+            byFg?.Clear();
 
         for (var i = 0; i < used; i++)
         {

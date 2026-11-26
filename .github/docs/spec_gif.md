@@ -66,6 +66,7 @@ The GIF output adds 25KB to the NativeAOT binary for win-x64 (4,553,216 to 4,578
 - **Scaling a GIF down can make it larger.** Scaled text gets blended colors that compress worse: `basic` at 640×380 was 450.6KB against 376.6KB at its own size, and its text was blurred. A smaller `--font-size` draws smaller text sharply and made the smallest GIF that still reads well, so the warning and the help suggest it, not `--max-size`.
 - **The frame rate matters little for typing.** A typing demo changes a few cells between keystrokes, and an unchanged frame costs a few bytes, so 10 to 30 fps changed `basic` by under 4%. A full-screen program changes the screen every frame, so there it matters: `pty` was 24% smaller at 10fps.
 - **A GIF's delays are hundredths of a second.** 30fps alternates delays of 3 and 4. 20fps gives an even 5.
+- **The second pass started over** (2026-11-26). The palette pass and the frame pass each decoded the background image with ffmpeg, loaded the title's font, and drew the window with its shadow. The frame pass now starts from the frame as the palette pass cleared it. With a background and a window, the pty sample took 219ms of scenetake's CPU time instead of 312ms (ffmpeg aside), with the same GIF.
 
 ## Alternatives Not Chosen
 

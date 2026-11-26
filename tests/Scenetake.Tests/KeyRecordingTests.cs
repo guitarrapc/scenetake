@@ -45,6 +45,9 @@ public sealed class KeyRecordingTests
 
     [Test]
     public async Task WatcherWaitsForLaterOutput() => await Assert.That(KeyRecordingCases.WatcherWaitsForLaterOutput()).IsTrue();
+
+    [Test]
+    public async Task WatcherFindsTextThatStartedInEarlierReads() => await Assert.That(KeyRecordingCases.WatcherFindsTextThatStartedInEarlierReads()).IsTrue();
 }
 
 internal static class KeyRecordingCases
@@ -350,6 +353,37 @@ internal static class KeyRecordingCases
         watcher.Clear();
         ok &= Expect(!watcher.WaitAsync("old prompt").IsCompleted, "output from before the key was found");
         watcher.StopWaiting();
+        return ok;
+    }
+
+    internal static bool WatcherFindsTextThatStartedInEarlierReads()
+    {
+        // A wait looks through each read from a little before where it stopped: a text whose start came in earlier
+        // reads is still found, one character at a time, and after a long output dropped the oldest text.
+        var watcher = new PtyOutputWatcher();
+        var wait = watcher.WaitAsync("ready to go");
+        foreach (var c in "xx ready to g")
+            watcher.Append(Encoding.UTF8.GetBytes(c.ToString()));
+        var ok = Expect(!wait.IsCompleted, "found before its last character came");
+        watcher.Append("o"u8);
+        ok &= Expect(wait.IsCompleted, $"not found when its last character came, read as {Show(watcher.Text)}");
+
+        var late = new PtyOutputWatcher();
+        var lateWait = late.WaitAsync("needle in hay");
+        var hay = Encoding.UTF8.GetBytes(new string('h', 999) + "\r\n");
+        for (var i = 0; i < 100; i++)
+            late.Append(hay);
+        late.Append("needle in"u8);
+        ok &= Expect(!lateWait.IsCompleted, "found before the whole text came");
+        late.Append(" hay"u8);
+        ok &= Expect(lateWait.IsCompleted, "not found after a long output");
+
+        // A new wait looks through the output that an earlier wait, given up, had already looked through.
+        var again = new PtyOutputWatcher();
+        _ = again.WaitAsync("never shows");
+        again.Append("prompt> "u8);
+        again.StopWaiting();
+        ok &= Expect(again.WaitAsync("prompt>").IsCompleted, "a new wait skipped output that an earlier wait had searched");
         return ok;
     }
 

@@ -129,6 +129,9 @@ public sealed class Mp4RenderTests
     public async Task FfmpegProbeTimesOut() => await Assert.That(Skipping.Run(() => Mp4RenderCases.FfmpegProbeTimesOut())).IsTrue();
 
     [Test]
+    public async Task Libx264CheckRunsOncePerFfmpeg() => await Assert.That(Mp4RenderCases.Libx264CheckRunsOncePerFfmpeg()).IsTrue();
+
+    [Test]
     public async Task OutputPathIsCheckedFirst() => await Assert.That(Skipping.Run(() => Mp4RenderCases.OutputPathIsCheckedFirst())).IsTrue();
 
     [Test]
@@ -1052,6 +1055,47 @@ internal static class Mp4RenderCases
             return ex.Message.Contains("16416x", StringComparison.Ordinal)
                 && Mp4Render.OutputSize(RasterLayout.Create(50, 512, 24), Mp4Settings.Default).Width == 15904
                 && Mp4Render.OutputSize(wide, Mp4Settings.Default with { MaxWidth = 1280, MaxHeight = 1024 }).Width == 1280;
+        }
+    }
+
+    internal static bool Libx264CheckRunsOncePerFfmpeg()
+    {
+        // Each mp4 output checks ffmpeg before anything runs. One ffmpeg is asked for its encoders once, and again
+        // when the file changes. The fake notes each run in runs.txt.
+        var directory = Path.Combine(Path.GetTempPath(), $"scenetake-libx264-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var path = Path.Combine(directory, OperatingSystem.IsWindows() ? "ffmpeg.cmd" : "ffmpeg");
+            var runs = Path.Combine(directory, "runs.txt");
+            void WriteFake(string encoders)
+            {
+                if (OperatingSystem.IsWindows())
+                {
+                    File.WriteAllText(path, $"@echo x>>\"%~dp0runs.txt\"\r\n@echo {encoders}\r\n");
+                }
+                else
+                {
+                    File.WriteAllText(path, $"#!/bin/sh\necho x >> \"$(dirname \"$0\")/runs.txt\"\necho \"{encoders}\"\n");
+                    File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+                }
+            }
+
+            int Runs() => File.Exists(runs) ? File.ReadAllLines(runs).Length : 0;
+
+            WriteFake(" V....D libx264              libx264 H.264");
+            var first = Ffmpeg.HasLibx264(path, out var firstError);
+            var second = Ffmpeg.HasLibx264(path, out _);
+            var ok = CanvasFitCases.Expect(first && second, $"libx264 not found: {firstError}") & CanvasFitCases.Expect(Runs() == 1, $"ffmpeg ran {Runs()} times for two checks");
+
+            WriteFake(" V....D libx265 H.265");
+            var changed = Ffmpeg.HasLibx264(path, out var changedError);
+            return ok & CanvasFitCases.Expect(!changed && changedError.Contains("no libx264", StringComparison.Ordinal), $"a changed ffmpeg was not checked again: {changedError}")
+                & CanvasFitCases.Expect(Runs() == 2, $"ffmpeg ran {Runs()} times after it changed");
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
         }
     }
 

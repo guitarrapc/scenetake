@@ -154,6 +154,7 @@ internal sealed class Mp4FrameRenderer
     private readonly double _fadeStart;
     private readonly CanvasWindow _canvas;
     private FixedRatePlan? _plan;
+    private FrameRasterizer? _raster;
 
     /// <param name="loopDuration">The video's length, with the end hold and the fade-out (<see cref="RenderSettingsResolver.ResolveLoopDuration"/>).</param>
     /// <param name="ffmpegPath">ffmpeg, which decodes a background image. Needed only when the background is an image.</param>
@@ -219,16 +220,28 @@ internal sealed class Mp4FrameRenderer
     /// <summary>Calls <paramref name="sink"/> with each RGB24 frame in order. The buffer is reused between calls.</summary>
     internal void Render(Action<byte[]> sink)
     {
-        var desktop = _render.Background is { } background
-            ? DesktopRaster.Render(Layout, background, (frameWidth, frameHeight) => Ffmpeg.DecodeImage(
-                _ffmpegPath ?? throw new Mp4Exception("a background image needs ffmpeg to decode it"), background.ImagePath!, frameWidth, frameHeight))
-            : null;
+        // A GIF renders twice, for its palette and then its frames. The second pass starts from the frame as the first
+        // one's Clear drew it, without decoding the background image, loading the title's font, or blurring the
+        // window's shadow again.
+        var raster = _raster;
+        if (raster is null)
+        {
+            var desktop = _render.Background is { } background
+                ? DesktopRaster.Render(Layout, background, (frameWidth, frameHeight) => Ffmpeg.DecodeImage(
+                    _ffmpegPath ?? throw new Mp4Exception("a background image needs ffmpeg to decode it"), background.ImagePath!, frameWidth, frameHeight))
+                : null;
 
-        GlyphSource? titleGlyphs = null;
-        if (Layout.Window != WindowStyle.None && !string.IsNullOrEmpty(_render.WindowTitle))
-            titleGlyphs = CreateTitleGlyphs(Layout.Window, _render.FontFamily, _fontFile);
+            GlyphSource? titleGlyphs = null;
+            if (Layout.Window != WindowStyle.None && !string.IsNullOrEmpty(_render.WindowTitle))
+                titleGlyphs = CreateTitleGlyphs(Layout.Window, _render.FontFamily, _fontFile);
 
-        var raster = new FrameRasterizer(Layout, _theme, Glyphs, desktop, titleGlyphs, _render.WindowTitle, _render.WindowOpacity, _render.WindowBlur);
+            _raster = raster = new FrameRasterizer(Layout, _theme, Glyphs, desktop, titleGlyphs, _render.WindowTitle, _render.WindowOpacity, _render.WindowBlur);
+        }
+        else
+        {
+            raster.Clear();
+        }
+
         var stepper = new ReplayStepper(_events, _initialWidth, _initialHeight, _canvas, _theme, Plan.StopIndex);
         byte[]? empty = null;
         byte[]? faded = null;
@@ -644,6 +657,16 @@ internal static class Ffmpeg
     internal static bool HasLibx264(string path, out string error, int timeoutMilliseconds = 15_000)
     {
         error = "";
+        var key = Libx264Key(path);
+        if (key is not null)
+        {
+            lock (s_withLibx264)
+            {
+                if (s_withLibx264.Contains(key))
+                    return true;
+            }
+        }
+
         try
         {
             var startInfo = new ProcessStartInfo(path)
@@ -671,7 +694,15 @@ internal static class Ffmpeg
 
             _ = stderr.Wait(timeoutMilliseconds);
             if (stdout.Result.Contains(" libx264 ", StringComparison.Ordinal))
+            {
+                if (key is not null)
+                {
+                    lock (s_withLibx264)
+                        s_withLibx264.Add(key);
+                }
+
                 return true;
+            }
 
             error = $"ffmpeg has no libx264 encoder: {path}";
             return false;
@@ -680,6 +711,26 @@ internal static class Ffmpeg
         {
             error = $"cannot run ffmpeg at {path}: {ex.Message}";
             return false;
+        }
+    }
+
+    // The ffmpeg files found to have libx264 in this run, by path, time, and size: each mp4 output is checked before
+    // anything runs, and starting ffmpeg to list its encoders takes about 60 ms. A file that changed since is checked
+    // again. A failed check is not kept: it stops the run.
+    private static readonly HashSet<string> s_withLibx264 = new(StringComparer.Ordinal);
+
+    private static string? Libx264Key(string path)
+    {
+        try
+        {
+            var file = new FileInfo(path);
+            return file.Exists
+                ? string.Create(CultureInfo.InvariantCulture, $"{file.FullName}|{file.LastWriteTimeUtc.Ticks}|{file.Length}")
+                : null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return null;
         }
     }
 

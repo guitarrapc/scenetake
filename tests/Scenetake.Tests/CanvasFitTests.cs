@@ -35,6 +35,9 @@ public sealed class CanvasFitTests
     public async Task WideCharacterCutByCropIsBlank() => await Assert.That(CanvasFitCases.WideCharacterCutByCropIsBlank()).IsTrue();
 
     [Test]
+    public async Task ReusedViewCopyShowsTheScreenAsANewCopyDoes() => await Assert.That(CanvasFitCases.ReusedViewCopyShowsTheScreenAsANewCopyDoes()).IsTrue();
+
+    [Test]
     public async Task CropLeavingNothingIsAnError() => await Assert.That(CanvasFitCases.CropLeavingNothingIsAnError()).IsTrue();
 
     [Test]
@@ -169,6 +172,31 @@ internal static class CanvasFitCases
         return Expect(left.GetCell(0, 0).Text == " " && !left.GetCell(0, 0).IsWideContinuation, "the half cut at the left is blank")
             & Expect(left.GetCell(0, 1).Text == "い", $"the next character stays: '{left.GetCell(0, 1).Text}'")
             & Expect(right.GetCell(0, 2).Text == " " && !right.GetCell(0, 2).IsWide, "the half cut at the right is blank");
+    }
+
+    internal static bool ReusedViewCopyShowsTheScreenAsANewCopyDoes()
+    {
+        // A replay copies each frame's window into the copy it made for the frame before. Nothing of that frame may
+        // stay: rows the screen no longer has after a resize are blank, and so is a wide character the edge cuts.
+        var theme = Theme();
+        var buffer = new ScreenBuffer(10, 5, theme);
+        var parser = new AnsiParser(buffer, theme);
+        var canvas = new CanvasWindow(1, 1, 6, 4);
+        ScreenBuffer? copy = null;
+        parser.Process("0123456789\r\nabcdefghij\r\nklmnopqrst\r\nuvwxyz0123\r\n456789abcd");
+        var first = TerminalReplay.ViewForCanvas(buffer, canvas, ref copy);
+        buffer.Resize(10, 2);
+        parser.Process("\u001b[H\u001b[2J\r\nあいう\u001b[?25l");
+        var second = TerminalReplay.ViewForCanvas(buffer, canvas, ref copy);
+        var fresh = TerminalReplay.ViewForCanvas(buffer, canvas);
+        var same = true;
+        for (var row = 0; row < fresh.Height; row++)
+            same &= second.RowEquals(fresh, row);
+        return Expect(ReferenceEquals(first, second), "the second frame did not reuse the copy of the first")
+            & Expect(same, "the reused copy kept cells of the earlier frame")
+            & Expect(second.GetCell(0, 0).Text == " " && second.GetCell(0, 1).Text == "い" && second.IsRowBlank(1), "cells of the new frame")
+            & Expect(second.CursorVisible == fresh.CursorVisible && second.CursorRow == fresh.CursorRow && second.CursorCol == fresh.CursorCol,
+                $"cursor {second.CursorRow},{second.CursorCol} {second.CursorVisible}, new copy {fresh.CursorRow},{fresh.CursorCol} {fresh.CursorVisible}");
     }
 
     internal static bool CropLeavingNothingIsAnError()
