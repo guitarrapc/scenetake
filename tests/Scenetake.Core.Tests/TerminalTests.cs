@@ -33,6 +33,9 @@ public sealed class TerminalTests
     public async Task AlternateScreen() => await Assert.That(TerminalCases.AlternateScreen()).IsTrue();
 
     [Test]
+    public async Task AlternateScreenThroughResizeAndClone() => await Assert.That(TerminalCases.AlternateScreenThroughResizeAndClone()).IsTrue();
+
+    [Test]
     public async Task CursorVisibility() => await Assert.That(TerminalCases.CursorVisibility()).IsTrue();
 
     [Test]
@@ -282,6 +285,27 @@ internal static class TerminalCases
             && buffer.GetCell(0, 1).Text == "A"
             && buffer.GetCell(0, 2).Text == "I"
             && buffer.GetCell(0, 3).Text == "N";
+    }
+
+    internal static bool AlternateScreenThroughResizeAndClone()
+    {
+        // The alternate screen's cells exist only while the program is on it: a resize and a copy made there keep
+        // them, and a resize made after leaving it does not bring them back.
+        var theme = DarkTheme();
+        var buffer = new ScreenBuffer(8, 4, theme);
+        var parser = new AnsiParser(buffer, theme);
+        parser.Process("MAIN\u001b[?1049hALT");
+        buffer.Resize(6, 3);
+        var copyOnAlt = buffer.Clone();
+        var ok = buffer.GetCell(0, 0).Text == "A" && copyOnAlt.GetCell(0, 2).Text == "T";
+        parser.Process("\u001b[?1049l");
+        ok &= buffer.GetCell(0, 0).Text == "M" && buffer.GetCell(0, 3).Text == "N" && copyOnAlt.GetCell(0, 0).Text == "A";
+        buffer.Resize(7, 3);
+        var copyOnMain = buffer.Clone();
+        parser.Process("\u001b[?1049h");
+        ok &= buffer.IsRowBlank(0) && copyOnMain.GetCell(0, 0).Text == "M";
+        parser.Process("\u001b[?1049l");
+        return ok && buffer.GetCell(0, 0).Text == "M";
     }
 
     internal static bool CursorVisibility()

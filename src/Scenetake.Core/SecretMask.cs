@@ -496,12 +496,13 @@ internal sealed class SecretMasker
         for (var s = 0; s < segments.Length; s++)
         {
             writer.Clear();
-            for (var b = segmentStarts[s]; b < segmentStarts[s + 1]; b++)
+            var end = segmentStarts[s + 1];
+            var b = Math.Max(segmentStarts[s], skipUntil);
+            while (b < end)
             {
-                if (b < skipUntil)
-                    continue;
-
-                if (next < replaced.Count && text.Starts[replaced[next]] == b)
+                // Replaced characters start in byte order, each after the bytes of the one before.
+                var nextStart = next < replaced.Count ? text.Starts[replaced[next]] : int.MaxValue;
+                if (nextStart == b)
                 {
                     var k = replaced[next];
                     if (replacements[next++] is { } replacement)
@@ -511,17 +512,21 @@ internal sealed class SecretMasker
                     }
                     else
                     {
-                        var width = text.Widths[k];
+                        var width = text.WidthAt(k);
                         writer.GetSpan(width)[..width].Fill((byte)MaskChar);
                         writer.Advance(width);
                     }
 
-                    skipUntil = b + text.Lengths[k];
+                    skipUntil = b + text.LengthAt(k);
+                    b = skipUntil;
                     continue;
                 }
 
-                writer.GetSpan(1)[0] = all[b];
-                writer.Advance(1);
+                // The bytes up to the next replaced character, or to the end of the segment, stay as they are.
+                var copyEnd = nextStart > b ? Math.Min(end, nextStart) : end;
+                all.AsSpan(b, copyEnd - b).CopyTo(writer.GetSpan(copyEnd - b));
+                writer.Advance(copyEnd - b);
+                b = copyEnd;
             }
 
             result[s] = writer.WrittenSpan.ToArray();
@@ -573,7 +578,7 @@ internal sealed class SecretMasker
         {
             for (var k = start; k < end; k++)
             {
-                if (visible.Starts[k] < 0 || visible.Fixed[k] || (paths is not null && paths[k] != 0))
+                if (visible.Starts[k] < 0 || visible.IsFixed(k) || (paths is not null && paths[k] != 0))
                     return false;
             }
 
@@ -1146,43 +1151,84 @@ internal sealed class SecretMasker
     /// </summary>
     private sealed class VisibleText
     {
-        private readonly StringBuilder _text;
-        private readonly List<int> _starts;
-        private readonly List<int> _lengths;
-        private readonly List<int> _widths;
-        private readonly List<bool> _fixed;
+        // Every step's output goes through here, so it keeps one char and one int per character, and finds a
+        // character's byte count and width again from its bytes when it is replaced, which few are. Five lists that
+        // were copied to arrays at the end allocated about 30 bytes per byte of output.
+        private readonly byte[] _bytes;
+        private char[] _chars;
+        private int[] _starts;
+        // Made at the first character on the alternate screen; most output has none.
+        private bool[]? _fixed;
+        private int _count;
         private readonly int[] _cuts;
         private int _nextCut;
         // Between a program's switch to the alternate screen and its switch back: a full-screen program draws there.
         private bool _alternate;
 
-        private VisibleText(int capacity, int[] cuts)
+        private VisibleText(byte[] bytes, int[] cuts)
         {
-            _text = new StringBuilder(capacity);
-            _starts = new List<int>(capacity);
-            _lengths = new List<int>(capacity);
-            _widths = new List<int>(capacity);
-            _fixed = new List<bool>(capacity);
+            _bytes = bytes;
+            // Each character has a byte of its own, except the stand-ins for tabs and cursor moves to the right, so
+            // the byte count is enough unless a cursor move stands for many spaces.
+            var capacity = Math.Max(16, bytes.Length);
+            _chars = new char[capacity];
+            _starts = new int[capacity];
             _cuts = cuts;
         }
 
         internal string Text { get; private set; } = "";
-        internal int[] Starts { get; private set; } = [];
-        internal int[] Lengths { get; private set; } = [];
-        internal int[] Widths { get; private set; } = [];
 
-        /// <summary>Whether each character is on the alternate screen, where a full-screen program places text by column.</summary>
-        internal bool[] Fixed { get; private set; } = [];
+        /// <summary>
+        /// Each character's first byte, or −1 for a stand-in, which has no bytes. Longer than <see cref="Text"/>: only
+        /// its first <c>Text.Length</c> entries are characters.
+        /// </summary>
+        internal int[] Starts => _starts;
+
+        /// <summary>Whether character <paramref name="k"/> is on the alternate screen, where a full-screen program places text by column.</summary>
+        internal bool IsFixed(int k) => _fixed is not null && _fixed[k];
+
+        /// <summary>The byte count of character <paramref name="k"/>: its whole UTF-8 sequence, which both halves of a surrogate pair share.</summary>
+        internal int LengthAt(int k)
+        {
+            var start = _starts[k];
+            if (start < 0)
+                return 0;
+            if (_bytes[start] < 0x80)
+                return 1;
+            Rune.DecodeFromUtf8(_bytes.AsSpan(start), out _, out var consumed);
+            return consumed;
+        }
+
+        /// <summary>The columns character <paramref name="k"/> takes: 0 for a combining mark, 2 for a wide character.</summary>
+        internal int WidthAt(int k)
+        {
+            var start = _starts[k];
+            if (start < 0)
+                return 0;
+            if (_bytes[start] < 0x80)
+                return 1;
+            Rune.DecodeFromUtf8(_bytes.AsSpan(start), out var rune, out _);
+            return IsCombining(rune) ? 0 : ScreenBuffer.IsWideCodePoint(rune.Value) ? 2 : 1;
+        }
 
         private bool _lastIsBreak;
 
-        private void Add(char c, int start, int length, int width)
+        private void Add(char c, int start)
         {
-            _text.Append(c);
-            _starts.Add(start);
-            _lengths.Add(length);
-            _widths.Add(width);
-            _fixed.Add(_alternate);
+            if (_count == _chars.Length)
+            {
+                var size = _chars.Length * 2;
+                Array.Resize(ref _chars, size);
+                Array.Resize(ref _starts, size);
+                if (_fixed is not null)
+                    Array.Resize(ref _fixed, size);
+            }
+
+            _chars[_count] = c;
+            _starts[_count] = start;
+            if (_alternate)
+                (_fixed ??= new bool[_chars.Length])[_count] = true;
+            _count++;
             _lastIsBreak = false;
         }
 
@@ -1191,7 +1237,7 @@ internal sealed class SecretMasker
         {
             if (_lastIsBreak)
                 return;
-            Add('\n', -1, 0, 0);
+            Add('\n', -1);
             _lastIsBreak = true;
         }
 
@@ -1201,7 +1247,7 @@ internal sealed class SecretMasker
         /// </summary>
         internal static VisibleText Read(byte[] bytes, int[] cuts)
         {
-            var visible = new VisibleText(bytes.Length, cuts);
+            var visible = new VisibleText(bytes, cuts);
             Span<char> chars = stackalloc char[2];
             var i = 0;
             while (i < bytes.Length)
@@ -1219,7 +1265,7 @@ internal sealed class SecretMasker
                     // CAN that comes after its string has ended, or SO and SI, which pick the set the next letters
                     // come from. `tput sgr0` writes SI after a color for some terminals.
                     if (b == (byte)'\t')
-                        visible.Add(' ', -1, 0, 0);
+                        visible.Add(' ', -1);
                     else if (b is (byte)'\n' or (byte)'\r' or 0x08 or 0x0B or 0x0C)
                         visible.Break();
                     i++;
@@ -1234,7 +1280,7 @@ internal sealed class SecretMasker
 
                 if (b < 0x80)
                 {
-                    visible.Add((char)b, i, 1, 1);
+                    visible.Add((char)b, i);
                     i++;
                     continue;
                 }
@@ -1256,20 +1302,16 @@ internal sealed class SecretMasker
                 }
                 else
                 {
-                    var width = IsCombining(rune) ? 0 : ScreenBuffer.IsWideCodePoint(rune.Value) ? 2 : 1;
+                    // LengthAt and WidthAt read the same sequence again at i.
                     var count = rune.EncodeToUtf16(chars);
                     for (var k = 0; k < count; k++)
-                        visible.Add(chars[k], i, consumed, width);
+                        visible.Add(chars[k], i);
                 }
 
                 i += consumed;
             }
 
-            visible.Text = visible._text.ToString();
-            visible.Starts = [.. visible._starts];
-            visible.Lengths = [.. visible._lengths];
-            visible.Widths = [.. visible._widths];
-            visible.Fixed = [.. visible._fixed];
+            visible.Text = new string(visible._chars, 0, visible._count);
             return visible;
         }
 
@@ -1325,7 +1367,7 @@ internal sealed class SecretMasker
                     // ConPTY writes a run of spaces as a cursor move to the right: `KEY:\e[1Cvalue`.
                     var count = ParseCount(bytes.AsSpan(i + 2, j - i - 2));
                     for (var k = 0; k < Math.Min(count, 512); k++)
-                        Add(' ', -1, 0, 0);
+                        Add(' ', -1);
                 }
                 else if (final is not ((byte)'m' or (byte)'X')
                     && !(final == (byte)'K' && (j == i + 2 || (j == i + 3 && bytes[i + 2] == (byte)'0'))))

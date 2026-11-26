@@ -52,7 +52,7 @@ internal static class CastReader
         if (headerLineIndex < 0)
             throw new CastReadException("cast header is missing");
 
-        using var headerDoc = ParseJsonOrThrow(headerLine, headerLineIndex + 1);
+        using var headerDoc = ParseJsonOrThrow(headerLine.AsMemory(), headerLineIndex + 1);
         var header = headerDoc.RootElement;
 
         if (!header.TryGetProperty("version", out var versionElement) ||
@@ -136,8 +136,9 @@ internal static class CastReader
 
         for (var i = headerLineIndex + 1; i < lines.Length; i++)
         {
-            var line = lines[i].AsSpan().Trim();
-            if (line.IsEmpty || line[0] == '#')
+            // A slice of the line, not a copy: JsonDocument reads it as it is.
+            var line = lines[i].AsMemory().Trim();
+            if (line.IsEmpty || line.Span[0] == '#')
                 continue;
 
             if (!TryParseEventLine(line, i + 1, warnedCodes, out var ev, out var relativeDelay, out var code))
@@ -418,11 +419,11 @@ internal static class CastReader
         return element.TryGetInt32(out value) && value > 0;
     }
 
-    private static JsonDocument ParseJsonOrThrow(ReadOnlySpan<char> json, int lineNumber)
+    private static JsonDocument ParseJsonOrThrow(ReadOnlyMemory<char> json, int lineNumber)
     {
         try
         {
-            return JsonDocument.Parse(json.ToString());
+            return JsonDocument.Parse(json);
         }
         catch (JsonException ex)
         {
@@ -484,7 +485,7 @@ internal static class CastReader
         c is (>= '0' and <= '9') or (>= 'a' and <= 'f') or (>= 'A' and <= 'F');
 
     private static bool TryParseEventLine(
-        ReadOnlySpan<char> line,
+        ReadOnlyMemory<char> line,
         int lineNumber,
         HashSet<string> warnedCodes,
         out CastEvent? ev,
@@ -509,12 +510,23 @@ internal static class CastReader
         relativeDelay = time;
         var data = root[2].GetString() ?? "";
 
-        var codeText = root[1].GetRawText();
-
-        if (codeText.Length == 3 && codeText[0] == '"' && codeText[2] == '"')
+        // The code as written: one character between the quotes, not an escape. Nearly every event's code is one ASCII
+        // letter, three raw bytes, which is read without making a string of them. JSON has no raw control character in
+        // a string, so '\0' means the code is something else.
+        var raw = System.Runtime.InteropServices.JsonMarshal.GetRawUtf8Value(root[1]);
+        var single = raw.Length == 3 ? (char)raw[1] : '\0';
+        string? codeText = null;
+        if (single == '\0')
         {
-            eventCode = codeText[1];
-            switch (codeText[1])
+            codeText = root[1].GetRawText();
+            if (codeText.Length == 3 && codeText[0] == '"' && codeText[2] == '"')
+                single = codeText[1];
+        }
+
+        if (single != '\0')
+        {
+            eventCode = single;
+            switch (single)
             {
                 case 'o':
                     ev = CastEvent.Output(time, data);
@@ -536,7 +548,7 @@ internal static class CastReader
                     return true;
                 default:
                 {
-                    var unknown = codeText[1].ToString();
+                    var unknown = single.ToString();
                     if (warnedCodes.Add(unknown))
                         Console.Error.WriteLine($"Warning: cast: unsupported cast event code '{unknown}', skipping");
 
@@ -545,6 +557,7 @@ internal static class CastReader
             }
         }
 
+        codeText ??= root[1].GetRawText();
         var code = codeText.Length >= 2 && codeText[0] == '"' && codeText[^1] == '"'
             ? codeText[1..^1].ToString()
             : root[1].GetString() ?? "";

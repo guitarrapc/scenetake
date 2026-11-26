@@ -133,7 +133,9 @@ internal sealed class ScreenBuffer
 
     private readonly TerminalTheme _theme;
     private ScreenCell[,] _mainCells;
-    private ScreenCell[,] _altCells;
+    // Only while the program is on the alternate screen. Entering it starts a blank one, so none is kept outside it,
+    // and a screen that never enters it, such as every canvas-sized copy a render makes, allocates none.
+    private ScreenCell[,]? _altCells;
     private ScreenCell[,] _cells;
     private bool _isAltScreen;
     private int _savedRow;
@@ -152,7 +154,6 @@ internal sealed class ScreenBuffer
         _theme = theme;
         DefaultStyle = CellStyle.Default(theme);
         _mainCells = CreateBlankCells();
-        _altCells = CreateBlankCells();
         _cells = _mainCells;
         _scrollTop = 0;
         _scrollBottom = Height - 1;
@@ -380,12 +381,12 @@ internal sealed class ScreenBuffer
             return;
 
         var resizedMain = ResizeCells(_mainCells, Width, Height, newWidth, newHeight, DefaultStyle);
-        var resizedAlt = ResizeCells(_altCells, Width, Height, newWidth, newHeight, DefaultStyle);
+        var resizedAlt = _altCells is null ? null : ResizeCells(_altCells, Width, Height, newWidth, newHeight, DefaultStyle);
         Width = newWidth;
         Height = newHeight;
         _mainCells = resizedMain;
         _altCells = resizedAlt;
-        _cells = _isAltScreen ? _altCells : _mainCells;
+        _cells = ShownCells();
         _scrollTop = 0;
         _scrollBottom = Height - 1;
         CursorRow = Math.Clamp(CursorRow, 0, Height - 1);
@@ -393,25 +394,40 @@ internal sealed class ScreenBuffer
         _pendingWrap = false;
     }
 
+    // The cells on show. A canvas-sized copy (CopyWindow) keeps the alternate screen's flag, but its cells are its own
+    // main cells.
+    private ScreenCell[,] ShownCells() => _isAltScreen && _altCells is not null ? _altCells : _mainCells;
+
     /// <summary>
     /// A copy of the cells <paramref name="canvas"/> covers, as a screen of its size. Cells outside this screen are
     /// blank. A wide character that the window's edge cuts in half becomes blank. The cursor keeps its place on the
     /// cells, and it is hidden when it is outside the window.
     /// </summary>
-    internal ScreenBuffer CopyWindow(CanvasWindow canvas)
+    /// <param name="reuse">
+    /// A copy that an earlier call made and that nobody reads any more. When it has the window's size it is filled
+    /// again and returned, so a replay copies every frame into one screen instead of allocating one per frame.
+    /// </param>
+    internal ScreenBuffer CopyWindow(CanvasWindow canvas, ScreenBuffer? reuse = null)
     {
-        var view = new ScreenBuffer(canvas.Width, canvas.Height, _theme);
+        var view = reuse is not null && !ReferenceEquals(reuse, this) && reuse._theme == _theme
+            && reuse.Width == Math.Max(1, canvas.Width) && reuse.Height == Math.Max(1, canvas.Height)
+            ? reuse
+            : new ScreenBuffer(canvas.Width, canvas.Height, _theme);
+        var blank = view.BlankCell();
         for (var viewRow = 0; viewRow < view.Height; viewRow++)
         {
             var row = viewRow + canvas.Top;
             if ((uint)row >= (uint)Height)
+            {
+                for (var viewCol = 0; viewCol < view.Width; viewCol++)
+                    view._cells[viewRow, viewCol] = blank;
                 continue;
+            }
 
             for (var viewCol = 0; viewCol < view.Width; viewCol++)
             {
                 var col = viewCol + canvas.Left;
-                if ((uint)col < (uint)Width)
-                    view._cells[viewRow, viewCol] = _cells[row, col];
+                view._cells[viewRow, viewCol] = (uint)col < (uint)Width ? _cells[row, col] : blank;
             }
 
             if (view._cells[viewRow, 0].IsWideContinuation)
@@ -488,9 +504,9 @@ internal sealed class ScreenBuffer
             _scrollBottom = _scrollBottom,
             _pendingWrap = _pendingWrap,
             _mainCells = CloneCells(_mainCells),
-            _altCells = CloneCells(_altCells),
+            _altCells = _altCells is null ? null : CloneCells(_altCells),
         };
-        cloned._cells = cloned._isAltScreen ? cloned._altCells : cloned._mainCells;
+        cloned._cells = cloned.ShownCells();
         return cloned;
     }
 
@@ -805,6 +821,7 @@ internal sealed class ScreenBuffer
             return;
 
         _cells = _mainCells;
+        _altCells = null;
         _isAltScreen = false;
         AlternateScreenSwitches++;
         CursorRow = Clamp(_savedMainRow, 0, Height - 1);
@@ -2570,6 +2587,7 @@ internal sealed class ReplayStepper
     private readonly int _stopIndex;
     private int _next;
     private ulong _lastSignature;
+    private ScreenBuffer? _viewCopy;
 
     /// <param name="stopIndex">Events at or after this index are never applied (see <see cref="TerminalReplay.PlanFixedRate"/>).</param>
     internal ReplayStepper(
@@ -2595,7 +2613,7 @@ internal sealed class ReplayStepper
     internal bool Started { get; private set; }
 
     /// <summary>The canvas-sized screen. Valid until the next <see cref="AdvanceTo"/>.</summary>
-    internal ScreenBuffer View => TerminalReplay.ViewForCanvas(_buffer, _canvas);
+    internal ScreenBuffer View => TerminalReplay.ViewForCanvas(_buffer, _canvas, ref _viewCopy);
 
     /// <summary>Applies every event with time ≤ <paramref name="time"/>. Returns true when the screen changed.</summary>
     internal bool AdvanceTo(double time)
@@ -2766,6 +2784,7 @@ internal static class TerminalReplay
         out bool finalIsBlank)
     {
         var buffer = new ScreenBuffer(initialWidth, initialHeight, theme);
+        ScreenBuffer? viewCopy = null;
         var parser = new AnsiParser(buffer, theme);
         var switchFrames = new List<int>();
         var seenSwitches = 0;
@@ -2788,7 +2807,7 @@ internal static class TerminalReplay
                 waitingForScreen = true;
             }
 
-            if (waitingForScreen && !IsBlankBuffer(ViewForCanvas(buffer, canvas)))
+            if (waitingForScreen && !IsBlankBuffer(ViewForCanvas(buffer, canvas, ref viewCopy)))
             {
                 if (frame > 0)
                     switchFrames.Add(frame);
@@ -2800,7 +2819,7 @@ internal static class TerminalReplay
         while (next < stopIndex)
             Apply(buffer, parser, events[next++]);
 
-        finalIsBlank = IsBlankBuffer(ViewForCanvas(buffer, canvas));
+        finalIsBlank = IsBlankBuffer(ViewForCanvas(buffer, canvas, ref viewCopy));
         return switchFrames;
     }
 
@@ -2838,6 +2857,7 @@ internal static class TerminalReplay
         bool lastOfSameTime = false)
     {
         var buffer = new ScreenBuffer(initialWidth, initialHeight, theme);
+        ScreenBuffer? viewCopy = null;
         var parser = new AnsiParser(buffer, theme);
         ulong? lastSignature = null;
         var yielded = false;
@@ -2848,7 +2868,7 @@ internal static class TerminalReplay
             lastSignature = signature;
             yielded = true;
             var (viewportWidth, viewportHeight) = canvas.Viewport(buffer.Width, buffer.Height);
-            yield return new ReplayCapture(0, ViewForCanvas(buffer, canvas), viewportWidth, viewportHeight, signature, -1);
+            yield return new ReplayCapture(0, ViewForCanvas(buffer, canvas, ref viewCopy), viewportWidth, viewportHeight, signature, -1);
         }
 
         for (var eventIndex = 0; eventIndex < events.Count; eventIndex++)
@@ -2874,12 +2894,12 @@ internal static class TerminalReplay
             lastSignature = signature;
             yielded = true;
             var (viewportWidth, viewportHeight) = canvas.Viewport(buffer.Width, buffer.Height);
-            yield return new ReplayCapture(ev.Time, ViewForCanvas(buffer, canvas), viewportWidth, viewportHeight, signature, eventIndex);
+            yield return new ReplayCapture(ev.Time, ViewForCanvas(buffer, canvas, ref viewCopy), viewportWidth, viewportHeight, signature, eventIndex);
         }
 
         if (!yielded)
         {
-            var view = ViewForCanvas(buffer, canvas);
+            var view = ViewForCanvas(buffer, canvas, ref viewCopy);
             var (viewportWidth, viewportHeight) = canvas.Viewport(buffer.Width, buffer.Height);
             yield return new ReplayCapture(0, view, viewportWidth, viewportHeight, view.ComputeCanvasSignature(view.Width, view.Height), events.Count);
         }
@@ -2912,10 +2932,11 @@ internal static class TerminalReplay
         IReadOnlyList<ReplayFrame> frames)
     {
         var buffer = new ScreenBuffer(initialWidth, initialHeight, theme);
+        ScreenBuffer? viewCopy = null;
         var parser = new AnsiParser(buffer, theme);
         var next = 0;
         while (next < frames.Count && frames[next].EventIndex < 0)
-            yield return (frames[next++], ViewForCanvas(buffer, canvas));
+            yield return (frames[next++], ViewForCanvas(buffer, canvas, ref viewCopy));
 
         for (var eventIndex = 0; eventIndex < events.Count && next < frames.Count; eventIndex++)
         {
@@ -2931,11 +2952,11 @@ internal static class TerminalReplay
                 parser.Process(ev.Data);
 
             if (frames[next].EventIndex == eventIndex)
-                yield return (frames[next++], ViewForCanvas(buffer, canvas));
+                yield return (frames[next++], ViewForCanvas(buffer, canvas, ref viewCopy));
         }
 
         while (next < frames.Count && frames[next].EventIndex >= events.Count)
-            yield return (frames[next++], ViewForCanvas(buffer, canvas));
+            yield return (frames[next++], ViewForCanvas(buffer, canvas, ref viewCopy));
 
         if (next != frames.Count)
             throw new InvalidOperationException($"replay reached {next} of {frames.Count} frames");
@@ -2981,6 +3002,18 @@ internal static class TerminalReplay
     /// </summary>
     internal static ScreenBuffer ViewForCanvas(ScreenBuffer source, CanvasWindow canvas)
     {
+        ScreenBuffer? copy = null;
+        return ViewForCanvas(source, canvas, ref copy);
+    }
+
+    /// <summary>
+    /// <see cref="ViewForCanvas(ScreenBuffer, CanvasWindow)"/> for a replay, which reads each view only until it asks
+    /// for the next: a copy of part of the screen goes into <paramref name="copy"/>, the copy the previous call made.
+    /// With fit, most renders draw part of the terminal, and for a full-screen program a new copy per frame was most of
+    /// what the render allocated.
+    /// </summary>
+    internal static ScreenBuffer ViewForCanvas(ScreenBuffer source, CanvasWindow canvas, ref ScreenBuffer? copy)
+    {
         if (canvas.Left == 0 && canvas.Top == 0)
         {
             if (source.Width == canvas.Width && source.Height == canvas.Height)
@@ -2988,13 +3021,13 @@ internal static class TerminalReplay
 
             if (source.Width <= canvas.Width && source.Height <= canvas.Height)
             {
-                var copy = source.Clone();
-                copy.Resize(canvas.Width, canvas.Height);
-                return copy;
+                var resized = source.Clone();
+                resized.Resize(canvas.Width, canvas.Height);
+                return resized;
             }
         }
 
-        return source.CopyWindow(canvas);
+        return copy = source.CopyWindow(canvas, copy);
     }
 
     /// <summary>
@@ -3700,7 +3733,30 @@ internal static class CellColors
         return string.Equals(bg, theme.Background, StringComparison.OrdinalIgnoreCase) ? null : bg;
     }
 
+    // Per thread, the result for each color with bold, faint, and both. Renderers resolve every bold or faint cell of
+    // every frame, and a program draws them in a few colors, so making the "#rrggbb" text again each time was waste.
+    [ThreadStatic] private static Dictionary<string, string>[]? t_intensity;
+    private const int MaxIntensityCacheEntries = 4096;
+
     internal static string ApplyIntensity(string color, bool bold, bool faint)
+    {
+        if (!bold && !faint)
+            return color;
+
+        var caches = t_intensity ??= new Dictionary<string, string>[3];
+        var cache = caches[bold ? (faint ? 2 : 0) : 1] ??= [];
+        if (cache.TryGetValue(color, out var cached))
+            return cached;
+
+        var result = ComputeIntensity(color, bold, faint);
+        // A recording with every truecolor shade would otherwise grow it without end.
+        if (cache.Count >= MaxIntensityCacheEntries)
+            cache.Clear();
+        cache[color] = result;
+        return result;
+    }
+
+    private static string ComputeIntensity(string color, bool bold, bool faint)
     {
         var factor = 1d;
         if (bold) factor *= 1.2d;

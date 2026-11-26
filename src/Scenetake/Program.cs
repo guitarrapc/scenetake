@@ -1187,9 +1187,10 @@ static int RenderOutputs(string castPath, IReadOnlyList<OutputPlan> plans, Resol
     var exitCode = 0;
     string? darkSvg = null;
     string? lightSvg = null;
+    CastRecording? written = null;
     foreach (var plan in plans)
     {
-        if (!TryRenderOutput(castPath, plan, runSettings, stepNames, out var drawn))
+        if (!TryRenderOutput(castPath, ref written, plan, runSettings, stepNames, out var drawn))
         {
             exitCode = 1;
             continue;
@@ -1217,7 +1218,7 @@ static int RenderOutputs(string castPath, IReadOnlyList<OutputPlan> plans, Resol
     return exitCode;
 }
 
-static bool TryRenderOutput(string castPath, OutputPlan plan, ResolvedRenderSettings runSettings, StepNames? stepNames, out ResolvedRenderSettings drawn)
+static bool TryRenderOutput(string castPath, ref CastRecording? read, OutputPlan plan, ResolvedRenderSettings runSettings, StepNames? stepNames, out ResolvedRenderSettings drawn)
 {
     drawn = runSettings;
     var name = plan.Format switch
@@ -1229,7 +1230,8 @@ static bool TryRenderOutput(string castPath, OutputPlan plan, ResolvedRenderSett
     };
     try
     {
-        var written = CastReader.Read(castPath);
+        // Read once for all the outputs. One that fails to read is tried again by the next output, as each read it before.
+        var written = read ??= CastReader.Read(castPath);
         var settings = RenderSettingsResolver.WithImageBackground(written.RenderSettings, runSettings);
         if (plan.Format == OutputFormat.Svg)
             settings = settings with { MaxFps = runSettings.MaxFps };
@@ -3476,10 +3478,14 @@ static void PrintPngWritten(string path, PngResult result, double at, string? st
 /// </summary>
 static string DescribeConvertedSizes(IReadOnlyList<CastEvent> events, int width, int height, ResolvedRenderSettings render)
 {
-    var text = $"as SVG {SvgRender.FormatSize(SvgRender.Measure(events, width, height, render))}";
+    // Both sizes start from the part of the terminal a render draws, which takes a replay of the recording to find:
+    // once, not once per format (SvgRender.Measure and Mp4Render.Measure each replay it).
+    var canvas = TerminalReplay.ResolveCanvas(events, width, height, render.Crop, render.Fit, TerminalTheme.FromResolved(render.Theme));
+    var text = $"as SVG {SvgRender.FormatSize(SvgFrameRenderer.Measure(render, canvas.Width, canvas.Height))}";
     try
     {
-        var (mp4Width, mp4Height) = Mp4Render.Measure(events, width, height, render, Mp4Settings.Default);
+        var settings = Mp4Settings.Default;
+        var (mp4Width, mp4Height) = Mp4Render.OutputSize(Mp4Render.CreateLayout(render, canvas.Width, canvas.Height, settings), settings);
         text += $", as mp4 {mp4Width}x{mp4Height}";
     }
     catch (FrameTooLargeException)

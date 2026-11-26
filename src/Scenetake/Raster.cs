@@ -1469,6 +1469,15 @@ internal sealed class FrameRasterizer
     /// </summary>
     internal void Clear()
     {
+        if (_cleared is not null)
+        {
+            // Drawn before: nothing it draws changes, and the shadow's blur is the slow part.
+            _cleared.CopyTo(Pixels, 0);
+            Array.Clear(_rowValid);
+            _cursor = null;
+            return;
+        }
+
         if (_desktop is not null)
         {
             _desktop.CopyTo(Pixels, 0);
@@ -1601,6 +1610,11 @@ internal sealed class FrameRasterizer
                 if ((uint)frameX >= (uint)_layout.Width)
                     continue;
 
+                // Under the window the shade is 0 whatever the blur gives, and that is most of the area: look first.
+                var inside = ShapeCoverage(frameX, frameY, x, y, width, height, radius, window);
+                if (inside >= 1)
+                    continue;
+
                 var sum = 0f;
                 for (var k = 0; k < kernel.Length; k++)
                 {
@@ -1609,7 +1623,6 @@ internal sealed class FrameRasterizer
                         sum += across[source * areaWidth + col] * kernel[k];
                 }
 
-                var inside = ShapeCoverage(frameX, frameY, x, y, width, height, radius, window);
                 var shade = opacity * sum * (1 - inside);
                 if (shade <= 0)
                     continue;

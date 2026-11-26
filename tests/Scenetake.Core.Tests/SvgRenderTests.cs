@@ -143,6 +143,9 @@ public sealed class SvgRenderTests
     public async Task CastWarningsSayCast() => await Assert.That(SvgRenderCases.CastWarningsSayCast()).IsTrue();
 
     [Test]
+    public async Task EventCodesAsWritten() => await Assert.That(SvgRenderCases.EventCodesAsWritten()).IsTrue();
+
+    [Test]
     public async Task InvalidJsonNamesOnlyTheCastLine() => await Assert.That(SvgRenderCases.InvalidJsonNamesOnlyTheCastLine()).IsTrue();
 
     [Test]
@@ -1297,6 +1300,27 @@ internal static class SvgRenderCases
             && Rejects(new ScenarioTheme { Palette = string.Join(':', Enumerable.Repeat("#123456", 8)) }, "render.theme.palette")
             && Rejects(new ScenarioTheme { Palette = palette16 + ":notacolor" }, "render.theme.palette")
             && RenderSettingsResolver.TryResolve(new Scenario { Render = new ScenarioRender { Theme = new ScenarioTheme { Fg = "#fff", Bg = "#123456", Palette = palette16 } } }, null, out _, out _);
+    }
+
+    internal static bool EventCodesAsWritten()
+    {
+        // A code is read as written between its quotes: "o" is output, and an escape that means "o" is an unknown
+        // code, as is a character other than a letter the cast format names.
+        var path = Path.Combine(Path.GetTempPath(), $"scenetake-cast-code-{Guid.NewGuid():N}.cast");
+        try
+        {
+            // The second event's code is the JSON escape for o, six characters between the quotes.
+            File.WriteAllText(path, "{\"version\":3,\"term\":{\"cols\":10,\"rows\":2}}\n[0.0, \"o\", \"a\"]\n[0.1, \"\\u006f\", \"b\"]\n[0.1, \"é\", \"c\"]\n[0.1, \"oo\", \"d\"]\n");
+            var (recording, warnings) = ReadCastCapturingWarnings(path);
+            return recording.Events.Count == 1 && recording.Events[0].Data == "a"
+                && warnings.Contains("unsupported cast event code '\\u006f'", StringComparison.Ordinal)
+                && warnings.Contains("unsupported cast event code 'é'", StringComparison.Ordinal)
+                && warnings.Contains("unsupported cast event code 'oo'", StringComparison.Ordinal);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 
     internal static bool CastWarningsSayCast()

@@ -35,6 +35,9 @@ public sealed class CastTimingTests
     public async Task HighlightSplitterPreservesSegments() => await Assert.That(CastTimingCases.HighlightSplitterPreservesSegments()).IsTrue();
 
     [Test]
+    public async Task HighlightSplitterWalksOnceAsFromTheStart() => await Assert.That(CastTimingCases.HighlightSplitterWalksOnceAsFromTheStart()).IsTrue();
+
+    [Test]
     public async Task HighlightSplitterKeepsSgrAcrossBoundary() => await Assert.That(CastTimingCases.HighlightSplitterKeepsSgrAcrossBoundary()).IsTrue();
 
     [Test]
@@ -172,6 +175,113 @@ internal static class CastTimingCases
             && coalesced[0].Data[0] == (byte)'a'
             && coalesced[0].Data[1] == (byte)'b'
             && coalesced[1].Data[0] == (byte)'c';
+    }
+
+    internal static bool HighlightSplitterWalksOnceAsFromTheStart()
+    {
+        // The splitter walks the highlighted text once, each part going on from where the one before stopped. Every
+        // part must be what a walk from the start to that part gives, colors carried over many parts included.
+        var random = new Random(1234);
+        string[] words = ["ok", "ERROR", "warn", "build", "done", "x", "日本"];
+        var segments = new List<string>();
+        for (var i = 0; i < 300; i++)
+        {
+            if (i % 37 == 5)
+            {
+                segments.Add("\u001b[?25l");
+                continue;
+            }
+
+            var text = new System.Text.StringBuilder();
+            for (var w = random.Next(1, 4); w > 0; w--)
+                text.Append(words[random.Next(words.Length)]).Append(random.Next(4) == 0 ? '\n' : ' ');
+            segments.Add(text.ToString());
+        }
+
+        var highlighted = string.Concat(segments)
+            .Replace("ERROR", "\u001b[1;31mERROR\u001b[0m", StringComparison.Ordinal)
+            .Replace("warn", "\u001b[0;33mwarn", StringComparison.Ordinal)
+            .Replace("ok", "\u001b[32mok\u001b[39m", StringComparison.Ordinal);
+        var split = HighlightSplitter.SplitByRawSegments(highlighted, segments);
+
+        var visibleStart = 0;
+        for (var k = 0; k < segments.Count; k++)
+        {
+            var visibleEnd = k == segments.Count - 1 ? int.MaxValue : visibleStart + VisibleCount(segments[k]);
+            var expected = WalkFromTheStart(highlighted, visibleStart, visibleEnd);
+            if (!SecretMaskCases.Expect(split[k] == expected, $"part {k}: {SecretMaskCases.Show(split[k])}, a walk from the start gives {SecretMaskCases.Show(expected)}"))
+                return false;
+            visibleStart = visibleEnd;
+        }
+
+        return true;
+
+        // Each read here holds whole sequences and no CR, so its visible characters are those outside sequences.
+        static int VisibleCount(string text)
+        {
+            var count = 0;
+            for (var i = 0; i < text.Length; i++)
+            {
+                if (text[i] == '\u001b')
+                    i = EscapeSequences.End(text, i) - 1;
+                else
+                    count++;
+            }
+
+            return count;
+        }
+
+        // The splitter as it was before it walked once: from the start of the text for every part.
+        static string WalkFromTheStart(string text, int visibleStart, int visibleEnd)
+        {
+            if (visibleEnd <= visibleStart)
+                return "";
+
+            var sb = new System.Text.StringBuilder();
+            var activeSgr = new System.Text.StringBuilder();
+            var visible = 0;
+            var prefixed = false;
+            for (var index = 0; index < text.Length && visible < visibleEnd; index++)
+            {
+                if (text[index] == '\u001b')
+                {
+                    var end = EscapeSequences.End(text, index);
+                    if (HighlightSplitter.IsSgrSequence(text, index, end))
+                    {
+                        HighlightSplitter.ReadSgr(text, index, end, out var resets, out var sets);
+                        if (resets)
+                            activeSgr.Clear();
+                        if (sets)
+                            activeSgr.Append(text, index, end - index);
+                    }
+
+                    if (visible >= visibleStart)
+                    {
+                        if (!prefixed)
+                            sb.Append(activeSgr);
+                        prefixed = true;
+                        sb.Append(text, index, end - index);
+                    }
+
+                    index = end - 1;
+                    continue;
+                }
+
+                if (visible >= visibleStart)
+                {
+                    if (!prefixed)
+                        sb.Append(activeSgr);
+                    prefixed = true;
+                    sb.Append(text[index]);
+                }
+
+                visible++;
+            }
+
+            if (prefixed && activeSgr.Length > 0 && !sb.ToString().EndsWith("\u001b[0m", StringComparison.Ordinal))
+                sb.Append("\u001b[0m");
+            return sb.ToString();
+        }
     }
 
     internal static bool HighlightSplitterPreservesSegments()

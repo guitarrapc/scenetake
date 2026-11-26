@@ -251,6 +251,13 @@ internal static class HighlightSplitter
         var raw = string.Concat(rawSegments);
         var rawInside = EscapeSequences.Inside(raw);
         var results = new List<string>(rawSegments.Count);
+        // One walk over the highlighted text. Each part goes on from where the one before it stopped, with the colors
+        // set so far, which is where and how a walk from the start would arrive. Walking from the start for every part
+        // took time in reads × length, seconds for a long streamed output.
+        var index = 0;
+        var visible = 0;
+        var activeSgr = new System.Text.StringBuilder();
+        var part = new System.Text.StringBuilder();
         var visibleStart = 0;
         var offset = 0;
         for (var k = 0; k < rawSegments.Count; k++)
@@ -258,7 +265,7 @@ internal static class HighlightSplitter
             var visibleEnd = k == rawSegments.Count - 1
                 ? int.MaxValue
                 : visibleStart + VisibleLength(raw, rawInside, offset, rawSegments[k].Length);
-            results.Add(ExtractVisibleRange(highlighted, visibleStart, visibleEnd));
+            results.Add(ExtractVisibleRange(highlighted, ref index, ref visible, activeSgr, part, visibleStart, visibleEnd));
             visibleStart = visibleEnd;
             offset += rawSegments[k].Length;
         }
@@ -284,16 +291,18 @@ internal static class HighlightSplitter
         return visible;
     }
 
-    private static string ExtractVisibleRange(string text, int visibleStart, int visibleEnd)
+    // The visible characters visibleStart..visibleEnd of text, with the sequences around them. The walk is at index,
+    // after visible characters, with the colors in activeSgr set: the previous part stopped there, at visibleStart, or
+    // the text ended before it. A part never walks back, so an empty part leaves the walk where it is.
+    private static string ExtractVisibleRange(
+        string text, ref int index, ref int visible, System.Text.StringBuilder activeSgr, System.Text.StringBuilder sb, int visibleStart, int visibleEnd)
     {
         if (visibleEnd <= visibleStart)
             return "";
 
-        var sb = new System.Text.StringBuilder();
-        var activeSgr = new System.Text.StringBuilder();
-        var visible = 0;
+        sb.Clear();
         var prefixedActiveSgr = false;
-        for (var index = 0; index < text.Length && visible < visibleEnd; index++)
+        for (; index < text.Length && visible < visibleEnd; index++)
         {
             if (text[index] == '\u001b')
             {

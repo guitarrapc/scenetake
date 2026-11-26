@@ -20,6 +20,12 @@ internal sealed class PtyOutputWatcher
     private readonly Lock gate = new();
     private readonly Decoder decoder = Encoding.UTF8.GetDecoder();
     private readonly StringBuilder text = new();
+    private char[] decoded = [];
+    // How much of the text the pending wait has looked through. Text only grows at its end until a wait takes it or the
+    // oldest is dropped, so the next look starts just before here: a match that ends in the new output can start at
+    // most the needle's length back. Searching all of it after every read, up to MaxText characters, was slow while a
+    // program drew a lot.
+    private int searched;
     private State state;
     private string? pending;
     private TaskCompletionSource? found;
@@ -39,9 +45,11 @@ internal sealed class PtyOutputWatcher
     {
         lock (gate)
         {
-            var chars = new char[decoder.GetCharCount(data, flush: false)];
-            decoder.GetChars(data, chars, flush: false);
-            AppendLocked(chars);
+            var count = decoder.GetCharCount(data, flush: false);
+            if (decoded.Length < count)
+                decoded = new char[Math.Max(count, 4096)];
+            count = decoder.GetChars(data, decoded, flush: false);
+            AppendLocked(decoded.AsSpan(0, count));
         }
     }
 
@@ -61,7 +69,11 @@ internal sealed class PtyOutputWatcher
             Feed(c);
 
         if (text.Length > MaxText)
-            text.Remove(0, text.Length - MaxText / 2);
+        {
+            var dropped = text.Length - MaxText / 2;
+            text.Remove(0, dropped);
+            searched = Math.Max(0, searched - dropped);
+        }
 
         if (pending is not null && TryTake(pending))
         {
@@ -75,7 +87,10 @@ internal sealed class PtyOutputWatcher
     internal void Clear()
     {
         lock (gate)
+        {
             text.Clear();
+            searched = 0;
+        }
     }
 
     /// <summary>
@@ -87,6 +102,8 @@ internal sealed class PtyOutputWatcher
         var normalized = Normalize(needle);
         lock (gate)
         {
+            // A new text: none of the output has been looked through for it yet.
+            searched = 0;
             if (TryTake(normalized))
                 return Task.CompletedTask;
 
@@ -138,11 +155,21 @@ internal sealed class PtyOutputWatcher
 
     private bool TryTake(string needle)
     {
-        var index = text.ToString().IndexOf(needle, StringComparison.Ordinal);
-        if (index < 0)
-            return false;
+        if (needle.Length == 0)
+            return true;
 
-        text.Remove(0, index + needle.Length);
+        // The first match starts at or after `from`: one that starts before it ends inside the text already looked
+        // through, which held none.
+        var from = Math.Max(0, searched - needle.Length + 1);
+        var index = from >= text.Length ? -1 : text.ToString(from, text.Length - from).IndexOf(needle, StringComparison.Ordinal);
+        if (index < 0)
+        {
+            searched = text.Length;
+            return false;
+        }
+
+        text.Remove(0, from + index + needle.Length);
+        searched = 0;
         return true;
     }
 
