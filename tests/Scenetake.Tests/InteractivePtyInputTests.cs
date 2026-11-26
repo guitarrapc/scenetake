@@ -77,7 +77,7 @@ internal static class InteractivePtyInputCases
     internal static bool OnForwardedInput_RecordsElapsedAndBytes()
     {
         var stopwatch = Stopwatch.StartNew();
-        var chunks = new List<PtyInputChunk>();
+        var chunks = new List<TimedBytes>();
         var recorder = new InteractivePtyInputRecorder(stopwatch, chunks);
 
         recorder.OnForwardedInput(TimeSpan.Zero, "hello"u8);
@@ -96,7 +96,7 @@ internal static class InteractivePtyInputCases
     internal static bool OnForwardedInput_IgnoresEmptySpan()
     {
         var stopwatch = Stopwatch.StartNew();
-        var chunks = new List<PtyInputChunk>();
+        var chunks = new List<TimedBytes>();
         var recorder = new InteractivePtyInputRecorder(stopwatch, chunks);
 
         recorder.OnForwardedInput(TimeSpan.Zero, ReadOnlySpan<byte>.Empty);
@@ -107,7 +107,7 @@ internal static class InteractivePtyInputCases
     // sudo, ssh and `read -s` turn echo off and keep canonical mode on while they read a password.
     internal static bool OnForwardedInput_SkipsKeysWhileChildReadsPassword()
     {
-        var chunks = new List<PtyInputChunk>();
+        var chunks = new List<TimedBytes>();
         var hidden = new List<TimeSpan>();
         PtyInputMode? mode = new PtyInputMode(Echo: false, Canonical: true);
         var recorder = new InteractivePtyInputRecorder(Stopwatch.StartNew(), chunks, () => mode, hidden);
@@ -127,7 +127,7 @@ internal static class InteractivePtyInputCases
     // keys themselves. Windows (and an exited child) reports no mode.
     internal static bool OnForwardedInput_RecordsKeysInOtherInputModes()
     {
-        var chunks = new List<PtyInputChunk>();
+        var chunks = new List<TimedBytes>();
         PtyInputMode? mode = null;
         var recorder = new InteractivePtyInputRecorder(Stopwatch.StartNew(), chunks, () => mode);
 

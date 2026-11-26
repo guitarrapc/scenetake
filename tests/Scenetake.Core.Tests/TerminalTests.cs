@@ -36,6 +36,12 @@ public sealed class TerminalTests
     public async Task AlternateScreenThroughResizeAndClone() => await Assert.That(TerminalCases.AlternateScreenThroughResizeAndClone()).IsTrue();
 
     [Test]
+    public async Task StillScreenIsTheFrameAStillShows() => await Assert.That(TerminalCases.StillScreenIsTheFrameAStillShows()).IsTrue();
+
+    [Test]
+    public async Task FitFindsTheEdgesItFoundBefore() => await Assert.That(TerminalCases.FitFindsTheEdgesItFoundBefore()).IsTrue();
+
+    [Test]
     public async Task CursorVisibility() => await Assert.That(TerminalCases.CursorVisibility()).IsTrue();
 
     [Test]
@@ -285,6 +291,135 @@ internal static class TerminalCases
             && buffer.GetCell(0, 1).Text == "A"
             && buffer.GetCell(0, 2).Text == "I"
             && buffer.GetCell(0, 3).Text == "N";
+    }
+
+    // Recordings for the still and fit checks: typing, a full-screen program, frames that each redraw the whole screen
+    // (where a still keeps copies), a final screen that a restore leaves blank, times that fall, markers, and a resize.
+    private static List<(string Name, IReadOnlyList<CastEvent> Events, int Width, int Height)> ReplayCases()
+    {
+        var cases = new List<(string, IReadOnlyList<CastEvent>, int, int)>();
+        foreach (var path in new[] { "samples/pty.cast", "samples/showcase/vim.cast", "samples/demo.cast" })
+        {
+            var recording = CastReader.Read(TestEnv.RepoPath(path));
+            cases.Add((path, recording.Events, recording.Width, recording.Height));
+        }
+
+        var frames = new List<CastEvent> { CastEvent.Output(0.1, "$ ") };
+        for (var frame = 0; frame < 30; frame++)
+        {
+            var screen = new System.Text.StringBuilder("\u001b[H");
+            for (var row = 0; row < 4; row++)
+                screen.Append($"\u001b[3{(frame + row) % 7 + 1}m{new string((char)('a' + (frame + row) % 26), 20)}\r\n");
+            frames.Add(CastEvent.Output(0.2 + frame * 0.1, screen.ToString()));
+            frames.Add(CastEvent.Output(0.2 + frame * 0.1, $"\u001b[{frame % 4 + 1};1H"));
+        }
+
+        frames.Add(CastEvent.Output(3.5, "\u001b[0m"));
+        cases.Add(("redrawn frames", frames, 20, 6));
+
+        cases.Add(("blank at the end", new List<CastEvent>
+        {
+            CastEvent.Output(0.5, "$ hello\r\n$ "),
+            CastEvent.Output(1.0, "\u001b[?1049h\u001b[H\u001b[2J"),
+            CastEvent.Output(1.2, "\u001b[3;5HTUI"),
+            CastEvent.Output(1.6, "\u001b[2J\u001b[?1049l\u001b[2J\u001b[H"),
+        }, 20, 6));
+
+        cases.Add(("falling times", new List<CastEvent>
+        {
+            CastEvent.Output(0.5, "one "),
+            CastEvent.Output(0.3, "two "),
+            CastEvent.Marker(0.4, "m"),
+            CastEvent.Output(0.8, "three\r\n"),
+            CastEvent.Output(0.6, "four"),
+            CastEvent.Resize(0.9, 12, 4),
+            CastEvent.Output(1.0, "five"),
+        }, 20, 6));
+        return cases;
+    }
+
+    private static bool SameScreen(ScreenBuffer? actual, ScreenBuffer? expected)
+    {
+        if (actual is null || expected is null)
+            return actual is null && expected is null;
+        if (actual.Width != expected.Width || actual.Height != expected.Height || actual.CursorVisible != expected.CursorVisible
+            || actual.CursorRow != expected.CursorRow || actual.CursorCol != expected.CursorCol)
+            return false;
+        for (var row = 0; row < actual.Height; row++)
+        {
+            if (!actual.RowEquals(expected, row))
+                return false;
+        }
+
+        return true;
+    }
+
+    internal static bool StillScreenIsTheFrameAStillShows()
+    {
+        // A still's screen comes from one replay that keeps copies, or from a replay up to its frame. Every way must give
+        // the frame that SelectStill picks from BuildFrames, as ReplayStill draws it.
+        var theme = DarkTheme();
+        foreach (var (name, events, width, height) in ReplayCases())
+        {
+            var (canvasWidth, canvasHeight) = TerminalReplay.ResolveCanvasSize(width, height, events);
+            var times = new List<double> { -1, 0, double.PositiveInfinity };
+            foreach (var ev in events)
+                times.AddRange([ev.Time, ev.Time + 0.0005, ev.Time + 0.05]);
+
+            foreach (var canvas in new[] { CanvasWindow.Whole(canvasWidth, canvasHeight), new CanvasWindow(1, 1, canvasWidth - 2, canvasHeight - 2) })
+            {
+                foreach (var at in times)
+                {
+                    var expected = TerminalReplay.SelectStill(TerminalReplay.BuildFrames(events, width, height, canvas, theme, lastOfSameTime: true), at) is { } frame
+                        ? TerminalReplay.ReplayStill(events, width, height, canvas, theme, frame)
+                        : null;
+                    if (!SameScreen(TerminalReplay.StillScreen(events, width, height, canvas, theme, at), expected))
+                    {
+                        Console.Error.WriteLine($"  {name}: the still at {at} on {canvas.Left},{canvas.Top},{canvas.Width}x{canvas.Height} differs");
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    internal static bool FitFindsTheEdgesItFoundBefore()
+    {
+        // The fit pass looks at the screen after each run of events that share a time, without the hash that skipped a
+        // screen seen before. It must find the edges that the pass over the frames found.
+        var theme = DarkTheme();
+        foreach (var (name, events, width, height) in ReplayCases())
+        {
+            foreach (var fit in new[] { FitMode.Height, FitMode.Width, FitMode.Both })
+            {
+                foreach (var crop in new[] { new CropSpec(0, 0, 0, 0), new CropSpec(1, 0, 2, 1) })
+                {
+                    var (canvasWidth, canvasHeight) = TerminalReplay.ResolveCanvasSize(width, height, events);
+                    var cropped = new CanvasWindow(crop.Left, crop.Top, canvasWidth - crop.Left - crop.Right, canvasHeight - crop.Top - crop.Bottom);
+                    var rows = 0;
+                    var cols = 0;
+                    foreach (var capture in TerminalReplay.EnumerateCaptures(events, width, height, CanvasWindow.Whole(canvasWidth, canvasHeight), theme, lastOfSameTime: true))
+                    {
+                        var (captureRows, captureCols) = capture.View.ContentExtent(cropped);
+                        rows = Math.Max(rows, captureRows);
+                        cols = Math.Max(cols, captureCols);
+                    }
+
+                    var expectedWidth = fit is FitMode.Width or FitMode.Both ? Math.Max(1, cols) : cropped.Width;
+                    var expectedHeight = fit is FitMode.Height or FitMode.Both ? Math.Max(1, rows) : cropped.Height;
+                    var actual = TerminalReplay.ResolveCanvas(events, width, height, crop, fit, theme);
+                    if (actual.Left != cropped.Left || actual.Top != cropped.Top || actual.Width != expectedWidth || actual.Height != expectedHeight)
+                    {
+                        Console.Error.WriteLine($"  {name}, fit {fit}: {actual.Width}x{actual.Height}, the frames give {expectedWidth}x{expectedHeight}");
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
     internal static bool AlternateScreenThroughResizeAndClone()

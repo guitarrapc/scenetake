@@ -54,7 +54,8 @@ internal static class PngRender
         string? ffmpegPath = null)
     {
         var theme = TerminalTheme.FromResolved(render.Theme);
-        var canvas = TerminalReplay.ResolveCanvas(events, width, height, render.Crop, render.Fit, theme, at);
+        // The canvas and the screen a still SVG shows on it, from as few replays as it takes (ResolveStill).
+        var canvas = TerminalReplay.ResolveStill(events, width, height, render.Crop, render.Fit, theme, at, out var still);
         var layout = CreateLayout(render, canvas.Width, canvas.Height);
         var glyphs = GlyphSource.Create(render.FontFamily, fontFile, layout);
         var desktop = render.Background is { } background
@@ -66,11 +67,8 @@ internal static class PngRender
             : null;
         var raster = new FrameRasterizer(layout, theme, glyphs, desktop, titleGlyphs, render.WindowTitle, render.WindowOpacity, render.WindowBlur);
 
-        // The same screen a still SVG shows. Before the first screen the terminal is empty, without a cursor.
-        var frames = TerminalReplay.BuildFrames(events, width, height, canvas, theme, lastOfSameTime: true);
-        var view = TerminalReplay.SelectStill(frames, at) is { } frame
-            ? TerminalReplay.ReplayStill(events, width, height, canvas, theme, frame)
-            : new ScreenBuffer(canvas.Width, canvas.Height, theme) { CursorVisible = false };
+        // Before the first screen the terminal is empty, without a cursor.
+        var view = still ?? new ScreenBuffer(canvas.Width, canvas.Height, theme) { CursorVisible = false };
         raster.Draw(view);
 
         var png = PngEncoder.Encode(raster.Pixels, layout.Width, layout.Height, out var colors);

@@ -943,7 +943,7 @@ internal sealed class SecretMasker
             if (next == separator || previous is '!' or '<' or '>' or '=' || (separator == ':' && (previous == ':' || next == '/')))
                 continue;
 
-            if (!TryReadKey(text, i, out var key) || !IsSecretKey(key))
+            if (!TryReadKey(text, i, out var keyStart, out var keyEnd) || !IsSecretKey(text.AsSpan(keyStart, keyEnd - keyStart)))
                 continue;
 
             if (TryReadValue(text, i + 1, out var start, out var end))
@@ -951,9 +951,12 @@ internal sealed class SecretMasker
         }
     }
 
-    private static bool TryReadKey(string text, int separator, out string key)
+    // Where the key before the separator starts and ends, read where it is: FindPairs asks at every = and : of a step's
+    // output, a timestamp's included, and a string for each was waste.
+    private static bool TryReadKey(string text, int separator, out int start, out int end)
     {
-        key = "";
+        start = 0;
+        end = 0;
         var j = separator - 1;
         while (j >= 0 && text[j] == ' ')
             j--;
@@ -969,17 +972,18 @@ internal sealed class SecretMasker
             if (open < 0 || text[open] != quote || open == j - 1)
                 return false;
 
-            key = text[(open + 1)..j];
+            start = open + 1;
+            end = j;
             return true;
         }
 
-        var end = j + 1;
+        end = j + 1;
         while (j >= 0 && end - j <= 64 && IsKeyChar(text[j]))
             j--;
         if (j + 1 == end)
             return false;
 
-        key = text[(j + 1)..end];
+        start = j + 1;
         return true;
     }
 
@@ -1041,65 +1045,66 @@ internal sealed class SecretMasker
         || word.Equals("Digest", StringComparison.OrdinalIgnoreCase);
 
     // The last word of a key that names a secret: GITHUB_TOKEN, db_password, clientSecret.
-    private static readonly HashSet<string> SecretWords = new(StringComparer.Ordinal)
-    {
+    private static readonly string[] SecretWords =
+    [
         "password", "passwd", "passphrase", "secret", "token", "apikey", "credential", "credentials",
         "privatekey", "accesskey", "secretkey", "authorization",
-    };
+    ];
 
     // Words that make a following "key" a secret: API_KEY, AccountKey, x-api-key. PUBLIC_KEY and KEY alone are not.
-    private static readonly HashSet<string> KeyQualifiers = new(StringComparer.Ordinal)
-    {
+    private static readonly string[] KeyQualifiers =
+    [
         "api", "access", "private", "secret", "signing", "encryption", "account", "master", "client", "subscription",
-    };
+    ];
 
     /// <summary>
     /// Whether a variable or key name names a secret: its last word is one of <see cref="SecretWords"/>, or it ends in
     /// "key" after one of <see cref="KeyQualifiers"/>. Words split at <c>_</c>, <c>-</c>, <c>.</c>, and camelCase.
     /// <c>token_endpoint</c> and <c>PASSWORD_FILE</c> do not name one: their last word is not a secret's.
     /// </summary>
-    internal static bool IsSecretKey(string name)
-    {
-        var words = SplitWords(name);
-        if (words.Count == 0)
-            return false;
+    internal static bool IsSecretKey(string name) => IsSecretKey(name.AsSpan());
 
-        var last = words[^1];
-        return SecretWords.Contains(last) || (last == "key" && words.Count > 1 && KeyQualifiers.Contains(words[^2]));
-    }
-
-    private static List<string> SplitWords(string name)
+    // The words are read where they are, without a string for each: FindPairs asks for every key in a step's output.
+    // A word is a run of ASCII letters and digits. fooBar and HTTPServer split before the upper case letter that
+    // starts a word. Case is ignored, and the words hold only ASCII, so OrdinalIgnoreCase is a compare in lower case.
+    private static bool IsSecretKey(ReadOnlySpan<char> name)
     {
-        var words = new List<string>();
-        var current = new StringBuilder();
+        // The last word and the one before it, as start and end.
+        int lastStart = -1, lastEnd = -1, beforeStart = -1, beforeEnd = -1, wordStart = -1;
         for (var i = 0; i < name.Length; i++)
         {
             var c = name[i];
-            if (!char.IsAsciiLetterOrDigit(c))
-            {
-                Flush();
-                continue;
-            }
-
-            // fooBar and HTTPServer split before the upper case letter that starts a word.
-            if (char.IsAsciiLetterUpper(c) && current.Length > 0
+            var startsWord = char.IsAsciiLetterOrDigit(c) && char.IsAsciiLetterUpper(c) && wordStart >= 0
                 && (char.IsAsciiLetterLower(name[i - 1]) || char.IsAsciiDigit(name[i - 1])
-                    || (i + 1 < name.Length && char.IsAsciiLetterLower(name[i + 1]) && char.IsAsciiLetterUpper(name[i - 1]))))
+                    || (i + 1 < name.Length && char.IsAsciiLetterLower(name[i + 1]) && char.IsAsciiLetterUpper(name[i - 1])));
+            if (wordStart >= 0 && (!char.IsAsciiLetterOrDigit(c) || startsWord))
             {
-                Flush();
+                (beforeStart, beforeEnd, lastStart, lastEnd) = (lastStart, lastEnd, wordStart, i);
+                wordStart = -1;
             }
 
-            current.Append(char.ToLowerInvariant(c));
+            if (char.IsAsciiLetterOrDigit(c) && wordStart < 0)
+                wordStart = i;
         }
 
-        Flush();
-        return words;
+        if (wordStart >= 0)
+            (beforeStart, beforeEnd, lastStart, lastEnd) = (lastStart, lastEnd, wordStart, name.Length);
+        if (lastStart < 0)
+            return false;
 
-        void Flush()
+        var last = name[lastStart..lastEnd];
+        return IsOneOf(last, SecretWords)
+            || (last.Equals("key", StringComparison.OrdinalIgnoreCase) && beforeStart >= 0 && IsOneOf(name[beforeStart..beforeEnd], KeyQualifiers));
+
+        static bool IsOneOf(ReadOnlySpan<char> word, string[] words)
         {
-            if (current.Length > 0)
-                words.Add(current.ToString());
-            current.Clear();
+            foreach (var candidate in words)
+            {
+                if (word.Equals(candidate, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
         }
     }
 

@@ -60,9 +60,8 @@ internal static class JsonEscape
                 continue;
             }
 
-            if (rune.Value < 0x20)
-                WriteJsonUnicodeEscape(writer, esc, rune.Value);
-            else if (rune.Value == ReplacementChar)
+            // Only bytes from 0x80 on get here, so no rune is a control character that needs an escape.
+            if (rune.Value == ReplacementChar)
                 writer.Write(ReplacementEscape);
             else
             {

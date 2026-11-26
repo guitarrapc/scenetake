@@ -1728,6 +1728,7 @@ internal static class SvgFrameRenderer
     [ThreadStatic] private static List<GlyphGroup>? t_glyphGroups;
     [ThreadStatic] private static Dictionary<string, GlyphGroup>[]? t_glyphGroupsByStyle;
     [ThreadStatic] private static string?[]? t_rowForegrounds;
+    [ThreadStatic] private static RowParts? t_rowParts;
     [ThreadStatic] private static List<BlockPart>? t_blockParts;
     [ThreadStatic] private static StringBuilder? t_escape;
 
@@ -1948,9 +1949,9 @@ internal static class SvgFrameRenderer
 
                 // Row-local content (baseline at y=0, moved by the row's class) drops y from every
                 // <text>, but the layer then needs the row class, and the row its CSS rule once.
-                // The row-local pass also measures the absolute form, so the absolute form is encoded
-                // here only when it is kept: when it is shorter, or while the row's savings have not
-                // paid for its rule.
+                // The row-local pass also measures the absolute form, so the absolute form is made
+                // only when it is kept: when it is shorter, or while the row's savings have not paid for
+                // its rule. It is made from the row-local encoding (AppendRowAt), not encoded again.
                 var rowTop = origin.Y + row * metrics.LineHeight;
                 local.Clear();
                 var localShape = AppendRow(local, buffer, row, origin.X, -metrics.BaselineOffset, rowLocal: true, context, rowTop);
@@ -1975,14 +1976,14 @@ internal static class SvgFrameRenderer
                 if (!rowLocal)
                 {
                     absolute.Clear();
-                    shape = AppendRow(absolute, buffer, row, origin.X, rowTop, rowLocal: false, context, rowTop);
+                    shape = AppendRowAt(absolute, buffer, row, origin.X, rowTop, context, local);
                     fragment = absolute;
                 }
                 var layer = new AnimLayer(time, row) { ElementCount = shape.Elements, SingleText = shape.SingleText };
 
                 // Scrolling moves unchanged rows to other lines. Reuse the first layer that showed the
                 // same content, after comparing bytes exactly: row-local content as it is, absolute
-                // content re-encoded at that layer's line.
+                // content made again at that layer's line.
                 var reused = false;
                 if (fragment.Length >= MinReusableRowChars)
                 {
@@ -1999,7 +2000,7 @@ internal static class SvgFrameRenderer
                         {
                             verify.Clear();
                             var sourceTop = origin.Y + sourceLayer.P0 * metrics.LineHeight;
-                            AppendRow(verify, buffer, row, origin.X, sourceTop, rowLocal: false, context, sourceTop);
+                            AppendRowAt(verify, buffer, row, origin.X, sourceTop, context, local);
                             same = rowLayers.SegmentEquals(sourceLayer.Content, verify);
                         }
 
@@ -2373,8 +2374,8 @@ internal static class SvgFrameRenderer
         /// </summary>
         internal void AssignNames(ClassNamePool pool)
         {
-            var lengths = new Dictionary<long, (int Uses, int First)>();
-            var entries = new List<(int Uses, int First, int Window, long Length)>();
+            var lengths = new Dictionary<long, NameEntry>();
+            var entries = new List<NameEntry>();
             for (var id = 0; id < _windows.Count; id++)
             {
                 if (_uses[id] == 0)
@@ -2384,20 +2385,26 @@ internal static class SvgFrameRenderer
                 if (KindOf(id) == WindowKind.Span)
                 {
                     var length = hide - show;
-                    var (uses, first) = lengths.TryGetValue(length, out var seen) ? seen : (0, id);
-                    lengths[length] = (uses + (show == 0 ? _uses[id] : 1), first);
+                    if (!lengths.TryGetValue(length, out var shared))
+                    {
+                        shared = new NameEntry(0, id, -1, length);
+                        lengths[length] = shared;
+                        entries.Add(shared);
+                    }
+
+                    shared.Uses += show == 0 ? _uses[id] : 1;
                     if (show == 0)
                         continue;
                 }
 
-                entries.Add((_uses[id], id, id, 0));
+                entries.Add(new NameEntry(_uses[id], id, id, 0));
             }
 
-            foreach (var (length, (uses, first)) in lengths)
-                entries.Add((uses, first, -1, length));
-
             _names = new string?[_windows.Count];
-            foreach (var entry in entries.OrderByDescending(e => e.Uses).ThenBy(e => e.First).ThenBy(e => e.Window))
+            // No two entries are alike in all three, so this order is the one a stable sort gives.
+            var ordered = entries.ToArray();
+            Array.Sort(ordered, NameEntry.Compare);
+            foreach (var entry in ordered)
             {
                 var name = pool.Next();
                 if (entry.Window < 0)
@@ -2405,6 +2412,19 @@ internal static class SvgFrameRenderer
                 else
                     _names[entry.Window] = name;
             }
+        }
+
+        // A window's class, or (Window -1) the keyframes that the spans of one length share. The most used get the
+        // shortest names, then the one first used. A class over a value tuple keeps LINQ's sort out of the binary.
+        private sealed class NameEntry(int uses, int first, int window, long length)
+        {
+            internal int Uses { get; set; } = uses;
+            internal int First { get; } = first;
+            internal int Window { get; } = window;
+            internal long Length { get; } = length;
+
+            internal static int Compare(NameEntry a, NameEntry b) =>
+                a.Uses != b.Uses ? b.Uses.CompareTo(a.Uses) : a.First != b.First ? a.First.CompareTo(b.First) : a.Window.CompareTo(b.Window);
         }
 
         internal string Name(int id)
@@ -3112,17 +3132,24 @@ internal static class SvgFrameRenderer
         var textYAttribute = rowLocal ? "" : absoluteTextY;
         // Each cell's foreground, resolved once for the forms below, which each looked it up again.
         var foregrounds = ResolveRowForegrounds(buffer, row, theme);
+        // What AppendRowAt needs to make the absolute encodings of this row from this one.
+        var parts = t_rowParts ??= new RowParts();
+        parts.Clear(foregrounds);
         var hasUnderline = AppendBackgroundSpans(sb, buffer, row, originX, rowTop, context, out var backgroundRects);
         var blockRects = AppendBlockRects(sb, buffer, row, originX, rowTop, metrics, foregrounds, absoluteRowTop, out var blockYGrowth);
-        var glyphUses = AppendSoftGlyphs(sb, buffer, row, originX, textYAttribute, context, foregrounds);
+        parts.UsesStart = sb.Length;
+        var glyphUses = AppendSoftGlyphs(sb, buffer, row, originX, textYAttribute, context, foregrounds, parts.UseYs);
+        parts.UsesEnd = sb.Length;
         var rectsLength = sb.Length - start;
 
         var runForm = t_runForm ??= new StringBuilder(1024);
         runForm.Clear();
-        var runTexts = AppendRunText(runForm, buffer, row, originX, textYAttribute, context, foregrounds);
+        var runTexts = AppendRunText(runForm, buffer, row, originX, textYAttribute, context, foregrounds, parts.RunYs);
         var texts = runTexts;
         var listLength = int.MaxValue;
         var listTexts = 0;
+        parts.HasUnderline = hasUnderline;
+        parts.GlyphUses = glyphUses;
         if (hasUnderline)
         {
             sb.Append(runForm);
@@ -3131,7 +3158,7 @@ internal static class SvgFrameRenderer
         {
             var listForm = t_listForm ??= new StringBuilder(1024);
             listForm.Clear();
-            listTexts = AppendGlyphListText(listForm, buffer, row, originX, textYAttribute, context, foregrounds);
+            listTexts = AppendGlyphListText(listForm, buffer, row, originX, textYAttribute, context, foregrounds, parts.ListYs);
             listLength = listForm.Length;
             if (listForm.Length < runForm.Length)
             {
@@ -3158,6 +3185,77 @@ internal static class SvgFrameRenderer
 
         var elements = backgroundRects + blockRects + glyphUses + texts;
         return new RowShape(elements, elements == 1 && texts == 1, absoluteLength);
+    }
+
+    /// <summary>
+    /// The row's absolute encoding at <paramref name="top"/>, as <see cref="AppendRow"/> with <c>rowLocal: false</c>
+    /// gives it, made from the row-local encoding in <paramref name="local"/> that the last AppendRow call wrote. The
+    /// rects are drawn again at that top, and the soft glyphs and the text are copied with a <c>y</c> put in where
+    /// each one takes it. Encoding the row again resolved every cell's colors and wrote every glyph a second time,
+    /// and a third for the check of a scrolled row against an absolute layer.
+    /// </summary>
+    private static RowShape AppendRowAt(StringBuilder sb, ScreenBuffer buffer, int row, double originX, double top, EncodeContext context, StringBuilder local)
+    {
+        var parts = t_rowParts!;
+        var start = sb.Length;
+        var textY = string.Create(CultureInfo.InvariantCulture, $" y=\"{top + context.Metrics.BaselineOffset:0.##}\"");
+        AppendBackgroundSpans(sb, buffer, row, originX, top, context, out var backgroundRects);
+        var blockRects = AppendBlockRects(sb, buffer, row, originX, top, context.Metrics, parts.Foregrounds, top, out _);
+        AppendWithY(sb, local, parts.UsesStart, parts.UsesEnd, parts.UseYs, textY);
+
+        // Each <text> gets one y, so the forms' lengths with it tell which AppendRow would keep.
+        var runForm = t_runForm!;
+        var useList = false;
+        if (!parts.HasUnderline)
+        {
+            var listForm = t_listForm!;
+            useList = listForm.Length + parts.ListYs.Count * textY.Length < runForm.Length + parts.RunYs.Count * textY.Length;
+        }
+
+        var form = useList ? t_listForm! : runForm;
+        var ys = useList ? parts.ListYs : parts.RunYs;
+        AppendWithY(sb, form, 0, form.Length, ys, textY);
+        var elements = backgroundRects + blockRects + parts.GlyphUses + ys.Count;
+        return new RowShape(elements, elements == 1 && ys.Count == 1, sb.Length - start);
+    }
+
+    // source[start..end] with y put in at each of the places, which are positions in source in rising order.
+    private static void AppendWithY(StringBuilder sb, StringBuilder source, int start, int end, List<int> places, string y)
+    {
+        var from = start;
+        foreach (var place in places)
+        {
+            sb.Append(source, from, place - from).Append(y);
+            from = place;
+        }
+
+        sb.Append(source, from, end - from);
+    }
+
+    /// <summary>
+    /// What <see cref="AppendRowAt"/> takes from the row-local encoding of a row: where its soft glyphs' &lt;use&gt;s
+    /// are, where each element there and in both text forms takes its <c>y</c>, and the row's foregrounds.
+    /// </summary>
+    private sealed class RowParts
+    {
+        internal string?[] Foregrounds { get; private set; } = [];
+        internal int UsesStart { get; set; }
+        internal int UsesEnd { get; set; }
+        internal List<int> UseYs { get; } = [];
+        internal List<int> RunYs { get; } = [];
+        internal List<int> ListYs { get; } = [];
+        internal bool HasUnderline { get; set; }
+        internal int GlyphUses { get; set; }
+
+        internal void Clear(string?[] foregrounds)
+        {
+            Foregrounds = foregrounds;
+            UseYs.Clear();
+            RunYs.Clear();
+            ListYs.Clear();
+            HasUnderline = false;
+            GlyphUses = 0;
+        }
     }
 
     private static string Format(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
@@ -3336,7 +3434,7 @@ internal static class SvgFrameRenderer
     /// inherited for the theme's foreground. Returns the number of &lt;use&gt;s.
     /// </summary>
     private static int AppendSoftGlyphs(
-        StringBuilder sb, ScreenBuffer buffer, int row, double originX, string textYAttribute, EncodeContext context, string?[] foregrounds)
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, string textYAttribute, EncodeContext context, string?[] foregrounds, List<int> ys)
     {
         var uses = 0;
         for (var col = 0; col < buffer.Width; col++)
@@ -3348,7 +3446,9 @@ internal static class SvgFrameRenderer
             // A soft glyph's cell may be a wide continuation, which ResolveRowForegrounds leaves out.
             var fill = foregrounds[col] ?? CellColors.ResolveTintedForeground(buffer, row, col, cell, context.Theme);
             sb.Append("<use href=\"#").Append(context.Glyphs.IdFor(glyph)).Append('"')
-                .Append(" x=\"").Append(context.ColumnX(originX, col)).Append('"').Append(textYAttribute);
+                .Append(" x=\"").Append(context.ColumnX(originX, col)).Append('"');
+            ys.Add(sb.Length);
+            sb.Append(textYAttribute);
             if (context.Fills.ClassFor(fill) is { } fillClass)
                 sb.Append(" class=\"").Append(fillClass).Append('"');
             sb.Append("/>");
@@ -3464,7 +3564,7 @@ internal static class SvgFrameRenderer
     /// </list>
     /// </summary>
     private static int AppendRunText(
-        StringBuilder sb, ScreenBuffer buffer, int row, double originX, string textYAttribute, EncodeContext context, string?[] foregrounds)
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, string textYAttribute, EncodeContext context, string?[] foregrounds, List<int> ys)
     {
         var theme = context.Theme;
         var lastUnderlined = -1;
@@ -3546,7 +3646,9 @@ internal static class SvgFrameRenderer
                 continue; // only spaces: the background span already covers them
 
             AppendTextStart(sb, runFg, context.Fills);
-            sb.Append(" x=\"").Append(context.ColumnX(originX, runStart)).Append('"').Append(textYAttribute);
+            sb.Append(" x=\"").Append(context.ColumnX(originX, runStart)).Append('"');
+            ys.Add(sb.Length);
+            sb.Append(textYAttribute);
             AppendFontStyle(sb, runBold, runItalic, runUnderline);
             sb.Append(" textLength=\"").Append(context.ColumnsWidth(drawnEnd - runStart)).Append("\">");
             AppendEscapedXml(sb, runText, drawnChars);
@@ -3600,7 +3702,7 @@ internal static class SvgFrameRenderer
     /// differently for those. Returns the number of &lt;text&gt; elements.
     /// </summary>
     private static int AppendGlyphListText(
-        StringBuilder sb, ScreenBuffer buffer, int row, double originX, string textYAttribute, EncodeContext context, string?[] foregrounds)
+        StringBuilder sb, ScreenBuffer buffer, int row, double originX, string textYAttribute, EncodeContext context, string?[] foregrounds, List<int> ys)
     {
         var texts = 0;
         var groups = t_glyphGroups ??= [];
@@ -3621,7 +3723,9 @@ internal static class SvgFrameRenderer
             if (text.Length != 1)
             {
                 AppendTextStart(sb, fg, context.Fills);
-                sb.Append(" x=\"").Append(x).Append('"').Append(textYAttribute);
+                sb.Append(" x=\"").Append(x).Append('"');
+                ys.Add(sb.Length);
+                sb.Append(textYAttribute);
                 AppendFontStyle(sb, cell.Bold, cell.Italic, underline: false);
                 sb.Append('>').Append(EscapeXml(text)).Append("</text>");
                 texts++;
@@ -3653,7 +3757,9 @@ internal static class SvgFrameRenderer
         {
             var group = groups[i];
             AppendTextStart(sb, group.Fg, context.Fills);
-            sb.Append(" x=\"").Append(group.Xs).Append('"').Append(textYAttribute);
+            sb.Append(" x=\"").Append(group.Xs).Append('"');
+            ys.Add(sb.Length);
+            sb.Append(textYAttribute);
             AppendFontStyle(sb, group.Bold, group.Italic, underline: false);
             sb.Append('>').Append(group.Text).Append("</text>");
             texts++;

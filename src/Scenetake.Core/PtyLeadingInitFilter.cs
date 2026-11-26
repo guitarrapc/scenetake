@@ -185,12 +185,9 @@ internal sealed class PtyLeadingInitFilter
                 return false;
             }
         }
-        else if (first is (byte)'\r' or (byte)'\n' or (byte)'\t')
-        {
-            StripPending(1);
-        }
         else
         {
+            // Any byte other than ESC, a line break or a tab included, is dropped one at a time.
             StripPending(1);
         }
 

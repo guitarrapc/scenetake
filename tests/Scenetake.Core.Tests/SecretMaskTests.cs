@@ -690,9 +690,9 @@ internal static class SecretMaskCases
     internal static bool SecretKeyNames()
     {
         var ok = true;
-        foreach (var name in new[] { "GITHUB_TOKEN", "TOKEN", "db_password", "clientSecret", "x-api-key", "AWS_SECRET_ACCESS_KEY", "AccountKey", "APIKey", "--password", "Authorization", "MYSQL_ROOT_PASSWORD" })
+        foreach (var name in new[] { "GITHUB_TOKEN", "TOKEN", "db_password", "clientSecret", "x-api-key", "AWS_SECRET_ACCESS_KEY", "AccountKey", "APIKey", "--password", "Authorization", "MYSQL_ROOT_PASSWORD", "HTTPServerToken", "OAUTH2Token", "my.api.key", "Password" })
             ok &= Expect(SecretMasker.IsSecretKey(name), $"{name} names a secret");
-        foreach (var name in new[] { "token_endpoint", "PASSWORD_FILE", "PUBLIC_KEY", "KEY", "secretKeyRef", "max_tokens", "TOKENIZERS_PARALLELISM", "author", "SSH_AUTH_SOCK", "PWD" })
+        foreach (var name in new[] { "token_endpoint", "PASSWORD_FILE", "PUBLIC_KEY", "KEY", "secretKeyRef", "max_tokens", "TOKENIZERS_PARALLELISM", "author", "SSH_AUTH_SOCK", "PWD", "TokenCount", "apiKeyName", "", "__", "key" })
             ok &= Expect(!SecretMasker.IsSecretKey(name), $"{name} does not name a secret");
         return ok;
     }

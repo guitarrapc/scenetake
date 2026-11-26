@@ -17,7 +17,7 @@ namespace Scenetake;
 /// </remarks>
 sealed class InteractivePtyInputRecorder(
     Stopwatch stopwatch,
-    List<PtyInputChunk> chunks,
+    List<TimedBytes> chunks,
     Func<PtyInputMode?>? inputMode = null,
     List<TimeSpan>? hidden = null) : IPtyConsoleInputObserver
 {
@@ -35,11 +35,7 @@ sealed class InteractivePtyInputRecorder(
             return;
         }
 
-        chunks.Add(new PtyInputChunk(stopwatch.Elapsed, data.ToArray().AsMemory()));
+        chunks.Add(new TimedBytes(stopwatch.Elapsed, data.ToArray().AsMemory()));
     }
 }
 
-/// <summary>
-/// Timestamped host→PTY input bytes captured during an interactive step (same clock as <c>PtyCaptureChunk</c> output).
-/// </summary>
-readonly record struct PtyInputChunk(TimeSpan Time, ReadOnlyMemory<byte> Data);
