@@ -24,6 +24,8 @@ const state = {
   own: '',
   // Counts the outputs files loaded, so a render for an earlier one is dropped.
   outputsLoads: 0,
+  // Counts the images given to the runtime, so a tab renders again after one changed.
+  imageLoads: 0,
   // The name of a YAML the reader opened while a sample's outputs file is loaded, for a hint in the step notes.
   yamlWithoutOutputs: '',
   alive: true,
@@ -162,6 +164,8 @@ const scenarioView = {
   url: '',
   cast: null,
   svg: null,
+  // The key of the render on show (scenarioKey, castKey).
+  rendered: '',
 };
 
 const castView = {
@@ -176,10 +180,17 @@ const castView = {
   url: '',
   cast: null,
   svg: null,
+  // The key of the render on show (scenarioKey, castKey).
+  rendered: '',
 };
 
+// What a render depends on. A tab that shows the render of its current key is not rendered again when it is selected.
 function scenarioKey() {
-  return JSON.stringify([state.sample, state.outputsLoads, getYaml(), state.options]);
+  return JSON.stringify([state.sample, state.outputsLoads, state.imageLoads, getYaml(), state.options]);
+}
+
+function castKey(text) {
+  return JSON.stringify([text, state.imageLoads, state.options]);
 }
 
 async function renderScenario() {
@@ -200,6 +211,7 @@ async function renderScenario() {
   }
 
   showResult(scenarioView, reply);
+  scenarioView.rendered = key;
   if (!reply.meta.error) {
     renderStepNotes(reply.meta.steps);
     renderNotApplied(reply.meta.notApplied);
@@ -216,7 +228,7 @@ async function renderCast() {
     return;
   }
 
-  const key = JSON.stringify([text.length, text.slice(0, 256), text.slice(-256), state.options]);
+  const key = castKey(text);
   let reply;
   try {
     reply = await request('renderCast', { cast: text, options: state.options });
@@ -225,13 +237,13 @@ async function renderCast() {
     return;
   }
 
-  const now = $('cast-input').value;
-  if (key !== JSON.stringify([now.length, now.slice(0, 256), now.slice(-256), state.options])) {
+  if (key !== castKey($('cast-input').value)) {
     scheduleCastRender(0);
     return;
   }
 
   showResult(castView, reply);
+  castView.rendered = key;
 }
 
 function showResult(view, reply) {
@@ -543,8 +555,17 @@ const imageFile = $('image-file');
 const imageError = $('image-error');
 
 async function addImage(name, data, url) {
-  const reply = await request('setImage', { name, data });
-  if (reply.meta.error) throw new Error(reply.meta.error);
+  try {
+    const reply = await request('setImage', { name, data });
+    if (reply.meta.error) throw new Error(reply.meta.error);
+  } catch (error) {
+    // No swatch shows a URL made for an image the runtime refused, so nothing else would free it.
+    if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+    throw error;
+  }
+
+  // A new image under a name in use changes the render without changing the options, so it counts as a change too.
+  state.imageLoads++;
   let swatch = backgroundSwatches.find((item) => item.dataset.background === name);
   if (!swatch) {
     swatch = document.createElement('button');
@@ -626,14 +647,16 @@ function selectTab(tab) {
     if (element instanceof HTMLOptionElement) element.textContent = `from ${source}`;
     else element.placeholder = `from ${source}`;
   }
+  // A tab renders again only when what it shows is out of date: the options, which both tabs share, or the images
+  // changed on the other tab. Switching back and forth used to render the whole recording each time.
   if (tab === 'scenario') {
     editor?.refresh();
-    scheduleScenarioRender(0);
+    if (scenarioView.rendered !== scenarioKey()) scheduleScenarioRender(0);
   } else if ($('cast-input').value.trim() === '' && state.casts.length > 0) {
     const castName = state.casts.includes(state.sample) ? state.sample : state.casts[0];
     $('cast-sample-select').value = castName;
     selectSampleCast(castName).catch((error) => showError(castView, error.message));
-  } else {
+  } else if (castView.rendered !== castKey($('cast-input').value)) {
     scheduleCastRender(0);
   }
 }

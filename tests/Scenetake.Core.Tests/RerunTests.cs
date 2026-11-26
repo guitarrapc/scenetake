@@ -29,6 +29,9 @@ public sealed class RerunTests
 
     [Test]
     public async Task InteractiveStepShownWithoutATerminal() => await Assert.That(RerunCases.InteractiveStepShownWithoutATerminal()).IsTrue();
+
+    [Test]
+    public async Task InteractiveStepWithNewlyMaskedOutputNeedsATerminal() => await Assert.That(RerunCases.InteractiveStepWithNewlyMaskedOutputNeedsATerminal()).IsTrue();
 }
 
 internal static class RerunCases
@@ -151,6 +154,19 @@ internal static class RerunCases
             && Expect(RunsInteractiveStep(scenario, null, masker, rerunAll: false), "a first recording should run it")
             && Expect(RunsInteractiveStep(ParseScenario(yaml.Replace("    rerun: false\n", "", StringComparison.Ordinal)), previous, masker, rerunAll: false), "a step without rerun: false should run")
             && Expect(RunsInteractiveStep(ParseScenario(yaml + "  - run: vim notes.md\n    pty: true\n    interactive: true\n    rerun: false\n"), previous, masker, rerunAll: false), "a second such step has no earlier output and should run");
+    }
+
+    internal static bool InteractiveStepWithNewlyMaskedOutputNeedsATerminal()
+    {
+        // A mask added since the step was recorded hides text in its earlier output, so the recording runs the step again
+        // (Rerecorder.Reuse). The check before pre finds that too, instead of the step failing after the steps before it.
+        const string yaml = "steps:\n  - echo before\n  - run: vim notes.md\n    pty: true\n    interactive: true\n    rerun: false\n";
+        var first = Record(yaml, step => step.UseInteractive ? Pty((0.1, "token hunter2\r\n")) : Pipe("ok\n"));
+        var masked = ParseScenario("settings:\n  mask: [hunter2]\n" + yaml);
+        var previous = PreviousCast.Parse(first.Cast.Split('\n'), 80, 24, out var problem);
+        return Expect(previous is not null, $"the cast cannot be read: {problem}")
+            && Expect(RunsInteractiveStep(masked, previous, SecretMasker.ForScenario(masked, environment: null), rerunAll: false), "the newly masked step should need a terminal")
+            && Expect(!RunsInteractiveStep(ParseScenario(yaml), previous, SecretMasker.ForScenario(ParseScenario(yaml), environment: null), rerunAll: false), "without the mask the step is shown");
     }
 
     private static bool Expect(bool condition, string message)

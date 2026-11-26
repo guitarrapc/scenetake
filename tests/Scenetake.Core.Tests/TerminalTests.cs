@@ -142,10 +142,168 @@ public sealed class TerminalTests
 
     [Test]
     public async Task OscFilterKeepsEventsWithoutOsc() => await Assert.That(TerminalCases.OscFilterKeepsEventsWithoutOsc()).IsTrue();
+
+    [Test]
+    public async Task TabMovesTheCursorOnly() => await Assert.That(TerminalCases.TabMovesTheCursorOnly()).IsTrue();
+
+    [Test]
+    public async Task UnterminatedStringEndsAtNextSequence() => await Assert.That(TerminalCases.UnterminatedStringEndsAtNextSequence()).IsTrue();
+
+    [Test]
+    public async Task EraseScrollbackChangesNothing() => await Assert.That(TerminalCases.EraseScrollbackChangesNothing()).IsTrue();
+
+    [Test]
+    public async Task SgrColonSubParameters() => await Assert.That(TerminalCases.SgrColonSubParameters()).IsTrue();
+
+    [Test]
+    public async Task MarkOutsideBmpJoinsPreviousCell() => await Assert.That(TerminalCases.MarkOutsideBmpJoinsPreviousCell()).IsTrue();
+
+    [Test]
+    public async Task WideCharacterHalvesSplit() => await Assert.That(TerminalCases.WideCharacterHalvesSplit()).IsTrue();
+
+    [Test]
+    public async Task EraseAndScrollFillWithBackgroundOnly() => await Assert.That(TerminalCases.EraseAndScrollFillWithBackgroundOnly()).IsTrue();
 }
 
 internal static class TerminalCases
 {
+    internal static bool TabMovesTheCursorOnly()
+    {
+        // A tab passes over the cells without writing them, stops at the last column, and leaves no background behind.
+        var theme = DarkTheme();
+        var over = new ScreenBuffer(20, 2, theme);
+        new AnsiParser(over, theme).Process("abcdefghij\r\u001b[1Cx\ty");
+        var edge = new ScreenBuffer(20, 2, theme);
+        new AnsiParser(edge, theme).Process("0123456789abcdefg\tZ");
+        var colored = new ScreenBuffer(20, 2, theme);
+        new AnsiParser(colored, theme).Process("\u001b[41mA\tB");
+
+        return RowText(over, 0) == "axcdefghyj"
+            && RowText(edge, 0) == "0123456789abcdefg  Z" && RowText(edge, 1) == "" && edge.CursorRow == 0
+            && colored.GetCell(0, 1).Background == colored.DefaultStyle.Background
+            && colored.GetCell(0, 8).Text == "B" && colored.GetCell(0, 8).Background == theme.AnsiPalette[1];
+    }
+
+    internal static bool UnterminatedStringEndsAtNextSequence()
+    {
+        // An OSC or DCS without BEL or ST ends at the next ESC, CAN, or SUB, as in a terminal: the output after it
+        // shows, in the next chunk too. A soft font cut off that way does not load.
+        var theme = DarkTheme();
+        var buffer = new ScreenBuffer(20, 6, theme);
+        var parser = new AnsiParser(buffer, theme);
+        parser.Process("before\r\n\u001b]0;title\u001b[1mafter\u001b[0m\r\n");
+        parser.Process("more\r\n\u001b]0;t\u0018can\r\n\u001b]0;t\u001asub\r\n");
+        parser.Process(Decdld("1;1;0;5;0;2;6;0", "@", Diagonal())[..^2] + "\u001b(@!");
+
+        return RowText(buffer, 0) == "before"
+            && RowText(buffer, 1) == "after" && buffer.GetCell(1, 0).Bold
+            && RowText(buffer, 2) == "more"
+            && RowText(buffer, 3) == "can"
+            && RowText(buffer, 4) == "sub"
+            && buffer.GetCell(5, 0) is { Text: "!", Glyph: null };
+    }
+
+    internal static bool EraseScrollbackChangesNothing()
+    {
+        // ED 3 erases the scrollback, which scenetake does not keep. An unknown ED or EL mode changes nothing either.
+        var theme = DarkTheme();
+        var buffer = new ScreenBuffer(10, 3, theme);
+        new AnsiParser(buffer, theme).Process("line1\r\nline2\r\nline3\u001b[2;1H\u001b[3J\u001b[9J\u001b[9K");
+
+        return RowText(buffer, 0) == "line1" && RowText(buffer, 1) == "line2" && RowText(buffer, 2) == "line3";
+    }
+
+    internal static bool SgrColonSubParameters()
+    {
+        var theme = DarkTheme();
+        var buffer = new ScreenBuffer(10, 2, theme);
+        var parser = new AnsiParser(buffer, theme);
+        // 4:0 ends the underline, 4:3 is a curly one, and 58 with its color draws nothing in either form.
+        parser.Process("\u001b[1;4:0mA\u001b[0m\u001b[4:3mB\u001b[0m\u001b[4;58;2;255;0;0mC\u001b[0m\u001b[58:2::255:0:0;1mD\u001b[0m");
+        // A color space before r, empty or not, and 58;5;n read as one code.
+        parser.Process("\u001b[38:2:0:255:128:0mE\u001b[0m\u001b[48:2::0:0:255mF\u001b[0m\u001b[4;58;5;196mG\u001b[0m\u001b[38:5:1mH");
+        var plain = buffer.DefaultStyle;
+
+        return buffer.GetCell(0, 0) is { Text: "A", Bold: true, Underline: false }
+            && buffer.GetCell(0, 1) is { Text: "B", Underline: true, Italic: false }
+            && buffer.GetCell(0, 2).ToStyle() == plain with { Underline = true }
+            && buffer.GetCell(0, 3).ToStyle() == plain with { Bold = true }
+            && buffer.GetCell(0, 4).Foreground == "#FF8000"
+            && buffer.GetCell(0, 5).ToStyle() == plain with { Background = "#0000FF" }
+            && buffer.GetCell(0, 6).ToStyle() == plain with { Underline = true }
+            && buffer.GetCell(0, 7).ToStyle() == plain with { Foreground = theme.AnsiPalette[1] };
+    }
+
+    internal static bool MarkOutsideBmpJoinsPreviousCell()
+    {
+        // An ideographic variation selector (U+E0100) after a kanji takes no cell, so the next character keeps its place.
+        var theme = DarkTheme();
+        var buffer = new ScreenBuffer(10, 2, theme);
+        new AnsiParser(buffer, theme).Process("葛\U000E0100飾|");
+
+        return buffer.GetCell(0, 0) is { Text: "葛\U000E0100", IsWide: true }
+            && buffer.GetCell(0, 2).Text == "飾"
+            && buffer.GetCell(0, 4).Text == "|"
+            && buffer.CursorCol == 5;
+    }
+
+    internal static bool WideCharacterHalvesSplit()
+    {
+        // A change that reaches one cell of a wide character blanks both, keeping its colors, as a terminal does.
+        static ScreenBuffer After(string text)
+        {
+            var theme = DarkTheme();
+            var buffer = new ScreenBuffer(6, 1, theme);
+            new AnsiParser(buffer, theme).Process(text);
+            return buffer;
+        }
+
+        static bool Plain(ScreenCell cell, string text) => cell.Text == text && !cell.IsWide && !cell.IsWideContinuation;
+        static bool Wide(ScreenBuffer buffer, int col, string text) =>
+            buffer.GetCell(0, col) is { IsWide: true } left && left.Text == text && buffer.GetCell(0, col + 1).IsWideContinuation;
+
+        var rightHalf = After("あいう\u001b[1;2HA");
+        var leftHalf = After("あい\u001b[1;1HB");
+        var wideOver = After("aあ\u001b[1;1Hい");
+        var eraseLine = After("あい\u001b[1;2H\u001b[K");
+        var eraseChars = After("あい\u001b[1;3H\u001b[1X");
+        var delete = After("あいう\u001b[1;2H\u001b[1P");
+        var insert = After("あいう\u001b[1;2H\u001b[1@");
+        var colored = After("\u001b[44mあ\u001b[0m\u001b[1;2HC");
+
+        return Plain(rightHalf.GetCell(0, 0), " ") && Plain(rightHalf.GetCell(0, 1), "A") && Wide(rightHalf, 2, "い")
+            && Plain(leftHalf.GetCell(0, 0), "B") && Plain(leftHalf.GetCell(0, 1), " ") && Wide(leftHalf, 2, "い")
+            && Wide(wideOver, 0, "い") && Plain(wideOver.GetCell(0, 2), " ")
+            && RowText(eraseLine, 0) == "" && Plain(eraseLine.GetCell(0, 0), " ")
+            && Wide(eraseChars, 0, "あ") && Plain(eraseChars.GetCell(0, 2), " ") && Plain(eraseChars.GetCell(0, 3), " ")
+            && Plain(delete.GetCell(0, 0), " ") && Wide(delete, 1, "い") && Wide(delete, 3, "う")
+            && Plain(insert.GetCell(0, 0), " ") && Plain(insert.GetCell(0, 1), " ") && Plain(insert.GetCell(0, 2), " ")
+            && Wide(insert, 3, "い") && Plain(insert.GetCell(0, 5), " ")
+            && Plain(colored.GetCell(0, 0), " ") && colored.GetCell(0, 0).Background == DarkTheme().AnsiPalette[4];
+    }
+
+    internal static bool EraseAndScrollFillWithBackgroundOnly()
+    {
+        // Erases and the lines a scroll brings in take the current background color and nothing else, as with bce.
+        var theme = DarkTheme();
+        var blue = theme.AnsiPalette[4];
+        var erase = new ScreenBuffer(6, 2, theme);
+        new AnsiParser(erase, theme).Process("\u001b[31;44;1;4;7mX\u001b[K");
+        var scroll = new ScreenBuffer(6, 2, theme);
+        var scrollParser = new AnsiParser(scroll, theme);
+        scrollParser.Process("\u001b[44ma\r\nb\r\nc");
+        var blueRow = scroll.GetCell(1, 3);
+        scrollParser.Process("\u001b[0m\r\nd");
+        var reset = new ScreenBuffer(6, 2, theme);
+        new AnsiParser(reset, theme).Process("\u001b[44m\u001bc\u001b[K");
+
+        return erase.GetCell(0, 1).ToStyle() == erase.DefaultStyle with { Background = blue }
+            && blueRow.ToStyle() == scroll.DefaultStyle with { Background = blue }
+            && scroll.GetCell(0, 3).ToStyle() == scroll.DefaultStyle with { Background = blue }
+            && scroll.GetCell(1, 3).ToStyle() == scroll.DefaultStyle
+            && reset.GetCell(0, 0).ToStyle() == reset.DefaultStyle && reset.IsRowBlank(0);
+    }
+
     internal static bool CastCursorTrackerFollowsEvents()
     {
         // A Windows PTY step starts ConPTY at the cursor this reports, so it must match what a player shows:

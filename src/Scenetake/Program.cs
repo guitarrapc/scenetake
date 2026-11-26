@@ -2410,13 +2410,16 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
     proc.StandardInput.Close();
     // A step that may be stopped runs in a job on Windows, which ends what the tree kill misses (ProcessJob).
     using var job = timeout is null ? null : ProcessJob.TryCreate(proc);
-    var readTask = PipeStreamCapture.ReadAsync(proc);
+    // After a stop, the output is read for 2 s more at most, as for a background step: a process the kill missed may
+    // keep a pipe open, and the recording does not wait for it.
+    using var drain = new CancellationTokenSource();
+    var readTask = PipeStreamCapture.ReadAsync(proc, drain.Token);
     var stopped = false;
     if (timeout is { } seconds)
     {
         // A pipe has no terminal to press Ctrl+C in. The whole tree ends, so no grandchild keeps the pipes open, and
         // what it printed so far is the step's output.
-        using var limit = new CancellationTokenSource(DelayOf(seconds));
+        using var limit = new CancellationTokenSource(Delays.Of(seconds));
         try
         {
             await proc.WaitForExitAsync(limit.Token);
@@ -2436,6 +2439,7 @@ static async Task<CommandExecution> RunCommandCoreAsync(string cmd, string? cwd,
                 // It exited just now.
             }
 
+            drain.CancelAfter(TimeSpan.FromSeconds(2));
             PrintTimeoutStop(seconds);
         }
     }
@@ -2499,7 +2503,7 @@ static async Task<CommandExecution> RunPtyWithInputAsync(StepStart step, string?
         {
             var left = timeout - stopwatch.Elapsed.TotalSeconds;
             var timedOut = left > 0
-                ? await Task.WhenAny(exit, Task.Delay(DelayOf(left))) != exit
+                ? await Task.WhenAny(exit, Task.Delay(Delays.Of(left))) != exit
                 : !exit.IsCompleted;
             if (timedOut)
             {
@@ -2569,7 +2573,7 @@ static async Task WriteKeysAsync(PtySession session, StepStart step, Task exit, 
         var wait = due - stopwatch.Elapsed.TotalSeconds;
         if (wait > 0)
         {
-            var delay = Task.Delay(DelayOf(wait), cancel);
+            var delay = Task.Delay(Delays.Of(wait), cancel);
             if (await Task.WhenAny(delay, exit) == exit)
                 return;
             await delay;
@@ -2617,10 +2621,6 @@ static async Task WriteKeysAsync(PtySession session, StepStart step, Task exit, 
 /// <summary>Whether a command that a write to its terminal just failed for exits within a second.</summary>
 static async Task<bool> ExitsSoonAsync(Task exit) =>
     await Task.WhenAny(exit, Task.Delay(TimeSpan.FromSeconds(1))) == exit;
-
-/// <summary>A wait in seconds as a delay that Task.Delay accepts: about 24 days at most, which a recording never reaches.</summary>
-static TimeSpan DelayOf(double seconds) =>
-    seconds * 1000 >= int.MaxValue ? TimeSpan.FromMilliseconds(int.MaxValue) : TimeSpan.FromSeconds(Math.Max(seconds, 0));
 
 /// <summary>
 /// Stops a PTY step's command as a person would: Ctrl+C first, so a TUI can leave the alternate screen and restore

@@ -97,6 +97,12 @@ public static partial class PlaygroundInterop
             s_svg = result.Svg ?? [];
             return ResultJson(result);
         }
+        catch (OptionValueException ex)
+        {
+            s_cast = [];
+            s_svg = [];
+            return ErrorJson(ex.Message);
+        }
         catch (Exception ex)
         {
             s_cast = [];
@@ -115,6 +121,11 @@ public static partial class PlaygroundInterop
             s_cast = [];
             s_svg = result.Svg ?? [];
             return ResultJson(result);
+        }
+        catch (OptionValueException ex)
+        {
+            s_svg = [];
+            return ErrorJson(ex.Message);
         }
         catch (Exception ex)
         {
@@ -176,11 +187,48 @@ public static partial class PlaygroundInterop
         static string? String(JsonElement root, string name) =>
             root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString() is { Length: > 0 } text ? text : null;
 
-        static int? Int(JsonElement root, string name) =>
-            root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number) ? number : null;
+        // A value that is not a whole number stops the render with the CLI's message, as --font-size 16.5 does there. It
+        // used to be dropped without a word, and the render went on with the YAML's value.
+        static int? Int(JsonElement root, string name)
+        {
+            if (!root.TryGetProperty(name, out var value) || value.ValueKind == JsonValueKind.Null)
+                return null;
+            if (value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number))
+                return number;
+            if (value.ValueKind == JsonValueKind.String && int.TryParse(value.GetString(), System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out number))
+                return number;
+            throw new OptionValueException(name, value);
+        }
 
-        static double? Double(JsonElement root, string name) =>
-            root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var number) ? number : null;
+        static double? Double(JsonElement root, string name)
+        {
+            if (!root.TryGetProperty(name, out var value) || value.ValueKind == JsonValueKind.Null)
+                return null;
+            if (value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var number))
+                return number;
+            if (value.ValueKind == JsonValueKind.String && double.TryParse(value.GetString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out number) && double.IsFinite(number))
+                return number;
+            throw new OptionValueException(name, value);
+        }
+    }
+
+    /// <summary>An option the page sent with a value of the wrong kind, named by its CLI flag: <c>invalid --font-size value: 16.5</c>.</summary>
+    private sealed class OptionValueException(string name, JsonElement value)
+        : Exception($"invalid --{Kebab(name)} value: {(value.ValueKind == JsonValueKind.String ? value.GetString() : value.GetRawText())}")
+    {
+        private static string Kebab(string name)
+        {
+            var flag = new StringBuilder(name.Length + 4);
+            foreach (var c in name)
+            {
+                if (char.IsAsciiLetterUpper(c))
+                    flag.Append('-').Append(char.ToLowerInvariant(c));
+                else
+                    flag.Append(c);
+            }
+
+            return flag.ToString();
+        }
     }
 
     private static string ResultJson(PlaygroundResult result) => WriteJson(writer =>

@@ -37,10 +37,31 @@ public sealed class PtyHighlightTests
 
     [Test]
     public async Task KeysWithNothingToColorWarn() => await Assert.That(PtyHighlightCases.KeysWithNothingToColorWarn()).IsTrue();
+
+    [Test]
+    public async Task ColumnsCountWhatAPersonSeesAsOneCharacter() => await Assert.That(PtyHighlightCases.ColumnsCountWhatAPersonSeesAsOneCharacter()).IsTrue();
 }
 
 internal static class PtyHighlightCases
 {
+    internal static bool ColumnsCountWhatAPersonSeesAsOneCharacter()
+    {
+        // A column is one character as typing types it (a grapheme cluster): an emoji, an emoji with a skin tone, a flag,
+        // and a letter with its accent are one column each, and a kanji is one. A style never splits a surrogate pair,
+        // which the cast would write as two U+FFFD. Pipe and PTY output count alike.
+        static string Pipe(string output, string at) => ApplyHighlights(output, [new HighlightSpec(Yellow, [at])], "cmd");
+        const string emoji = "\U0001F600";
+        const string thumb = "\U0001F44D\U0001F3FD";
+        const string flag = "\U0001F1EF\U0001F1F5";
+        return Expect(Pipe($"a{emoji}b", "1:2") == $"a{Yellow}{emoji}{Reset}b", "emoji")
+            & Expect(Pipe($"a{emoji}b", "1:3") == $"a{emoji}{Yellow}b{Reset}", "after an emoji")
+            & Expect(Pipe($"{thumb}{flag}x", "1:2-3") == $"{thumb}{Yellow}{flag}x{Reset}", "skin tone and flag")
+            & Expect(Pipe("éx", "1:2") == $"é{Yellow}x{Reset}", "accent")
+            & Expect(Pipe("漢字x", "1:3") == $"漢字{Yellow}x{Reset}", "kanji")
+            & Expect(Pipe($"{emoji}", "1:2") == emoji, "past the end")
+            & Expect(Paint(Yellow, "1:2", $"a{emoji}b\r\n") == $"a{Yellow}{emoji}{Reset}b\r\n", "pty emoji");
+    }
+
     private const string Yellow = "\u001b[1;33m";
     private const string Reset = "\u001b[0m";
 

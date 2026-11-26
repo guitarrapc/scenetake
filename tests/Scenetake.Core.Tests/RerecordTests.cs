@@ -164,10 +164,36 @@ public sealed class RerecordTests
 
     [Test]
     public async Task IntegrationReplayFindsStepsWithExportedSecrets() => await Assert.That(RerecordCases.IntegrationReplayFindsStepsWithExportedSecrets(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task InvalidKeepOutputWarnsOnce() => await Assert.That(RerecordCases.InvalidKeepOutputWarnsOnce()).IsTrue();
 }
 
 internal static class RerecordCases
 {
+    internal static bool InvalidKeepOutputWarnsOnce()
+    {
+        // A step with rerun: false that the earlier cast does not have runs, and both places read keep-output: a value that
+        // is not true or false warns once.
+        var earlier = Record("steps:\n  - run: other\n", _ => Pipe("x\n")).Cast;
+        var original = Console.Error;
+        using var captured = new StringWriter();
+#pragma warning disable TUnit0055
+        Console.SetError(captured);
+        try
+        {
+            Record("steps:\n  - run: new step\n    rerun: false\n    keep-output: maybe\n", _ => Pipe("out\n"), earlier);
+        }
+        finally
+        {
+            Console.SetError(original);
+        }
+#pragma warning restore TUnit0055
+        var warnings = captured.ToString();
+        var count = warnings.Split("invalid boolean value 'maybe'").Length - 1;
+        return Expect(count == 1, $"{count} warnings: {warnings}");
+    }
+
 
     internal static bool Expect(bool condition, string message)
     {

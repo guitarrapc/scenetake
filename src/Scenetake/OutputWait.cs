@@ -2,6 +2,16 @@ using System.Text;
 
 namespace Scenetake;
 
+internal static class Delays
+{
+    /// <summary>
+    /// A wait in seconds as a delay that Task.Delay and CancellationTokenSource accept: about 24 days at most, which a
+    /// recording never reaches. A longer timeout or wait-timeout would make them throw instead of waiting.
+    /// </summary>
+    internal static TimeSpan Of(double seconds) =>
+        seconds * 1000 >= int.MaxValue ? TimeSpan.FromMilliseconds(int.MaxValue) : TimeSpan.FromSeconds(Math.Max(seconds, 0));
+}
+
 /// <summary>
 /// A PTY step's output as plain text, for the <c>wait</c> entries of its <c>keys</c>. Escape sequences are left
 /// out. Line breaks, cursor moves, and runs of spaces all count as one space, because a program can move the

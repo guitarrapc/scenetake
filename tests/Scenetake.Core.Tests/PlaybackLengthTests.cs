@@ -44,10 +44,29 @@ public sealed class PlaybackLengthTests
 
     [Test]
     public async Task SilentEscapeCodes() => await Assert.That(PlaybackLengthCases.SilentEscapeCodes()).IsTrue();
+
+    [Test]
+    public async Task EndHoldLeavesOutOneClosingEvent() => await Assert.That(PlaybackLengthCases.EndHoldLeavesOutOneClosingEvent()).IsTrue();
 }
 
 internal static class PlaybackLengthCases
 {
+    internal static bool EndHoldLeavesOutOneClosingEvent()
+    {
+        // With an end-hold, the closing event that only sets the default hold is left out once. A cast that ends with two
+        // such events keeps the first: the played events and the fitted ones, which the frame rate and the length note
+        // read, have the same events.
+        var (recording, settings) = Read(Scenario, Run);
+        var last = recording.Events[^1].Time;
+        List<CastEvent> events = [.. recording.Events, CastEvent.Output(last + 1, ScenarioCast.SgrReset), CastEvent.Output(last + 2, ScenarioCast.SgrReset)];
+        var held = settings with { EndHold = 1, Length = 1000 };
+        double? loop = recording.LoopDuration;
+        var played = RenderSettingsResolver.ApplySpeed(events, held, ref loop);
+        var fitted = RenderSettingsResolver.FitLength(events, held, recording.LoopDuration)!;
+        return Expect(played.Count == events.Count - 1, $"{events.Count - played.Count} events were left out, expected 1")
+            && Expect(fitted.Events.Count == played.Count, $"the fit has {fitted.Events.Count} events, the playback {played.Count}");
+    }
+
     internal static bool CardLinesWithAndWithoutCornerMark()
     {
         // A card's reading time counts its lines. The corner mark (fit) is one more cursor move, which only a recording

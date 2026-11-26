@@ -60,10 +60,26 @@ public sealed class CastTimingTests
 
     [Test]
     public async Task StreamedReadsCountACrlfOnce() => await Assert.That(CastTimingCases.StreamedReadsCountACrlfOnce()).IsTrue();
+
+    [Test]
+    public async Task NulInStdoutStays() => await Assert.That(CastTimingCases.NulInStdoutStays()).IsTrue();
 }
 
 internal static class CastTimingCases
 {
+    internal static bool NulInStdoutStays()
+    {
+        // A terminal draws nothing for a NUL. A pipe step's stdout that holds one, such as find -print0 writes, stays and
+        // shows as it does there, as a streamed step's does.
+        var merged = ScenarioCast.MergePipeOutput("./a\0./b\0\n", "err\n", "");
+        var theme = TerminalCases.DarkTheme();
+        var buffer = new ScreenBuffer(10, 3, theme);
+        new AnsiParser(buffer, theme).Process(merged.Replace("\n", "\r\n", StringComparison.Ordinal));
+        return merged == "./a\0./b\0\nerr\n"
+            && TerminalCases.RowText(buffer, 0) == "./a./b"
+            && TerminalCases.RowText(buffer, 1) == "err";
+    }
+
     internal static bool StreamedReadsCountACrlfOnce()
     {
         // stream-output keeps each read as its own event. A CRLF that two reads split is still one line break, as the

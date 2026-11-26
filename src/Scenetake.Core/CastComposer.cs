@@ -313,6 +313,8 @@ internal static partial class ScenarioCast
             var useInteractive = GetBool(command.Extra, false, "interactive");
             var normalizeTyping = GetBool(command.Extra, false, "normalize-typing");
             var continueOnError = GetBool(command.Extra, false, "continue-on-error");
+            // Read once, so a value that is not true or false warns once, also when the earlier output cannot be reused.
+            var keepOutput = options.Rerecorder is not null && GetBool(command.Extra, false, "keep-output");
             // A terminal gets stderr and stdout as one stream, and a person draws an interactive step's screen, so these
             // keys have nothing to color there. They used to do nothing without a word.
             if (usePty && command.Extra.ContainsKey("stderr-color"))
@@ -390,7 +392,7 @@ internal static partial class ScenarioCast
                     i + 1,
                     reusedRun,
                     Rerecording.StepId(usePty, useInteractive, show, reusedRun),
-                    GetBool(command.Extra, false, "keep-output"),
+                    keepOutput,
                     t,
                     t + cmdExecutionDuration,
                     ptyStartCursor,
@@ -531,7 +533,7 @@ internal static partial class ScenarioCast
                             masker,
                             colorsFollowReads ? Rerecording.DescribeColors(cmdStderrStyle, cmdHighlights) : null),
                         clock,
-                        GetBool(command.Extra, false, "keep-output"),
+                        keepOutput,
                         outputFirst,
                         events.Count - outputFirst,
                         commandStart,
@@ -671,9 +673,13 @@ internal static partial class ScenarioCast
         return commandStart + executionDuration;
     }
 
+    /// <summary>
+    /// A pipe step's stdout, then its stderr in <paramref name="stderrStyle"/>. Output with a NUL in it stays: a terminal
+    /// draws nothing for a NUL, as the cast's player and the renderers do, so <c>find -print0</c> shows as it does there,
+    /// and as a streamed step shows it.
+    /// </summary>
     internal static string MergePipeOutput(string stdout, string stderr, string stderrStyle)
     {
-        stdout = SanitizeInstantEmitStdout(stdout);
         if (string.IsNullOrEmpty(stdout))
         {
             if (string.IsNullOrEmpty(stderr) || string.IsNullOrEmpty(stderrStyle) || ContainsAnsiSgr(stderr))
@@ -689,14 +695,6 @@ internal static partial class ScenarioCast
             return string.Concat(stdout, stderr);
 
         return string.Concat(stdout, WrapWithStylePreserveTrailingNewlines(stderr, stderrStyle));
-    }
-
-    internal static string SanitizeInstantEmitStdout(string stdout)
-    {
-        if (string.IsNullOrEmpty(stdout))
-            return stdout;
-
-        return stdout.IndexOf('\0') >= 0 ? "" : stdout;
     }
 
     internal static (string Stdout, string Stderr) CollectPipeOutputs(IReadOnlyList<PipeStreamChunk> chunks)

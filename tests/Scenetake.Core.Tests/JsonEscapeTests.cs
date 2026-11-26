@@ -29,10 +29,30 @@ public sealed class JsonEscapeTests
 
     [Test]
     public async Task MixedAsciiAndEscapes() => await Assert.That(JsonEscapeCases.MixedAsciiAndEscapes()).IsTrue();
+
+    [Test]
+    public async Task Utf8InvalidSequenceIsOneReplacement() => await Assert.That(JsonEscapeCases.Utf8InvalidSequenceIsOneReplacement()).IsTrue();
 }
 
 internal static class JsonEscapeCases
 {
+    internal static bool Utf8InvalidSequenceIsOneReplacement()
+    {
+        // One U+FFFD for each invalid sequence, as Encoding.UTF8 decodes it, which the text of a highlighted or masked
+        // step goes through: a cut 3-byte or 4-byte character is one, two bad bytes are two, and an encoded surrogate is
+        // three, one for each byte that cannot start or go on with it.
+        byte[][] cases = [[0xE3, 0x81, (byte)'a'], [0xF0, 0x9F, 0x98, (byte)'b'], [0xFF, 0xFE], [(byte)'x', 0xE3, 0x81], [0xED, 0xA0, 0x80]];
+        foreach (var bytes in cases)
+        {
+            var json = EncodeJsonUtf8String(bytes);
+            var expected = Encoding.UTF8.GetString(bytes).Count(static c => c == '\uFFFD');
+            if (json.Split("\\uFFFD").Length - 1 != expected)
+                return false;
+        }
+
+        return EncodeJsonUtf8String(new byte[] { 0xE3, 0x81, (byte)'a' }) == "\"\\uFFFDa\"";
+    }
+
 
     internal static bool QuotesAndBackslashes()
     {

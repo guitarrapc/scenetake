@@ -42,6 +42,9 @@ public sealed class StepInputTests
     public async Task IntegrationTimeoutStopsCommands() => await Assert.That(StepInputCases.IntegrationTimeoutStopsCommands(TestEnv.RepoRoot)).IsTrue();
 
     [Test]
+    public async Task IntegrationTimeoutDoesNotWaitForAProcessTheKillMissed() => await Assert.That(StepInputCases.IntegrationTimeoutDoesNotWaitForAProcessTheKillMissed(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
     public async Task IntegrationPipeStepGetsNoInput() => await Assert.That(StepInputCases.IntegrationPipeStepGetsNoInput(TestEnv.RepoRoot)).IsTrue();
 
     [Test]
@@ -350,6 +353,20 @@ internal static class StepInputCases
         ok &= Expect(run.Text.Contains("after-timeouts", StringComparison.Ordinal), "the step after the timeouts did not run");
         ok &= Expect(Regex.Matches(run.Stderr, @"stopped after 1 s \(timeout\)").Count == 3, $"expected three stop lines in stderr: {run.Stderr}");
         ok &= Expect(!run.Stderr.Contains("exited with code", StringComparison.Ordinal), $"a stop by timeout warned as a failure: {run.Stderr}");
+        return ok;
+    }
+
+    internal static bool IntegrationTimeoutDoesNotWaitForAProcessTheKillMissed(string repoRoot)
+    {
+        if (!TryGetBinary(out var bin))
+            return true;
+
+        var run = RunFixture(bin, repoRoot, "step-input-timeout-escaped.yaml");
+        // The stop after 1 s and 2 s of reading after it, plus typing and startup. Waiting for the pipe takes 30 s.
+        var ok = Expect(run.ExitCode == 0, $"exit {run.ExitCode}: {run.Stderr}");
+        ok &= Expect(run.Elapsed < TimeSpan.FromSeconds(20), $"took {run.Elapsed.TotalSeconds:F1} s");
+        ok &= Expect(run.Text.Contains("escaped-started", StringComparison.Ordinal), "the step lost what it printed before the timeout");
+        ok &= Expect(run.Text.Contains("after-escape", StringComparison.Ordinal), "the step after it did not run");
         return ok;
     }
 

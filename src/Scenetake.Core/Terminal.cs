@@ -147,12 +147,17 @@ internal sealed class ScreenBuffer
     private int _scrollBottom;
     private bool _pendingWrap;
 
+    // What an erase or a scroll fills cells with: the default style with the program's current background color, as a
+    // terminal with background color erase (bce) does. The foreground, bold, reverse, and underline stay out of it.
+    private CellStyle _eraseStyle;
+
     internal ScreenBuffer(int width, int height, TerminalTheme theme)
     {
         Width = Math.Max(1, width);
         Height = Math.Max(1, height);
         _theme = theme;
         DefaultStyle = CellStyle.Default(theme);
+        _eraseStyle = DefaultStyle;
         _mainCells = CreateBlankCells();
         _cells = _mainCells;
         _scrollTop = 0;
@@ -172,6 +177,10 @@ internal sealed class ScreenBuffer
     internal int CursorCol { get; private set; }
     internal bool CursorVisible { get; set; }
     internal CellStyle DefaultStyle { get; }
+
+    /// <summary>Sets the background color that erases and scrolls fill with from now on: the program's current one.</summary>
+    internal void SetEraseBackground(string background) =>
+        _eraseStyle = background == DefaultStyle.Background ? DefaultStyle : DefaultStyle with { Background = background };
 
     internal ScreenCell GetCell(int row, int col)
     {
@@ -522,6 +531,7 @@ internal sealed class ScreenBuffer
             _scrollTop = _scrollTop,
             _scrollBottom = _scrollBottom,
             _pendingWrap = _pendingWrap,
+            _eraseStyle = _eraseStyle,
             _mainCells = CloneCells(_mainCells),
             _altCells = _altCells is null ? null : CloneCells(_altCells),
         };
@@ -543,13 +553,11 @@ internal sealed class ScreenBuffer
                 Backspace();
                 return;
             case '\t':
-            {
-                var nextStop = ((CursorCol / 8) + 1) * 8;
-                var spaces = Math.Max(1, nextStop - CursorCol);
-                for (var i = 0; i < spaces; i++)
-                PutPrintable(Space, style);
+                // HT moves the cursor to the next tab stop, every 8 columns, and stops at the last column. It writes
+                // nothing, so the cells it passes keep what they show, and it never starts a new line. A pending wrap
+                // stays: the cursor is on the last column then, where a tab does not move it.
+                CursorCol = Math.Min(((CursorCol / 8) + 1) * 8, Width - 1);
                 return;
-            }
             default:
                 if (char.IsControl(value))
                     return;
@@ -562,6 +570,8 @@ internal sealed class ScreenBuffer
     internal void PutSoftGlyph(char code, SoftGlyph glyph, CellStyle style)
     {
         WrapIfPending();
+        SplitWideBefore(CursorRow, CursorCol);
+        SplitWideBefore(CursorRow, CursorCol + 1);
         _cells[CursorRow, CursorCol] = new ScreenCell(CharStr(code), style, glyph: glyph);
         CursorCol++;
         if (CursorCol >= Width)
@@ -691,54 +701,57 @@ internal sealed class ScreenBuffer
         CursorCol = Math.Max(0, CursorCol - 1);
     }
 
-    internal void ClearLine(int mode, CellStyle? style = null)
+    internal void ClearLine(int mode)
     {
-        var eraseStyle = style ?? DefaultStyle;
         switch (mode)
         {
+            case 0:
+                EraseCells(CursorRow, CursorCol, Width);
+                return;
             case 1:
-                for (var col = 0; col <= CursorCol; col++)
-                    _cells[CursorRow, col] = new ScreenCell(" ", eraseStyle);
+                EraseCells(CursorRow, 0, CursorCol + 1);
                 return;
             case 2:
-                for (var col = 0; col < Width; col++)
-                    _cells[CursorRow, col] = new ScreenCell(" ", eraseStyle);
-                return;
-            default:
-                for (var col = CursorCol; col < Width; col++)
-                    _cells[CursorRow, col] = new ScreenCell(" ", eraseStyle);
+                EraseCells(CursorRow, 0, Width);
                 return;
         }
     }
 
-    internal void DeleteCharacters(int count, CellStyle? style = null)
+    internal void DeleteCharacters(int count)
     {
         if (count <= 0)
             return;
 
-        var eraseStyle = style ?? DefaultStyle;
         count = Math.Min(count, Width - CursorCol);
+        // A wide character that the deleted cells cut in two is blank on both sides, as with an erase.
+        SplitWideBefore(CursorRow, CursorCol);
+        SplitWideBefore(CursorRow, CursorCol + count);
 
         for (var col = CursorCol; col < Width - count; col++)
             _cells[CursorRow, col] = _cells[CursorRow, col + count];
 
+        var erased = new ScreenCell(Space, _eraseStyle);
         for (var col = Width - count; col < Width; col++)
-            _cells[CursorRow, col] = new ScreenCell(" ", eraseStyle);
+            _cells[CursorRow, col] = erased;
     }
 
-    internal void InsertBlankCharacters(int count, CellStyle? style = null)
+    internal void InsertBlankCharacters(int count)
     {
         if (count <= 0)
             return;
 
-        var eraseStyle = style ?? DefaultStyle;
         count = Math.Min(count, Width - CursorCol);
+        // The blanks go in at the cursor, and cells pushed past the right edge are dropped: a wide character cut at
+        // either place is blank on both sides.
+        SplitWideBefore(CursorRow, CursorCol);
+        SplitWideBefore(CursorRow, Width - count);
 
         for (var col = Width - 1; col >= CursorCol + count; col--)
             _cells[CursorRow, col] = _cells[CursorRow, col - count];
 
+        var erased = new ScreenCell(Space, _eraseStyle);
         for (var col = CursorCol; col < CursorCol + count; col++)
-            _cells[CursorRow, col] = new ScreenCell(" ", eraseStyle);
+            _cells[CursorRow, col] = erased;
     }
 
     internal void InsertLines(int count)
@@ -763,55 +776,64 @@ internal sealed class ScreenBuffer
     internal void ScrollDownLines(int count) =>
         ScrollRegionDown(_scrollTop, _scrollBottom, count);
 
-    internal void EraseChars(int count, CellStyle? style = null)
+    internal void EraseChars(int count)
     {
         if (count <= 0)
             return;
 
-        var eraseStyle = style ?? DefaultStyle;
-        var endCol = Math.Min(Width - 1, CursorCol + count - 1);
-        for (var col = CursorCol; col <= endCol; col++)
-        {
-            var cell = _cells[CursorRow, col];
-            if (cell.IsWideContinuation && col > 0)
-                _cells[CursorRow, col - 1] = new ScreenCell(" ", eraseStyle);
-
-            if (cell.IsWide && col + 1 < Width)
-                _cells[CursorRow, col + 1] = new ScreenCell(" ", eraseStyle);
-
-            _cells[CursorRow, col] = new ScreenCell(" ", eraseStyle);
-        }
+        EraseCells(CursorRow, CursorCol, Math.Min(Width, CursorCol + count));
     }
 
-    internal void ClearDisplay(int mode, CellStyle? style = null)
+    /// <summary>
+    /// ED: 0 erases from the cursor to the end of the screen, 1 from its start to the cursor, 2 all of it. 3 erases the
+    /// scrollback in a terminal, and scenetake keeps none, so it changes nothing, as an unknown mode does not.
+    /// </summary>
+    internal void ClearDisplay(int mode)
     {
-        var eraseStyle = style ?? DefaultStyle;
         switch (mode)
         {
+            case 0:
+                EraseCells(CursorRow, CursorCol, Width);
+                for (var row = CursorRow + 1; row < Height; row++)
+                    EraseCells(row, 0, Width);
+                return;
             case 1:
-                for (var row = 0; row <= CursorRow; row++)
-                {
-                    var end = row == CursorRow ? CursorCol : Width - 1;
-                    for (var col = 0; col <= end; col++)
-                        _cells[row, col] = new ScreenCell(" ", eraseStyle);
-                }
+                for (var row = 0; row < CursorRow; row++)
+                    EraseCells(row, 0, Width);
+                EraseCells(CursorRow, 0, CursorCol + 1);
                 return;
             case 2:
                 for (var row = 0; row < Height; row++)
-                {
-                    for (var col = 0; col < Width; col++)
-                        _cells[row, col] = new ScreenCell(" ", eraseStyle);
-                }
-                return;
-            default:
-                for (var row = CursorRow; row < Height; row++)
-                {
-                    var start = row == CursorRow ? CursorCol : 0;
-                    for (var col = start; col < Width; col++)
-                        _cells[row, col] = new ScreenCell(" ", eraseStyle);
-                }
+                    EraseCells(row, 0, Width);
                 return;
         }
+    }
+
+    /// <summary>
+    /// Columns <paramref name="from"/> up to <paramref name="to"/> of <paramref name="row"/> become blanks in the erase
+    /// style. A wide character with one cell inside the range and one outside is blank on both sides.
+    /// </summary>
+    private void EraseCells(int row, int from, int to)
+    {
+        SplitWideBefore(row, from);
+        SplitWideBefore(row, to);
+        var erased = new ScreenCell(Space, _eraseStyle);
+        for (var col = from; col < to; col++)
+            _cells[row, col] = erased;
+    }
+
+    /// <summary>
+    /// A wide character takes two cells, and a write, an erase, an insert, or a delete may reach only one of them.
+    /// When <paramref name="col"/> is the second cell of one, a change starts or ends between its two cells: both become
+    /// blanks that keep its colors, as in a terminal, so no half of a character is drawn over its neighbor.
+    /// </summary>
+    private void SplitWideBefore(int row, int col)
+    {
+        if (col <= 0 || col >= Width || !_cells[row, col].IsWideContinuation)
+            return;
+
+        _cells[row, col - 1] = new ScreenCell(Space, _cells[row, col - 1].Style);
+        _cells[row, col] = new ScreenCell(Space, _cells[row, col].Style);
     }
 
     internal void SetAlternateScreen(bool enabled)
@@ -899,11 +921,14 @@ internal sealed class ScreenBuffer
         var isWide = IsWideCodePoint(cp);
         if (isWide && CursorCol + 1 >= Width)
         {
+            SplitWideBefore(CursorRow, CursorCol);
             _cells[CursorRow, CursorCol] = BlankCell();
             CursorCol = 0;
             Index();
         }
 
+        SplitWideBefore(CursorRow, CursorCol);
+        SplitWideBefore(CursorRow, CursorCol + (isWide ? 2 : 1));
         _cells[CursorRow, CursorCol] = new ScreenCell(text, style, isWide);
         CursorCol++;
 
@@ -952,7 +977,8 @@ internal sealed class ScreenBuffer
     };
 
     // Rows scrolled off the top are dropped. Nothing renders scrollback, and keeping it would grow
-    // replay memory with every line a recording scrolls.
+    // replay memory with every line a recording scrolls. Rows that a scroll brings in have the erase style, so
+    // output that scrolls under a background color keeps that color on its new lines.
     private void ScrollRegionUp(int top, int bottom, int count)
     {
         if (count <= 0 || top < 0 || bottom >= Height || top > bottom)
@@ -962,7 +988,7 @@ internal sealed class ScreenBuffer
         var cells = RegionCells(top, bottom);
         var cleared = count * Width;
         cells[cleared..].CopyTo(cells);
-        cells[^cleared..].Fill(BlankCell());
+        cells[^cleared..].Fill(new ScreenCell(Space, _eraseStyle));
     }
 
     private void ScrollRegionDown(int top, int bottom, int count)
@@ -974,7 +1000,7 @@ internal sealed class ScreenBuffer
         var cells = RegionCells(top, bottom);
         var cleared = count * Width;
         cells[..^cleared].CopyTo(cells[cleared..]);
-        cells[..cleared].Fill(BlankCell());
+        cells[..cleared].Fill(new ScreenCell(Space, _eraseStyle));
     }
 
     // Rows top..bottom of the active screen as one span. Rows are contiguous in the row-major
@@ -1042,6 +1068,8 @@ internal sealed class AnsiParser
     private readonly ScreenBuffer _buffer;
     private readonly TerminalTheme _theme;
     private readonly List<int> _csiParams = new(8);
+    // For each parameter, 1 when a colon comes before it, which makes it part of the parameter before (ITU T.416).
+    private readonly List<int> _csiAfterColon = new(8);
     private readonly CharsetState _charsets = new();
     private CellStyle _style;
     private byte[] _buf = [];
@@ -1126,7 +1154,7 @@ internal sealed class AnsiParser
 
             if (b == (byte)'^' && i + 2 < input.Length && input[i + 1] == (byte)'[' && input[i + 2] == (byte)']')
             {
-                if (!TrySkipOsc(input, i + 3, out var oscEnd, caretTerminator: true))
+                if (!TrySkipString(input, i + 3, out var oscEnd, out _, caretTerminator: true))
                 {
                     SavePending(input[i..]);
                     return;
@@ -1161,6 +1189,14 @@ internal sealed class AnsiParser
         {
             Span<char> chars = stackalloc char[2];
             rune.TryEncodeToUtf16(chars, out _);
+            // A mark outside the BMP, such as an ideographic variation selector (U+E0100–U+E01EF) after a kanji, joins
+            // the character before it as a mark inside the BMP does, and takes no cell, as DisplayWidth counts it.
+            if (Rune.GetUnicodeCategory(rune) is UnicodeCategory.NonSpacingMark or UnicodeCategory.SpacingCombiningMark or UnicodeCategory.EnclosingMark)
+            {
+                _buffer.AppendToPreviousCell(new string(chars));
+                return;
+            }
+
             _buffer.PutSurrogatePair(chars[0], chars[1], _style);
             return;
         }
@@ -1228,11 +1264,11 @@ internal sealed class AnsiParser
             case (byte)'[':
                 return TryHandleCsi(input, index + 2, out endIndex);
             case (byte)']':
-                return TrySkipOsc(input, index + 2, out endIndex);
+                return TrySkipString(input, index + 2, out endIndex, out _);
             case (byte)'P':
                 return TryHandleDcs(input, index + 2, out endIndex);
             case (byte)'X' or (byte)'^' or (byte)'_':
-                return TrySkipString(input, index + 2, out endIndex);
+                return TrySkipString(input, index + 2, out endIndex, out _);
             case 0x1B:
                 // A terminal starts again at the second ESC. A program that asks tmux to pass a sequence through
                 // writes each ESC in it twice.
@@ -1273,9 +1309,10 @@ internal sealed class AnsiParser
                 endIndex = index + 1;
                 return true;
             case (byte)'c':
+                _style = _buffer.DefaultStyle;
+                _buffer.SetEraseBackground(_style.Background);
                 _buffer.ClearDisplay(2);
                 _buffer.MoveCursorTo(0, 0);
-                _style = _buffer.DefaultStyle;
                 _charsets.Reset();
                 endIndex = index + 1;
                 return true;
@@ -1324,21 +1361,24 @@ internal sealed class AnsiParser
     /// <summary>A DCS string. A DECDLD soft font is loaded; every other DCS is skipped as before.</summary>
     private bool TryHandleDcs(ReadOnlySpan<byte> input, int start, out int endIndex)
     {
-        if (!TrySkipOsc(input, start, out endIndex))
+        if (!TrySkipString(input, start, out endIndex, out var terminated))
             return false;
 
-        // endIndex is the terminator's last byte: BEL, or the backslash of ESC \.
-        var bodyEnd = input[endIndex] == 0x07 ? endIndex : endIndex - 1;
-        _charsets.TryLoadSoftFont(input[start..bodyEnd]);
+        // A font loads only from a string that its own end closes, BEL or ESC \, as a terminal loads it. endIndex is
+        // the terminator's last byte: BEL, or the backslash of ESC \.
+        if (terminated)
+            _charsets.TryLoadSoftFont(input[start..(input[endIndex] == 0x07 ? endIndex : endIndex - 1)]);
         return true;
     }
 
     /// <summary>
-    /// SOS, PM, or APC (an inline image): a string whose data is not text. Besides BEL and ST, it ends where a terminal
-    /// cuts it off, at CAN, SUB, or the ESC of another sequence. A string that a program left open then hides the
-    /// output only up to the next sequence, as in a terminal, not to the end of the recording.
+    /// The body of an OSC, DCS, SOS, PM, or APC string. Besides BEL and ST (ESC \), it ends where a terminal cuts it
+    /// off: at CAN or SUB, or at the ESC of another sequence, which is read next. A string that a program left open then
+    /// hides the output only up to the next sequence, as in a terminal, not to the end of the recording. The cast
+    /// filter (<see cref="CastOscFilter"/>) and the masker end a string at the same bytes. <paramref name="terminated"/>
+    /// is true when BEL or ST ended it.
     /// </summary>
-    private static bool TrySkipString(ReadOnlySpan<byte> input, int start, out int endIndex)
+    private static bool TrySkipString(ReadOnlySpan<byte> input, int start, out int endIndex, out bool terminated, bool caretTerminator = false)
     {
         for (var i = start; i < input.Length; i++)
         {
@@ -1346,6 +1386,14 @@ internal sealed class AnsiParser
             if (b is 0x07 or 0x18 or 0x1A)
             {
                 endIndex = i;
+                terminated = b == 0x07;
+                return true;
+            }
+
+            if (caretTerminator && b == (byte)'^' && i + 2 < input.Length && input[i + 1] == (byte)'[' && input[i + 2] == (byte)'\\')
+            {
+                endIndex = i + 2;
+                terminated = true;
                 return true;
             }
 
@@ -1355,39 +1403,14 @@ internal sealed class AnsiParser
                     break;
 
                 // ESC \ is the string's own end. Any other ESC starts the next sequence, which is read next.
-                endIndex = input[i + 1] == (byte)'\\' ? i + 1 : i - 1;
+                terminated = input[i + 1] == (byte)'\\';
+                endIndex = terminated ? i + 1 : i - 1;
                 return true;
             }
         }
 
         endIndex = start;
-        return false;
-    }
-
-    private static bool TrySkipOsc(ReadOnlySpan<byte> input, int start, out int endIndex, bool caretTerminator = false)
-    {
-        endIndex = start;
-        for (var i = start; i < input.Length; i++)
-        {
-            if (input[i] == 0x07)
-            {
-                endIndex = i;
-                return true;
-            }
-
-            if (caretTerminator && input[i] == (byte)'^' && i + 2 < input.Length && input[i + 1] == (byte)'[' && input[i + 2] == (byte)'\\')
-            {
-                endIndex = i + 2;
-                return true;
-            }
-
-            if (input[i] == 0x1B && i + 1 < input.Length && input[i + 1] == (byte)'\\')
-            {
-                endIndex = i + 1;
-                return true;
-            }
-        }
-
+        terminated = false;
         return false;
     }
 
@@ -1488,16 +1511,16 @@ internal sealed class AnsiParser
                 return;
             }
             case 'J':
-                _buffer.ClearDisplay(GetParameter(parameters, 0, 0), _style);
+                _buffer.ClearDisplay(GetParameter(parameters, 0, 0));
                 return;
             case 'K':
-                _buffer.ClearLine(GetParameter(parameters, 0, 0), _style);
+                _buffer.ClearLine(GetParameter(parameters, 0, 0));
                 return;
             case 'P':
-                _buffer.DeleteCharacters(Math.Max(1, GetParameter(parameters, 0, 1)), _style);
+                _buffer.DeleteCharacters(Math.Max(1, GetParameter(parameters, 0, 1)));
                 return;
             case '@':
-                _buffer.InsertBlankCharacters(Math.Max(1, GetParameter(parameters, 0, 1)), _style);
+                _buffer.InsertBlankCharacters(Math.Max(1, GetParameter(parameters, 0, 1)));
                 return;
             case 'L':
                 _buffer.InsertLines(Math.Max(1, GetParameter(parameters, 0, 1)));
@@ -1519,7 +1542,7 @@ internal sealed class AnsiParser
                 return;
             }
             case 'X':
-                _buffer.EraseChars(Math.Max(1, GetParameter(parameters, 0, 1)), _style);
+                _buffer.EraseChars(Math.Max(1, GetParameter(parameters, 0, 1)));
                 return;
             case 's':
                 _buffer.SaveCursor();
@@ -1533,76 +1556,144 @@ internal sealed class AnsiParser
     private void ApplySgr(List<int> parameters)
     {
         if (parameters.Count == 0)
-            parameters.Add(0);
+        {
+            _style = _buffer.DefaultStyle;
+            _buffer.SetEraseBackground(_style.Background);
+            return;
+        }
 
         for (var i = 0; i < parameters.Count; i++)
         {
             var code = GetParameter(parameters, i, 0);
-            switch (code)
+
+            // Parameters after a colon belong to the code before them: 4:3 is a curly underline, not an underline and
+            // italic, and 38:2::255:0:0 is one color. A code that takes none ignores them.
+            var subCount = 0;
+            while (i + 1 + subCount < parameters.Count && _csiAfterColon[i + 1 + subCount] != 0)
+                subCount++;
+            if (subCount > 0)
             {
-                case 0:
-                    _style = _buffer.DefaultStyle;
-                    break;
-                case 1:
-                    _style = _style with { Bold = true, Faint = false };
-                    break;
-                case 2:
-                    _style = _style with { Bold = false, Faint = true };
-                    break;
-                case 3:
-                    _style = _style with { Italic = true };
-                    break;
-                case 4:
-                    _style = _style with { Underline = true };
-                    break;
-                case 7:
-                    _style = _style with { Reversed = true };
-                    break;
-                case 22:
-                    _style = _style with { Bold = false, Faint = false };
-                    break;
-                case 23:
-                    _style = _style with { Italic = false };
-                    break;
-                case 24:
-                    _style = _style with { Underline = false };
-                    break;
-                case 27:
-                    _style = _style with { Reversed = false };
-                    break;
-                case 39:
-                    _style = _style with { Foreground = _buffer.DefaultStyle.Foreground };
-                    break;
-                case 49:
-                    _style = _style with { Background = _buffer.DefaultStyle.Background };
-                    break;
-                default:
-                    if (code is >= 30 and <= 37)
-                        _style = _style with { Foreground = _theme.AnsiPalette[code - 30] };
-                    else if (code is >= 40 and <= 47)
-                        _style = _style with { Background = _theme.AnsiPalette[code - 40] };
-                    else if (code is >= 90 and <= 97)
-                        _style = _style with { Foreground = _theme.AnsiPalette[8 + (code - 90)] };
-                    else if (code is >= 100 and <= 107)
-                        _style = _style with { Background = _theme.AnsiPalette[8 + (code - 100)] };
-                    else if ((code == 38 || code == 48) && i + 1 < parameters.Count)
-                        TryApplyExtendedColor(parameters, ref i, code == 48);
-                    break;
+                ApplySgrWithSubParameters(code, parameters, i + 1, subCount);
+                i += subCount;
+                continue;
             }
+
+            if (code is 38 or 48 or 58)
+            {
+                // 38;5;n and 38;2;r;g;b in the older form with semicolons. The underline color (58) is not drawn, but
+                // its numbers are read, so they are not taken for codes of their own.
+                if (TryReadExtendedColor(parameters, ref i, out var color) && code != 58)
+                    _style = code == 48 ? _style with { Background = color } : _style with { Foreground = color };
+                continue;
+            }
+
+            ApplySgrCode(code);
+        }
+
+        _buffer.SetEraseBackground(_style.Background);
+    }
+
+    private void ApplySgrCode(int code)
+    {
+        switch (code)
+        {
+            case 0:
+                _style = _buffer.DefaultStyle;
+                break;
+            case 1:
+                _style = _style with { Bold = true, Faint = false };
+                break;
+            case 2:
+                _style = _style with { Bold = false, Faint = true };
+                break;
+            case 3:
+                _style = _style with { Italic = true };
+                break;
+            case 4:
+                _style = _style with { Underline = true };
+                break;
+            case 7:
+                _style = _style with { Reversed = true };
+                break;
+            case 22:
+                _style = _style with { Bold = false, Faint = false };
+                break;
+            case 23:
+                _style = _style with { Italic = false };
+                break;
+            case 24:
+                _style = _style with { Underline = false };
+                break;
+            case 27:
+                _style = _style with { Reversed = false };
+                break;
+            case 39:
+                _style = _style with { Foreground = _buffer.DefaultStyle.Foreground };
+                break;
+            case 49:
+                _style = _style with { Background = _buffer.DefaultStyle.Background };
+                break;
+            default:
+                if (code is >= 30 and <= 37)
+                    _style = _style with { Foreground = _theme.AnsiPalette[code - 30] };
+                else if (code is >= 40 and <= 47)
+                    _style = _style with { Background = _theme.AnsiPalette[code - 40] };
+                else if (code is >= 90 and <= 97)
+                    _style = _style with { Foreground = _theme.AnsiPalette[8 + (code - 90)] };
+                else if (code is >= 100 and <= 107)
+                    _style = _style with { Background = _theme.AnsiPalette[8 + (code - 100)] };
+                break;
         }
     }
 
-    private void TryApplyExtendedColor(List<int> parameters, ref int index, bool isBackground)
+    /// <summary>
+    /// A code with parameters after colons (ITU T.416). 4:0 ends the underline and 4:1 to 4:5 start one (double, curly,
+    /// dotted, and dashed draw as single). 38 and 48 take 5:n or 2:r:g:b, and before r a color space that may be empty:
+    /// 2::r:g:b or 2:0:r:g:b. 58, the underline color, is not drawn.
+    /// </summary>
+    private void ApplySgrWithSubParameters(int code, List<int> parameters, int first, int count)
     {
+        switch (code)
+        {
+            case 4:
+                _style = _style with { Underline = GetParameter(parameters, first, 1) != 0 };
+                return;
+            case 38 or 48:
+            {
+                string? color = null;
+                var mode = GetParameter(parameters, first, 0);
+                if (mode == 5 && count >= 2)
+                    color = FromAnsi256(GetParameter(parameters, first + 1, 0));
+                else if (mode == 2 && count >= 4)
+                    color = Rgb(parameters, first + (count >= 5 ? 2 : 1));
+                if (color is not null)
+                    _style = code == 48 ? _style with { Background = color } : _style with { Foreground = color };
+                return;
+            }
+            case 58:
+                return;
+            default:
+                ApplySgrCode(code);
+                return;
+        }
+    }
+
+    /// <summary>
+    /// The color of 38, 48, or 58 in the form with semicolons at <paramref name="index"/>: 5;n or 2;r;g;b, where an empty
+    /// parameter before r is a color space. <paramref name="index"/> moves to the last parameter read.
+    /// </summary>
+    private bool TryReadExtendedColor(List<int> parameters, ref int index, out string color)
+    {
+        color = "";
+        if (index + 1 >= parameters.Count)
+            return false;
+
         var mode = GetParameter(parameters, index + 1, 0);
         if (mode == 5 && index + 2 < parameters.Count)
         {
-            var color = FromAnsi256(GetParameter(parameters, index + 2, 0));
-            _style = isBackground
-                ? _style with { Background = color }
-                : _style with { Foreground = color };
+            color = FromAnsi256(GetParameter(parameters, index + 2, 0));
             index += 2;
-            return;
+            return true;
         }
 
         if (mode == 2)
@@ -1612,17 +1703,22 @@ internal sealed class AnsiParser
                 rgbStart++;
 
             if (rgbStart + 2 >= parameters.Count)
-                return;
+                return false;
 
-            var r = Clamp(GetParameter(parameters, rgbStart, 0), 0, 255);
-            var g = Clamp(GetParameter(parameters, rgbStart + 1, 0), 0, 255);
-            var b = Clamp(GetParameter(parameters, rgbStart + 2, 0), 0, 255);
-            var color = string.Create(CultureInfo.InvariantCulture, $"#{r:X2}{g:X2}{b:X2}");
-            _style = isBackground
-                ? _style with { Background = color }
-                : _style with { Foreground = color };
+            color = Rgb(parameters, rgbStart);
             index = rgbStart + 2;
+            return true;
         }
+
+        return false;
+    }
+
+    private static string Rgb(List<int> parameters, int first)
+    {
+        var r = Clamp(GetParameter(parameters, first, 0), 0, 255);
+        var g = Clamp(GetParameter(parameters, first + 1, 0), 0, 255);
+        var b = Clamp(GetParameter(parameters, first + 2, 0), 0, 255);
+        return string.Create(CultureInfo.InvariantCulture, $"#{r:X2}{g:X2}{b:X2}");
     }
 
     private string FromAnsi256(int index)
@@ -1650,10 +1746,12 @@ internal sealed class AnsiParser
     private void ParseParameters(ReadOnlySpan<byte> parameterText)
     {
         _csiParams.Clear();
+        _csiAfterColon.Clear();
         if (parameterText.IsEmpty)
             return;
 
         var i = 0;
+        var afterColon = 0;
         while (i <= parameterText.Length)
         {
             var start = i;
@@ -1667,10 +1765,12 @@ internal sealed class AnsiParser
                 _csiParams.Add(value);
             else
                 _csiParams.Add(MissingParameter);
+            _csiAfterColon.Add(afterColon);
 
             if (i >= parameterText.Length)
                 break;
 
+            afterColon = parameterText[i] == (byte)':' ? 1 : 0;
             i++;
         }
     }

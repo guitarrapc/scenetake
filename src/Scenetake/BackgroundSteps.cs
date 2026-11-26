@@ -51,7 +51,7 @@ internal sealed class BackgroundSteps : IDisposable
         var stopwatch = Stopwatch.StartNew();
         var found = running.WaitAsync(waitFor);
         var exited = process.WaitForExitAsync();
-        var first = await Task.WhenAny(found, exited, Task.Delay(TimeSpan.FromSeconds(waitLimit)));
+        var first = await Task.WhenAny(found, exited, Task.Delay(Delays.Of(waitLimit)));
         if (first == exited)
         {
             // The text may have come just before the exit: what the command printed is read to its end first.
