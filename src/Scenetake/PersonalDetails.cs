@@ -6,8 +6,9 @@ namespace Scenetake;
 
 /// <summary>
 /// Collects what names the person who records, for <c>settings.mask-personal</c> (spec_scenario.md → Masking personal
-/// details): the user name, the home folder's name, the computer's name, and the git name and email. Commands print
-/// them without being asked: <c>pwd</c> under the home folder, <c>ls -l</c>, <c>git log</c>, a stack trace.
+/// details): the computer's name, and the git name and email, which commands such as <c>hostname</c> and
+/// <c>git log</c> print. The user name and the home folder are left out: paths name them in nearly every recording,
+/// and <c>cwd-as</c> or <c>settings.mask</c> hides them where an author wants to.
 /// </summary>
 internal static class PersonalDetails
 {
@@ -21,13 +22,6 @@ internal static class PersonalDetails
     internal static List<PersonalDetail> Collect(string? folder)
     {
         var details = new List<PersonalDetail>();
-        Add(details, Environment.UserName, PersonalDetail.UserName);
-
-        // The home folder's name is usually the user name, but not always: Windows can cut it or add the domain.
-        // Git Bash may set HOME to another folder than the user profile. Its 8.3 name, such as ADALOV~1, is in TEMP.
-        foreach (var home in HomeFolders())
-            Add(details, LastName(home), PersonalDetail.HomeFolderName);
-
         try
         {
             Add(details, Environment.MachineName, PersonalDetail.ComputerName);
@@ -50,33 +44,10 @@ internal static class PersonalDetails
         return details;
     }
 
-    /// <summary>
-    /// The home folder in each form a command may print it, for its path to show as ~ (PathStandIn): the user profile,
-    /// which PowerShell on Windows takes as home, and HOME, which Git Bash and Unix shells take, each in its forms
-    /// (<see cref="FolderPaths.Forms"/>).
-    /// </summary>
-    internal static List<string> HomeFolders()
-    {
-        var folders = FolderPaths.Forms(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
-        foreach (var form in FolderPaths.Forms(Environment.GetEnvironmentVariable("HOME")))
-            FolderPaths.AddNew(folders, form);
-        return folders;
-    }
-
     private static void Add(List<PersonalDetail> details, string? value, string kind)
     {
         if (!string.IsNullOrWhiteSpace(value))
             details.Add(new PersonalDetail(value, kind));
-    }
-
-    private static string? LastName(string? path)
-    {
-        var trimmed = path?.TrimEnd('/', '\\');
-        if (string.IsNullOrEmpty(trimmed))
-            return null;
-
-        var slash = trimmed.LastIndexOfAny(['/', '\\']);
-        return slash < 0 ? trimmed : trimmed[(slash + 1)..];
     }
 
     /// <summary>

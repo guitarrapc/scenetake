@@ -260,7 +260,7 @@
           "default": true
         },
         "mask-personal": {
-          "description": "Hide the user name, home folder name, computer name, and git name and email of the machine that records. The home folder's path shows as ~.",
+          "description": "Hide the computer name, and the git name and email, of the machine that records. The user name and the home folder's path show as they are: cwd-as or mask hides them.",
           "type": "boolean",
           "default": true
         }

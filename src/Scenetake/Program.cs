@@ -894,9 +894,8 @@ var outputsFileArg = saveOutputsPath ?? Environment.GetEnvironmentVariable(StepO
 List<RecordedStep>? recordedSteps = string.IsNullOrWhiteSpace(outputsFileArg) ? null : [];
 
 // The commands inherit scenetake's environment, so a secret variable's value is hidden wherever a step prints it.
-// So is one that pre or a step exports for the commands after it. mask-personal hides who records: the user name,
-// the home folder, the computer's name, and the git identity, which pwd, ls -l, and git log print.
-// The home folder's path shows as ~ with mask-personal, and cwd's as cwd-as gives it.
+// So is one that pre or a step exports for the commands after it. mask-personal hides the computer's name and the git
+// identity, which hostname and git log print. cwd's path shows as cwd-as gives it.
 var masker = SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment(), CollectPersonalDetails(scenario), CollectPathStandIns(scenario, scenarioPath));
 masker?.Learn(shellState?.TakeExports());
 
@@ -2967,8 +2966,8 @@ static ShellLaunch ResolveShell(Scenario scenario)
 static List<PersonalDetail>? CollectPersonalDetails(Scenario scenario) =>
     (scenario.Settings?.MaskPersonal ?? true) ? PersonalDetails.Collect(scenario.Cwd) : null;
 
-// The folders whose paths show as a stand-in: cwd as cwd-as gives it, and with mask-personal the home folder as ~. A
-// replay does not resolve cwd, so it is resolved here as the recording resolves it, against the scenario's folder.
+// The folder whose path shows as a stand-in: cwd as cwd-as gives it. A replay does not resolve cwd, so it is resolved
+// here as the recording resolves it, against the scenario's folder.
 static List<PathStandIn> CollectPathStandIns(Scenario scenario, string scenarioPath)
 {
     var paths = new List<PathStandIn>();
@@ -2987,13 +2986,7 @@ static List<PathStandIn> CollectPathStandIns(Scenario scenario, string scenarioP
         }
 
         foreach (var form in FolderPaths.Forms(cwd))
-            paths.Add(new PathStandIn(form, cwdAs.Trim(), kind: null));
-    }
-
-    if (scenario.Settings?.MaskPersonal ?? true)
-    {
-        foreach (var home in PersonalDetails.HomeFolders())
-            paths.Add(new PathStandIn(home, "~", PersonalDetail.HomeFolder));
+            paths.Add(new PathStandIn(form, cwdAs.Trim()));
     }
 
     return paths;
@@ -3300,7 +3293,7 @@ static string CreateInitialScenarioYaml(string? shell)
       # mask:                        # Texts to hide wherever the recording shows them, as *, such as a host name.
       #   - "internal.example.com"
       # mask-auto: true              # The default: also hide tokens, KEY=value secrets, passwords in URLs, and more.
-      # mask-personal: true          # The default: also hide your user name, computer name, and git name and email.
+      # mask-personal: true          # The default: also hide your computer name, and git name and email.
 
     # Optional setup commands. They run before steps, but are not recorded in the cast.
     # pre:

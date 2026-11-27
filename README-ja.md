@@ -615,7 +615,7 @@ settings:
     - "internal.example.com"
 ```
 
-録画した人の情報をマスクします。対象は`ls -l`に出るユーザー名、コンピューター名、`git log`に出るgitの名前とメールです。ホームフォルダーのパスは`~`と表示するので、`pwd`は`~/src/app`と出ます。表示したいときは`mask-personal: false`にします。webアドレス中の名前（例: `github.com/<名前>/tool`）はマスクしません。
+録画した人の情報もマスクします。対象はコンピューター名と、`git log`に出るgitの名前とメールです。表示したいときは`mask-personal: false`にします。webアドレス中のgitの名前（例: `github.com/<名前>/tool`）はマスクしません。ユーザー名とホームフォルダーのパスはそのまま出ます。出したくないときは、デモのフォルダーを`cwd-as`（下記）で指定するか、ユーザー名を`mask`に書きます。
 
 ```yaml
 settings:

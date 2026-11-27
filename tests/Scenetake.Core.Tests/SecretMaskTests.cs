@@ -711,42 +711,44 @@ internal static class SecretMaskCases
             & Same("type error", "'settings.mask' must be a list, not 'abc'.", FindValueTypeError("settings:\n  mask: abc\nsteps:\n  - echo hi\n") ?? "(none)");
     }
 
-    // The details of a made-up person, as PersonalDetails.Collect would give them on their machine.
+    // The details of a made-up person, as PersonalDetails.Collect would give them on their machine. Their user name,
+    // adal, is not one: a path names it in nearly every recording.
     internal static PersonalDetail[] AdaDetails() =>
     [
-        new("adal", PersonalDetail.UserName),
-        new("adal", PersonalDetail.HomeFolderName),
         new("Adas-MacBook-Pro", PersonalDetail.ComputerName),
         new("Ada Lovelace", PersonalDetail.GitName),
         new("ada+adal@example.com", PersonalDetail.GitEmail),
     ];
 
-    internal static SecretMasker PersonalMasker(string yamlSettings = "  prompt: \"$ \"") =>
-        SecretMasker.ForScenario(ParseScenario($"settings:\n{yamlSettings}\nsteps:\n  - echo hi\n"), null, AdaDetails())
+    // The same person with the handle they publish under as their git name, which is also their user name.
+    internal static PersonalDetail[] AdaHandleDetails() =>
+    [
+        new("Adas-MacBook-Pro", PersonalDetail.ComputerName),
+        new("adal", PersonalDetail.GitName),
+        new("ada+adal@example.com", PersonalDetail.GitEmail),
+    ];
+
+    internal static SecretMasker PersonalMasker(string yamlSettings = "  prompt: \"$ \"", PersonalDetail[]? details = null) =>
+        SecretMasker.ForScenario(ParseScenario($"settings:\n{yamlSettings}\nsteps:\n  - echo hi\n"), null, details ?? AdaDetails())
             ?? throw new InvalidOperationException("no masker");
 
     internal static bool PersonalDetailsAreHiddenAsWords()
     {
         var masker = PersonalMasker();
         string Mask(string text) => masker.MaskText(text);
-        return Same("unix home", "/home/****/app", Mask("/home/adal/app"))
-            & Same("macOS home", "/Users/****", Mask("/Users/adal"))
-            & Same("Windows home, other case", @"C:\Users\****\AppData", Mask(@"C:\Users\Adal\AppData"))
-            & Same("Git Bash home", "/c/Users/****/src", Mask("/c/Users/ADAL/src"))
-            & Same("JSON home", @"""C:\\Users\\****\\x""", Mask(@"""C:\\Users\\adal\\x"""))
-            & Same("ls -l", "-rw-r--r--  1 ****  staff  3 a.txt", Mask("-rw-r--r--  1 adal  staff  3 a.txt"))
-            & Same("prompt of a child shell", "****@****************:~$", Mask("adal@Adas-MacBook-Pro:~$"))
+        return Same("prompt of a child shell", "adal@****************:~$", Mask("adal@Adas-MacBook-Pro:~$"))
             & Same("computer name, other case", "****************.local", Mask("adas-macbook-pro.local"))
-            & Same("id", "uid=501(****) gid=20(staff)", Mask("uid=501(adal) gid=20(staff)"))
+            & Same("computer name in a path", "/Volumes/****************/x", Mask("/Volumes/Adas-MacBook-Pro/x"))
             & Same("git log", "Author: ************ <********************>", Mask("Author: Ada Lovelace <ada+adal@example.com>"))
-            & Same("an email with the user name", "****@other.example", Mask("adal@other.example"))
-            & Same("a path that is not the home", @"D:\src\****\app", Mask(@"D:\src\adal\app"))
-            & Same("inside longer words", "adalbert adal-work adal_x xadal", Mask("adalbert adal-work adal_x xadal"));
+            & Same("git name, other case", "by ************,", Mask("by ADA LOVELACE,"))
+            & Same("inside longer words", "Adas-MacBook-Pro2 xAdas-MacBook-Pro Ada Lovelaces", Mask("Adas-MacBook-Pro2 xAdas-MacBook-Pro Ada Lovelaces"));
     }
 
+    // The git name is the handle the person publishes under, so it stays in an address. A path is no address, so there
+    // it is hidden as a git name, though it is the user name too.
     internal static bool PublishedNamesStay()
     {
-        var masker = PersonalMasker();
+        var masker = PersonalMasker(details: AdaHandleDetails());
         string Mask(string text) => masker.MaskText(text);
         return Same("web address", "https://github.com/adal/tool", Mask("https://github.com/adal/tool"))
             & Same("address without a scheme", "see github.com/adal/tool", Mask("see github.com/adal/tool"))
@@ -767,12 +769,12 @@ internal static class SecretMaskCases
     {
         PersonalDetail[] details =
         [
-            new("runner", PersonalDetail.UserName),
-            new("root", PersonalDetail.HomeFolderName),
+            new("runner", PersonalDetail.GitName),
+            new("root", PersonalDetail.GitName),
             new("localhost", PersonalDetail.ComputerName),
             new("dev", PersonalDetail.ComputerName),
-            new("jo", PersonalDetail.UserName),
-            new("1001", PersonalDetail.UserName),
+            new("jo", PersonalDetail.GitName),
+            new("1001", PersonalDetail.ComputerName),
             new("Demo", PersonalDetail.GitName),
         ];
         var scenario = ParseScenario("settings:\n  mask-auto: false\nsteps:\n  - echo hi\n");
@@ -785,7 +787,7 @@ internal static class SecretMaskCases
 
     internal static bool MaskPersonalFalseShowsThem()
     {
-        var text = "/home/adal Ada Lovelace";
+        var text = "Adas-MacBook-Pro Ada Lovelace";
         var off = PersonalMasker("  mask-personal: false");
         var none = SecretMasker.ForScenario(ParseScenario("settings:\n  mask-personal: false\n  mask-auto: false\nsteps:\n  - echo hi\n"), null, AdaDetails());
         // mask-personal is separate from mask-auto: turning off the token finders keeps the personal details hidden.
@@ -793,19 +795,19 @@ internal static class SecretMaskCases
         return Same("mask-personal: false", text, off.MaskText(text))
             & Expect(off.PersonalSummary() is null, "no personal summary")
             & Expect(none is null, "nothing left to hide gives no masker")
-            & Same("mask-auto: false", "/home/**** ************", autoOff.MaskText(text));
+            & Same("mask-auto: false", "**************** ************", autoOff.MaskText(text));
     }
 
     internal static bool PersonalSummaryIsItsOwnLine()
     {
         var masker = PersonalMasker();
-        // The email holds the user name: it is hidden and named as the email.
-        masker.MaskText("API_KEY=abcd1234 ada+adal@example.com /home/adal ADAL Ada Lovelace");
-        var emailOnly = PersonalMasker();
+        masker.MaskText("API_KEY=abcd1234 ada+adal@example.com adas-macbook-pro Ada Lovelace");
+        // The email holds the git name: it is hidden and named as the email.
+        var emailOnly = PersonalMasker(details: AdaHandleDetails());
         emailOnly.MaskText("by ada+adal@example.com");
         return Same("secrets", "Masked 1 secret: 1 key=value secret", masker.Summary() ?? "(none)")
-            & Same("personal", "Masked personal details: user name, git name, git email", masker.PersonalSummary() ?? "(none)")
-            & Same("email holding the user name", "Masked personal details: git email", emailOnly.PersonalSummary() ?? "(none)")
+            & Same("personal", "Masked personal details: computer name, git name, git email", masker.PersonalSummary() ?? "(none)")
+            & Same("email holding the git name", "Masked personal details: git email", emailOnly.PersonalSummary() ?? "(none)")
             & Expect(emailOnly.Summary() is null, "no secret summary");
     }
 
@@ -813,8 +815,8 @@ internal static class SecretMaskCases
     {
         // Split across reads and colored in parts, as a prompt or ls --color writes it.
         var masker = PersonalMasker();
-        return Same("split and colored", "\u001b[1m**|**\u001b[0m@****************\r\n",
-            MaskPty(masker, "\u001b[1mad", "al\u001b[0m@Adas-MacBook-Pro\r\n"));
+        return Same("split and colored", "adal@\u001b[1m********|********\u001b[0m:~$ ",
+            MaskPty(masker, "adal@\u001b[1mAdas-Mac", "Book-Pro\u001b[0m:~$ "));
     }
 
     internal static bool RecordingHidesCommandCommentAndOutput()

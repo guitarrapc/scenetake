@@ -16,7 +16,7 @@ scenetake records terminal demos from commands you write in a YAML scenario.
 
 Terminal demos recorded by hand go stale when your tool changes. Re-recording means retyping every command, waiting for the output, and avoiding typos, and it gets tedious fast.
 
-scenetake makes re-recording easy. Write the commands in a YAML scenario, and scenetake types them for you. It presses the keys you list in TUIs and interactive apps, and hides tokens and your user name. Steps whose output did not change record exactly as before, so a re-recorded demo differs only where something changed.
+scenetake makes re-recording easy. Write the commands in a YAML scenario, and scenetake types them for you. It presses the keys you list in TUIs and interactive apps, and hides tokens and your git identity. Steps whose output did not change record exactly as before, so a re-recorded demo differs only where something changed.
 
 ## Gallery
 
@@ -610,7 +610,7 @@ settings:
     - "internal.example.com"
 ```
 
-It also hides who recorded the demo: your user name in `ls -l`, your computer's name, and your git name and email in `git log`. Your home folder's path shows as `~`, so `pwd` prints `~/src/app`. Your name in a web address, such as `github.com/<name>/tool`, stays. To show them, set `mask-personal: false`.
+It also hides who recorded the demo: your computer's name, and your git name and email in `git log`. Your git name in a web address, such as `github.com/<name>/tool`, stays. To show them, set `mask-personal: false`. Your user name and your home folder's path show as they are. To keep them out, give the demo's folder with `cwd-as` (below), or list your user name in `mask`.
 
 ```yaml
 settings:

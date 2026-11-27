@@ -16,7 +16,7 @@ internal static class FolderPaths
         if (string.IsNullOrWhiteSpace(folder))
             return forms;
 
-        // Git Bash writes HOME as /c/Users/name.
+        // Git Bash writes a Windows folder as /c/Users/name.
         var native = PromptTemplate.NativePath(folder.Trim());
         if (!Path.IsPathFullyQualified(native))
             return forms;
@@ -46,7 +46,7 @@ internal static class FolderPaths
     }
 
     /// <summary>Adds <paramref name="form"/> unless the list has it, case ignored: the masker ignores case too.</summary>
-    internal static void AddNew(List<string> forms, string? form)
+    private static void AddNew(List<string> forms, string? form)
     {
         if (string.IsNullOrEmpty(form))
             return;
