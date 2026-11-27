@@ -1047,10 +1047,11 @@ internal static class PosixShellDump
 }
 
 /// <summary>
-/// PowerShell: the command is wrapped on its first and last lines, so its line numbers stay as written. The first
-/// line notes the shell as it started, then restores the state; a <c>finally</c> after the last line saves what
-/// differs, and the exit code is made again from <c>$?</c>, as <c>-Command</c> makes it, because the save is the
-/// last statement now. The state goes from one command to the next as a CliXml file, which PowerShell reads and
+/// PowerShell: the command runs as a script block of its own, after the restore and before the save, so its errors
+/// show its own lines and none of scenetake's. Nothing catches around it: a <c>try</c> or a <c>trap</c> anywhere
+/// above the command makes an error that stops one statement, such as <c>1/0</c>, stop the whole command. So a
+/// command that ends with a terminating error or <c>exit</c> saves nothing, and the next one gets the state of the
+/// commands before it. The state goes from one command to the next as a CliXml file, which PowerShell reads and
 /// writes itself.
 /// </summary>
 internal sealed class PowerShellState : ShellState
@@ -1058,17 +1059,28 @@ internal sealed class PowerShellState : ShellState
     // The state the last command saved, or null before the first one.
     private string? _input;
 
+    // Runs command.ps1 between restore.ps1 and save.ps1 of the folder in $__scenetake_dir. A command that does not
+    // parse runs nothing, as when it runs alone, and its error names its own lines. The command's block is called on
+    // the first line, because pwsh shows where an error is when it comes from below the first line, and Write-Error
+    // places its error at that call. $? is read after the command's last line, as -Command reads it for the exit code.
+    // A command that returns early leaves $__scenetake_ok unset and exits 0, as -Command does.
+    private const string RunScript =
+        """
+        $__scenetake_text = [IO.File]::ReadAllText($__scenetake_dir + '/command.ps1'); $__scenetake_tokens = $__scenetake_errors = $null; $null = [System.Management.Automation.Language.Parser]::ParseInput($__scenetake_text, [ref]$__scenetake_tokens, [ref]$__scenetake_errors); if ($__scenetake_errors.Count) { throw [System.Management.Automation.ParseException]::new($__scenetake_errors) }; . ([scriptblock]::Create([IO.File]::ReadAllText($__scenetake_dir + '/restore.ps1'))); $__scenetake_ok = $null; . ([scriptblock]::Create($__scenetake_text + "`n`$__scenetake_ok = `$?"))
+        . ([scriptblock]::Create([IO.File]::ReadAllText($__scenetake_dir + '/save.ps1'))); if ($__scenetake_ok -eq $false) { exit 1 }
+        """;
+
     protected override PreparedCommand Prepare(string command, string folder)
     {
-        var restore = Path.Combine(folder, "restore.ps1");
-        var save = Path.Combine(folder, "save.ps1");
-        File.WriteAllText(restore, BuildRestore(_input, Path.Combine(folder, "restore.err")), new UTF8Encoding(false));
-        File.WriteAllText(save, BuildSave(Path.Combine(folder, "state.xml"), Path.Combine(folder, "exports.txt"), Path.Combine(folder, "restore.err"), Path.Combine(folder, "final.pwd")), new UTF8Encoding(false));
+        var utf8 = new UTF8Encoding(false);
+        File.WriteAllText(Path.Combine(folder, "restore.ps1"), BuildRestore(_input, Path.Combine(folder, "restore.err")), utf8);
+        File.WriteAllText(Path.Combine(folder, "save.ps1"), BuildSave(Path.Combine(folder, "state.xml"), Path.Combine(folder, "exports.txt"), Path.Combine(folder, "restore.err"), Path.Combine(folder, "final.pwd")), utf8);
+        File.WriteAllText(Path.Combine(folder, "command.ps1"), command, utf8);
+        File.WriteAllText(Path.Combine(folder, "run.ps1"), RunScript, utf8);
         // The scripts are read as text and run as script blocks: Windows PowerShell's default execution policy
-        // refuses to run a .ps1 file, and a script block is not checked.
-        var text = $". ([scriptblock]::Create([IO.File]::ReadAllText({Literal(restore)}))); $__scenetake_ok = $false; try {{ {command}\n" +
-                   $"$__scenetake_ok = $? }} finally {{ . ([scriptblock]::Create([IO.File]::ReadAllText({Literal(save)}))) }}; if (-not $__scenetake_ok) {{ exit 1 }}";
-        return new PreparedCommand(text, null);
+        // refuses to run a .ps1 file, and a script block is not checked. run.ps1 names no folder, because Windows
+        // PowerShell shows its line with an error from Write-Error.
+        return new PreparedCommand($"$__scenetake_dir = {Literal(folder)}; . ([scriptblock]::Create([IO.File]::ReadAllText($__scenetake_dir + '/run.ps1')))", null);
     }
 
     protected override void Take(string folder, List<KeyValuePair<string, string?>> exports)

@@ -1,0 +1,25 @@
+# A PowerShell step's errors show as they do when the command runs alone, with nothing of scenetake's wrapper, and the
+# step goes on after an error that stops only its statement (spec_scenario.md → Shell state across steps). Run from the
+# repository root by ShellStateTests, with shell: pwsh, and with shell: powershell on Windows.
+title: "errors in PowerShell steps"
+width: 120
+height: 40
+shell: pwsh
+settings:
+  typing-speed: 0.001
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+steps:
+  - run: throw 'boom'
+    continue-on-error: true
+  - run: |
+      Write-Output first
+      throw 'second'
+    continue-on-error: true
+  - "[int]::Parse('x'); 'after-statement-error'"
+  - run: Get-Item -Path )
+    continue-on-error: true
+  - run: |
+      using namespace System.IO
+      [Path]::GetFileName('dir/using-works')

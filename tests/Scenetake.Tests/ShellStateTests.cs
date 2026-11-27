@@ -51,7 +51,7 @@ public sealed class ShellStateTests
     public async Task PosixShellRestoreCarriesWhatChanged() => await Assert.That(ShellStateCases.PosixShellRestoreCarriesWhatChanged()).IsTrue();
 
     [Test]
-    public async Task PowerShellWrapsOnFirstAndLastLine() => await Assert.That(ShellStateCases.PowerShellWrapsOnFirstAndLastLine()).IsTrue();
+    public async Task PowerShellRunsTheCommandFromItsOwnFile() => await Assert.That(ShellStateCases.PowerShellRunsTheCommandFromItsOwnFile()).IsTrue();
 
     [Test]
     public async Task ShowAndClearErrors() => await Assert.That(ShellStateCases.ShowAndClearErrors()).IsTrue();
@@ -130,6 +130,12 @@ public sealed class ShellStateTests
 
     [Test]
     public async Task IntegrationWindowsPowerShellCarriesState() => await Assert.That(ShellStateCases.IntegrationWindowsPowerShellCarriesState(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationPowerShellErrorsShowAsAlone() => await Assert.That(ShellStateCases.IntegrationPowerShellErrorsShowAsAlone(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationWindowsPowerShellErrorsShowAsAlone() => await Assert.That(ShellStateCases.IntegrationWindowsPowerShellErrorsShowAsAlone(TestEnv.RepoRoot)).IsTrue();
 
     [Test]
     public async Task IntegrationPowerShellKeepsNamesThatDifferInCase() => await Assert.That(ShellStateCases.IntegrationPowerShellKeepsNamesThatDifferInCase(TestEnv.RepoRoot)).IsTrue();
@@ -390,16 +396,18 @@ internal static class ShellStateCases
                 $"exports: {string.Join(", ", exports.Select(static e => $"{e.Key}={e.Value}"))}");
     }
 
-    // The user's lines keep their numbers: the restore shares the first line, and the save comes after the last.
-    internal static bool PowerShellWrapsOnFirstAndLastLine()
+    // The user's lines keep their numbers and their text: the command is a file of its own, which the shell's command
+    // line only names through the folder.
+    internal static bool PowerShellRunsTheCommandFromItsOwnFile()
     {
         using var state = ShellState.Create("pwsh", isPowerShell: true)!;
-        var command = state.Prepare("Write-Output one\nWrite-Output two # a comment").Command;
-        var lines = command.Split('\n');
-        return Expect(lines.Length == 3, $"lines: {lines.Length}")
-            && Expect(lines[0].EndsWith("try { Write-Output one", StringComparison.Ordinal), lines[0])
-            && Expect(lines[1] == "Write-Output two # a comment", lines[1])
-            && Expect(lines[2].StartsWith("$__scenetake_ok = $? }", StringComparison.Ordinal) && lines[2].EndsWith("if (-not $__scenetake_ok) { exit 1 }", StringComparison.Ordinal), lines[2]);
+        const string Command = "Write-Output one\nWrite-Output 'it''s two' # a comment";
+        var text = state.Prepare(Command).Command;
+        var folder = Regex.Match(text, @"^\$__scenetake_dir = '((?:[^']|'')*)';").Groups[1].Value.Replace("''", "'", StringComparison.Ordinal);
+        return Expect(!text.Contains('\n', StringComparison.Ordinal) && !text.Contains("Write-Output", StringComparison.Ordinal), text)
+            && Expect(Directory.Exists(folder), $"folder: {folder}")
+            && Expect(File.ReadAllText(Path.Combine(folder, "command.ps1")) == Command, "command.ps1")
+            && Expect(!File.ReadAllText(Path.Combine(folder, "run.ps1")).Contains(folder, StringComparison.OrdinalIgnoreCase), "run.ps1 names the folder");
     }
 
     internal static bool ShowAndClearErrors()
@@ -1187,8 +1195,7 @@ internal static class ShellStateCases
 
     internal static bool IntegrationWindowsPowerShellCarriesState(string repoRoot)
     {
-        // Windows runs the same state scripts in Windows PowerShell when pwsh is not installed. Its error display is its
-        // own, so only the state is checked.
+        // Windows PowerShell's error display is its own, so only the state is checked.
         if (!TryGetBinary(out var bin))
             return true;
         if (!OperatingSystem.IsWindows() || !IsOnPath("powershell"))
@@ -1197,15 +1204,71 @@ internal static class ShellStateCases
             return true;
         }
 
-        var pwsh = File.ReadAllText(Path.Combine(repoRoot, "tests", "fixtures", "shell-state-pwsh.yaml"));
-        if (!Expect(pwsh.Contains("shell: pwsh", StringComparison.Ordinal), "the pwsh fixture names no shell"))
+        return RunInWindowsPowerShell(bin, repoRoot, "shell-state-pwsh.yaml", PowerShellStateEnvironment()) is { } run && PowerShellStateCarried(run);
+    }
+
+    internal static bool IntegrationPowerShellErrorsShowAsAlone(string repoRoot)
+    {
+        if (!TryGetBinary(out var bin))
+            return true;
+        if (!IsOnPath("pwsh"))
+        {
+            Skip.Test("pwsh is not on PATH");
+            return true;
+        }
+
+        var run = RunFixture(bin, repoRoot, "shell-state-pwsh-errors.yaml");
+        var text = run.Text;
+        return PowerShellErrorsShownAsAlone(run)
+            && Expect(text.Contains("Exception: boom", StringComparison.Ordinal), $"the error on the first line: {Show(text)}")
+            && Expect(text.Contains("   2 |  throw 'second'", StringComparison.Ordinal), $"the error on the second line: {Show(text)}")
+            && Expect(text.Contains("   1 |  Get-Item -Path )", StringComparison.Ordinal), $"the syntax error: {Show(text)}");
+    }
+
+    // Windows PowerShell writes where each error is, so the positions must be the command's own.
+    internal static bool IntegrationWindowsPowerShellErrorsShowAsAlone(string repoRoot)
+    {
+        if (!TryGetBinary(out var bin))
+            return true;
+        if (!OperatingSystem.IsWindows() || !IsOnPath("powershell"))
+        {
+            Skip.Test("Windows PowerShell is not on PATH");
+            return true;
+        }
+
+        if (RunInWindowsPowerShell(bin, repoRoot, "shell-state-pwsh-errors.yaml", null) is not { } run)
             return false;
+        var text = run.Text;
+        return PowerShellErrorsShownAsAlone(run)
+            && Expect(text.Contains("At line:1 char:1\n+ throw 'boom'\n", StringComparison.Ordinal), $"the error on the first line: {Show(text)}")
+            && Expect(text.Contains("At line:2 char:1\n+ throw 'second'\n", StringComparison.Ordinal), $"the error on the second line: {Show(text)}")
+            && Expect(text.Contains("\n+ Get-Item -Path )\n", StringComparison.Ordinal), $"the syntax error: {Show(text)}");
+    }
+
+    // What shell-state-pwsh-errors.yaml shows in either PowerShell. [int]::Parse('x') stops only its own statement, so
+    // the step goes on and exits 0, as it does alone. using namespace is valid only where a script begins.
+    private static bool PowerShellErrorsShownAsAlone((int ExitCode, string Stderr, string Text) run)
+    {
+        var text = run.Text;
+        return Expect(run.ExitCode == 0, $"exit {run.ExitCode}\n{run.Stderr}")
+            && Expect(!text.Contains("__scenetake", StringComparison.Ordinal) && !text.Contains("scenetake-state", StringComparison.Ordinal), $"the wrapper shows: {Show(text)}")
+            && Expect(text.Contains("after-statement-error", StringComparison.Ordinal) && !run.Stderr.Contains("exited 1: [int]::Parse", StringComparison.Ordinal), $"the step after the statement's error: {Show(text)}\n{run.Stderr}")
+            && Expect(text.Contains("using-works", StringComparison.Ordinal), $"using namespace: {Show(text)}");
+    }
+
+    // Windows runs the same state scripts in Windows PowerShell when pwsh is not installed. The fixture is a pwsh one,
+    // run from a copy that names powershell. Null when the fixture names no shell to replace.
+    private static (int ExitCode, string Stderr, string Text)? RunInWindowsPowerShell(string bin, string repoRoot, string fixtureName, Dictionary<string, string?>? environment)
+    {
+        var pwsh = File.ReadAllText(Path.Combine(repoRoot, "tests", "fixtures", fixtureName));
+        if (!Expect(pwsh.Contains("shell: pwsh", StringComparison.Ordinal), $"{fixtureName} names no shell"))
+            return null;
 
         var fixture = Path.Combine(Path.GetTempPath(), $"scenetake-shell-state-powershell-{Guid.NewGuid():N}.yaml");
         File.WriteAllText(fixture, pwsh.Replace("shell: pwsh", "shell: powershell", StringComparison.Ordinal));
         try
         {
-            return PowerShellStateCarried(RunFixture(bin, repoRoot, fixture, PowerShellStateEnvironment()));
+            return RunFixture(bin, repoRoot, fixture, environment);
         }
         finally
         {
