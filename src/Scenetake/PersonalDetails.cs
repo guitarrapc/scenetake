@@ -80,8 +80,9 @@ internal static class PersonalDetails
     }
 
     /// <summary>
-    /// user.name and user.email from the global and system git config. A repository's own config is left out: a demo
-    /// repository may set an identity on purpose, and it is that repository's.
+    /// user.name and user.email from the global and system git config, and from the command scope: GIT_CONFIG_COUNT
+    /// and GIT_CONFIG_PARAMETERS in the environment, which the steps get too. A repository's own config is left out:
+    /// a demo repository may set an identity on purpose, and it is that repository's.
     /// </summary>
     private static void ReadGitIdentity(List<PersonalDetail> details, string folder)
     {
@@ -110,7 +111,7 @@ internal static class PersonalDetails
             if (scoped)
             {
                 var tab = line.IndexOf('\t');
-                if (tab < 0 || line[..tab] is not ("global" or "system"))
+                if (tab < 0 || line[..tab] is not ("global" or "system" or "command"))
                     continue;
                 line = line[(tab + 1)..];
             }

@@ -298,6 +298,18 @@ internal sealed class PreviousCast
         return count;
     }
 
+    /// <summary>The earlier step with <paramref name="id"/> that the <paramref name="n"/>-th step with it, from 0, finds, or null.</summary>
+    internal PreviousStep? Nth(ulong id, int n)
+    {
+        foreach (var step in _steps)
+        {
+            if (step.Id == id && n-- == 0)
+                return step;
+        }
+
+        return null;
+    }
+
     /// <summary>The text of the step's output events, joined.</summary>
     internal string Text(PreviousStep step)
     {

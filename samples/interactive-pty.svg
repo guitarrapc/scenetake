@@ -762,7 +762,7 @@ text { dominant-baseline: alphabetic; }
 <g class="l ct j"><g id="r265"><text class="g" x="27.92" font-weight="bold" textLength="9.92">←</text><text x="47.76" textLength="456.32">open sidebar · Interactive · Manual Approval ·</text><text class="g" x="514" font-weight="bold" textLength="9.92">/</text><text x="533.84" textLength="267.84">commands  Claude Sonnet 5.5</text></g></g>
 <g class="l am s"><g id="r266"><text class="k" x="18" textLength="9.92">│</text><text class="h" x="47.76" textLength="59.52">╰─╯╰─╯</text><text x="127.12" textLength="248">Copilot v1.0.114 uses AI.</text><text class="k" x="394.96" textLength="9.92">│</text><text x="424.72" textLength="347.2">Use the tabs above to explore your…</text><text class="k" x="781.84" textLength="9.92">│</text><text x="801.68" textLength="9.92">┃</text></g></g>
 <g class="l am t"><g id="r267"><rect x="67.6" y="-12.8" width="4.96" height="10" fill="#7dd6cf"/><rect x="82.48" y="-12.8" width="4.96" height="10" fill="#7dd6cf"/><rect x="47.76" y="-12.8" width="9.92" height="20" fill="#9f4e85"/><rect x="97.36" y="-12.8" width="9.92" height="20" fill="#9f4e85"/><text class="k" x="18" textLength="9.92">│</text><text x="127.12" textLength="188.48">Check for mistakes.</text><text class="k" x="394.96" textLength="9.92">│</text><text x="424.72" textLength="347.2">/init — Initialize Copilot instruc…</text><text class="k" x="781.84" textLength="9.92">│</text><text x="801.68" textLength="9.92">┃</text></g></g>
-<g class="l am u"><g id="r268"><rect x="57.68" y="-12.8" width="39.68" height="2.5" fill="#9f4e85"/><text class="k" x="18" textLength="9.92">│</text><text class="k" x="394.96" textLength="9.92">│</text><text x="424.72" textLength="347.2">/model — Switch models across prov…</text><text class="k" x="781.84" textLength="9.92">│</text><text x="801.68" textLength="9.92">┃</text></g></g>
+<g class="l am u"><rect x="57.68" y="-12.8" width="39.68" height="2.5" fill="#9f4e85"/><text class="k" x="18" textLength="9.92">│</text><text class="k" x="394.96" textLength="9.92">│</text><text x="424.72" textLength="347.2">/model — Switch models across prov…</text><text class="k" x="781.84" textLength="9.92">│</text><text x="801.68" textLength="9.92">┃</text></g>
 <use href="#r238" class="l am n"/>
 <use href="#r239" class="l am o"/>
 <text class="l am p" x="801.68">┃</text>
@@ -819,7 +819,7 @@ text { dominant-baseline: alphabetic; }
 <g class="l bk j"><text x="27.92" textLength="307.52">Interactive · Manual Approval ·</text><text class="g" x="345.36" font-weight="bold" textLength="9.92">@</text><text x="365.2" textLength="158.72">files/sessions ·</text><text class="g" x="533.84" font-weight="bold" textLength="9.92">#</text><text x="553.68" textLength="248">issues  Claude Sonnet 5.5</text></g>
 <use href="#r266" class="l bx s"/>
 <use href="#r267" class="l bx t"/>
-<use href="#r268" class="l bx u"/>
+<g class="l bx u"><rect x="57.68" y="-12.8" width="39.68" height="2.5" fill="#9f4e85"/><text class="k" x="18" textLength="9.92">│</text><text class="k" x="394.96" textLength="9.92">│</text><text x="424.72" textLength="347.2">/model — Switch models across prov…</text><text class="k" x="781.84" textLength="9.92">│</text><text x="801.68" textLength="9.92">┃</text></g>
 <use href="#r238" class="l ao n"/>
 <use href="#r239" class="l ao o"/>
 <text class="l ao p" x="801.68">┃</text>

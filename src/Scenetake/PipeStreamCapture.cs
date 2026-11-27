@@ -6,16 +6,30 @@ namespace Scenetake;
 
 internal static class PipeStreamCapture
 {
-    internal static async Task<IReadOnlyList<PipeStreamChunk>> ReadAsync(Process process, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// What the process writes to stdout and stderr until both close, in the order it came. When
+    /// <paramref name="giveUp"/> is canceled first, what has come so far: a process that a timeout ended may have
+    /// started one that the kill did not reach, such as a daemon, and that one can keep a pipe open for as long as
+    /// it runs.
+    /// </summary>
+    internal static async Task<IReadOnlyList<PipeStreamChunk>> ReadAsync(Process process, CancellationToken giveUp = default)
     {
         var stopwatch = Stopwatch.StartNew();
         var stdoutChunks = new List<PipeStreamChunk>();
         var stderrChunks = new List<PipeStreamChunk>();
 
-        var stdoutTask = ReadStreamAsync(process.StandardOutput, stdoutChunks, isStderr: false, stopwatch, cancellationToken);
-        var stderrTask = ReadStreamAsync(process.StandardError, stderrChunks, isStderr: true, stopwatch, cancellationToken);
-        await Task.WhenAll(stdoutTask, stderrTask);
+        var stdoutTask = ReadStreamAsync(process.StandardOutput, stdoutChunks, isStderr: false, stopwatch);
+        var stderrTask = ReadStreamAsync(process.StandardError, stderrChunks, isStderr: true, stopwatch);
+        var reading = Task.WhenAll(stdoutTask, stderrTask);
+        if (giveUp.CanBeCanceled && await Task.WhenAny(reading, Task.Delay(Timeout.InfiniteTimeSpan, giveUp)) != reading)
+        {
+            // The reads go on in the background until the pipe closes, and what they add after this is dropped.
+            lock (stdoutChunks)
+            lock (stderrChunks)
+                return MergeChronologically([.. stdoutChunks], [.. stderrChunks]);
+        }
 
+        await reading;
         return MergeChronologically(stdoutChunks, stderrChunks);
     }
 
@@ -23,30 +37,29 @@ internal static class PipeStreamCapture
         StreamReader reader,
         List<PipeStreamChunk> chunks,
         bool isStderr,
-        Stopwatch stopwatch,
-        CancellationToken cancellationToken) =>
+        Stopwatch stopwatch) =>
         // On Windows the reader's encoding is the code page of the terminal that started scenetake, which is
         // neither what UTF-8 tools write nor the code page of the console the child has, so the bytes go
         // through PipeOutputDecoder. Elsewhere the reader's encoding is right and is kept.
         OperatingSystem.IsWindows()
-            ? ReadBytesAsync(reader.BaseStream, new PipeOutputDecoder(new WindowsCodePageDecoder(WindowsCodePageDecoder.OemCodePage())), chunks, isStderr, stopwatch, cancellationToken)
-            : ReadCharsAsync(reader, chunks, isStderr, stopwatch, cancellationToken);
+            ? ReadBytesAsync(reader.BaseStream, new PipeOutputDecoder(new WindowsCodePageDecoder(WindowsCodePageDecoder.OemCodePage())), chunks, isStderr, stopwatch)
+            : ReadCharsAsync(reader, chunks, isStderr, stopwatch);
 
     private static async Task ReadCharsAsync(
         StreamReader reader,
         List<PipeStreamChunk> chunks,
         bool isStderr,
-        Stopwatch stopwatch,
-        CancellationToken cancellationToken)
+        Stopwatch stopwatch)
     {
         var buffer = new char[4096];
-        while (!cancellationToken.IsCancellationRequested)
+        while (true)
         {
-            var read = await reader.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken);
+            var read = await reader.ReadAsync(buffer.AsMemory(0, buffer.Length));
             if (read == 0)
                 break;
 
-            chunks.Add(new PipeStreamChunk(stopwatch.Elapsed, isStderr, new string(buffer, 0, read)));
+            lock (chunks)
+                chunks.Add(new PipeStreamChunk(stopwatch.Elapsed, isStderr, new string(buffer, 0, read)));
         }
     }
 
@@ -55,18 +68,21 @@ internal static class PipeStreamCapture
         Decoder decoder,
         List<PipeStreamChunk> chunks,
         bool isStderr,
-        Stopwatch stopwatch,
-        CancellationToken cancellationToken)
+        Stopwatch stopwatch)
     {
         var bytes = new byte[4096];
         // PipeOutputDecoder returns at most one char per byte, its held-back bytes included.
         var chars = new char[bytes.Length + PipeOutputDecoder.MaxPendingBytes];
-        while (!cancellationToken.IsCancellationRequested)
+        while (true)
         {
-            var read = await stream.ReadAsync(bytes.AsMemory(0, bytes.Length), cancellationToken);
+            var read = await stream.ReadAsync(bytes.AsMemory(0, bytes.Length));
             var count = decoder.GetChars(bytes, 0, read, chars, 0, flush: read == 0);
             if (count > 0)
-                chunks.Add(new PipeStreamChunk(stopwatch.Elapsed, isStderr, new string(chars, 0, count)));
+            {
+                lock (chunks)
+                    chunks.Add(new PipeStreamChunk(stopwatch.Elapsed, isStderr, new string(chars, 0, count)));
+            }
+
             if (read == 0)
                 break;
         }

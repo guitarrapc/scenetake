@@ -106,7 +106,7 @@ static class HelpText
                                            pre and post do not run.
                   --rerun                  Run every step, also those that set 'rerun: false' and show the
                                            earlier cast's output without running
-                  --strict                Stop at the first step that exits non-zero unless it sets
+                  --strict                 Stop at the first step that exits non-zero unless it sets
                                            'continue-on-error: true'. Write no output but the --save-keys
                                            file, and run post. Exit 1. If a post command fails, return that
                                            command's exit code.

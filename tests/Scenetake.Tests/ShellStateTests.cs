@@ -147,6 +147,9 @@ public sealed class ShellStateTests
     public async Task IntegrationBackgroundWaitTimeoutStops() => await Assert.That(ShellStateCases.IntegrationBackgroundWaitTimeoutStops(TestEnv.RepoRoot)).IsTrue();
 
     [Test]
+    public async Task IntegrationBackgroundLongWaitTimeout() => await Assert.That(ShellStateCases.IntegrationBackgroundLongWaitTimeout(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
     public async Task IntegrationBackgroundContinueOnError() => await Assert.That(ShellStateCases.IntegrationBackgroundContinueOnError(TestEnv.RepoRoot)).IsTrue();
 
     [Test]
@@ -938,6 +941,17 @@ internal static class ShellStateCases
             && Expect(run.Stderr.Contains("post-ran", StringComparison.Ordinal), "post did not run")
             // The command sleeps 60 s: it was ended, not waited for.
             && Expect(stopwatch.Elapsed < TimeSpan.FromSeconds(30), $"took {stopwatch.Elapsed.TotalSeconds:0.0} s");
+    }
+
+    internal static bool IntegrationBackgroundLongWaitTimeout(string repoRoot)
+    {
+        if (!TryGetBinary(out var bin))
+            return true;
+
+        var run = RunFixture(bin, repoRoot, "background-long-wait-timeout.yaml");
+        return Expect(run.ExitCode == 0, $"exit {run.ExitCode}\n{run.Stderr}")
+            && Expect(run.Stderr.Contains("ready after", StringComparison.Ordinal), run.Stderr)
+            && Expect(run.Text.Contains("after", StringComparison.Ordinal), "the next step");
     }
 
     internal static bool IntegrationBackgroundContinueOnError(string repoRoot)

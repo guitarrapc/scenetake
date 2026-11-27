@@ -55,8 +55,10 @@ internal static class JsonEscape
             var status = Rune.DecodeFromUtf8(utf8[index..], out var rune, out var consumed);
             if (status != OperationStatus.Done)
             {
+                // One U+FFFD for each invalid sequence (its maximal subpart), as Encoding.UTF8 and the terminal decode
+                // it, so a highlighted or masked step, which goes through a string, shows the same as one that does not.
                 writer.Write(ReplacementEscape);
-                index++;
+                index += Math.Max(consumed, 1);
                 continue;
             }
 

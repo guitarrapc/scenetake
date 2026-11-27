@@ -199,20 +199,22 @@ sealed class CaptureRequest
             yaml.Insert(start, "render:\n");
     }
 
+    private string JoinWords(string[] words) =>
+        JoinWords(words, Shell ?? (OperatingSystem.IsWindows() ? "pwsh" : Environment.GetEnvironmentVariable("SHELL") ?? "bash"));
+
     /// <summary>
-    /// The words as one command line for the shell that runs it. A word with a space, a quote, or another character a
-    /// shell reads is quoted for that shell, so it reaches the command as the caller's shell passed it.
+    /// The words as one command line for <paramref name="shell"/>, the shell that runs it. A word with a space, a quote,
+    /// or another character that shell reads is quoted for it, so it reaches the command as the caller's shell passed it.
     /// </summary>
-    private string JoinWords(string[] words)
+    internal static string JoinWords(string[] words, string shell)
     {
-        var shell = Shell ?? (OperatingSystem.IsWindows() ? "pwsh" : Environment.GetEnvironmentVariable("SHELL") ?? "bash");
         var name = Path.GetFileNameWithoutExtension(shell.Trim()).ToLowerInvariant();
         var line = new StringBuilder();
         foreach (var word in words)
         {
             if (line.Length > 0)
                 line.Append(' ');
-            if (word.Length > 0 && IsPlainWord(word))
+            if (word.Length > 0 && IsPlainWord(word, name))
                 line.Append(word);
             else if (name is "pwsh" or "powershell")
                 line.Append('\'').Append(word.Replace("'", "''")).Append('\'');
@@ -224,12 +226,36 @@ sealed class CaptureRequest
 
         return line.ToString();
 
-        // Letters, digits, and the punctuation that no shell reads specially in a word.
-        static bool IsPlainWord(string word)
+        // Letters, digits, and punctuation that the shell does not read in a word. Some of it one shell reads: PowerShell
+        // takes @name alone for splatting and --% for the end of parsing, cmd takes ^ for an escape, and zsh takes =name
+        // at the start for the path of a command.
+        static bool IsPlainWord(string word, string shell)
         {
             foreach (var c in word)
             {
                 if (!char.IsAsciiLetterOrDigit(c) && "-_./=:,+@%^".IndexOf(c) < 0)
+                    return false;
+            }
+
+            return shell switch
+            {
+                "pwsh" or "powershell" => word != "--%" && !IsSplat(word),
+                "cmd" => !word.Contains('^', StringComparison.Ordinal),
+                "zsh" => word[0] != '=',
+                _ => true,
+            };
+        }
+
+        // @args or @params: a variable's name after the @, which PowerShell passes as the variable's values. A word such
+        // as @scope/package is not one.
+        static bool IsSplat(string word)
+        {
+            if (word.Length < 2 || word[0] != '@')
+                return false;
+
+            foreach (var c in word.AsSpan(1))
+            {
+                if (!char.IsAsciiLetterOrDigit(c) && c != '_')
                     return false;
             }
 

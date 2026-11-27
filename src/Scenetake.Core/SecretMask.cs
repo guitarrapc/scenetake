@@ -1419,8 +1419,8 @@ internal sealed class SecretMasker
 
         /// <summary>
         /// Where the text after a control string starts, or −1 when nothing ends the string. It ends at the first byte
-        /// where anything that shows the cast ends it. The SVG renderer ends every string at BEL or ESC \. The cast
-        /// filter ends an OSC at BEL, CAN, SUB, ESC \, or the ESC of the next sequence. The terminal that plays the
+        /// where anything that shows the cast ends it. The SVG renderer and the cast filter end a string at BEL, CAN,
+        /// SUB, ESC \, or the ESC of the next sequence. The terminal that plays the
         /// cast ends a string at ESC, CAN, SUB, or a C1 control, but an OSC that the cast drops
         /// (<paramref name="kept"/> false) never reaches it. A cut at <paramref name="limit"/> ends the string too. Ending a string later than
         /// any of them would hide from the masker text that a viewer sees.

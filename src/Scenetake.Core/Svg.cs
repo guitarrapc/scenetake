@@ -922,7 +922,7 @@ internal static class RenderSettingsResolver
     internal static IReadOnlyList<CastEvent> ApplySpeed(IReadOnlyList<CastEvent> events, ResolvedRenderSettings settings, ref double? loopDuration)
     {
         events = TerminalReplay.WithoutHoldEvent(events, settings.EndHold);
-        if (FitLength(events, settings, loopDuration) is { } fitted)
+        if (FitTrimmed(events, settings, loopDuration) is { } fitted)
         {
             loopDuration = fitted.LoopDuration;
             return fitted.Events;
@@ -945,8 +945,13 @@ internal static class RenderSettingsResolver
     /// without step ranges, which plays as recorded (<see cref="LengthNote"/> says so).
     /// </summary>
     internal static PlaybackLength.Result? FitLength(IReadOnlyList<CastEvent> events, ResolvedRenderSettings settings, double? loopDuration) =>
+        FitTrimmed(TerminalReplay.WithoutHoldEvent(events, settings.EndHold), settings, loopDuration ?? TerminalReplay.ComputeLoopDuration(events));
+
+    // FitLength for events that WithoutHoldEvent has already trimmed. Trimming again would drop a second closing
+    // event when a cast ends with two, which the speed, the frame rate, and the length note do not drop.
+    private static PlaybackLength.Result? FitTrimmed(IReadOnlyList<CastEvent> trimmed, ResolvedRenderSettings settings, double? loopDuration) =>
         settings.Length is double length && settings.StepRanges is { } steps
-            ? PlaybackLength.Fit(TerminalReplay.WithoutHoldEvent(events, settings.EndHold), steps, loopDuration ?? TerminalReplay.ComputeLoopDuration(events), settings.EndHold, settings.FadeOut ?? 0, length)
+            ? PlaybackLength.Fit(trimmed, steps, loopDuration ?? TerminalReplay.ComputeLoopDuration(trimmed), settings.EndHold, settings.FadeOut ?? 0, length)
             : null;
 
     /// <summary>

@@ -59,7 +59,7 @@ internal static class PersonalDetailsCases
         File.WriteAllText(global, $"[user]\n\tname = Global Person\n\temail = global@example.com\n[includeIf \"gitdir:{top}/\"]\n\tpath = {work.Replace('\\', '/')}\n");
 
         var saved = new Dictionary<string, string?>();
-        foreach (var name in new[] { "GIT_CONFIG_GLOBAL", "GIT_CONFIG_NOSYSTEM" })
+        foreach (var name in new[] { "GIT_CONFIG_GLOBAL", "GIT_CONFIG_NOSYSTEM", "GIT_CONFIG_COUNT", "GIT_CONFIG_KEY_0", "GIT_CONFIG_VALUE_0" })
             saved[name] = Environment.GetEnvironmentVariable(name);
         try
         {
@@ -67,11 +67,17 @@ internal static class PersonalDetailsCases
             Environment.SetEnvironmentVariable("GIT_CONFIG_NOSYSTEM", "1");
             var inRepo = PersonalDetails.Collect(repo);
             var outside = PersonalDetails.Collect(folder);
+            // An identity that the environment gives git (the command scope) reaches every step, as the global one does.
+            Environment.SetEnvironmentVariable("GIT_CONFIG_COUNT", "1");
+            Environment.SetEnvironmentVariable("GIT_CONFIG_KEY_0", "user.email");
+            Environment.SetEnvironmentVariable("GIT_CONFIG_VALUE_0", "ci@example.com");
+            var command = PersonalDetails.Collect(folder);
             return Check(Has(inRepo, "Global Person", PersonalDetail.GitName), "the global name")
                 & Check(Has(inRepo, "global@example.com", PersonalDetail.GitEmail), "the global email")
                 & Check(Has(inRepo, "work@example.com", PersonalDetail.GitEmail), "the email the repository's folder includes")
                 & Check(!inRepo.Exists(static detail => detail.Value == "Local Demo"), "no repository identity")
-                & Check(!Has(outside, "work@example.com", PersonalDetail.GitEmail), "no included email outside that folder");
+                & Check(!Has(outside, "work@example.com", PersonalDetail.GitEmail), "no included email outside that folder")
+                & Check(Has(command, "ci@example.com", PersonalDetail.GitEmail), "the email of the command scope");
         }
         finally
         {

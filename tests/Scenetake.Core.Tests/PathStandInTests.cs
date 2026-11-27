@@ -136,6 +136,8 @@ internal static class PathStandInCases
             & Same("{dir} of a stand-in", "my-app", PromptTemplate.FolderName("~/my-app/", "~"))
             & Same("{dir} of ~", "~", PromptTemplate.FolderName("~", "~"))
             & Same("{dir} of a Windows stand-in", "demo", PromptTemplate.FolderName(@"C:\demo", "~"))
-            & Expect(PromptTemplate.SameFolder("/home/adal/", "/home/adal") && !PromptTemplate.SameFolder("/home/adal", "/home/adal2"), "SameFolder");
+            & Expect(PromptTemplate.SameFolder("/home/adal/", "/home/adal") && !PromptTemplate.SameFolder("/home/adal", "/home/adal2"), "SameFolder")
+            // Windows and macOS ignore case in a path, so /users/adal is the home folder there. Linux does not.
+            & Expect(PromptTemplate.SameFolder("/users/adal", "/Users/adal") == (OperatingSystem.IsWindows() || OperatingSystem.IsMacOS()), "SameFolder and case");
     }
 }

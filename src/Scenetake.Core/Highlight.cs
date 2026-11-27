@@ -632,7 +632,7 @@ internal static partial class ScenarioCast
             {
                 var styleId = GetOrAddStyleId(styleIds, stylesList, spec.ColorOpen);
                 foreach (var at in spec.At)
-                    ApplyAt(lineRanges, paint, at, styleId, cmd);
+                    ApplyAt(text, lineRanges, paint, at, styleId, cmd);
             }
 
             var styles = CollectionsMarshal.AsSpan(stylesList);
@@ -701,7 +701,7 @@ internal static partial class ScenarioCast
             {
                 var styleId = GetOrAddStyleId(styleIds, stylesList, spec.ColorOpen);
                 foreach (var at in spec.At)
-                    ApplyAt(lineRanges, paint, at, styleId, cmd);
+                    ApplyAt(text, lineRanges, paint, at, styleId, cmd);
             }
 
             var styles = CollectionsMarshal.AsSpan(stylesList);
@@ -856,7 +856,14 @@ internal static partial class ScenarioCast
         lineRanges[line * 2 + 1] = text.Length - start;
     }
 
-    internal static void ApplyAt(ReadOnlySpan<int> lines, ushort[][] paint, string at, ushort styleId, string cmd)
+    /// <summary>
+    /// Paints the places that <paramref name="at"/> names in <paramref name="text"/>, whose lines <paramref name="lines"/>
+    /// gives as start and length. Columns count the characters a person sees as one, extended grapheme clusters, as
+    /// typing types them: an emoji, a flag, or a letter with its accent is one column, so a style never starts or ends
+    /// inside one, where it would split a surrogate pair into two U+FFFD. A kanji is one column too, although it takes
+    /// two cells on the screen. Escape sequences are counted as written.
+    /// </summary>
+    internal static void ApplyAt(ReadOnlySpan<char> text, ReadOnlySpan<int> lines, ushort[][] paint, string at, ushort styleId, string cmd)
     {
         if (!TryParseAt(at, out var lineLo, out var lineHi, out var openLineEnd, out var colLo, out var colHi, out var openColEnd, out var hasCol))
         {
@@ -888,15 +895,15 @@ internal static partial class ScenarioCast
             int start, end;
             if (hasCol)
             {
-                start = colLo - 1;
-                end = openColEnd ? contentLength : colHi;
+                var content = text.Slice(lines[li * 2], contentLength);
+                start = CharacterOffset(content, colLo - 1);
                 if (start >= contentLength)
                 {
                     if (lineLo == lineHi)
                         Warn("highlight", cmd, $"at '{at}' starts after output");
                     continue;
                 }
-                if (end > contentLength) end = contentLength;
+                end = openColEnd ? contentLength : CharacterOffset(content, colHi);
             }
             else
             {
@@ -909,6 +916,15 @@ internal static partial class ScenarioCast
             for (var c = start; c < end; c++)
                 row[c] = styleId;
         }
+    }
+
+    /// <summary>The place in <paramref name="line"/> after its first <paramref name="count"/> characters (grapheme clusters), or its length when it has fewer.</summary>
+    private static int CharacterOffset(ReadOnlySpan<char> line, int count)
+    {
+        var offset = 0;
+        for (var n = 0; n < count && offset < line.Length; n++)
+            offset += StringInfo.GetNextTextElementLength(line[offset..]);
+        return offset;
     }
 
     /// <summary>
@@ -1109,8 +1125,12 @@ internal sealed class PromptTemplate(PromptPart[] parts)
     }
 
     /// <summary>Whether two paths name one folder, Git Bash's /c/Users/name and C:\Users\name included.</summary>
+    /// <remarks>
+    /// Case is ignored on Windows and on macOS, whose file systems ignore it unless set up otherwise: <c>cd /users/me</c>
+    /// is the home folder <c>/Users/me</c> there, and the shell keeps the case it was typed in.
+    /// </remarks>
     internal static bool SameFolder(string a, string b) =>
-        string.Equals(NativePath(a).TrimEnd('/', '\\'), NativePath(b).TrimEnd('/', '\\'), OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
+        string.Equals(NativePath(a).TrimEnd('/', '\\'), NativePath(b).TrimEnd('/', '\\'), OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
 
     /// <summary>A Git Bash or Cygwin drive path on Windows (<c>/c/Users</c>, <c>/cygdrive/c/Users</c>) as Windows writes it.</summary>
     internal static string NativePath(string path)

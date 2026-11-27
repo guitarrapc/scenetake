@@ -1,0 +1,14 @@
+# A wait-timeout longer than a wait can be (about 24 days) waits as long as one can, as a step's timeout does, instead
+# of stopping the run with an error (spec_scenario.md → Background steps).
+title: "background step with a very long wait-timeout"
+shell: bash
+settings:
+  typing-speed: 0.001
+  pre-delay: 0
+  post-delay: 0
+steps:
+  - run: echo "listening"; sleep 60
+    background: true
+    wait: "listening"
+    wait-timeout: 10000000
+  - echo after

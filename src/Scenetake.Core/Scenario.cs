@@ -648,8 +648,11 @@ internal static partial class ScenarioCast
             if (!interactive)
                 continue;
 
-            var shown = !rerunAll && previous is not null && IsStepFlagCleared(command.Extra, "rerun") && occurrence < previous.CountOf(id);
-            if (!shown)
+            // The step shows its earlier output only when the earlier cast has it and nothing in it is masked now, as the
+            // recording decides (Rerecorder.Reuse). A mask added since then would otherwise be found after pre and the
+            // steps before it had run.
+            var earlier = !rerunAll && previous is not null && IsStepFlagCleared(command.Extra, "rerun") ? previous.Nth(id, occurrence) : null;
+            if (earlier is null || masker?.Hides(previous!.Text(earlier)) == true)
                 return true;
         }
 

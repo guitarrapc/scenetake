@@ -1,0 +1,11 @@
+title: "step input: timeout with a process the kill does not reach"
+width: 60
+height: 8
+shell: bash
+
+steps:
+  # The pipe step leaves a sleep behind whose parent has exited, so on Linux the tree kill does not reach it, and it
+  # keeps stdout open for 30 s. The recording reads what came for 2 s more after the stop and goes on.
+  - run: echo escaped-started; (sleep 30 &); sleep 30
+    timeout: 1
+  - echo after-escape
