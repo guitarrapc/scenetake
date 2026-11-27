@@ -163,10 +163,36 @@ public sealed class TerminalTests
 
     [Test]
     public async Task EraseAndScrollFillWithBackgroundOnly() => await Assert.That(TerminalCases.EraseAndScrollFillWithBackgroundOnly()).IsTrue();
+
+    [Test]
+    public async Task Ansi256ColorsAboveSixteenAreTheSameInEveryTheme() => await Assert.That(TerminalCases.Ansi256ColorsAboveSixteenAreTheSameInEveryTheme()).IsTrue();
 }
 
 internal static class TerminalCases
 {
+    internal static bool Ansi256ColorsAboveSixteenAreTheSameInEveryTheme()
+    {
+        // 256-color text for 16-255 is made once for every parser, and 0-15 come from the theme: each theme gets its own
+        // color 3, and both get the same cube and gray colors, with ';' and with ':'.
+        var dark = DarkTheme();
+        var gray = TerminalTheme.FromResolved(new ResolvedTheme("#000000", "#ffffff", string.Join(':', Enumerable.Range(0, 16).Select(static i => $"#{i * 16:X2}{i * 16:X2}{i * 16:X2}"))));
+        static string[] Colors(TerminalTheme theme)
+        {
+            var buffer = new ScreenBuffer(10, 1, theme);
+            new AnsiParser(buffer, theme).Process("\u001b[38;5;3mA\u001b[38;5;196mB\u001b[48;5;240mC\u001b[38;5;16mD\u001b[38:5:231mE");
+            return [buffer.GetCell(0, 0).Foreground, buffer.GetCell(0, 1).Foreground, buffer.GetCell(0, 2).Background, buffer.GetCell(0, 3).Foreground, buffer.GetCell(0, 4).Foreground];
+        }
+
+        var first = Colors(dark);
+        var second = Colors(gray);
+        var again = Colors(dark);
+        return first is [_, "#FF0000", "#585858", "#000000", "#FFFFFF"]
+            && first[0] == dark.AnsiPalette[3]
+            && second[0] == gray.AnsiPalette[3] && second[0] != first[0]
+            && second.AsSpan(1).SequenceEqual(first.AsSpan(1))
+            && again.AsSpan().SequenceEqual(first);
+    }
+
     internal static bool TabMovesTheCursorOnly()
     {
         // A tab passes over the cells without writing them, stops at the last column, and leaves no background behind.

@@ -92,6 +92,11 @@ internal sealed class PreviousCast
     private readonly long[] _ms;
     private readonly List<PreviousStep> _steps;
 
+    // The screen CursorAt last played, and up to which event. Steps ask in the order they come, so each one plays on
+    // from the step before it. Playing the cast from its start for each step grew with the square of the steps.
+    private CastCursorTracker? _cursor;
+    private (int Width, int Height, int Index) _cursorAt;
+
     private PreviousCast(List<CastEvent> events, long[] ms, List<PreviousStep> steps)
     {
         _events = events;
@@ -330,8 +335,13 @@ internal sealed class PreviousCast
     internal long MsAt(int index) => _ms[index];
 
     /// <summary>Where the cursor was when the event at <paramref name="index"/> came: where that step started.</summary>
-    internal (int Row, int Column) CursorAt(int index, int width, int height) =>
-        new CastCursorTracker(width, height).Advance(_events, index);
+    internal (int Row, int Column) CursorAt(int index, int width, int height)
+    {
+        if (_cursor is null || _cursorAt.Width != width || _cursorAt.Height != height || index < _cursorAt.Index)
+            _cursor = new CastCursorTracker(width, height);
+        _cursorAt = (width, height, index);
+        return _cursor.Advance(_events, index);
+    }
 }
 
 /// <summary>

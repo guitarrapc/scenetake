@@ -217,25 +217,7 @@ internal static class PngEncoder
             {
                 var output = candidates[filter];
                 output[0] = (byte)filter;
-                long sum = 0;
-                for (var i = 0; i < stride; i++)
-                {
-                    var left = i >= Bpp ? row[i - Bpp] : 0;
-                    var above = up[i];
-                    var upperLeft = i >= Bpp ? up[i - Bpp] : 0;
-                    var predicted = filter switch
-                    {
-                        1 => left,
-                        2 => above,
-                        3 => (left + above) >> 1,
-                        4 => Paeth(left, above, upperLeft),
-                        _ => 0,
-                    };
-                    var value = (byte)(row[i] - predicted);
-                    output[1 + i] = value;
-                    sum += value < 128 ? value : 256 - value;
-                }
-
+                var sum = FilterRow(filter, row, up, output.AsSpan(1));
                 if (sum < bestSum)
                 {
                     bestSum = sum;
@@ -245,6 +227,58 @@ internal static class PngEncoder
 
             zlib.Write(candidates[best]);
         }
+    }
+
+    /// <summary>
+    /// Writes <paramref name="row"/> through one filter and returns the sum of the absolute values it wrote. A loop for
+    /// each filter, with the first pixel, which has nothing to its left, apart: choosing the filter inside the loop
+    /// for each byte took about as long as compressing the rows.
+    /// </summary>
+    internal static long FilterRow(int filter, ReadOnlySpan<byte> row, ReadOnlySpan<byte> up, Span<byte> output)
+    {
+        const int Bpp = 3;
+        output = output[..row.Length];
+        up = up[..row.Length];
+        long sum = 0;
+        switch (filter)
+        {
+            case 0:
+                for (var i = 0; i < row.Length; i++)
+                    sum += Store(output, i, row[i]);
+                break;
+            case 1:
+                for (var i = 0; i < Bpp; i++)
+                    sum += Store(output, i, row[i]);
+                for (var i = Bpp; i < row.Length; i++)
+                    sum += Store(output, i, row[i] - row[i - Bpp]);
+                break;
+            case 2:
+                for (var i = 0; i < row.Length; i++)
+                    sum += Store(output, i, row[i] - up[i]);
+                break;
+            case 3:
+                for (var i = 0; i < Bpp; i++)
+                    sum += Store(output, i, row[i] - (up[i] >> 1));
+                for (var i = Bpp; i < row.Length; i++)
+                    sum += Store(output, i, row[i] - ((row[i - Bpp] + up[i]) >> 1));
+                break;
+            default:
+                // With nothing to the left, Paeth predicts the byte above.
+                for (var i = 0; i < Bpp; i++)
+                    sum += Store(output, i, row[i] - up[i]);
+                for (var i = Bpp; i < row.Length; i++)
+                    sum += Store(output, i, row[i] - Paeth(row[i - Bpp], up[i], up[i - Bpp]));
+                break;
+        }
+
+        return sum;
+    }
+
+    private static int Store(Span<byte> output, int index, int difference)
+    {
+        var value = (byte)difference;
+        output[index] = value;
+        return value < 128 ? value : 256 - value;
     }
 
     private static int Paeth(int left, int above, int upperLeft)

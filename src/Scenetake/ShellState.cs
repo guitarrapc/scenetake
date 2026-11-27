@@ -1152,7 +1152,7 @@ internal sealed class PowerShellState : ShellState
                 if (-not $__scenetake_base.Environment.ContainsKey($__scenetake_item.Name) -or $__scenetake_base.Environment[$__scenetake_item.Name] -cne $__scenetake_item.Value) { $__scenetake_state.Environment[$__scenetake_item.Name] = $__scenetake_item.Value }
             }
             foreach ($__scenetake_name in $__scenetake_base.Environment.Keys) {
-                if (-not (Test-Path -LiteralPath "env:$__scenetake_name")) { $__scenetake_state.RemovedEnvironment += $__scenetake_name }
+                if ($null -eq [Environment]::GetEnvironmentVariable($__scenetake_name)) { $__scenetake_state.RemovedEnvironment += $__scenetake_name }
             }
             $__scenetake_skip = @({{SkippedVariables}})
             foreach ($__scenetake_item in Get-Variable -Scope Global) {

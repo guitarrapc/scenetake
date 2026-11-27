@@ -1721,12 +1721,18 @@ internal sealed class AnsiParser
         return string.Create(CultureInfo.InvariantCulture, $"#{r:X2}{g:X2}{b:X2}");
     }
 
+    // Colors 16-255 are the same in every theme, so each one's "#rrggbb" text is made once. A program that draws in 256
+    // colors, such as nyancat, sets one in most of its sequences. Two threads may both make one: they make the same text.
+    private static readonly string?[] s_ansi256 = new string?[256];
+
     private string FromAnsi256(int index)
     {
         index = Clamp(index, 0, 255);
-        if (index < 16)
-            return _theme.AnsiPalette[index];
+        return index < 16 ? _theme.AnsiPalette[index] : s_ansi256[index] ??= Ansi256Color(index);
+    }
 
+    private static string Ansi256Color(int index)
+    {
         if (index >= 232)
         {
             var gray = Clamp(8 + ((index - 232) * 10), 0, 255);

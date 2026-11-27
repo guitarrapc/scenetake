@@ -716,8 +716,9 @@ internal static partial class ScenarioCast
             var reopenAt = -1;
             // The program's color sequences since its last reset, which a reset that ends a highlight would undo, as
             // places in the text. Only the last few: a program that colors each character without a reset, as lolcat
-            // does, would otherwise have every one of them written again at each place a highlight ends.
-            var programStyle = new Queue<(int Start, int Length)>(ProgramStylesKept);
+            // does, would otherwise have every one of them written again at each place a highlight ends. A ring of start
+            // and length pairs, oldest first: a Queue of value tuples was generic code of its own in the binary.
+            var programStyle = new ProgramStyles(new int[ProgramStylesKept * 2]);
             for (var i = 0; i < text.Length; i++)
             {
                 while (i >= readEnd && read < reads.Count - 1)
@@ -752,13 +753,9 @@ internal static partial class ScenarioCast
                         {
                             HighlightSplitter.ReadSgr(text, i, end, out var resets, out var sets);
                             if (resets)
-                                programStyle.Clear();
+                                programStyle.Count = 0;
                             if (sets)
-                            {
-                                if (programStyle.Count == ProgramStylesKept)
-                                    programStyle.Dequeue();
-                                programStyle.Enqueue((i, end - i));
-                            }
+                                programStyle.Add(i, end - i);
 
                             reopenAt = end;
                         }
@@ -794,11 +791,37 @@ internal static partial class ScenarioCast
     /// </summary>
     private const int ProgramStylesKept = 8;
 
-    private static void AppendResetAndProgramStyle(StringBuilder sb, string text, Queue<(int Start, int Length)> programStyle)
+    private static void AppendResetAndProgramStyle(StringBuilder sb, string text, ProgramStyles programStyle)
     {
         sb.Append(SgrReset);
-        foreach (var (start, length) in programStyle)
-            sb.Append(text, start, length);
+        for (var k = 0; k < programStyle.Count; k++)
+        {
+            var slot = (programStyle.First + k) % ProgramStylesKept * 2;
+            sb.Append(text, programStyle.Places[slot], programStyle.Places[slot + 1]);
+        }
+    }
+
+    /// <summary>The last <see cref="ProgramStylesKept"/> color sequences of the program, as start and length pairs in <see cref="Places"/>, from <see cref="First"/>.</summary>
+    private sealed class ProgramStyles(int[] places)
+    {
+        internal int[] Places { get; } = places;
+        internal int First { get; private set; }
+        internal int Count { get; set; }
+
+        /// <summary>Adds a sequence, dropping the oldest when all places are taken.</summary>
+        internal void Add(int start, int length)
+        {
+            if (Count == ProgramStylesKept)
+            {
+                First = (First + 1) % ProgramStylesKept;
+                Count--;
+            }
+
+            var slot = (First + Count) % ProgramStylesKept * 2;
+            Places[slot] = start;
+            Places[slot + 1] = length;
+            Count++;
+        }
     }
 
     internal static string NormalizeToLf(string text)
