@@ -1132,7 +1132,7 @@ internal sealed class PowerShellState : ShellState
             $__scenetake_state = Import-Clixml -LiteralPath {{Literal(input)}}
             try { Set-Location -LiteralPath $__scenetake_state.Location -ErrorAction Stop } catch { [IO.File]::AppendAllText({{Literal(errors)}}, "could not return to $($__scenetake_state.Location): it no longer exists or cannot be entered`n") }
             foreach ($__scenetake_name in $__scenetake_state.Environment.Keys) { [Environment]::SetEnvironmentVariable($__scenetake_name, $__scenetake_state.Environment[$__scenetake_name]) }
-            foreach ($__scenetake_name in $__scenetake_state.RemovedEnvironment) { [Environment]::SetEnvironmentVariable($__scenetake_name, $null) }
+            foreach ($__scenetake_name in $__scenetake_state.RemovedEnvironment) { [Environment]::SetEnvironmentVariable($__scenetake_name, [NullString]::Value) }
             foreach ($__scenetake_name in $__scenetake_state.Variables.Keys) { Set-Variable -Scope Global -Name $__scenetake_name -Value $__scenetake_state.Variables[$__scenetake_name] -Force -ErrorAction SilentlyContinue }
             foreach ($__scenetake_name in $__scenetake_state.Functions.Keys) { Set-Item -LiteralPath "function:global:$__scenetake_name" -Value ([scriptblock]::Create($__scenetake_state.Functions[$__scenetake_name])) -ErrorAction SilentlyContinue }
             foreach ($__scenetake_name in $__scenetake_state.Aliases.Keys) { Set-Alias -Scope Global -Name $__scenetake_name -Value $__scenetake_state.Aliases[$__scenetake_name] -Force -ErrorAction SilentlyContinue }

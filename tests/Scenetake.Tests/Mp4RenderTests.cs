@@ -988,14 +988,15 @@ internal static class Mp4RenderCases
     {
         // A rounded rectangle tells at once that a pixel is wholly inside or outside it. Each count must still be the
         // one its 16 sample points give, tested as the window's shapes were tested before (Inside below): for edges on
-        // whole, half, and other pixels, each choice of rounded corners, radii from none to half the box, and with a
+        // whole, half, and other pixels, and on the first and the last sample point (.125 and .875), where the quick
+        // checks compare with equality, each choice of rounded corners, radii from none to half the box, and with a
         // hole, as a border or a stroke has. A radius over half the box, or a hole with no size, is none the window
         // draws: the corner test throws for it, as it did before.
         var random = new Random(7);
-        double[] starts = [0, 0.5, 3, 2.3, 10.75];
+        double[] starts = [0, 0.5, 3, 2.3, 10.75, 0.875, 2.125];
         var compared = 0;
         foreach (var x in starts)
-        foreach (var width in new double[] { 5, 7.5, 20, 33.4 })
+        foreach (var width in new double[] { 5, 7.5, 7.75, 20, 33.4 })
         foreach (var radius in new double[] { 0, 0.5, 2, 2.5, 3.75, -1 })
         foreach (var (roundTop, roundBottom) in new[] { (true, true), (true, false), (false, true), (false, false) })
         {
@@ -1004,6 +1005,8 @@ internal static class Mp4RenderCases
 
             var y = starts[random.Next(starts.Length)];
             var height = width * (1 + random.NextDouble());
+            if (random.Next(2) == 0)
+                height = Math.Round(height * 8) / 8;
             var box = new FrameRasterizer.RoundedBox(x, y, width, height, radius, roundTop, roundBottom);
             bool InBox(double px, double py) => Inside(x, y, width, height, radius, roundTop, roundBottom, px, py);
             for (var py = (int)Math.Floor(y) - 1; py <= (int)Math.Ceiling(y + height) + 1; py++)
@@ -1175,24 +1178,47 @@ internal static class Mp4RenderCases
     {
         // A rasterizer draws only the rows that changed since its last frame. Each frame must be the one a new rasterizer
         // draws from nothing: when another row changes under a cursor that stays, when the cursor moves along its row,
-        // when it moves to another row, and when it hides.
-        var layout = RasterLayout.Create(16, 12, 4);
+        // when it moves to another row, and when it hides. With padding 0, the first and the last column lie on the
+        // window's border, and a bold or italic glyph there reaches past the window: the pixels that the cursor, a
+        // cell's background, or the glyph covered must come back when they leave.
         var theme = TerminalTheme.FromResolved(new ResolvedTheme("#d0d0d0", "#282c34", RenderSettingsResolver.DefaultPalette));
-        var glyphs = GlyphSource.Create("monospace", null, layout);
-        var screen = new ScreenBuffer(12, 4, theme);
-        var parser = new AnsiParser(screen, theme);
-        var inTurn = new FrameRasterizer(layout, theme, glyphs);
-        string[] changes = ["ab\r\ncd\r\nef\u001b[2;2H", "\u001b[4;1Hgh\u001b[2;2H", "\u001b[2;4H", "\u001b[3;1H", "\u001b[?25l"];
-        foreach (var change in changes)
+        string[] changes =
+        [
+            "ab\r\ncd\r\nef\u001b[2;2H", "\u001b[4;1Hgh\u001b[2;2H", "\u001b[2;4H", "\u001b[3;1H",
+            "\u001b[1;1Hxy\u001b[3;1H", "\u001b[3;12H", "\u001b[1;1Hzw\u001b[3;12H", "\u001b[2;1H",
+            "\u001b[4;1H\u001b[41m \u001b[0m\u001b[1;1H", "\u001b[4;1H \u001b[1;1H",
+            "\u001b[1;1H\u001b[1mWs -la totaW\u001b[0m", "\u001b[1;1H\u001b[2K", "\u001b[1;1H\u001b[3mWs -la totaW\u001b[0m", "\u001b[1;1H\u001b[2K",
+            "\u001b[?25l",
+        ];
+        var layouts = new[]
         {
-            parser.Process(change);
-            inTurn.Draw(screen);
-            var alone = new FrameRasterizer(layout, theme, glyphs);
-            alone.Draw(screen);
-            if (!inTurn.Pixels.AsSpan().SequenceEqual(alone.Pixels))
+            RasterLayout.Create(16, 12, 4),
+            RasterLayout.Create(16, 12, 4, padding: 0),
+            RasterLayout.Create(16, 12, 4, WindowStyle.Macos, padding: 0, margin: 20, desktop: true),
+            RasterLayout.Create(16, 12, 4, WindowStyle.Windows, padding: 0, margin: 20, desktop: true),
+            RasterLayout.Create(16, 12, 4, WindowStyle.None, padding: 0, margin: 20, desktop: true),
+            RasterLayout.Create(16, 12, 4, WindowStyle.Macos, desktop: true),
+        };
+        foreach (var layout in layouts)
+        {
+            var desktop = layout.Desktop
+                ? DesktopRaster.Render(layout, new BackgroundSpec(["#203040", "#c0a080"], null), static (_, _) => throw new InvalidOperationException("no image"))
+                : null;
+            var glyphs = GlyphSource.Create("monospace", null, layout);
+            var screen = new ScreenBuffer(12, 4, theme);
+            var parser = new AnsiParser(screen, theme);
+            var inTurn = new FrameRasterizer(layout, theme, glyphs, desktop);
+            foreach (var change in changes)
             {
-                Console.Error.WriteLine($"  differs after {change.Replace("\u001b", "ESC", StringComparison.Ordinal)}");
-                return false;
+                parser.Process(change);
+                inTurn.Draw(screen);
+                var alone = new FrameRasterizer(layout, theme, glyphs, desktop);
+                alone.Draw(screen);
+                if (!inTurn.Pixels.AsSpan().SequenceEqual(alone.Pixels))
+                {
+                    Console.Error.WriteLine($"  {layout.Window}, padding {layout.PadX}: differs after {change.Replace("\u001b", "ESC", StringComparison.Ordinal)}");
+                    return false;
+                }
             }
         }
 

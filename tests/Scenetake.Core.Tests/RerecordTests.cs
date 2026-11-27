@@ -193,8 +193,14 @@ internal static class RerecordCases
             return false;
 
         var events = Enumerable.Range(0, count).Select(previous!.EventAt).ToList();
+        // The first event where 5 columns put the cursor elsewhere than 40 do. Asked for it right after the event before
+        // it at 40 columns, only the width tells the two apart.
+        var narrow = Enumerable.Range(0, count).FirstOrDefault(i => new CastCursorTracker(5, 6).Advance(events, i) != new CastCursorTracker(40, 6).Advance(events, i));
+        if (!Expect(narrow > 0, "no event where 5 columns put the cursor elsewhere"))
+            return false;
+
         var ok = true;
-        foreach (var (index, width, height) in new[] { (3, 40, 6), (7, 40, 6), (7, 40, 6), (count - 1, 40, 6), (2, 40, 6), (5, 40, 6), (count - 2, 40, 3), (count - 1, 40, 3), (count - 1, 40, 6) })
+        foreach (var (index, width, height) in new[] { (3, 40, 6), (7, 40, 6), (7, 40, 6), (count - 1, 40, 6), (2, 40, 6), (5, 40, 6), (count - 2, 40, 3), (count - 1, 40, 3), (count - 1, 40, 6), (narrow - 1, 40, 6), (narrow, 5, 6) })
         {
             var expected = new CastCursorTracker(width, height).Advance(events, index);
             var actual = previous.CursorAt(index, width, height);

@@ -129,6 +129,9 @@ public sealed class ShellStateTests
     public async Task IntegrationPowerShellCarriesState() => await Assert.That(ShellStateCases.IntegrationPowerShellCarriesState(TestEnv.RepoRoot)).IsTrue();
 
     [Test]
+    public async Task IntegrationWindowsPowerShellCarriesState() => await Assert.That(ShellStateCases.IntegrationWindowsPowerShellCarriesState(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
     public async Task IntegrationZshCarriesState() => await Assert.That(ShellStateCases.IntegrationZshCarriesState(TestEnv.RepoRoot)).IsTrue();
 
     [Test]
@@ -139,6 +142,9 @@ public sealed class ShellStateTests
 
     [Test]
     public async Task IntegrationBackgroundRunsUntilPost() => await Assert.That(ShellStateCases.IntegrationBackgroundRunsUntilPost(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationBackgroundOutputIsReadAfterTheWait() => await Assert.That(ShellStateCases.IntegrationBackgroundOutputIsReadAfterTheWait(TestEnv.RepoRoot)).IsTrue();
 
     [Test]
     public async Task IntegrationBackgroundExitStops() => await Assert.That(ShellStateCases.IntegrationBackgroundExitStops(TestEnv.RepoRoot)).IsTrue();
@@ -913,6 +919,18 @@ internal static class ShellStateCases
             && Expect(!run.Text.Contains("while :", StringComparison.Ordinal), "the background command was recorded");
     }
 
+    internal static bool IntegrationBackgroundOutputIsReadAfterTheWait(string repoRoot)
+    {
+        // Each background command prints 1MB, more than any pipe holds, and only then writes its file. A command whose
+        // output nobody read would block on the full pipe and never write it.
+        if (!TryGetBinary(out var bin))
+            return true;
+
+        var run = RunFixture(bin, repoRoot, "background-chatty.yaml");
+        return Expect(run.ExitCode == 0, $"exit {run.ExitCode}\n{run.Stderr}")
+            && Expect(run.Text.Contains("after-wait=done no-wait=done", StringComparison.Ordinal), $"the next step: {Show(run.Text)}");
+    }
+
     internal static bool IntegrationBackgroundExitStops(string repoRoot)
     {
         if (!TryGetBinary(out var bin))
@@ -1159,7 +1177,46 @@ internal static class ShellStateCases
             return true;
         }
 
-        var run = RunFixture(bin, repoRoot, "shell-state-pwsh.yaml");
+        var run = RunFixture(bin, repoRoot, "shell-state-pwsh.yaml", PowerShellStateEnvironment());
+        return PowerShellStateCarried(run)
+            && Expect(run.Text.Contains("Exception: boom", StringComparison.Ordinal) && !run.Text.Contains("Line |", StringComparison.Ordinal), "the error's display");
+    }
+
+    internal static bool IntegrationWindowsPowerShellCarriesState(string repoRoot)
+    {
+        // Windows runs the same state scripts in Windows PowerShell when pwsh is not installed. Its error display is its
+        // own, so only the state is checked.
+        if (!TryGetBinary(out var bin))
+            return true;
+        if (!OperatingSystem.IsWindows() || !IsOnPath("powershell"))
+        {
+            Skip.Test("Windows PowerShell is not on PATH");
+            return true;
+        }
+
+        var pwsh = File.ReadAllText(Path.Combine(repoRoot, "tests", "fixtures", "shell-state-pwsh.yaml"));
+        if (!Expect(pwsh.Contains("shell: pwsh", StringComparison.Ordinal), "the pwsh fixture names no shell"))
+            return false;
+
+        var fixture = Path.Combine(Path.GetTempPath(), $"scenetake-shell-state-powershell-{Guid.NewGuid():N}.yaml");
+        File.WriteAllText(fixture, pwsh.Replace("shell: pwsh", "shell: powershell", StringComparison.Ordinal));
+        try
+        {
+            return PowerShellStateCarried(RunFixture(bin, repoRoot, fixture, PowerShellStateEnvironment()));
+        }
+        finally
+        {
+            File.Delete(fixture);
+        }
+    }
+
+    // SCENETAKE_TEST_INHERITED is in the shell's environment from the start, so only the removed-variable list of the
+    // state keeps it away from the next step. DEMO, which a step set, is simply left out of the state.
+    private static Dictionary<string, string?> PowerShellStateEnvironment() => new() { ["SCENETAKE_TEST_INHERITED"] = "from-scenetake" };
+
+    // What shell-state-pwsh.yaml prints when each step gets the state of the steps before it.
+    private static bool PowerShellStateCarried((int ExitCode, string Stderr, string Text) run)
+    {
         var text = run.Text;
         return Expect(run.ExitCode == 0, $"exit {run.ExitCode}\n{run.Stderr}")
             && Expect(text.Contains("start=tests", StringComparison.Ordinal), $"pre's location: {Show(text)}")
@@ -1167,8 +1224,9 @@ internal static class ShellStateCases
             && Expect(text.Contains("demo=carried plain=plain-value pre=pre-value", StringComparison.Ordinal), "variables")
             && Expect(text.Contains("hello alias", StringComparison.Ordinal), "the alias and the function")
             && Expect(text.Contains("demo=[]", StringComparison.Ordinal), "a removed variable")
+            && Expect(text.Contains("inherited=from-scenetake", StringComparison.Ordinal), "an inherited variable")
+            && Expect(text.Contains("inherited=[] False", StringComparison.Ordinal), "a removed inherited variable")
             && Expect(text.Contains("pref=Stop", StringComparison.Ordinal), "a preference variable")
-            && Expect(text.Contains("Exception: boom", StringComparison.Ordinal) && !text.Contains("Line |", StringComparison.Ordinal), "the error's display")
             && Expect(run.Stderr.Contains("step exited 7: exit 7", StringComparison.Ordinal), "the exit code")
             && Expect(text.Contains("after-exit=plain-value", StringComparison.Ordinal), "exit dropped the state");
     }

@@ -21,6 +21,9 @@ steps:
   - hi alias
   - Remove-Item env:DEMO
   - '"demo=[$env:DEMO]"'
+  - '"inherited=$env:SCENETAKE_TEST_INHERITED"'
+  - Remove-Item env:SCENETAKE_TEST_INHERITED
+  - '"inherited=[$env:SCENETAKE_TEST_INHERITED] $(Test-Path env:SCENETAKE_TEST_INHERITED)"'
   - $ErrorActionPreference = 'Stop'
   - '"pref=$ErrorActionPreference"'
   - run: throw 'boom'

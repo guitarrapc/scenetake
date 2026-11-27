@@ -2009,9 +2009,6 @@ internal sealed class FrameRasterizer
     /// below 255 blends the whole shape over what is there. For the small shapes, such as a button or a line: a
     /// rounded rectangle is <see cref="FillBox"/>.
     /// </summary>
-    /// Fills the pixels of a shape inside the given bounds, anti-aliased by 4×4 supersampling. <paramref name="alpha"/>
-    /// below 255 blends the whole shape over what is there.
-    /// </summary>
     private void FillShape(double left, double top, double right, double bottom, (byte R, byte G, byte B) color, Func<double, double, bool> inside, int alpha = 255)
     {
         for (var y = Math.Max(0, (int)Math.Floor(top)); y < Math.Min(_layout.Height, (int)Math.Ceiling(bottom)); y++)
@@ -2113,13 +2110,14 @@ internal sealed class FrameRasterizer
     {
         var top = _layout.RowY(row);
         var height = _layout.CellHeight;
-        // Inside the window, and inside its border when it stands on a background. On a background the row comes
-        // back as Clear drew it: the edge line, the corners, and a translucent window's background with it.
-        var inset = _layout.Desktop && _layout.Window != WindowStyle.None ? 1 : 0;
-        if (_cleared is null)
-            FillRect(_layout.WindowX + inset, top, _layout.WindowWidth - inset * 2, height, _background);
+        // The row comes back as Clear drew it across the whole frame, not only inside the window: on a background that
+        // is the border, the edge line, the corners, a translucent window's background, and the shadow beside it. With
+        // a small padding, a cursor or a cell's background in the first or the last column covers the border, and a
+        // bold or italic glyph there reaches past the window. Those pixels would otherwise stay after it left.
+        if (_cleared is not null)
+            CopyRect(_cleared, 0, top, _layout.Width, height);
         else
-            CopyRect(_cleared, _layout.WindowX + inset, top, _layout.WindowWidth - inset * 2, height);
+            FillRect(0, top, _layout.Width, height, _background);
 
         // Backgrounds first, then glyphs, as in the SVG: a glyph may overhang its neighbor.
         var lastUnderlined = -1;
