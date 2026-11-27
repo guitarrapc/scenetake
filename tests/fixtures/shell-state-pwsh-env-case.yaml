@@ -1,0 +1,22 @@
+# On Linux and macOS, two environment variables whose names differ only in case are two variables, and each one passes
+# on by itself (spec_scenario.md → Shell state across steps). ShellStateTests runs it from the repository root there,
+# with sct_case and SCT_CASE in the environment scenetake starts with.
+title: "shell state, names that differ in case (pwsh)"
+width: 120
+height: 30
+shell: pwsh
+settings:
+  typing-speed: 0.001
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+steps:
+  - '"start lower=[$env:sct_case] upper=[$env:SCT_CASE]"'
+  - Remove-Item env:sct_case
+  - '"one-removed lower=[$env:sct_case] $($null -eq $env:sct_case) upper=[$env:SCT_CASE]"'
+  - Remove-Item env:SCT_CASE
+  - '"both-removed lower=$($null -eq $env:sct_case) upper=$($null -eq $env:SCT_CASE)"'
+  - $env:SCT_CASE = 'changed'
+  - '"upper-set lower=$($null -eq $env:sct_case) upper=[$env:SCT_CASE]"'
+  - $env:sct_new = 'one'; $env:SCT_NEW = 'two'
+  - '"new lower=[$env:sct_new] upper=[$env:SCT_NEW]"'

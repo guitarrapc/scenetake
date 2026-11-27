@@ -132,6 +132,9 @@ public sealed class ShellStateTests
     public async Task IntegrationWindowsPowerShellCarriesState() => await Assert.That(ShellStateCases.IntegrationWindowsPowerShellCarriesState(TestEnv.RepoRoot)).IsTrue();
 
     [Test]
+    public async Task IntegrationPowerShellKeepsNamesThatDifferInCase() => await Assert.That(ShellStateCases.IntegrationPowerShellKeepsNamesThatDifferInCase(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
     public async Task IntegrationZshCarriesState() => await Assert.That(ShellStateCases.IntegrationZshCarriesState(TestEnv.RepoRoot)).IsTrue();
 
     [Test]
@@ -1229,6 +1232,29 @@ internal static class ShellStateCases
             && Expect(text.Contains("pref=Stop", StringComparison.Ordinal), "a preference variable")
             && Expect(run.Stderr.Contains("step exited 7: exit 7", StringComparison.Ordinal), "the exit code")
             && Expect(text.Contains("after-exit=plain-value", StringComparison.Ordinal), "exit dropped the state");
+    }
+
+    // Both names are in the shell's environment from the start, so a removal reaches the next step only through the
+    // state's list of removed names. A table that matches names in any case keeps one of the two, so the steps that
+    // remove both, or set both, fail on every run.
+    internal static bool IntegrationPowerShellKeepsNamesThatDifferInCase(string repoRoot)
+    {
+        if (!TryGetBinary(out var bin))
+            return true;
+        if (OperatingSystem.IsWindows() || !IsOnPath("pwsh"))
+        {
+            Skip.Test("Linux and macOS only, with pwsh on PATH: Windows has one variable for both names");
+            return true;
+        }
+
+        var run = RunFixture(bin, repoRoot, "shell-state-pwsh-env-case.yaml", new() { ["sct_case"] = "lower", ["SCT_CASE"] = "upper" });
+        var text = run.Text;
+        return Expect(run.ExitCode == 0, $"exit {run.ExitCode}\n{run.Stderr}")
+            && Expect(text.Contains("start lower=[lower] upper=[upper]", StringComparison.Ordinal), $"the inherited names: {Show(text)}")
+            && Expect(text.Contains("one-removed lower=[] True upper=[upper]", StringComparison.Ordinal), $"one name removed: {Show(text)}")
+            && Expect(text.Contains("both-removed lower=True upper=True", StringComparison.Ordinal), $"both names removed: {Show(text)}")
+            && Expect(text.Contains("upper-set lower=True upper=[changed]", StringComparison.Ordinal), $"one name set again: {Show(text)}")
+            && Expect(text.Contains("new lower=[one] upper=[two]", StringComparison.Ordinal), $"both names set in one step: {Show(text)}");
     }
 
     // HOME is a folder of login files that move ZDOTDIR and reorder PATH, as many users' files and macOS's path_helper do.

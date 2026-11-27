@@ -1114,10 +1114,14 @@ internal sealed class PowerShellState : ShellState
     // shell, so only the preference variables among them pass on, when a step changes them.
     private const string SkippedVariables = "'LASTEXITCODE','Matches','StackTrace','_','PSItem','PWD','args','input','MyInvocation','PSBoundParameters','PSCmdlet','PSCommandPath','PSScriptRoot','this','foreach','switch','sender','EventArgs','Event','EventSubscriber','SourceArgs','SourceEventArgs'";
 
+    // Only Windows has one environment variable for names that differ in case. On Linux and macOS, sct_case and SCT_CASE
+    // are two, and @{}, which matches keys in any case, would keep one of them.
+    private static readonly string EnvironmentTable = OperatingSystem.IsWindows() ? "@{}" : "[System.Collections.Hashtable]::new([System.StringComparer]::Ordinal)";
+
     internal static string BuildRestore(string? input, string errors) =>
         $$"""
         # Written by scenetake: notes the shell as it started, then restores the state of the commands before this one (ShellState.cs).
-        $global:__scenetake_base = @{ Variables = @{}; Functions = @{}; Aliases = @{}; Environment = @{} }
+        $global:__scenetake_base = @{ Variables = @{}; Functions = @{}; Aliases = @{}; Environment = {{EnvironmentTable}} }
         foreach ($__scenetake_item in Get-Variable -Scope Global) { $global:__scenetake_base.Variables[$__scenetake_item.Name] = $(if ($__scenetake_item.Name -like '*Preference') { "$($__scenetake_item.Value)" } else { $null }) }
         foreach ($__scenetake_item in Get-ChildItem function:) { $global:__scenetake_base.Functions[$__scenetake_item.Name] = $__scenetake_item.Definition }
         foreach ($__scenetake_item in Get-Alias) { $global:__scenetake_base.Aliases[$__scenetake_item.Name] = $__scenetake_item.Definition }
@@ -1147,7 +1151,7 @@ internal sealed class PowerShellState : ShellState
         # Written by scenetake: saves what this command changed in the shell, for the next command (ShellState.cs).
         try {
             $__scenetake_base = $global:__scenetake_base
-            $__scenetake_state = @{ Location = (Get-Location).Path; Environment = @{}; RemovedEnvironment = @(); Variables = @{}; Functions = @{}; Aliases = @{} }
+            $__scenetake_state = @{ Location = (Get-Location).Path; Environment = {{EnvironmentTable}}; RemovedEnvironment = @(); Variables = @{}; Functions = @{}; Aliases = @{} }
             foreach ($__scenetake_item in Get-ChildItem env:) {
                 if (-not $__scenetake_base.Environment.ContainsKey($__scenetake_item.Name) -or $__scenetake_base.Environment[$__scenetake_item.Name] -cne $__scenetake_item.Value) { $__scenetake_state.Environment[$__scenetake_item.Name] = $__scenetake_item.Value }
             }
