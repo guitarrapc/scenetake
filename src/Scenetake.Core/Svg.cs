@@ -1138,9 +1138,11 @@ internal static class RenderSettingsResolver
             return false;
         }
 
+        // The value is written as is into the SVG's <style>, and an SVG is XML: a bare '&' makes it fail to
+        // parse, so the SVG shows nothing. A character reference such as &#123; would need its ';', refused here too.
         foreach (var c in text)
         {
-            if (char.IsControl(c) || c is ';' or '{' or '}' or '<' or '>')
+            if (char.IsControl(c) || c is ';' or '{' or '}' or '<' or '>' or '&')
             {
                 error = $"font-family: invalid character '{c}'";
                 return false;
