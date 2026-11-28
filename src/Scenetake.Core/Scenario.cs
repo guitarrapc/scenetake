@@ -982,8 +982,8 @@ public partial class ScenarioSettings
     public bool? EndPrompt { get; set; }
 
     /// <summary>
-    /// Whether each step shows the shell's own prompt once the scenario sets one: PS1, a zsh precmd, or a PowerShell
-    /// prompt function. Until then, and in other shells, <see cref="Prompt"/> shows.
+    /// Whether each step shows the shell's own prompt once the scenario sets one: PS1, directly or from a hook, or a
+    /// PowerShell prompt function. Until then, and in other shells, <see cref="Prompt"/> shows.
     /// </summary>
     public bool? ShellPrompt { get; set; }
 

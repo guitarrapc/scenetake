@@ -45,7 +45,7 @@ internal static class PathStandInCases
     internal static bool EachSpellingShowsAsTheStandIn()
     {
         var unix = Masker(Settings, Cwd("/home/adal/demo"));
-        // The CLI gives the folder's 8.3 form too, which Windows writes in TEMP.
+        // The CLI gives the folder's 8.3 form too: TEMP and cmd write the profile as C:\Users\ADAL~1.
         var windows = Masker(Settings, Cwd(@"C:\Users\adal\demo\"), Cwd(@"C:\Users\ADAL~1\demo"));
         return Same("pwd", "~/my-app/src\n", unix.MaskText("/home/adal/demo/src\n"))
             & Same("the folder itself", "cd ~/my-app && ls ~/my-app/", unix.MaskText("cd /home/adal/demo && ls /home/adal/demo/"))
@@ -71,7 +71,31 @@ internal static class PathStandInCases
             & Same("PowerShell", @"PS ~\my-app\src> ", masker.MaskText(@"PS ~\demo\src> "))
             & Same("another folder", "~/demo2 ~/demo.old ~/demo-x", masker.MaskText("~/demo2 ~/demo.old ~/demo-x"))
             & Same("inside another path", "/x~/demo a~/demo", masker.MaskText("/x~/demo a~/demo"))
-            & Same("the home folder", "~ ~/other", masker.MaskText("~ ~/other"));
+            & Same("the home folder", "~ ~/other", masker.MaskText("~ ~/other"))
+            & Same("a stand-in with a trailing slash", "~/my-app/src ~/my-app", Masker(Settings, new PathStandIn("/home/adal/demo", "~/my-app/")).MaskText("/home/adal/demo/src /home/adal/demo"))
+            & RootStandInKeepsItsSeparator()
+            & StandInUnderTheFolder();
+
+        // A root keeps its separator, and the text after the folder stays as it is: a path under it shows two
+        // separators, and an escape after it keeps its meaning, in JSON too.
+        static bool RootStandInKeepsItsSeparator()
+        {
+            var unix = Masker(Settings, new PathStandIn("/home/adal/demo", "/"));
+            var windows = Masker(Settings, new PathStandIn(@"C:\Users\adal\demo", @"C:\"));
+            return Same("a root stand-in", @"/ //sub ""/\n""", unix.MaskText(@"/home/adal/demo /home/adal/demo/sub ""/home/adal/demo\n"""))
+                & Same("a drive root stand-in", @"C:\ C:\\sub ""C:\\\\sub"" ""C:\\\n""", windows.MaskText(@"C:\Users\adal\demo C:\Users\adal\demo\sub ""C:\\Users\\adal\\demo\\sub"" ""C:\\Users\\adal\\demo\n"""));
+        }
+
+        // cwd-as under the folder's own ~ form reads as a path under the folder too. A replay masks the recorded text
+        // again, which then must change nothing, while a sibling such as app2 is still a path under the folder.
+        static bool StandInUnderTheFolder()
+        {
+            var under = Masker(Settings, new PathStandIn("/home/adal/demo", "~/demo/app"), new PathStandIn("~/demo", "~/demo/app"));
+            var once = under.MaskText("cd /home/adal/demo && ls ~/demo/src ~/demo/app2");
+            return Same("a stand-in under the ~ form", "cd ~/demo/app && ls ~/demo/app/src ~/demo/app/app2", once)
+                & Same("masked twice", once, under.MaskText(once))
+                & Expect(!under.Hides(once), "the masked text has more to replace");
+        }
     }
 
     internal static bool OnlyAWholePathIsReplaced()

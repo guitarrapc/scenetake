@@ -1628,8 +1628,8 @@ internal sealed class GenerateOptions
     internal string? EndFolder { get; set; }
 
     /// <summary>
-    /// The prompt the shell drew for the next command (settings.shell-prompt), as the shell wrote it, or null when the
-    /// scenario has set none yet. Called before each shown step and once at the end. A replay takes the prompts from
+    /// The prompt the shell drew for the next command (settings.shell-prompt), as the shell wrote it, or null while the
+    /// shell draws none. Called before each shown step and once at the end. A replay takes the prompts from
     /// the outputs file instead.
     /// </summary>
     internal Func<string?>? ShellPrompt { get; init; }

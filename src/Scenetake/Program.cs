@@ -3244,6 +3244,7 @@ static string CreateInitialScenarioYaml(string? shell)
         : """
           #   run: read -r -p "Your name? " name; echo "Hello, $name"
         """;
+    var ownPrompt = powerShellSyntax ? "a prompt function" : "PS1";
     return ScenarioSchema.ModeLine + $"""
     # scenetake starter scenario. Record it with: scenetake <this file>
     # It writes a cast and, as outputs lists below, an SVG. Replace the steps with your tool's commands.
@@ -3293,7 +3294,7 @@ static string CreateInitialScenarioYaml(string? shell)
       pre-delay: {DefaultPreDelay}           # Pause before typing each step.
       post-delay: {DefaultPostDelay}          # Pause after output before the next step.
       # end-prompt: false          # When true, end with the prompt after the last output, as a terminal does.
-      # shell-prompt: false        # When true, show the shell's own prompt once a step sets one, such as PS1.
+      # shell-prompt: false        # When true, show the shell's own prompt once a step sets one, such as {ownPrompt}.
       execution-duration: {DefaultExecutionDuration} # Optional cast wait after command execution.
       stderr-color: {DefaultStderrColorSpec}       # Applied only when stderr has no ANSI SGR. "none" keeps it plain (git and many tools print progress to stderr).
       # stream-output: false         # When true, replay captured chunk times in the cast.

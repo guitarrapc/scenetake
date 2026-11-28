@@ -401,7 +401,7 @@ steps:
   - card: "[fg:yellow]npm install -g my-app"
 ```
 
-To show off a prompt itself, such as a PS1 or a prompt theme, turn on `shell-prompt`. In bash, zsh, and PowerShell, once a step sets a PS1, a zsh precmd, or a PowerShell `prompt` function, the following steps show the prompt the shell draws, with the exit status and the folder of the step before.
+To show off a prompt itself, such as a PS1 or a prompt theme, turn on `shell-prompt`. In bash, zsh, and PowerShell, once a step sets a PS1, directly or from PROMPT_COMMAND or a zsh precmd, or a PowerShell `prompt` function, the following steps show the prompt the shell draws, with the exit status and the folder of the step before.
 
 ```yaml
 shell: bash
@@ -411,7 +411,8 @@ steps:
   - run: PS1='\[\e[32m\]\w\[\e[0m\] [$?] \$ '
     show: none
   - cd src
-  - "false"                 # the next prompt shows [1]
+  - "false"
+  - echo done               # its prompt shows [1]
 ```
 
 ### Customize the look
@@ -624,7 +625,7 @@ settings:
     - "internal.example.com"
 ```
 
-It also hides who recorded the demo: your computer's name, and your git name and email in `git log`. Your git name in a web address, such as `github.com/<name>/tool`, stays. To show them, set `mask-personal: false`. Your user name and your home folder's path show as they are. To keep them out, give the demo's folder with `cwd-as` (below), or list your user name in `mask`.
+It also hides who recorded the demo: your computer's name, and your git name and email in `git log`. Your git name in a web address, such as `github.com/<name>/tool`, stays. To show them, set `mask-personal: false`. Your user name and your home folder's path show as they are. To keep them out of the demo folder's paths, such as `pwd` and errors, give the folder with `cwd-as` (below). Listing your user name in `mask` hides it in any other text too, also inside other words, so it suits a name that is no common word.
 
 ```yaml
 settings:

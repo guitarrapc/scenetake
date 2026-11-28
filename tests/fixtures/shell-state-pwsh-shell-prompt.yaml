@@ -1,5 +1,5 @@
 # settings.shell-prompt draws PowerShell's own prompt once the scenario sets a prompt function (spec_scenario.md →
-# Prompt). The first step shows settings.prompt. Write-Host's color, $? of the last command, and the location then show
+# Shell prompt). The first step shows settings.prompt. Write-Host's color, $? of the last command, and the location then show
 # in the next prompt. A prompt function that throws warns once, and settings.prompt shows. Run from the repository root
 # by ShellStateTests, also in Windows PowerShell.
 title: "shell prompt (pwsh)"

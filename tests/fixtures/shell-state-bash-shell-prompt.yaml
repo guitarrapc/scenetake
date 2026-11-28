@@ -1,7 +1,10 @@
-# settings.shell-prompt draws bash's own prompt once the scenario sets one (spec_scenario.md → Prompt). The first step
-# shows settings.prompt, since PS1 is still what the login files left. A PS1 set in a show: none step, $? of the last
-# command, the folder, and PROMPT_COMMAND then show in the next prompt. A step stopped by timeout changes nothing, and
-# the masked word stays masked in the outputs file. Run from the repository root by ShellStateTests.
+# settings.shell-prompt draws bash's own prompt once the scenario sets one (spec_scenario.md → Shell prompt). The first
+# steps show settings.prompt: the scenario has set no PS1, and a PROMPT_COMMAND that sets none draws nothing. A PS1 set
+# in a show: none step, $? of the last command, and the folder then show in the next prompt. A step stopped by timeout
+# changes nothing, and set -x in a step traces none of scenetake's lines. From bash 5.1 on, each element of a
+# PROMPT_COMMAND array sees the command's $?, and what it changes carries. The masked word stays masked in the outputs
+# file. The first step prints bash's version, which tells the test what this bash draws. Run from the repository root
+# by ShellStateTests.
 title: "shell prompt (bash)"
 width: 60
 height: 12
@@ -19,14 +22,20 @@ settings:
 pre:
   - cd tests
 steps:
-  - echo first
+  - echo "first bash=${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}"
+  - run: PROMPT_COMMAND='title=$PWD'
+    show: none
+  - echo title-hook
   - run: PS1='\[\e[32m\]\W\[\e[0m\] [$?] masked-word > '
     show: none
   - echo second
   - run: cd fixtures && false
     continue-on-error: true
   - echo third
+  - set -x; echo "tra""ced"
   - run: PS1='stopped > '; sleep 5
     timeout: 1
-  - n=0; pc() { n=$((n + 1)); PS1="pc$n > "; }; PROMPT_COMMAND=pc
+  - n=0; pc() { s=$?; n=$((n + 1)); PS1="pc$n [$s] > "; }; PROMPT_COMMAND=(true pc)
+  - run: "false"
+    continue-on-error: true
   - echo fourth

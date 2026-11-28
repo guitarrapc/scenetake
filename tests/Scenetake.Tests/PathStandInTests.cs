@@ -16,6 +16,9 @@ public sealed class PathStandInTests
 
     [Test]
     public async Task IntegrationRecordingShowsStandIns() => await Assert.That(PathStandInCliCases.IntegrationRecordingShowsStandIns(TestEnv.Binary)).IsTrue();
+
+    [Test]
+    public async Task IntegrationHomeFormShowsTheStandIn() => await Assert.That(PathStandInCliCases.IntegrationHomeFormShowsTheStandIn(TestEnv.Binary)).IsTrue();
 }
 
 internal static class PathStandInCliCases
@@ -62,7 +65,12 @@ internal static class PathStandInCliCases
             var demo = Path.Combine(home, "src", "demo");
             Directory.CreateDirectory(demo);
             var forms = FolderPaths.HomeForms(demo, [null, "", home, home + Path.DirectorySeparatorChar]);
+            // A name that starts with two dots is a folder under home, not the folder above it.
+            var dotted = Path.Combine(home, "..hidden", "demo");
+            Directory.CreateDirectory(dotted);
+            var dottedForms = FolderPaths.HomeForms(dotted, [home]);
             return Check(forms is ["~/src/demo"], $"under home: {string.Join(", ", forms)}")
+                & Check(dottedForms is ["~/..hidden/demo"], $"a folder named ..hidden: {string.Join(", ", dottedForms)}")
                 & Check(FolderPaths.HomeForms(home, [home]).Count == 0, "the home folder")
                 & Check(FolderPaths.HomeForms(outside, [home]).Count == 0, "a folder outside home")
                 & Check(FolderPaths.HomeForms(demo, [outside]).Count == 0, "another home");
@@ -120,6 +128,45 @@ internal static class PathStandInCliCases
             if (ok && OperatingSystem.IsWindows() && Environment.GetEnvironmentVariable("TEMP") is { } temp)
                 ok = Check(cast.Contains($"\"{temp.Replace("\\", "\\\\", StringComparison.Ordinal)}\\r\\n\"", StringComparison.Ordinal), $"TEMP shows as {temp}");
 
+            if (!ok)
+                Console.Error.WriteLine(cast);
+            return ok;
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    // HOME is the test folder, so cwd is ~/demo there, and only the CLI's ~ forms can find `~/demo` in the typed command,
+    // the output, and bash's \w prompt. Without them each shows ~/demo.
+    internal static bool IntegrationHomeFormShowsTheStandIn(string scenetake)
+    {
+        var folder = Directory.CreateTempSubdirectory("scenetake-home-form-").FullName;
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(folder, "demo"));
+            File.WriteAllText(Path.Combine(folder, "demo.yaml"), """
+                shell: bash
+                cwd: ./demo
+                cwd-as: ~/my-app
+                settings:
+                  prompt: "$ "
+                  shell-prompt: true
+                  typing-speed: 0.01
+                  typing-jitter: 0
+                pre:
+                  - PS1='[\w] '
+                steps:
+                  - echo '~/demo/notes'
+                """ + "\n");
+            var (exit, stderr) = Mp4FfmpegCases.Exec(scenetake, folder, ["demo.yaml"], new Dictionary<string, string> { ["HOME"] = folder });
+            var cast = exit == 0 ? File.ReadAllText(Path.Combine(folder, "demo.cast")) : "";
+            // bash before 4.4, as on macOS, draws no PS1 and warns.
+            var ok = Check(exit == 0, $"exit {exit}{Environment.NewLine}{stderr}")
+                && Check(cast.Contains("\"[~/my-app] \"", StringComparison.Ordinal) || stderr.Contains("draws PS1 with bash 4.4", StringComparison.Ordinal), "the prompt shows cwd-as")
+                && Check(cast.Contains("\"~/my-app/notes\\r\\n\"", StringComparison.Ordinal), "the output shows cwd-as")
+                && Check(!cast.Contains("~/demo", StringComparison.Ordinal), "~/demo shows");
             if (!ok)
                 Console.Error.WriteLine(cast);
             return ok;

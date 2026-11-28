@@ -45,6 +45,9 @@ internal sealed class SecretMasker
     // written as that way writes its separators.
     private readonly string[] _pathTexts;
     private readonly byte[][] _pathStandIns;
+    // For each way, the stand-in when it is a path under that way's own text, as `~/demo/app` is under `~/demo`, or
+    // null. Text there that already reads as the stand-in stays, or it would grow each time a replay masks it again.
+    private readonly string?[] _pathStandInsUnder;
 
     private SecretMasker(List<string> literals, List<string> labels, List<PersonalDetail> personal, bool auto, List<PathStandIn> paths)
     {
@@ -74,8 +77,13 @@ internal sealed class SecretMasker
 
         _pathTexts = texts.ToArray();
         _pathStandIns = new byte[standIns.Count][];
+        _pathStandInsUnder = new string?[standIns.Count];
         for (var i = 0; i < standIns.Count; i++)
+        {
             _pathStandIns[i] = Encoding.UTF8.GetBytes(standIns[i]);
+            if (standIns[i].Length > texts[i].Length && standIns[i].StartsWith(texts[i], StringComparison.OrdinalIgnoreCase))
+                _pathStandInsUnder[i] = standIns[i];
+        }
     }
 
     /// <summary>
@@ -87,11 +95,15 @@ internal sealed class SecretMasker
     private static void AddSpellings(PathStandIn path, List<string> texts, List<string> standIns, HashSet<string> seen)
     {
         var folder = path.Folder.TrimEnd('/', '\\');
+        // `cwd-as: ~/my-app/` would show a path under it as ~/my-app//src. A stand-in that is only a separator, or has a
+        // colon before it as a drive's root does, keeps it, and a path under the folder then shows two separators.
+        var trimmed = path.StandIn.TrimEnd('/', '\\');
+        var shown = trimmed.Length == 0 || trimmed.EndsWith(':') ? path.StandIn : trimmed;
         if (folder.Length > 2 && folder[0] == '~' && folder[1] is '/' or '\\')
         {
             var slash = folder.Replace('\\', '/');
-            Add(slash, path.StandIn.Replace('\\', '/'));
-            Add(slash.Replace('/', '\\'), path.StandIn.Replace('/', '\\'));
+            Add(slash, shown.Replace('\\', '/'));
+            Add(slash.Replace('/', '\\'), shown.Replace('/', '\\'));
         }
         else if (folder.Length >= 2 && char.IsAsciiLetter(folder[0]) && folder[1] == ':')
         {
@@ -100,8 +112,8 @@ internal sealed class SecretMasker
 
             var back = folder.Replace('/', '\\');
             var slash = folder.Replace('\\', '/');
-            var standInBack = path.StandIn.Replace('/', '\\');
-            var standInSlash = path.StandIn.Replace('\\', '/');
+            var standInBack = shown.Replace('/', '\\');
+            var standInSlash = shown.Replace('\\', '/');
             Add(back, standInBack);
             Add(slash, standInSlash);
             Add("/" + char.ToLowerInvariant(folder[0]) + slash[2..], standInSlash);
@@ -109,7 +121,7 @@ internal sealed class SecretMasker
         }
         else if (folder.StartsWith('/'))
         {
-            Add(folder, path.StandIn.Replace('\\', '/'));
+            Add(folder, shown.Replace('\\', '/'));
         }
 
         void Add(string text, string standIn)
@@ -552,6 +564,8 @@ internal sealed class SecretMasker
             {
                 var end = at + path.Length;
                 if ((at > 0 && IsPathChar(text[at - 1])) || NameGoesOn(text, end) || !Replaceable(at, end))
+                    continue;
+                if (_pathStandInsUnder[i] is { } under && text.AsSpan(at).StartsWith(under, StringComparison.OrdinalIgnoreCase) && !NameGoesOn(text, at + under.Length))
                     continue;
 
                 paths ??= new int[text.Length];

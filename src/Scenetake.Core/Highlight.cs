@@ -1138,7 +1138,7 @@ internal sealed class PromptTemplate(PromptPart[] parts)
 
     /// <summary>
     /// How <c>{dir}</c> shows a folder, as bash's <c>\W</c> does: its last name, <c>~</c> for the home folder, and
-    /// <c>/</c> for the root. The rest of the path is never shown, so a recording names no user folder. Git Bash
+    /// <c>/</c> for the root. The rest of the path is never shown, so the prompt names no user folder. Git Bash
     /// reports <c>/c/Users/name</c> for <c>C:\Users\name</c>, which is the home folder too.
     /// </summary>
     /// <param name="profile">A second folder that is home too, such as the user profile, which PowerShell's <c>~</c> names when HOME does not.</param>

@@ -1,7 +1,8 @@
-# settings.shell-prompt draws zsh's own prompt once the scenario sets one (spec_scenario.md → Prompt). The first step
+# settings.shell-prompt draws zsh's own prompt once the scenario sets one (spec_scenario.md → Shell prompt). The first step
 # shows settings.prompt. A PS1 set in a show: none step, $? of the last command, and the folder then show in the next
 # prompt. prompt_subst carries to the next shell, where the prompt is drawn again, and precmd runs before each prompt.
-# Run from the repository root by ShellStateTests.
+# The precmd reads zsh's commands table, as vcs_info does, and the state still carries after it. Run from the
+# repository root by ShellStateTests.
 title: "shell prompt (zsh)"
 width: 60
 height: 12
@@ -28,6 +29,6 @@ steps:
     show: none
   - echo fourth
   - echo fifth
-  - run: precmd() { PS1="st=$? > " }; exit 3
+  - run: precmd() { local s=$?; (( ${+commands[ls]} )); PS1="st=$s > " }; exit 3
     continue-on-error: true
   - echo sixth

@@ -1,0 +1,15 @@
+# A pwsh script with a clean block, which pwsh 7.3 runs after the end block, exits as the clean block leaves $?, as
+# -Command does (spec_scenario.md → Shell state across steps). Windows PowerShell has no clean block. Run from the
+# repository root by ShellStateTests, with shell: pwsh.
+title: "clean blocks in pwsh steps"
+width: 80
+height: 24
+shell: pwsh
+settings:
+  typing-speed: 0.001
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+steps:
+  - "end { Write-Error 'in-end' } clean { $null = 'clean runs, and pwsh drops its output' }"
+  - "end { 'end-' + 'ran' } clean { Write-Error ('in-' + 'clean') }"

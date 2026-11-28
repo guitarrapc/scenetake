@@ -144,6 +144,12 @@ public sealed class ShellStateTests
     public async Task IntegrationBashShellPrompt() => await Assert.That(ShellStateCases.IntegrationBashShellPrompt(TestEnv.RepoRoot)).IsTrue();
 
     [Test]
+    public async Task IntegrationBashReadonlyLoginPrompt() => await Assert.That(ShellStateCases.IntegrationBashReadonlyLoginPrompt(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationZshReadonlyLoginPrompt() => await Assert.That(ShellStateCases.IntegrationZshReadonlyLoginPrompt(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
     public async Task IntegrationZshShellPrompt() => await Assert.That(ShellStateCases.IntegrationZshShellPrompt(TestEnv.RepoRoot)).IsTrue();
 
     [Test]
@@ -160,6 +166,15 @@ public sealed class ShellStateTests
 
     [Test]
     public async Task IntegrationPowerShellErrorsShowAsAlone() => await Assert.That(ShellStateCases.IntegrationPowerShellErrorsShowAsAlone(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationPowerShellExitCodes() => await Assert.That(ShellStateCases.IntegrationPowerShellExitCodes(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationWindowsPowerShellExitCodes() => await Assert.That(ShellStateCases.IntegrationWindowsPowerShellExitCodes(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationShellPromptWarnsInOtherShells() => await Assert.That(ShellStateCases.IntegrationShellPromptWarnsInOtherShells(TestEnv.RepoRoot)).IsTrue();
 
     [Test]
     public async Task IntegrationWindowsPowerShellErrorsShowAsAlone() => await Assert.That(ShellStateCases.IntegrationWindowsPowerShellErrorsShowAsAlone(TestEnv.RepoRoot)).IsTrue();
@@ -409,19 +424,46 @@ internal static class ShellStateCases
         return Expect(restore.Contains("builtin setopt promptsubst\n", StringComparison.Ordinal) && restore.Contains("builtin unsetopt promptpercent\n", StringComparison.Ordinal), restore)
             && Expect(!restore.Contains("promptbang", StringComparison.Ordinal), "an option that did not change")
             && Expect(!none.Contains("setopt", StringComparison.Ordinal), "no dumps, as from a shell that wrote none")
-            && Expect(ZshDump.SplitOptions("promptsubst=on a;b=on promptbang=maybe =on x=\n").Count == 1, "only a name of letters that is on or off");
+            && Expect(ZshDump.SplitOptions("promptsubst=on a;b=on promptbang=maybe =on x=\n").Count == 1, "only a name of letters that is on or off")
+            // zsh loads commands by itself once a prompt reads it, and refuses it in the next restore. mapfile is a plain
+            // variable until a step loads zsh/mapfile.
+            && Expect(ZshDump.IsSkippedVariable("commands") && ZshDump.IsSkippedVariable("widgets") && !ZshDump.IsSkippedVariable("mapfile") && !ZshDump.IsSkippedVariable("SRANDOM"), "the tables zsh loads by itself")
+            && ModuleTablesAndReadonlyNamesStay();
+
+        // A table that zmodload loaded prints without a value, and restored, a fresh shell would refuse the module. The
+        // login files' readonly PROMPT changes when a step sets PS1, and cannot be assigned.
+        static bool ModuleTablesAndReadonlyNamesStay()
+        {
+            var tables = ZshDump.BuildRestore("", "typeset -A mapfile\ntypeset -g -ar errnos\ntypeset -g mapfile2=plain\n", "", "", "", "", "", "", "/w", []);
+            var shared = ZshDump.BuildRestore("typeset -g -r PROMPT='ro'\ntypeset -g PS1='ro'\n", "typeset -g -r PROMPT='mine'\ntypeset -g PS1='mine'\n", "", "", "", "", "", "", "/w", []);
+            // The readonly half of a tied pair is on its second line, and a readonly variable a step unset after
+            // `typeset +r` cannot be unset in a fresh shell either.
+            var tied = ZshDump.BuildRestore("export -T PATH path=( /bin )\ntypeset -g -arT PATH path=( /bin )\ntypeset -g -r FOO=1\n", "export -T PATH path=( /bin /opt )\ntypeset -g -arT PATH path=( /bin /opt )\n", "", "", "", "", "", "", "/w", []);
+            // A step's `readonly PATH` puts -r on the first line, which would make path readonly before its own line.
+            var stepTied = ZshDump.BuildRestore("export -T PATH path=( /bin )\ntypeset -g -aT PATH path=( /bin )\n", "export -rT PATH path=( /bin /run )\ntypeset -g -aT PATH path=( /bin /run )\ntypeset -g -r FOO=1\n", "", "", "", "", "", "", "/w", []);
+            return Expect(!tables.Contains("typeset -A mapfile\n", StringComparison.Ordinal) && !tables.Contains("errnos", StringComparison.Ordinal) && tables.Contains("mapfile2=plain", StringComparison.Ordinal), tables)
+                && Expect(!shared.Contains("PROMPT", StringComparison.Ordinal) && shared.Contains("typeset -g PS1='mine'\n", StringComparison.Ordinal), shared)
+                && Expect(!tied.Contains("path", StringComparison.Ordinal) && !tied.Contains("FOO", StringComparison.Ordinal), tied)
+                && Expect(stepTied.Contains("export -T PATH path=( /bin /run )\ntypeset -g -aT PATH path=( /bin /run )\n", StringComparison.Ordinal) && stepTied.Contains("typeset -g -r FOO=1\n", StringComparison.Ordinal), stepTied)
+                && Expect(ZshDump.WithoutReadonly("typeset -g -arT PATH path=( /r )\ntypeset -r -T FOO foo=( r )") == "typeset -g -aT PATH path=( /r )\ntypeset -T FOO foo=( r )", "readonly taken out of each line")
+                && Expect(ZshDump.IsReadonly("typeset -g -r PROMPT=x") && ZshDump.IsReadonly("typeset -Ar sysparams") && !ZshDump.IsReadonly("typeset -g -i10 RANDOM=1") && !ZshDump.IsReadonly("typeset -g mirror=r"), "readonly flags");
+        }
     }
 
-    // With settings.shell-prompt off, the scripts are those that ran before it existed.
+    // With settings.shell-prompt off, no script draws a prompt or clears the login files' one. zsh's note the prompt
+    // options either way, since those carry as in a terminal.
     internal static bool ShellPromptScriptsOnlyWhenOn()
     {
         var bashOff = BashState.BuildScript("x=1\n");
         var bashOn = BashState.BuildScript("x=1\n", 72);
         var zshOff = ZshState.BuildFiles("/s", null, "x=1\n").Single(static file => file.Name == "finish.zsh").Text;
         var zshOn = ZshState.BuildFiles("/s", null, "x=1\n", 72).Single(static file => file.Name == "finish.zsh").Text;
-        return Expect(!bashOff.Contains("prompt", StringComparison.Ordinal) && !zshOff.Contains("__scenetake_prompt", StringComparison.Ordinal), "a prompt is drawn while shell-prompt is off")
-            && Expect(bashOn.Contains("__scenetake_save() { __scenetake_prompt \"$?\" || :; ", StringComparison.Ordinal) && bashOn.Contains("COLUMNS:-72", StringComparison.Ordinal), bashOn)
-            && Expect(zshOn.Contains("__scenetake_save() { __scenetake_prompt $? || :; ", StringComparison.Ordinal) && zshOn.Contains("COLUMNS:-72", StringComparison.Ordinal), zshOn)
+        return Expect(!bashOff.Contains("prompt", StringComparison.Ordinal) && !bashOff.Contains("PS1", StringComparison.Ordinal), "bash draws or clears a prompt while shell-prompt is off")
+            && Expect(!zshOff.Contains("__scenetake_prompt", StringComparison.Ordinal) && !zshOff.Contains("PS1", StringComparison.Ordinal), "zsh draws or clears a prompt while shell-prompt is off")
+            && Expect(bashOn.Contains("__scenetake_save() { __scenetake_prompt \"$?\" || :; ", StringComparison.Ordinal) && bashOn.Contains(": 72 ))", StringComparison.Ordinal), bashOn)
+            && Expect(bashOn.IndexOf("builtin unset PS1 PROMPT_COMMAND", StringComparison.Ordinal) is >= 0 and var bashClear && bashClear < bashOn.IndexOf("base.vars", StringComparison.Ordinal), "bash clears the login files' prompt before it notes the shell")
+            && Expect(zshOn.Contains("__scenetake_save() { __scenetake_prompt $? || :; ", StringComparison.Ordinal) && zshOn.Contains(": 72 ))", StringComparison.Ordinal), zshOn)
+            && Expect(zshOn.IndexOf("PS1=''", StringComparison.Ordinal) is >= 0 and var zshClear && zshClear < zshOn.IndexOf("__scenetake_dump base", StringComparison.Ordinal), "zsh clears the login files' prompt before it notes the shell")
             && Expect(!PowerShellSave(null).Contains("function:prompt", StringComparison.Ordinal), "PowerShell draws a prompt while shell-prompt is off")
             && Expect(PowerShellSave(72) is var on && on.IndexOf("function:prompt", StringComparison.Ordinal) is >= 0 and var drawAt && drawAt < on.IndexOf("Export-Clixml", StringComparison.Ordinal), "PowerShell draws the prompt before the save");
 
@@ -1367,6 +1409,81 @@ internal static class ShellStateCases
             && Expect(text.Contains("\n+ Get-Item -Path )\n", StringComparison.Ordinal), $"the syntax error: {Show(text)}");
     }
 
+    internal static bool IntegrationPowerShellExitCodes(string repoRoot)
+    {
+        if (!TryGetBinary(out var bin))
+            return true;
+        if (!IsOnPath("pwsh"))
+        {
+            Skip.Test("pwsh is not on PATH");
+            return true;
+        }
+
+        if (!PowerShellExitCodesKept(RunFixture(bin, repoRoot, "shell-state-pwsh-exit-codes.yaml")))
+            return false;
+
+        // The first step's end block fails and its clean block does not, and the second the other way round, so only
+        // the second exits 1 when $? is read after the clean block.
+        var clean = RunFixture(bin, repoRoot, "shell-state-pwsh-clean.yaml");
+        return Expect(clean.ExitCode == 0, $"exit {clean.ExitCode}\n{clean.Stderr}")
+            && Expect(clean.Text.Contains("\nend-ran\n", StringComparison.Ordinal) && clean.Text.Contains("in-clean", StringComparison.Ordinal), $"the blocks ran: {Show(clean.Text)}")
+            && Expect(!clean.Stderr.Contains("exited 1: end { Write-Error 'in-end' }", StringComparison.Ordinal), $"a failing end block before a clean block: {clean.Stderr}")
+            && Expect(clean.Stderr.Contains("step exited 1: end { 'end-' + 'ran' } clean { Write-Error ('in-' + 'clean') }", StringComparison.Ordinal), $"a failing clean block: {clean.Stderr}");
+    }
+
+    internal static bool IntegrationWindowsPowerShellExitCodes(string repoRoot)
+    {
+        if (!TryGetBinary(out var bin))
+            return true;
+        if (!OperatingSystem.IsWindows() || !IsOnPath("powershell"))
+        {
+            Skip.Test("Windows PowerShell is not on PATH");
+            return true;
+        }
+
+        return RunInWindowsPowerShell(bin, repoRoot, "shell-state-pwsh-exit-codes.yaml", null) is { } run && PowerShellExitCodesKept(run);
+    }
+
+    // Each step's exit code shows in the warning scenetake prints for it, and a step that exits 0 prints none. The
+    // named blocks' output is joined from parts, so only a step that ran prints it.
+    private static bool PowerShellExitCodesKept((int ExitCode, string Stderr, string Text) run) =>
+        Expect(run.ExitCode == 0, $"exit {run.ExitCode}\n{run.Stderr}")
+            && Expect(run.Stderr.Contains("step exited 1: Write-Error 'write-error-fails'", StringComparison.Ordinal), $"Write-Error: {run.Stderr}")
+            && Expect(run.Stderr.Contains("step exited 1: if ($null -eq $IsWindows", StringComparison.Ordinal), $"a failing native command: {run.Stderr}")
+            && Expect(run.Stderr.Contains("step exited 1: 1/0", StringComparison.Ordinal), $"an error that stops the last statement: {run.Stderr}")
+            && Expect(run.Stderr.Contains("step exited 7: exit 7", StringComparison.Ordinal), $"exit 7: {run.Stderr}")
+            && Expect(!run.Stderr.Contains("exited 1: 'returns'", StringComparison.Ordinal), $"return: {run.Stderr}")
+            && Expect(run.Stderr.Contains("step exited 1: end { Write-Error 'end-block-fails' }", StringComparison.Ordinal), $"a failing end block: {run.Stderr}")
+            && Expect(run.Text.Contains("\nbegin-block\nend-block\n", StringComparison.Ordinal) && !run.Stderr.Contains("exited 1: begin {", StringComparison.Ordinal), $"named blocks: {Show(run.Text)}\n{run.Stderr}");
+
+    // scenetake draws the prompt of bash, zsh, and PowerShell only, so in cmd and the sh family shell-prompt warns that
+    // settings.prompt shows.
+    internal static bool IntegrationShellPromptWarnsInOtherShells(string repoRoot)
+    {
+        if (!TryGetBinary(out var bin))
+            return true;
+        var shell = OperatingSystem.IsWindows() ? "cmd" : "sh";
+        if (!IsOnPath(shell))
+        {
+            Skip.Test($"{shell} is not on PATH");
+            return true;
+        }
+
+        var fixture = Path.Combine(Path.GetTempPath(), $"scenetake-shell-prompt-{shell}-{Guid.NewGuid():N}.yaml");
+        File.WriteAllText(fixture, $"shell: {shell}\nsettings:\n  prompt: \"tpl $ \"\n  shell-prompt: true\n  typing-speed: 0.001\n  typing-jitter: 0\nsteps:\n  - echo one\n");
+        try
+        {
+            var run = RunFixture(bin, repoRoot, fixture);
+            return Expect(run.ExitCode == 0, $"exit {run.ExitCode}\n{run.Stderr}")
+                && Expect(run.Stderr.Contains($"Warning: settings.shell-prompt draws the prompt of bash, zsh, and PowerShell: in {shell} the steps show settings.prompt.", StringComparison.Ordinal), run.Stderr)
+                && Expect(run.Text.Contains("tpl $ echo one", StringComparison.Ordinal), Show(run.Text));
+        }
+        finally
+        {
+            File.Delete(fixture);
+        }
+    }
+
     // What shell-state-pwsh-errors.yaml shows in either PowerShell. [int]::Parse('x') stops only its own statement, so
     // the step goes on and exits 0, as it does alone. using namespace is valid only where a script begins.
     private static bool PowerShellErrorsShownAsAlone((int ExitCode, string Stderr, string Text) run)
@@ -1432,21 +1549,110 @@ internal static class ShellStateCases
             || !Expect(!text.Contains("__scenetake", StringComparison.Ordinal), $"scenetake's own names show: {Show(text)}"))
             return false;
 
-        if (run.Stderr.Contains("draws PS1 with bash 4.4 or later", StringComparison.Ordinal))
+        // The first step prints the version of the bash that scenetake ran, which may not be the one on this PATH.
+        var version = Regex.Match(text, @"first bash=(\d+)\.(\d+)");
+        if (!Expect(version.Success, $"the first step's version: {Show(text)}")
+            || !Expect(!run.Stderr.Contains("draws the prompt of", StringComparison.Ordinal), $"bash was taken for a shell that draws no prompt: {run.Stderr}"))
+            return false;
+        var bashVersion = int.Parse(version.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) * 100 + int.Parse(version.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture);
+        var warned = Regex.Matches(run.Stderr, "draws PS1 with bash 4.4 or later").Count;
+        if (bashVersion < 404)
         {
-            return Expect(Regex.Matches(run.Stderr, "draws PS1 with bash 4.4").Count == 1, $"the warning shows more than once: {run.Stderr}")
+            return Expect(warned == 1, $"the warning, once: {run.Stderr}")
                 && Expect(text.Contains("tpl $ echo fourth", StringComparison.Ordinal) && text.EndsWith("tpl $ ", StringComparison.Ordinal), Show(text));
         }
 
         var masked = new string('*', "masked-word".Length);
         string Prompt(string folder, int status) => $"\u001b[32m{folder}\u001b[0m [{status}] {masked} > ";
-        return Expect(text.Contains("tpl $ echo first", StringComparison.Ordinal), $"the prompt before PS1 is set: {Show(text)}")
+        return Expect(warned == 0, $"a bash {version.Value} that draws PS1 warned: {run.Stderr}")
+            && Expect(text.Contains("tpl $ echo \"first", StringComparison.Ordinal), $"the prompt before PS1 is set: {Show(text)}")
+            && Expect(text.Contains("tpl $ echo title-hook", StringComparison.Ordinal), $"a PROMPT_COMMAND that sets no PS1 drew a prompt: {Show(text)}")
             && Expect(text.Contains(Prompt("tests", 0) + "echo second", StringComparison.Ordinal), $"the PS1 of a show: none step: {Show(text)}")
             && Expect(text.Contains(Prompt("fixtures", 1) + "echo third", StringComparison.Ordinal), $"the folder and $? of a failed step: {Show(text)}")
+            // The typed command joins "tra""ced", so only bash's trace writes "+ echo traced".
+            && Expect(text.Contains(Prompt("fixtures", 0) + "set -x;", StringComparison.Ordinal) && text.Contains("+ echo traced", StringComparison.Ordinal), $"the set -x step: {Show(text)}")
             && Expect(text.Contains(Prompt("fixtures", 0) + "n=0;", StringComparison.Ordinal), $"a step stopped by timeout changed the prompt: {Show(text)}")
-            && Expect(text.Contains("pc1 > echo fourth", StringComparison.Ordinal) && text.EndsWith("pc2 > ", StringComparison.Ordinal), $"PROMPT_COMMAND and what it changed: {Show(text)}")
-            && Expect(run.Outputs.Contains($"{masked} > \"", StringComparison.Ordinal) && !run.Outputs.Contains("masked-word", StringComparison.Ordinal)
-                && run.Outputs.Contains("\"endPrompt\": \"pc2 > \"", StringComparison.Ordinal), $"the outputs file: {run.Outputs}");
+            && Expect(run.Outputs.Contains($"{masked} > \"", StringComparison.Ordinal) && !run.Outputs.Contains("masked-word", StringComparison.Ordinal), $"the outputs file: {run.Outputs}")
+            && (bashVersion >= 501 ? PromptCommandArrayDrawn() : OnlyFirstElementRan());
+
+        // From bash 5.1 on, the array's second element sets PS1 from the command's $? and counts the prompts.
+        bool PromptCommandArrayDrawn() =>
+            Expect(text.Contains("pc1 [0] > false", StringComparison.Ordinal) && text.Contains("pc2 [1] > echo fourth", StringComparison.Ordinal) && text.EndsWith("pc3 [0] > ", StringComparison.Ordinal),
+                $"a PROMPT_COMMAND array, $? in its second element, and what it changed: {Show(text)}")
+            && Expect(run.Outputs.Contains("\"endPrompt\": \"pc3 [0] > \"", StringComparison.Ordinal), $"the closing prompt in the outputs file: {run.Outputs}");
+
+        // Before 5.1, bash runs only the first element, true, so the PS1 set before stays.
+        bool OnlyFirstElementRan() =>
+            Expect(text.Contains(Prompt("fixtures", 1) + "echo fourth", StringComparison.Ordinal) && !text.Contains("pc1", StringComparison.Ordinal), $"bash {version.Value} ran more than the first element: {Show(text)}");
+    }
+
+    // HOME is a folder whose .bash_profile makes PROMPT_COMMAND or PS1 readonly, as some audit setups do, so clearing
+    // the login files' prompt fails there, and must say nothing into the recording.
+    internal static bool IntegrationBashReadonlyLoginPrompt(string repoRoot)
+    {
+        if (!TryGetBinary(out var bin))
+            return true;
+
+        // With set -e from the login files too, a failed clear would end the shell before each command. The readonly hook
+        // still runs at each command, so hooked counts the two commands before it. A hook that runs only once PS1
+        // changes gives 1.
+        var hook = RunWithLoginFile(bin, repoRoot, ".bash_profile", "set -e\nreadonly PROMPT_COMMAND='hooked=$((hooked + 1))'\n", "shell: bash", "  - run: PS1='mine > '\n    show: none\n  - echo \"hooked=$hooked\"\n");
+        // A readonly PS1 cannot be cleared, so the login files' prompt shows from the first command on, and a step's
+        // PROMPT_COMMAND still runs.
+        var ps1 = RunWithLoginFile(bin, repoRoot, ".bash_profile", "readonly PS1='ro> '\n", "shell: bash", "  - echo again\n  - run: PROMPT_COMMAND='cnt=$((cnt + 1))'\n    show: none\n  - echo \"cnt=$cnt\"\n");
+        var old = hook.Stderr.Contains("draws PS1 with bash 4.4", StringComparison.Ordinal);
+        return Expect(hook.ExitCode == 0 && !hook.Stderr.Contains("step exited", StringComparison.Ordinal), $"exit {hook.ExitCode}\n{hook.Stderr}")
+            && Expect(!hook.Text.Contains("readonly", StringComparison.Ordinal) && !hook.Text.Contains("scenetake-state", StringComparison.Ordinal), $"the failed clear shows: {Show(hook.Text)}")
+            && Expect(hook.Text.Contains("tpl $ echo one\none\n", StringComparison.Ordinal) && (old || (hook.Text.Contains("mine > echo two\ntwo\n", StringComparison.Ordinal) && hook.Text.Contains("hooked=2\n", StringComparison.Ordinal))), Show(hook.Text))
+            && Expect(ps1.ExitCode == 0 && ((ps1.Text.Contains("ro> echo again", StringComparison.Ordinal) && ps1.Text.Contains("cnt=1\n", StringComparison.Ordinal)) || ps1.Stderr.Contains("draws PS1 with bash 4.4", StringComparison.Ordinal)), $"a readonly PS1 from the login files: {Show(ps1.Text)}\n{ps1.Stderr}");
+    }
+
+    // zsh stops reading a startup file at an assignment to a readonly parameter. A readonly PS1 must not stop the state.
+    internal static bool IntegrationZshReadonlyLoginPrompt(string repoRoot)
+    {
+        if (!TryGetBinary(out var bin))
+            return true;
+        if (OperatingSystem.IsWindows() || !IsOnPath("zsh"))
+        {
+            Skip.Test("zsh is not on PATH");
+            return true;
+        }
+
+        // PS1, PROMPT, and prompt share one value, each readonly on its own, so the login files' prompt shows at `echo
+        // again`, and a step still sets the shared value through another name. The readonly one must then not be
+        // restored, or zsh stops reading the restore and nothing carries.
+        const string Carry = "  - cd /\n  - export CARRIED=yes\n  - echo \"at=$PWD carried=$CARRIED\"\n";
+        var ps1 = RunWithLoginFile(bin, repoRoot, ".zshenv", "readonly PS1='ro%# '\n", "shell: zsh", "  - echo again\n  - run: PROMPT='mine > '\n    show: none\n" + Carry);
+        var upper = RunWithLoginFile(bin, repoRoot, ".zshenv", "readonly PROMPT='ro%# '\n", "shell: zsh", "  - echo again\n  - run: PS1='mine > '\n    show: none\n" + Carry);
+        // A readonly precmd_functions cannot be emptied, and its hook runs at each command, so pcs counts the six before it.
+        var lower = RunWithLoginFile(bin, repoRoot, ".zshenv", "readonly prompt='lo%# '\npc() { pcs=$(( pcs + 1 )) }\nprecmd_functions=(pc)\nreadonly precmd_functions\n", "shell: zsh",
+            "  - echo again\n  - run: PS1='mine > '\n    show: none\n" + Carry + "  - echo \"pcs=$pcs\"\n");
+        return Readonly(ps1, "ro", "a readonly PS1") && Readonly(upper, "ro", "a readonly PROMPT") && Readonly(lower, "lo", "a readonly prompt and precmd_functions")
+            && Expect(lower.Text.Contains("pcs=6\n", StringComparison.Ordinal), $"the readonly hook did not run at each command: {Show(lower.Text)}");
+
+        // %# is # for root and % otherwise.
+        static bool Readonly((int ExitCode, string Stderr, string Text) run, string login, string what) =>
+            Expect(run.ExitCode == 0 && !run.Stderr.Contains("read-only", StringComparison.Ordinal), $"{what}: exit {run.ExitCode}\n{run.Stderr}")
+            && Expect(Regex.IsMatch(run.Text, $@"{login}[#%] echo again"), $"{what}, its prompt: {Show(run.Text)}")
+            && Expect(run.Text.Contains("at=/ carried=yes", StringComparison.Ordinal) && run.Text.Contains("mine > echo two", StringComparison.Ordinal), $"{what}, the state: {Show(run.Text)}");
+    }
+
+    // Records `echo one`, then the given steps, then `echo two`, with shell-prompt on, in a HOME that holds one login file.
+    private static (int ExitCode, string Stderr, string Text) RunWithLoginFile(string bin, string repoRoot, string loginFile, string login, string shellLine, string steps)
+    {
+        var home = Path.Combine(Path.GetTempPath(), $"scenetake-login-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(home);
+        try
+        {
+            File.WriteAllText(Path.Combine(home, loginFile), login);
+            var fixture = Path.Combine(home, "scenario.yaml");
+            File.WriteAllText(fixture, $"{shellLine}\nsettings:\n  prompt: \"tpl $ \"\n  shell-prompt: true\n  typing-speed: 0.001\n  typing-jitter: 0\nsteps:\n  - echo one\n{steps}  - echo two\n");
+            return RunFixture(bin, repoRoot, fixture, new() { ["HOME"] = home, ["ZDOTDIR"] = null });
+        }
+        finally
+        {
+            Directory.Delete(home, recursive: true);
+        }
     }
 
     internal static bool IntegrationZshShellPrompt(string repoRoot)
@@ -1468,6 +1674,7 @@ internal static class ShellStateCases
             && Expect(text.Contains("fixtures (main) > echo fourth", StringComparison.Ordinal), $"prompt_subst in the shell that set it: {Show(text)}")
             && Expect(text.Contains("fixtures (main) > echo fifth", StringComparison.Ordinal), $"prompt_subst in the next shell: {Show(text)}")
             && Expect(text.Contains("st=3 > echo sixth", StringComparison.Ordinal) && text.EndsWith("st=0 > ", StringComparison.Ordinal), $"precmd and $?: {Show(text)}")
+            && Expect(!run.Stderr.Contains("can't change type", StringComparison.Ordinal), $"a table of zsh's was restored: {run.Stderr}")
             && Expect(!text.Contains("__scenetake", StringComparison.Ordinal), $"scenetake's own names show: {Show(text)}");
     }
 
@@ -1508,7 +1715,7 @@ internal static class ShellStateCases
             && Expect(text.Contains("[tests] ok=True > Write-Output second", StringComparison.Ordinal), $"the prompt function of a show: none step: {Show(text)}")
             && Expect(text.Contains("[fixtures] ok=False > Write-Output third", StringComparison.Ordinal), $"the location and $? of a failed step: {Show(text)}")
             && Expect(text.Contains("tpl > Write-Output fourth", StringComparison.Ordinal) && text.TrimEnd().EndsWith("tpl >", StringComparison.Ordinal), $"a prompt function that throws: {Show(text)}")
-            && Expect(Regex.Matches(stderr, "Warning: the prompt function failed: broken prompt").Count == 1, $"the warning, once: {stderr}")
+            && Expect(Regex.Matches(stderr, "Warning: the prompt function failed, and the steps show settings.prompt: broken prompt").Count == 1, $"the warning, once: {stderr}")
             && Expect(!text.Contains("__scenetake", StringComparison.Ordinal), $"scenetake's own names show: {Show(text)}");
 
     // SCENETAKE_TEST_INHERITED is in the shell's environment from the start, so only the removed-variable list of the

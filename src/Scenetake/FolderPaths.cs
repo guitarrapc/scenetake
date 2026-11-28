@@ -60,8 +60,11 @@ internal static class FolderPaths
             {
                 foreach (var folderForm in folderForms)
                 {
+                    // A folder outside home is ".." or starts with "../", while a folder named "..hidden" is under it.
                     var relative = Path.GetRelativePath(homeForm, folderForm);
-                    if (relative != "." && !relative.StartsWith("..", StringComparison.Ordinal) && !Path.IsPathRooted(relative))
+                    var outside = relative == ".." || relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+                        || relative.StartsWith(".." + Path.AltDirectorySeparatorChar, StringComparison.Ordinal);
+                    if (relative != "." && !outside && !Path.IsPathRooted(relative))
                         AddNew(forms, "~/" + relative.Replace('\\', '/'));
                 }
             }
