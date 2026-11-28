@@ -625,7 +625,7 @@ settings:
     - "internal.example.com"
 ```
 
-It also hides who recorded the demo: your computer's name, and your git name and email in `git log`. Your git name in a web address, such as `github.com/<name>/tool`, stays. To show them, set `mask-personal: false`. Your user name and your home folder's path show as they are. To keep them out of the demo folder's paths, such as `pwd` and errors, give the folder with `cwd-as` (below). Listing your user name in `mask` hides it in any other text too, also inside other words, so it suits a name that is no common word.
+It also masks who recorded the demo: your computer's name, and your git name and email in `git log`. To show them, set `mask-personal: false`. Your git name in a web address, such as `github.com/<name>/tool`, is not masked. Your home folder's path shows as it is, but `cwd-as` replaces it.
 
 ```yaml
 settings:
