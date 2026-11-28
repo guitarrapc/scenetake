@@ -1,0 +1,33 @@
+name: diag-winps-arm64
+
+on:
+  push:
+    branches:
+      - diag/winps-arm64
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: windows-11-arm
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Defender and PowerShell
+        shell: powershell
+        run: |
+          Get-MpComputerStatus | Select-Object AMServiceEnabled, AntivirusEnabled, RealTimeProtectionEnabled, BehaviorMonitorEnabled, OnAccessProtectionEnabled, IoavProtectionEnabled, IsTamperProtected, AMRunningMode | Format-List
+          Get-MpPreference | Select-Object DisableRealtimeMonitoring, DisableScriptScanning, DisableBehaviorMonitoring, MAPSReporting, SubmitSamplesConsent, CloudBlockLevel, CloudExtendedTimeout, ExclusionPath | Format-List
+          "$($PSVersionTable.PSVersion) 64bit=$([Environment]::Is64BitProcess) arch=$env:PROCESSOR_ARCHITECTURE"
+      - name: Measure
+        shell: pwsh
+        run: ./diag/measure.ps1 -Repeat 3
+      - name: Events
+        if: always()
+        shell: powershell
+        run: |
+          Get-WinEvent -LogName 'Microsoft-Windows-Windows Defender/Operational' -MaxEvents 15 -ErrorAction SilentlyContinue | Select-Object TimeCreated, Id, Message | Format-List
+          Get-WinEvent -LogName 'Microsoft-Windows-PowerShell/Operational' -MaxEvents 40 -ErrorAction SilentlyContinue | Group-Object Id, LevelDisplayName | Select-Object Count, Name | Format-Table
