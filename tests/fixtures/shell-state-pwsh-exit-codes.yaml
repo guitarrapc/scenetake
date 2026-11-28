@@ -1,0 +1,21 @@
+# A PowerShell step exits as its command does alone: 1 after Write-Error, a failing native command, or an error that
+# stops the last statement, its own code after exit, and 0 after return. A script of named blocks runs, and exits 1
+# when its end block fails (spec_scenario.md → Shell state across steps). Run from the repository root by
+# ShellStateTests, with shell: pwsh, and with shell: powershell on Windows.
+title: "exit codes of PowerShell steps"
+width: 80
+height: 24
+shell: pwsh
+settings:
+  typing-speed: 0.001
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+steps:
+  - Write-Error 'write-error-fails'
+  - "if ($null -eq $IsWindows -or $IsWindows) { cmd /c exit 3 } else { sh -c 'exit 3' }"
+  - 1/0
+  - exit 7
+  - "'returns'; return"
+  - "end { Write-Error 'end-block-fails' }"
+  - "begin { $begun = 'begin-' + 'block' } end { $begun; 'end-' + 'block' }"

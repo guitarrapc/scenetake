@@ -220,6 +220,11 @@
           "type": "boolean",
           "default": false
         },
+        "shell-prompt": {
+          "description": "Show the shell's own prompt once the scenario sets one: PS1 in bash and zsh, directly or from PROMPT_COMMAND or precmd, or a prompt function in PowerShell. Until then, and in other shells, prompt shows.",
+          "type": "boolean",
+          "default": false
+        },
         "execution-duration": {
           "description": "Seconds after Enter before the output appears, at least.",
           "$ref": "#/definitions/seconds",
@@ -260,7 +265,7 @@
           "default": true
         },
         "mask-personal": {
-          "description": "Hide the user name, home folder name, computer name, and git name and email of the machine that records. The home folder's path shows as ~.",
+          "description": "Hide the computer name, and the git name and email, of the machine that records. The user name and the home folder's path show as they are: cwd-as or mask hides them.",
           "type": "boolean",
           "default": true
         }

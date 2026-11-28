@@ -4,13 +4,17 @@ using static Scenetake.Core.Tests.SecretMaskCases;
 
 namespace Scenetake.Core.Tests;
 
-// Paths that show as a stand-in (.github/docs/spec_scenario.md → Paths in the recording): the home folder as ~ with
-// mask-personal, and cwd as cwd-as gives it. The folders are a made-up person's, as the CLI would collect them.
+// The path that shows as a stand-in (.github/docs/spec_scenario.md → Paths in the recording): cwd as cwd-as gives it.
+// The folders are a made-up person's, as the CLI would collect them. The home folder has no stand-in, and its path
+// shows as it is.
 
 public sealed class PathStandInTests
 {
     [Test]
     public async Task EachSpellingShowsAsTheStandIn() => await Assert.That(PathStandInCases.EachSpellingShowsAsTheStandIn()).IsTrue();
+
+    [Test]
+    public async Task HomeSpellingShowsAsTheStandIn() => await Assert.That(PathStandInCases.HomeSpellingShowsAsTheStandIn()).IsTrue();
 
     [Test]
     public async Task OnlyAWholePathIsReplaced() => await Assert.That(PathStandInCases.OnlyAWholePathIsReplaced()).IsTrue();
@@ -19,7 +23,7 @@ public sealed class PathStandInTests
     public async Task PathsInAPtyStream() => await Assert.That(PathStandInCases.PathsInAPtyStream()).IsTrue();
 
     [Test]
-    public async Task MaskPersonalTurnsOffTheHomeOnly() => await Assert.That(PathStandInCases.MaskPersonalTurnsOffTheHomeOnly()).IsTrue();
+    public async Task CwdAsIsNoPersonalDetail() => await Assert.That(PathStandInCases.CwdAsIsNoPersonalDetail()).IsTrue();
 
     [Test]
     public async Task RecordingShowsStandIns() => await Assert.That(PathStandInCases.RecordingShowsStandIns()).IsTrue();
@@ -32,7 +36,7 @@ internal static class PathStandInCases
 {
     private const string Settings = "  prompt: \"$ \"";
 
-    private static PathStandIn Home(string folder) => new(folder, "~", PersonalDetail.HomeFolder);
+    private static PathStandIn Cwd(string folder) => new(folder, "~/my-app");
 
     private static SecretMasker Masker(string yamlSettings, params PathStandIn[] paths) =>
         SecretMasker.ForScenario(ParseScenario($"settings:\n{yamlSettings}\nsteps:\n  - echo hi\n"), null, AdaDetails(), paths)
@@ -40,86 +44,112 @@ internal static class PathStandInCases
 
     internal static bool EachSpellingShowsAsTheStandIn()
     {
-        var unix = Masker(Settings, Home("/home/adal"));
-        // The CLI gives the profile's 8.3 form too, which Windows writes in TEMP.
-        var windows = Masker(Settings, Home(@"C:\Users\adal"), Home(@"C:\Users\ADAL~1"));
-        // cwd under the home folder: its own stand-in wins, written with each spelling's separators.
-        var cwd = Masker(Settings, new PathStandIn(@"C:\Users\adal\src\demo\", "~/my-app", null), Home(@"C:\Users\adal"));
-        return Same("pwd", "~/src/app\n", unix.MaskText("/home/adal/src/app\n"))
-            & Same("the home folder itself", "cd ~ && ls ~/", unix.MaskText("cd /home/adal && ls /home/adal/"))
-            & Same("PATH", "PATH=~/bin:~/.local/bin:/usr/bin", unix.MaskText("PATH=/home/adal/bin:/home/adal/.local/bin:/usr/bin"))
-            & Same("quoted and at the end of a sentence", "'~/x' \"~\" in ~.", unix.MaskText("'/home/adal/x' \"/home/adal\" in /home/adal."))
-            & Same("Windows, other case", @"~\AppData", windows.MaskText(@"c:\users\Adal\AppData"))
-            & Same("forward slashes", "~/AppData", windows.MaskText("C:/Users/adal/AppData"))
-            & Same("Git Bash", "~/src", windows.MaskText("/c/Users/ADAL/src"))
-            & Same("JSON", @"{""dir"":""~\\x""}", windows.MaskText(@"{""dir"":""C:\\Users\\adal\\x""}"))
-            & Same("8.3 name", @"~\AppData\Local\Temp", windows.MaskText(@"C:\Users\ADAL~1\AppData\Local\Temp"))
-            & Same("cwd-as under the home folder", @"~\my-app\src and ~\other", cwd.MaskText(@"C:\Users\adal\src\demo\src and C:\Users\adal\other"))
-            & Same("cwd-as in Git Bash", "~/my-app", cwd.MaskText("/c/Users/adal/src/demo"))
-            & Same("cwd-as in JSON", @"""~\\my-app""", cwd.MaskText(@"""C:\\Users\\adal\\src\\demo"""))
-            & Same("masked twice", "~/x", unix.MaskText(unix.MaskText("/home/adal/x")))
-            & Expect(!unix.Hides("~/src") && unix.Hides("/home/adal"), "text with stand-ins has nothing left to replace");
+        var unix = Masker(Settings, Cwd("/home/adal/demo"));
+        // The CLI gives the folder's 8.3 form too: TEMP and cmd write the profile as C:\Users\ADAL~1.
+        var windows = Masker(Settings, Cwd(@"C:\Users\adal\demo\"), Cwd(@"C:\Users\ADAL~1\demo"));
+        return Same("pwd", "~/my-app/src\n", unix.MaskText("/home/adal/demo/src\n"))
+            & Same("the folder itself", "cd ~/my-app && ls ~/my-app/", unix.MaskText("cd /home/adal/demo && ls /home/adal/demo/"))
+            & Same("PATH", "PATH=~/my-app/bin:/usr/bin", unix.MaskText("PATH=/home/adal/demo/bin:/usr/bin"))
+            & Same("quoted and at the end of a sentence", "'~/my-app/x' \"~/my-app\" in ~/my-app.", unix.MaskText("'/home/adal/demo/x' \"/home/adal/demo\" in /home/adal/demo."))
+            & Same("the home folder above it", "/home/adal and /home/adal/other", unix.MaskText("/home/adal and /home/adal/other"))
+            & Same("Windows, other case", @"~\my-app\src", windows.MaskText(@"c:\users\Adal\Demo\src"))
+            & Same("forward slashes", "~/my-app/src", windows.MaskText("C:/Users/adal/demo/src"))
+            & Same("Git Bash", "~/my-app/src", windows.MaskText("/c/Users/ADAL/demo/src"))
+            & Same("JSON", @"{""dir"":""~\\my-app\\x""}", windows.MaskText(@"{""dir"":""C:\\Users\\adal\\demo\\x""}"))
+            & Same("8.3 name", @"~\my-app\src", windows.MaskText(@"C:\Users\ADAL~1\demo\src"))
+            & Same("masked twice", "~/my-app/x", unix.MaskText(unix.MaskText("/home/adal/demo/x")))
+            & Expect(!unix.Hides("~/my-app/src") && unix.Hides("/home/adal/demo"), "text with stand-ins has nothing left to replace");
+    }
+
+    // A prompt writes the folder from ~ (bash's \w, zsh's %~), and the CLI gives that form when cwd is under the home
+    // folder. A PowerShell prompt writes it with backslashes.
+    internal static bool HomeSpellingShowsAsTheStandIn()
+    {
+        var masker = Masker(Settings, Cwd("/home/adal/demo"), Cwd("~/demo"));
+        return Same("bash's \\w", "adal@box:~/my-app/src$ ", masker.MaskText("adal@box:~/demo/src$ "))
+            & Same("the folder itself", "[~/my-app] ", masker.MaskText("[~/demo] "))
+            & Same("PowerShell", @"PS ~\my-app\src> ", masker.MaskText(@"PS ~\demo\src> "))
+            & Same("another folder", "~/demo2 ~/demo.old ~/demo-x", masker.MaskText("~/demo2 ~/demo.old ~/demo-x"))
+            & Same("inside another path", "/x~/demo a~/demo", masker.MaskText("/x~/demo a~/demo"))
+            & Same("the home folder", "~ ~/other", masker.MaskText("~ ~/other"))
+            & Same("a stand-in with a trailing slash", "~/my-app/src ~/my-app", Masker(Settings, new PathStandIn("/home/adal/demo", "~/my-app/")).MaskText("/home/adal/demo/src /home/adal/demo"))
+            & RootStandInKeepsItsSeparator()
+            & StandInUnderTheFolder();
+
+        // A root keeps its separator, and the text after the folder stays as it is: a path under it shows two
+        // separators, and an escape after it keeps its meaning, in JSON too.
+        static bool RootStandInKeepsItsSeparator()
+        {
+            var unix = Masker(Settings, new PathStandIn("/home/adal/demo", "/"));
+            var windows = Masker(Settings, new PathStandIn(@"C:\Users\adal\demo", @"C:\"));
+            return Same("a root stand-in", @"/ //sub ""/\n""", unix.MaskText(@"/home/adal/demo /home/adal/demo/sub ""/home/adal/demo\n"""))
+                & Same("a drive root stand-in", @"C:\ C:\\sub ""C:\\\\sub"" ""C:\\\n""", windows.MaskText(@"C:\Users\adal\demo C:\Users\adal\demo\sub ""C:\\Users\\adal\\demo\\sub"" ""C:\\Users\\adal\\demo\n"""));
+        }
+
+        // cwd-as under the folder's own ~ form reads as a path under the folder too. A replay masks the recorded text
+        // again, which then must change nothing, while a sibling such as app2 is still a path under the folder.
+        static bool StandInUnderTheFolder()
+        {
+            var under = Masker(Settings, new PathStandIn("/home/adal/demo", "~/demo/app"), new PathStandIn("~/demo", "~/demo/app"));
+            var once = under.MaskText("cd /home/adal/demo && ls ~/demo/src ~/demo/app2");
+            return Same("a stand-in under the ~ form", "cd ~/demo/app && ls ~/demo/app/src ~/demo/app/app2", once)
+                & Same("masked twice", once, under.MaskText(once))
+                & Expect(!under.Hides(once), "the masked text has more to replace");
+        }
     }
 
     internal static bool OnlyAWholePathIsReplaced()
     {
-        var unix = Masker(Settings, Home("/home/adal"));
-        var windows = Masker(Settings, Home(@"C:\Users\adal"));
+        var unix = Masker(Settings, Cwd("/home/adal/demo"));
+        var windows = Masker(Settings, Cwd(@"C:\Users\adal\demo"));
         // A root folder starts every path, so it has no stand-in.
-        var root = Masker(Settings, Home("/"), Home(@"C:\"), Home("relative/home"));
-        // Where the path is not replaced, the user name is starred as a word, as before.
-        return Same("another folder", "/home/adal2/x /home/adal-work /home/adal_x", unix.MaskText("/home/adal2/x /home/adal-work /home/adal_x"))
-            & Same("a folder with a dot in its name", "/home/****.old", unix.MaskText("/home/adal.old"))
-            & Same("inside another path", "/mnt/home/**** x/home/**** ./home/****", unix.MaskText("/mnt/home/adal x/home/adal ./home/adal"))
-            & Same("WSL's path to the Windows home", "/mnt/c/Users/****", windows.MaskText("/mnt/c/Users/adal"))
-            & Same("a long path", @"\\?\C:\Users\****", windows.MaskText(@"\\?\C:\Users\adal"))
-            // A file URL is a path, not a web address where a published name stays.
-            & Same("a file URL", "file:///C:/Users/****/x file:///home/****", windows.MaskText("file:///C:/Users/adal/x file:///home/adal"))
-            & Same("root folders", @"/usr/bin C:\Windows relative/home/x", root.MaskText(@"/usr/bin C:\Windows relative/home/x"));
+        var root = Masker(Settings, Cwd("/"), Cwd(@"C:\"), Cwd("relative/demo"));
+        return Same("another folder", "/home/adal/demo2/x /home/adal/demo-work /home/adal/demo_x", unix.MaskText("/home/adal/demo2/x /home/adal/demo-work /home/adal/demo_x"))
+            & Same("a folder with a dot in its name", "/home/adal/demo.old", unix.MaskText("/home/adal/demo.old"))
+            & Same("inside another path", "/mnt/home/adal/demo x/home/adal/demo ./home/adal/demo", unix.MaskText("/mnt/home/adal/demo x/home/adal/demo ./home/adal/demo"))
+            & Same("WSL's path to the Windows folder", "/mnt/c/Users/adal/demo", windows.MaskText("/mnt/c/Users/adal/demo"))
+            & Same("a long path", @"\\?\C:\Users\adal\demo", windows.MaskText(@"\\?\C:\Users\adal\demo"))
+            & Same("a file URL", "file:///C:/Users/adal/demo/x", windows.MaskText("file:///C:/Users/adal/demo/x"))
+            & Same("root folders", @"/usr/bin C:\Windows relative/demo/x", root.MaskText(@"/usr/bin C:\Windows relative/demo/x"));
     }
 
     internal static bool PathsInAPtyStream()
     {
-        var masker = Masker(Settings, Home("/home/adal"));
-        return Same("split across reads", "~|/x\r\n", MaskPty(masker, "/home/ad", "al/x\r\n"))
+        var masker = Masker(Settings, Cwd("/home/adal/demo"));
+        return Same("split across reads", "~/my-app|/x\r\n", MaskPty(masker, "/home/adal/de", "mo/x\r\n"))
             // The colors inside the path stay, so the text after it keeps its own.
-            & Same("colored in parts", "\u001b[34m~\u001b[1m\u001b[0m/x", MaskPty(masker, "\u001b[34m/home/\u001b[1madal\u001b[0m/x"))
-            // A full-screen program places text by column: there the width stays, and the name is starred.
-            & Same("alternate screen", "\u001b[?1049h/home/****/x\u001b[?1049l~/y", MaskPty(masker, "\u001b[?1049h/home/adal/x\u001b[?1049l/home/adal/y"))
-            & Same("alternate screen, mode 47 among others", "\u001b[?1;47h/home/****\u001b[?47l~", MaskPty(masker, "\u001b[?1;47h/home/adal\u001b[?47l/home/adal"))
+            & Same("colored in parts", "\u001b[34m~/my-app\u001b[1m\u001b[0m/x", MaskPty(masker, "\u001b[34m/home/adal/\u001b[1mdemo\u001b[0m/x"))
+            // A full-screen program places text by column: there the path keeps its width, and it shows as it is.
+            & Same("alternate screen", "\u001b[?1049h/home/adal/demo/x\u001b[?1049l~/my-app/y", MaskPty(masker, "\u001b[?1049h/home/adal/demo/x\u001b[?1049l/home/adal/demo/y"))
+            & Same("alternate screen, mode 47 among others", "\u001b[?1;47h/home/adal/demo\u001b[?47l~/my-app", MaskPty(masker, "\u001b[?1;47h/home/adal/demo\u001b[?47l/home/adal/demo"))
             // A path that a cursor move cuts was drawn in parts.
-            & Same("cut by a cursor move", "/home/\u001b[7G****", MaskPty(masker, "/home/\u001b[7Gadal"))
+            & Same("cut by a cursor move", "/home/adal/\u001b[12Gdemo", MaskPty(masker, "/home/adal/\u001b[12Gdemo"))
             // ConPTY writes a run of spaces as a move to the right.
-            & Same("followed by a move to the right", "~\u001b[1Cx", MaskPty(masker, "/home/adal\u001b[1Cx"));
+            & Same("followed by a move to the right", "~/my-app\u001b[1Cx", MaskPty(masker, "/home/adal/demo\u001b[1Cx"));
     }
 
-    internal static bool MaskPersonalTurnsOffTheHomeOnly()
+    internal static bool CwdAsIsNoPersonalDetail()
     {
-        var off = Masker("  mask-personal: false", new PathStandIn("/home/adal/demo", "~/my-app", null), Home("/home/adal"));
-        var none = SecretMasker.ForScenario(ParseScenario("settings:\n  mask-personal: false\n  mask-auto: false\nsteps:\n  - echo hi\n"), null, AdaDetails(), [Home("/home/adal")]);
-        var counted = Masker(Settings, new PathStandIn("/home/adal/demo", "~/my-app", null), Home("/home/adal"));
-        counted.MaskText("/home/adal/demo");
-        var cwdOnly = counted.PersonalSummary();
-        counted.MaskUncounted("/home/adal/x");
-        var uncounted = counted.PersonalSummary();
-        counted.MaskText("/home/adal/x");
+        var off = Masker("  mask-personal: false", Cwd("/home/adal/demo"));
+        var alone = SecretMasker.ForScenario(ParseScenario("settings:\n  mask-personal: false\n  mask-auto: false\nsteps:\n  - echo hi\n"), null, AdaDetails(), [Cwd("/home/adal/demo")]);
+        var counted = Masker(Settings, Cwd("/home/adal/demo"));
+        counted.MaskText("/home/adal/demo /home/adal/x");
         return Same("cwd-as stays on", "~/my-app /home/adal/x", off.MaskText("/home/adal/demo /home/adal/x"))
-            & Expect(none is null, "the home folder alone gives no masker with mask-personal: false")
-            & Expect(cwdOnly is null && uncounted is null, $"cwd-as and uncounted text name no personal detail: {cwdOnly}, {uncounted}")
-            & Same("summary", "Masked personal details: home folder as ~", counted.PersonalSummary() ?? "(none)");
+            & Expect(alone is not null && alone.MaskText("/home/adal/demo") == "~/my-app", "cwd-as alone gives a masker")
+            & Expect(counted.PersonalSummary() is null && counted.Summary() is null, $"cwd-as names no detail: {counted.PersonalSummary()}, {counted.Summary()}");
     }
 
     internal static bool RecordingShowsStandIns()
     {
-        var scenario = ParseScenario("settings:\n  prompt: \"$ \"\nsteps:\n  - name: read /home/adal/notes.txt\n    run: wc -l /home/adal/notes.txt\n");
-        var masker = SecretMasker.ForScenario(scenario, null, AdaDetails(), [Home("/home/adal")]);
+        var scenario = ParseScenario("settings:\n  prompt: \"$ \"\nsteps:\n  - name: read /home/adal/demo/notes.txt\n    run: wc -l /home/adal/demo/notes.txt /home/adal/todo.txt\n");
+        var masker = SecretMasker.ForScenario(scenario, null, AdaDetails(), [Cwd("/home/adal/demo")]);
         var (events, _) = GenerateAsync(scenario, new GenerateOptions { LogRunning = false, Masker = masker }, step => Task.FromResult(CommandExecution.FromPipeStream(
-            "3 /home/adal/notes.txt\n", "", 0, [new PipeStreamChunk(TimeSpan.Zero, false, "3 /home/adal/notes.txt\n")]))).GetAwaiter().GetResult();
+            "3 /home/adal/demo/notes.txt\n", "", 0, [new PipeStreamChunk(TimeSpan.Zero, false, "3 /home/adal/demo/notes.txt\n")]))).GetAwaiter().GetResult();
         var shown = string.Concat(events.Select(static ev => ev.Kind == CastEventKind.Marker ? $"[{ev.Data}]" : ev.HasUtf8Output ? Encoding.UTF8.GetString(ev.Utf8Output.Span) : ev.Data));
-        return Expect(!shown.Contains("adal", StringComparison.Ordinal), $"the cast shows the home folder: {Show(shown)}")
-            & Expect(shown.Contains("[read ~/notes.txt]", StringComparison.Ordinal), $"the marker: {Show(shown)}")
-            & Expect(shown.Contains("wc -l ~/notes.txt\r\n", StringComparison.Ordinal), $"the typed command: {Show(shown)}")
-            & Expect(shown.Contains("3 ~/notes.txt", StringComparison.Ordinal), $"the output: {Show(shown)}");
+        return Expect(!shown.Contains("/home/adal/demo", StringComparison.Ordinal), $"the cast shows cwd: {Show(shown)}")
+            & Expect(shown.Contains("[read ~/my-app/notes.txt]", StringComparison.Ordinal), $"the marker: {Show(shown)}")
+            & Expect(shown.Contains("wc -l ~/my-app/notes.txt /home/adal/todo.txt\r\n", StringComparison.Ordinal), $"the typed command, with the home folder as it is: {Show(shown)}")
+            & Expect(shown.Contains("3 ~/my-app/notes.txt", StringComparison.Ordinal), $"the output: {Show(shown)}");
     }
 
     internal static bool CwdAsKey()

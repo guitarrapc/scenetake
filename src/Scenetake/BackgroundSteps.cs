@@ -46,7 +46,10 @@ internal sealed class BackgroundSteps : IDisposable
             _running.Add(running);
 
         if (waitFor is null)
+        {
+            running.StopWaiting();
             return CommandExecution.FromPipe("", "", 0);
+        }
 
         var stopwatch = Stopwatch.StartNew();
         var found = running.WaitAsync(waitFor);
@@ -66,11 +69,12 @@ internal sealed class BackgroundSteps : IDisposable
             return CommandExecution.FromPipe("", "", 0);
         }
 
+        var tail = running.Tail();
         running.StopWaiting();
         var problem = first == exited
             ? $"exited {process.ExitCode} before it printed \"{waitFor}\""
             : $"did not print \"{waitFor}\" within {waitLimit.ToString("0.###", CultureInfo.InvariantCulture)} s";
-        return CommandExecution.FromPipe(running.Tail(), "", first == exited ? process.ExitCode : 1) with { BackgroundProblem = problem };
+        return CommandExecution.FromPipe(tail, "", first == exited ? process.ExitCode : 1) with { BackgroundProblem = problem };
     }
 
     /// <summary>
@@ -112,6 +116,7 @@ internal sealed class BackgroundSteps : IDisposable
         private readonly PtyOutputWatcher _stderr = new();
         private readonly StringBuilder _tail = new();
         private readonly Task _pumps;
+        private volatile bool _ignoring;
 
         internal Running(int number, string cmd, bool continueOnError, Process process, ProcessJob? job)
         {
@@ -128,8 +133,14 @@ internal sealed class BackgroundSteps : IDisposable
         /// <summary>Completes when either stream shows <paramref name="text"/>.</summary>
         internal Task WaitAsync(string text) => Task.WhenAny(_stdout.WaitAsync(text), _stderr.WaitAsync(text));
 
+        /// <summary>
+        /// Gives up the wait, and from then on reads the output only to keep the pipes from filling: nothing looks at it
+        /// again. Decoding it and keeping it cost CPU for as long as a command that prints a lot, such as a server
+        /// writing its log, ran.
+        /// </summary>
         internal void StopWaiting()
         {
+            _ignoring = true;
             _stdout.StopWaiting();
             _stderr.StopWaiting();
         }
@@ -190,6 +201,9 @@ internal sealed class BackgroundSteps : IDisposable
                 int read;
                 while ((read = await stream.ReadAsync(buffer).ConfigureAwait(false)) > 0)
                 {
+                    if (_ignoring)
+                        continue;
+
                     var count = decoder.GetChars(buffer, 0, read, chars, 0, flush: false);
                     watcher.Append(chars.AsSpan(0, count));
                     lock (_tail)

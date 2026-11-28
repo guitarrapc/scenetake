@@ -832,8 +832,12 @@ Console.Error.WriteLine($"Using shell: {shell.DisplayName}");
 
 // What each command leaves in its shell (the folder, variables, functions, aliases) goes on to the next one, from
 // pre through the steps to post, as in a terminal. The sh family carries the folder and variables only, and other
-// shells than bash, zsh, and PowerShell start each command afresh.
-using var shellState = ShellState.Create(shell.FileName, IsPowerShellLaunch(shell));
+// shells than bash, zsh, and PowerShell start each command afresh. With settings.shell-prompt, each command ends by
+// drawing the shell's own prompt for the next one.
+var shellPromptOn = scenario.Settings?.ShellPrompt == true;
+using var shellState = ShellState.Create(shell.FileName, IsPowerShellLaunch(shell), shellPromptOn ? scenarioWidth : null);
+if (shellPromptOn && shellState?.DrawsPrompt != true)
+    Console.Error.WriteLine($"Warning: settings.shell-prompt draws the prompt of bash, zsh, and PowerShell: in {shell.DisplayName} the steps show settings.prompt.");
 if ((scenario.Pre?.Count ?? 0) + (scenario.Steps?.Count ?? 0) + (scenario.Post?.Count ?? 0) > 1)
 {
     if (shellState is null)
@@ -894,9 +898,8 @@ var outputsFileArg = saveOutputsPath ?? Environment.GetEnvironmentVariable(StepO
 List<RecordedStep>? recordedSteps = string.IsNullOrWhiteSpace(outputsFileArg) ? null : [];
 
 // The commands inherit scenetake's environment, so a secret variable's value is hidden wherever a step prints it.
-// So is one that pre or a step exports for the commands after it. mask-personal hides who records: the user name,
-// the home folder, the computer's name, and the git identity, which pwd, ls -l, and git log print.
-// The home folder's path shows as ~ with mask-personal, and cwd's as cwd-as gives it.
+// So is one that pre or a step exports for the commands after it. mask-personal hides the computer's name and the git
+// identity, which hostname and git log print. cwd's path shows as cwd-as gives it.
 var masker = SecretMasker.ForScenario(scenario, SecretMasker.ProcessEnvironment(), CollectPersonalDetails(scenario), CollectPathStandIns(scenario, scenarioPath));
 masker?.Learn(shellState?.TakeExports());
 
@@ -982,6 +985,7 @@ var generateOptions = new GenerateOptions
     Fit = renderSettings.Fit,
     Crop = renderSettings.Crop,
     PromptFolder = PromptFolderName,
+    ShellPrompt = shellState is null ? null : () => shellState.Prompt,
     Record = recordedSteps,
     Masker = masker,
     SavedKeys = savedKeys,
@@ -1064,6 +1068,7 @@ if (recordedSteps is not null)
             Height = scenarioHeight,
             Steps = recordedSteps,
             EndFolder = generateOptions.EndFolder,
+            EndPrompt = generateOptions.EndShellPrompt,
         }.WriteFile(outputsFilePath);
     }
     catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -2967,8 +2972,8 @@ static ShellLaunch ResolveShell(Scenario scenario)
 static List<PersonalDetail>? CollectPersonalDetails(Scenario scenario) =>
     (scenario.Settings?.MaskPersonal ?? true) ? PersonalDetails.Collect(scenario.Cwd) : null;
 
-// The folders whose paths show as a stand-in: cwd as cwd-as gives it, and with mask-personal the home folder as ~. A
-// replay does not resolve cwd, so it is resolved here as the recording resolves it, against the scenario's folder.
+// The folder whose path shows as a stand-in: cwd as cwd-as gives it. A replay does not resolve cwd, so it is resolved
+// here as the recording resolves it, against the scenario's folder.
 static List<PathStandIn> CollectPathStandIns(Scenario scenario, string scenarioPath)
 {
     var paths = new List<PathStandIn>();
@@ -2987,13 +2992,10 @@ static List<PathStandIn> CollectPathStandIns(Scenario scenario, string scenarioP
         }
 
         foreach (var form in FolderPaths.Forms(cwd))
-            paths.Add(new PathStandIn(form, cwdAs.Trim(), kind: null));
-    }
-
-    if (scenario.Settings?.MaskPersonal ?? true)
-    {
-        foreach (var home in PersonalDetails.HomeFolders())
-            paths.Add(new PathStandIn(home, "~", PersonalDetail.HomeFolder));
+            paths.Add(new PathStandIn(form, cwdAs.Trim()));
+        // A prompt writes a folder under the home folder from ~, as bash's \w and zsh's %~ do.
+        foreach (var form in FolderPaths.HomeForms(cwd, [Environment.GetEnvironmentVariable("HOME"), Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)]))
+            paths.Add(new PathStandIn(form, cwdAs.Trim()));
     }
 
     return paths;
@@ -3242,6 +3244,7 @@ static string CreateInitialScenarioYaml(string? shell)
         : """
           #   run: read -r -p "Your name? " name; echo "Hello, $name"
         """;
+    var ownPrompt = powerShellSyntax ? "a prompt function" : "PS1";
     return ScenarioSchema.ModeLine + $"""
     # scenetake starter scenario. Record it with: scenetake <this file>
     # It writes a cast and, as outputs lists below, an SVG. Replace the steps with your tool's commands.
@@ -3291,6 +3294,7 @@ static string CreateInitialScenarioYaml(string? shell)
       pre-delay: {DefaultPreDelay}           # Pause before typing each step.
       post-delay: {DefaultPostDelay}          # Pause after output before the next step.
       # end-prompt: false          # When true, end with the prompt after the last output, as a terminal does.
+      # shell-prompt: false        # When true, show the shell's own prompt once a step sets one, such as {ownPrompt}.
       execution-duration: {DefaultExecutionDuration} # Optional cast wait after command execution.
       stderr-color: {DefaultStderrColorSpec}       # Applied only when stderr has no ANSI SGR. "none" keeps it plain (git and many tools print progress to stderr).
       # stream-output: false         # When true, replay captured chunk times in the cast.
@@ -3300,7 +3304,7 @@ static string CreateInitialScenarioYaml(string? shell)
       # mask:                        # Texts to hide wherever the recording shows them, as *, such as a host name.
       #   - "internal.example.com"
       # mask-auto: true              # The default: also hide tokens, KEY=value secrets, passwords in URLs, and more.
-      # mask-personal: true          # The default: also hide your user name, computer name, and git name and email.
+      # mask-personal: true          # The default: also hide your computer name, and git name and email.
 
     # Optional setup commands. They run before steps, but are not recorded in the cast.
     # pre:

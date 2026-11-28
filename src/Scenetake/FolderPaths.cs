@@ -16,7 +16,7 @@ internal static class FolderPaths
         if (string.IsNullOrWhiteSpace(folder))
             return forms;
 
-        // Git Bash writes HOME as /c/Users/name.
+        // Git Bash writes a Windows folder as /c/Users/name.
         var native = PromptTemplate.NativePath(folder.Trim());
         if (!Path.IsPathFullyQualified(native))
             return forms;
@@ -45,8 +45,36 @@ internal static class FolderPaths
         return forms;
     }
 
+    /// <summary>
+    /// <paramref name="folder"/> written from <c>~</c>, as a prompt writes a folder under the home folder: <c>~/src/demo</c>.
+    /// None for the home folder itself, whose <c>~</c> stands for every path under it, or for a folder outside it.
+    /// </summary>
+    /// <param name="homes">The folders that are home: HOME, which bash and zsh take, and the user profile, which PowerShell takes on Windows.</param>
+    internal static List<string> HomeForms(string? folder, IEnumerable<string?> homes)
+    {
+        var forms = new List<string>();
+        var folderForms = Forms(folder);
+        foreach (var home in homes)
+        {
+            foreach (var homeForm in Forms(home))
+            {
+                foreach (var folderForm in folderForms)
+                {
+                    // A folder outside home is ".." or starts with "../", while a folder named "..hidden" is under it.
+                    var relative = Path.GetRelativePath(homeForm, folderForm);
+                    var outside = relative == ".." || relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+                        || relative.StartsWith(".." + Path.AltDirectorySeparatorChar, StringComparison.Ordinal);
+                    if (relative != "." && !outside && !Path.IsPathRooted(relative))
+                        AddNew(forms, "~/" + relative.Replace('\\', '/'));
+                }
+            }
+        }
+
+        return forms;
+    }
+
     /// <summary>Adds <paramref name="form"/> unless the list has it, case ignored: the masker ignores case too.</summary>
-    internal static void AddNew(List<string> forms, string? form)
+    private static void AddNew(List<string> forms, string? form)
     {
         if (string.IsNullOrEmpty(form))
             return;

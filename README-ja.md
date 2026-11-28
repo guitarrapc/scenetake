@@ -16,7 +16,7 @@ scenetakeは、YAMLシナリオに書いたコマンドからターミナルの�
 
 手で録ったターミナルのデモは、ツールが変わると古くなります。撮り直す時、コマンドを全部打ち直して出力を待ち、打ち間違えないよう気を付けて、何度も取り直したくなくなります。
 
-scenetakeはデモの作り直しを簡単にするためのツールです。YAMLシナリオを用意すればコマンドを自動入力するので、撮り直しが簡単です。TUIや対話型アプリでは書いたとおりにキーを自動入力し、トークンやユーザー名は隠します。出力が変わらないステップは前回と同じに録れるのでデモを撮り直しても、差分は変更のあった部分だけです。
+scenetakeはデモの作り直しを簡単にするためのツールです。YAMLシナリオを用意すればコマンドを自動入力するので、撮り直しが簡単です。TUIや対話型アプリでは書いたとおりにキーを自動入力し、トークンやgitの名前とメールは隠します。出力が変わらないステップは前回と同じに録れるのでデモを撮り直しても、差分は変更のあった部分だけです。
 
 ## ギャラリー
 
@@ -406,6 +406,20 @@ steps:
   - card: "[fg:yellow]npm install -g my-app"
 ```
 
+PS1やプロンプトのテーマなど、プロンプトそのものを見せたいときは`shell-prompt`をオンにします。bash、zsh、PowerShellで、ステップがPS1（直接、またはPROMPT_COMMANDやzshのprecmdから）か、PowerShellの`prompt`関数を設定すると、その後のステップはシェルが描くプロンプトを表示します。直前のステップの終了コードやフォルダーもそのまま出ます。
+
+```yaml
+shell: bash
+settings:
+  shell-prompt: true
+steps:
+  - run: PS1='\[\e[32m\]\w\[\e[0m\] [$?] \$ '
+    show: none
+  - cd src
+  - "false"
+  - echo done               # このプロンプトに[1]が出る
+```
+
 ### 見た目の調整
 
 シナリオの`render`キーか、同じ名前のフラグ（`--window macos`など）で指定します。
@@ -513,6 +527,7 @@ settings:                        # Defaults for all steps; map-form steps can ov
   pre-delay: 0.5                 # Pause before typing each step
   post-delay: 1.0                # Pause after output before the next step
   # end-prompt: false            # When true, end with the prompt after the last output
+  # shell-prompt: false          # When true, show the shell's own prompt once a step sets one, such as PS1
   execution-duration: 0.1        # Cast wait after command execution
   stderr-color: red              # When stderr has no ANSI SGR sequences
   # stream-output: false         # When true, replay captured chunk times in the cast
@@ -615,7 +630,7 @@ settings:
     - "internal.example.com"
 ```
 
-録画した人の情報をマスクします。対象は`ls -l`に出るユーザー名、コンピューター名、`git log`に出るgitの名前とメールです。ホームフォルダーのパスは`~`と表示するので、`pwd`は`~/src/app`と出ます。表示したいときは`mask-personal: false`にします。webアドレス中の名前（例: `github.com/<名前>/tool`）はマスクしません。
+録画した人の情報もマスクします。対象はコンピューター名と、`git log`に出るgitの名前とメールです。表示したいときは`mask-personal: false`にします。webアドレス中のgitの名前（例: `github.com/<名前>/tool`）はマスクしません。ホームフォルダーのパスはそのまま出ますが、`cwd-as`で置き換えます。
 
 ```yaml
 settings:

@@ -1721,12 +1721,18 @@ internal sealed class AnsiParser
         return string.Create(CultureInfo.InvariantCulture, $"#{r:X2}{g:X2}{b:X2}");
     }
 
+    // Colors 16-255 are the same in every theme, so each one's "#rrggbb" text is made once. A program that draws in 256
+    // colors, such as nyancat, sets one in most of its sequences. Two threads may both make one: they make the same text.
+    private static readonly string?[] s_ansi256 = new string?[256];
+
     private string FromAnsi256(int index)
     {
         index = Clamp(index, 0, 255);
-        if (index < 16)
-            return _theme.AnsiPalette[index];
+        return index < 16 ? _theme.AnsiPalette[index] : s_ansi256[index] ??= Ansi256Color(index);
+    }
 
+    private static string Ansi256Color(int index)
+    {
         if (index >= 232)
         {
             var gray = Clamp(8 + ((index - 232) * 10), 0, 255);
@@ -2220,6 +2226,18 @@ internal static class CastOscFilter
 
         events.RemoveRange(first, count);
         events.AddRange(filtered);
+    }
+
+    /// <summary>The OSC filter over one text that stands alone, such as a prompt the shell drew. What it leaves open shows nothing, and is dropped.</summary>
+    internal static string RemovePrivateSequences(string text)
+    {
+        if (!text.Contains("\u001b]", StringComparison.Ordinal) && !text.EndsWith('\u001b'))
+            return text;
+
+        var state = State.Ground;
+        var output = new ArrayBufferWriter<byte>();
+        Scan(Encoding.UTF8.GetBytes(text), ref state, new List<byte>(16), output);
+        return Encoding.UTF8.GetString(output.WrittenSpan);
     }
 
     private static bool EndsWithEscape(CastEvent ev) =>

@@ -11,8 +11,8 @@ namespace Scenetake;
 /// <remarks>
 /// bash reads the state through <c>BASH_ENV</c>, and zsh through startup files that scenetake puts in
 /// <c>ZDOTDIR</c>. Both save it from an EXIT trap, so the command's text, and the line numbers in its error
-/// messages, stay as written. PowerShell gets the state on the command's first line and saves it in a
-/// <c>finally</c> on its last. The sh family gets it on the command's first line too, without functions or aliases.
+/// messages, stay as written. PowerShell restores the state before the command and saves it after, from a script of
+/// its own (<see cref="PowerShellState"/>). The sh family gets it on the command's first line too, without functions or aliases.
 /// Other shells get none: <see cref="Create"/> returns null for them. Each command has a folder of its own under a
 /// private temporary folder, which holds secrets a step exported, and which <see cref="Dispose"/> removes.
 /// </remarks>
@@ -23,9 +23,12 @@ internal abstract class ShellState : IDisposable
     private int _detached;
     private readonly List<string> _warnings = [];
     private readonly List<KeyValuePair<string, string?>> _exports = [];
+    // A prompt that fails fails at every step, and says so once.
+    private readonly HashSet<string> _promptWarnings = new(StringComparer.Ordinal);
 
-    protected ShellState()
+    protected ShellState(int? promptColumns)
     {
+        PromptColumns = promptColumns;
         _root = Path.Combine(Path.GetTempPath(), "scenetake-state-" + Guid.NewGuid().ToString("N"));
         // The state holds what the steps exported, tokens included, so only the user may read it.
         if (OperatingSystem.IsWindows())
@@ -34,11 +37,15 @@ internal abstract class ShellState : IDisposable
             Directory.CreateDirectory(_root, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
     }
 
-    /// <summary>The state for <paramref name="shell"/>, or null when scenetake cannot carry state in that shell.</summary>
-    internal static ShellState? Create(string fileName, bool isPowerShell)
+    /// <summary>
+    /// The state for the shell <paramref name="fileName"/>, or null when scenetake cannot carry state in that shell.
+    /// <paramref name="promptColumns"/> turns on <c>settings.shell-prompt</c>: each command ends by drawing the shell's
+    /// own prompt (<see cref="Prompt"/>), and bash and zsh draw it that many columns wide.
+    /// </summary>
+    internal static ShellState? Create(string fileName, bool isPowerShell, int? promptColumns = null)
     {
         if (isPowerShell)
-            return new PowerShellState();
+            return new PowerShellState(promptColumns);
 
         var name = Path.GetFileName(fileName);
         if (OperatingSystem.IsWindows())
@@ -50,8 +57,8 @@ internal abstract class ShellState : IDisposable
 
         return name switch
         {
-            "bash" => new BashState(),
-            "zsh" => new ZshState(),
+            "bash" => new BashState(promptColumns),
+            "zsh" => new ZshState(promptColumns),
             // A shell started as sh reads no BASH_ENV even when it is bash, as /bin/sh is on macOS.
             "sh" or "dash" or "ash" or "ksh" or "ksh93" or "mksh" => new PosixShellState(),
             _ => null,
@@ -60,6 +67,23 @@ internal abstract class ShellState : IDisposable
 
     /// <summary>False for a shell that carries the folder and the variables only.</summary>
     internal virtual bool CarriesFunctionsAndAliases => true;
+
+    /// <summary>Whether each command ends by drawing the shell's prompt (<see cref="Prompt"/>).</summary>
+    internal bool DrawsPrompt => PromptColumns is not null;
+
+    /// <summary>
+    /// The width that bash's and zsh's prompts see in <c>COLUMNS</c> when the shell has none, or null when the shell
+    /// draws no prompt. PowerShell uses only whether it is set.
+    /// </summary>
+    private protected int? PromptColumns { get; }
+
+    /// <summary>
+    /// The prompt the shell drew when the last command that carried its state ended, as the shell wrote it, for the
+    /// next command. Null while the shell draws none: bash and zsh start without the login files' prompt and draw once
+    /// PS1 is set, by a step or by PROMPT_COMMAND or a precmd hook. PowerShell draws once the prompt function differs
+    /// from the one it starts with.
+    /// </summary>
+    internal string? Prompt { get; private protected set; }
 
     /// <summary>
     /// The folder the last command that carried its state ended in, as the shell wrote it (Git Bash writes
@@ -107,6 +131,7 @@ internal abstract class ShellState : IDisposable
         try
         {
             ReadWarnings(folder, _warnings);
+            ReadPromptWarnings(folder);
             if (keep)
                 Take(folder, _exports);
         }
@@ -157,6 +182,34 @@ internal abstract class ShellState : IDisposable
         }
     }
 
+    /// <summary>
+    /// What kept the shell from drawing its prompt: <c>prompt.err</c> holds why a prompt failed, and
+    /// <c>prompt.old</c> the version of a bash too old to draw PS1. Each says so once.
+    /// </summary>
+    private void ReadPromptWarnings(string folder)
+    {
+        var errors = Path.Combine(folder, "prompt.err");
+        if (File.Exists(errors))
+        {
+            foreach (var line in File.ReadAllLines(errors))
+            {
+                if (!string.IsNullOrWhiteSpace(line) && _promptWarnings.Add(line.Trim()))
+                    _warnings.Add(line.Trim());
+            }
+        }
+
+        var old = Path.Combine(folder, "prompt.old");
+        if (File.Exists(old) && _promptWarnings.Add("old"))
+            _warnings.Add($"settings.shell-prompt draws PS1 with bash 4.4 or later, and this is bash {File.ReadAllText(old).Trim()}: the steps show settings.prompt. Give the path of a newer bash in shell, or use zsh.");
+    }
+
+    /// <summary>The prompt the command drew in <paramref name="folder"/>, or null when it drew none.</summary>
+    private protected static string? ReadPrompt(string folder)
+    {
+        var path = Path.Combine(folder, "final.prompt");
+        return File.Exists(path) ? File.ReadAllText(path, new UTF8Encoding(false)) : null;
+    }
+
     private static void TryDelete(string path)
     {
         try
@@ -183,7 +236,7 @@ internal readonly record struct PreparedCommand(string Command, Dictionary<strin
 /// functions, aliases, and folder. The difference from the noted shell is the state for the next command, so the
 /// state is what the steps changed, never what the login files set.
 /// </summary>
-internal sealed class BashState : ShellState
+internal sealed class BashState(int? promptColumns) : ShellState(promptColumns)
 {
     // The restore statements for the next command, cumulative since pre's first command.
     private string _restore = "";
@@ -192,7 +245,7 @@ internal sealed class BashState : ShellState
     protected override PreparedCommand Prepare(string command, string folder)
     {
         var script = Path.Combine(folder, "restore.sh");
-        File.WriteAllText(script, BuildScript(_restore), new UTF8Encoding(false));
+        File.WriteAllText(script, BuildScript(_restore, PromptColumns), new UTF8Encoding(false));
         return new PreparedCommand(command, new(StringComparer.Ordinal)
         {
             ["BASH_ENV"] = ScriptPath(script),
@@ -211,6 +264,7 @@ internal sealed class BashState : ShellState
 
         Folder = Read("final.pwd");
         FolderExists = !File.Exists(Path.Combine(folder, "final.gone"));
+        Prompt = ReadPrompt(folder);
         _restore = BashDump.BuildRestore(
             Read("base.vars"), Read("final.vars"),
             Read("base.funcs"), Read("final.funcs"),
@@ -219,8 +273,11 @@ internal sealed class BashState : ShellState
             exports);
     }
 
-    /// <summary>The script bash reads through BASH_ENV. Every line keeps quiet: what bash prints here would be recorded.</summary>
-    internal static string BuildScript(string restore)
+    /// <summary>
+    /// The script bash reads through BASH_ENV. Every line keeps quiet: what bash prints here would be recorded. With
+    /// <paramref name="promptColumns"/>, the EXIT trap draws the prompt first (<see cref="DrawPromptFunction"/>).
+    /// </summary>
+    internal static string BuildScript(string restore, int? promptColumns = null)
     {
         var script = new StringBuilder();
         script.Append("# Written by scenetake: the state of the commands before this one (ShellState.cs).\n");
@@ -233,13 +290,54 @@ internal sealed class BashState : ShellState
         // gets each name. The loop runs in a subshell, which has every variable of the shell.
         script.Append("__scenetake_vars() { if (( BASH_VERSINFO[0] > 3 )); then builtin declare -p; else builtin compgen -v | while IFS= builtin read -r __scenetake_name; do builtin declare -p \"$__scenetake_name\"; done; fi; }\n");
         // The shell as the login files left it. The state is the difference from it.
+        // Git Bash's login files set a PS1 even in a shell that runs a command, and Linux's set none. Without the login
+        // files' prompt, a scenario's prompt is the same on every machine, and names nothing of the author's setup. One
+        // that a login file made readonly stays, and fails the unset, which set -e from the login files must not turn
+        // into an exit.
+        if (promptColumns is not null)
+            script.Append("builtin unset PS1 PROMPT_COMMAND 2>/dev/null || :\n");
         script.Append("{ __scenetake_vars >|\"$__scenetake_dir/base.vars\"; builtin declare -f >|\"$__scenetake_dir/base.funcs\"; builtin alias -p >|\"$__scenetake_dir/base.alias\"; } 2>/dev/null\n");
+        if (promptColumns is { } columns)
+            script.Append(DrawPromptFunction(columns));
+
         // In a || list, set -e from the caller's BASH_ENV does not stop the shell at a statement that fails.
         script.Append("{\n").Append(restore).Append(":\n} 2>>\"$__scenetake_dir/restore.err\" || :\n");
-        script.Append("__scenetake_save() { { __scenetake_vars >|\"$__scenetake_dir/final.vars\"; builtin declare -f >|\"$__scenetake_dir/final.funcs\"; builtin alias -p >|\"$__scenetake_dir/final.alias\"; builtin printf '%s' \"$PWD\" >|\"$__scenetake_dir/final.pwd\"; builtin test -d \"$PWD\" || : >|\"$__scenetake_dir/final.gone\"; } 2>/dev/null; }\n");
-        script.Append("builtin trap __scenetake_save EXIT\n");
+        // The prompt is drawn before the dumps, so what PROMPT_COMMAND changes goes on to the next command, as it does
+        // between two commands in a terminal.
+        script.Append("__scenetake_save() { ").Append(promptColumns is null ? "" : "__scenetake_prompt \"$?\" || :; ")
+            .Append("{ __scenetake_vars >|\"$__scenetake_dir/final.vars\"; builtin declare -f >|\"$__scenetake_dir/final.funcs\"; builtin alias -p >|\"$__scenetake_dir/final.alias\"; builtin printf '%s' \"$PWD\" >|\"$__scenetake_dir/final.pwd\"; builtin test -d \"$PWD\" || : >|\"$__scenetake_dir/final.gone\"; } 2>/dev/null; }\n");
+        // set -x in a step would trace the save into the recording, so the trap drops its stderr.
+        script.Append("builtin trap '{ __scenetake_save; } 2>/dev/null' EXIT\n");
         return script.ToString();
     }
+
+    /// <summary>
+    /// <c>__scenetake_prompt</c>, which draws the prompt into <c>final.prompt</c> as bash draws it after a command:
+    /// each PROMPT_COMMAND runs with <c>$?</c> as the command left it, then PS1 is expanded with <c>${PS1@P}</c>. It
+    /// draws nothing while PS1 is empty after PROMPT_COMMAND, as with a hook that only sets a window title. A bash older
+    /// than 4.4, which has no <c>@P</c>, writes its version to <c>prompt.old</c> instead.
+    /// </summary>
+    /// <remarks>
+    /// The trap calls it in a <c>||</c> list, where <c>set -e</c> stops nothing, and nounset is turned off inside: an
+    /// unset variable in PS1 would end the shell before the state is saved. Everything the prompt prints is dropped,
+    /// because the command's output is still being recorded. A shell without a terminal has no COLUMNS, and gets the
+    /// scenario's width.
+    /// </remarks>
+    private static string DrawPromptFunction(int columns) =>
+        "__scenetake_status() { return \"$1\"; }\n" +
+        "__scenetake_prompt() {\n" +
+        "  [[ -n ${PS1-}${PROMPT_COMMAND[*]-} ]] || return 0\n" +
+        "  if (( BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1] < 404 )); then builtin printf '%s' \"$BASH_VERSION\" >|\"$__scenetake_dir/prompt.old\"; return; fi\n" +
+        "  builtin local -; builtin set +u\n" +
+        // `builtin local` takes its words as a command does, split at spaces, so no value here may hold one.
+        $"  builtin local __scenetake_s=$1 __scenetake_c __scenetake_e; builtin local -x COLUMNS=$(( ${{COLUMNS:-0}} > 0 ? COLUMNS : {columns} ))\n" +
+        // bash runs every element of a PROMPT_COMMAND array from 5.1 on, and before that only the first.
+        "  if (( BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1] >= 501 )); then __scenetake_c=(\"${PROMPT_COMMAND[@]}\"); else __scenetake_c=(\"${PROMPT_COMMAND-}\"); fi\n" +
+        "  {\n" +
+        "    for __scenetake_e in \"${__scenetake_c[@]}\"; do __scenetake_status \"$__scenetake_s\"; builtin eval \"$__scenetake_e\"; done\n" +
+        "    if [[ -n ${PS1-} ]]; then __scenetake_status \"$__scenetake_s\"; builtin printf '%s' \"${PS1@P}\" >|\"$__scenetake_dir/final.prompt\"; fi\n" +
+        "  } </dev/null >/dev/null 2>&1\n" +
+        "}\n";
 }
 
 /// <summary>
@@ -668,7 +766,7 @@ internal static class ShellText
 /// bash's script does. The restore comes after every login file because macOS's /etc/zprofile runs path_helper, which
 /// puts the system folders first in PATH again.
 /// </summary>
-internal sealed class ZshState : ShellState
+internal sealed class ZshState(int? promptColumns) : ShellState(promptColumns)
 {
     // The restore statements for the next command, cumulative since pre's first command.
     private string _restore = "";
@@ -676,7 +774,7 @@ internal sealed class ZshState : ShellState
 
     protected override PreparedCommand Prepare(string command, string folder)
     {
-        foreach (var (name, text) in BuildFiles(ScriptPath(folder), _userZdotdir, _restore))
+        foreach (var (name, text) in BuildFiles(ScriptPath(folder), _userZdotdir, _restore, PromptColumns))
             File.WriteAllText(Path.Combine(folder, name), text, new UTF8Encoding(false));
         return new PreparedCommand(command, new(StringComparer.Ordinal) { ["ZDOTDIR"] = ScriptPath(folder) });
     }
@@ -684,16 +782,19 @@ internal sealed class ZshState : ShellState
     protected override void Take(string folder, List<KeyValuePair<string, string?>> exports)
     {
         string Read(string name) => File.ReadAllText(Path.Combine(folder, name));
+        string ReadOptional(string name) => File.Exists(Path.Combine(folder, name)) ? Read(name) : "";
         // No final.pwd: the EXIT trap did not run (exec, or the command's own EXIT trap). The state stays as it was.
         if (!File.Exists(Path.Combine(folder, "final.pwd")) || !File.Exists(Path.Combine(folder, "base.vars")))
             return;
 
         Folder = Read("final.pwd");
         FolderExists = !File.Exists(Path.Combine(folder, "final.gone"));
+        Prompt = ReadPrompt(folder);
         _restore = ZshDump.BuildRestore(
             Read("base.vars"), Read("final.vars"),
             Read("base.funcs"), Read("final.funcs"),
             Read("base.alias"), Read("final.alias"),
+            ReadOptional("base.opts"), ReadOptional("final.opts"),
             Folder,
             exports);
     }
@@ -704,7 +805,7 @@ internal sealed class ZshState : ShellState
     /// ends the chain early: the state is restored there instead. Every line keeps quiet: what zsh prints here would
     /// be recorded.
     /// </summary>
-    internal static List<(string Name, string Text)> BuildFiles(string folder, string? userZdotdir, string restore)
+    internal static List<(string Name, string Text)> BuildFiles(string folder, string? userZdotdir, string restore, int? promptColumns = null)
     {
         // A user file reads ZDOTDIR as zsh gives it: unset, or the value scenetake started with.
         var user = string.IsNullOrEmpty(userZdotdir) ? "builtin unset ZDOTDIR\n" : "ZDOTDIR=" + BashDump.Quote(userZdotdir) + "\n";
@@ -731,8 +832,10 @@ internal sealed class ZshState : ShellState
         finish.Append("# Written by scenetake: the state of the commands before this one (ShellState.cs).\n");
         finish.Append("builtin unset __scenetake_zdotdir\n");
         // The dumps run with zsh's own options, whatever the steps set. Both run in this function, so both write
-        // the global variables as typeset -g, and argv is the function's.
+        // the global variables as typeset -g, and argv is the function's. The options that prompt expansion reads
+        // are noted before emulate sets zsh's own.
         finish.Append("__scenetake_dump() {\n");
+        finish.Append("  builtin print -r -- \"promptsubst=${options[promptsubst]} promptbang=${options[promptbang]} promptpercent=${options[promptpercent]}\" >|\"$__scenetake_dir/$1.opts\" 2>/dev/null\n");
         finish.Append("  builtin emulate -L zsh\n");
         finish.Append("  builtin typeset -p >|\"$__scenetake_dir/$1.vars\" 2>/dev/null\n");
         finish.Append("  builtin local __scenetake_k\n");
@@ -741,13 +844,50 @@ internal sealed class ZshState : ShellState
         finish.Append("    for __scenetake_k in ${(ok)galiases}; do builtin print -r -- \"galiases[${(q)__scenetake_k}]=${(q)galiases[$__scenetake_k]}\"; done\n");
         finish.Append("    for __scenetake_k in ${(ok)saliases}; do builtin print -r -- \"saliases[${(q)__scenetake_k}]=${(q)saliases[$__scenetake_k]}\"; done } >|\"$__scenetake_dir/$1.alias\" 2>/dev/null\n");
         finish.Append("}\n");
+        // Without the login files' prompt, as for bash (BashState.BuildScript). zsh stops reading this file at an
+        // assignment to a readonly parameter, so a readonly one is left as it is. PS1, PROMPT, and prompt share one
+        // value, so clearing PS1 would clear a readonly PROMPT too.
+        if (promptColumns is not null)
+            finish.Append("{ [[ ${parameters[PS1]-}${parameters[PROMPT]-}${parameters[prompt]-} == *readonly* ]] || PS1=''; [[ ${parameters[precmd_functions]-} == *readonly* ]] || precmd_functions=(); builtin unfunction precmd || :; } 2>/dev/null\n");
         finish.Append("__scenetake_dump base\n");
+        if (promptColumns is { } columns)
+            finish.Append(DrawPromptFunction(columns));
+
         finish.Append("{\n").Append(restore).Append(":\n} 2>>\"$__scenetake_dir/restore.err\" || :\n");
-        finish.Append("__scenetake_save() { __scenetake_dump final; builtin print -rn -- \"$PWD\" >|\"$__scenetake_dir/final.pwd\" 2>/dev/null; [[ -d $PWD ]] || : >|\"$__scenetake_dir/final.gone\" 2>/dev/null; }\n");
-        finish.Append("builtin trap __scenetake_save EXIT\n");
+        // The prompt is drawn before the dumps, so what precmd changes goes on to the next command, as it does between
+        // two commands in a terminal.
+        finish.Append("__scenetake_save() { ").Append(promptColumns is null ? "" : "__scenetake_prompt $? || :; ")
+            .Append("__scenetake_dump final; builtin print -rn -- \"$PWD\" >|\"$__scenetake_dir/final.pwd\" 2>/dev/null; [[ -d $PWD ]] || : >|\"$__scenetake_dir/final.gone\" 2>/dev/null; }\n");
+        // set -x in a step would trace the save into the recording, so the trap drops its stderr. zsh still traces the
+        // trap's call itself.
+        finish.Append("builtin trap '{ __scenetake_save; } 2>/dev/null' EXIT\n");
 
         return [(".zshenv", zshenv), (".zprofile", zprofile), (".zlogin", zlogin), ("finish.zsh", finish.ToString())];
     }
+
+    /// <summary>
+    /// <c>__scenetake_prompt</c>, which draws the prompt into <c>final.prompt</c> as zsh draws it after a command: the
+    /// precmd hooks run with <c>$?</c> as the command left it, then PS1 gets prompt expansion with the scenario's
+    /// prompt options (<c>${(%%)PS1}</c>). It draws nothing while PS1 is empty after the hooks.
+    /// </summary>
+    /// <remarks>
+    /// err_exit and nounset are turned off inside, as for bash: either would end the shell before the state is saved.
+    /// local_options keeps that to the function. Everything the prompt prints is dropped, because the command's
+    /// output is still being recorded. zsh without a terminal sets COLUMNS to 0, which a theme may loop on, so 0 gets
+    /// the scenario's width too.
+    /// </remarks>
+    private static string DrawPromptFunction(int columns) =>
+        "__scenetake_status() { return $1 }\n" +
+        "__scenetake_prompt() {\n" +
+        "  [[ -n ${PS1-}${functions[precmd]-}${precmd_functions[*]-} ]] || return 0\n" +
+        "  builtin setopt localoptions noerrexit noerrreturn unset\n" +
+        $"  builtin local __scenetake_s=$1 __scenetake_f; builtin local -x COLUMNS=$(( COLUMNS > 0 ? COLUMNS : {columns} ))\n" +
+        "  {\n" +
+        "    if (( ${+functions[precmd]} )); then __scenetake_status $__scenetake_s; precmd; fi\n" +
+        "    for __scenetake_f in \"${precmd_functions[@]}\"; do __scenetake_status $__scenetake_s; \"$__scenetake_f\"; done\n" +
+        "    if [[ -n ${PS1-} ]]; then __scenetake_status $__scenetake_s; builtin print -rn -- \"${(%%)PS1}\" >|\"$__scenetake_dir/final.prompt\"; fi\n" +
+        "  } </dev/null >/dev/null 2>&1\n" +
+        "}\n";
 }
 
 /// <summary>
@@ -757,13 +897,23 @@ internal sealed class ZshState : ShellState
 internal static class ZshDump
 {
     // Variables that zsh changes by itself, or that belong to the shell rather than to the steps. ZDOTDIR is
-    // scenetake's own while zsh starts.
+    // scenetake's own while zsh starts. The second group are the tables that zsh loads by itself once something reads
+    // them (zsh/parameter, zsh/zleparameter, zsh/terminfo, zsh/termcap), as vcs_info and the prompt themes do, and
+    // typeset -p then lists them. A fresh shell refuses `typeset -A commands`, and that error stops the restore and the
+    // EXIT trap after it. A table that a step loads with zmodload, such as mapfile, prints without a value, and
+    // BuildRestore leaves it out.
     private static readonly HashSet<string> SkippedVariables = new(StringComparer.Ordinal)
     {
         "0", "_", "ARGC", "COLUMNS", "EPOCHREALTIME", "EPOCHSECONDS", "ERRNO", "HISTCMD", "LINENO", "LINES", "OPTARG",
-        "OPTIND", "PPID", "PWD", "RANDOM", "SECONDS", "SHLVL", "TRY_BLOCK_ERROR", "TRY_BLOCK_INTERRUPT", "TTY", "TTYIDLE",
-        "ZDOTDIR", "ZSH_ARGZERO", "ZSH_EVAL_CONTEXT", "ZSH_EXECUTION_STRING", "ZSH_SUBSHELL", "argv", "epochtime",
-        "funcfiletrace", "funcsourcetrace", "funcstack", "functrace", "pipestatus", "status", "zsh_eval_context",
+        "OPTIND", "PPID", "PWD", "RANDOM", "SECONDS", "SHLVL", "TRY_BLOCK_ERROR", "TRY_BLOCK_INTERRUPT", "TTY",
+        "TTYIDLE", "ZDOTDIR", "ZSH_ARGZERO", "ZSH_EVAL_CONTEXT", "ZSH_EXECUTION_STRING", "ZSH_SUBSHELL", "argv",
+        "epochtime", "funcfiletrace", "funcsourcetrace", "funcstack", "functrace", "pipestatus", "status",
+        "zsh_eval_context",
+        "aliases", "builtins", "commands", "dirstack", "dis_aliases", "dis_builtins", "dis_functions",
+        "dis_functions_source", "dis_galiases", "dis_patchars", "dis_reswords", "dis_saliases", "functions",
+        "functions_source", "galiases", "history", "historywords", "jobdirs", "jobstates", "jobtexts", "keymaps",
+        "modules", "nameddirs", "options", "parameters", "patchars", "reswords", "saliases",
+        "termcap", "terminfo", "userdirs", "usergroups", "widgets", "zsh_scheduled_events",
     };
 
     internal static bool IsSkippedVariable(string name) =>
@@ -771,13 +921,14 @@ internal static class ZshDump
 
     /// <summary>
     /// The statements that restore what changed between the base dumps (the shell after its login files) and the
-    /// final ones (the shell at exit): the folder, the variables, the functions, then the aliases. Exported
-    /// variables that changed are added to <paramref name="exports"/>.
+    /// final ones (the shell at exit): the folder, the variables, the prompt options, the functions, then the
+    /// aliases. Exported variables that changed are added to <paramref name="exports"/>.
     /// </summary>
     internal static string BuildRestore(
         string baseVars, string finalVars,
         string baseFunctions, string finalFunctions,
         string baseAliases, string finalAliases,
+        string baseOptions, string finalOptions,
         string folder,
         List<KeyValuePair<string, string?>> exports)
     {
@@ -790,22 +941,100 @@ internal static class ZshDump
         var after = SplitDeclarations(finalVars);
         foreach (var (name, statement) in after)
         {
-            if (IsSkippedVariable(name) || (before.TryGetValue(name, out var old) && old == statement))
+            if (IsSkippedVariable(name) || (before.TryGetValue(name, out var old) && (old == statement || IsReadonly(old))))
                 continue;
-            restore.Append(statement).Append('\n');
+            // A declaration without a value carries none, as a module's table such as mapfile after zmodload zsh/mapfile
+            // prints. Restored, that table would keep a later zmodload from loading the module.
+            if (!statement.Contains('='))
+                continue;
+            // Restored with -r, a tied pair stops zsh reading the restore, at once or one step later, so a pair that a step
+            // made readonly carries without it.
+            restore.Append(statement.Contains('\n') && IsReadonly(statement) ? WithoutReadonly(statement) : statement).Append('\n');
             if (statement.StartsWith("export ", StringComparison.Ordinal) && !statement.Contains('\n'))
                 exports.Add(new(name, ShellText.AssignedValue(statement)));
         }
 
-        foreach (var name in before.Keys)
+        foreach (var (name, statement) in before)
         {
-            if (!after.ContainsKey(name) && !IsSkippedVariable(name))
+            if (!after.ContainsKey(name) && !IsSkippedVariable(name) && !IsReadonly(statement))
                 restore.Append("builtin unset -v -- ").Append(BashDump.Quote(name)).Append('\n');
+        }
+
+        // The options of prompt expansion, as `promptsubst=on promptbang=off ...`: a prompt such as
+        // PROMPT='$(git_prompt_info)' needs prompt_subst in every later shell. No other option carries.
+        var optionsBefore = SplitOptions(baseOptions);
+        foreach (var (name, value) in SplitOptions(finalOptions))
+        {
+            if (optionsBefore.TryGetValue(name, out var old) && old != value)
+                restore.Append(value == "on" ? "builtin setopt " : "builtin unsetopt ").Append(name).Append('\n');
         }
 
         AppendEntries(restore, SplitEntries(baseFunctions), SplitEntries(finalFunctions));
         AppendEntries(restore, SplitEntries(baseAliases), SplitEntries(finalAliases));
         return restore.ToString();
+    }
+
+    /// <summary>
+    /// Whether a <c>typeset -p</c> statement declares its variable readonly, as <c>typeset -r PROMPT=...</c>. zsh stops
+    /// reading the restore at an assignment to, or an unset of, a variable the login files made readonly, so the
+    /// restore leaves such a variable out.
+    /// </summary>
+    internal static bool IsReadonly(string statement)
+    {
+        // A tied pair is two lines, and the readonly half, PATH or path, may be either.
+        foreach (var line in statement.Split('\n'))
+        {
+            var rest = line.AsSpan(line.StartsWith("export ", StringComparison.Ordinal) ? 7 : line.StartsWith("typeset ", StringComparison.Ordinal) ? 8 : line.Length);
+            while (rest.Length > 0 && rest[0] == '-')
+            {
+                var space = rest.IndexOf(' ');
+                var option = space < 0 ? rest : rest[..space];
+                if (option.Contains('r'))
+                    return true;
+                rest = space < 0 ? [] : rest[(space + 1)..];
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// <paramref name="statement"/> with the readonly flag taken out of each line's options, as
+    /// <c>export -rT PATH path=(...)</c> becomes <c>export -T PATH path=(...)</c>.
+    /// </summary>
+    internal static string WithoutReadonly(string statement)
+    {
+        var text = new StringBuilder(statement.Length);
+        var first = true;
+        foreach (var line in statement.Split('\n'))
+        {
+            if (!first)
+                text.Append('\n');
+            first = false;
+            var at = line.StartsWith("export ", StringComparison.Ordinal) ? 7 : line.StartsWith("typeset ", StringComparison.Ordinal) ? 8 : line.Length;
+            text.Append(line, 0, at);
+            while (at < line.Length && line[at] == '-')
+            {
+                var space = line.IndexOf(' ', at);
+                var end = space < 0 ? line.Length : space + 1;
+                var option = line.AsSpan(at, end - at);
+                // An option of only r goes away, and -arT keeps the rest as -aT.
+                if (option.TrimEnd(' ').Length > 2 || !option.Contains('r'))
+                {
+                    foreach (var c in option)
+                    {
+                        if (c != 'r')
+                            text.Append(c);
+                    }
+                }
+
+                at = end;
+            }
+
+            text.Append(line, at, line.Length - at);
+        }
+
+        return text.ToString();
     }
 
     /// <summary>
@@ -858,6 +1087,31 @@ internal static class ZshDump
         var next = rest[(end + 1)..];
         var equals = next.IndexOfAny('=', ' ');
         return equals > 0 && next[equals] == '=' ? next[..equals].ToString() : rest[..end].ToString();
+    }
+
+    /// <summary>The options of a <c>name=on name=off</c> line, by name. Only names of letters pass, so a restore line holds nothing else.</summary>
+    internal static Dictionary<string, string> SplitOptions(string dump)
+    {
+        var options = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var word in dump.Split([' ', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries))
+        {
+            var equals = word.IndexOf('=');
+            if (equals > 0 && word[(equals + 1)..] is "on" or "off" && IsLetters(word.AsSpan(0, equals)))
+                options[word[..equals]] = word[(equals + 1)..];
+        }
+
+        return options;
+
+        static bool IsLetters(ReadOnlySpan<char> name)
+        {
+            foreach (var c in name)
+            {
+                if (!char.IsAsciiLetter(c))
+                    return false;
+            }
+
+            return true;
+        }
     }
 
     /// <summary>The lines of a functions or aliases dump, <c>functions[name]=body</c>, by the part before <c>=</c>.</summary>
@@ -914,7 +1168,7 @@ internal static class ZshDump
 /// stay. It carries the folder and the variables only: dash and ash cannot list their functions, and an alias that
 /// the first line defines is not used on that line.
 /// </summary>
-internal sealed class PosixShellState : ShellState
+internal sealed class PosixShellState() : ShellState(promptColumns: null)
 {
     // The restore statements for the next command, cumulative since pre's first command.
     private string _restore = "";
@@ -1047,28 +1301,48 @@ internal static class PosixShellDump
 }
 
 /// <summary>
-/// PowerShell: the command is wrapped on its first and last lines, so its line numbers stay as written. The first
-/// line notes the shell as it started, then restores the state; a <c>finally</c> after the last line saves what
-/// differs, and the exit code is made again from <c>$?</c>, as <c>-Command</c> makes it, because the save is the
-/// last statement now. The state goes from one command to the next as a CliXml file, which PowerShell reads and
-/// writes itself.
+/// PowerShell: the command runs as a script block of its own, after the restore and before the save, so its errors
+/// show its own lines and no path of scenetake's. Windows PowerShell's Write-Error still shows the line of run.ps1
+/// that called the block. Nothing catches around it: a <c>try</c> or a <c>trap</c> anywhere above the command makes
+/// an error that stops one statement, such as <c>1/0</c>, stop the whole command. So a command that ends with a
+/// terminating error, <c>exit</c>, or a <c>break</c> or <c>continue</c> outside a loop saves nothing, and the next one
+/// gets the state of the commands before it. The state goes from one command to the next as a CliXml file, which
+/// PowerShell reads and writes itself.
 /// </summary>
-internal sealed class PowerShellState : ShellState
+internal sealed class PowerShellState(int? promptColumns) : ShellState(promptColumns)
 {
     // The state the last command saved, or null before the first one.
     private string? _input;
 
+    // Runs command.ps1 between restore.ps1 and save.ps1 of the folder in $__scenetake_dir. A command that does not
+    // parse runs nothing, as when it runs alone, and its error names its own lines. The command's block is called on
+    // the first line, because pwsh shows where an error is when it comes from below the first line, and Write-Error
+    // places its error at that call. $? is read after the command's last line, as -Command reads it for the exit code.
+    // A script of named blocks (begin, process, end) takes no statement after them, so there $? is read at the end of
+    // the block that runs last, clean or else end, or in an end block of its own. A command that returns early leaves $__scenetake_ok unset and exits
+    // 0, as -Command does.
+    private const string RunScript =
+        """
+        $__scenetake_text = [IO.File]::ReadAllText($__scenetake_dir + '/command.ps1'); $__scenetake_tokens = $__scenetake_errors = $null; $__scenetake_ast = [System.Management.Automation.Language.Parser]::ParseInput($__scenetake_text, [ref]$__scenetake_tokens, [ref]$__scenetake_errors); if ($__scenetake_errors.Count) { throw [System.Management.Automation.ParseException]::new($__scenetake_errors) }; $__scenetake_run = $__scenetake_text + "`n`$__scenetake_ok = `$?"; if ($__scenetake_ast.BeginBlock -or $__scenetake_ast.ProcessBlock -or $__scenetake_ast.DynamicParamBlock -or $__scenetake_ast.CleanBlock -or ($__scenetake_ast.EndBlock -and -not $__scenetake_ast.EndBlock.Unnamed)) { $__scenetake_last = $(if ($__scenetake_ast.CleanBlock) { $__scenetake_ast.CleanBlock } else { $__scenetake_ast.EndBlock }); $__scenetake_run = $(if ($__scenetake_last) { $__scenetake_text.Insert($__scenetake_last.Extent.EndOffset - 1, "`n`$__scenetake_ok = `$?`n") } else { $__scenetake_text + "`nend { `$__scenetake_ok = `$? }" }) }; . ([scriptblock]::Create([IO.File]::ReadAllText($__scenetake_dir + '/restore.ps1'))); $__scenetake_ok = $null; . ([scriptblock]::Create($__scenetake_run))
+        . ([scriptblock]::Create([IO.File]::ReadAllText($__scenetake_dir + '/save.ps1'))); if ($__scenetake_ok -eq $false) { exit 1 }
+        """;
+
     protected override PreparedCommand Prepare(string command, string folder)
     {
-        var restore = Path.Combine(folder, "restore.ps1");
-        var save = Path.Combine(folder, "save.ps1");
-        File.WriteAllText(restore, BuildRestore(_input, Path.Combine(folder, "restore.err")), new UTF8Encoding(false));
-        File.WriteAllText(save, BuildSave(Path.Combine(folder, "state.xml"), Path.Combine(folder, "exports.txt"), Path.Combine(folder, "restore.err"), Path.Combine(folder, "final.pwd")), new UTF8Encoding(false));
+        var utf8 = new UTF8Encoding(false);
+        File.WriteAllText(Path.Combine(folder, "restore.ps1"), BuildRestore(_input, Path.Combine(folder, "restore.err")), utf8);
+        // The prompt is drawn before the save, so what the prompt function changes goes on to the next command, as it
+        // does between two commands in a terminal.
+        var save = BuildSave(Path.Combine(folder, "state.xml"), Path.Combine(folder, "exports.txt"), Path.Combine(folder, "restore.err"), Path.Combine(folder, "final.pwd"));
+        if (DrawsPrompt)
+            save = BuildDrawPrompt(Path.Combine(folder, "final.prompt"), Path.Combine(folder, "prompt.err")) + "\n" + save;
+        File.WriteAllText(Path.Combine(folder, "save.ps1"), save, utf8);
+        File.WriteAllText(Path.Combine(folder, "command.ps1"), command, utf8);
+        File.WriteAllText(Path.Combine(folder, "run.ps1"), RunScript, utf8);
         // The scripts are read as text and run as script blocks: Windows PowerShell's default execution policy
-        // refuses to run a .ps1 file, and a script block is not checked.
-        var text = $". ([scriptblock]::Create([IO.File]::ReadAllText({Literal(restore)}))); $__scenetake_ok = $false; try {{ {command}\n" +
-                   $"$__scenetake_ok = $? }} finally {{ . ([scriptblock]::Create([IO.File]::ReadAllText({Literal(save)}))) }}; if (-not $__scenetake_ok) {{ exit 1 }}";
-        return new PreparedCommand(text, null);
+        // refuses to run a .ps1 file, and a script block is not checked. run.ps1 names no folder, because Windows
+        // PowerShell shows its line with an error from Write-Error.
+        return new PreparedCommand($"$__scenetake_dir = {Literal(folder)}; . ([scriptblock]::Create([IO.File]::ReadAllText($__scenetake_dir + '/run.ps1')))", null);
     }
 
     protected override void Take(string folder, List<KeyValuePair<string, string?>> exports)
@@ -1084,6 +1358,7 @@ internal sealed class PowerShellState : ShellState
         var location = Path.Combine(folder, "final.pwd");
         if (File.Exists(location))
             Folder = File.ReadAllText(location);
+        Prompt = ReadPrompt(folder);
 
         var exportsPath = Path.Combine(folder, "exports.txt");
         if (!File.Exists(exportsPath))
@@ -1114,10 +1389,14 @@ internal sealed class PowerShellState : ShellState
     // shell, so only the preference variables among them pass on, when a step changes them.
     private const string SkippedVariables = "'LASTEXITCODE','Matches','StackTrace','_','PSItem','PWD','args','input','MyInvocation','PSBoundParameters','PSCmdlet','PSCommandPath','PSScriptRoot','this','foreach','switch','sender','EventArgs','Event','EventSubscriber','SourceArgs','SourceEventArgs'";
 
+    // Only Windows has one environment variable for names that differ in case. On Linux and macOS, sct_case and SCT_CASE
+    // are two, and @{}, which matches keys in any case, would keep one of them.
+    private static readonly string EnvironmentTable = OperatingSystem.IsWindows() ? "@{}" : "[System.Collections.Hashtable]::new([System.StringComparer]::Ordinal)";
+
     internal static string BuildRestore(string? input, string errors) =>
         $$"""
         # Written by scenetake: notes the shell as it started, then restores the state of the commands before this one (ShellState.cs).
-        $global:__scenetake_base = @{ Variables = @{}; Functions = @{}; Aliases = @{}; Environment = @{} }
+        $global:__scenetake_base = @{ Variables = @{}; Functions = @{}; Aliases = @{}; Environment = {{EnvironmentTable}} }
         foreach ($__scenetake_item in Get-Variable -Scope Global) { $global:__scenetake_base.Variables[$__scenetake_item.Name] = $(if ($__scenetake_item.Name -like '*Preference') { "$($__scenetake_item.Value)" } else { $null }) }
         foreach ($__scenetake_item in Get-ChildItem function:) { $global:__scenetake_base.Functions[$__scenetake_item.Name] = $__scenetake_item.Definition }
         foreach ($__scenetake_item in Get-Alias) { $global:__scenetake_base.Aliases[$__scenetake_item.Name] = $__scenetake_item.Definition }
@@ -1132,7 +1411,7 @@ internal sealed class PowerShellState : ShellState
             $__scenetake_state = Import-Clixml -LiteralPath {{Literal(input)}}
             try { Set-Location -LiteralPath $__scenetake_state.Location -ErrorAction Stop } catch { [IO.File]::AppendAllText({{Literal(errors)}}, "could not return to $($__scenetake_state.Location): it no longer exists or cannot be entered`n") }
             foreach ($__scenetake_name in $__scenetake_state.Environment.Keys) { [Environment]::SetEnvironmentVariable($__scenetake_name, $__scenetake_state.Environment[$__scenetake_name]) }
-            foreach ($__scenetake_name in $__scenetake_state.RemovedEnvironment) { [Environment]::SetEnvironmentVariable($__scenetake_name, $null) }
+            foreach ($__scenetake_name in $__scenetake_state.RemovedEnvironment) { [Environment]::SetEnvironmentVariable($__scenetake_name, [NullString]::Value) }
             foreach ($__scenetake_name in $__scenetake_state.Variables.Keys) { Set-Variable -Scope Global -Name $__scenetake_name -Value $__scenetake_state.Variables[$__scenetake_name] -Force -ErrorAction SilentlyContinue }
             foreach ($__scenetake_name in $__scenetake_state.Functions.Keys) { Set-Item -LiteralPath "function:global:$__scenetake_name" -Value ([scriptblock]::Create($__scenetake_state.Functions[$__scenetake_name])) -ErrorAction SilentlyContinue }
             foreach ($__scenetake_name in $__scenetake_state.Aliases.Keys) { Set-Alias -Scope Global -Name $__scenetake_name -Value $__scenetake_state.Aliases[$__scenetake_name] -Force -ErrorAction SilentlyContinue }
@@ -1142,17 +1421,67 @@ internal sealed class PowerShellState : ShellState
         Remove-Variable -Name __scenetake_state, __scenetake_name -ErrorAction SilentlyContinue
         """;
 
+    /// <summary>
+    /// Draws the prompt into <paramref name="output"/> as the host draws it after a command: what <c>Write-Host</c>
+    /// writes, with the colors it was given as SGR codes, then the function's first output, or <c>PS&gt;</c> without one. It draws
+    /// nothing while the prompt function is the one the shell started with. <c>$?</c> is false in the function when
+    /// the command failed, as the host leaves it.
+    /// </summary>
+    /// <remarks>
+    /// The try keeps a failing prompt from ending the shell before the save. It also stops the prompt at an error that
+    /// would stop one statement: the warning in <paramref name="errors"/> names it. The streams the host shows besides
+    /// output and Write-Host are dropped, since the command's output is still being recorded.
+    /// </remarks>
+    internal static string BuildDrawPrompt(string output, string errors) =>
+        $$"""
+        # Written by scenetake: draws the prompt as the host draws it after a command (ShellState.cs).
+        $__scenetake_prompt = Get-Item -LiteralPath function:prompt -ErrorAction Ignore
+        if ($null -ne $__scenetake_prompt -and $__scenetake_prompt.Definition -cne $global:__scenetake_base.Functions['prompt']) {
+            try {
+                if ($__scenetake_ok -eq $false) { Write-Error -Message 'failed' -ErrorAction Ignore }
+                $__scenetake_items = @(prompt 2>$null 3>$null 4>$null 5>$null 6>&1)
+                $__scenetake_sgr = 30, 34, 32, 36, 31, 35, 33, 37, 90, 94, 92, 96, 91, 95, 93, 97
+                # Write-Host gives each message the console's colors unless it is given its own, and those draw as the
+                # terminal's default.
+                $__scenetake_fg = $__scenetake_bg = -1
+                try { $__scenetake_fg = [int]$Host.UI.RawUI.ForegroundColor; $__scenetake_bg = [int]$Host.UI.RawUI.BackgroundColor } catch { }
+                $__scenetake_drawn = [Text.StringBuilder]::new()
+                $__scenetake_returned = $null
+                foreach ($__scenetake_item in $__scenetake_items) {
+                    if ($__scenetake_item -is [System.Management.Automation.InformationRecord]) {
+                        $__scenetake_message = $__scenetake_item.MessageData
+                        if ($__scenetake_message -isnot [System.Management.Automation.HostInformationMessage]) { continue }
+                        $__scenetake_style = ''
+                        $__scenetake_color = $(if ($null -eq $__scenetake_message.ForegroundColor) { -1 } else { [int]$__scenetake_message.ForegroundColor })
+                        if ($__scenetake_color -ge 0 -and $__scenetake_color -le 15 -and $__scenetake_color -ne $__scenetake_fg) { $__scenetake_style += "$([char]27)[$($__scenetake_sgr[$__scenetake_color])m" }
+                        $__scenetake_color = $(if ($null -eq $__scenetake_message.BackgroundColor) { -1 } else { [int]$__scenetake_message.BackgroundColor })
+                        if ($__scenetake_color -ge 0 -and $__scenetake_color -le 15 -and $__scenetake_color -ne $__scenetake_bg) { $__scenetake_style += "$([char]27)[$($__scenetake_sgr[$__scenetake_color] + 10)m" }
+                        $null = $__scenetake_drawn.Append($__scenetake_style).Append([string]$__scenetake_message.Message)
+                        if ($__scenetake_style) { $null = $__scenetake_drawn.Append("$([char]27)[0m") }
+                        if (-not $__scenetake_message.NoNewLine) { $null = $__scenetake_drawn.Append("`n") }
+                    } elseif ($null -eq $__scenetake_returned) {
+                        $__scenetake_returned = $(if ($null -eq $__scenetake_item) { '' } else { $__scenetake_item.ToString() })
+                    }
+                }
+                if ([string]::IsNullOrEmpty($__scenetake_returned)) { $__scenetake_returned = 'PS>' }
+                [IO.File]::WriteAllText({{Literal(output)}}, $__scenetake_drawn.ToString() + $__scenetake_returned)
+            } catch {
+                [IO.File]::AppendAllText({{Literal(errors)}}, "the prompt function failed, and the steps show settings.prompt: $($_.Exception.Message)`n")
+            }
+        }
+        """;
+
     internal static string BuildSave(string output, string exports, string errors, string location) =>
         $$"""
         # Written by scenetake: saves what this command changed in the shell, for the next command (ShellState.cs).
         try {
             $__scenetake_base = $global:__scenetake_base
-            $__scenetake_state = @{ Location = (Get-Location).Path; Environment = @{}; RemovedEnvironment = @(); Variables = @{}; Functions = @{}; Aliases = @{} }
+            $__scenetake_state = @{ Location = (Get-Location).Path; Environment = {{EnvironmentTable}}; RemovedEnvironment = @(); Variables = @{}; Functions = @{}; Aliases = @{} }
             foreach ($__scenetake_item in Get-ChildItem env:) {
                 if (-not $__scenetake_base.Environment.ContainsKey($__scenetake_item.Name) -or $__scenetake_base.Environment[$__scenetake_item.Name] -cne $__scenetake_item.Value) { $__scenetake_state.Environment[$__scenetake_item.Name] = $__scenetake_item.Value }
             }
             foreach ($__scenetake_name in $__scenetake_base.Environment.Keys) {
-                if (-not (Test-Path -LiteralPath "env:$__scenetake_name")) { $__scenetake_state.RemovedEnvironment += $__scenetake_name }
+                if ($null -eq [Environment]::GetEnvironmentVariable($__scenetake_name)) { $__scenetake_state.RemovedEnvironment += $__scenetake_name }
             }
             $__scenetake_skip = @({{SkippedVariables}})
             foreach ($__scenetake_item in Get-Variable -Scope Global) {

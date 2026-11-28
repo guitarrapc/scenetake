@@ -156,6 +156,19 @@ internal static partial class ScenarioCast
         // A prompt drawn at every step: masked without counting, so a folder name is not counted once per step.
         string Prompt(string? folder) =>
             promptTemplate.Render(folder ?? "") is var prompt && options.Masker is { } promptMasker ? promptMasker.MaskUncounted(prompt) : prompt;
+        // settings.shell-prompt: the prompt the shell drew for the next command, as the cast shows it, before masking.
+        // From the shell's state on the CLI, from the outputs file in a replay. Null shows settings.prompt.
+        var shellPrompt = settings.ShellPrompt == true;
+        string? ShellPrompt(string run, bool pty, bool interactive) =>
+            !shellPrompt ? null
+            : options.Replay is { } replay ? replay.Prompt(run, pty, interactive)
+            : options.ShellPrompt?.Invoke() is { } drawn ? PromptTemplate.ShellPrompt(drawn) : null;
+        // A drawn prompt is masked and counted as output is, unlike settings.prompt: the Masked line then names a computer
+        // name that only the prompt shows. A value counts once, however many prompts show it.
+        string? MaskShellPrompt(string? drawn, bool count) =>
+            drawn is null || options.Masker is not { } shellPromptMasker ? drawn
+            : count ? shellPromptMasker.MaskText(drawn)
+            : shellPromptMasker.MaskUncounted(drawn);
         var speed     = settings.TypingSpeed ?? DefaultSpeed;
         var jitter    = settings.TypingJitter ?? DefaultJitter;
         var preDelay  = settings.PreDelay ?? DefaultPreDelay;
@@ -331,8 +344,10 @@ internal static partial class ScenarioCast
 
             // After a card the demo goes on from a cleared screen, as after a clear step, with the cursor shown again.
             var afterCard = cardOnScreen;
-            // Taken before the command runs: a cd in it moves the next step's prompt, not its own.
+            // Taken before the command runs: a cd in it moves the next step's prompt, not its own, and so does a PS1.
             var stepFolder = StepFolder(command.Cmd, usePty, useInteractive);
+            var stepShellPrompt = ShellPrompt(command.Cmd, usePty, useInteractive);
+            var recordedPrompt = MaskShellPrompt(stepShellPrompt, count: false);
             if (cardOnScreen)
             {
                 events.Add(CastEvent.Output(Math.Round(t, 6), ClearScreen + ShowCursor));
@@ -364,7 +379,7 @@ internal static partial class ScenarioCast
             // post-delay, as a shell draws it when the command ends.
             var typingFrom = t + cmdPre + 0.05;
             if (show == StepShow.All)
-                EmitTypedCommand(events, ref t, Prompt(stepFolder), cmdPre, masker?.MaskText(typed) ?? typed, cmdSpeed, cmdJitter, stepRandom, hasRunHighlight, runHighlightStyle);
+                EmitTypedCommand(events, ref t, MaskShellPrompt(stepShellPrompt, count: true) ?? Prompt(stepFolder), cmdPre, masker?.MaskText(typed) ?? typed, cmdSpeed, cmdJitter, stepRandom, hasRunHighlight, runHighlightStyle);
             else
                 t += cmdPre;
             var stepTyping = show == StepShow.All ? t - typingFrom : 0;
@@ -460,7 +475,7 @@ internal static partial class ScenarioCast
                     height,
                     options.Verbose);
                 composed = masker?.MaskComposed(composed) ?? composed;
-                options.Record?.Add(RecordedStep.Interactive(command.Cmd, execution.ExitCode, composed, maskedRun, stepFolder));
+                options.Record?.Add(RecordedStep.Interactive(command.Cmd, execution.ExitCode, composed, maskedRun, stepFolder, recordedPrompt));
                 t = EmitComposedPtyOutput(events, commandStart, composed);
             }
             else if (execution.IsPty)
@@ -469,7 +484,7 @@ internal static partial class ScenarioCast
                     ? execution.PtyByteChunks!
                     : RemovePtyLeadingInit(execution.PtyByteChunks!, options.Verbose);
                 chunks = masker?.MaskPty(chunks) ?? chunks;
-                options.Record?.Add(RecordedStep.Pty(command.Cmd, execution.ExitCode, ptyStartCursor, chunks, maskedRun, stepFolder));
+                options.Record?.Add(RecordedStep.Pty(command.Cmd, execution.ExitCode, ptyStartCursor, chunks, maskedRun, stepFolder, recordedPrompt));
                 t = EmitPtyStepOutput(
                     events,
                     commandStart,
@@ -486,7 +501,7 @@ internal static partial class ScenarioCast
                     ? StreamedPipeCuts(execution.PipeStreamChunks!, cmdStderrStyle)
                     : null;
                 var pipeChunks = masker?.MaskPipe(execution.PipeStreamChunks!, cuts) ?? execution.PipeStreamChunks!;
-                options.Record?.Add(RecordedStep.Pipe(command.Cmd, execution.ExitCode, pipeChunks, maskedRun, stepFolder));
+                options.Record?.Add(RecordedStep.Pipe(command.Cmd, execution.ExitCode, pipeChunks, maskedRun, stepFolder, recordedPrompt));
                 t = EmitPipeStepOutput(
                     events,
                     commandStart,
@@ -555,6 +570,10 @@ internal static partial class ScenarioCast
         // for the hold after the last event.
         if (promptTemplate.UsesDir)
             options.EndFolder = options.Replay is { } endReplay ? endReplay.EndFolder ?? HomeFolderName : MaskFolder(options.PromptFolder?.Invoke() ?? HomeFolderName);
+        var endShellPrompt = !shellPrompt ? null
+            : options.Replay is { } endPromptReplay ? endPromptReplay.EndPrompt
+            : options.ShellPrompt?.Invoke() is { } endDrawn ? PromptTemplate.ShellPrompt(endDrawn) : null;
+        options.EndShellPrompt = MaskShellPrompt(endShellPrompt, count: false);
         if (cardOnScreen)
         {
             events.Add(CastEvent.Output(Math.Round(t, 6), HideCursor));
@@ -565,7 +584,7 @@ internal static partial class ScenarioCast
             // final screen stays 2 x (post-delay + pre-delay) after the last output: an event that changes nothing ends
             // the recording, and the render holds the screen as long again. An end-hold leaves the event out
             // (TerminalReplay.WithoutHoldEvent).
-            events.Add(CastEvent.Output(Math.Round(t, 6), Prompt(options.EndFolder)));
+            events.Add(CastEvent.Output(Math.Round(t, 6), MaskShellPrompt(endShellPrompt, count: true) ?? Prompt(options.EndFolder)));
             var closingHold = lastPost / 2 + lastPre;
             if (closingHold > 0)
                 events.Add(CastEvent.Output(Math.Round(t + closingHold, 6), SgrReset));
@@ -1607,6 +1626,16 @@ internal sealed class GenerateOptions
 
     /// <summary>The folder the closing prompt showed, when the prompt shows one: the outputs file keeps it.</summary>
     internal string? EndFolder { get; set; }
+
+    /// <summary>
+    /// The prompt the shell drew for the next command (settings.shell-prompt), as the shell wrote it, or null while the
+    /// shell draws none. Called before each shown step and once at the end. A replay takes the prompts from
+    /// the outputs file instead.
+    /// </summary>
+    internal Func<string?>? ShellPrompt { get; init; }
+
+    /// <summary>The prompt the shell drew for the closing prompt, masked, when it drew one: the outputs file keeps it.</summary>
+    internal string? EndShellPrompt { get; set; }
 
     /// <summary>Receives each step's output for the outputs file. Null records nothing.</summary>
     internal List<RecordedStep>? Record { get; init; }

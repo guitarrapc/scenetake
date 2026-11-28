@@ -16,7 +16,7 @@ scenetake records terminal demos from commands you write in a YAML scenario.
 
 Terminal demos recorded by hand go stale when your tool changes. Re-recording means retyping every command, waiting for the output, and avoiding typos, and it gets tedious fast.
 
-scenetake makes re-recording easy. Write the commands in a YAML scenario, and scenetake types them for you. It presses the keys you list in TUIs and interactive apps, and hides tokens and your user name. Steps whose output did not change record exactly as before, so a re-recorded demo differs only where something changed.
+scenetake makes re-recording easy. Write the commands in a YAML scenario, and scenetake types them for you. It presses the keys you list in TUIs and interactive apps, and hides tokens and your git identity. Steps whose output did not change record exactly as before, so a re-recorded demo differs only where something changed.
 
 ## Gallery
 
@@ -401,6 +401,20 @@ steps:
   - card: "[fg:yellow]npm install -g my-app"
 ```
 
+To show off a prompt itself, such as a PS1 or a prompt theme, turn on `shell-prompt`. In bash, zsh, and PowerShell, once a step sets a PS1, directly or from PROMPT_COMMAND or a zsh precmd, or a PowerShell `prompt` function, the following steps show the prompt the shell draws, with the exit status and the folder of the step before.
+
+```yaml
+shell: bash
+settings:
+  shell-prompt: true
+steps:
+  - run: PS1='\[\e[32m\]\w\[\e[0m\] [$?] \$ '
+    show: none
+  - cd src
+  - "false"
+  - echo done               # its prompt shows [1]
+```
+
 ### Customize the look
 
 Set these with a `render` key in the scenario, or with the flag of the same name, such as `--window macos`.
@@ -508,6 +522,7 @@ settings:                        # Defaults for all steps; map-form steps can ov
   pre-delay: 0.5                 # Pause before typing each step
   post-delay: 1.0                # Pause after output before the next step
   # end-prompt: false            # When true, end with the prompt after the last output
+  # shell-prompt: false          # When true, show the shell's own prompt once a step sets one, such as PS1
   execution-duration: 0.1        # Cast wait after command execution
   stderr-color: red              # When stderr has no ANSI SGR sequences
   # stream-output: false         # When true, replay captured chunk times in the cast
@@ -610,7 +625,7 @@ settings:
     - "internal.example.com"
 ```
 
-It also hides who recorded the demo: your user name in `ls -l`, your computer's name, and your git name and email in `git log`. Your home folder's path shows as `~`, so `pwd` prints `~/src/app`. Your name in a web address, such as `github.com/<name>/tool`, stays. To show them, set `mask-personal: false`.
+It also masks who recorded the demo: your computer's name, and your git name and email in `git log`. To show them, set `mask-personal: false`. Your git name in a web address, such as `github.com/<name>/tool`, is not masked. Your home folder's path shows as it is, but `cwd-as` replaces it.
 
 ```yaml
 settings:

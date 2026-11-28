@@ -836,9 +836,10 @@ internal sealed unsafe class GlyphSource
     /// <summary>
     /// The mask of <paramref name="text"/>'s first scalar and any combining marks, drawn at the glyph's own
     /// advance with its origin at <paramref name="pen"/> pixels, and that advance: for proportional text such as
-    /// the window title. A character no font has is a box one cell wide, or two for a wide one.
+    /// the window title. A character no font has is a box one cell wide, or two for a wide one. With
+    /// <paramref name="measure"/> it only gives the advance, and the mask is empty.
     /// </summary>
-    internal (RasterGlyph Glyph, float Advance) GetProportional(string text, bool bold, float pen)
+    internal (RasterGlyph Glyph, float Advance) GetProportional(string text, bool bold, float pen, bool measure = false)
     {
         if (text.Length == 0 || !Rune.TryGetRuneAt(text, 0, out var first) || Rune.IsControl(first))
             return (RasterGlyph.Empty, 0);
@@ -855,7 +856,7 @@ internal sealed unsafe class GlyphSource
             StbTrueType.stbtt_GetGlyphHMetrics(font, glyphIndex, &advance, &bearing);
             var scale = StbTrueType.stbtt_ScaleForMappingEmToPixels(font, _layout.FontSize);
             var advancePx = advance * scale;
-            if (Rune.IsWhiteSpace(first))
+            if (measure || Rune.IsWhiteSpace(first))
                 return (RasterGlyph.Empty, advancePx);
 
             var glyph = RasterizeAt(font, glyphIndex, scale, pen);
@@ -1522,10 +1523,10 @@ internal sealed class FrameRasterizer
                 return;
             }
 
-            var square = RoundedRect(x, y, width, height, 0, roundTop: false, roundBottom: false);
+            var square = new RoundedBox(x, y, width, height, 0, roundTop: false, roundBottom: false);
             if (_blur > 0)
-                CopyShape(BlurDesktop(), x, y, x + width, y + height, square);
-            FillShape(x, y, x + width, y + height, _background, square, _windowAlpha);
+                CopyBox(BlurDesktop(), square);
+            FillBox(square, _background, _windowAlpha);
             return;
         }
 
@@ -1539,16 +1540,15 @@ internal sealed class FrameRasterizer
             return;
         }
 
-        var outer = RoundedRect(x, y, width, height, radius, roundTop: true, roundBottom: true);
-        var inner = RoundedRect(x + 1, y + 1, width - 2, height - 2, innerRadius, roundTop: true, roundBottom: true);
+        var outer = new RoundedBox(x, y, width, height, radius, roundTop: true, roundBottom: true);
+        var inner = new RoundedBox(x + 1, y + 1, width - 2, height - 2, innerRadius, roundTop: true, roundBottom: true);
         if (_blur > 0)
-            CopyShape(BlurDesktop(), x + 1, y + 1, x + width - 1, y + height - 1, inner);
+            CopyBox(BlurDesktop(), inner);
 
         // The terminal below the title bar and its line.
         var bar = _layout.TitleBarHeight;
-        FillShape(x + 1, y + bar, x + width - 1, y + height - 1, _background,
-            RoundedRect(x + 1, y + bar, width - 2, height - 1 - bar, innerRadius, roundTop: false, roundBottom: true), _windowAlpha);
-        FillShape(x, y, x + width, y + height, ParseColor(palette.Border), (px, py) => outer(px, py) && !inner(px, py));
+        FillBox(new RoundedBox(x + 1, y + bar, width - 2, height - 1 - bar, innerRadius, roundTop: false, roundBottom: true), _background, _windowAlpha);
+        FillRing(outer, inner, ParseColor(palette.Border));
     }
 
     /// <summary>
@@ -1558,10 +1558,15 @@ internal sealed class FrameRasterizer
     /// <see cref="SvgFrameRenderer.WindowShadowOpacity"/>. It stays outside the window, as the SVG's mask keeps a
     /// translucent window's shadow; an opaque window covers it anyway. Drawn once per video.
     /// </summary>
-    private void DrawWindowShadow()
+    private void DrawWindowShadow() =>
+        DrawWindowShadow(Pixels, _layout.Width, _layout.Height, _layout.WindowX, _layout.WindowY, _layout.WindowWidth, _layout.WindowHeight, _layout.CornerRadius);
+
+    /// <summary>
+    /// The shadow of a window at <paramref name="x"/>, <paramref name="y"/> with corners rounded by
+    /// <paramref name="radius"/>, drawn on <paramref name="pixels"/>, the RGB24 pixels of a frame.
+    /// </summary>
+    internal static void DrawWindowShadow(byte[] pixels, int frameWidth, int frameHeight, int x, int y, int width, int height, int radius)
     {
-        var (x, y, width, height) = (_layout.WindowX, _layout.WindowY, _layout.WindowWidth, _layout.WindowHeight);
-        var radius = _layout.CornerRadius;
         var offset = (int)Math.Round(SvgFrameRenderer.WindowShadowOffsetY);
         var kernel = GaussianKernel(SvgFrameRenderer.WindowShadowDeviation);
         var reach = kernel.Length / 2;
@@ -1571,7 +1576,7 @@ internal sealed class FrameRasterizer
         var top = y + offset - reach;
         var areaWidth = width + reach * 2;
         var areaHeight = height + reach * 2;
-        var shape = RoundedRect(x, y + offset, width, height, radius, roundTop: true, roundBottom: true);
+        var shape = new RoundedBox(x, y + offset, width, height, radius, roundTop: true, roundBottom: true);
         var coverage = new float[areaWidth * areaHeight];
         for (var row = reach; row < reach + height; row++)
         {
@@ -1579,11 +1584,22 @@ internal sealed class FrameRasterizer
                 coverage[row * areaWidth + col] = ShapeCoverage(left + col, top + row, x, y + offset, width, height, radius, shape);
         }
 
+        // The pass down below reads this pass only where the window does not cover the frame. In the window's columns
+        // that is above and below it, and in its rounded corners, so the rows more than the blur's reach from those
+        // need only the columns beside the window. They were most of this pass.
+        var skipFrom = y + radius + reach;
+        var skipTo = y + height - radius - reach;
         var across = new float[coverage.Length];
         for (var row = reach; row < reach + height; row++)
         {
+            var skips = top + row >= skipFrom && top + row < skipTo;
             for (var col = 0; col < areaWidth; col++)
             {
+                if (skips && col == reach)
+                    col = reach + width;
+                if (col >= areaWidth)
+                    break;
+
                 var sum = 0f;
                 for (var k = 0; k < kernel.Length; k++)
                 {
@@ -1596,18 +1612,18 @@ internal sealed class FrameRasterizer
             }
         }
 
-        var window = RoundedRect(x, y, width, height, radius, roundTop: true, roundBottom: true);
+        var window = new RoundedBox(x, y, width, height, radius, roundTop: true, roundBottom: true);
         var opacity = (float)SvgFrameRenderer.WindowShadowOpacity;
         for (var row = 0; row < areaHeight; row++)
         {
             var frameY = top + row;
-            if ((uint)frameY >= (uint)_layout.Height)
+            if ((uint)frameY >= (uint)frameHeight)
                 continue;
 
             for (var col = 0; col < areaWidth; col++)
             {
                 var frameX = left + col;
-                if ((uint)frameX >= (uint)_layout.Width)
+                if ((uint)frameX >= (uint)frameWidth)
                     continue;
 
                 // Under the window the shade is 0 whatever the blur gives, and that is most of the area: look first.
@@ -1627,9 +1643,9 @@ internal sealed class FrameRasterizer
                 if (shade <= 0)
                     continue;
 
-                var offsetPixel = (frameY * _layout.Width + frameX) * 3;
+                var offsetPixel = (frameY * frameWidth + frameX) * 3;
                 for (var c = 0; c < 3; c++)
-                    Pixels[offsetPixel + c] = (byte)MathF.Round(Pixels[offsetPixel + c] * (1 - shade));
+                    pixels[offsetPixel + c] = (byte)MathF.Round(pixels[offsetPixel + c] * (1 - shade));
             }
         }
     }
@@ -1638,13 +1654,13 @@ internal sealed class FrameRasterizer
     /// How much of the pixel at (<paramref name="px"/>, <paramref name="py"/>) a rounded rectangle with whole-pixel
     /// edges covers, 0-1: whole inside its straight edges, sampled as <see cref="FillShape"/> samples near a corner.
     /// </summary>
-    private static float ShapeCoverage(int px, int py, int x, int y, int width, int height, int radius, Func<double, double, bool> inside)
+    internal static float ShapeCoverage(int px, int py, int x, int y, int width, int height, int radius, in RoundedBox shape)
     {
         if (px < x || px >= x + width || py < y || py >= y + height)
             return 0;
         var nearX = px < x + radius || px >= x + width - radius;
         var nearY = py < y + radius || py >= y + height - radius;
-        return nearX && nearY ? Coverage(px, py, inside) / 16f : 1;
+        return nearX && nearY ? Coverage(px, py, shape) / 16f : 1;
     }
 
     /// <summary>
@@ -1659,14 +1675,14 @@ internal sealed class FrameRasterizer
 
         var (x, y, width, height) = (_layout.WindowX, _layout.WindowY, _layout.WindowWidth, _layout.WindowHeight);
         var radius = _layout.CornerRadius;
-        var outer = RoundedRect(x + 1, y + 1, width - 2, height - 2, Math.Max(radius - 1, 0), roundTop: true, roundBottom: true);
-        var inner = RoundedRect(x + 2, y + 2, width - 4, height - 4, Math.Max(radius - 2, 0), roundTop: true, roundBottom: true);
+        var outer = new RoundedBox(x + 1, y + 1, width - 2, height - 2, Math.Max(radius - 1, 0), roundTop: true, roundBottom: true);
+        var inner = new RoundedBox(x + 2, y + 2, width - 4, height - 4, Math.Max(radius - 2, 0), roundTop: true, roundBottom: true);
         var alpha = (int)Math.Round(palette.EdgeHighlight * 255, MidpointRounding.AwayFromZero);
-        FillShape(x + 1, y + 1, x + width - 1, y + height - 1, ((byte)255, (byte)255, (byte)255), (px, py) => outer(px, py) && !inner(px, py), alpha);
+        FillRing(outer, inner, ((byte)255, (byte)255, (byte)255), alpha);
     }
 
     /// <summary>A normalized Gaussian kernel of standard deviation <paramref name="sigma"/>, three deviations each side.</summary>
-    private static float[] GaussianKernel(double sigma)
+    internal static float[] GaussianKernel(double sigma)
     {
         var radius = (int)Math.Ceiling(sigma * 3);
         var kernel = new float[radius * 2 + 1];
@@ -1810,8 +1826,7 @@ internal sealed class FrameRasterizer
         if (row.HasTab)
         {
             double left = x + row.TabLeft, right = x + row.TabRight, top = y + SvgFrameRenderer.WinTabTop, bottom = y + _layout.TitleBarHeight;
-            FillShape(left, top, right, bottom, _background,
-                RoundedRect(left, top, right - left, bottom - top, SvgFrameRenderer.WinTabCornerRadius, roundTop: true, roundBottom: false), _windowAlpha);
+            FillBox(new RoundedBox(left, top, right - left, bottom - top, SvgFrameRenderer.WinTabCornerRadius, roundTop: true, roundBottom: false), _background, _windowAlpha);
 
             var cy = y + SvgFrameRenderer.WinTabCenterY;
             var ix = left + 10;
@@ -1864,9 +1879,10 @@ internal sealed class FrameRasterizer
         while (enumerator.MoveNext())
             elements.Add(enumerator.GetTextElement());
 
+        // The width only needs the advances: drawing each glyph here too, to throw it away, drew the title twice.
         var width = 0f;
         foreach (var element in elements)
-            width += _titleGlyphs.GetProportional(element, bold, 0).Advance;
+            width += _titleGlyphs.GetProportional(element, bold, 0, measure: true).Advance;
 
         var pen = (float)(x - (centered ? width / 2 : 0));
         var baselineY = (int)Math.Round(baseline, MidpointRounding.AwayFromZero);
@@ -1896,9 +1912,9 @@ internal sealed class FrameRasterizer
     /// <summary>The 1-pixel outline of a rounded rectangle, centered on its edges as an SVG stroke is.</summary>
     private void StrokeRoundedRect(double x, double y, double width, double height, double radius, (byte R, byte G, byte B) color)
     {
-        var outer = RoundedRect(x - 0.5, y - 0.5, width + 1, height + 1, radius + 0.5, roundTop: true, roundBottom: true);
-        var inner = RoundedRect(x + 0.5, y + 0.5, width - 1, height - 1, Math.Max(radius - 0.5, 0), roundTop: true, roundBottom: true);
-        FillShape(x - 0.5, y - 0.5, x + width + 0.5, y + height + 0.5, color, (px, py) => outer(px, py) && !inner(px, py));
+        var outer = new RoundedBox(x - 0.5, y - 0.5, width + 1, height + 1, radius + 0.5, roundTop: true, roundBottom: true);
+        var inner = new RoundedBox(x + 0.5, y + 0.5, width - 1, height - 1, Math.Max(radius - 0.5, 0), roundTop: true, roundBottom: true);
+        FillRing(outer, inner, color);
     }
 
     /// <summary>
@@ -1915,32 +1931,83 @@ internal sealed class FrameRasterizer
             return;
         }
 
-        FillShape(x, y, x + width, y + height, color, RoundedRect(x, y, width, height, radius, roundTop: true, roundBottom), alpha);
+        FillBox(new RoundedBox(x, y, width, height, radius, roundTop: true, roundBottom), color, alpha);
     }
 
-    /// <summary>Whether a point is inside a rectangle with the given corners rounded by <paramref name="radius"/>.</summary>
-    private static Func<double, double, bool> RoundedRect(double x, double y, double width, double height, double radius, bool roundTop, bool roundBottom)
+    // The first and the last of the 4 sample points across a pixel, as Coverage places them: (0 + 0.5) / 4 and (3 + 0.5) / 4.
+    private const double FirstSample = 0.125;
+    private const double LastSample = 0.875;
+
+    /// <summary>
+    /// A rectangle with its top or bottom corners rounded by <see cref="Radius"/>: the window and its parts. It also
+    /// tells, without sampling, that a pixel is wholly inside it or wholly outside it, which is most of a window's
+    /// pixels. Sampling each of them 16 times was most of the time it took to draw a window on a background.
+    /// </summary>
+    internal readonly struct RoundedBox(double x, double y, double width, double height, double radius, bool roundTop, bool roundBottom)
     {
-        double left = x, top = y, right = x + width, bottom = y + height, r = Math.Max(radius, 0);
-        return (px, py) =>
+        internal readonly double Left = x;
+        internal readonly double Top = y;
+        internal readonly double Right = x + width;
+        internal readonly double Bottom = y + height;
+        internal readonly double Radius = Math.Max(radius, 0);
+        private readonly bool _roundTop = roundTop;
+        private readonly bool _roundBottom = roundBottom;
+
+        /// <summary>Whether the point is inside.</summary>
+        internal bool Contains(double px, double py)
         {
-            if (px < left || px >= right || py < top || py >= bottom)
+            if (px < Left || px >= Right || py < Top || py >= Bottom)
                 return false;
 
-            var nearTop = roundTop && py < top + r;
-            var nearBottom = roundBottom && py > bottom - r;
+            var nearTop = _roundTop && py < Top + Radius;
+            var nearBottom = _roundBottom && py > Bottom - Radius;
             if (!nearTop && !nearBottom)
                 return true;
 
-            var cx = Math.Clamp(px, left + r, right - r);
-            var cy = nearTop ? top + r : bottom - r;
-            return (px - cx) * (px - cx) + (py - cy) * (py - cy) <= r * r;
-        };
+            var cx = Math.Clamp(px, Left + Radius, Right - Radius);
+            var cy = nearTop ? Top + Radius : Bottom - Radius;
+            return (px - cx) * (px - cx) + (py - cy) * (py - cy) <= Radius * Radius;
+        }
+
+        /// <summary>
+        /// Whether <see cref="Contains"/> holds at every sample point of the pixel without reaching a corner: each is
+        /// inside the straight edges, below a rounded top, and above a rounded bottom, tested as Contains tests them.
+        /// </summary>
+        internal bool HoldsWhole(int x, int y) =>
+            x + FirstSample >= Left && x + LastSample < Right
+            && y + FirstSample >= (_roundTop ? Top + Radius : Top)
+            && y + LastSample < Bottom && (!_roundBottom || y + LastSample <= Bottom - Radius);
+
+        /// <summary>Whether every sample point of the pixel is outside the rectangle, so <see cref="Contains"/> holds at none.</summary>
+        internal bool MissesWhole(int x, int y) =>
+            x + LastSample < Left || x + FirstSample >= Right || y + LastSample < Top || y + FirstSample >= Bottom;
+    }
+
+    /// <summary>Fills a rounded rectangle, anti-aliased as <see cref="FillShape"/> is. <paramref name="alpha"/> below 255 blends it over what is there.</summary>
+    private void FillBox(in RoundedBox box, (byte R, byte G, byte B) color, int alpha = 255) =>
+        FillBox(box, default, hasHole: false, color, alpha);
+
+    /// <summary>Fills the part of <paramref name="box"/> outside <paramref name="hole"/>, such as a border, anti-aliased as <see cref="FillShape"/> is.</summary>
+    private void FillRing(in RoundedBox box, in RoundedBox hole, (byte R, byte G, byte B) color, int alpha = 255) =>
+        FillBox(box, hole, hasHole: true, color, alpha);
+
+    private void FillBox(in RoundedBox box, in RoundedBox hole, bool hasHole, (byte R, byte G, byte B) color, int alpha)
+    {
+        for (var y = Math.Max(0, (int)Math.Floor(box.Top)); y < Math.Min(_layout.Height, (int)Math.Ceiling(box.Bottom)); y++)
+        {
+            for (var x = Math.Max(0, (int)Math.Floor(box.Left)); x < Math.Min(_layout.Width, (int)Math.Ceiling(box.Right)); x++)
+            {
+                var hits = Coverage(x, y, box, hole, hasHole);
+                if (hits != 0)
+                    BlendPixel((y * _layout.Width + x) * 3, color, hits * 255 / 16 * alpha / 255);
+            }
+        }
     }
 
     /// <summary>
     /// Fills the pixels of a shape inside the given bounds, anti-aliased by 4×4 supersampling. <paramref name="alpha"/>
-    /// below 255 blends the whole shape over what is there.
+    /// below 255 blends the whole shape over what is there. For the small shapes, such as a button or a line: a
+    /// rounded rectangle is <see cref="FillBox"/>.
     /// </summary>
     private void FillShape(double left, double top, double right, double bottom, (byte R, byte G, byte B) color, Func<double, double, bool> inside, int alpha = 255)
     {
@@ -1955,14 +2022,14 @@ internal sealed class FrameRasterizer
         }
     }
 
-    /// <summary>Draws the pixels of a shape from <paramref name="source"/>, a frame of the same size, anti-aliased as <see cref="FillShape"/> is.</summary>
-    private void CopyShape(byte[] source, double left, double top, double right, double bottom, Func<double, double, bool> inside)
+    /// <summary>Draws the pixels of a rounded rectangle from <paramref name="source"/>, a frame of the same size, anti-aliased as <see cref="FillShape"/> is.</summary>
+    private void CopyBox(byte[] source, in RoundedBox box)
     {
-        for (var y = Math.Max(0, (int)Math.Floor(top)); y < Math.Min(_layout.Height, (int)Math.Ceiling(bottom)); y++)
+        for (var y = Math.Max(0, (int)Math.Floor(box.Top)); y < Math.Min(_layout.Height, (int)Math.Ceiling(box.Bottom)); y++)
         {
-            for (var x = Math.Max(0, (int)Math.Floor(left)); x < Math.Min(_layout.Width, (int)Math.Ceiling(right)); x++)
+            for (var x = Math.Max(0, (int)Math.Floor(box.Left)); x < Math.Min(_layout.Width, (int)Math.Ceiling(box.Right)); x++)
             {
-                var hits = Coverage(x, y, inside);
+                var hits = Coverage(x, y, box);
                 if (hits == 0)
                     continue;
 
@@ -1988,6 +2055,34 @@ internal sealed class FrameRasterizer
         return hits;
     }
 
+    private static int Coverage(int x, int y, in RoundedBox box) => Coverage(x, y, box, default, hasHole: false);
+
+    /// <summary>
+    /// How many of the 4×4 sample points in the pixel are inside <paramref name="box"/> and, with
+    /// <paramref name="hasHole"/>, outside <paramref name="hole"/>, 0-16: the count the sampling gives, found without
+    /// it for a pixel wholly inside or outside.
+    /// </summary>
+    internal static int Coverage(int x, int y, in RoundedBox box, in RoundedBox hole, bool hasHole)
+    {
+        if (hasHole && hole.HoldsWhole(x, y))
+            return 0;
+        if (box.HoldsWhole(x, y) && (!hasHole || hole.MissesWhole(x, y)))
+            return 16;
+
+        var hits = 0;
+        for (var sy = 0; sy < 4; sy++)
+        {
+            for (var sx = 0; sx < 4; sx++)
+            {
+                var (px, py) = (x + (sx + 0.5) / 4, y + (sy + 0.5) / 4);
+                if (box.Contains(px, py) && !(hasHole && hole.Contains(px, py)))
+                    hits++;
+            }
+        }
+
+        return hits;
+    }
+
     /// <summary>Draws <paramref name="view"/> (canvas-sized), redrawing only rows that changed.</summary>
     internal void Draw(ScreenBuffer view)
     {
@@ -1997,8 +2092,10 @@ internal sealed class FrameRasterizer
         for (var row = 0; row < _layout.Rows; row++)
         {
             var cursorHere = cursor?.Row == row;
-            var cursorWasHere = _cursor?.Row == row;
-            if (_rowValid[row] && !cursorHere && !cursorWasHere && view.RowEquals(row, _drawn[row]))
+            // A row whose cells and cursor stay as drawn is skipped. The cursor's row was drawn again in each frame
+            // that changed another row.
+            var cursorStays = cursorHere ? _cursor == cursor : _cursor?.Row != row;
+            if (_rowValid[row] && cursorStays && view.RowEquals(row, _drawn[row]))
                 continue;
 
             DrawRow(view, row, cursorHere ? cursor!.Value.Col : -1);
@@ -2013,13 +2110,14 @@ internal sealed class FrameRasterizer
     {
         var top = _layout.RowY(row);
         var height = _layout.CellHeight;
-        // Inside the window, and inside its border when it stands on a background. On a background the row comes
-        // back as Clear drew it: the edge line, the corners, and a translucent window's background with it.
-        var inset = _layout.Desktop && _layout.Window != WindowStyle.None ? 1 : 0;
-        if (_cleared is null)
-            FillRect(_layout.WindowX + inset, top, _layout.WindowWidth - inset * 2, height, _background);
+        // The row comes back as Clear drew it across the whole frame, not only inside the window: on a background that
+        // is the border, the edge line, the corners, a translucent window's background, and the shadow beside it. With
+        // a small padding, a cursor or a cell's background in the first or the last column covers the border, and a
+        // bold or italic glyph there reaches past the window. Those pixels would otherwise stay after it left.
+        if (_cleared is not null)
+            CopyRect(_cleared, 0, top, _layout.Width, height);
         else
-            CopyRect(_cleared, _layout.WindowX + inset, top, _layout.WindowWidth - inset * 2, height);
+            FillRect(0, top, _layout.Width, height, _background);
 
         // Backgrounds first, then glyphs, as in the SVG: a glyph may overhang its neighbor.
         var lastUnderlined = -1;

@@ -29,7 +29,7 @@ internal sealed class SecretMasker
     // A value shorter than this is not taken as a secret in a KEY=value pair: `token_count: 5` stays.
     private const int MinPairValueLength = 4;
 
-    /// <summary>A user name, folder name, computer name, or git name shorter than this is not hidden: <c>me</c> is everywhere.</summary>
+    /// <summary>A computer name or git name shorter than this is not hidden: <c>me</c> is everywhere.</summary>
     internal const int MinPersonalLength = 3;
 
     // This file avoids LINQ, tuples in collections, and other generics over value types: Native AOT compiles a copy of
@@ -41,28 +41,29 @@ internal sealed class SecretMasker
     private readonly Dictionary<string, int> _counts = new(StringComparer.Ordinal);
     // The secrets counted so far, so a value that shows again is not counted again.
     private readonly HashSet<string> _counted = new(StringComparer.Ordinal);
-    // Each way a command may write a folder that shows as a stand-in, longest first, so cwd under the home folder shows
-    // as cwd-as gives it and not as ~/... (FindPaths). The stand-in is written as that way writes its separators.
+    // Each way a command may write the folder that shows as a stand-in (FindPaths), longest first. The stand-in is
+    // written as that way writes its separators.
     private readonly string[] _pathTexts;
     private readonly byte[][] _pathStandIns;
-    private readonly string?[] _pathKinds;
+    // For each way, the stand-in when it is a path under that way's own text, as `~/demo/app` is under `~/demo`, or
+    // null. Text there that already reads as the stand-in stays, or it would grow each time a replay masks it again.
+    private readonly string?[] _pathStandInsUnder;
 
     private SecretMasker(List<string> literals, List<string> labels, List<PersonalDetail> personal, bool auto, List<PathStandIn> paths)
     {
         SortLongestFirst(literals, labels);
         _literals = literals.ToArray();
         _literalLabels = labels.ToArray();
-        // Longest first, as for the listed texts: a git email that holds the user name is hidden as an email.
+        // Longest first, as for the listed texts: a git email that holds the git name is hidden as an email.
         _personal = personal.ToArray();
         Array.Sort(_personal, static (a, b) => b.Value.Length.CompareTo(a.Value.Length));
         _auto = auto;
 
         var texts = new List<string>();
         var standIns = new List<string>();
-        var kinds = new List<string?>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var path in paths)
-            AddSpellings(path, texts, standIns, kinds, seen);
+            AddSpellings(path, texts, standIns, seen);
 
         // Longest first, keeping the order of equal lengths. The lists are short.
         for (var i = 1; i < texts.Count; i++)
@@ -71,36 +72,48 @@ internal sealed class SecretMasker
             {
                 (texts[j], texts[j - 1]) = (texts[j - 1], texts[j]);
                 (standIns[j], standIns[j - 1]) = (standIns[j - 1], standIns[j]);
-                (kinds[j], kinds[j - 1]) = (kinds[j - 1], kinds[j]);
             }
         }
 
         _pathTexts = texts.ToArray();
         _pathStandIns = new byte[standIns.Count][];
+        _pathStandInsUnder = new string?[standIns.Count];
         for (var i = 0; i < standIns.Count; i++)
+        {
             _pathStandIns[i] = Encoding.UTF8.GetBytes(standIns[i]);
-        _pathKinds = kinds.ToArray();
+            if (standIns[i].Length > texts[i].Length && standIns[i].StartsWith(texts[i], StringComparison.OrdinalIgnoreCase))
+                _pathStandInsUnder[i] = standIns[i];
+        }
     }
 
     /// <summary>
     /// Each way a command writes <paramref name="path"/>'s folder, with its stand-in written the same way. A Windows
     /// folder is <c>C:\Users\ada</c>, <c>C:/Users/ada</c> (Git Bash's <c>pwd -W</c>, Node.js), Git Bash's
-    /// <c>/c/Users/ada</c>, and <c>C:\\Users\\ada</c> in JSON. A Unix folder is its path. A root folder has none: every
-    /// path starts with it. A spelling that an earlier path gave stays with that path, so cwd-as wins over ~ when cwd is
-    /// the home folder.
+    /// <c>/c/Users/ada</c>, and <c>C:\\Users\\ada</c> in JSON. A Unix folder is its path. A folder from <c>~</c> is
+    /// <c>~/demo</c>, and <c>~\demo</c> as a PowerShell prompt writes it. A root folder has none: every path starts with it.
     /// </summary>
-    private static void AddSpellings(PathStandIn path, List<string> texts, List<string> standIns, List<string?> kinds, HashSet<string> seen)
+    private static void AddSpellings(PathStandIn path, List<string> texts, List<string> standIns, HashSet<string> seen)
     {
         var folder = path.Folder.TrimEnd('/', '\\');
-        if (folder.Length >= 2 && char.IsAsciiLetter(folder[0]) && folder[1] == ':')
+        // `cwd-as: ~/my-app/` would show a path under it as ~/my-app//src. A stand-in that is only a separator, or has a
+        // colon before it as a drive's root does, keeps it, and a path under the folder then shows two separators.
+        var trimmed = path.StandIn.TrimEnd('/', '\\');
+        var shown = trimmed.Length == 0 || trimmed.EndsWith(':') ? path.StandIn : trimmed;
+        if (folder.Length > 2 && folder[0] == '~' && folder[1] is '/' or '\\')
+        {
+            var slash = folder.Replace('\\', '/');
+            Add(slash, shown.Replace('\\', '/'));
+            Add(slash.Replace('/', '\\'), shown.Replace('/', '\\'));
+        }
+        else if (folder.Length >= 2 && char.IsAsciiLetter(folder[0]) && folder[1] == ':')
         {
             if (folder.Length == 2)
                 return;
 
             var back = folder.Replace('/', '\\');
             var slash = folder.Replace('\\', '/');
-            var standInBack = path.StandIn.Replace('/', '\\');
-            var standInSlash = path.StandIn.Replace('\\', '/');
+            var standInBack = shown.Replace('/', '\\');
+            var standInSlash = shown.Replace('\\', '/');
             Add(back, standInBack);
             Add(slash, standInSlash);
             Add("/" + char.ToLowerInvariant(folder[0]) + slash[2..], standInSlash);
@@ -108,7 +121,7 @@ internal sealed class SecretMasker
         }
         else if (folder.StartsWith('/'))
         {
-            Add(folder, path.StandIn.Replace('\\', '/'));
+            Add(folder, shown.Replace('\\', '/'));
         }
 
         void Add(string text, string standIn)
@@ -117,7 +130,6 @@ internal sealed class SecretMasker
                 return;
             texts.Add(text);
             standIns.Add(standIn);
-            kinds.Add(path.Kind);
         }
     }
 
@@ -168,9 +180,9 @@ internal sealed class SecretMasker
     /// The masker for a scenario, or null when it would hide nothing: no <c>settings.mask</c> texts,
     /// <c>settings.mask-auto: false</c>, and no personal details to hide. <paramref name="environment"/> gives the
     /// values of secret variables to hide, and <paramref name="personal"/> the details that name the person who
-    /// records, which <c>settings.mask-personal: false</c> leaves shown. <paramref name="paths"/> gives the folders
-    /// that show as a stand-in: the home folder as <c>~</c>, which is a personal detail too, and cwd as <c>cwd-as</c>
-    /// gives it. The playground has none of them, because its outputs were masked when they were recorded.
+    /// records, which <c>settings.mask-personal: false</c> leaves shown. <paramref name="paths"/> gives the folder that
+    /// shows as a stand-in: cwd as <c>cwd-as</c> gives it. The playground has none of them, because its outputs were
+    /// masked when they were recorded.
     /// </summary>
     internal static SecretMasker? ForScenario(Scenario scenario, IEnumerable<KeyValuePair<string, string?>>? environment, IEnumerable<PersonalDetail>? personal = null,
         IEnumerable<PathStandIn>? paths = null)
@@ -201,18 +213,11 @@ internal sealed class SecretMasker
             }
         }
 
-        var maskPersonal = settings?.MaskPersonal ?? true;
-        var standIns = new List<PathStandIn>();
-        foreach (var path in paths ?? [])
-        {
-            if (path.Kind is null || maskPersonal)
-                standIns.Add(path);
-        }
-
+        var standIns = new List<PathStandIn>(paths ?? []);
         var details = new List<PersonalDetail>();
-        if (maskPersonal && personal is not null)
+        if ((settings?.MaskPersonal ?? true) && personal is not null)
         {
-            // Case is ignored: Windows writes C:\Users\Name in one place and /c/Users/name in another.
+            // Case is ignored: Windows gives the computer name in upper case, and hostname prints it as it was set.
             var seenDetails = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var detail in personal)
             {
@@ -304,8 +309,8 @@ internal sealed class SecretMasker
     }
 
     /// <summary>
-    /// A line for stderr that says which personal details were hidden, such as <c>Masked personal details: user name,
-    /// git email</c>, or null. A detail is one value, so the line names kinds without counts.
+    /// A line for stderr that says which personal details were hidden, such as <c>Masked personal details: computer
+    /// name, git email</c>, or null. A detail is one value, so the line names kinds without counts.
     /// </summary>
     internal string? PersonalSummary()
     {
@@ -464,7 +469,7 @@ internal sealed class SecretMasker
         segmentStarts[^1] = total;
 
         var text = VisibleText.Read(all, cuts ?? []);
-        var paths = FindPaths(text, count);
+        var paths = FindPaths(text);
         var hidden = Find(text.Text, count, paths);
         if (hidden is null && paths is null)
             return null;
@@ -545,10 +550,10 @@ internal sealed class SecretMasker
     /// </summary>
     /// <remarks>
     /// A stand-in changes the line's width. A full-screen program places its text by column and redraws only what
-    /// changed, so a path drawn on its screen (the alternate screen) is left, and the masking of personal details
-    /// stars the names in it as before. So is a path that a cursor move cuts: it was drawn in parts.
+    /// changed, so a path drawn on its screen (the alternate screen) is left as it is. So is a path that a cursor move
+    /// cuts: it was drawn in parts.
     /// </remarks>
-    private int[]? FindPaths(VisibleText visible, bool count)
+    private int[]? FindPaths(VisibleText visible)
     {
         var text = visible.Text;
         int[]? paths = null;
@@ -560,14 +565,13 @@ internal sealed class SecretMasker
                 var end = at + path.Length;
                 if ((at > 0 && IsPathChar(text[at - 1])) || NameGoesOn(text, end) || !Replaceable(at, end))
                     continue;
+                if (_pathStandInsUnder[i] is { } under && text.AsSpan(at).StartsWith(under, StringComparison.OrdinalIgnoreCase) && !NameGoesOn(text, at + under.Length))
+                    continue;
 
                 paths ??= new int[text.Length];
                 paths[at] = i + 1;
                 for (var k = at + 1; k < end; k++)
                     paths[k] = -1;
-
-                if (count && _pathKinds[i] is { } kind)
-                    _counts[kind] = _counts.GetValueOrDefault(kind) + 1;
             }
         }
 
@@ -684,9 +688,9 @@ internal sealed class SecretMasker
     private delegate void HideRange(int start, int end, string label);
 
     /// <summary>
-    /// Each personal detail where it stands as a whole word, ignoring case: <c>/home/name/app</c>, <c>name staff</c> in
-    /// <c>ls -l</c>, <c>name@host</c>. A user name, folder name, or git name inside a web address or after a leading
-    /// <c>@</c> stays (<see cref="InAddress"/>).
+    /// Each personal detail where it stands as a whole word, ignoring case: <c>ada@name</c>, <c>name.local</c>,
+    /// <c>Author: Name</c> in <c>git log</c>. A git name inside a web address or after a leading <c>@</c> stays
+    /// (<see cref="InAddress"/>).
     /// </summary>
     private void FindPersonal(string text, HideRange hide)
     {
@@ -695,7 +699,7 @@ internal sealed class SecretMasker
             var value = detail.Value;
             for (var at = text.IndexOf(value, StringComparison.OrdinalIgnoreCase); at >= 0; at = text.IndexOf(value, at + 1, StringComparison.OrdinalIgnoreCase))
             {
-                // A name inside a longer word is another word: user name `ann` in `annual` or `ann-marie`.
+                // A name inside a longer word is another word: git name `ann` in `annual` or `ann-marie`.
                 var end = at + value.Length;
                 if ((at > 0 && IsWordChar(text[at - 1])) || (end < text.Length && IsWordChar(text[end])))
                     continue;
@@ -1493,48 +1497,42 @@ internal sealed class SecretMasker
 }
 
 /// <summary>
-/// A detail that names the person who records: their user name, home folder name, computer name, git name, or git
-/// email. <c>settings.mask-personal</c> (on by default) hides it. The CLI collects them on the recording machine
+/// A detail that names the person who records: their computer name, git name, or git email.
+/// <c>settings.mask-personal</c> (on by default) hides it. The CLI collects them on the recording machine
 /// (PersonalDetails.cs). The playground has none: its outputs were masked when they were recorded.
 /// </summary>
 internal sealed class PersonalDetail(string value, string kind)
 {
-    /// <summary>The kind of the home folder's path, which shows as <c>~</c> (<see cref="PathStandIn"/>).</summary>
-    internal const string HomeFolder = "home folder as ~";
-    internal const string UserName = "user name";
-    internal const string HomeFolderName = "home folder name";
     internal const string ComputerName = "computer name";
     internal const string GitName = "git name";
     internal const string GitEmail = "git email";
 
     /// <summary>The kinds, in the order the CLI names them.</summary>
-    internal static readonly string[] Kinds = [HomeFolder, UserName, HomeFolderName, ComputerName, GitName, GitEmail];
+    internal static readonly string[] Kinds = [ComputerName, GitName, GitEmail];
 
     internal string Value { get; } = value;
     internal string Kind { get; } = kind;
 
     /// <summary>
-    /// Whether the detail stays in a web address or after a leading @: a user name or a git name is often the name a
-    /// person publishes under, as in <c>github.com/name</c>. A computer name and an email are not.
+    /// Whether the detail stays in a web address or after a leading @: a git name is often the name a person publishes
+    /// under, as in <c>github.com/name</c>. A computer name and an email are not.
     /// </summary>
-    internal bool StaysInAddress => Kind is UserName or HomeFolderName or GitName;
+    internal bool StaysInAddress => Kind is GitName;
 
     internal static bool IsKind(string label) => Array.IndexOf(Kinds, label) >= 0;
 }
 
 /// <summary>
-/// A folder whose path the recording shows as another text: the home folder as <c>~</c>, with
-/// <c>settings.mask-personal</c>, and the folder the steps start in as <c>cwd-as</c> gives it. <c>pwd</c>, a stack
-/// trace, and an error message then show the same path on every machine, and no user folder. The CLI gives each form
-/// of a folder that a command may print: the long and the short (8.3) name on Windows, and the path with its links
-/// resolved on Unix, which <c>pwd</c> prints when it reads the folder from the system.
+/// A folder whose path the recording shows as another text: the folder the steps start in, as <c>cwd-as</c> gives it.
+/// <c>pwd</c>, a stack trace, and an error message then show the same path on every machine. The CLI gives each form
+/// of a folder that a command may print: the long and the short (8.3) name on Windows, the path with its links
+/// resolved on Unix, which <c>pwd</c> prints when it reads the folder from the system, and the path from <c>~</c> for a
+/// folder under the home folder, which a prompt writes (bash's <c>\w</c>, zsh's <c>%~</c>).
 /// </summary>
-/// <param name="folder">A full path in the form of the machine that records.</param>
+/// <param name="folder">A full path in the form of the machine that records, or a path that starts with <c>~/</c>.</param>
 /// <param name="standIn">What shows in its place. Its <c>/</c> and <c>\</c> are written as the path's own.</param>
-/// <param name="kind">The personal detail the folder is, which <c>mask-personal: false</c> shows, or null for <c>cwd-as</c>.</param>
-internal sealed class PathStandIn(string folder, string standIn, string? kind)
+internal sealed class PathStandIn(string folder, string standIn)
 {
     internal string Folder { get; } = folder;
     internal string StandIn { get; } = standIn;
-    internal string? Kind { get; } = kind;
 }

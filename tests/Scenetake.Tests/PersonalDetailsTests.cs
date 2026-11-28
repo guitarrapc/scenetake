@@ -10,10 +10,13 @@ namespace Scenetake.Tests;
 
 public sealed class PersonalDetailsTests
 {
+    // Both set the process's git variables while they run.
     [Test]
+    [NotInParallel("git environment")]
     public async Task CollectGivesTheMachineNames() => await Assert.That(PersonalDetailsCases.CollectGivesTheMachineNames()).IsTrue();
 
     [Test]
+    [NotInParallel("git environment")]
     public async Task CollectReadsGlobalGitConfigOnly() => await Assert.That(PersonalDetailsCases.CollectReadsGlobalGitConfigOnly()).IsTrue();
 
     [Test]
@@ -32,13 +35,30 @@ internal static class PersonalDetailsCases
     private static bool Has(List<PersonalDetail> details, string value, string kind) =>
         details.Exists(detail => detail.Kind == kind && string.Equals(detail.Value, value, StringComparison.OrdinalIgnoreCase));
 
+    // With no git identity, only the computer's names are left: the user name and the home folder's name are not
+    // details, since paths name them in nearly every recording.
     internal static bool CollectGivesTheMachineNames()
     {
-        var details = PersonalDetails.Collect(null);
-        var home = Path.GetFileName(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile).TrimEnd('/', '\\'));
-        return Check(Has(details, Environment.UserName, PersonalDetail.UserName), "the user name")
-            & Check(Has(details, home, PersonalDetail.HomeFolderName), "the home folder name")
-            & Check(Has(details, Environment.MachineName, PersonalDetail.ComputerName), "the computer name");
+        var folder = NewFolder("machine");
+        var empty = Path.Combine(folder, "empty.gitconfig");
+        File.WriteAllText(empty, "");
+        var names = new[] { "GIT_CONFIG_GLOBAL", "GIT_CONFIG_NOSYSTEM", "GIT_CONFIG_COUNT", "GIT_CONFIG_PARAMETERS", "GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL" };
+        var saved = names.ToDictionary(static name => name, Environment.GetEnvironmentVariable);
+        try
+        {
+            foreach (var name in names)
+                Environment.SetEnvironmentVariable(name, null);
+            Environment.SetEnvironmentVariable("GIT_CONFIG_GLOBAL", empty);
+            Environment.SetEnvironmentVariable("GIT_CONFIG_NOSYSTEM", "1");
+            var details = PersonalDetails.Collect(folder);
+            return Check(Has(details, Environment.MachineName, PersonalDetail.ComputerName), "the computer name")
+                & Check(details.TrueForAll(static detail => detail.Kind == PersonalDetail.ComputerName), $"only the computer's names: {string.Join(", ", details.Select(static detail => detail.Kind))}");
+        }
+        finally
+        {
+            foreach (var (name, value) in saved)
+                Environment.SetEnvironmentVariable(name, value);
+        }
     }
 
     // The global config, with a conditional include for the repository's folder, gives the name and both emails. The

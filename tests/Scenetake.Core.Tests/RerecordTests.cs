@@ -167,10 +167,49 @@ public sealed class RerecordTests
 
     [Test]
     public async Task InvalidKeepOutputWarnsOnce() => await Assert.That(RerecordCases.InvalidKeepOutputWarnsOnce()).IsTrue();
+
+    [Test]
+    public async Task CursorAtAnyOrderIsTheCursorAtThatEvent() => await Assert.That(RerecordCases.CursorAtAnyOrderIsTheCursorAtThatEvent()).IsTrue();
 }
 
 internal static class RerecordCases
 {
+    internal static bool CursorAtAnyOrderIsTheCursorAtThatEvent()
+    {
+        // CursorAt plays on from the event it played to last. Asked in any order, and at another terminal size, each
+        // answer must be the cursor that playing the cast from its start to that event gives. The shorter terminal scrolls,
+        // so its cursor is on another row.
+        var cast = Record(
+            "width: 40\nheight: 6\nsteps:\n  - run: one\n    pty: true\n  - run: two\n    pty: true\n  - run: three\n",
+            start => start.Index switch
+            {
+                0 => Pty((0.1, "a\r\nbb"), (0.2, "\u001b[3;7Hc")),
+                1 => Pty((0.1, "\r\n1\r\n2\r\n3\r\n4\r\n5\r\n6")),
+                _ => Pipe("end\n"),
+            }).Cast;
+        var previous = PreviousCast.Parse(cast.Split('\n'), 40, 6, out var problem);
+        var count = CastReader.ReadText(cast).Events.Count;
+        if (!Expect(previous is not null && count > 8, $"{problem}, {count} events"))
+            return false;
+
+        var events = Enumerable.Range(0, count).Select(previous!.EventAt).ToList();
+        // The first event where 5 columns put the cursor elsewhere than 40 do. Asked for it right after the event before
+        // it at 40 columns, only the width tells the two apart.
+        var narrow = Enumerable.Range(0, count).FirstOrDefault(i => new CastCursorTracker(5, 6).Advance(events, i) != new CastCursorTracker(40, 6).Advance(events, i));
+        if (!Expect(narrow > 0, "no event where 5 columns put the cursor elsewhere"))
+            return false;
+
+        var ok = true;
+        foreach (var (index, width, height) in new[] { (3, 40, 6), (7, 40, 6), (7, 40, 6), (count - 1, 40, 6), (2, 40, 6), (5, 40, 6), (count - 2, 40, 3), (count - 1, 40, 3), (count - 1, 40, 6), (narrow - 1, 40, 6), (narrow, 5, 6) })
+        {
+            var expected = new CastCursorTracker(width, height).Advance(events, index);
+            var actual = previous.CursorAt(index, width, height);
+            ok &= Expect(actual == expected, $"event {index} at {width}x{height}: {actual}, expected {expected}");
+        }
+
+        return ok;
+    }
+
     internal static bool InvalidKeepOutputWarnsOnce()
     {
         // A step with rerun: false that the earlier cast does not have runs, and both places read keep-output: a value that

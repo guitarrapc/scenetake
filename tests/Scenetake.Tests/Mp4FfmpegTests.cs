@@ -1875,9 +1875,10 @@ internal static class Mp4FfmpegCases
         var removedRanPost = File.Exists(Path.Combine(directory, "post-ran.txt"));
 
         // A step that fails while the recording runs: a PTY command that holds a NUL, which the PTY refuses
-        // to start. An interactive step whose output is redirected is refused before pre instead
-        // (ScenarioErrorsStopBeforePre).
+        // to start. The shell takes the command on its command line: PowerShell reads it from a file. An
+        // interactive step whose output is redirected is refused before pre instead (ScenarioErrorsStopBeforePre).
         var failures = new List<(int Exit, string Stderr, bool RanPost)>();
+        var commandLineShell = OperatingSystem.IsWindows() ? "cmd" : "bash";
         foreach (var (name, step) in new[]
         {
         ("nul", "  - run: \"echo a\\0b\"\n    pty: true"),
@@ -1885,7 +1886,7 @@ internal static class Mp4FfmpegCases
         {
             File.Delete(Path.Combine(directory, "post-ran.txt"));
             var scenario = Path.Combine(directory, $"{name}.yaml");
-            File.WriteAllText(scenario, $"title: \"{name}\"\nwidth: 40\nheight: 6\ncwd: '{cwd}'\npre:\n  - echo ran > pre-ran.txt\nsteps:\n{step}\npost:\n  - echo ran > post-ran.txt\n");
+            File.WriteAllText(scenario, $"title: \"{name}\"\nwidth: 40\nheight: 6\nshell: {commandLineShell}\ncwd: '{cwd}'\npre:\n  - echo ran > pre-ran.txt\nsteps:\n{step}\npost:\n  - echo ran > post-ran.txt\n");
             var (exit, stderr) = Exec(scenetake, repoRoot, [scenario]);
             if (exit != 1)
                 Console.Error.WriteLine(stderr);

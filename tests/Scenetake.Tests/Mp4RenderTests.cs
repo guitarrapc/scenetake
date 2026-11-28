@@ -181,6 +181,15 @@ public sealed class Mp4RenderTests
 
     [Test]
     public async Task LogNamesAFontThatLoads() => await Assert.That(Skipping.Run(() => Mp4RenderCases.LogNamesAFontThatLoads())).IsTrue();
+
+    [Test]
+    public async Task WindowShapesCoverWhatSamplingCovers() => await Assert.That(Mp4RenderCases.WindowShapesCoverWhatSamplingCovers()).IsTrue();
+
+    [Test]
+    public async Task ShadowMatchesTheBlurOfEveryRow() => await Assert.That(Mp4RenderCases.ShadowMatchesTheBlurOfEveryRow()).IsTrue();
+
+    [Test]
+    public async Task FramesDrawnInTurnMatchFramesDrawnAlone() => await Assert.That(Skipping.Run(() => Mp4RenderCases.FramesDrawnInTurnMatchFramesDrawnAlone())).IsTrue();
 }
 
 internal static class Mp4RenderCases
@@ -974,6 +983,247 @@ internal static class Mp4RenderCases
 
     internal static (byte, byte, byte) CellPixel(byte[] frame, RasterLayout layout, int row, int col) =>
         Pixel(frame, layout, layout.CellX(col) + layout.CellWidth / 2, layout.RowY(row) + layout.CellHeight / 2);
+
+    internal static bool WindowShapesCoverWhatSamplingCovers()
+    {
+        // A rounded rectangle tells at once that a pixel is wholly inside or outside it. Each count must still be the
+        // one its 16 sample points give, tested as the window's shapes were tested before (Inside below): for edges on
+        // whole, half, and other pixels, and on the first and the last sample point (.125 and .875), where the quick
+        // checks compare with equality, each choice of rounded corners, radii from none to half the box, and with a
+        // hole, as a border or a stroke has. A radius over half the box, or a hole with no size, is none the window
+        // draws: the corner test throws for it, as it did before.
+        var random = new Random(7);
+        double[] starts = [0, 0.5, 3, 2.3, 10.75, 0.875, 2.125];
+        var compared = 0;
+        foreach (var x in starts)
+        foreach (var width in new double[] { 5, 7.5, 7.75, 20, 33.4 })
+        foreach (var radius in new double[] { 0, 0.5, 2, 2.5, 3.75, -1 })
+        foreach (var (roundTop, roundBottom) in new[] { (true, true), (true, false), (false, true), (false, false) })
+        {
+            if (radius > width / 2)
+                continue;
+
+            var y = starts[random.Next(starts.Length)];
+            var height = width * (1 + random.NextDouble());
+            if (random.Next(2) == 0)
+                height = Math.Round(height * 8) / 8;
+            var box = new FrameRasterizer.RoundedBox(x, y, width, height, radius, roundTop, roundBottom);
+            bool InBox(double px, double py) => Inside(x, y, width, height, radius, roundTop, roundBottom, px, py);
+            for (var py = (int)Math.Floor(y) - 1; py <= (int)Math.Ceiling(y + height) + 1; py++)
+            {
+                for (var px = (int)Math.Floor(x) - 1; px <= (int)Math.Ceiling(x + width) + 1; px++)
+                {
+                    compared++;
+                    if (FrameRasterizer.Coverage(px, py, box, default, hasHole: false) != Sampled(px, py, InBox))
+                    {
+                        Console.Error.WriteLine($"  box {x},{y} {width}x{height} r{radius} {roundTop}/{roundBottom}: pixel {px},{py}");
+                        return false;
+                    }
+
+                    // Inset by 1 as a window's border, by 0.5 as a stroke, and by 2 off center.
+                    foreach (var (inset, shift) in new[] { (1.0, 0.0), (0.5, 0.0), (2.0, 0.3) })
+                    {
+                        var (hx, hy, hw, hh, hr) = (x + inset + shift, y + inset, width - 2 * inset, height - 2 * inset, radius - inset);
+                        var hole = new FrameRasterizer.RoundedBox(hx, hy, hw, hh, hr, roundTop, roundBottom);
+                        var sampled = Sampled(px, py, (sx, sy) => InBox(sx, sy) && !Inside(hx, hy, hw, hh, hr, roundTop, roundBottom, sx, sy));
+                        if (FrameRasterizer.Coverage(px, py, box, hole, hasHole: true) != sampled)
+                        {
+                            Console.Error.WriteLine($"  box {x},{y} {width}x{height} r{radius} {roundTop}/{roundBottom}, hole inset {inset}: pixel {px},{py}");
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        return compared > 10000;
+    }
+
+    // How the window's shapes were tested before RoundedBox: a point test for each of the 4×4 sample points of a pixel.
+    private static bool Inside(double left, double top, double width, double height, double radius, bool roundTop, bool roundBottom, double px, double py)
+    {
+        double right = left + width, bottom = top + height, r = Math.Max(radius, 0);
+        if (px < left || px >= right || py < top || py >= bottom)
+            return false;
+
+        var nearTop = roundTop && py < top + r;
+        var nearBottom = roundBottom && py > bottom - r;
+        if (!nearTop && !nearBottom)
+            return true;
+
+        var cx = Math.Clamp(px, left + r, right - r);
+        var cy = nearTop ? top + r : bottom - r;
+        return (px - cx) * (px - cx) + (py - cy) * (py - cy) <= r * r;
+    }
+
+    private static int Sampled(int x, int y, Func<double, double, bool> inside)
+    {
+        var hits = 0;
+        for (var sy = 0; sy < 4; sy++)
+        {
+            for (var sx = 0; sx < 4; sx++)
+            {
+                if (inside(x + (sx + 0.5) / 4, y + (sy + 0.5) / 4))
+                    hits++;
+            }
+        }
+
+        return hits;
+    }
+
+    internal static bool ShadowMatchesTheBlurOfEveryRow()
+    {
+        // The pass across leaves out the rows beside the middle of the window, which the pass down never reads. The
+        // shadow must be the one the pass across over every row gives (ShadowOverEveryRow): for a window tall enough to
+        // have such rows, one too short to have them, one with square corners, and one against the frame's edges.
+        (int FrameWidth, int FrameHeight, int X, int Y, int Width, int Height, int Radius)[] windows =
+        [
+            (320, 420, 30, 30, 260, 340, 10),
+            (220, 130, 20, 15, 180, 90, 10),
+            (300, 300, 25, 25, 250, 250, 0),
+            (200, 240, 0, 0, 200, 230, 8),
+        ];
+        foreach (var (frameWidth, frameHeight, x, y, width, height, radius) in windows)
+        {
+            var background = new byte[frameWidth * frameHeight * 3];
+            for (var i = 0; i < background.Length; i++)
+                background[i] = (byte)(i * 7 % 251);
+            var drawn = (byte[])background.Clone();
+            var expected = (byte[])background.Clone();
+            FrameRasterizer.DrawWindowShadow(drawn, frameWidth, frameHeight, x, y, width, height, radius);
+            ShadowOverEveryRow(expected, frameWidth, frameHeight, x, y, width, height, radius);
+            if (!drawn.AsSpan().SequenceEqual(expected) || drawn.AsSpan().SequenceEqual(background))
+            {
+                Console.Error.WriteLine($"  window {x},{y} {width}x{height} r{radius} in {frameWidth}x{frameHeight}");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // The shadow as it was drawn before the pass across left rows out.
+    private static void ShadowOverEveryRow(byte[] pixels, int frameWidth, int frameHeight, int x, int y, int width, int height, int radius)
+    {
+        var offset = (int)Math.Round(SvgFrameRenderer.WindowShadowOffsetY);
+        var kernel = FrameRasterizer.GaussianKernel(SvgFrameRenderer.WindowShadowDeviation);
+        var reach = kernel.Length / 2;
+        var left = x - reach;
+        var top = y + offset - reach;
+        var areaWidth = width + reach * 2;
+        var areaHeight = height + reach * 2;
+        var shape = new FrameRasterizer.RoundedBox(x, y + offset, width, height, radius, roundTop: true, roundBottom: true);
+        var coverage = new float[areaWidth * areaHeight];
+        for (var row = reach; row < reach + height; row++)
+        {
+            for (var col = reach; col < reach + width; col++)
+                coverage[row * areaWidth + col] = FrameRasterizer.ShapeCoverage(left + col, top + row, x, y + offset, width, height, radius, shape);
+        }
+
+        var across = new float[coverage.Length];
+        for (var row = reach; row < reach + height; row++)
+        {
+            for (var col = 0; col < areaWidth; col++)
+            {
+                var sum = 0f;
+                for (var k = 0; k < kernel.Length; k++)
+                {
+                    var source = col + k - reach;
+                    if ((uint)source < (uint)areaWidth)
+                        sum += coverage[row * areaWidth + source] * kernel[k];
+                }
+
+                across[row * areaWidth + col] = sum;
+            }
+        }
+
+        var window = new FrameRasterizer.RoundedBox(x, y, width, height, radius, roundTop: true, roundBottom: true);
+        var opacity = (float)SvgFrameRenderer.WindowShadowOpacity;
+        for (var row = 0; row < areaHeight; row++)
+        {
+            var frameY = top + row;
+            if ((uint)frameY >= (uint)frameHeight)
+                continue;
+
+            for (var col = 0; col < areaWidth; col++)
+            {
+                var frameX = left + col;
+                if ((uint)frameX >= (uint)frameWidth)
+                    continue;
+
+                var inside = FrameRasterizer.ShapeCoverage(frameX, frameY, x, y, width, height, radius, window);
+                if (inside >= 1)
+                    continue;
+
+                var sum = 0f;
+                for (var k = 0; k < kernel.Length; k++)
+                {
+                    var source = row + k - reach;
+                    if ((uint)source < (uint)areaHeight)
+                        sum += across[source * areaWidth + col] * kernel[k];
+                }
+
+                var shade = opacity * sum * (1 - inside);
+                if (shade <= 0)
+                    continue;
+
+                var offsetPixel = (frameY * frameWidth + frameX) * 3;
+                for (var c = 0; c < 3; c++)
+                    pixels[offsetPixel + c] = (byte)MathF.Round(pixels[offsetPixel + c] * (1 - shade));
+            }
+        }
+    }
+
+    internal static bool FramesDrawnInTurnMatchFramesDrawnAlone()
+    {
+        // A rasterizer draws only the rows that changed since its last frame. Each frame must be the one a new rasterizer
+        // draws from nothing: when another row changes under a cursor that stays, when the cursor moves along its row,
+        // when it moves to another row, and when it hides. With padding 0, the first and the last column lie on the
+        // window's border, and a bold or italic glyph there reaches past the window: the pixels that the cursor, a
+        // cell's background, or the glyph covered must come back when they leave.
+        var theme = TerminalTheme.FromResolved(new ResolvedTheme("#d0d0d0", "#282c34", RenderSettingsResolver.DefaultPalette));
+        string[] changes =
+        [
+            "ab\r\ncd\r\nef\u001b[2;2H", "\u001b[4;1Hgh\u001b[2;2H", "\u001b[2;4H", "\u001b[3;1H",
+            "\u001b[1;1Hxy\u001b[3;1H", "\u001b[3;12H", "\u001b[1;1Hzw\u001b[3;12H", "\u001b[2;1H",
+            "\u001b[4;1H\u001b[41m \u001b[0m\u001b[1;1H", "\u001b[4;1H \u001b[1;1H",
+            "\u001b[1;1H\u001b[1mWs -la totaW\u001b[0m", "\u001b[1;1H\u001b[2K", "\u001b[1;1H\u001b[3mWs -la totaW\u001b[0m", "\u001b[1;1H\u001b[2K",
+            "\u001b[?25l",
+        ];
+        var layouts = new[]
+        {
+            RasterLayout.Create(16, 12, 4),
+            RasterLayout.Create(16, 12, 4, padding: 0),
+            RasterLayout.Create(16, 12, 4, WindowStyle.Macos, padding: 0, margin: 20, desktop: true),
+            RasterLayout.Create(16, 12, 4, WindowStyle.Windows, padding: 0, margin: 20, desktop: true),
+            RasterLayout.Create(16, 12, 4, WindowStyle.None, padding: 0, margin: 20, desktop: true),
+            RasterLayout.Create(16, 12, 4, WindowStyle.Macos, desktop: true),
+        };
+        foreach (var layout in layouts)
+        {
+            var desktop = layout.Desktop
+                ? DesktopRaster.Render(layout, new BackgroundSpec(["#203040", "#c0a080"], null), static (_, _) => throw new InvalidOperationException("no image"))
+                : null;
+            var glyphs = GlyphSource.Create("monospace", null, layout);
+            var screen = new ScreenBuffer(12, 4, theme);
+            var parser = new AnsiParser(screen, theme);
+            var inTurn = new FrameRasterizer(layout, theme, glyphs, desktop);
+            foreach (var change in changes)
+            {
+                parser.Process(change);
+                inTurn.Draw(screen);
+                var alone = new FrameRasterizer(layout, theme, glyphs, desktop);
+                alone.Draw(screen);
+                if (!inTurn.Pixels.AsSpan().SequenceEqual(alone.Pixels))
+                {
+                    Console.Error.WriteLine($"  {layout.Window}, padding {layout.PadX}: differs after {change.Replace("\u001b", "ESC", StringComparison.Ordinal)}");
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 
     internal static bool SoftGlyphScalesByCoverage()
     {

@@ -1,0 +1,25 @@
+# A background command that prints far more than a pipe holds, after its wait or with no wait, keeps running: nothing
+# looks at that output, but it is still read (spec_scenario.md → Background steps). Run from the repository root by
+# ShellStateTests.
+title: "background output after the wait (bash)"
+width: 80
+height: 10
+shell: bash
+settings:
+  typing-speed: 0.001
+  pre-delay: 0
+  post-delay: 0
+pre:
+  - export CHATTY_DIR="$(mktemp -d)"
+steps:
+  - run: cd "$CHATTY_DIR"
+    show: none
+  # The file is written only when tr wrote all of it: a closed pipe kills tr, and a full one stops it.
+  - run: echo ready; head -c 1000000 /dev/zero | tr '\0' x && echo done > after-wait.txt; sleep 30
+    background: true
+    wait: ready
+  - run: head -c 1000000 /dev/zero | tr '\0' y && echo done > no-wait.txt; sleep 30
+    background: true
+  - for i in $(seq 1 100); do [ -s after-wait.txt ] && [ -s no-wait.txt ] && break; sleep 0.1; done; echo "after-wait=$(cat after-wait.txt) no-wait=$(cat no-wait.txt)"
+post:
+  - rm -rf "$CHATTY_DIR"

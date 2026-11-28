@@ -54,10 +54,86 @@ public sealed class PngRenderTests
 
     [Test]
     public async Task FailedPngWritesNoFile() => await Assert.That(Skipping.Run(() => PngRenderCases.FailedPngWritesNoFile())).IsTrue();
+
+    [Test]
+    public async Task FiltersWriteWhatOneLoopForAllWrote() => await Assert.That(PngRenderCases.FiltersWriteWhatOneLoopForAllWrote()).IsTrue();
 }
 
 internal static class PngRenderCases
 {
+    internal static bool FiltersWriteWhatOneLoopForAllWrote()
+    {
+        // Each filter has a loop of its own. Its bytes and its sum must be what one loop that chose the filter for each
+        // byte gave (FilteredInOneLoop), so every row keeps its filter and the file its bytes: for rows of 1, 2, 5, and
+        // 64 pixels, the first row (nothing above), flat rows, and noise.
+        var random = new Random(11);
+        foreach (var pixels in new[] { 1, 2, 5, 64 })
+        {
+            var stride = pixels * 3;
+            for (var trial = 0; trial < 24; trial++)
+            {
+                var row = new byte[stride];
+                var up = new byte[stride];
+                random.NextBytes(row);
+                random.NextBytes(up);
+                if (trial % 3 == 0)
+                    Array.Clear(up);
+                if (trial % 3 == 1)
+                    Array.Fill(row, (byte)(trial * 37));
+                for (var filter = 0; filter < 5; filter++)
+                {
+                    var output = new byte[stride];
+                    var sum = PngEncoder.FilterRow(filter, row, up, output);
+                    var (expected, expectedSum) = FilteredInOneLoop(filter, row, up);
+                    if (sum != expectedSum || !output.AsSpan().SequenceEqual(expected))
+                    {
+                        Console.Error.WriteLine($"  filter {filter}, {pixels} pixels, trial {trial}: sum {sum}, expected {expectedSum}");
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    // How the encoder filtered a row before each filter had a loop of its own.
+    private static (byte[] Output, long Sum) FilteredInOneLoop(int filter, byte[] row, byte[] up)
+    {
+        const int Bpp = 3;
+        var output = new byte[row.Length];
+        long sum = 0;
+        for (var i = 0; i < row.Length; i++)
+        {
+            var left = i >= Bpp ? row[i - Bpp] : 0;
+            var above = up[i];
+            var upperLeft = i >= Bpp ? up[i - Bpp] : 0;
+            var predicted = filter switch
+            {
+                1 => left,
+                2 => above,
+                3 => (left + above) >> 1,
+                4 => Paeth(left, above, upperLeft),
+                _ => 0,
+            };
+            var value = (byte)(row[i] - predicted);
+            output[i] = value;
+            sum += value < 128 ? value : 256 - value;
+        }
+
+        return (output, sum);
+
+        static int Paeth(int left, int above, int upperLeft)
+        {
+            var estimate = left + above - upperLeft;
+            var toLeft = Math.Abs(estimate - left);
+            var toAbove = Math.Abs(estimate - above);
+            var toUpperLeft = Math.Abs(estimate - upperLeft);
+            if (toLeft <= toAbove && toLeft <= toUpperLeft)
+                return left;
+            return toAbove <= toUpperLeft ? above : upperLeft;
+        }
+    }
 
     internal static bool Crc32MatchesTheStandardCheckValue() =>
         PngEncoder.Crc32("123456789"u8) == 0xCBF43926u && PngEncoder.Crc32([]) == 0;
