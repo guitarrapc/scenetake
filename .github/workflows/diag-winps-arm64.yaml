@@ -9,25 +9,48 @@ permissions:
   contents: read
 
 jobs:
-  measure:
+  fixture:
+    name: fixtures at ${{ matrix.name }}
     runs-on: windows-11-arm
-    timeout-minutes: 30
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: before-79
+            ref: a94259f60f1a86b63aef4d6b74d7b07a29af266b
+          - name: after-79
+            ref: 5e3d5247ed80ddfdaf9132db83373879fe44e350
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          ref: ${{ matrix.ref }}
           persist-credentials: false
-      - name: Defender and PowerShell
-        shell: powershell
-        run: |
-          Get-MpComputerStatus | Select-Object AMServiceEnabled, AntivirusEnabled, RealTimeProtectionEnabled, BehaviorMonitorEnabled, OnAccessProtectionEnabled, IoavProtectionEnabled, IsTamperProtected, AMRunningMode | Format-List
-          Get-MpPreference | Select-Object DisableRealtimeMonitoring, DisableScriptScanning, DisableBehaviorMonitoring, MAPSReporting, SubmitSamplesConsent, CloudBlockLevel, CloudExtendedTimeout, ExclusionPath | Format-List
-          "$($PSVersionTable.PSVersion) 64bit=$([Environment]::Is64BitProcess) arch=$env:PROCESSOR_ARCHITECTURE"
-      - name: Measure
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: 10.0.x
+      - name: Publish
+        shell: bash
+        run: dotnet publish src/Scenetake/Scenetake.csproj -c Release -r win-arm64 --self-contained true -p:PublishAot=true -p:StripSymbols=true -p:DebugType=None -o "$RUNNER_TEMP/bin" > "$RUNNER_TEMP/publish.log" 2>&1 || { tail -40 "$RUNNER_TEMP/publish.log"; exit 1; }
+      - name: Run fixtures
         shell: pwsh
-        run: ./diag/measure.ps1 -Repeat 3
-      - name: Events
-        if: always()
-        shell: powershell
         run: |
-          Get-WinEvent -LogName 'Microsoft-Windows-Windows Defender/Operational' -MaxEvents 15 -ErrorAction SilentlyContinue | Select-Object TimeCreated, Id, Message | Format-List
-          Get-WinEvent -LogName 'Microsoft-Windows-PowerShell/Operational' -MaxEvents 40 -ErrorAction SilentlyContinue | Group-Object Id, LevelDisplayName | Select-Object Count, Name | Format-Table
+          $bin = "$env:RUNNER_TEMP\bin\scenetake.exe"
+          foreach ($shell in 'powershell', 'pwsh') {
+            foreach ($f in 'shell-state-pwsh-errors', 'shell-state-pwsh-exit-codes', 'shell-state-pwsh-shell-prompt', 'shell-state-pwsh') {
+              $src = "tests/fixtures/$f.yaml"
+              if (-not (Test-Path $src)) { "== $shell $f: no fixture"; continue }
+              $yaml = "tests/fixtures/diag-$shell-$f.yaml"
+              [IO.File]::WriteAllText($yaml, ([IO.File]::ReadAllText($src)).Replace('shell: pwsh', "shell: $shell"))
+              $psi = [Diagnostics.ProcessStartInfo]::new($bin)
+              foreach ($a in '--verbose', $yaml, "$env:RUNNER_TEMP\out-$shell-$f") { $psi.ArgumentList.Add($a) }
+              $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true; $psi.UseShellExecute = $false
+              $sw = [Diagnostics.Stopwatch]::StartNew()
+              $p = [Diagnostics.Process]::Start($psi)
+              $o = $p.StandardOutput.ReadToEndAsync(); $e = $p.StandardError.ReadToEndAsync()
+              $done = $p.WaitForExit(300000)
+              if (-not $done) { $p.Kill($true); $p.WaitForExit() }
+              "== $shell $f done=$done exit=$($p.ExitCode) $([Math]::Round($sw.Elapsed.TotalSeconds, 1))s"
+              $o.Result; $e.Result
+            }
+          }
