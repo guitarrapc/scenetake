@@ -1,0 +1,28 @@
+# settings.shell-prompt draws PowerShell's own prompt once the scenario sets a prompt function (spec_scenario.md →
+# Prompt). The first step shows settings.prompt. Write-Host's color, $? of the last command, and the location then show
+# in the next prompt. A prompt function that throws warns once, and settings.prompt shows. Run from the repository root
+# by ShellStateTests, also in Windows PowerShell.
+title: "shell prompt (pwsh)"
+width: 60
+height: 12
+shell: pwsh
+settings:
+  typing-speed: 0.001
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+  end-prompt: true
+  shell-prompt: true
+  prompt: "tpl > "
+pre:
+  - Set-Location tests
+steps:
+  - Write-Output first
+  - run: function prompt { $ok = $?; Write-Host "[$(Split-Path -Leaf $PWD)]" -NoNewline -ForegroundColor Green; " ok=$ok > " }
+    show: none
+  - Write-Output second
+  - run: Set-Location fixtures; Get-Item nosuchfile
+    continue-on-error: true
+  - Write-Output third
+  - function prompt { throw 'broken prompt' }
+  - Write-Output fourth

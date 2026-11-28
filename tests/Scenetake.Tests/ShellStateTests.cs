@@ -48,6 +48,21 @@ public sealed class ShellStateTests
     public async Task ZshRestoreCarriesWhatChanged() => await Assert.That(ShellStateCases.ZshRestoreCarriesWhatChanged()).IsTrue();
 
     [Test]
+    public async Task ZshRestoreCarriesPromptOptions() => await Assert.That(ShellStateCases.ZshRestoreCarriesPromptOptions()).IsTrue();
+
+    [Test]
+    public async Task ShellPromptScriptsOnlyWhenOn() => await Assert.That(ShellStateCases.ShellPromptScriptsOnlyWhenOn()).IsTrue();
+
+    [Test]
+    public async Task ShellPromptAsTheCastShowsIt() => await Assert.That(ShellStateCases.ShellPromptAsTheCastShowsIt()).IsTrue();
+
+    [Test]
+    public async Task ShellPromptComposes() => await Assert.That(ShellStateCases.ShellPromptComposes()).IsTrue();
+
+    [Test]
+    public async Task ShellPromptReplays() => await Assert.That(ShellStateCases.ShellPromptReplays()).IsTrue();
+
+    [Test]
     public async Task PosixShellRestoreCarriesWhatChanged() => await Assert.That(ShellStateCases.PosixShellRestoreCarriesWhatChanged()).IsTrue();
 
     [Test]
@@ -124,6 +139,18 @@ public sealed class ShellStateTests
 
     [Test]
     public async Task IntegrationPowerShellPromptFollowsFolder() => await Assert.That(ShellStateCases.IntegrationPowerShellPromptFollowsFolder(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationBashShellPrompt() => await Assert.That(ShellStateCases.IntegrationBashShellPrompt(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationZshShellPrompt() => await Assert.That(ShellStateCases.IntegrationZshShellPrompt(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationPowerShellShellPrompt() => await Assert.That(ShellStateCases.IntegrationPowerShellShellPrompt(TestEnv.RepoRoot)).IsTrue();
+
+    [Test]
+    public async Task IntegrationWindowsPowerShellShellPrompt() => await Assert.That(ShellStateCases.IntegrationWindowsPowerShellShellPrompt(TestEnv.RepoRoot)).IsTrue();
 
     [Test]
     public async Task IntegrationPowerShellCarriesState() => await Assert.That(ShellStateCases.IntegrationPowerShellCarriesState(TestEnv.RepoRoot)).IsTrue();
@@ -353,7 +380,7 @@ internal static class ShellStateCases
         const string baseAliases = "aliases[run-help]=man\ngaliases[G]=\\|\\ grep\nsaliases[txt]=cat\n";
         const string finalAliases = "aliases[hi]=greet\naliases[run-help]=man\n";
         var exports = new List<KeyValuePair<string, string?>>();
-        var restore = ZshDump.BuildRestore(baseVars, finalVars, baseFunctions, finalFunctions, baseAliases, finalAliases, "/work/it's", exports);
+        var restore = ZshDump.BuildRestore(baseVars, finalVars, baseFunctions, finalFunctions, baseAliases, finalAliases, "", "", "/work/it's", exports);
 
         return Expect(restore.StartsWith("builtin cd -q -- '/work/it'\\''s'", StringComparison.Ordinal), $"cd first: {restore}")
             && Expect(restore.Contains("export -T PATH path=( /venv/bin /usr/bin )\ntypeset -g -aT PATH path=( /venv/bin /usr/bin )\n", StringComparison.Ordinal), "the changed tied pair")
@@ -371,6 +398,101 @@ internal static class ShellStateCases
                 && restore.IndexOf("functions[greet]", StringComparison.Ordinal) < restore.IndexOf("aliases[hi]", StringComparison.Ordinal), "variables, then functions, then aliases")
             && Expect(exports.Count == 2 && exports.Any(static e => e.Key == "API_TOKEN" && e.Value == "it's-secret") && exports.Any(static e => e.Key == "OLDPWD"),
                 $"exports: {string.Join(", ", exports.Select(static e => $"{e.Key}={e.Value}"))}");
+    }
+
+    // A PROMPT such as '$(git_prompt_info)' needs prompt_subst in every later shell, and only the prompt options carry.
+    internal static bool ZshRestoreCarriesPromptOptions()
+    {
+        var exports = new List<KeyValuePair<string, string?>>();
+        var restore = ZshDump.BuildRestore("", "", "", "", "", "", "promptsubst=off promptbang=on promptpercent=on\n", "promptsubst=on promptbang=on promptpercent=off\n", "/w", exports);
+        var none = ZshDump.BuildRestore("", "", "", "", "", "", "", "", "/w", exports);
+        return Expect(restore.Contains("builtin setopt promptsubst\n", StringComparison.Ordinal) && restore.Contains("builtin unsetopt promptpercent\n", StringComparison.Ordinal), restore)
+            && Expect(!restore.Contains("promptbang", StringComparison.Ordinal), "an option that did not change")
+            && Expect(!none.Contains("setopt", StringComparison.Ordinal), "no dumps, as from a shell that wrote none")
+            && Expect(ZshDump.SplitOptions("promptsubst=on a;b=on promptbang=maybe =on x=\n").Count == 1, "only a name of letters that is on or off");
+    }
+
+    // With settings.shell-prompt off, the scripts are those that ran before it existed.
+    internal static bool ShellPromptScriptsOnlyWhenOn()
+    {
+        var bashOff = BashState.BuildScript("x=1\n");
+        var bashOn = BashState.BuildScript("x=1\n", 72);
+        var zshOff = ZshState.BuildFiles("/s", null, "x=1\n").Single(static file => file.Name == "finish.zsh").Text;
+        var zshOn = ZshState.BuildFiles("/s", null, "x=1\n", 72).Single(static file => file.Name == "finish.zsh").Text;
+        return Expect(!bashOff.Contains("prompt", StringComparison.Ordinal) && !zshOff.Contains("__scenetake_prompt", StringComparison.Ordinal), "a prompt is drawn while shell-prompt is off")
+            && Expect(bashOn.Contains("__scenetake_save() { __scenetake_prompt \"$?\" || :; ", StringComparison.Ordinal) && bashOn.Contains("COLUMNS:-72", StringComparison.Ordinal), bashOn)
+            && Expect(zshOn.Contains("__scenetake_save() { __scenetake_prompt $? || :; ", StringComparison.Ordinal) && zshOn.Contains("COLUMNS:-72", StringComparison.Ordinal), zshOn)
+            && Expect(!PowerShellSave(null).Contains("function:prompt", StringComparison.Ordinal), "PowerShell draws a prompt while shell-prompt is off")
+            && Expect(PowerShellSave(72) is var on && on.IndexOf("function:prompt", StringComparison.Ordinal) is >= 0 and var drawAt && drawAt < on.IndexOf("Export-Clixml", StringComparison.Ordinal), "PowerShell draws the prompt before the save");
+
+        static string PowerShellSave(int? columns)
+        {
+            using var state = ShellState.Create("pwsh", isPowerShell: true, columns)!;
+            var text = state.Prepare("Write-Output hi").Command;
+            var folder = Regex.Match(text, @"^\$__scenetake_dir = '((?:[^']|'')*)';").Groups[1].Value.Replace("''", "'", StringComparison.Ordinal);
+            return File.ReadAllText(Path.Combine(folder, "save.ps1"));
+        }
+    }
+
+    // The markers of bash's \[ and \], and a title that names the folder, are not in the cast. A line break moves to the
+    // start of the next line, as the terminal the shell writes to makes it.
+    internal static bool ShellPromptAsTheCastShowsIt() =>
+        Expect(PromptTemplate.ShellPrompt("\u0001\u001b[32m\u0002dir\u0001\u001b[0m\u0002\u001b]0;ada@box: /home/ada\u0007 $ ") == "\u001b[32mdir\u001b[0m $ ", "markers and the title")
+            && Expect(PromptTemplate.ShellPrompt("top\nnext\r\n> \r") == "top\r\nnext\r\n> \r", "line breaks")
+            && Expect(PromptTemplate.ShellPrompt("\u001b]4;1;rgb:ff/00/00\u0007> \u001b") == "\u001b]4;1;rgb:ff/00/00\u0007> ", "a color OSC stays, and an ESC left open goes");
+
+    // The shell's prompt shows from the step after the scenario set one, masked and counted as output is, and the
+    // outputs file keeps it masked. Before then, settings.prompt shows, and the outputs file keeps none.
+    internal static bool ShellPromptComposes()
+    {
+        static (string Text, List<RecordedStep> Recorded, GenerateOptions Options, SecretMasker Masker) Compose(bool on)
+        {
+            var scenario = ParseScenario($"settings:\n  prompt: \"tpl $ \"\n  shell-prompt: {(on ? "true" : "false")}\n  end-prompt: true\n  mask: [secret]\n  typing-speed: 0.001\n  typing-jitter: 0\nsteps:\n  - echo one\n  - echo two\n");
+            var masker = SecretMasker.ForScenario(scenario, null)!;
+            var drawn = new Queue<string?>([null, "\u001b[32msecret\u001b[0m\n> ", "end > "]);
+            var recorded = new List<RecordedStep>();
+            var options = new GenerateOptions { LogRunning = false, Masker = masker, Record = recorded, ShellPrompt = () => drawn.Dequeue() };
+            var (events, _) = GenerateAsync(scenario, options, step => Task.FromResult(CommandExecution.FromPipeStream("out\n", "", 0, [new PipeStreamChunk(TimeSpan.Zero, false, "out\n")]))).GetAwaiter().GetResult();
+            return (string.Concat(events.Select(static ev => ev.HasUtf8Output ? Encoding.UTF8.GetString(ev.Utf8Output.Span) : ev.Data)), recorded, options, masker);
+        }
+
+        var (text, recorded, options, masker) = Compose(on: true);
+        var (offText, offRecorded, offOptions, _) = Compose(on: false);
+        return Expect(text.Contains("tpl $ echo one", StringComparison.Ordinal) && text.Contains("\u001b[32m******\u001b[0m\r\n> echo two", StringComparison.Ordinal) && text.Contains("end > ", StringComparison.Ordinal), Show(text))
+            && Expect(recorded[0].Prompt is null && recorded[1].Prompt == "\u001b[32m******\u001b[0m\r\n> " && options.EndShellPrompt == "end > ", $"recorded: {Show(recorded[1].Prompt)}, {Show(options.EndShellPrompt)}")
+            && Expect(masker.Summary() is not null, "the masked word was only in a prompt, and was not counted")
+            && Expect(offText.Contains("tpl $ echo two", StringComparison.Ordinal) && offRecorded.TrueForAll(static step => step.Prompt is null) && offOptions.EndShellPrompt is null, $"shell-prompt off: {Show(offText)}");
+    }
+
+    // The outputs file keeps each step's prompt and the closing one, and a replay draws them while shell-prompt is on.
+    internal static bool ShellPromptReplays()
+    {
+        var outputs = new StepOutputs
+        {
+            Scenetake = "test",
+            Os = "linux",
+            Shell = "bash",
+            Width = 40,
+            Height = 8,
+            EndPrompt = "end > ",
+            Steps =
+            [
+                RecordedStep.Pipe("echo one", 0, [new PipeStreamChunk(TimeSpan.Zero, false, "one\n")]),
+                RecordedStep.Pipe("echo two", 0, [], prompt: "\u001b[32mapp\u001b[0m > "),
+            ],
+        };
+        using var stream = new MemoryStream();
+        outputs.Write(stream);
+        var json = Encoding.UTF8.GetString(stream.ToArray());
+        var parsed = StepOutputs.Parse(json);
+        if (!Expect(parsed.EndPrompt == "end > " && parsed.Steps[0].Prompt is null && parsed.Steps[1].Prompt == "\u001b[32mapp\u001b[0m > ", $"the prompts did not round-trip: {json}"))
+            return false;
+
+        const string yaml = "width: 40\nheight: 8\nsettings:\n  typing-speed: 0.01\n  typing-jitter: 0\n  prompt: \"tpl $ \"\n  shell-prompt: true\n  end-prompt: true\nsteps:\n  - echo one\n  - echo two\n";
+        var on = CastOutput(Encoding.UTF8.GetString(PlaygroundRender.RenderScenario(yaml, parsed, new PlaygroundOptions(), renderSvg: false).Cast!));
+        var off = CastOutput(Encoding.UTF8.GetString(PlaygroundRender.RenderScenario(yaml.Replace("shell-prompt: true", "shell-prompt: false", StringComparison.Ordinal), parsed, new PlaygroundOptions(), renderSvg: false).Cast!));
+        return Expect(on.Contains("tpl $ echo one", StringComparison.Ordinal) && on.Contains("\u001b[32mapp\u001b[0m > echo two", StringComparison.Ordinal) && on.Contains("end > ", StringComparison.Ordinal), Show(on))
+            && Expect(off.Contains("tpl $ echo two", StringComparison.Ordinal) && !off.Contains("end > ", StringComparison.Ordinal), $"shell-prompt off: {Show(off)}");
     }
 
     // dash writes a quote as '"'"' and a line break inside the quotes; export -p lists the exported names again.
@@ -1275,6 +1397,119 @@ internal static class ShellStateCases
             File.Delete(fixture);
         }
     }
+
+    // Records a fixture with --save-outputs, then replays the outputs file. Text is the cast's output with its escapes.
+    private static (bool Ran, string Stderr, string Text, string Outputs, bool ReplaySame) RecordAndReplay(string bin, string repoRoot, string fixtureName)
+    {
+        var stem = Path.Combine(Path.GetTempPath(), $"scenetake-shell-prompt-{Guid.NewGuid():N}");
+        var outputs = stem + ".outputs.json";
+        try
+        {
+            var fixture = Path.Combine("tests", "fixtures", fixtureName);
+            var (recordExit, recordStderr) = RunBinary(bin, repoRoot, ["--save-outputs", outputs, fixture, stem]);
+            var recorded = File.Exists(stem + ".cast") ? File.ReadAllBytes(stem + ".cast") : [];
+            var (replayExit, replayStderr) = RunBinary(bin, repoRoot, ["--replay", outputs, fixture, stem + "-replay"]);
+            var replayed = File.Exists(stem + "-replay.cast") ? File.ReadAllBytes(stem + "-replay.cast") : [];
+            return (recordExit == 0 && replayExit == 0, $"{recordStderr}\n{replayStderr}", CastOutput(Encoding.UTF8.GetString(recorded)),
+                File.Exists(outputs) ? File.ReadAllText(outputs) : "", recorded.Length > 0 && recorded.AsSpan().SequenceEqual(replayed));
+        }
+        finally
+        {
+            foreach (var file in new[] { stem + ".cast", stem + "-replay.cast", outputs })
+                File.Delete(file);
+        }
+    }
+
+    // A bash older than 4.4, macOS's /bin/bash, cannot expand PS1: it says so once, and settings.prompt shows.
+    internal static bool IntegrationBashShellPrompt(string repoRoot)
+    {
+        if (!TryGetBinary(out var bin))
+            return true;
+
+        var run = RecordAndReplay(bin, repoRoot, "shell-state-bash-shell-prompt.yaml");
+        var text = run.Text;
+        if (!Expect(run.Ran && run.ReplaySame, $"the record or the replay failed, or the replay drew other prompts:\n{run.Stderr}")
+            || !Expect(!text.Contains("__scenetake", StringComparison.Ordinal), $"scenetake's own names show: {Show(text)}"))
+            return false;
+
+        if (run.Stderr.Contains("draws PS1 with bash 4.4 or later", StringComparison.Ordinal))
+        {
+            return Expect(Regex.Matches(run.Stderr, "draws PS1 with bash 4.4").Count == 1, $"the warning shows more than once: {run.Stderr}")
+                && Expect(text.Contains("tpl $ echo fourth", StringComparison.Ordinal) && text.EndsWith("tpl $ ", StringComparison.Ordinal), Show(text));
+        }
+
+        var masked = new string('*', "masked-word".Length);
+        string Prompt(string folder, int status) => $"\u001b[32m{folder}\u001b[0m [{status}] {masked} > ";
+        return Expect(text.Contains("tpl $ echo first", StringComparison.Ordinal), $"the prompt before PS1 is set: {Show(text)}")
+            && Expect(text.Contains(Prompt("tests", 0) + "echo second", StringComparison.Ordinal), $"the PS1 of a show: none step: {Show(text)}")
+            && Expect(text.Contains(Prompt("fixtures", 1) + "echo third", StringComparison.Ordinal), $"the folder and $? of a failed step: {Show(text)}")
+            && Expect(text.Contains(Prompt("fixtures", 0) + "n=0;", StringComparison.Ordinal), $"a step stopped by timeout changed the prompt: {Show(text)}")
+            && Expect(text.Contains("pc1 > echo fourth", StringComparison.Ordinal) && text.EndsWith("pc2 > ", StringComparison.Ordinal), $"PROMPT_COMMAND and what it changed: {Show(text)}")
+            && Expect(run.Outputs.Contains($"{masked} > \"", StringComparison.Ordinal) && !run.Outputs.Contains("masked-word", StringComparison.Ordinal)
+                && run.Outputs.Contains("\"endPrompt\": \"pc2 > \"", StringComparison.Ordinal), $"the outputs file: {run.Outputs}");
+    }
+
+    internal static bool IntegrationZshShellPrompt(string repoRoot)
+    {
+        if (!TryGetBinary(out var bin))
+            return true;
+        if (OperatingSystem.IsWindows() || !IsOnPath("zsh"))
+        {
+            Skip.Test("zsh is not on PATH");
+            return true;
+        }
+
+        var run = RecordAndReplay(bin, repoRoot, "shell-state-zsh-shell-prompt.yaml");
+        var text = run.Text;
+        return Expect(run.Ran && run.ReplaySame, $"the record or the replay failed, or the replay drew other prompts:\n{run.Stderr}")
+            && Expect(text.Contains("tpl $ echo first", StringComparison.Ordinal), $"the prompt before PS1 is set: {Show(text)}")
+            && Expect(text.Contains("\u001b[32mtests\u001b[39m [0] > echo second", StringComparison.Ordinal), $"the PS1 of a show: none step: {Show(text)}")
+            && Expect(text.Contains("\u001b[32mfixtures\u001b[39m [1] > echo third", StringComparison.Ordinal), $"the folder and $? of a failed step: {Show(text)}")
+            && Expect(text.Contains("fixtures (main) > echo fourth", StringComparison.Ordinal), $"prompt_subst in the shell that set it: {Show(text)}")
+            && Expect(text.Contains("fixtures (main) > echo fifth", StringComparison.Ordinal), $"prompt_subst in the next shell: {Show(text)}")
+            && Expect(text.Contains("st=3 > echo sixth", StringComparison.Ordinal) && text.EndsWith("st=0 > ", StringComparison.Ordinal), $"precmd and $?: {Show(text)}")
+            && Expect(!text.Contains("__scenetake", StringComparison.Ordinal), $"scenetake's own names show: {Show(text)}");
+    }
+
+    internal static bool IntegrationPowerShellShellPrompt(string repoRoot)
+    {
+        if (!TryGetBinary(out var bin))
+            return true;
+        if (!IsOnPath("pwsh"))
+        {
+            Skip.Test("pwsh is not on PATH");
+            return true;
+        }
+
+        var run = RecordAndReplay(bin, repoRoot, "shell-state-pwsh-shell-prompt.yaml");
+        return Expect(run.Ran && run.ReplaySame, $"the record or the replay failed, or the replay drew other prompts:\n{run.Stderr}")
+            && Expect(run.Text.Contains("\u001b[92m[tests]\u001b[0m ok=True > Write-Output second", StringComparison.Ordinal), $"Write-Host's color: {Show(run.Text)}")
+            && PowerShellPromptShown(StripEscapes(run.Text), run.Stderr);
+    }
+
+    internal static bool IntegrationWindowsPowerShellShellPrompt(string repoRoot)
+    {
+        if (!TryGetBinary(out var bin))
+            return true;
+        if (!OperatingSystem.IsWindows() || !IsOnPath("powershell"))
+        {
+            Skip.Test("Windows PowerShell is not on PATH");
+            return true;
+        }
+
+        return RunInWindowsPowerShell(bin, repoRoot, "shell-state-pwsh-shell-prompt.yaml", null) is { } run
+            && Expect(run.ExitCode == 0, $"exit {run.ExitCode}\n{run.Stderr}")
+            && PowerShellPromptShown(run.Text, run.Stderr);
+    }
+
+    // What shell-state-pwsh-shell-prompt.yaml shows in either PowerShell, without escapes.
+    private static bool PowerShellPromptShown(string text, string stderr) =>
+        Expect(text.Contains("tpl > Write-Output first", StringComparison.Ordinal), $"the prompt before the prompt function is set: {Show(text)}")
+            && Expect(text.Contains("[tests] ok=True > Write-Output second", StringComparison.Ordinal), $"the prompt function of a show: none step: {Show(text)}")
+            && Expect(text.Contains("[fixtures] ok=False > Write-Output third", StringComparison.Ordinal), $"the location and $? of a failed step: {Show(text)}")
+            && Expect(text.Contains("tpl > Write-Output fourth", StringComparison.Ordinal) && text.TrimEnd().EndsWith("tpl >", StringComparison.Ordinal), $"a prompt function that throws: {Show(text)}")
+            && Expect(Regex.Matches(stderr, "Warning: the prompt function failed: broken prompt").Count == 1, $"the warning, once: {stderr}")
+            && Expect(!text.Contains("__scenetake", StringComparison.Ordinal), $"scenetake's own names show: {Show(text)}");
 
     // SCENETAKE_TEST_INHERITED is in the shell's environment from the start, so only the removed-variable list of the
     // state keeps it away from the next step. DEMO, which a step set, is simply left out of the state.

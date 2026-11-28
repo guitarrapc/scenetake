@@ -45,6 +45,31 @@ internal static class FolderPaths
         return forms;
     }
 
+    /// <summary>
+    /// <paramref name="folder"/> written from <c>~</c>, as a prompt writes a folder under the home folder: <c>~/src/demo</c>.
+    /// None for the home folder itself, whose <c>~</c> stands for every path under it, or for a folder outside it.
+    /// </summary>
+    /// <param name="homes">The folders that are home: HOME, which bash and zsh take, and the user profile, which PowerShell takes on Windows.</param>
+    internal static List<string> HomeForms(string? folder, IEnumerable<string?> homes)
+    {
+        var forms = new List<string>();
+        var folderForms = Forms(folder);
+        foreach (var home in homes)
+        {
+            foreach (var homeForm in Forms(home))
+            {
+                foreach (var folderForm in folderForms)
+                {
+                    var relative = Path.GetRelativePath(homeForm, folderForm);
+                    if (relative != "." && !relative.StartsWith("..", StringComparison.Ordinal) && !Path.IsPathRooted(relative))
+                        AddNew(forms, "~/" + relative.Replace('\\', '/'));
+                }
+            }
+        }
+
+        return forms;
+    }
+
     /// <summary>Adds <paramref name="form"/> unless the list has it, case ignored: the masker ignores case too.</summary>
     private static void AddNew(List<string> forms, string? form)
     {

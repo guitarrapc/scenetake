@@ -1125,6 +1125,18 @@ internal sealed class PromptTemplate(PromptPart[] parts)
     }
 
     /// <summary>
+    /// A prompt the shell drew (settings.shell-prompt) as the cast shows it: without the markers that tell a line
+    /// editor which bytes take no columns (bash's <c>\[</c> and <c>\]</c> as \x01 and \x02), without the OSC sequences
+    /// the cast leaves out, such as a window title that names the folder, and with each line break as <c>\r\n</c>,
+    /// since the shell writes the prompt to a terminal that turns <c>\n</c> into both. A lone <c>\r</c> stays.
+    /// </summary>
+    internal static string ShellPrompt(string drawn)
+    {
+        var text = CastOscFilter.RemovePrivateSequences(drawn.Replace("\u0001", "", StringComparison.Ordinal).Replace("\u0002", "", StringComparison.Ordinal));
+        return text.Replace("\r\n", "\n", StringComparison.Ordinal).Replace("\n", "\r\n", StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// How <c>{dir}</c> shows a folder, as bash's <c>\W</c> does: its last name, <c>~</c> for the home folder, and
     /// <c>/</c> for the root. The rest of the path is never shown, so a recording names no user folder. Git Bash
     /// reports <c>/c/Users/name</c> for <c>C:\Users\name</c>, which is the home folder too.

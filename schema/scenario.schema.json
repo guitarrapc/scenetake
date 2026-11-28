@@ -220,6 +220,11 @@
           "type": "boolean",
           "default": false
         },
+        "shell-prompt": {
+          "description": "Show the shell's own prompt once the scenario sets one: PS1 or PROMPT_COMMAND in bash, PS1 or precmd in zsh, a prompt function in PowerShell. Until then, and in other shells, prompt shows.",
+          "type": "boolean",
+          "default": false
+        },
         "execution-duration": {
           "description": "Seconds after Enter before the output appears, at least.",
           "$ref": "#/definitions/seconds",

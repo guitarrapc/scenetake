@@ -116,6 +116,7 @@ Defaults for all steps. Map-form steps may override individual keys.
 | `pre-delay` | `0.2` | Pause before typing a step, with its prompt on the screen. See Pauses below. |
 | `post-delay` | `0.5` | Pause after output before the next step's comment and prompt |
 | `end-prompt` | `false` | `true` ends the recording with the prompt after the last output, as a terminal does. By default it ends on the last output. See Pauses below. |
+| `shell-prompt` | `false` | `true` shows the shell's own prompt once the scenario sets one: a PS1, a zsh precmd, or a PowerShell `prompt` function. bash, zsh, and PowerShell. See Shell prompt below. |
 | `execution-duration` | `0.05` | Minimum cast wait after Enter before step output appears (seconds). With default pipe emit, all output is written at `command_start + execution-duration`. |
 | `stream-output` | `false` | When `true`, emit pipe/PTY output as timed chunks using wall-clock capture instead of a single instant blob |
 | `max-duration` | — | When set, enables stream emit and linearly scales the step output timeline to this ceiling (seconds) |
@@ -143,7 +144,7 @@ From one step's output to the next step's typing:
 
 ### Prompt
 
-`prompt` is the text before each typed command, and at the end of the recording with `end-prompt: true`. It is text, as before, or a list of parts, each text or a mapping with `text` and an optional `color`. A color is a style as `highlight` takes one ([spec_highlight.md](spec_highlight.md)), and each colored part ends with a reset.
+`prompt` is the text before each typed command, and at the end of the recording with `end-prompt: true`. It is text, as before, or a list of parts, each text or a mapping with `text` and an optional `color`. A color is a style as `highlight` takes one ([spec_highlight.md](spec_highlight.md)), and each colored part ends with a reset. With `shell-prompt: true`, the shell's own prompt takes its place once the scenario sets one ([Shell prompt](#shell-prompt)).
 
 ```yaml
 settings:
@@ -165,6 +166,36 @@ settings:
 - **The prompt is masked** as the recording's other text is, without counting it again at each step.
 - **Width.** A prompt whose width changes from step to step starts each command at another column. On Windows a PTY step starts where the recording's cursor is, so ConPTY still draws it in place. A `keep-output` step whose PTY output would start elsewhere than in the earlier cast shows its new output (Recording again below).
 - **Why `{dir}` and no other placeholder.** Since steps carry their folder, a prompt that shows it makes `cd my-app` visible as it would be in a terminal. A user name or a host name would name the person who recorded the demo, which scenetake keeps out of a published cast (`spec_cast.md`), and the prompt's text can name a fixed one.
+
+### Shell prompt
+
+`shell-prompt: true` shows the shell's own prompt in place of `prompt`, for a demo of a prompt: a PS1, a prompt theme, or a PowerShell `prompt` function.
+
+```yaml
+shell: bash
+settings:
+  prompt: "$ "              # until the scenario sets a prompt of its own
+  shell-prompt: true
+pre:
+  - PS1='\[\e[32m\]\w\[\e[0m\] [$?] \$ '
+steps:
+  - cd src                  # the next prompt shows the folder
+  - "false"                 # the next prompt shows [1]
+```
+
+- **From when.** From the command after the scenario sets a prompt of its own: in bash a PS1 or a PROMPT_COMMAND, in zsh a PS1 (`PROMPT`) or a precmd hook (`precmd`, `precmd_functions`), and in PowerShell a `prompt` function, that differs from what the login files left. Until then `prompt` shows. It may be set in `pre`, in a shown step, or in a `show: none` step, and a later change shows from the next prompt on.
+- **How it is drawn.** Each command ends by drawing the prompt in its own shell, as a terminal draws it when a command ends. bash runs PROMPT_COMMAND and expands PS1 (`${PS1@P}`). zsh runs the precmd hooks and expands PS1 with the scenario's prompt options. PowerShell calls `prompt`. `$?` is what the command left, so a prompt that shows the exit status shows the step's own. What they change, such as a variable that PROMPT_COMMAND sets, carries to the next command, as between two commands in a terminal. `COLUMNS` is the scenario's `width` when the shell has none. What they print besides the prompt is dropped.
+- **PowerShell** shows what `Write-Host` wrote, with the colors it was given, then the function's first output, or `PS>` without one, as the host does. A prompt function that fails warns once, `Warning: the prompt function failed: ...`, and `prompt` shows.
+- **It follows the shell state.** A step stopped by `timeout`, a PowerShell step that ends with `throw` or `exit`, a background step, and a `rerun: false` step change the prompt no more than the folder ([Shell state across steps](#shell-state-across-steps)).
+- **What the cast leaves out.** bash's `\[` and `\]` markers, and the OSC sequences that the cast leaves out anyway, such as a window title that names the folder. A line break goes to the start of the next line.
+- **Masking.** The prompt is masked and counted as output is: `\h` shows the computer name as stars with `mask-personal`. `\w` and `%~` write a folder under the home folder from `~`, which `cwd-as` finds too ([Paths in the recording](#paths-in-the-recording)). A prompt that shows only the folder's own name, such as `\W`, shows its real name: `cwd-as` changes whole paths.
+- **Replay and the playground.** The outputs file keeps each step's prompt and the closing one, masked (`prompt`, `endPrompt`, [spec_playground.md](spec_playground.md) → Outputs file), and a replay draws the same prompts while `shell-prompt` is on.
+- **Other shells** (cmd, fish, the sh family) show `prompt`, with a warning. A bash older than 4.4, such as macOS's `/bin/bash` 3.2, has no `@P`: it says so once, and `prompt` shows.
+- **Not drawn:** a right prompt (zsh's `RPROMPT`, a theme's right side), a prompt that a line editor draws by itself (zsh's widgets, PSReadLine), and what a theme fills in later from a background job. bash's traps do not carry, so a theme that times a command from a DEBUG trap shows no time. PowerShell modules do not carry, so a prompt that a module defines, as oh-my-posh and starship do, can fail in later steps. A prompt that shows the time, such as `\t` or `%*`, differs in each recording.
+
+**Why only once the scenario sets one** (2026-11-28). Git Bash's login files set PS1 even in a shell that runs one command, `user@host MINGW64 path` with a window title, while bash and zsh on Linux and macOS have none there. Showing the login files' prompt would make one scenario look different on each machine, and show the author's own setup. As for the shell state, only what the scenario sets counts.
+
+**Why at the end of each command.** A shell that runs one command draws no prompt. Drawn in that shell after the command, the prompt sees what a terminal's prompt sees: the exit status, the folder, and the variables and functions the command left. A shell started for the next step would see only what carries.
 
 ### Output timing (pipe and PTY)
 
@@ -264,7 +295,7 @@ cwd-as: ~/my-app     # pwd prints ~/my-app here, on every machine
 ```
 
 - **`cwd-as` gives what the folder the steps start in shows as**: `cwd`, or the caller's folder without it. It holds with `mask-personal: false` too, since it is the scenario's choice and no detail of the machine. The prompt's `{dir}` there shows its last name. A folder above it, the home folder included, shows as it is. A blank `cwd-as`, or one with a line break, is an error found before anything runs.
-- **Every spelling.** A Windows folder is found in each way a command writes it: `C:\Users\Ada\demo`, `C:/Users/Ada/demo` (Git Bash's `pwd -W`, Node.js), Git Bash's `/c/Users/Ada/demo`, and JSON's `C:\\Users\\Ada\\demo`. The stand-in's `/` and `\` are written as that spelling writes them: `cwd-as: ~/my-app` shows as `~\my-app` where PowerShell prints the folder, and as `~\\my-app` in JSON. The 8.3 form of the folder, such as `C:\Users\ADALOV~1\demo`, is found too. On Unix, so is the folder with its links resolved, which `pwd` prints when the shell reads the folder from the system: `/private/var/...` for `/var/...` on macOS. Case is ignored, as for the personal details.
+- **Every spelling.** A Windows folder is found in each way a command writes it: `C:\Users\Ada\demo`, `C:/Users/Ada/demo` (Git Bash's `pwd -W`, Node.js), Git Bash's `/c/Users/Ada/demo`, and JSON's `C:\\Users\\Ada\\demo`. The stand-in's `/` and `\` are written as that spelling writes them: `cwd-as: ~/my-app` shows as `~\my-app` where PowerShell prints the folder, and as `~\\my-app` in JSON. The 8.3 form of the folder, such as `C:\Users\ADALOV~1\demo`, is found too. On Unix, so is the folder with its links resolved, which `pwd` prints when the shell reads the folder from the system: `/private/var/...` for `/var/...` on macOS. A folder under the home folder is found from `~` as well, as a prompt writes it: `~/src/demo` (bash's `\w`, zsh's `%~`), and `~\src\demo` in PowerShell. The home folder itself is not: its `~` begins every path under it. Case is ignored, as for the personal details.
 - **Only a whole path.** A path is the folder or a path under it, and it stands apart: no letter, digit, `_`, `-`, `.`, `~`, `/`, or `\` before it, and no name going on after it. For `/work/demo`, `/work/demo2`, `/work/demo.old`, WSL's `/mnt/c/work/demo`, `\\?\C:\work\demo`, and `file:///C:/work/demo` are not the folder, and show as they are. A root folder (`/`, `C:\`) has no stand-in: every path starts with it.
 - **Where.** Wherever masking looks: every step's output, the typed command, comments, and cards. A colored path keeps its colors, and a path split across two reads is found, as a secret is.
 - **A full-screen program keeps the path.** On the alternate screen, where vim, less, and htop draw, a path keeps its width and shows as it is. So does a path that a cursor move cuts.
@@ -517,7 +548,7 @@ Each command, in `pre`, `steps`, and `post`, runs in a shell of its own, as alwa
 
 So `source .venv/bin/activate`, `nvm use 20`, and `. ./env.ps1` work for the steps after them, as in a terminal.
 
-- **Not carried:** shell options (`set -e`, `shopt`, `setopt`), traps, background jobs (`&`), history, the directory stack, and PowerShell modules from `Import-Module`. Variables the shell sets by itself, such as `RANDOM`, `SECONDS`, `PIPESTATUS`, `pipestatus`, `LASTEXITCODE`, and `$Matches`, are not carried either.
+- **Not carried:** shell options (`set -e`, `shopt`, `setopt`), traps, background jobs (`&`), history, the directory stack, and PowerShell modules from `Import-Module`. Variables the shell sets by itself, such as `RANDOM`, `SECONDS`, `PIPESTATUS`, `pipestatus`, `LASTEXITCODE`, and `$Matches`, are not carried either. zsh's prompt options are the exception: `prompt_subst`, `prompt_bang`, and `prompt_percent` carry, because a prompt theme sets `prompt_subst` once and needs it in every later prompt ([Shell prompt](#shell-prompt)). Nothing else reads them in a shell that runs a command.
 - **Only what the commands changed.** Each command starts as a fresh shell, with its login files. The state is the difference between that fresh shell and the shell when the command ended, added up over the commands. What the login files set is never carried, so it cannot pile up.
 - **A failed command still carries.** As in a terminal, `cd app && false` leaves the next step in `app`. A command stopped by `timeout` carries nothing: what it changed before the stop is dropped, so a stop never leaves the next step somewhere unplanned. A command that replaces its shell (`exec`) or sets its own EXIT trap (bash, zsh, the sh family) also carries nothing. So does a PowerShell command that ends with a terminating error, such as `throw` or an error under `-ErrorAction Stop`, or with `exit` (How it works, below).
 - **A background command** gets the state so far and carries none back: it has not ended when the next step starts.
@@ -777,6 +808,9 @@ Template commands must run in the selected shell. `scenetake init --shell bash|p
 - **Turning expansion on for a step's alias turned it on for the login files' aliases too** (2026-11-20). In a Git Bash terminal, whose `TERM` is `xterm-256color`, the login files also define `node` as `winpty node.exe`. After a step defined any alias, `node` in a later pipe or background step went through winpty, which needs a console, and failed with `stdin is not a tty`: a background `node` server never became ready. The login files' aliases are now removed whenever expansion is on, so only the scenario's aliases expand.
 - **Kept events land at whole milliseconds from the step's start** (2026-11-18). The cast writer carries rounding error from interval to interval, so each interval is the difference of two rounded absolute times. Placing the earlier events at their earlier offsets in whole milliseconds, and going on from the earlier step's end, gives the earlier file byte for byte. Offsets in fractions of a millisecond moved intervals by 1 ms.
 - **A step is compared while it is composed, not after all of them** (2026-11-19). Comparing the finished recording left the later steps laid out on output the cast did not show: a `name` comment took its line break from the discarded output, and ConPTY started the next step at the discarded output's row, which drew it on the wrong line and reported it as changed.
+- **A shell that runs a command has no prompt of its own** (2026-11-28). bash leaves out a PS1 that comes from the environment when it is not interactive, and zsh sets none, so on Linux both had an empty PS1 with `-lc`. Git Bash's login files set the Git for Windows prompt anyway. So `shell-prompt` waits for the scenario's own prompt, and a prompt is a change from the login files, as the state is.
+- **`builtin local name=$value` splits the value** (2026-11-28). With `builtin` before it, bash reads `local` as a command, whose words are split at spaces, so a PS1 with a space became several names and an error in the recording. The values are assigned on lines of their own.
+- **`Write-Host` gives each message the console's colors** (2026-11-28). A message without `-ForegroundColor` carried the host's own gray and black, so the first prompts drew every part in those colors. Only a color that differs from the host's own is one the prompt chose. `Write-Error -ErrorAction Ignore` right before the call makes `$?` false inside the prompt function, as the host leaves it after a failed command.
 - **Each step's output is filtered as it is composed** (2026-11-19). Filtering only the finished recording let an escape sequence left open at the end of a step reach the next step's text, and the steps after it were laid out on events the cast would not hold. The closing prompt now depends on whether a step was shown, not on what it printed, so a first step that leaves nothing in the cast does not change it.
 - **A replay takes the masked `run` from the outputs file** (2026-11-19). A secret that `pre` exported is known only while recording, so a replay that masked by itself hashed the plain text and did not find the step. The file holds `maskedRun` only when masking changed the text. The replay types that text too: masking the YAML's `run` again typed the secret in clear.
 - **The outputs file is not merged with the earlier one** (2026-11-19). Keeping the earlier entries of unchanged steps was tried, so that a replay would give the cast. A file left from another recording then put old output, or text masked since, back into the new file, entries are found by other rules than cast steps, and a replay after a YAML edit still differed by 1 ms from the kept events. A recording that writes the file now comes from one run.

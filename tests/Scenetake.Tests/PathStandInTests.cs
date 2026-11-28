@@ -12,6 +12,9 @@ public sealed class PathStandInTests
     public async Task FormsOfAFolder() => await Assert.That(PathStandInCliCases.FormsOfAFolder()).IsTrue();
 
     [Test]
+    public async Task HomeFormsOfAFolder() => await Assert.That(PathStandInCliCases.HomeFormsOfAFolder()).IsTrue();
+
+    [Test]
     public async Task IntegrationRecordingShowsStandIns() => await Assert.That(PathStandInCliCases.IntegrationRecordingShowsStandIns(TestEnv.Binary)).IsTrue();
 }
 
@@ -45,6 +48,29 @@ internal static class PathStandInCliCases
         finally
         {
             Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    // The forms from ~ that a prompt writes: one for a folder under a home folder, none for the home folder itself, whose
+    // ~ stands for every path, and none for a folder outside it.
+    internal static bool HomeFormsOfAFolder()
+    {
+        var home = Directory.CreateTempSubdirectory("scenetake-home-").FullName;
+        var outside = Directory.CreateTempSubdirectory("scenetake-outside-").FullName;
+        try
+        {
+            var demo = Path.Combine(home, "src", "demo");
+            Directory.CreateDirectory(demo);
+            var forms = FolderPaths.HomeForms(demo, [null, "", home, home + Path.DirectorySeparatorChar]);
+            return Check(forms is ["~/src/demo"], $"under home: {string.Join(", ", forms)}")
+                & Check(FolderPaths.HomeForms(home, [home]).Count == 0, "the home folder")
+                & Check(FolderPaths.HomeForms(outside, [home]).Count == 0, "a folder outside home")
+                & Check(FolderPaths.HomeForms(demo, [outside]).Count == 0, "another home");
+        }
+        finally
+        {
+            Directory.Delete(home, recursive: true);
+            Directory.Delete(outside, recursive: true);
         }
     }
 

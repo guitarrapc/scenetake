@@ -1,0 +1,32 @@
+# settings.shell-prompt draws bash's own prompt once the scenario sets one (spec_scenario.md → Prompt). The first step
+# shows settings.prompt, since PS1 is still what the login files left. A PS1 set in a show: none step, $? of the last
+# command, the folder, and PROMPT_COMMAND then show in the next prompt. A step stopped by timeout changes nothing, and
+# the masked word stays masked in the outputs file. Run from the repository root by ShellStateTests.
+title: "shell prompt (bash)"
+width: 60
+height: 12
+shell: bash
+settings:
+  typing-speed: 0.001
+  typing-jitter: 0
+  pre-delay: 0
+  post-delay: 0
+  end-prompt: true
+  shell-prompt: true
+  prompt: "tpl $ "
+  mask:
+    - "masked-word"
+pre:
+  - cd tests
+steps:
+  - echo first
+  - run: PS1='\[\e[32m\]\W\[\e[0m\] [$?] masked-word > '
+    show: none
+  - echo second
+  - run: cd fixtures && false
+    continue-on-error: true
+  - echo third
+  - run: PS1='stopped > '; sleep 5
+    timeout: 1
+  - n=0; pc() { n=$((n + 1)); PS1="pc$n > "; }; PROMPT_COMMAND=pc
+  - echo fourth

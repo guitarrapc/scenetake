@@ -2228,6 +2228,18 @@ internal static class CastOscFilter
         events.AddRange(filtered);
     }
 
+    /// <summary>The OSC filter over one text that stands alone, such as a prompt the shell drew. What it leaves open shows nothing, and is dropped.</summary>
+    internal static string RemovePrivateSequences(string text)
+    {
+        if (!text.Contains("\u001b]", StringComparison.Ordinal) && !text.EndsWith('\u001b'))
+            return text;
+
+        var state = State.Ground;
+        var output = new ArrayBufferWriter<byte>();
+        Scan(Encoding.UTF8.GetBytes(text), ref state, new List<byte>(16), output);
+        return Encoding.UTF8.GetString(output.WrittenSpan);
+    }
+
     private static bool EndsWithEscape(CastEvent ev) =>
         ev.HasUtf8Output ? !ev.Utf8Output.IsEmpty && ev.Utf8Output.Span[^1] == 0x1B : ev.Data.EndsWith('\u001b');
 

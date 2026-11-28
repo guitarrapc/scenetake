@@ -832,8 +832,12 @@ Console.Error.WriteLine($"Using shell: {shell.DisplayName}");
 
 // What each command leaves in its shell (the folder, variables, functions, aliases) goes on to the next one, from
 // pre through the steps to post, as in a terminal. The sh family carries the folder and variables only, and other
-// shells than bash, zsh, and PowerShell start each command afresh.
-using var shellState = ShellState.Create(shell.FileName, IsPowerShellLaunch(shell));
+// shells than bash, zsh, and PowerShell start each command afresh. With settings.shell-prompt, each command ends by
+// drawing the shell's own prompt for the next one.
+var shellPromptOn = scenario.Settings?.ShellPrompt == true;
+using var shellState = ShellState.Create(shell.FileName, IsPowerShellLaunch(shell), shellPromptOn ? scenarioWidth : null);
+if (shellPromptOn && shellState?.DrawsPrompt != true)
+    Console.Error.WriteLine($"Warning: settings.shell-prompt draws the prompt of bash, zsh, and PowerShell: in {shell.DisplayName} the steps show settings.prompt.");
 if ((scenario.Pre?.Count ?? 0) + (scenario.Steps?.Count ?? 0) + (scenario.Post?.Count ?? 0) > 1)
 {
     if (shellState is null)
@@ -981,6 +985,7 @@ var generateOptions = new GenerateOptions
     Fit = renderSettings.Fit,
     Crop = renderSettings.Crop,
     PromptFolder = PromptFolderName,
+    ShellPrompt = shellState is null ? null : () => shellState.Prompt,
     Record = recordedSteps,
     Masker = masker,
     SavedKeys = savedKeys,
@@ -1063,6 +1068,7 @@ if (recordedSteps is not null)
             Height = scenarioHeight,
             Steps = recordedSteps,
             EndFolder = generateOptions.EndFolder,
+            EndPrompt = generateOptions.EndShellPrompt,
         }.WriteFile(outputsFilePath);
     }
     catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -2987,6 +2993,9 @@ static List<PathStandIn> CollectPathStandIns(Scenario scenario, string scenarioP
 
         foreach (var form in FolderPaths.Forms(cwd))
             paths.Add(new PathStandIn(form, cwdAs.Trim()));
+        // A prompt writes a folder under the home folder from ~, as bash's \w and zsh's %~ do.
+        foreach (var form in FolderPaths.HomeForms(cwd, [Environment.GetEnvironmentVariable("HOME"), Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)]))
+            paths.Add(new PathStandIn(form, cwdAs.Trim()));
     }
 
     return paths;
@@ -3284,6 +3293,7 @@ static string CreateInitialScenarioYaml(string? shell)
       pre-delay: {DefaultPreDelay}           # Pause before typing each step.
       post-delay: {DefaultPostDelay}          # Pause after output before the next step.
       # end-prompt: false          # When true, end with the prompt after the last output, as a terminal does.
+      # shell-prompt: false        # When true, show the shell's own prompt once a step sets one, such as PS1.
       execution-duration: {DefaultExecutionDuration} # Optional cast wait after command execution.
       stderr-color: {DefaultStderrColorSpec}       # Applied only when stderr has no ANSI SGR. "none" keeps it plain (git and many tools print progress to stderr).
       # stream-output: false         # When true, replay captured chunk times in the cast.

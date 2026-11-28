@@ -66,6 +66,7 @@ The playground is a .NET WebAssembly build of the same source files that the CLI
 | `shell` | The resolved shell's file name, the same value as the cast's `env.SHELL` ([spec_cast.md](spec_cast.md) → Header) |
 | `width`, `height` | The terminal size of the recording |
 | `endFolder` | Only when the prompt shows `{dir}`: the folder the last step left, which the closing prompt shows with `end-prompt: true`, masked as it showed it. It is kept without `end-prompt` too, so a replay may turn it on ([spec_scenario.md](spec_scenario.md) → Prompt) |
+| `endPrompt` | Only with `shell-prompt: true`, once the scenario has set a prompt: the prompt the shell drew after the last step, masked, as `endFolder` is kept ([spec_scenario.md](spec_scenario.md) → Shell prompt) |
 | `steps` | One entry for each step that ran, in order |
 
 Each step entry:
@@ -77,6 +78,7 @@ Each step entry:
 | `kind` | `pipe`, `pty`, or `interactive` |
 | `exitCode` | The command's exit code |
 | `folder` | Only when the prompt shows `{dir}`: the folder name its prompt showed, masked as it showed it. A replay and the playground draw the same prompt from it, and show `~` for a file without it |
+| `prompt` | Only with `shell-prompt: true`, once the scenario has set a prompt: the prompt the shell drew before the step, as the cast shows it, masked. A replay and the playground draw it while `shell-prompt` is on, and `settings.prompt` for a step without it |
 | `cursor` | Non-interactive PTY steps on Windows only: the start cursor that scenetake reported to ConPTY, as `row` and `column` ([spec_pty.md](spec_pty.md)) |
 | `chunks` | Output in arrival order (below) |
 | `end` | Interactive steps only: where the step's output ends, in seconds since the command started |

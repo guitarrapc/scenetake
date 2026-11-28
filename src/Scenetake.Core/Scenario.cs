@@ -981,6 +981,12 @@ public partial class ScenarioSettings
     /// <summary>Whether the recording ends with the closing prompt. Without it, it ends on the last output.</summary>
     public bool? EndPrompt { get; set; }
 
+    /// <summary>
+    /// Whether each step shows the shell's own prompt once the scenario sets one: PS1, a zsh precmd, or a PowerShell
+    /// prompt function. Until then, and in other shells, <see cref="Prompt"/> shows.
+    /// </summary>
+    public bool? ShellPrompt { get; set; }
+
     public double? ExecutionDuration { get; set; }
     public double? SilenceThreshold { get; set; }
     public double? MaxIdle { get; set; }

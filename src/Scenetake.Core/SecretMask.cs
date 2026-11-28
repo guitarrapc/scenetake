@@ -81,13 +81,19 @@ internal sealed class SecretMasker
     /// <summary>
     /// Each way a command writes <paramref name="path"/>'s folder, with its stand-in written the same way. A Windows
     /// folder is <c>C:\Users\ada</c>, <c>C:/Users/ada</c> (Git Bash's <c>pwd -W</c>, Node.js), Git Bash's
-    /// <c>/c/Users/ada</c>, and <c>C:\\Users\\ada</c> in JSON. A Unix folder is its path. A root folder has none: every
-    /// path starts with it.
+    /// <c>/c/Users/ada</c>, and <c>C:\\Users\\ada</c> in JSON. A Unix folder is its path. A folder from <c>~</c> is
+    /// <c>~/demo</c>, and <c>~\demo</c> as a PowerShell prompt writes it. A root folder has none: every path starts with it.
     /// </summary>
     private static void AddSpellings(PathStandIn path, List<string> texts, List<string> standIns, HashSet<string> seen)
     {
         var folder = path.Folder.TrimEnd('/', '\\');
-        if (folder.Length >= 2 && char.IsAsciiLetter(folder[0]) && folder[1] == ':')
+        if (folder.Length > 2 && folder[0] == '~' && folder[1] is '/' or '\\')
+        {
+            var slash = folder.Replace('\\', '/');
+            Add(slash, path.StandIn.Replace('\\', '/'));
+            Add(slash.Replace('/', '\\'), path.StandIn.Replace('/', '\\'));
+        }
+        else if (folder.Length >= 2 && char.IsAsciiLetter(folder[0]) && folder[1] == ':')
         {
             if (folder.Length == 2)
                 return;
@@ -1505,10 +1511,11 @@ internal sealed class PersonalDetail(string value, string kind)
 /// <summary>
 /// A folder whose path the recording shows as another text: the folder the steps start in, as <c>cwd-as</c> gives it.
 /// <c>pwd</c>, a stack trace, and an error message then show the same path on every machine. The CLI gives each form
-/// of a folder that a command may print: the long and the short (8.3) name on Windows, and the path with its links
-/// resolved on Unix, which <c>pwd</c> prints when it reads the folder from the system.
+/// of a folder that a command may print: the long and the short (8.3) name on Windows, the path with its links
+/// resolved on Unix, which <c>pwd</c> prints when it reads the folder from the system, and the path from <c>~</c> for a
+/// folder under the home folder, which a prompt writes (bash's <c>\w</c>, zsh's <c>%~</c>).
 /// </summary>
-/// <param name="folder">A full path in the form of the machine that records.</param>
+/// <param name="folder">A full path in the form of the machine that records, or a path that starts with <c>~/</c>.</param>
 /// <param name="standIn">What shows in its place. Its <c>/</c> and <c>\</c> are written as the path's own.</param>
 internal sealed class PathStandIn(string folder, string standIn)
 {

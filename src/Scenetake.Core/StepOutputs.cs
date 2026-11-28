@@ -41,16 +41,22 @@ internal sealed class RecordedStep
     /// </summary>
     internal string? Folder { get; init; }
 
+    /// <summary>
+    /// The prompt the shell drew before the step (settings.shell-prompt), as the cast shows it, masked. Kept only when
+    /// the scenario had set a prompt of its own by then, so a replay draws the same prompt.
+    /// </summary>
+    internal string? Prompt { get; init; }
+
     private static string? ChangedText(string run, string? maskedRun) => maskedRun == run ? null : maskedRun;
 
-    internal static RecordedStep Pipe(string run, int exitCode, IReadOnlyList<PipeStreamChunk> chunks, string? maskedRun = null, string? folder = null) =>
-        new() { Run = run, Kind = RecordedStepKind.Pipe, ExitCode = exitCode, PipeChunks = chunks, MaskedRun = ChangedText(run, maskedRun), Folder = folder };
+    internal static RecordedStep Pipe(string run, int exitCode, IReadOnlyList<PipeStreamChunk> chunks, string? maskedRun = null, string? folder = null, string? prompt = null) =>
+        new() { Run = run, Kind = RecordedStepKind.Pipe, ExitCode = exitCode, PipeChunks = chunks, MaskedRun = ChangedText(run, maskedRun), Folder = folder, Prompt = prompt };
 
-    internal static RecordedStep Pty(string run, int exitCode, (int Row, int Column)? cursor, IReadOnlyList<TimedBytes> chunks, string? maskedRun = null, string? folder = null) =>
-        new() { Run = run, Kind = RecordedStepKind.Pty, ExitCode = exitCode, Cursor = cursor, PtyChunks = chunks, MaskedRun = ChangedText(run, maskedRun), Folder = folder };
+    internal static RecordedStep Pty(string run, int exitCode, (int Row, int Column)? cursor, IReadOnlyList<TimedBytes> chunks, string? maskedRun = null, string? folder = null, string? prompt = null) =>
+        new() { Run = run, Kind = RecordedStepKind.Pty, ExitCode = exitCode, Cursor = cursor, PtyChunks = chunks, MaskedRun = ChangedText(run, maskedRun), Folder = folder, Prompt = prompt };
 
-    internal static RecordedStep Interactive(string run, int exitCode, ComposedPtyOutput output, string? maskedRun = null, string? folder = null) =>
-        new() { Run = run, Kind = RecordedStepKind.Interactive, ExitCode = exitCode, Composed = output, MaskedRun = ChangedText(run, maskedRun), Folder = folder };
+    internal static RecordedStep Interactive(string run, int exitCode, ComposedPtyOutput output, string? maskedRun = null, string? folder = null, string? prompt = null) =>
+        new() { Run = run, Kind = RecordedStepKind.Interactive, ExitCode = exitCode, Composed = output, MaskedRun = ChangedText(run, maskedRun), Folder = folder, Prompt = prompt };
 
     internal static string KindName(RecordedStepKind kind) => kind switch
     {
@@ -81,6 +87,9 @@ internal sealed class StepOutputs
     /// <summary>The folder the closing prompt showed, when the prompt shows the folder (<see cref="RecordedStep.Folder"/>).</summary>
     internal string? EndFolder { get; init; }
 
+    /// <summary>The prompt the shell drew for the closing prompt, when the scenario had set one (<see cref="RecordedStep.Prompt"/>).</summary>
+    internal string? EndPrompt { get; init; }
+
     internal static string CurrentOs =>
         OperatingSystem.IsWindows() ? "windows" : OperatingSystem.IsMacOS() ? "macos" : "linux";
 
@@ -108,6 +117,8 @@ internal sealed class StepOutputs
         writer.WriteNumber("height", Height);
         if (EndFolder is { } endFolder)
             writer.WriteString("endFolder", endFolder);
+        if (EndPrompt is { } endPrompt)
+            writer.WriteString("endPrompt", endPrompt);
         writer.WriteStartArray("steps");
         foreach (var step in Steps)
             WriteStep(writer, step);
@@ -127,6 +138,8 @@ internal sealed class StepOutputs
         writer.WriteNumber("exitCode", step.ExitCode);
         if (step.Folder is { } folder)
             writer.WriteString("folder", folder);
+        if (step.Prompt is { } prompt)
+            writer.WriteString("prompt", prompt);
         if (step.Cursor is { } cursor)
         {
             writer.WriteStartObject("cursor");
@@ -233,6 +246,7 @@ internal sealed class StepOutputs
                 Height = RequireInt(root, "height"),
                 Steps = steps,
                 EndFolder = OptionalString(root, "endFolder"),
+                EndPrompt = OptionalString(root, "endPrompt"),
             };
         }
     }
@@ -242,6 +256,7 @@ internal sealed class StepOutputs
         var run = OptionalString(element, "run") ?? throw new FormatException("an outputs file step has no run");
         var maskedRun = OptionalString(element, "maskedRun");
         var folder = OptionalString(element, "folder");
+        var prompt = OptionalString(element, "prompt");
         var kind = OptionalString(element, "kind") switch
         {
             "pipe" => RecordedStepKind.Pipe,
@@ -274,7 +289,7 @@ internal sealed class StepOutputs
                     }
                 }
 
-                return RecordedStep.Pipe(run, exitCode, pipeChunks, maskedRun, folder);
+                return RecordedStep.Pipe(run, exitCode, pipeChunks, maskedRun, folder, prompt);
             }
 
             case RecordedStepKind.Pty:
@@ -286,7 +301,7 @@ internal sealed class StepOutputs
                         ptyChunks.Add(new TimedBytes(TimeSpan.FromTicks(chunk.GetProperty("ticks").GetInt64()), chunk.GetProperty("data").GetBytesFromBase64()));
                 }
 
-                return RecordedStep.Pty(run, exitCode, cursor, ptyChunks, maskedRun, folder);
+                return RecordedStep.Pty(run, exitCode, cursor, ptyChunks, maskedRun, folder, prompt);
             }
 
             default:
@@ -299,7 +314,7 @@ internal sealed class StepOutputs
                 }
 
                 var end = element.TryGetProperty("end", out var endElement) ? endElement.GetDouble() : 0;
-                return RecordedStep.Interactive(run, exitCode, new ComposedPtyOutput(output, end), maskedRun, folder);
+                return RecordedStep.Interactive(run, exitCode, new ComposedPtyOutput(output, end), maskedRun, folder, prompt);
             }
         }
     }
@@ -509,16 +524,22 @@ internal sealed class StepOutputsReplay
     /// The folder that the prompt showed for the step that <see cref="Run"/> takes next, as <see cref="MaskedRun"/>
     /// finds it. Null for a step that was not recorded, or a file recorded without a folder in the prompt.
     /// </summary>
-    internal string? Folder(string run, bool pty, bool interactive)
+    internal string? Folder(string run, bool pty, bool interactive) => Next(run, pty, interactive)?.Folder;
+
+    /// <summary>The prompt the shell drew for the step that <see cref="Run"/> takes next, as <see cref="Folder"/> finds it, or null.</summary>
+    internal string? Prompt(string run, bool pty, bool interactive) => Next(run, pty, interactive)?.Prompt;
+
+    private RecordedStep? Next(string run, bool pty, bool interactive)
     {
         var key = (run, interactive ? RecordedStepKind.Interactive : pty ? RecordedStepKind.Pty : RecordedStepKind.Pipe);
-        return _recorded.TryGetValue(key, out var recorded)
-            ? recorded[Math.Min(_taken.GetValueOrDefault(key), recorded.Count - 1)].Folder
-            : null;
+        return _recorded.TryGetValue(key, out var recorded) ? recorded[Math.Min(_taken.GetValueOrDefault(key), recorded.Count - 1)] : null;
     }
 
     /// <summary>The folder the recording's closing prompt showed, or null.</summary>
     internal string? EndFolder => _outputs.EndFolder;
+
+    /// <summary>The prompt the shell drew for the recording's closing prompt, or null.</summary>
+    internal string? EndPrompt => _outputs.EndPrompt;
 
     internal CommandExecution Run(StepStart step)
     {

@@ -14,6 +14,9 @@ public sealed class PathStandInTests
     public async Task EachSpellingShowsAsTheStandIn() => await Assert.That(PathStandInCases.EachSpellingShowsAsTheStandIn()).IsTrue();
 
     [Test]
+    public async Task HomeSpellingShowsAsTheStandIn() => await Assert.That(PathStandInCases.HomeSpellingShowsAsTheStandIn()).IsTrue();
+
+    [Test]
     public async Task OnlyAWholePathIsReplaced() => await Assert.That(PathStandInCases.OnlyAWholePathIsReplaced()).IsTrue();
 
     [Test]
@@ -56,6 +59,19 @@ internal static class PathStandInCases
             & Same("8.3 name", @"~\my-app\src", windows.MaskText(@"C:\Users\ADAL~1\demo\src"))
             & Same("masked twice", "~/my-app/x", unix.MaskText(unix.MaskText("/home/adal/demo/x")))
             & Expect(!unix.Hides("~/my-app/src") && unix.Hides("/home/adal/demo"), "text with stand-ins has nothing left to replace");
+    }
+
+    // A prompt writes the folder from ~ (bash's \w, zsh's %~), and the CLI gives that form when cwd is under the home
+    // folder. A PowerShell prompt writes it with backslashes.
+    internal static bool HomeSpellingShowsAsTheStandIn()
+    {
+        var masker = Masker(Settings, Cwd("/home/adal/demo"), Cwd("~/demo"));
+        return Same("bash's \\w", "adal@box:~/my-app/src$ ", masker.MaskText("adal@box:~/demo/src$ "))
+            & Same("the folder itself", "[~/my-app] ", masker.MaskText("[~/demo] "))
+            & Same("PowerShell", @"PS ~\my-app\src> ", masker.MaskText(@"PS ~\demo\src> "))
+            & Same("another folder", "~/demo2 ~/demo.old ~/demo-x", masker.MaskText("~/demo2 ~/demo.old ~/demo-x"))
+            & Same("inside another path", "/x~/demo a~/demo", masker.MaskText("/x~/demo a~/demo"))
+            & Same("the home folder", "~ ~/other", masker.MaskText("~ ~/other"));
     }
 
     internal static bool OnlyAWholePathIsReplaced()

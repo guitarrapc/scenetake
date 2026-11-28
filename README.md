@@ -401,6 +401,19 @@ steps:
   - card: "[fg:yellow]npm install -g my-app"
 ```
 
+To show off a prompt itself, such as a PS1 or a prompt theme, turn on `shell-prompt`. In bash, zsh, and PowerShell, once a step sets a PS1, a zsh precmd, or a PowerShell `prompt` function, the following steps show the prompt the shell draws, with the exit status and the folder of the step before.
+
+```yaml
+shell: bash
+settings:
+  shell-prompt: true
+steps:
+  - run: PS1='\[\e[32m\]\w\[\e[0m\] [$?] \$ '
+    show: none
+  - cd src
+  - "false"                 # the next prompt shows [1]
+```
+
 ### Customize the look
 
 Set these with a `render` key in the scenario, or with the flag of the same name, such as `--window macos`.
@@ -508,6 +521,7 @@ settings:                        # Defaults for all steps; map-form steps can ov
   pre-delay: 0.5                 # Pause before typing each step
   post-delay: 1.0                # Pause after output before the next step
   # end-prompt: false            # When true, end with the prompt after the last output
+  # shell-prompt: false          # When true, show the shell's own prompt once a step sets one, such as PS1
   execution-duration: 0.1        # Cast wait after command execution
   stderr-color: red              # When stderr has no ANSI SGR sequences
   # stream-output: false         # When true, replay captured chunk times in the cast
