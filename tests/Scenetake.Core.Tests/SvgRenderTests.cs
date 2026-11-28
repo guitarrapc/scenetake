@@ -164,6 +164,12 @@ public sealed class SvgRenderTests
     public async Task TooManyFontFamiliesStillWarns() => await Assert.That(SvgRenderCases.TooManyFontFamiliesStillWarns()).IsTrue();
 
     [Test]
+    public async Task FontFamilyRejectsAmpersand() => await Assert.That(SvgRenderCases.FontFamilyRejectsAmpersand()).IsTrue();
+
+    [Test]
+    public async Task CastFontFamilyKeepsSvgWellFormed() => await Assert.That(SvgRenderCases.CastFontFamilyKeepsSvgWellFormed()).IsTrue();
+
+    [Test]
     public async Task SoftFontGlyphsAreUses() => await Assert.That(SvgRenderCases.SoftFontGlyphsAreUses()).IsTrue();
 
     [Test]
@@ -519,6 +525,42 @@ internal static class SvgRenderCases
         {
             File.Delete(path);
         }
+    }
+
+    internal static bool FontFamilyRejectsAmpersand() =>
+        !RenderSettingsResolver.TryParseFontFamily("Fira & Code, monospace", out _, out var error)
+        && error == "font-family: invalid character '&'";
+
+    internal static bool CastFontFamilyKeepsSvgWellFormed()
+    {
+        // The family goes into the SVG's <style> as is. A bare '&' would make the SVG fail to parse as XML, and a
+        // character reference, which must end in ';', must not turn into '{' or '}' and add CSS rules from a cast.
+        string[] families = ["Fira & Code", "a&#125;@font-face&#123;src:url(https://example.invalid/f)&#125;text&#123;font-family:a"];
+        foreach (var family in families)
+        {
+            var path = Path.Combine(Path.GetTempPath(), $"scenetake-font-family-{Guid.NewGuid():N}.cast");
+            try
+            {
+                File.WriteAllText(path, "{\"version\":3,\"term\":{\"cols\":10,\"rows\":2},\"tags\":[\"st:font-family=" + family + "\"]}\n[0.0, \"o\", \"x\"]\n");
+                var (recording, warnings) = ReadCastCapturingWarnings(path);
+                var svg = SvgRender.RenderToString(recording.Events, recording.Width, recording.Height, recording.RenderSettings, recording.LoopDuration);
+                System.Xml.Linq.XDocument.Parse(svg);
+                if (!warnings.Contains("invalid font-family", StringComparison.Ordinal)
+                    || recording.RenderSettings.FontFamily != RenderSettingsResolver.DefaultFontFamily
+                    || svg.Contains("@font-face", StringComparison.Ordinal))
+                    return false;
+            }
+            catch (System.Xml.XmlException)
+            {
+                return false;
+            }
+            finally
+            {
+                File.Delete(path);
+            }
+        }
+
+        return true;
     }
 
     internal static (CastRecording Recording, string Warnings) ReadCastCapturingWarnings(string path)
